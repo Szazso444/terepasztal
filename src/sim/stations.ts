@@ -532,6 +532,13 @@ export class Station {
     return f;
   }
   /**
+   * What a panel shows against `capacity`: `fullest()`, never past it. A harvester in a town counts
+   * the town store's stock of its goods (`outlet`), which may be far more than it holds itself.
+   */
+  shownStored(): number {
+    return Math.min(this.fullest(), this.capacity);
+  }
+  /**
    * Take up to `amount` units of cargo out of storage (the dock's; else its own, then the outlet's
    * for a cargo the station makes); returns what was taken.
    */

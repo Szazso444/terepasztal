@@ -6,7 +6,7 @@ import { TrackGraph } from '../world/track';
 import { Dir } from '../engine/iso';
 import { Rng } from '../engine/rng';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
+import { Store } from './stores';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
 import { Train, defaultStop, resetTrainIds, type RouteMode } from './trains';
@@ -21,7 +21,7 @@ import { locoDef, wagonDef, type Item } from '../gacha/items';
 import { Commands, STATION_NAME_MAX } from './commands';
 import { STR } from '../strings';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
-import { storeWith } from '../testing/storeFixtures';
+import { storeWith, storesWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
@@ -34,11 +34,13 @@ beforeEach(() => {
 const ROW = 30;
 const GDT = 0.05;
 
-/** A grass map with one straight line along row 30 and every simulation module a command uses. */
+/**
+ * A grass map with one straight line along row 30 and every simulation module a command uses, and
+ * a store for the market to trade with: its cap per good is `cap`, which a test may change.
+ */
 function world() {
   const map = emptyMap(4242, 96, 96, Terrain.Grass),
     track = new TrackGraph(96, 96),
-    stock = new Stockpile(),
     economy = new Economy(),
     inventory = new Inventory(),
     trade = new TradeDesk();
@@ -49,8 +51,10 @@ function world() {
   const fleet = new Fleet(track, builder, map, inventory, economy);
   const gacha = new Gacha(new Rng(7), inventory);
   for (let x = 2; x < 90; x++) track.place(x, ROW, 'straight', 1);
-  const commands = new Commands({ fleet, builder, economy, stock, trade, gacha, inventory });
-  return { map, track, stock, economy, inventory, trade, builder, fleet, gacha, commands };
+  const commands = new Commands({ fleet, builder, economy, trade, gacha, inventory });
+  const w = { map, track, economy, inventory, trade, builder, fleet, gacha, commands, cap: 1000 };
+  const stock = new Store('st:0', 'depot', { x: 0, y: 0 }, () => w.cap);
+  return Object.assign(w, { stock });
 }
 type World = ReturnType<typeof world>;
 
@@ -468,7 +472,7 @@ describe('spotBuy', () => {
     const w = world();
     const { buy } = w.trade.spotQuote('stone');
     w.economy.money = 10000;
-    expect(w.commands.spotBuy('stone', 10, 1000)).toEqual({ ok: true });
+    expect(w.commands.spotBuy('stone', 10, w.stock)).toEqual({ ok: true });
     expect(w.stock.get('stone')).toBe(10);
     expect(w.economy.money).toBeCloseTo(10000 - 10 * buy, 9);
   });
@@ -478,29 +482,54 @@ describe('spotBuy', () => {
     const { buy } = w.trade.spotQuote('stone');
     w.economy.money = 10000;
     w.stock.add('stone', 995);
-    expect(w.commands.spotBuy('stone', 100, 1000)).toEqual({ ok: true });
+    expect(w.commands.spotBuy('stone', 100, w.stock)).toEqual({ ok: true });
     expect(w.stock.get('stone')).toBe(1000);
     expect(w.economy.money).toBeCloseTo(10000 - 5 * buy, 9);
     const money = w.economy.money;
-    expect(w.commands.spotBuy('stone', 10, 1000)).toEqual({
+    expect(w.commands.spotBuy('stone', 10, w.stock)).toEqual({
       ok: false,
       message: STR.market.full,
     });
-    expect(w.commands.spotBuy('stone', 10, NaN)).toEqual({ ok: false, message: STR.market.full });
+    w.cap = NaN;
+    expect(w.commands.spotBuy('stone', 10, w.stock)).toEqual({
+      ok: false,
+      message: STR.market.full,
+    });
     expect(w.stock.get('stone')).toBe(1000);
     expect(w.economy.money).toBe(money);
+  });
+
+  it('spot buy fills the given store up to its cap', () => {
+    const w = world();
+    const { stores, depots } = storesWith([
+      { amounts: { stone: 2995 }, at: { x: 0, y: 0 } },
+      { amounts: { stone: 10 }, at: { x: 200, y: 200 } },
+    ]);
+    const [near, far] = depots.map((d) => stores.poolOf(d));
+    const { buy } = w.trade.spotQuote('stone');
+    w.economy.money = 1e6;
+    expect(near.cap('stone')).toBe(rules.depotCap);
+    expect(w.commands.spotBuy('stone', 100, near)).toEqual({ ok: true });
+    expect(near.get('stone'), 'up to its cap').toBe(rules.depotCap);
+    expect(far.get('stone'), 'the other store').toBe(10);
+    expect(w.economy.money).toBeCloseTo(1e6 - (rules.depotCap - 2995) * buy, 6);
+    expect(w.commands.spotBuy('stone', 10, near)).toEqual({ ok: false, message: STR.market.full });
+    // and a sale takes from the store it is told
+    expect(w.commands.spotSell('stone', 4, far)).toEqual({ ok: true });
+    expect(far.get('stone')).toBe(6);
+    expect(near.get('stone')).toBe(rules.depotCap);
   });
 
   it('buys only what the money pays for and never goes below zero', () => {
     const w = world();
     const { buy } = w.trade.spotQuote('stone');
     w.economy.money = buy * 3.5;
-    expect(w.commands.spotBuy('stone', 100, 1000)).toEqual({ ok: true });
+    expect(w.commands.spotBuy('stone', 100, w.stock)).toEqual({ ok: true });
     expect(w.stock.get('stone')).toBe(3);
     expect(w.economy.money).toBeGreaterThanOrEqual(0);
     expect(w.economy.money).toBeCloseTo(buy * 0.5, 9);
     w.economy.money = buy - 0.01;
-    expect(w.commands.spotBuy('stone', 1, 1000)).toEqual({
+    expect(w.commands.spotBuy('stone', 1, w.stock)).toEqual({
       ok: false,
       message: STR.roster.noMoney,
     });
@@ -516,7 +545,7 @@ describe('spotBuy', () => {
     expect(Math.floor(money / buy)).toBe(19);
     expect(19 * buy).toBeGreaterThan(money);
     w.economy.money = money;
-    expect(w.commands.spotBuy('stone', 100, 1000)).toEqual({ ok: true });
+    expect(w.commands.spotBuy('stone', 100, w.stock)).toEqual({ ok: true });
     expect(w.stock.get('stone')).toBe(18);
     expect(w.economy.money).toBe(money - 18 * buy);
   });
@@ -524,12 +553,12 @@ describe('spotBuy', () => {
   it('refuses what the market does not trade and quantities under one', () => {
     const w = world();
     w.economy.money = 10000;
-    expect(w.commands.spotBuy('passengers', 10, 1000)).toEqual({
+    expect(w.commands.spotBuy('passengers', 10, w.stock)).toEqual({
       ok: false,
       message: STR.build.supplyLocked,
     });
     for (const n of [0, 0.5, -5, NaN])
-      expect(w.commands.spotBuy('stone', n, 1000), `${n} units`).toEqual({
+      expect(w.commands.spotBuy('stone', n, w.stock), `${n} units`).toEqual({
         ok: false,
         message: STR.market.nothingToBuy,
       });
@@ -548,8 +577,8 @@ describe('spotSell', () => {
       w.stock.add(id, 7);
       const stock = w.stock.get(id);
       const money = (w.economy.money = 50000);
-      expect(w.commands.spotBuy(id, 40, 1000)).toEqual({ ok: true });
-      expect(w.commands.spotSell(id, 40)).toEqual({ ok: true });
+      expect(w.commands.spotBuy(id, 40, w.stock)).toEqual({ ok: true });
+      expect(w.commands.spotSell(id, 40, w.stock)).toEqual({ ok: true });
       expect(w.stock.get(id)).toBe(stock);
       expect(w.economy.money - money).toBeCloseTo(40 * (sell - buy), 9);
     }
@@ -560,7 +589,7 @@ describe('spotSell', () => {
     const { sell } = w.trade.spotQuote('stone');
     w.economy.money = 0;
     w.stock.add('stone', 4.7);
-    expect(w.commands.spotSell('stone', 10)).toEqual({ ok: true });
+    expect(w.commands.spotSell('stone', 10, w.stock)).toEqual({ ok: true });
     expect(w.stock.get('stone')).toBeCloseTo(0.7, 9);
     expect(w.economy.money).toBeCloseTo(4 * sell, 9);
     expect(w.economy.earned).toBeCloseTo(4 * sell, 9);
@@ -572,13 +601,13 @@ describe('spotSell', () => {
     w.stock.add('stone', 0.9);
     w.stock.add('passengers', 50);
     const nothing = { ok: false, message: STR.market.nothingToSell };
-    expect(w.commands.spotSell('stone', 10)).toEqual(nothing);
-    expect(w.commands.spotSell('iron', 10)).toEqual(nothing);
-    expect(w.commands.spotSell('passengers', 10)).toEqual({
+    expect(w.commands.spotSell('stone', 10, w.stock)).toEqual(nothing);
+    expect(w.commands.spotSell('iron', 10, w.stock)).toEqual(nothing);
+    expect(w.commands.spotSell('passengers', 10, w.stock)).toEqual({
       ok: false,
       message: STR.build.supplyLocked,
     });
-    expect(w.commands.spotSell('stone', -3)).toEqual(nothing);
+    expect(w.commands.spotSell('stone', -3, w.stock)).toEqual(nothing);
     expect(w.stock.get('stone')).toBe(0.9);
     expect(w.stock.get('iron')).toBe(0);
     expect(w.stock.get('passengers')).toBe(50);
@@ -790,7 +819,8 @@ function keepBooks(c: LedgerCase) {
           books.stock.set(op.id, have + qty);
         }
       }
-      result = w.commands.spotBuy(op.id, op.n, op.cap);
+      w.cap = op.cap;
+      result = w.commands.spotBuy(op.id, op.n, w.stock);
     } else if (op.kind === 'sell') {
       const have = books.stock.get(op.id) ?? 0;
       const qty = Math.min(Math.floor(op.n), Math.floor(have));
@@ -803,7 +833,7 @@ function keepBooks(c: LedgerCase) {
         if (v > 0) books.earned += v;
         books.stock.set(op.id, have - qty);
       }
-      result = w.commands.spotSell(op.id, op.n);
+      result = w.commands.spotSell(op.id, op.n, w.stock);
     } else if (op.kind === 'pull') {
       const banner = BANNERS[op.banner];
       const cost = PULL_COST * op.count;
@@ -888,10 +918,10 @@ describe('economy commands', () => {
         w.economy.money = c.money;
         w.stock.amounts.set(id, c.stock);
         const { buy, sell } = w.trade.spotQuote(id);
-        if (!w.commands.spotBuy(id, c.n, 1000).ok) return;
+        if (!w.commands.spotBuy(id, c.n, w.stock).ok) return;
         const qty = w.stock.get(id) - c.stock;
         expect(Number.isInteger(qty) && qty >= 1 && qty <= c.n, `bought ${qty}`).toBe(true);
-        expect(w.commands.spotSell(id, qty)).toEqual({ ok: true });
+        expect(w.commands.spotSell(id, qty, w.stock)).toEqual({ ok: true });
         expect(w.stock.get(id)).toBe(c.stock);
         expect(w.economy.money - c.money).toBeCloseTo(qty * (sell - buy), 6);
         expect(w.economy.money).toBeLessThanOrEqual(c.money + 1e-9);

@@ -221,12 +221,11 @@ function partsOf(w: SimWorld, step: SimStep, camera: SaveParts['camera']): SaveP
   };
 }
 
-/** Play mode with the weather setting as given and Game's storage cap. */
+/** Play mode with the weather setting as given. */
 function context(w: SimWorld, weather: boolean): StepContext {
   return {
     mode: 'play',
     weather,
-    stockCap: (id) => w.stock.cap(id, w.builder.depotCount(), w.builder.plantCount()),
   };
 }
 

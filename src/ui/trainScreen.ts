@@ -139,6 +139,7 @@ export class TrainScreen implements Screen {
       ),
     );
     if (t.lastMessage) l.append(row(STR.train.note, t.lastMessage));
+    if (t.hungry) l.append(row(STR.train.note, STR.train.hungry, 'red'));
     const job = t.job ?? t.jobs[0];
     if (job) {
       const queued = t.jobs.length - (t.job ? 0 : 1);

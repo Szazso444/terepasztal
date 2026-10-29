@@ -8,7 +8,7 @@ import type { Inventory } from '../gacha/inventory';
 import type { Fleet } from './fleet';
 import type { Builder, Decor } from './build';
 import type { Economy } from './economy';
-import type { Stockpile } from './stockpile';
+import type { ResourceStore } from './stores';
 import type { TradeDesk } from './trade';
 import type { Station } from './stations';
 import type { Train, RouteMode, StopPlan } from './trains';
@@ -24,7 +24,6 @@ export interface CommandDeps {
   fleet: Fleet;
   builder: Builder;
   economy: Economy;
-  stock: Stockpile;
   trade: TradeDesk;
   gacha: Gacha;
   inventory: Inventory;
@@ -45,7 +44,6 @@ export class Commands {
   private readonly fleet: Fleet;
   private readonly builder: Builder;
   private readonly economy: Economy;
-  private readonly stock: Stockpile;
   private readonly trade: TradeDesk;
   private readonly gacha: Gacha;
   private readonly inventory: Inventory;
@@ -54,7 +52,6 @@ export class Commands {
     this.fleet = deps.fleet;
     this.builder = deps.builder;
     this.economy = deps.economy;
-    this.stock = deps.stock;
     this.trade = deps.trade;
     this.gacha = deps.gacha;
     this.inventory = deps.inventory;
@@ -114,14 +111,14 @@ export class Commands {
 
   // ------------------------------------------------------------ spot market
   /**
-   * Buy up to `n` units at the spot price into the stockpile: as many as fit under `cap` and the
-   * money pays for.
+   * Buy up to `n` units at the spot price into `store`: as many as fit under its cap and the money
+   * pays for.
    */
-  spotBuy(cargoId: string, n: number, cap: number): CommandResult {
+  spotBuy(cargoId: string, n: number, store: ResourceStore): CommandResult {
     if (!spotTraded(cargoId)) return refuse(STR.build.supplyLocked);
     const want = Math.floor(n);
     if (!(want >= 1)) return refuse(STR.market.nothingToBuy);
-    const room = Math.floor(Math.max(0, cap - this.stock.get(cargoId)));
+    const room = Math.floor(Math.max(0, store.cap(cargoId) - store.get(cargoId)));
     if (!(room >= 1)) return refuse(STR.market.full);
     const { buy } = this.trade.spotQuote(cargoId);
     let qty = Math.min(want, room, buy > 0 ? Math.floor(this.economy.money / buy) : Infinity);
@@ -131,16 +128,16 @@ export class Commands {
     // zero refuses even goods quoted at nothing)
     if (!(qty >= 1) || !this.economy.canAfford(qty * buy)) return refuse(STR.roster.noMoney);
     this.economy.spend(qty * buy);
-    this.stock.add(cargoId, qty, cap);
+    store.add(cargoId, qty);
     return done();
   }
-  /** Sell up to `n` units from the stockpile at the spot price: as many as are on hand. */
-  spotSell(cargoId: string, n: number): CommandResult {
+  /** Sell up to `n` units from `store` at the spot price: as many as it holds. */
+  spotSell(cargoId: string, n: number, store: ResourceStore): CommandResult {
     if (!spotTraded(cargoId)) return refuse(STR.build.supplyLocked);
-    const qty = Math.min(Math.floor(n), Math.floor(this.stock.get(cargoId)));
+    const qty = Math.min(Math.floor(n), Math.floor(store.get(cargoId)));
     if (!(qty >= 1)) return refuse(STR.market.nothingToSell);
     const { sell } = this.trade.spotQuote(cargoId);
-    this.stock.take(cargoId, qty);
+    store.take(cargoId, qty);
     this.economy.earn(qty * sell);
     return done();
   }

@@ -125,7 +125,6 @@ function stepper(w: SimWorld) {
   const ctx: StepContext = {
     mode: 'play',
     weather: false,
-    stockCap: (id) => w.stock.cap(id, w.builder.depotCount(), w.builder.plantCount()),
   };
   return (gdt: number) => {
     w.clock.time += gdt;

@@ -4,7 +4,7 @@
 
 import type { Builder } from '../sim/build';
 import { Station } from '../sim/stations';
-import { StoreRegistry, type Store } from '../sim/stores';
+import { Store, StoreRegistry } from '../sim/stores';
 import type { TownRegistry } from '../sim/towns';
 import { TrackGraph } from '../world/track';
 import { station, type SimWorld } from './simWorld';
@@ -27,11 +27,12 @@ export function storeWith(
 /**
  * `storeWith` for several depots: a registry of one depot store for each, in the order given,
  * anchored where it says and holding what it says. Their station ids are 0, -1, -2 and on: no
- * station a test places has one, as ids start at 1.
+ * station a test places has one, as ids start at 1. `stations` is the registry's list of them: take
+ * one out and `refresh` to see its store go.
  */
 export function storesWith(
   list: readonly { amounts: Record<string, number>; at: { x: number; y: number } }[],
-): { stores: StoreRegistry; depots: Store[] } {
+): { stores: StoreRegistry; depots: Store[]; stations: Station[] } {
   const sts = list.map(({ at }, i) => new Station('depot', at.x, at.y, undefined, -i || 0));
   const builder = {
     stations: sts,
@@ -53,7 +54,17 @@ export function storesWith(
     for (const [id, n] of Object.entries(list[i].amounts)) depot.amounts.set(id, n);
     return depot;
   });
-  return { stores, depots };
+  return { stores, depots, stations: sts };
+}
+
+/**
+ * A store of no place and no cap holding `amounts`, for what only counts goods (the workshop, the
+ * market): what is added is all kept.
+ */
+export function looseStore(amounts: Record<string, number> = {}): Store {
+  const s = new Store('st:0', 'depot', { x: 0, y: 0 }, () => Infinity);
+  for (const [id, n] of Object.entries(amounts)) s.amounts.set(id, n);
+  return s;
 }
 
 /**

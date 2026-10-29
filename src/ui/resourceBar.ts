@@ -1,16 +1,21 @@
-import { el } from './dom';
+import { el, btn } from './dom';
 import { STR } from '../strings';
-import type { Stockpile } from '../sim/stockpile';
+import type { ResourceStore } from '../sim/stores';
 import { CARGO, cargoName } from '../sim/cargo';
 import { inSupplyMode } from '../sim/supply';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
 import type { ResourceStat } from '../sim/stats';
 
-/** Second row under the top bar: every resource with a hover card, population, and the funds block. */
+/**
+ * Second row under the top bar: the store it shows (a button that steps to the next one), every
+ * resource held there with a hover card, population, and the funds block.
+ */
 export class ResourceBar {
   readonly root = el('div', { id: 'resbar', class: 'panel' });
   readonly right = el('div', { class: 'res-right' });
+  /** the name of the store shown; a click asks for the next one (`onNextStore`) */
+  private storeBtn = btn('', () => this.onNextStore?.(), 'small res-store');
   private cells = new Map<string, HTMLElement>();
   private cellRoots = new Map<string, HTMLElement>();
   private cellDefs = new Map<string, (typeof CARGO)[number]>();
@@ -18,12 +23,18 @@ export class ResourceBar {
   private famine = el('span', { class: 'value red', text: STR.res.famine });
   private card = el('div', { id: 'res-card', class: 'panel' });
   private hovered: string | null = null;
-  /** Supplied by the game: actual rolling weekly flows and the cap. */
+  /** Supplied by the game: actual rolling weekly flows. */
   stats: (() => Record<string, ResourceStat>) | null = null;
-  cap: (id: string) => number = () => Infinity;
-  private stock: Stockpile | null = null;
+  /** Supplied by the game: residents, and the food they and the crews eat a week. */
+  people: (() => { residents: number; foodPerWeek: number }) | null = null;
+  /** the store button was clicked: show the next store */
+  onNextStore: (() => void) | null = null;
+  private store: ResourceStore | null = null;
+  private totals = new Map<string, number>();
 
   constructor(atlas: AtlasRegistry, onClick: () => void) {
+    this.storeBtn.title = STR.res.nextStore;
+    this.root.append(this.storeBtn);
     for (const c of [...CARGO.filter((x) => x.class !== 'people').map((x) => x.id), 'power']) {
       const v = el('span', { class: 'value' });
       const cell = el(
@@ -71,7 +82,7 @@ export class ResourceBar {
   }
   private renderCard() {
     const id = this.hovered;
-    const st = this.stock;
+    const st = this.store;
     if (!id || !st) return;
     const c = this.card;
     c.innerHTML = '';
@@ -83,14 +94,15 @@ export class ResourceBar {
         el('span', { class: 'v', text: v }),
       );
     if (id === 'population') {
+      const p = this.people?.() ?? { residents: 0, foodPerWeek: 0 };
       c.append(
         el('div', { class: 'panel-title', text: STR.res.population }),
         el(
           'div',
           { class: 'panel-body' },
           el('div', { class: 'bi-desc', text: STR.res.populationHint }),
-          row(STR.res.people, String(st.population)),
-          row(STR.res.eats, `${st.foodPerWeek().toFixed(1)} ${STR.res.foodPerWeek}`),
+          row(STR.res.people, String(p.residents)),
+          row(STR.res.eats, `${p.foodPerWeek.toFixed(1)} ${STR.res.foodPerWeek}`),
         ),
       );
       return;
@@ -99,7 +111,10 @@ export class ResourceBar {
     const stats = this.stats?.()[id];
     const body = el('div', { class: 'panel-body' });
     if (info) body.append(el('div', { class: 'bi-desc', text: info }));
-    body.append(row(STR.res.have, `${Math.floor(st.get(id))} / ${this.cap(id)}`));
+    body.append(row(STR.res.have, `${Math.floor(st.get(id))} / ${st.cap(id)}`));
+    body.append(
+      el('div', { class: 'dim', text: STR.res.allStores(Math.floor(this.totals.get(id) ?? 0)) }),
+    );
     if (stats) {
       body.append(el('div', { class: 'dim', text: STR.res.historyNote }));
       body.append(row(STR.res.producedDay, stats.produced.toFixed(1)));
@@ -110,9 +125,14 @@ export class ResourceBar {
     c.append(el('div', { class: 'panel-title', text: cargoName(id) }), body);
   }
 
-  update(stock: Stockpile, cap: (id: string) => number) {
-    this.stock = stock;
-    this.cap = cap;
+  /**
+   * Show `store` (with the grid's power beside it), named `label` on the store button; `totals` is
+   * what every store holds together, for the hover card.
+   */
+  update(store: ResourceStore, label: string, totals: Map<string, number>) {
+    this.store = store;
+    this.totals = totals;
+    if (this.storeBtn.textContent !== label) this.storeBtn.textContent = label;
     const stats = this.stats?.();
     for (const [id, v] of this.cells) {
       const def = this.cellDefs.get(id);
@@ -120,8 +140,8 @@ export class ResourceBar {
       const root = this.cellRoots.get(id)!;
       if ((root.style.display === 'none') === shown) root.style.display = shown ? '' : 'none';
       if (!shown) continue;
-      const have = Math.floor(stock.get(id));
-      const c = cap(id);
+      const have = Math.floor(store.get(id));
+      const c = store.cap(id);
       const text = `${have}`;
       if (v.textContent !== text) v.textContent = text;
       const net = (stats?.[id]?.produced ?? 0) - (stats?.[id]?.consumed ?? 0);
@@ -130,9 +150,9 @@ export class ResourceBar {
       v.classList.toggle('amber', Math.abs(net) <= 0.01 && have >= c);
       root.title = STR.res.netTitle(`${net >= 0 ? '+' : ''}${net.toFixed(1)}`);
     }
-    const p = `${stock.population}`;
+    const p = `${this.people?.().residents ?? 0}`;
     if (this.pop.textContent !== p) this.pop.textContent = p;
-    this.famine.style.display = stock.famine ? '' : 'none';
+    this.famine.style.display = store.famine ? '' : 'none';
     if (this.hovered) this.renderCard();
   }
 }

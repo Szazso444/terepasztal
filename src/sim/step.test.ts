@@ -54,12 +54,11 @@ beforeEach(() => {
   vi.mocked(tickBuildings).mockImplementation(realTickBuildings);
 });
 
-/** Play mode with the weather setting as given and Game's storage cap. */
+/** Play mode with the weather setting as given. */
 function context(w: SimWorld, weather: boolean): StepContext {
   return {
     mode: 'play',
     weather,
-    stockCap: (id) => w.stock.cap(id, w.builder.depotCount(), w.builder.plantCount()),
   };
 }
 
@@ -665,7 +664,6 @@ function stage(s: Scene): Staged {
   const ctx: StepContext = {
     mode: s.mode,
     weather: s.weather,
-    stockCap: (id) => w.stock.cap(id, w.builder.depotCount(), w.builder.plantCount()),
   };
   const at = { step: 0 };
   const due = new Map<number, number>();
@@ -891,13 +889,11 @@ describe('SimStep: one step', () => {
             },
           );
           const tradeTick = trade.tick.bind(trade);
-          trade.tick = (now, st, econ, cap) => {
+          trade.tick = (now, st, econ) => {
             calls.push('trade.tick');
             expect(now, 'trade.tick: time').toBe(clock.time);
-            expect(st === stock && econ === economy, 'trade.tick: stock and economy').toBe(true);
-            for (const id of ['stone', 'power'])
-              expect(cap(id), `trade.tick: cap of ${id}`).toBe(ctx.stockCap(id));
-            tradeTick(now, st, econ, cap);
+            expect(st === stores && econ === economy, 'trade.tick: stores and economy').toBe(true);
+            tradeTick(now, st, econ);
             completedAtEnd = contracts.completedToday;
           };
           economy.advanceAge = watched(
@@ -1639,7 +1635,6 @@ function seedRun(c: SeedCase, varied: boolean) {
   const ctx: StepContext = {
     mode: c.mode,
     weather: c.weather,
-    stockCap: (id) => w.stock.cap(id, w.builder.depotCount(), w.builder.plantCount()),
   };
   let done = 0;
   const fleetTick = w.fleet.tick.bind(w.fleet);

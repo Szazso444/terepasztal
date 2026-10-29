@@ -106,6 +106,8 @@ describe('the status kind the works tooltip is built from', () => {
         return STR.building.full;
       case 'running':
         return STR.building.running;
+      case 'noStore':
+        return STR.stores.noStoreNear(s.range);
       case 'starved':
         return STR.building.starved(s.missing ? cargoName(s.missing) : STR.building.unknownInput);
     }
@@ -133,6 +135,16 @@ describe('the status kind the works tooltip is built from', () => {
     expect(short.kind === 'starved' ? short.missing : null).not.toBeNull();
     for (const [k, v] of Object.entries(def.recipe.in)) stock.add(k, v);
     expect(BuildingPanel.statusKind(b, stock)).toEqual({ kind: 'starved', missing: null });
+  });
+
+  it('says no store is in reach of a works that has none, not what it waits for', () => {
+    const def = works.find((d) => Object.values(d.recipe.in).some((v) => v > 0))!;
+    const b = building(def, 'inputs', false);
+    expect(BuildingPanel.statusKind(b, null)).toEqual({ kind: 'noStore', range: rules.buildReach });
+    expect(BuildingPanel.status(b, null)).toEqual({
+      text: STR.stores.noStoreNear(rules.buildReach),
+      cls: 'red',
+    });
   });
 
   it('keeps a bridge being strengthened as it was, and closes a works being upgraded', () => {

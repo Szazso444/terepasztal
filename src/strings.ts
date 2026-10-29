@@ -406,6 +406,8 @@ export const STR = {
     /** building: no store within the reach holds the cost; `missing` is the nearest one's shortfall */
     noStoreInReach: (range: number, missing: string) =>
       `No store within ${range} tiles holds ${missing}`,
+    /** the build card: the store that pays for the work on the hovered tile (`Builder.payerAt`) */
+    paidFrom: (label: string) => `Paid from ${label}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
     levelOpens: (level: number, age: string) => `Level ${level} opens in the ${age}`,
     upgradingNow: 'Already being upgraded',
@@ -580,6 +582,7 @@ export const STR = {
     orphaned: (n: string) => `${n}: no platform track`,
     unwired: (n: string) => `${n}: no power line connected`,
     starved: (n: string, r: string) => `${n}: waiting for ${r}`,
+    noStore: (n: string, range: number) => `${n}: no store within ${range} tiles`,
     full: (n: string) => `${n}: stockpile full, output stopped`,
     contractFailed: (n: string) => `Contract failed: ${n}`,
     contractDone: (n: string) => `Contract completed: ${n}`,
@@ -604,8 +607,8 @@ export const STR = {
         'Open the Depot (F), pick the locomotive and wagons and press Dispatch. The route is automatic.',
       idleStock: (n: number) =>
         `${n} locomotive(s) sit idle in the depot. Dispatch them to earn more.`,
-      lowWheat:
-        'Food is running low. Bring wheat from a farm to the depot and build a Windmill, or buy food on the Market (K).',
+      lowWheat: (store: string) =>
+        `Food is running low at ${store}. Bring wheat from a farm and build a Windmill, or buy food on the Market (K).`,
       famine:
         'The crews need food: production halved. Supply a Windmill or buy food on the Market (K).',
       outOfFuel: (n: string) =>
@@ -623,8 +626,8 @@ export const STR = {
       offers: (n: number) => `${n} contract offer(s) are waiting on the Contract Board (C).`,
       failed: (n: string) =>
         `Contract "${n}" failed. Accept only contracts your trains already pass through, and watch the deadline.`,
-      capFull: (r: string) =>
-        `The stockpile is full of ${r}. A second depot raises the cap; warehouses hold goods locally; or sell on the Market.`,
+      capFull: (r: string, store: string) =>
+        `${store} is full of ${r}. A Warehouse raises a town's cap and holds goods of its own; or sell on the Market.`,
       blocked: (n: string) =>
         `${n} is stuck behind another train. Add a passing loop with switches or a second track.`,
     },
@@ -882,7 +885,8 @@ export const STR = {
     failedNothing: (name: string) => `${name} failed on the bench; the materials are lost`,
     stats: (recipes: number, crafts: number, failures: number) =>
       `${recipes} recipes · ${crafts} built · ${failures} failed`,
-    resources: 'Stockpile',
+    /** the workshop's foot: the materials of the selected store, named */
+    resources: (label: string) => `Materials at ${label}`,
     filterLabel: 'Vehicle type',
     filter: {
       all: 'All railcraft',
@@ -1342,6 +1346,8 @@ export const STR = {
     tiles: 'tiles',
     prefer: 'Steam fuel:',
     routing: 'Routing',
+    /** the crew owes more than a day of food (`Train.hungry`) */
+    hungry: 'Crew hungry: runs slower until it reaches a store with food',
     clickHint: 'Click to select',
     /** the train tooltip's state and the station the train heads for */
     toward: '{state} → {station}',
@@ -1381,21 +1387,25 @@ export const STR = {
   market: {
     title: 'Market',
     resource: 'Resource',
-    have: 'Stockpile',
+    have: 'In store',
     buyPrice: 'Buy',
     sellPrice: 'Sell',
     buy: 'Buy',
     sell: 'Sell',
-    full: 'Stockpile is full',
+    full: 'The store is full',
     nothingToBuy: 'Nothing to buy',
-    nothingToSell: 'None in the stockpile to sell',
+    nothingToSell: 'None in the store to sell',
+    /** the market's head: the store it buys into and sells from (the selected one) */
+    store: (label: string) => `Trading at ${label}. Pick another store on the top bar.`,
+    /** the store the standing deals settle with (`TradeDesk.storeKey`) */
+    dealsAt: (label: string) => `Deals settle at ${label}`,
     trend: 'Trend',
     driftPct: (p: number) => `${p >= 0 ? '+' : ''}${p}%`,
     driftHint: 'Fuel prices (oil, diesel, crude) wander up to ±40 % on a slow weekly walk.',
-    hint: 'Prices are per unit. Each depot raises the stockpile cap.',
+    hint: 'Prices are per unit. A store holds up to its cap of each good.',
     deals: 'Standing deals',
     dealsHint: (d: number) =>
-      `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the stockpile cap or when funds run out; selling takes what is on hand.`,
+      `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the store's cap or when funds run out; selling takes what is on hand.`,
     dealBuy: 'Buy / cycle',
     dealSell: 'Sell / cycle',
     perCycle: 'Money / cycle',
@@ -1413,7 +1423,11 @@ export const STR = {
     famine: 'NO WHEAT',
     foodPerWeek: 'food/week',
     openMarket: 'Open the market',
-    have: 'Stockpile / cap',
+    have: 'In store / cap',
+    /** the top bar's card: the good in every store together */
+    allStores: (n: number) => `All stores: ${n}`,
+    /** the top bar's store button: what a click does */
+    nextStore: 'The store the bar shows. Click: the next store',
     producedDay: 'Received / last week',
     consumedDay: 'Spent / last week',
     netDay: 'Net / last week',
@@ -1507,6 +1521,8 @@ export const STR = {
     famine: (name: string) => `${name}: the crews are out of food: production halved`,
     /** a store in famine has food again, or nobody left to feed */
     fed: (name: string) => `${name}: food is back; crews are fed again`,
+    /** a works with no store in reach (`StoreRegistry.worksStore`) */
+    noStoreNear: (range: number) => `No store within ${range} tiles`,
   },
   town: {
     title: 'Towns',
@@ -1516,6 +1532,8 @@ export const STR = {
       `${st} station${st === 1 ? '' : 's'}, ${works} works, ${houses} house${houses === 1 ? '' : 's'}`,
     needs: (house: boolean, wh: boolean) =>
       `Not founded yet: needs ${[house ? 'a House' : '', wh ? 'a warehouse' : ''].filter(Boolean).join(' and ')} within 7 tiles`,
+    /** the town store's fullest good against its cap per good */
+    store: (fullest: number, cap: number) => `Store: up to ${fullest} of a good, cap ${cap} each`,
     makes: 'Makes / week',
     uses: 'Uses / week',
     /** power among what a town makes or uses, lowercase like the cargo names beside it */

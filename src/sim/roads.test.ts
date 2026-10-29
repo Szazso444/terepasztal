@@ -632,7 +632,7 @@ describe('a level crossing', () => {
         const train = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
         if (typeof train === 'string') throw new Error(`fleet.create: ${train}`);
         const step = new SimStep(w);
-        const ctx = { mode: 'play', weather: false, stockCap: () => 1e9 } as const;
+        const ctx = { mode: 'play', weather: false } as const;
         const trace: string[] = [];
         const heads = new Set<string>();
         for (let i = 0; i < 3000; i++) {

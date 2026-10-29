@@ -11,6 +11,7 @@ import {
   type Building,
 } from '../sim/buildings';
 import type { ResourceStore } from '../sim/stores';
+import { rules } from '../sim/rules';
 import { fmtCost } from '../sim/stockpile';
 import { cargoName } from '../sim/cargo';
 import { upgradeView } from './upgradeView';
@@ -56,12 +57,14 @@ export class BuildingPanel {
    * What a works is doing. A works is closed while it is upgraded; a bridge being strengthened
    * still carries trains, so it reads as it does without one. The panel words it in `status`; the
    * hover tooltip words it from this (`WorksSnapshot.status`), so the two cannot disagree. A
-   * starved works names the input its store (`StoreRegistry.worksStore`) is short of.
+   * starved works names the input its store (`StoreRegistry.worksStore`) is short of; one with
+   * no store at all says no store is in reach.
    */
   static statusKind(b: Building, store: Pick<ResourceStore, 'get'> | null): WorksStatus {
     const def = buildingDef(b.id);
     if (b.work && !def.bridge) return { kind: 'closed' };
     if (b.reason === 'full') return { kind: 'full' };
+    if (b.reason === 'inputs' && !store) return { kind: 'noStore', range: rules.buildReach };
     if (b.reason === 'inputs') return { kind: 'starved', missing: missingInput(def, store) };
     return { kind: 'running' };
   }
@@ -83,6 +86,8 @@ export class BuildingPanel {
         };
       case 'running':
         return { text: STR.building.running, cls: 'good' };
+      case 'noStore':
+        return { text: STR.stores.noStoreNear(s.range), cls: 'red' };
     }
   }
   /** The crew the panel shows: none while the works is closed for its upgrade (`crewTotal`). */

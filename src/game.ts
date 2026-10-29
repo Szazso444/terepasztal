@@ -126,7 +126,7 @@ import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
 import { Crafting } from './gacha/crafting';
 import { Stockpile, RESOURCE_IDS } from './sim/stockpile';
-import { StoreRegistry } from './sim/stores';
+import { StoreRegistry, type ResourceStore } from './sim/stores';
 import { cityTiles } from './sim/city';
 import { bridgeSpan } from './sim/bridges';
 import {
@@ -162,7 +162,7 @@ import { expandSave, ownsBorderChunk } from './sim/expand';
 import { generatorOf, groundOf } from './sim/ground';
 import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
-import { SimStep, startStock, ageSnapshot as ageSnapshotOf } from './sim/step';
+import { SimStep, startStock, eaters, ageSnapshot as ageSnapshotOf } from './sim/step';
 import { Commands } from './sim/commands';
 import { createPlayUi, confirmReplaceSave, type PlayUi, type UiHost } from './ui/panels';
 import { handlePlayKeys } from './ui/keymap';
@@ -978,12 +978,7 @@ export class Game implements UiHost {
     this.people = new PeopleSim(this.map, this.builder);
     this.contracts = new ContractBoard(new Rng(this.seed ^ 0x5eed), this.builder, this.economy);
     this.gacha = new Gacha(new Rng(this.seed ^ 0x9ac4a), this.inventory);
-    this.crafting = new Crafting(
-      new Rng(this.seed ^ 0xc4af7),
-      this.inventory,
-      this.economy,
-      this.stock,
-    );
+    this.crafting = new Crafting(new Rng(this.seed ^ 0xc4af7), this.inventory, this.economy);
     this.crafting.grantFromInventory();
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
     this.contractJobs = new ContractDispatcher(
@@ -1106,7 +1101,6 @@ export class Game implements UiHost {
       fleet: this.fleet,
       builder: this.builder,
       economy: this.economy,
-      stock: this.stock,
       trade: this.trade,
       gacha: this.gacha,
       inventory: this.inventory,
@@ -1637,9 +1631,11 @@ export class Game implements UiHost {
     this.overview.rebuildPower(this.power);
     this.powerLines.rebuild(this.power);
   }
-  /** Storage cap for one resource at the current warehouse and plant count. */
-  stockCap(id: string) {
-    return this.stock.cap(id, this.builder.depotCount(), this.builder.plantCount());
+  /** The field tile under the pointer; null over a panel, a screen or the overview. */
+  get fieldTile(): { x: number; y: number } | null {
+    const t = this.hoverTile;
+    const onField = this.viewTarget === 0 && !this.input.overUi && !this.screens.current;
+    return onField && inBounds(this.map, t.x, t.y) ? t : null;
   }
   /** Arm positions of every semaphore, stepped towards the aspect they should show. */
   private semaphoreArms = new Map<number, { m: number; d: number; frame: string }>();
@@ -1948,16 +1944,16 @@ export class Game implements UiHost {
       this.sim.run(gdt, {
         mode: this.mode,
         weather: this.settings.weather,
-        stockCap: (id) => this.stockCap(id),
       }),
     );
   }
 
-  /** Debug aid requested for testing: money plus a full stockpile. */
+  /** Debug aid requested for testing: money, and the selected store and the grid filled. */
   cheat() {
     this.economy.money += 10000;
     this.economy.tickets += 10;
-    for (const id of RESOURCE_IDS) this.stock.add(id, 1e9, this.stockCap(id));
+    const store = this.stores.selected;
+    if (store) for (const id of RESOURCE_IDS) this.stores.withGrid(store).add(id, 1e9);
     this.toasts.push(STR.topbar.cheated, 'info');
   }
 
@@ -2067,12 +2063,22 @@ export class Game implements UiHost {
     }
     if (this.lastFailedContract)
       tips.push({ key: 'failed', kind: 'warn', text: T.failed(this.lastFailedContract) });
-    // a famine at any store; else food in every store together against two weeks of eating
-    const food = this.stores.totals().get('food') ?? 0;
+    // a famine at any store; else the first store (a network as one) whose food lasts its residents
+    // and crews less than two weeks; a train's crew pays at its next store, so it is left out
     if (this.stores.all().some((s) => s.famine))
       tips.push({ key: 'famine', kind: 'bad', text: T.famine });
-    else if (this.stock.foodPerWeek() > 0 && food < this.stock.foodPerWeek() * 2)
-      tips.push({ key: 'wheat', kind: 'warn', text: T.lowWheat });
+    else {
+      const eating = new Map<ResourceStore, number>();
+      for (const [pool, n] of eaters(this.houses, b)) {
+        const at = this.stores.networkPool(pool);
+        eating.set(at, (eating.get(at) ?? 0) + n);
+      }
+      for (const [pool, n] of eating)
+        if (pool.get('food') < n * rules.wheatPerCrew * 2) {
+          tips.push({ key: 'wheat', kind: 'warn', text: T.lowWheat(this.stores.label(pool)) });
+          break;
+        }
+    }
     if (b.stations.length === 0) tips.push({ key: 'nostations', kind: 'info', text: T.noStations });
     else if (b.stations.length === 1)
       tips.push({ key: 'onestation', kind: 'info', text: T.oneStation });
@@ -2088,13 +2094,17 @@ export class Game implements UiHost {
       !b.decorHas('water_tower')
     )
       tips.push({ key: 'water', kind: 'warn', text: T.noWater });
-    if (steam && this.stock.get('coal') < 10 && !b.buildingHas('kiln'))
+    if (steam && (this.stores.totals().get('coal') ?? 0) < 10 && !b.buildingHas('kiln'))
       tips.push({ key: 'coal', kind: 'warn', text: T.lowCoal });
-    for (const id of RESOURCE_IDS)
-      if (this.stock.get(id) >= this.stockCap(id) - 1e-6 && id !== 'power') {
-        tips.push({ key: `cap:${id}`, kind: 'info', text: T.capFull(id) });
-        break;
-      }
+    // the store the player looks at is full of a good
+    const shown = this.stores.selected;
+    if (shown)
+      for (const id of RESOURCE_IDS)
+        if (id !== 'power' && shown.cap(id) > 0 && shown.get(id) >= shown.cap(id) - 1e-6) {
+          const text = T.capFull(id, this.stores.label(shown));
+          tips.push({ key: `cap:${id}`, kind: 'info', text });
+          break;
+        }
     const offers = this.contracts.offers.length;
     if (offers > 0 && !this.contracts.active.length)
       tips.push({ key: 'offers', kind: 'info', text: T.offers(offers) });
@@ -2333,7 +2343,13 @@ export class Game implements UiHost {
     this.cursor.tint = this.world.harvest.outline;
     this.updateRtsTooltip();
     this.hud.update(this.economy);
-    this.resourceBar.update(this.stock, (id) => this.stockCap(id));
+    // the selected store, with the grid's power beside it; none but the grid in an empty world
+    const shown = this.stores.selected ?? this.stores.grid;
+    this.resourceBar.update(
+      this.stores.withGrid(shown),
+      this.stores.label(shown),
+      this.stores.totals(),
+    );
     this.hud.setFps(this.settings.showFps ? this.loop.fps : null);
     this.panelRefresh += dt;
     if (this.panelRefresh > 0.5) {
@@ -2473,7 +2489,7 @@ export class Game implements UiHost {
       name: st.name,
       level: st.level,
       work: st.work ? { to: st.work.to, hoursLeft: hoursLeft(st.work) } : null,
-      stored: st.fullest(),
+      stored: st.shownStored(),
       capacity: st.capacity,
       biome: biomeAt(this.map, st.x, st.y),
       weeklyAtLevel1: weeklyOutput(1, 1),
@@ -2532,7 +2548,7 @@ export class Game implements UiHost {
           kind: 'station',
           name: s.name,
           level: s.level,
-          stored: s.fullest(),
+          stored: s.shownStored(),
           capacity: s.capacity,
         };
     } else {

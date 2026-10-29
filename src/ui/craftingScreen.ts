@@ -14,7 +14,8 @@ import {
 } from '../gacha/crafting';
 import { RARITIES, itemDef, itemKind, type LocoDef, type WagonDef } from '../gacha/items';
 import type { Economy } from '../sim/economy';
-import { fmtCost, type Stockpile } from '../sim/stockpile';
+import { fmtCost } from '../sim/stockpile';
+import type { ResourceStore, StoreRegistry } from '../sim/stores';
 import type { Inventory } from '../gacha/inventory';
 import { cargoDef } from '../sim/cargo';
 import { sfx } from '../engine/audio';
@@ -56,7 +57,8 @@ export class CraftingScreen implements Screen {
   constructor(
     private readonly crafting: Crafting,
     private readonly economy: Economy,
-    private readonly stock: Stockpile,
+    /** the selected store is the one the workshop builds from and refunds into */
+    private readonly stores: StoreRegistry,
     private readonly inventory: Inventory,
     private readonly now: () => number,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
@@ -89,9 +91,14 @@ export class CraftingScreen implements Screen {
   refresh() {
     if (this.stateKey() !== this.shownKey) this.render();
   }
+  /** The store the workshop works from: the selected one, else the grid, which holds none. */
+  private get stock(): ResourceStore {
+    return this.stores.selected ?? this.stores.grid;
+  }
   private stateKey() {
     return [
       this.economy.money,
+      this.stock.key,
       ...craftResources().map((k) => Math.floor(this.stock.get(k))),
       this.crafting.recipes.size,
       this.inventory.items.length,
@@ -280,7 +287,7 @@ export class CraftingScreen implements Screen {
     return card;
   }
   private doChoose(id: string) {
-    const res = this.crafting.choose(id);
+    const res = this.crafting.choose(id, this.stock);
     this.hidePick();
     if (!res) {
       this.render();
@@ -392,7 +399,7 @@ export class CraftingScreen implements Screen {
     return row;
   }
   private doCraft(id: string) {
-    const res = this.crafting.craft(id, this.now());
+    const res = this.crafting.craft(id, this.stock, this.now());
     const name = itemDef(id).name;
     if (!res) {
       this.toast(
@@ -422,7 +429,10 @@ export class CraftingScreen implements Screen {
       .map((k) => `${Math.floor(this.stock.get(k))} ${k}`)
       .join(' · ');
     f.append(
-      el('span', { class: 'num', text: `${STR.craft.resources}: ${res}` }),
+      el('span', {
+        class: 'num',
+        text: `${STR.craft.resources(this.stores.label(this.stock))}: ${res}`,
+      }),
       el('span', { style: 'flex:1' }),
       el('span', {
         class: 'dim',

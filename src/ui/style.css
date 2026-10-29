@@ -1779,6 +1779,14 @@ input[type='range'] {
 #resbar .spacer {
   flex: 1;
 }
+/* the store the bar shows; a click steps to the next */
+#resbar .res-store {
+  margin: 0 6px 0 4px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 #resbar .res-right {
   display: flex;
   align-items: stretch;

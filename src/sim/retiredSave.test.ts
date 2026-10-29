@@ -6,7 +6,6 @@ import { TrackGraph, makePiece, type TrackClass } from '../world/track';
 import { Dir } from '../engine/iso';
 import { Rng } from '../engine/rng';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
 import { Train, resetTrainIds } from './trains';
@@ -19,7 +18,7 @@ import { Inventory } from '../gacha/inventory';
 import { Gacha } from '../gacha/gacha';
 import { Crafting } from '../gacha/crafting';
 import { LOCOS, WAGONS, locoDef, wagonDef, type Item } from '../gacha/items';
-import { storeWith } from '../testing/storeFixtures';
+import { looseStore, storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
@@ -35,14 +34,14 @@ const LINES = [30, 40];
 function world() {
   const map = emptyMap(4242, 96, 96, Terrain.Grass),
     track = new TrackGraph(96, 96),
-    stock = new Stockpile(),
+    stock = looseStore(),
     economy = new Economy(),
     inventory = new Inventory();
   const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
   const fleet = new Fleet(track, builder, map, inventory, economy);
   const gacha = new Gacha(new Rng(1), inventory);
-  const crafting = new Crafting(new Rng(2), inventory, economy, stock);
+  const crafting = new Crafting(new Rng(2), inventory, economy);
   return { map, track, stock, economy, builder, fleet, inventory, gacha, crafting };
 }
 function item(uid: number, defId: string, kind: Item['kind'], assigned: number | null): Item {
@@ -224,8 +223,8 @@ describe.each([
       const retired = FLAGGED.includes(id);
       expect(w.crafting.knows(id), id).toBe(!retired);
       for (const k of Object.keys(w.crafting.instanceCost(id))) w.stock.add(k, 1e6);
-      expect(w.crafting.canCraft(id), id).toBe(!retired);
-      const built = w.crafting.craft(id, 0);
+      expect(w.crafting.canCraft(id, w.stock), id).toBe(!retired);
+      const built = w.crafting.craft(id, w.stock, 0);
       expect(built === null, id).toBe(retired);
       expect(w.inventory.count(id), id).toBe(built?.ok ? 3 : 2);
     }

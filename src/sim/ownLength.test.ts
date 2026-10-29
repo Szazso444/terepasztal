@@ -23,7 +23,6 @@ import { Train, resetTrainIds } from './trains';
 import { Fleet, type GateInfo } from './fleet';
 import { Traffic } from './traffic';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
@@ -979,7 +978,7 @@ describe('a size', () => {
    */
   function sizeJobs(def: LocoDef | WagonDef, loco: boolean, has: (key: string) => boolean) {
     const spec = vehicleSpec(def);
-    const workshop = new Crafting(new Rng(1), new Inventory(), new Economy(), new Stockpile());
+    const workshop = new Crafting(new Rng(1), new Inventory(), new Economy());
     const tier = craftTier(def.id);
     return {
       body: {

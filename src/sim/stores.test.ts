@@ -9,7 +9,8 @@ import { defaultStop, Train, type StopPlan } from './trains';
 import { content } from '../data/content';
 import { Dir } from '../engine/iso';
 import { SimStep, startStock, type StepContext } from './step';
-import { tickBuildings, type Building } from './buildings';
+import { buildingDef, tickBuildings, type Building } from './buildings';
+import { STR } from '../strings';
 import { depotWith } from '../testing/storeFixtures';
 
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
@@ -521,7 +522,7 @@ describe('works and harvesters at their store', () => {
     expect(far.get('coal')).toBe(0);
   });
 
-  it('a works with no store in reach does not run', () => {
+  it('a works with no store in reach does not run, and its notice says no store is in reach', () => {
     const w = simWorld({ terrain: 'grass', size: 96 });
     const kiln = works(w, 'kiln', 48, 20);
     expect(w.stores.worksStore(kiln)).toBeNull();
@@ -532,6 +533,9 @@ describe('works and harvesters at their store', () => {
       0,
       undefined,
     ]);
+    w.notices.refresh({ trains: [], builder: w.builder, power: w.power });
+    const notice = w.notices.list.find((n) => n.key === `b${kiln.x},${kiln.y}:in`);
+    expect(notice?.text).toBe(STR.notice.noStore(buildingDef('kiln').name, rules.buildReach));
   });
 
   it("a power plant's power goes to the grid, its fuel comes from its store", () => {
@@ -649,7 +653,6 @@ describe('trains at a harvester in a town', () => {
     const ctx: StepContext = {
       mode: 'play',
       weather: false,
-      stockCap: (id) => w.stock.cap(id, w.builder.depotCount(), w.builder.plantCount()),
     };
     let called = false;
     for (let i = 0; i < 20000; i++) {
@@ -699,6 +702,15 @@ describe('trains at a harvester in a town', () => {
     expect(farm.take('stone', 10)).toBe(0);
     expect(town.get('stone')).toBe(stone + 40);
     expect(farm.accepts('wheat')).toBe(false);
+  });
+
+  it("shows no more stored than its own capacity, however much wheat the town's store holds", () => {
+    const { farm, town } = farmLine(false);
+    town.add('wheat', farm.capacity + 150);
+    expect(farm.stored('wheat')).toBe(farm.capacity + 150);
+    expect(farm.shownStored()).toBe(farm.capacity);
+    town.take('wheat', 160);
+    expect(farm.shownStored()).toBe(farm.capacity - 10);
   });
 });
 
@@ -1016,5 +1028,60 @@ describe('a pool of several stores', () => {
     s.b.famine = false;
     s.a.famine = true;
     expect(s.p.famine).toBe(true);
+  });
+});
+
+describe('the selected store', () => {
+  it("is the start depot's pool until the player picks one, and again once that one is gone", () => {
+    const { w, stores } = world();
+    expect(stores.selected, 'no store yet').toBeNull();
+    const first = station(w, 'depot', 30, 24);
+    station(w, 'depot', 70, 24);
+    const wh = station(w, 'warehouse', 50, 29);
+    sync(w, stores);
+    expect(stores.selected!.key).toBe(`st:${first.id}`);
+    stores.selected = stores.dockOf(wh);
+    expect(stores.selected!.key).toBe(`st:${wh.id}`);
+    expect(stores.selected).toBe(stores.dockOf(wh));
+    w.builder.free = true;
+    expect(w.builder.removeStation(wh)).toBe(true);
+    sync(w, stores);
+    expect(stores.selected!.key, 'the picked one went').toBe(`st:${first.id}`);
+    stores.clear();
+    stores.refresh();
+    expect(stores.selected!.key, 'a load forgets the pick').toBe(`st:${first.id}`);
+  });
+
+  it('lists one choice for each place goods are kept, a rail network as one, in label order', () => {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    w.builder.free = true;
+    const a = station(w, 'depot', 20, 29);
+    const b = station(w, 'depot', 50, 29);
+    line(w, 22, 30, 49);
+    const lone = station(w, 'depot', 40, 70);
+    a.name = 'Zeta';
+    b.name = 'Alpha';
+    lone.name = 'Mid';
+    const keys = () => w.stores.choices().map((c) => c.key);
+    // A and B share a network: one choice, named after its first store in registry order
+    expect(keys()).toEqual([`st:${lone.id}`, `st:${a.id}`]);
+    expect(w.stores.choices().map((c) => w.stores.label(c))).toEqual(['Mid', 'Zeta']);
+    setSupplyMode('full');
+    expect(keys()).toEqual([`st:${b.id}`, `st:${lone.id}`, `st:${a.id}`]);
+  });
+
+  it('shows a store with the grid power beside it', () => {
+    const { w, stores } = world();
+    const d = station(w, 'depot', 30, 24);
+    sync(w, stores);
+    const store = stores.dockOf(d)!;
+    store.add('wood', 40);
+    stores.grid.amounts.set('power', 70);
+    const view = stores.withGrid(store);
+    expect(view.get('wood')).toBe(40);
+    expect(view.get('power')).toBe(70);
+    expect(view.cap('power')).toBe(stores.grid.cap('power'));
+    expect(view.cap('wood')).toBe(rules.depotCap);
+    expect(stores.withGrid(store)).toBe(view);
   });
 });

@@ -11,8 +11,8 @@ import type { Rng } from '../engine/rng';
 import { LOCOS, WAGONS, isRetired, itemDef, itemKind, type Item } from './items';
 import type { Inventory } from './inventory';
 import type { Economy } from '../sim/economy';
-import type { Stockpile } from '../sim/stockpile';
 import { scaleCost } from '../sim/stockpile';
+import type { ResourceStore } from '../sim/stores';
 
 export type { CraftKind };
 export const CRAFT_CONFIG: CraftingConfig = content.crafting;
@@ -69,8 +69,9 @@ export type CraftResult =
 
 /**
  * Recipes and building. Step one: pay money for a draw of a few recipe cards of one kind and age
- * and keep one. Step two: spend stockpile resources on an instance of a known recipe; rarer
- * models fail more often and give part of the materials back.
+ * and keep one. Step two: spend the resources of a store (the one the player has selected) on an
+ * instance of a known recipe; rarer models fail more often and give part of the materials back to
+ * that store.
  */
 export class Crafting {
   /** model ids the player can build */
@@ -82,7 +83,6 @@ export class Crafting {
     readonly rng: Rng,
     readonly inventory: Inventory,
     readonly economy: Economy,
-    readonly stock: Stockpile,
   ) {}
 
   knows(defId: string) {
@@ -154,13 +154,16 @@ export class Crafting {
     }
     return out;
   }
-  /** Keep one card of the pending draw; the others are gone. An owned recipe refunds materials. */
-  choose(defId: string): ChooseResult | null {
+  /**
+   * Keep one card of the pending draw; the others are gone. An owned recipe refunds materials into
+   * `store`.
+   */
+  choose(defId: string, store: ResourceStore): ChooseResult | null {
     if (!this.pending || !this.pending.cards.includes(defId) || isRetired(defId)) return null;
     this.pending = null;
     if (this.recipes.has(defId)) {
       const refund = { ...CRAFT_CONFIG.ownedRefund };
-      this.stock.refund(refund);
+      store.refund(refund);
       return { defId, owned: true, refund };
     }
     this.recipes.add(defId);
@@ -176,26 +179,27 @@ export class Crafting {
   failChance(defId: string): number {
     return CRAFT_CONFIG.failChance[craftRarity(defId)] ?? 0;
   }
-  canCraft(defId: string) {
+  canCraft(defId: string, store: ResourceStore) {
     return (
-      this.recipes.has(defId) && !isRetired(defId) && this.stock.canAfford(this.instanceCost(defId))
+      this.recipes.has(defId) && !isRetired(defId) && store.canAfford(this.instanceCost(defId))
     );
   }
   /**
-   * Spend the materials and roll against the failure chance. Null when the recipe is unknown,
-   * retired or unaffordable.
+   * Spend the materials from `store` and roll against the failure chance; a failure gives its
+   * share back to the same store. Null when the recipe is unknown, retired or more than the store
+   * holds.
    */
-  craft(defId: string, now: number): CraftResult | null {
+  craft(defId: string, store: ResourceStore, now: number): CraftResult | null {
     if (!this.recipes.has(defId) || isRetired(defId)) return null;
     const cost = this.instanceCost(defId);
-    if (!this.stock.spend(cost)) return null;
+    if (!store.spend(cost)) return null;
     this.stats.crafts++;
     if (this.rng.chance(this.failChance(defId))) {
       this.stats.failures++;
       const refund: Cost = {};
       for (const [k, v] of Object.entries(cost))
         refund[k] = Math.floor(v * CRAFT_CONFIG.failRefund);
-      this.stock.refund(refund);
+      store.refund(refund);
       return { ok: false, refund, cost };
     }
     return { ok: true, item: this.inventory.add(defId, now), cost };

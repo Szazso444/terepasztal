@@ -208,7 +208,7 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   fleet.onPassengers = (st, n, boarding) => (boarding ? people.board(st, n) : people.alight(st, n));
   const contracts = new ContractBoard(new Rng(seed ^ 0x5eed), builder, economy);
   const gacha = new Gacha(new Rng(seed ^ 0x9ac4a), inventory);
-  const crafting = new Crafting(new Rng(seed ^ 0xc4af7), inventory, economy, stock);
+  const crafting = new Crafting(new Rng(seed ^ 0xc4af7), inventory, economy);
   crafting.grantFromInventory();
   fleet.onDelivery = (e) => contracts.onDelivery(e);
   const contractJobs = new ContractDispatcher(fleet, contracts, builder, track, notices);

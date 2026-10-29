@@ -124,8 +124,6 @@ export interface StepContext {
   readonly mode: 'play' | 'editor';
   /** the weather setting: off keeps the weather still and its speed factor at 1 */
   readonly weather: boolean;
-  /** storage cap of one resource now (`Game.stockCap`), for the trade desk */
-  readonly stockCap: (id: string) => number;
 }
 
 /** The game's side of a step: drawing, toasts and sounds. Each one is optional. */
@@ -144,7 +142,7 @@ export interface StepHooks {
  * town and a crew with no store in reach eat nothing (and never starve). Train crews are not
  * counted here: they owe their food and pay it at the next store they fill up at (`Train.owed`).
  */
-function eaters(houses: HouseRegistry, builder: Builder): Map<ResourceStore, number> {
+export function eaters(houses: HouseRegistry, builder: Builder): Map<ResourceStore, number> {
   const out = new Map<ResourceStore, number>();
   const eat = (at: ResourceStore | null, n: number) => {
     if (at && n > 0) out.set(at, (out.get(at) ?? 0) + n);
@@ -269,7 +267,7 @@ export class SimStep {
     const speed = ctx.weather ? weather.speedFactor() : 1;
     fleet.tick(gdt, clock.time, speed);
     contracts.tick(clock.time);
-    trade.tick(clock.time, stock, economy, ctx.stockCap);
+    trade.tick(clock.time, stores, economy);
     if (play && clock.time >= this.nextAgeCheck) {
       this.nextAgeCheck = clock.time + daySeconds() / AGE_CHECKS_PER_DAY;
       economy.advanceAge(ageSnapshot(this.d));

@@ -1247,17 +1247,16 @@ const waited = (p: Person, b: Person | undefined) =>
   p.x === b.x &&
   p.y === b.y;
 
-/** Play mode with the weather off and Game's storage cap. */
-const playContext = (w: SimWorld): StepContext => ({
+/** Play mode with the weather off. */
+const playContext = (): StepContext => ({
   mode: 'play',
   weather: false,
-  stockCap: (id) => w.stock.cap(id, w.builder.depotCount(), w.builder.plantCount()),
 });
 
 /** Ten game minutes of steps in play mode, the weather off, and what came of them. */
 function tenMinutes(w: SimWorld, train: Train | null) {
   const step = new SimStep(w);
-  const ctx = playContext(w);
+  const ctx = playContext();
   const steps = Math.round(600 / SIM_STEP);
   // how far ahead a run of the train is checked against what the watch allowed it
   const ahead = Math.floor(CROSSING_HORIZON / SIM_STEP);
@@ -1442,7 +1441,7 @@ function fleetRun(seed: number, consists: readonly Consist[]) {
     wagons: c.wagons.map((id) => w.inventory.add(id, 0).uid),
   }));
   const step = new SimStep(w);
-  const ctx = playContext(w);
+  const ctx = playContext();
   const crossings = [...w.builder.roads.crossingKeys()];
   const trains: Train[] = [];
   const seen: Seen[][] = [];
@@ -1649,7 +1648,7 @@ describe('the crossings the step watches', () => {
   it('are read again when a road is laid or taken up, or the track under one', () => {
     const { w, train } = crossingWorld('adler', 4242);
     const step = new SimStep(w);
-    const ctx = playContext(w);
+    const ctx = playContext();
     const once = () => w.clock.run((gdt) => step.run(gdt, ctx));
     // the train under way east from the quarry, a few tiles short of a tile with no road yet
     for (let i = 0; i < 4000 && !(train!.speed > 0.5 && train!.headTile!.x === 22); i++) once();
@@ -1683,7 +1682,7 @@ describe('the crossings the step watches', () => {
     ];
     for (const [why, there] of cases) {
       const { w, train } = crossingWorld('adler', 4242);
-      const ctx = playContext(w);
+      const ctx = playContext();
       const before = new SimStep(w);
       for (let i = 0; i < 4000 && !there(train!); i++) w.clock.run((gdt) => before.run(gdt, ctx));
       expect(there(train!), why).toBe(true);
@@ -1754,7 +1753,7 @@ describe('a train standing at the platform by a level crossing, ten game minutes
     (loco, seed) => {
       const { w, train } = platformWorld(loco, seed);
       const step = new SimStep(w);
-      const ctx = playContext(w);
+      const ctx = playContext();
       // the crossing as the walkers of the step found it
       const tick = w.people.tick.bind(w.people);
       let found: boolean | null = null;
@@ -1857,7 +1856,7 @@ describe('a walker set down by a level crossing', () => {
     (seed) => {
       const { w } = doorWorld('adler', seed);
       const step = new SimStep(w);
-      const ctx = playContext(w);
+      const ctx = playContext();
       const crossings = [...w.builder.roads.crossingKeys()];
       let byDoor = 0;
       for (let i = 0; i < Math.round(600 / SIM_STEP); i++) {
@@ -2755,7 +2754,7 @@ describe('a crossing only trains out of fuel or power hold closed', () => {
 function roundRun(seed: number, head: number, dry: boolean, minutes: number) {
   const { w, train } = crossingWorld('adler', seed);
   const step = new SimStep(w);
-  const ctx = playContext(w);
+  const ctx = playContext();
   const t = train!;
   const tanks = () => {
     t.coal = dry ? 0 : t.coalCap;

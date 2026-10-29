@@ -7,8 +7,8 @@ import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import { Rng } from '../engine/rng';
 import { content, type LocoDef, type WagonDef } from '../data/content';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
+import { looseStore } from '../testing/storeFixtures';
 import { Fleet } from './fleet';
 import { Train, resetTrainIds } from './trains';
 import {
@@ -83,7 +83,7 @@ function pileOf(amounts: Record<string, number>) {
 function newGame(stock: Record<string, number> = plenty()) {
   const map = emptyMap(4242, 64, 64, Terrain.Grass),
     track = new TrackGraph(64, 64),
-    stockpile = new Stockpile(),
+    stockpile = looseStore(),
     economy = new Economy();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
@@ -94,7 +94,7 @@ function newGame(stock: Record<string, number> = plenty()) {
   const inventory = new Inventory();
   inventory.seedStarter(0);
   const fleet = new Fleet(track, builder, map, inventory, economy);
-  const crafting = new Crafting(new Rng(1), inventory, economy, stockpile);
+  const crafting = new Crafting(new Rng(1), inventory, economy);
   crafting.grantFromInventory();
   for (const [id, n] of Object.entries(stock)) stockpile.add(id, n);
   return { map, track, stock: stockpile, supplies: stock, builder, inventory, fleet, crafting };
@@ -232,11 +232,11 @@ describe('the starter kit of a new game', () => {
   });
 
   it('knows the recipe of each model it owns and of no other, every one narrow gauge', () => {
-    const { inventory, crafting } = newGame();
+    const { inventory, crafting, stock } = newGame();
     expect([...crafting.recipes].sort()).toEqual(inventory.ownedDefs().sort());
     for (const id of crafting.recipes) {
       expect(gaugeOf(itemDef(id)), id).toBe('narrow');
-      expect(crafting.canCraft(id), id).toBe(true);
+      expect(crafting.canCraft(id, stock), id).toBe(true);
     }
   });
 
@@ -468,12 +468,12 @@ describe('the starter engines of a new game', () => {
   });
 
   it('are all in the recipe draws of the first age and craftable by a new game', () => {
-    const { crafting } = newGame();
+    const { crafting, stock } = newGame();
     const pool = craftPool('loco', 0);
     for (const l of STARTER_LOCOS) {
       expect(pool, l.id).toContain(l.id);
       expect(crafting.knows(l.id), l.id).toBe(true);
-      expect(crafting.canCraft(l.id), l.id).toBe(true);
+      expect(crafting.canCraft(l.id, stock), l.id).toBe(true);
     }
   });
 
@@ -628,10 +628,10 @@ describe('the starter engines of a new game', () => {
       const find = draw!.cards.find((id) => newcomers.some((l) => l.id === id) && !offered.has(id));
       if (find) offered.add(find);
       const kept = find ?? draw!.cards[0];
-      expect(w.crafting.choose(kept)?.defId, `draw ${n}`).toBe(kept);
+      expect(w.crafting.choose(kept, w.stock)?.defId, `draw ${n}`).toBe(kept);
     }
     expect([...offered].sort()).toEqual(newcomers.map((l) => l.id).sort());
-    for (const { id } of newcomers) expect(w.crafting.canCraft(id), id).toBe(true);
+    for (const { id } of newcomers) expect(w.crafting.canCraft(id, w.stock), id).toBe(true);
   });
 });
 
@@ -1324,7 +1324,7 @@ describe('the engines the kit no longer hands out', () => {
       const find = draw!.cards.find((id) => finds.includes(id) && !offered.has(id));
       if (find) offered.add(find);
       const kept = find ?? draw!.cards[0];
-      expect(w.crafting.choose(kept)?.defId, `draw ${n}`).toBe(kept);
+      expect(w.crafting.choose(kept, w.stock)?.defId, `draw ${n}`).toBe(kept);
       expect(w.crafting.knows(kept), kept).toBe(true);
     }
     expect([...offered].sort()).toEqual([...finds].sort());
@@ -1332,7 +1332,7 @@ describe('the engines the kit no longer hands out', () => {
       const before = w.inventory.count(id);
       let built = 0;
       for (let n = 0; n < 20 && !built; n++) {
-        const r = w.crafting.craft(id, 0);
+        const r = w.crafting.craft(id, w.stock, 0);
         expect(r, id).not.toBeNull();
         if (r!.ok) built++;
       }

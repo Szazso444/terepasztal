@@ -3,7 +3,8 @@ import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
 import type { ToolItem } from './toolbar';
 import { cargoName } from '../sim/cargo';
-import type { Stockpile } from '../sim/stockpile';
+import type { ResourceStore } from '../sim/stores';
+import type { Cost } from '../data/content';
 import type { Train } from '../sim/trains';
 import type { Builder } from '../sim/build';
 import { STR } from '../strings';
@@ -11,8 +12,9 @@ import { btn } from './dom';
 import { locoFrame } from '../art/frames';
 
 /**
- * Card above the survey map: preview, name, cost with icons and a description of a build item;
- * or, when a train is selected in the field view, that train's state, load and tanks.
+ * Card above the survey map: preview, name, cost with icons and a description of a build item,
+ * and over a field tile the store that would pay for it there (or why none can); or, when a train
+ * is selected in the field view, that train's state, load and tanks.
  */
 export class BuildInfo {
   readonly root = el('div', { id: 'build-info', class: 'panel' });
@@ -25,8 +27,9 @@ export class BuildInfo {
   onTrainClose: (() => void) | null = null;
   constructor(
     private readonly atlas: AtlasRegistry,
-    private readonly stock: Stockpile,
     private readonly builder: Builder,
+    /** the field tile under the pointer, null over a panel: where the work would be paid for */
+    private readonly at: () => { x: number; y: number } | null,
   ) {
     this.root.append(this.body);
     this.root.style.display = 'none';
@@ -59,7 +62,7 @@ export class BuildInfo {
     ]
       .filter(Boolean)
       .join(' · ');
-    const key = `${t.id}|${t.name}|${state}|${loads}|${tanks}|${t.mode}|${t.lastMessage}`;
+    const key = `${t.id}|${t.name}|${state}|${loads}|${tanks}|${t.mode}|${t.lastMessage}|${t.hungry}`;
     if (!force && key === this.trainKey) return;
     this.trainKey = key;
     this.root.style.display = '';
@@ -80,6 +83,7 @@ export class BuildInfo {
         ),
       ),
       el('div', { class: 'bi-desc', text: `${STR.depot.wagons}: ${loads || '-'}` }),
+      t.hungry ? el('div', { class: 'bi-desc red', text: STR.train.hungry }) : '',
       el('div', {
         class: 'bi-desc',
         text: tanks || `${Math.round(t.weight)} / ${Math.round(t.power)} t`,
@@ -109,8 +113,9 @@ export class BuildInfo {
     const cost = item.costNow ? item.costNow() : item.cost;
     const entries = Object.entries(cost).filter(([, v]) => v > 0);
     if (!entries.length) costs.append(el('span', { class: 'dim', text: STR.build.free }));
+    const { from, line } = this.payment(cost, entries.length > 0);
     for (const [k, v] of entries) {
-      const have = this.stock.get(k);
+      const have = from?.get(k) ?? 0;
       costs.append(
         el(
           'span',
@@ -130,9 +135,28 @@ export class BuildInfo {
       ),
       el('div', { class: 'bi-desc', text: item.desc }),
       item.place ? el('div', { class: 'bi-place', text: item.place }) : '',
+      line ? el('div', { class: `bi-place ${line.ok ? '' : 'red'}`, text: line.text }) : '',
     );
   }
-  /** Re-render affordability colours when the stockpile changed. */
+  /**
+   * Who pays `cost`: over a field tile the store that would (`Builder.payerAt`), named, or the
+   * reason none can, with the nearest store's goods to mark what is short; off the field the
+   * selected store's goods, and nothing said.
+   */
+  private payment(
+    cost: Cost,
+    priced: boolean,
+  ): { from: ResourceStore | null; line: { ok: boolean; text: string } | null } {
+    const stores = this.builder.stores;
+    const at = this.at();
+    if (!at || !priced || this.builder.free) return { from: stores.selected, line: null };
+    const payer = this.builder.payerAt(cost, at.x, at.y);
+    if (payer)
+      return { from: payer, line: { ok: true, text: STR.build.paidFrom(stores.label(payer)) } };
+    const why = this.builder.affordable(cost, at.x, at.y).reason ?? '';
+    return { from: stores.nearest(at.x, at.y)[0] ?? null, line: { ok: false, text: why } };
+  }
+  /** Re-render affordability colours and the paying store when the stores or the tile changed. */
   refresh() {
     if (this.shown) this.show(this.shown);
   }

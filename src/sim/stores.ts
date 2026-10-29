@@ -245,8 +245,6 @@ interface StoreSpec {
 export class StoreRegistry {
   /** power only: the battery cap rises with every plant */
   readonly grid: Store;
-  /** the store the player looks at; the UI sets it */
-  selected: ResourceStore | null = null;
   /** a store's famine begins or ends (`tickUpkeep`) */
   onMessage: ((msg: string, kind: 'info' | 'warn' | 'good') => void) | null = null;
   private deps: StoreDeps | null = null;
@@ -274,6 +272,8 @@ export class StoreRegistry {
   private readonly gridWorks: WorksStore;
   /** game seconds the eaters at each pool have gone short, by the pool's key; not saved */
   private short = new Map<string, number>();
+  /** the key of the store the player picked (`selected`); null for the start depot's */
+  private selectedKey: string | null = null;
 
   constructor() {
     this.grid = new Store('grid', 'grid', { x: 0, y: 0 }, (id) =>
@@ -461,6 +461,48 @@ export class StoreRegistry {
     }
   }
 
+  /**
+   * The store the player looks at, which the top bar shows and crafting, the market and the trade
+   * desk use: the pool of the store the player picked last (a click on a town, a depot or a
+   * warehouse, or the top bar's button); while that store is gone, or none was picked, the start
+   * depot's; with no depot, the first store there is. Null when there is no store but the grid.
+   */
+  get selected(): ResourceStore | null {
+    const picked = this.selectedKey !== null ? this.stores.get(this.selectedKey) : undefined;
+    const s =
+      picked ?? this.startDepot() ?? [...this.stores.values()].find((m) => m.kind !== 'grid');
+    return s ? this.poolOf(s) : null;
+  }
+  set selected(r: ResourceStore | null) {
+    this.selectedKey = r?.key ?? null;
+  }
+  /**
+   * The stores the top bar steps through, one for each place goods are kept, in label order: in
+   * Simple mode one for each rail network (`networkPool`). The grid is not one of them.
+   */
+  choices(): ResourceStore[] {
+    const seen = new Map<string, ResourceStore>();
+    for (const s of this.stores.values()) {
+      if (s.kind === 'grid') continue;
+      const pool = this.networkPool(this.poolOf(s));
+      if (!seen.has(pool.key)) seen.set(pool.key, pool);
+    }
+    return [...seen.values()].sort((a, b) => this.label(a).localeCompare(this.label(b)));
+  }
+  /**
+   * What a store holds with the grid's power beside it, as a works sees it (`worksStore`): the
+   * top bar shows the selected store so, its power cell the grid's.
+   */
+  withGrid(base: ResourceStore): ResourceStore {
+    this.follow();
+    let w = this.worksOf.get(base);
+    if (!w) {
+      w = new WorksStore(base, this.gridWorks.grid);
+      this.worksOf.set(base, w);
+    }
+    return w;
+  }
+
   /** Every store, the grid first. */
   all(): Store[] {
     return [...this.stores.values()];
@@ -576,12 +618,7 @@ export class StoreRegistry {
     this.follow();
     const base = this.supplierFor(b.x, b.y);
     if (!base) return needsStore(b) ? null : this.gridWorks;
-    let w = this.worksOf.get(base);
-    if (!w) {
-      w = new WorksStore(base, this.gridWorks.grid);
-      this.worksOf.set(base, w);
-    }
-    return w;
+    return this.withGrid(base);
   }
 
   /**
@@ -700,7 +737,7 @@ export class StoreRegistry {
     this.stores = new Map([[this.grid.key, this.grid]]);
     this.grid.amounts.clear();
     this.grid.famine = false;
-    this.selected = null;
+    this.selectedKey = null;
     this.short.clear();
     this.nets.clear();
     for (const key of [...this.pools.keys()]) if (key !== this.grid.key) this.pools.delete(key);
@@ -718,6 +755,10 @@ export class StoreRegistry {
     const at = this.placeOf(key);
     const near = at && (this.townStore(at.x, at.y) ?? this.nearest(at.x, at.y)[0]);
     if (near) return membersOf(near)[0];
+    return this.startDepot();
+  }
+  /** The start depot's store: the first depot store in registry order. */
+  private startDepot(): Store | undefined {
     return [...this.stores.values()].find((s) => s.kind === 'depot');
   }
   /** Where the station or the Townhouse a store key names stands; null for a key of no place. */

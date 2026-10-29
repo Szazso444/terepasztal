@@ -199,14 +199,14 @@ describe('weekly food economy and housing', () => {
   });
   it('settles and drifts markets weekly', () => {
     const desk = new TradeDesk(),
-      s = new Stockpile(),
+      { stores, depot: s } = storeWith({}),
       e = new Economy();
     desk.set('food', 10);
-    desk.tick(1, s, e, () => 1000);
-    desk.tick(daySeconds() * 6, s, e, () => 1000);
+    desk.tick(1, stores, e);
+    desk.tick(daySeconds() * 6, stores, e);
     expect(s.get('food')).toBe(0);
     expect(desk.fuelMul).toBe(1);
-    desk.tick(weekSeconds() + 1, s, e, () => 1000);
+    desk.tick(weekSeconds() + 1, stores, e);
     expect(s.get('food')).toBe(10);
     expect(desk.nextAt).toBe(2 * weekSeconds() + 1);
   });
