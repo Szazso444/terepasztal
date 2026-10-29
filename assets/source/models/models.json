@@ -1,8 +1,8 @@
 {
  "farm": {
   "file": "farm.png",
-  "ax": 146.01,
-  "ay": 222.4,
+  "ax": 128.42,
+  "ay": 188.39,
   "frames": [
    "structures/farm_1",
    "structures/farm_2",
@@ -10,7 +10,8 @@
    "structures/farm_4",
    "structures/farm_5"
   ],
-  "scale": 1.193,
+  "scale": 1.0282,
+  "fit": 0.8619,
   "span": [
    1,
    1
@@ -18,8 +19,8 @@
  },
  "lumber": {
   "file": "lumber.png",
-  "ax": 65.7,
-  "ay": 154.89,
+  "ax": 80.07,
+  "ay": 170.63,
   "frames": [
    "structures/lumber_1",
    "structures/lumber_2",
@@ -27,7 +28,8 @@
    "structures/lumber_4",
    "structures/lumber_5"
   ],
-  "scale": 1.08,
+  "scale": 1.1802,
+  "fit": 1.0927,
   "span": [
    1,
    1
@@ -35,8 +37,8 @@
  },
  "quarry": {
   "file": "quarry.png",
-  "ax": 96.96,
-  "ay": 195.99,
+  "ax": 100.09,
+  "ay": 177.08,
   "frames": [
    "structures/quarry_1",
    "structures/quarry_2",
@@ -44,7 +46,8 @@
    "structures/quarry_4",
    "structures/quarry_5"
   ],
-  "scale": 1.099,
+  "scale": 0.9341,
+  "fit": 0.85,
   "span": [
    1,
    1
@@ -52,8 +55,8 @@
  },
  "town": {
   "file": "town.png",
-  "ax": 182.07,
-  "ay": 340.11,
+  "ax": 153.79,
+  "ay": 289.53,
   "frames": [
    "structures/town_1",
    "structures/town_2",
@@ -61,7 +64,8 @@
    "structures/town_4",
    "structures/town_5"
   ],
-  "scale": 1.125,
+  "scale": 0.9562,
+  "fit": 0.85,
   "span": [
    2,
    1
@@ -69,8 +73,8 @@
  },
  "warehouse": {
   "file": "warehouse.png",
-  "ax": 218.68,
-  "ay": 253.75,
+  "ax": 186.74,
+  "ay": 211.63,
   "frames": [
    "structures/warehouse_1",
    "structures/warehouse_2",
@@ -78,7 +82,8 @@
    "structures/warehouse_4",
    "structures/warehouse_5"
   ],
-  "scale": 1.154,
+  "scale": 0.9809,
+  "fit": 0.85,
   "span": [
    2,
    1
@@ -86,8 +91,8 @@
  },
  "station": {
   "file": "station.png",
-  "ax": 126.75,
-  "ay": 190.18,
+  "ax": 116.88,
+  "ay": 168.25,
   "frames": [
    "structures/station_1",
    "structures/station_2",
@@ -95,7 +100,8 @@
    "structures/station_4",
    "structures/station_5"
   ],
-  "scale": 1.271,
+  "scale": 1.1277,
+  "fit": 0.8872,
   "span": [
    1,
    1
@@ -103,8 +109,8 @@
  },
  "depot-r0": {
   "file": "depot-r0.png",
-  "ax": 236.26,
-  "ay": 294.74,
+  "ax": 239.78,
+  "ay": 311.26,
   "frames": [
    "structures/depot_r0",
    "structures/depot_r0_lv2",
@@ -113,7 +119,8 @@
    "structures/depot_r0_lv5",
    "structures/depot_1"
   ],
-  "scale": 0.944,
+  "scale": 0.9927,
+  "fit": 1.0516,
   "span": [
    2,
    2
@@ -121,8 +128,8 @@
  },
  "depot-r1": {
   "file": "depot-r1.png",
-  "ax": 218.44,
-  "ay": 274.26,
+  "ax": 219.69,
+  "ay": 284.73,
   "frames": [
    "structures/depot_r1",
    "structures/depot_r1_lv2",
@@ -130,7 +137,8 @@
    "structures/depot_r1_lv4",
    "structures/depot_r1_lv5"
   ],
-  "scale": 0.944,
+  "scale": 0.9927,
+  "fit": 1.0516,
   "span": [
    2,
    2
@@ -138,8 +146,8 @@
  },
  "depot-r2": {
   "file": "depot-r2.png",
-  "ax": 219.39,
-  "ay": 282.85,
+  "ax": 234.74,
+  "ay": 292.68,
   "frames": [
    "structures/depot_r0_r2",
    "structures/depot_r0_lv2_r2",
@@ -147,7 +155,8 @@
    "structures/depot_r0_lv4_r2",
    "structures/depot_r0_lv5_r2"
   ],
-  "scale": 0.944,
+  "scale": 0.9927,
+  "fit": 1.0516,
   "span": [
    2,
    2
@@ -155,8 +164,8 @@
  },
  "depot-r3": {
   "file": "depot-r3.png",
-  "ax": 237.21,
-  "ay": 282.33,
+  "ax": 256.84,
+  "ay": 298.21,
   "frames": [
    "structures/depot_r1_r3",
    "structures/depot_r1_lv2_r3",
@@ -164,7 +173,8 @@
    "structures/depot_r1_lv4_r3",
    "structures/depot_r1_lv5_r3"
   ],
-  "scale": 0.944,
+  "scale": 0.9927,
+  "fit": 1.0516,
   "span": [
    2,
    2
@@ -172,15 +182,16 @@
  },
  "kiln": {
   "file": "kiln.png",
-  "ax": 80.35,
-  "ay": 141.52,
+  "ax": 94.88,
+  "ay": 164.89,
   "frames": [
    "structures/kiln",
    "structures/kiln_lv2",
    "structures/kiln_lv3",
    "structures/kiln_lv4"
   ],
-  "scale": 0.87,
+  "scale": 1.0005,
+  "fit": 1.15,
   "span": [
    1,
    1
@@ -188,15 +199,16 @@
  },
  "grinder": {
   "file": "grinder.png",
-  "ax": 130.38,
-  "ay": 199.52,
+  "ax": 112.3,
+  "ay": 166.39,
   "frames": [
    "structures/grinder",
    "structures/grinder_lv2",
    "structures/grinder_lv3",
    "structures/grinder_lv4"
   ],
-  "scale": 1.158,
+  "scale": 0.9843,
+  "fit": 0.85,
   "span": [
    1,
    1
@@ -204,15 +216,16 @@
  },
  "refinery": {
   "file": "refinery.png",
-  "ax": 246.74,
-  "ay": 356.99,
+  "ax": 230.56,
+  "ay": 310.1,
   "frames": [
    "structures/refinery",
    "structures/refinery_lv2",
    "structures/refinery_lv3",
    "structures/refinery_lv4"
   ],
-  "scale": 2.136,
+  "scale": 1.912,
+  "fit": 0.8951,
   "span": [
    2,
    2
@@ -220,15 +233,16 @@
  },
  "power_plant": {
   "file": "power_plant.png",
-  "ax": 310.81,
-  "ay": 331.64,
+  "ax": 317.39,
+  "ay": 334.67,
   "frames": [
    "structures/power_plant",
    "structures/power_plant_lv2",
    "structures/power_plant_lv3",
    "structures/power_plant_lv4"
   ],
-  "scale": 1.1215,
+  "scale": 1.1352,
+  "fit": 1.0122,
   "span": [
    3,
    2
@@ -236,15 +250,16 @@
  },
  "substation": {
   "file": "substation.png",
-  "ax": 83.2,
-  "ay": 169.67,
+  "ax": 72.64,
+  "ay": 150.79,
   "frames": [
    "structures/substation",
    "structures/substation_lv2",
    "structures/substation_lv3",
    "structures/substation_lv4"
   ],
-  "scale": 0.4572,
+  "scale": 0.4098,
+  "fit": 0.8963,
   "span": [
    1,
    1
@@ -252,15 +267,16 @@
  },
  "ironworks": {
   "file": "ironworks.png",
-  "ax": 137.42,
-  "ay": 158.37,
+  "ax": 115.05,
+  "ay": 134.27,
   "frames": [
    "structures/ironworks",
    "structures/ironworks_lv2",
    "structures/ironworks_lv3",
    "structures/ironworks_lv4"
   ],
-  "scale": 0.5923,
+  "scale": 0.5035,
+  "fit": 0.85,
   "span": [
    1,
    1
@@ -268,15 +284,16 @@
  },
  "diesel_refinery": {
   "file": "diesel_refinery.png",
-  "ax": 323.77,
-  "ay": 396.27,
+  "ax": 296.96,
+  "ay": 357.81,
   "frames": [
    "structures/diesel_refinery",
    "structures/diesel_refinery_lv2",
    "structures/diesel_refinery_lv3",
    "structures/diesel_refinery_lv4"
   ],
-  "scale": 1.643,
+  "scale": 1.4956,
+  "fit": 0.9103,
   "span": [
    3,
    2
@@ -284,15 +301,16 @@
  },
  "wire_mill": {
   "file": "wire_mill.png",
-  "ax": 246.74,
-  "ay": 327.68,
+  "ax": 255.03,
+  "ay": 332.73,
   "frames": [
    "structures/wire_mill",
    "structures/wire_mill_lv2",
    "structures/wire_mill_lv3",
    "structures/wire_mill_lv4"
   ],
-  "scale": 1.0929,
+  "scale": 1.1154,
+  "fit": 1.0206,
   "span": [
    2,
    2

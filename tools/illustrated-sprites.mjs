@@ -333,13 +333,14 @@ function targets(entry, inventory) {
 }
 
 /**
- * The 3D models' game-camera renders (the author's pick, 2026-10-27): `models.json` names each
- * picture's frames, every level of its building, and its anchor, the footprint's centre on the
- * ground, in texels. A picture is already at DENSITY and its building's real size (measured
- * against the walker), so it is packed as it is, through the cap pass only, and it takes its
- * frames from the painting or the generator that had them.
+ * The 3D models' game-camera views, painted by Codex (the author's pick, 2026-10-27; painted
+ * since 2026-10-29): `models.json` names each picture's frames, every level of its building, and
+ * its anchor, the footprint's centre on the ground, in texels. A picture is already at DENSITY
+ * and its building's size (its real size measured against the walker, fitted to its tiles), so
+ * it is packed as it is, through the cap pass only, and it takes its frames from the painting or
+ * the generator that had them.
  */
-export const MODELS = 'assets/source/models-2026-10-27';
+export const MODELS = 'assets/source/models';
 
 function addModelFrames(groups, capped, report) {
   const models = readJson(join(MODELS, 'models.json'));
