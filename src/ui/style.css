@@ -210,6 +210,16 @@ body {
   gap: 4px;
   padding: 0 10px;
 }
+/* day, clock and speed read as one group, the last cell of the bar */
+#topbar .datespeed {
+  gap: 8px;
+  padding-right: 0;
+  border-right: none;
+  box-shadow: none;
+}
+#topbar .datespeed .time {
+  padding: 0 10px 0 4px;
+}
 #topbar .time .btn {
   padding: 1px 7px;
   min-width: 30px;

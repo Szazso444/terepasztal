@@ -1,6 +1,6 @@
 import { el, btn, fmtMoney, fmtInt } from './dom';
 import { STR } from '../strings';
-import type { GameClock } from '../sim/time';
+import { SPEED_ORDER, type GameClock } from '../sim/time';
 import type { AgeStatus, GoalKind, GoalStatus } from '../sim/ages';
 
 export interface HudModel {
@@ -66,14 +66,18 @@ export class Hud {
     const stat = (label: string, v: HTMLElement) =>
       el('div', { class: 'stat' }, el('span', { class: 'label', text: label }), v);
     const time = el('div', { class: 'time' });
-    STR.hud.speed.forEach((s, i) => {
+    // the buttons read in SPEED_ORDER; speedBtns stays by real index, as clock.speedIndex is
+    for (const i of SPEED_ORDER) {
+      const s = STR.hud.speed[i];
       const b =
         i === 0
           ? btn(s, () => this.clock.togglePause(), 'pause')
           : btn(s, () => this.clock.setSpeed(i), 'small');
-      this.speedBtns.push(b);
+      // pause keeps its own title (update); the digits 1-3 set indexes 1-3, ½× has only + and −
+      if (i !== 0) b.title = STR.hud.speedKey(s, i <= 3 ? `${i}, + / −` : '+ / −');
+      this.speedBtns[i] = b;
       time.append(b);
-    });
+    }
     this.weatherBtn.title = STR.hud.weatherToggleHint;
     this.dayBtn.title = STR.hud.dayToggleHint;
     const ageStat = stat(STR.hud.age, this.age);
@@ -104,8 +108,8 @@ export class Hud {
       this.rightActions,
       el('div', { class: 'stat toggles' }, this.weatherBtn, this.dayBtn),
       el('div', { class: 'stat weather' }, this.weather),
-      el('div', { class: 'stat' }, this.day, this.clockEl),
-      time,
+      // one block at the right end, so the era widget can sit just before it
+      el('div', { class: 'stat datespeed' }, this.day, this.clockEl, time),
     );
   }
 

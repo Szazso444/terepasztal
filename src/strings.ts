@@ -43,7 +43,10 @@ export const STR = {
     tickets: 'Tickets',
     age: 'Age',
     day: (d: number) => `Day ${d}`,
-    speed: ['❚❚', '1x', '2x', '3x'],
+    /** by `SPEEDS` index; the buttons show them in `SPEED_ORDER` */
+    speed: ['❚❚', '1x', '2x', '3x', '½x'],
+    /** a speed button's tooltip: its label and the keys that set it */
+    speedKey: (label: string, key: string) => `${label} speed (${key})`,
     pause: 'Pause (Space)',
     resume: 'Resume (Space)',
     weatherToggle: 'Weather',
