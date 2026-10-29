@@ -64,6 +64,29 @@ export class GameClock {
     const at = RUNNING_ORDER.indexOf(base) + dir;
     this.setSpeed(RUNNING_ORDER[Math.max(0, Math.min(RUNNING_ORDER.length - 1, at))]);
   }
+  /** How many steps the next `run` takes: `floor(carry + speed)`, 0 on ½×'s empty ticks. */
+  dueSteps(): number {
+    return Math.floor(this.carry + this.speed);
+  }
+  /**
+   * Whether the next loop tick starts a new span for the renderer (`Fleet.beginFrame`): it runs
+   * a step, or the clock is stopped and the poses hold still. Always, at a whole speed. Below 1x
+   * the empty ticks between steps go on drawing the span of the last step.
+   */
+  startsSpan(): boolean {
+    return this.speed === 0 || this.dueSteps() > 0;
+  }
+  /**
+   * How far the renderer is from the poses before the last step to the poses after it, given the
+   * loop's `alpha` through the current loop tick: `alpha` at a whole speed, 1 when paused. Below
+   * 1x a step spans 1 / speed loop ticks, so ½× goes 0 to ½ through the tick that ran the step and
+   * ½ to 1 through the empty one after it: `carry + alpha * speed`.
+   */
+  stepAlpha(alpha: number): number {
+    const speed = this.speed;
+    if (speed === 0) return 1;
+    return speed < 1 ? this.carry + alpha * speed : alpha;
+  }
   /** Advance by real seconds, returns in-game seconds elapsed. */
   advance(realDt: number): number {
     const dt = realDt * this.speed;

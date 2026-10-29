@@ -7,8 +7,23 @@ export interface ClickEvent {
   ctrl: boolean;
 }
 
+/**
+ * Keys bound by the character they type rather than by where they sit: '+' and '-' move between
+ * layouts (Shift+3 and the Slash key on a Hungarian keyboard).
+ */
+const TYPED_KEYS = new Set(['+', '-']);
+
+/**
+ * The name a key press goes by in `pressed`: `Char+` or `Char-` when it types '+' or '-', else its
+ * `KeyboardEvent.code`. So Shift+3 typing '+' is no `Digit3` press.
+ */
+const pressName = (e: Pick<KeyboardEvent, 'code' | 'key'>) =>
+  TYPED_KEYS.has(e.key) ? `Char${e.key}` : e.code;
+
 export class Input {
+  /** keys held down, by `KeyboardEvent.code`, so letting a key go clears it whatever it typed */
   readonly keys = new Set<string>();
+  /** keys pressed this frame, by `pressName` */
   readonly pressed = new Set<string>();
   mouseX = 0;
   mouseY = 0;
@@ -38,7 +53,7 @@ export class Input {
     window.addEventListener('keydown', (e) => {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
-      if (!this.keys.has(e.code)) this.pressed.add(e.code);
+      if (!this.keys.has(e.code)) this.pressed.add(pressName(e));
       this.keys.add(e.code);
       if (['Tab', 'Space'].includes(e.code)) e.preventDefault();
     });

@@ -107,8 +107,24 @@ describe('½× speed', () => {
     const clock = new GameClock();
     clock.setSpeed(4);
     expect(clock.speed).toBe(0.5);
-    const ran = [0, 0, 0, 0].map(() => clock.run(() => {}));
+    const gdts: number[] = [];
+    const ran = [0, 0, 0, 0].map(() => clock.run((gdt) => gdts.push(gdt)));
+    expect(ran).toEqual([0, SIM_STEP, 0, SIM_STEP]);
+    // every step is the 1x step: ½× runs fewer of them, never shorter ones
+    expect(gdts).toEqual([SIM_STEP, SIM_STEP]);
     expect(ran.reduce((a, b) => a + b, 0)).toBeCloseTo(2 * SIM_STEP, 12);
+  });
+  it('says before each loop tick how many steps it will run', () => {
+    for (const index of SPEEDS.keys()) {
+      const clock = new GameClock();
+      clock.setSpeed(index);
+      for (let n = 0; n < 6; n++) {
+        const due = clock.dueSteps();
+        let ran = 0;
+        clock.run(() => ran++);
+        expect(ran, `speed ${SPEEDS[index]}, loop tick ${n}`).toBe(due);
+      }
+    }
   });
   it('gives the same time at ½× over twice the ticks as 1×', () => {
     const a = new GameClock();
@@ -118,6 +134,42 @@ describe('½× speed', () => {
     for (let i = 0; i < 40; i++) a.run(() => {});
     for (let i = 0; i < 20; i++) b.run(() => {});
     expect(a.time).toBeCloseTo(b.time, 12);
+  });
+});
+describe('GameClock.stepAlpha', () => {
+  it('is the loop alpha at a whole speed, and 1 while paused, as before ½×', () => {
+    const clock = new GameClock();
+    for (const index of [1, 2, 3, 0])
+      for (let n = 0; n < 3; n++) {
+        clock.setSpeed(index);
+        clock.run(() => {});
+        for (const alpha of [0, 0.25, 0.5, 0.99])
+          expect(clock.stepAlpha(alpha), `speed ${index}`).toBe(index === 0 ? 1 : alpha);
+      }
+  });
+  it('at ½× spans each step over two loop ticks: 0 to ½ after the step, ½ to 1 on the empty tick', () => {
+    const clock = new GameClock();
+    clock.setSpeed(4);
+    clock.run(() => {}); // empty
+    clock.run(() => {}); // the step
+    expect(clock.stepAlpha(0)).toBe(0);
+    expect(clock.stepAlpha(0.5)).toBe(0.25);
+    expect(clock.stepAlpha(1)).toBe(0.5);
+    clock.run(() => {}); // empty
+    expect(clock.stepAlpha(0)).toBe(0.5);
+    expect(clock.stepAlpha(1)).toBe(1);
+  });
+  it('starts a span for the renderer on every tick that runs a step, and on every paused tick', () => {
+    for (const index of SPEEDS.keys()) {
+      const clock = new GameClock();
+      clock.setSpeed(index);
+      for (let n = 0; n < 6; n++) {
+        expect(clock.startsSpan(), `speed ${SPEEDS[index]}, loop tick ${n}`).toBe(
+          index === 0 || clock.dueSteps() > 0,
+        );
+        clock.run(() => {});
+      }
+    }
   });
 });
 describe('stepSpeed', () => {
@@ -198,6 +250,8 @@ describe('the same game time gives the same outcome at every game speed', () => 
     // One scaled 0.15 s step per loop tick, as `advance` gives at 3x, arrives 0.2 s early here
     // (audit A03: 39.15 s against 39.35 s).
     expect(arrive(3)).toEqual(slow);
+    // ½× runs the same steps over twice the loop ticks
+    expect(arrive(0.5)).toEqual(slow);
     expect(slow.arrivedAt).not.toBeNull();
     expect(slow.arrivedAt!).toBeLessThan(180);
   }, 30_000);
@@ -255,6 +309,32 @@ describe('Fleet.beginFrame', () => {
     expect(t.prevPoses).not.toBe(t.poses);
     expect(t.prevVehiclePoses).toBe(t.vehiclePoses);
   });
+
+  it.each([0.5, 1, 2, 3])(
+    'at %fx, as Game.update drives it, a running train moves on every loop tick without a jump',
+    (speed) => {
+      const { fleet, t } = underWay();
+      const clock = clockAt(speed);
+      clock.time = 100;
+      /** where the renderer draws the lead car this frame, at the loop's alpha */
+      const drawn = (alpha: number) => {
+        const a = clock.stepAlpha(alpha);
+        return t.prevPoses[0].x + (t.poses[0].x - t.prevPoses[0].x) * a;
+      };
+      const spans: [number, number][] = [];
+      for (let n = 0; n < 12; n++) {
+        if (clock.startsSpan()) fleet.beginFrame();
+        clock.run((gdt) => fleet.tick(gdt, clock.time));
+        spans.push([drawn(0), drawn(1)]);
+      }
+      // the first ticks still show the steps from before the speed was set
+      for (let n = 2; n < spans.length; n++) {
+        const at = `loop tick ${n}: ${JSON.stringify(spans.slice(n - 1, n + 1))}`;
+        expect(spans[n][0], at).toBeCloseTo(spans[n - 1][1], 9);
+        expect(spans[n][1], at).toBeGreaterThan(spans[n][0]);
+      }
+    },
+  );
 
   it('without it, each tick captures the poses it starts from, as before', () => {
     const { t, tick } = underWay();

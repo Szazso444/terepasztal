@@ -268,8 +268,11 @@ async function boot() {
   // a game starts at 1x, whatever speed its save was at; the editor stays stopped. A dev reload
   // keeps the speed the snapshot was taken at instead, so a running game stays running, and so
   // does growing the world, from the reveal on: the clock stands still behind the loading screen.
+  // Under the title it stays stopped, even with no loading screen (an intent the boot could not
+  // carry out), so its Continue does not run the clock behind its own loading screen: that one
+  // starts 1x at its reveal (`continueFromTitle`).
   if (start !== 'editor' && !resumed && !(intent?.action === 'continue' && intent.keepSpeed))
-    game.clock.setSpeed(1);
+    game.clock.setSpeed(start === 'menu' ? 0 : 1);
   const speed = game.clock.speedIndex;
   if (screen) game.clock.setSpeed(0);
   if (start === 'menu') {

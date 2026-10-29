@@ -102,12 +102,14 @@ export interface KeyBinding {
 /** The slot or the speed a digit key stands for: 1 for Digit1. */
 const digitOf = (code: string) => Number(code.slice('Digit'.length));
 
-/** + steps the speed up and − down, on the main keys and on the numpad. */
+/**
+ * + steps the speed up and − down. They are bound by the character they type (`Input` names them
+ * `Char+` and `Char-`), as layouts move them: Shift+3 and the Slash key on a Hungarian keyboard,
+ * Shift+Equal and Minus on a US one, the numpad's keys on every one.
+ */
 const SPEED_STEP = new Map<string, 1 | -1>([
-  ['Equal', 1],
-  ['NumpadAdd', 1],
-  ['Minus', -1],
-  ['NumpadSubtract', -1],
+  ['Char+', 1],
+  ['Char-', -1],
 ]);
 const SPEED_STEP_KEYS = [...SPEED_STEP.keys()];
 
@@ -199,8 +201,9 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
     h.setSpeed(digitOf(b.code));
     return false;
   },
+  // the level editor's clock stays stopped
   speedStep: (h, b) => {
-    h.stepSpeed(SPEED_STEP.get(b.code)!);
+    if (h.mode === 'play') h.stepSpeed(SPEED_STEP.get(b.code)!);
     return false;
   },
   record: (h) => {

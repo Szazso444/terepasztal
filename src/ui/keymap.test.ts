@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { Input } from '../engine/input';
 import {
   KEYMAP,
   handlePlayKeys,
@@ -93,12 +94,10 @@ const screenCases = (name: string): Case[] => [
   { state: { mode: 'editor' }, calls: [] },
 ];
 const digit = (b: KeyBinding) => Number(b.code.replace('Digit', ''));
-/** + steps the speed up and − down, on the main keys and on the numpad. */
+/** + steps the speed up and − down: the typed character, wherever the layout puts it (`Input`). */
 const STEP_KEYS: [string, 1 | -1][] = [
-  ['Equal', 1],
-  ['NumpadAdd', 1],
-  ['Minus', -1],
-  ['NumpadSubtract', -1],
+  ['Char+', 1],
+  ['Char-', -1],
 ];
 const stepDir = (b: KeyBinding) => STEP_KEYS.find(([code]) => code === b.code)![1];
 
@@ -153,7 +152,11 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
     { calls: digit(b) <= 3 ? [`setSpeed(${digit(b)})`] : [] },
   ],
   speed: (b) => [{ calls: [`setSpeed(${digit(b)})`] }],
-  speedStep: (b) => [{ calls: [`stepSpeed(${stepDir(b)})`] }],
+  speedStep: (b) => [
+    { calls: [`stepSpeed(${stepDir(b)})`] },
+    // the level editor's clock stays stopped
+    { state: { mode: 'editor' }, calls: [] },
+  ],
   record: () => [
     { calls: ['toggleRecording'] },
     { state: { recording: true }, calls: ['toggleRecording'] },
@@ -355,5 +358,90 @@ describe('Escape and the tooltip stack, in every state the keys read', () => {
                 calls: closed.calls,
               });
           }
+  });
+});
+
+describe('+ and − as the browser types them', () => {
+  /** A real `Input` on stand-ins for the window, the document and the canvas. */
+  function browserInput() {
+    const handlers = new Map<string, ((e: unknown) => void)[]>();
+    vi.stubGlobal('window', {
+      addEventListener: (type: string, fn: (e: unknown) => void) =>
+        handlers.set(type, [...(handlers.get(type) ?? []), fn]),
+    });
+    vi.stubGlobal('document', { addEventListener: () => {} });
+    const input = new Input({ addEventListener: () => {} } as unknown as HTMLElement);
+    /** a key event with this `code` (where the key sits) and `key` (what it types) */
+    const fire = (type: 'keydown' | 'keyup', code: string, key: string) => {
+      for (const fn of handlers.get(type) ?? [])
+        fn({ code, key, target: null, preventDefault() {} });
+    };
+    return { input, fire };
+  }
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** What one key press calls in `context`, with Shift held first when `shift`. */
+  function press(context: KeyContext, code: string, key: string, shift: boolean, state = {}) {
+    const { input, fire } = browserInput();
+    if (shift) fire('keydown', 'ShiftLeft', 'Shift');
+    fire('keydown', code, key);
+    const { host, calls } = fakeHost(context, state);
+    handlePlayKeys(input, host);
+    return calls;
+  }
+
+  // [layout, code, key, Shift held, the step]
+  const TYPED: [string, string, string, boolean, 1 | -1][] = [
+    ['Hungarian +', 'Digit3', '+', true, 1],
+    ['Hungarian −', 'Slash', '-', false, -1],
+    ['US +', 'Equal', '+', true, 1],
+    ['US −', 'Minus', '-', false, -1],
+    ['numpad +', 'NumpadAdd', '+', false, 1],
+    ['numpad −', 'NumpadSubtract', '-', false, -1],
+  ];
+  it.each(TYPED)('%s (%s typing %s) steps the speed in both views', (_, code, key, shift, dir) => {
+    for (const context of ['play', 'overview'] as const)
+      for (const state of [{}, { categoryOpen: true }])
+        expect(
+          press(context, code, key, shift, state),
+          `${context} ${JSON.stringify(state)}`,
+        ).toEqual([`stepSpeed(${dir})`]);
+  });
+
+  it('a + typed as Shift+3 is no digit 3: it picks no piece and sets no 3x', () => {
+    expect(press('play', 'Digit3', '+', true, { categoryOpen: true })).not.toContain(
+      'selectPiece(2)',
+    );
+    expect(press('play', 'Digit3', '+', true)).not.toContain('setSpeed(3)');
+    expect(press('overview', 'Digit3', '+', true)).not.toContain('setSpeed(3)');
+  });
+
+  it('the 3 key still picks piece 3 or 3x when it types a 3, after a + on it was let go', () => {
+    const { input, fire } = browserInput();
+    fire('keydown', 'Digit3', '+');
+    input.endFrame();
+    fire('keyup', 'Digit3', '+');
+    fire('keydown', 'Digit3', '3');
+    expect(input.isDown('Digit3')).toBe(true);
+    const plain = fakeHost('play');
+    handlePlayKeys(input, plain.host);
+    expect(plain.calls).toEqual(['setSpeed(3)']);
+    const piece = fakeHost('play', { categoryOpen: true });
+    handlePlayKeys(input, piece.host);
+    expect(piece.calls).toEqual(['selectPiece(2)']);
+  });
+
+  it('holds the key that typed + down by where it sits, until it is let go', () => {
+    const { input, fire } = browserInput();
+    fire('keydown', 'Digit3', '+');
+    expect(input.wasPressed('Char+')).toBe(true);
+    expect(input.wasPressed('Digit3')).toBe(false);
+    expect(input.isDown('Digit3')).toBe(true);
+    // a held key repeats: no second press
+    input.endFrame();
+    fire('keydown', 'Digit3', '+');
+    expect(input.wasPressed('Char+')).toBe(false);
+    fire('keyup', 'Digit3', '+');
+    expect(input.isDown('Digit3')).toBe(false);
   });
 });
