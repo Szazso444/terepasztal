@@ -45,10 +45,19 @@ export interface ResourceStore {
   cap(id: string): number;
   /** Every good held and how much of it. */
   held(): Iterable<[string, number]>;
-  /** Add up to the cap; returns the amount actually stored. */
-  add(id: string, amount: number): number;
-  take(id: string, amount: number): number;
-  /** Actual units received and spent in the last seven days; the goods a game began with are not. */
+  /**
+   * Add up to the cap; returns the amount actually stored. `haul` marks goods a train brings in
+   * (see `weeklyFlow`).
+   */
+  add(id: string, amount: number, haul?: boolean): number;
+  /** Take up to `amount`; `haul` marks goods a train carries off. */
+  take(id: string, amount: number, haul?: boolean): number;
+  /**
+   * Actual units received and spent in the last seven days; the goods a game began with are not.
+   * Goods a train hauls (`haul`) count as received or spent only by their net: what is hauled
+   * between the stores of one pool (Simple mode's rail network) leaves the pool's flow as it was,
+   * what is hauled in from outside it shows as received, what is hauled out as spent.
+   */
   weeklyFlow(id: string): Flow;
   canAfford(cost: Cost, mul?: number): boolean;
   /** What is missing to pay `cost` (empty when affordable). */
@@ -65,6 +74,21 @@ export interface Flow {
   consumed: number;
 }
 
+/** What a store's log holds for a good: made and used up there, and hauled in and out by train. */
+interface RawFlow extends Flow {
+  hauledIn: number;
+  hauledOut: number;
+}
+
+/** The flow a reader sees: hauls count by their net, so a haul between pool members cancels. */
+function netFlow(raw: RawFlow): Flow {
+  const haul = raw.hauledIn - raw.hauledOut;
+  return {
+    produced: raw.produced + Math.max(0, haul),
+    consumed: raw.consumed + Math.max(0, -haul),
+  };
+}
+
 /** The game time the stores' flows are told by; the registry owns it and moves it on every step. */
 interface FlowClock {
   time: number;
@@ -77,31 +101,33 @@ const BUCKETS_PER_WEEK = 28;
 
 /** What one store received and spent, in quarter-day buckets over the last week. */
 class FlowLog {
-  private flows = new Map<string, { at: number; produced: number; consumed: number }[]>();
+  private flows = new Map<string, ({ at: number } & RawFlow)[]>();
 
   constructor(private clock: FlowClock | null) {}
 
-  record(id: string, amount: number, kind: keyof Flow) {
+  record(id: string, amount: number, kind: keyof RawFlow) {
     if (!this.clock?.tracking || amount <= 0) return;
     const buckets = this.flows.get(id) ?? [];
     const at = Math.floor(this.clock.time / (weekSeconds() / BUCKETS_PER_WEEK));
     let bucket = buckets[buckets.length - 1];
     if (!bucket || bucket.at !== at) {
-      bucket = { at, produced: 0, consumed: 0 };
+      bucket = { at, produced: 0, consumed: 0, hauledIn: 0, hauledOut: 0 };
       buckets.push(bucket);
     }
     bucket[kind] += amount;
     while (buckets.length && buckets[0].at <= at - BUCKETS_PER_WEEK) buckets.shift();
     this.flows.set(id, buckets);
   }
-  weekly(id: string): Flow {
-    const total = { produced: 0, consumed: 0 };
+  weekly(id: string): RawFlow {
+    const total = { produced: 0, consumed: 0, hauledIn: 0, hauledOut: 0 };
     if (!this.clock) return total;
     const now = Math.floor(this.clock.time / (weekSeconds() / BUCKETS_PER_WEEK));
     for (const b of this.flows.get(id) ?? [])
       if (b.at > now - BUCKETS_PER_WEEK) {
         total.produced += b.produced;
         total.consumed += b.consumed;
+        total.hauledIn += b.hauledIn;
+        total.hauledOut += b.hauledOut;
       }
     return total;
   }
@@ -121,8 +147,8 @@ export interface StoreJSON {
 /** The arithmetic every store shares, over whatever `get`, `cap`, `add` and `take` hold. */
 abstract class Ledger {
   abstract get(id: string): number;
-  abstract add(id: string, amount: number): number;
-  abstract take(id: string, amount: number): number;
+  abstract add(id: string, amount: number, haul?: boolean): number;
+  abstract take(id: string, amount: number, haul?: boolean): number;
 
   canAfford(cost: Cost, mul = 1) {
     return Object.entries(cost).every(([k, v]) => this.get(k) >= v * mul);
@@ -169,6 +195,10 @@ export class Store extends Ledger implements ResourceStore {
     return this.capOf(id);
   }
   weeklyFlow(id: string) {
+    return netFlow(this.log.weekly(id));
+  }
+  /** the log as it is, hauls apart: a pool nets them over its members */
+  rawFlow(id: string) {
     return this.log.weekly(id);
   }
   clearFlows() {
@@ -177,18 +207,18 @@ export class Store extends Ledger implements ResourceStore {
   held() {
     return this.amounts.entries();
   }
-  add(id: string, amount: number) {
+  add(id: string, amount: number, haul = false) {
     const cur = this.get(id);
     const n = Math.max(0, Math.min(amount, this.cap(id) - cur));
     this.amounts.set(id, cur + n);
-    this.log.record(id, n, 'produced');
+    this.log.record(id, n, haul ? 'hauledIn' : 'produced');
     return n;
   }
-  take(id: string, amount: number) {
+  take(id: string, amount: number, haul = false) {
     const cur = this.get(id);
     const n = Math.max(0, Math.min(cur, amount));
     this.amounts.set(id, cur - n);
-    this.log.record(id, n, 'consumed');
+    this.log.record(id, n, haul ? 'hauledOut' : 'consumed');
     return n;
   }
 }
@@ -223,13 +253,15 @@ export class StorePool extends Ledger implements ResourceStore {
     return n;
   }
   weeklyFlow(id: string) {
-    const total = { produced: 0, consumed: 0 };
+    const total = { produced: 0, consumed: 0, hauledIn: 0, hauledOut: 0 };
     for (const m of this.members) {
-      const f = m.weeklyFlow(id);
+      const f = m.rawFlow(id);
       total.produced += f.produced;
       total.consumed += f.consumed;
+      total.hauledIn += f.hauledIn;
+      total.hauledOut += f.hauledOut;
     }
-    return total;
+    return netFlow(total);
   }
   held() {
     const out = new Map<string, number>();
@@ -237,19 +269,19 @@ export class StorePool extends Ledger implements ResourceStore {
       for (const [id, n] of m.amounts) out.set(id, (out.get(id) ?? 0) + n);
     return out.entries();
   }
-  add(id: string, amount: number) {
+  add(id: string, amount: number, haul = false) {
     let put = 0;
     for (const m of this.members) {
       if (put >= amount) break;
-      put += m.add(id, amount - put);
+      put += m.add(id, amount - put, haul);
     }
     return put;
   }
-  take(id: string, amount: number) {
+  take(id: string, amount: number, haul = false) {
     let got = 0;
     for (const m of this.members) {
       if (got >= amount) break;
-      got += m.take(id, amount - got);
+      got += m.take(id, amount - got, haul);
     }
     return got;
   }
@@ -293,11 +325,11 @@ class WorksStore extends Ledger implements ResourceStore {
     out.set('power', this.grid.get('power'));
     return out.entries();
   }
-  add(id: string, amount: number) {
-    return this.of(id)?.add(id, amount) ?? 0;
+  add(id: string, amount: number, haul = false) {
+    return this.of(id)?.add(id, amount, haul) ?? 0;
   }
-  take(id: string, amount: number) {
-    return this.of(id)?.take(id, amount) ?? 0;
+  take(id: string, amount: number, haul = false) {
+    return this.of(id)?.take(id, amount, haul) ?? 0;
   }
 }
 

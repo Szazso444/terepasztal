@@ -1689,3 +1689,39 @@ describe('SimStep over a seed list', () => {
     },
   );
 });
+
+describe('SimStep: the stores record what they receive and spend', () => {
+  it('shows the crews eating at the depot after real steps, the clock moved by the step', () => {
+    const w = grass();
+    const depot = depotWith(w, { food: 500 }, { x: 8, y: 20 });
+    station(w, 'quarry', 12, 19);
+    w.stores.beginFlowHistory();
+    const pool = w.stores.poolOf(depot);
+    expect(pool.weeklyFlow('food')).toEqual({ produced: 0, consumed: 0 });
+    run(w, new SimStep(w), context(w, false), 120);
+    const ate = 500 - depot.get('food');
+    expect(ate).toBeGreaterThan(0);
+    expect(pool.weeklyFlow('food').consumed).toBeCloseTo(ate, 9);
+    expect(pool.weeklyFlow('food').produced).toBe(0);
+  });
+});
+
+describe('ageSnapshot population of real houses', () => {
+  it('is the residents of the houses the world holds, with nothing stubbed', () => {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    line(w, 2, 30, 90);
+    const hall = station(w, 'town', 36, 29);
+    const store = w.stores.townStore(hall.x, hall.y)!;
+    w.builder.free = true;
+    w.builder.spawnDecor(40, 29, 'townhouse', 0);
+    w.builder.spawnDecor(32, 29, 'townhouse', 0);
+    w.houses.finishAll();
+    store.add('food', 300);
+    for (let i = 0; i < 100; i++) w.houses.tick(daySeconds(), i * daySeconds());
+    let residents = 0;
+    for (const h of w.houses.houses.values()) residents += h.residents;
+    expect(residents).toBeGreaterThan(0);
+    expect(ageSnapshot(w).population).toBe(residents);
+    expect(ageSnapshot(w).population).toBe(w.houses.residentsTotal());
+  });
+});

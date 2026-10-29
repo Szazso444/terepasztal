@@ -1150,3 +1150,70 @@ describe('the selected store on a rail network (Simple mode)', () => {
     expect(w.stores.selected).toBe(choice);
   });
 });
+
+describe('the weekly flow of goods a train hauls', () => {
+  /**
+   * A depot at the west end of a line and a town on it with a farm in its reach. A train's load at
+   * the farm is `farm.take` (out of the town store, through the outlet) and its unload at the
+   * depot is `depot.store` (into the depot's dock): the calls `Train` makes.
+   */
+  function haulWorld(supply: 'simple' | 'full') {
+    const w = simWorld({ terrain: 'grass', size: 96, supply });
+    const depotStore = depotWith(w, {}, { x: 4, y: 30 });
+    line(w, 6, 30, 90);
+    const hall = station(w, 'town', 20, 29);
+    const farm = station(w, 'farm', 25, 29);
+    const depot = w.builder.stations.find((s) => s.def.depot)!;
+    const town = w.stores.byKey(`town:${w.towns.townAt(hall.x, hall.y)!.id}`)!;
+    expect(farm.outlet).toBe(w.stores.townStore(hall.x, hall.y));
+    w.stores.beginFlowHistory();
+    w.stores.tickUpkeep(1, new Map());
+    return { w, farm, depot, depotStore, town };
+  }
+  const haul = (farm: Station, depot: Station, n: number) => {
+    const took = farm.take('wheat', n);
+    expect(took).toBeCloseTo(n, 9);
+    expect(depot.store('wheat', took)).toBeCloseTo(took, 9);
+    return took;
+  };
+
+  it('counts the farm output once in Simple mode, where the town and the depot are one pool', () => {
+    const { w, farm, depot, depotStore, town } = haulWorld('simple');
+    farm.tick(daySeconds());
+    const made = town.get('wheat');
+    expect(made).toBeGreaterThan(0);
+    const pool = w.stores.networkPool(w.stores.poolOf(town));
+    expect(pool.key).toBe(w.stores.networkPool(w.stores.poolOf(depotStore)).key);
+    const before = pool.weeklyFlow('wheat');
+    expect(before).toEqual({ produced: made, consumed: 0 });
+    haul(farm, depot, made);
+    expect(depotStore.get('wheat')).toBeCloseTo(made, 9);
+    // the haul between two members of the pool is neither received nor spent
+    expect(pool.weeklyFlow('wheat').produced).toBeCloseTo(made, 9);
+    expect(pool.weeklyFlow('wheat').consumed).toBe(0);
+  });
+
+  it('shows a haul into a store from outside its pool as received', () => {
+    const { w, farm, depot, depotStore, town } = haulWorld('simple');
+    farm.tick(daySeconds());
+    const made = town.get('wheat');
+    haul(farm, depot, made);
+    // the depot alone, as a pool of one, sees the load arrive; the town alone sees it leave
+    const lone = new StorePool([depotStore]);
+    expect(lone.weeklyFlow('wheat')).toEqual({ produced: made, consumed: 0 });
+    expect(new StorePool([town]).weeklyFlow('wheat').consumed).toBeCloseTo(made, 9);
+    expect(w.stores.grid.weeklyFlow('wheat')).toEqual({ produced: 0, consumed: 0 });
+  });
+
+  it('shows the depot unloading as received in Full mode, where every store stands alone', () => {
+    const { w, farm, depot, depotStore, town } = haulWorld('full');
+    farm.tick(daySeconds());
+    const made = town.get('wheat');
+    expect(made).toBeGreaterThan(0);
+    const n = haul(farm, depot, made);
+    expect(w.stores.poolOf(depotStore).weeklyFlow('wheat')).toEqual({ produced: n, consumed: 0 });
+    const away = w.stores.poolOf(town).weeklyFlow('wheat');
+    expect(away.produced).toBeCloseTo(made, 9);
+    expect(away.consumed).toBeCloseTo(n, 9);
+  });
+});

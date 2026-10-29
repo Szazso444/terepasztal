@@ -448,11 +448,14 @@ export class Station {
     if (this.dock) return Math.max(0, this.dock.cap(cargo) - this.dock.get(cargo));
     return Math.max(0, this.capacity - this.totalStored());
   }
-  /** Put goods into the station's store; returns what fitted (nothing while it is closed). */
+  /**
+   * Put goods into the station's store; returns what fitted (nothing while it is closed). Only
+   * trains call it: into a dock it is a haul (`ResourceStore.weeklyFlow`).
+   */
   store(cargo: string, amount: number): number {
     const n = Math.max(0, Math.min(amount, this.roomFor(cargo)));
     if (n <= 0) return 0;
-    if (this.dock) return this.dock.add(cargo, n);
+    if (this.dock) return this.dock.add(cargo, n, true);
     this.storage.set(cargo, this.stored(cargo) + n);
     return n;
   }
@@ -539,10 +542,11 @@ export class Station {
   }
   /**
    * Take up to `amount` units of cargo out of storage (the dock's; else its own, then the outlet's
-   * for a cargo the station makes); returns what was taken.
+   * for a cargo the station makes); returns what was taken. Only trains call it: out of a dock or
+   * outlet it is a haul (`ResourceStore.weeklyFlow`).
    */
   take(cargo: string, amount: number): number {
-    if (this.dock) return this.dock.take(cargo, Math.max(0, amount));
+    if (this.dock) return this.dock.take(cargo, Math.max(0, amount), true);
     const have = this.storage.get(cargo) ?? 0;
     const n = Math.max(0, Math.min(have, amount));
     if (n > 0) {
@@ -550,7 +554,9 @@ export class Station {
       else this.storage.set(cargo, have - n);
     }
     // what its own storage lacks comes from the outlet, for a cargo the station makes
-    const more = this.outletHolds(cargo) ? this.outlet!.take(cargo, Math.max(0, amount - n)) : 0;
+    const more = this.outletHolds(cargo)
+      ? this.outlet!.take(cargo, Math.max(0, amount - n), true)
+      : 0;
     return n + more;
   }
   hasFreePlatform() {
