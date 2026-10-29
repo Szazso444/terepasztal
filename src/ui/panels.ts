@@ -23,7 +23,6 @@ import type { Station } from '../sim/stations';
 import type { Train } from '../sim/trains';
 import type { Commands } from '../sim/commands';
 import { cargoDef } from '../sim/cargo';
-import { resourceStats } from '../sim/stats';
 import { withoutInCab } from '../sim/compat';
 import { listRulePresets, rules, stageNewGameTuning } from '../sim/rules';
 import { supplyMode, type SupplyMode } from '../sim/supply';
@@ -364,11 +363,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     if (host.mode === 'play' && !menuOpen()) d.screens.toggle(marketScreen);
   });
   resourceBar.right.append(hud.funds);
-  // the flows of the store the bar shows, with the grid's power beside it
-  resourceBar.stats = () => {
-    const shown = stores.selected ?? stores.grid;
-    return resourceStats(stores.withGrid(shown), RESOURCE_IDS);
-  };
   resourceBar.people = () => {
     const residents = d.houses.residentsTotal();
     const crews = d.builder.crewTotal() + d.fleet.crewTotal();
@@ -386,6 +380,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     () => {
       host.applySeason(true);
       toolbar.refresh();
+      // a town's cap and the tiles in building and fuel reach are derived from the rules
+      stores.refresh();
     },
     // a tuning saved or deleted there changes the title screen's New game choice, in place
     () => mainMenu.refreshTunings(),

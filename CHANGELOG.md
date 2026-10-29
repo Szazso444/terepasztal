@@ -70,22 +70,37 @@ is untouched. Evidence and commands: `scratchpad/README.md`.
 
 - Goods are kept in local stores, not in one global stockpile: each town (its Townhouse holds 300 of
   every good, and every Warehouse in the town's reach adds 1,000 per level), each depot (3,000),
-  each stand-alone Warehouse (1,000 per level) and the power grid (batteries). Trains unload into
-  them and take goods out of them.
-- Building pays from the nearest store that holds all the material, within 24 tiles of the spot; the
-  build card names the store and says what it lacks. Fuel buildings outside a town (coaling stage,
-  water tower) fill trains from the nearest store within 8 tiles.
+  each stand-alone Warehouse (1,000 per level) and the power grid (batteries).
+- Trains on a schedule load and unload at a depot, a Warehouse or a Townhouse, out of and into its
+  store (a Townhouse's, and a Warehouse's in a town, is the town's), and load a harvester's goods
+  in a town out of the town store. That is how goods, the start stock too, reach a town or a
+  forward Warehouse. Freight trains never take goods out of a store: they collect from producers
+  that keep their own pile and take the goods to the nearest store with room, a depot, a Warehouse
+  or a Townhouse. The Freight tuning for the Warehouse pile before pickup is gone.
+- Building and every upgrade, a house's too, pay from the nearest store that holds all the
+  material, within 24 tiles of the spot; the build card names the store and says what it lacks.
+  Fuel buildings outside a town (coaling stage, water tower) fill trains from the nearest store
+  within 8 tiles.
 - Simple mode shares the stores on one rail network: a network is one place with one pool, named
   after its towns. Full mode keeps every store alone.
-- Trains refuel at the stores, and crews and residents eat at the store of their town or of the
-  nearest store in reach. A store whose crews go hungry for ten seconds is in famine: production
-  there is halved and trains slow, and the top bar says so.
+- Trains refuel at the stores. Residents eat at their town's store, the crews of stations and works
+  at their town's store or the nearest store in reach, and a train's crew pays for its food at the
+  next store it fills up at. A store whose residents or crews go short for ten seconds is in
+  famine: the stations and works it supplies make half as much, nobody moves into its town, and
+  the top bar says so while it shows that store. A train whose crew owes more than a day of food
+  runs slower.
+- A store that goes (its station pulled down, a Warehouse taken into a town) hands all its goods to
+  the town store that covers its place, else the nearest store, however far; goods are lost only
+  when no store is left.
 - The top bar shows the selected store (click its name to step through the stores; clicking a town,
   depot or warehouse also selects it). The weekly flow colours and the Received / Spent card follow
   the shown store. Crafting and the market use it too.
-- Old saves load without error: the old stockpile moves into the start depot, and each warehouse
-  keeps its own goods. Saves now carry a `stores` part in place of `stockpile`.
-- The `stockpileCap` tuning is gone; the depot, warehouse and Townhouse caps are tuned on their own.
+- A new game's start stock waits in the start depot; a level's in its first depot, else its first
+  Warehouse's or town's store, else in the depot it is granted.
+- Old saves load without error: the old stockpile moves into the start depot (its famine does not),
+  and each warehouse keeps its own goods. Saves now carry a `stores` part in place of `stockpile`.
+- The `stockpileCap` tuning is gone; the depot, warehouse and Townhouse caps are tuned on their own,
+  and a change to a cap or a reach on the Tuning screen holds at once.
 
 ## v0.8.0
 

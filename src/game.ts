@@ -2351,6 +2351,7 @@ export class Game implements UiHost {
     this.panelRefresh += dt;
     if (this.panelRefresh > 0.5) {
       this.panelRefresh = 0;
+      this.resourceBar.refreshFlows();
       if (this.stationPanel.station) this.stationPanel.render();
       if (this.buildingPanel.building) this.buildingPanel.render();
       if (this.decorPanel.decor) this.decorPanel.render();

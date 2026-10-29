@@ -1484,7 +1484,8 @@ describe('stores through Game.snapshot and Game.applySave', () => {
     const depot = back.builder.depots()[0];
     expect(depot, 'the depot granted on load').toBeDefined();
     expect(goods(back, `st:${depot.id}`)).toEqual({ wood: 400 });
-    expect(back.stores.byKey(`st:${depot.id}`)!.famine).toBe(true);
+    // the stockpile's famine is not carried to the depot, where nobody may eat
+    expect(back.stores.byKey(`st:${depot.id}`)!.famine).toBe(false);
     expect(goods(back, 'grid')).toEqual({ power: 50 });
   });
 

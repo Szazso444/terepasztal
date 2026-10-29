@@ -1704,9 +1704,11 @@ describe('v20 to v21', () => {
       ]),
     );
     expect(j.stockpile).toBeUndefined();
-    // the depot of the lowest id is the start depot; power goes to the grid
+    // the depot of the lowest id is the start depot; power goes to the grid. The stockpile's
+    // famine is not carried: those who went hungry eat at their own stores now, whose next meals
+    // declare a famine again (one carried to a depot nobody eats at would only be told as ended)
     expect(j.stores).toEqual([
-      { key: 'st:2', amounts: { wood: 400 }, famine: true },
+      { key: 'st:2', amounts: { wood: 400 }, famine: false },
       grid,
       { key: 'st:3', amounts: { stone: 80 }, famine: false },
     ]);
@@ -1721,7 +1723,7 @@ describe('v20 to v21', () => {
       v20([st(1, 'farm'), st(3, 'warehouse', { wood: 5, stone: 80 }), st(2, 'warehouse')]),
     );
     expect(toWarehouse.stores).toEqual([
-      { key: 'st:3', amounts: { wood: 405, stone: 80 }, famine: true },
+      { key: 'st:3', amounts: { wood: 405, stone: 80 }, famine: false },
       grid,
       { key: 'st:2', amounts: {}, famine: false },
     ]);
@@ -1731,11 +1733,11 @@ describe('v20 to v21', () => {
         towns: [{ id: 9, name: 'Alder', stationId: 6, custom: false, color: 0 }],
       }),
     );
-    expect(toTown.stores).toEqual([{ key: 'town:9', amounts: { wood: 400 }, famine: true }, grid]);
+    expect(toTown.stores).toEqual([{ key: 'town:9', amounts: { wood: 400 }, famine: false }, grid]);
     // with no place at all, the goods wait for the depot a load grants (`StoreRegistry.load`)
     const nowhere = runStep(20, v20([st(1, 'farm')]));
     expect(nowhere.stores).toEqual([
-      { key: 'unplaced', amounts: { wood: 400 }, famine: true },
+      { key: 'unplaced', amounts: { wood: 400 }, famine: false },
       grid,
     ]);
   });

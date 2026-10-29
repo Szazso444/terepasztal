@@ -603,11 +603,10 @@ export const MIGRATIONS: Migration[] = [
     run: (j) => {
       const stores: StoreJSON[] = [];
       /** Add `goods` to the store of `key`, made at the end of the list when it is not there yet. */
-      const put = (key: string, goods: Record<string, number>, famine = false) => {
+      const put = (key: string, goods: Record<string, number>) => {
         let s = stores.find((e) => e.key === key);
         if (!s) stores.push((s = { key, amounts: {}, famine: false }));
         for (const [id, n] of Object.entries(goods)) s.amounts[id] = (s.amounts[id] ?? 0) + n;
-        s.famine ||= famine;
       };
       const stations = j.stations.filter((s) => isRecord(s) && typeof s.id === 'number');
       const warehouses = stations.filter((s) => s.defId === 'warehouse');
@@ -630,7 +629,9 @@ export const MIGRATIONS: Migration[] = [
             : town
               ? `town:${town.id}`
               : 'unplaced';
-        put(key, goods, stock.famine === true);
+        // its famine stays behind: the eaters are at their own stores now, whose next meals say
+        // whether they starve (carried to a depot nobody eats at, it would only be told as ended)
+        put(key, goods);
         put('grid', power === undefined ? {} : { power });
       }
       for (const w of warehouses) {

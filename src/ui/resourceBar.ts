@@ -1,11 +1,11 @@
 import { el, btn } from './dom';
 import { STR } from '../strings';
-import type { ResourceStore } from '../sim/stores';
+import { RESOURCE_IDS, type ResourceStore } from '../sim/stores';
 import { CARGO, cargoName } from '../sim/cargo';
 import { inSupplyMode } from '../sim/supply';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
-import type { ResourceStat } from '../sim/stats';
+import { ShownFlows } from '../sim/stats';
 
 /**
  * Second row under the top bar: the store it shows (a button that steps to the next one), every
@@ -23,8 +23,8 @@ export class ResourceBar {
   private famine = el('span', { class: 'value red', text: STR.res.famine });
   private card = el('div', { id: 'res-card', class: 'panel' });
   private hovered: string | null = null;
-  /** Supplied by the game: actual rolling weekly flows. */
-  stats: (() => Record<string, ResourceStat>) | null = null;
+  /** the rolling weekly flows of the store shown, worked out on `refreshFlows` */
+  private flows = new ShownFlows(RESOURCE_IDS);
   /** Supplied by the game: residents, and the food they and the crews eat a week. */
   people: (() => { residents: number; foodPerWeek: number }) | null = null;
   /** the store button was clicked: show the next store */
@@ -108,7 +108,7 @@ export class ResourceBar {
       return;
     }
     const info = STR.res.info[id];
-    const stats = this.stats?.()[id];
+    const stats = this.flows.of(st)[id];
     const body = el('div', { class: 'panel-body' });
     if (info) body.append(el('div', { class: 'bi-desc', text: info }));
     body.append(row(STR.res.have, `${Math.floor(st.get(id))} / ${st.cap(id)}`));
@@ -133,7 +133,7 @@ export class ResourceBar {
     this.store = store;
     this.totals = totals;
     if (this.storeBtn.textContent !== label) this.storeBtn.textContent = label;
-    const stats = this.stats?.();
+    const stats = this.flows.of(store);
     for (const [id, v] of this.cells) {
       const def = this.cellDefs.get(id);
       const shown = !def || inSupplyMode(def);
@@ -144,7 +144,7 @@ export class ResourceBar {
       const c = store.cap(id);
       const text = `${have}`;
       if (v.textContent !== text) v.textContent = text;
-      const net = (stats?.[id]?.produced ?? 0) - (stats?.[id]?.consumed ?? 0);
+      const net = (stats[id]?.produced ?? 0) - (stats[id]?.consumed ?? 0);
       v.classList.toggle('red', net < -0.01);
       v.classList.toggle('good', net > 0.01);
       v.classList.toggle('amber', Math.abs(net) <= 0.01 && have >= c);
@@ -154,5 +154,9 @@ export class ResourceBar {
     if (this.pop.textContent !== p) this.pop.textContent = p;
     this.famine.style.display = store.famine ? '' : 'none';
     if (this.hovered) this.renderCard();
+  }
+  /** The weekly flows are worked out again at the next `update` (the panels' refresh). */
+  refreshFlows() {
+    this.flows.refresh();
   }
 }

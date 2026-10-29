@@ -599,3 +599,22 @@ describe("what the title screen's Tuning choice is wired to", () => {
     expect(methodOf(sf, 'MainMenu', 'missing')).toBeUndefined();
   });
 });
+
+describe('the in-game Tuning screen', () => {
+  // the stores keep what they derive from the rules (a town's cap, the tiles in building and fuel
+  // reach) until their next refresh: a change on the screen must bring them up to date
+  it('derives the stores again after every change to the live rules', () => {
+    const sf = parse('panels.ts', source('panels.ts'));
+    const onChange: string[] = [];
+    const visit = (n: ts.Node) => {
+      if (ts.isNewExpression(n) && n.expression.getText(sf) === 'TuningScreen') {
+        const first = n.arguments?.[0];
+        if (first && ts.isArrowFunction(first)) onChange.push(first.body.getText(sf));
+      }
+      ts.forEachChild(n, visit);
+    };
+    visit(sf);
+    expect(onChange, 'one Tuning screen, its change callback an arrow').toHaveLength(1);
+    expect(onChange[0]).toMatch(/\bstores\.refresh\(\)/);
+  });
+});
