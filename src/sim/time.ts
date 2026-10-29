@@ -46,14 +46,15 @@ export class GameClock {
   get days() {
     return this.time / daySeconds();
   }
+  /** Picking the speed the clock already has changes nothing, `carry` included. */
   setSpeed(i: number) {
     if (i !== 0) this.prevSpeed = i;
+    if (i === this.speedIndex) return;
     this.speedIndex = i;
     this.carry = 0;
   }
   togglePause() {
-    this.speedIndex = this.speedIndex === 0 ? this.prevSpeed : 0;
-    this.carry = 0;
+    this.setSpeed(this.speedIndex === 0 ? this.prevSpeed : 0);
   }
   /**
    * One speed up (1) or down (-1) along SPEED_ORDER, stopping at ½× and 3×. From pause it

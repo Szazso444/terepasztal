@@ -296,7 +296,7 @@ body {
 #topbar > .tt-term {
   flex: none;
 }
-/* short of room (Hud.fit): tighter cells and buttons, no weather text, the era without its name */
+/* short of room (Hud.fit): tighter cells and buttons and no weather text; if still short, compact-2 */
 #topbar.compact .title {
   padding: 0 6px;
 }
@@ -309,7 +309,7 @@ body {
   padding: 1px 4px;
 }
 #topbar.compact .stat.weather,
-#topbar.compact .era-name {
+#topbar.compact-2 .era-name {
   display: none;
 }
 #topbar.compact .datespeed {

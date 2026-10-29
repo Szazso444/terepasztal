@@ -194,6 +194,31 @@ describe('stepSpeed', () => {
     c.stepSpeed(1);
     expect(c.speed).toBe(3);
   });
+  it('choosing the speed the clock already has keeps its place between steps', () => {
+    // at ½× a step is due every second tick: the tick after the empty one runs it
+    const dueAfter = (choose: (c: GameClock) => void) => {
+      const c = new GameClock();
+      c.setSpeed(4);
+      expect(c.run(() => {})).toBe(0);
+      choose(c);
+      return c.dueSteps();
+    };
+    expect(dueAfter(() => {})).toBe(1);
+    // − at ½× clamps, and picks ½× again
+    expect(dueAfter((c) => c.stepSpeed(-1))).toBe(1);
+    // so does a click on the active ½× button
+    expect(dueAfter((c) => c.setSpeed(4))).toBe(1);
+  });
+  it('pausing and resuming starts the count again', () => {
+    const c = new GameClock();
+    c.setSpeed(4);
+    c.run(() => {});
+    expect(c.dueSteps()).toBe(1);
+    c.togglePause();
+    c.togglePause();
+    expect(c.speed).toBe(0.5);
+    expect(c.dueSteps()).toBe(0);
+  });
 });
 
 describe('the same game time gives the same outcome at every game speed', () => {
@@ -235,7 +260,7 @@ describe('the same game time gives the same outcome at every game speed', () => 
     90_000,
   );
 
-  it('a single f7 on a straight line arrives at the same game time at 1x and 3x', () => {
+  it('a single f7 on a straight line arrives at the same game time at 1x, 3x and ½×', () => {
     const arrive = (speed: number) => {
       resetModules();
       const { fleet, t } = f7Run();

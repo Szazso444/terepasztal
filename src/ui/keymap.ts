@@ -91,7 +91,10 @@ export type KeyAction =
   | 'finishRoute';
 
 export interface KeyBinding {
-  /** `KeyboardEvent.code` */
+  /**
+   * `KeyboardEvent.code`, or `Char+` / `Char-` for the keys bound by the character they type
+   * (`Input`)
+   */
   readonly code: string;
   /** true: only with Shift held; false: only without; absent: either */
   readonly shift?: boolean;

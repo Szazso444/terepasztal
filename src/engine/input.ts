@@ -17,10 +17,17 @@ const TYPED_KEYS = new Set(['+', '-']);
  * The name a key press goes by in `pressed`: `Char+` or `Char-` when it types '+' or '-' with
  * Shift held or on a key other than a digit, else its `KeyboardEvent.code`. So Shift+3 typing '+'
  * (Hungarian) is no `Digit3` press, while an unshifted digit typing '-' (Digit6 on AZERTY) stays
- * that digit and picks its piece.
+ * that digit and picks its piece. With Ctrl, Meta or Alt held it is never `Char±`: Ctrl+ and Ctrl-
+ * zoom the browser, and are not the game's speed keys.
  */
-const pressName = (e: Pick<KeyboardEvent, 'code' | 'key' | 'shiftKey'>) =>
-  TYPED_KEYS.has(e.key) && (e.shiftKey || !e.code.startsWith('Digit')) ? `Char${e.key}` : e.code;
+const pressName = (
+  e: Pick<KeyboardEvent, 'code' | 'key' | 'shiftKey' | 'ctrlKey' | 'metaKey' | 'altKey'>,
+) =>
+  TYPED_KEYS.has(e.key) &&
+  !(e.ctrlKey || e.metaKey || e.altKey) &&
+  (e.shiftKey || !e.code.startsWith('Digit'))
+    ? `Char${e.key}`
+    : e.code;
 
 export class Input {
   /** keys held down, by `KeyboardEvent.code`, so letting a key go clears it whatever it typed */

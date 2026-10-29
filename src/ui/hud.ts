@@ -7,7 +7,7 @@ import { ttTerm, type Tooltip } from './tooltip';
 import { tipBuild } from './tooltipRender';
 import { ageTip, eraView } from './ageTooltip';
 import { ageIcon } from './ageIcons';
-import { topbarCompact } from './fit';
+import { compactLevel, topbarCompact, type CompactLevel } from './fit';
 
 export interface HudModel {
   tickets: number;
@@ -22,9 +22,10 @@ export interface HudModel {
  * in `funds`, which the game places at the right end of the resource row (the money itself is the
  * resource bar's first cell).
  *
- * When the bar is short of room (`fit`) it goes `compact`: tighter spacing, the weather words in
- * the Weather toggle's tooltip, the era widget without the age's name (its tooltip has it). The era
- * widget and the date and speed never give way; past compact, the screen buttons are cut.
+ * When the bar is short of room (`fit`) it goes `compact` in two steps: first tighter spacing and
+ * the weather words in the Weather toggle's tooltip; only if that is still not enough, the era
+ * widget without the age's name as well (`compact-2`; its tooltip has the name). The era widget
+ * and the date and speed never give way; past that, the screen buttons are cut.
  */
 export class Hud {
   readonly root: HTMLElement;
@@ -55,7 +56,7 @@ export class Hud {
   private fps = el('span', { class: 'value dim' });
   private weather = el('span', { class: 'value' });
   /** the spacing the bar has now (`fit`), and a fit waiting for the next frame */
-  private compact = false;
+  private compact: CompactLevel = 0;
   private fitQueued = false;
 
   constructor(
@@ -127,26 +128,34 @@ export class Hud {
   }
 
   /**
-   * Normal spacing when everything fits, `compact` when, laid out without it, the bar would
-   * overflow or cut the screen buttons or the weather text (`topbarCompact`). Measured with compact
-   * off, so the answer does not depend on the last one.
+   * The loosest spacing at which everything fits (`compactLevel`): normal, then `compact`, then
+   * `compact-2`, each laid out on its own and measured for overflow or a cut in the screen buttons
+   * or the weather text (`topbarCompact`). So the answer does not depend on the last one, and the
+   * classes and the tooltip are written only when it changed.
    */
   private fit() {
     const bar = this.root;
-    bar.classList.remove('compact');
-    // a hidden bar has no answer: keep the last one
-    const compact = topbarCompact(bar, [this.actions, this.weather]) ?? this.compact;
-    bar.classList.toggle('compact', compact);
-    if (compact === this.compact) return;
-    this.compact = compact;
+    const level =
+      compactLevel((at) => {
+        this.setLevelClasses(at);
+        return topbarCompact(bar, [this.actions, this.weather]);
+      }) ?? this.compact; // a hidden bar has no answer: keep the last one
+    this.setLevelClasses(level);
+    if (level === this.compact) return;
+    this.compact = level;
     this.titleWeather();
+  }
+
+  private setLevelClasses(level: CompactLevel) {
+    this.root.classList.toggle('compact', level >= 1);
+    this.root.classList.toggle('compact-2', level >= 2);
   }
 
   /** The Weather toggle's tooltip: in compact, the weather words the bar no longer shows. */
   private titleWeather() {
     const now = this.weather.textContent ?? '';
     this.weatherBtn.title =
-      this.compact && now ? STR.hud.weatherToggleHintNow(now) : STR.hud.weatherToggleHint;
+      this.compact >= 1 && now ? STR.hud.weatherToggleHintNow(now) : STR.hud.weatherToggleHint;
   }
 
   setToggles(weather: boolean, day: boolean) {
@@ -182,7 +191,11 @@ export class Hud {
       // fixed markup from ageIcons.ts, never from data
       this.eraIcon.innerHTML = ageIcon(v.id);
     }
-    if (this.eraName.textContent !== v.name) this.eraName.textContent = v.name;
+    if (this.eraName.textContent !== v.name) {
+      this.eraName.textContent = v.name;
+      // hidden at compact-2, a new name resizes no cell the observer watches: fit again by hand
+      this.queueFit();
+    }
     // the last age has no next one: no bar, and the label says it is the current one
     const bar = v.percent === undefined ? 'none' : '';
     if (this.eraBar.style.display !== bar) this.eraBar.style.display = bar;

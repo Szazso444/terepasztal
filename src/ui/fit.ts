@@ -23,3 +23,27 @@ export function topbarCompact(bar: Measured, giving: readonly Measured[]): boole
   if (!bar.clientWidth) return null;
   return [bar, ...giving].some((b) => needsCompact(b.scrollWidth, b.clientWidth));
 }
+
+/**
+ * How tight the top bar's spacing is: 0 normal, 1 compact (tighter spacing, the weather text in
+ * its toggle's tooltip), 2 compact without the era's name as well.
+ */
+export type CompactLevel = 0 | 1 | 2;
+
+/**
+ * The first level, from the loosest, at which the bar fits. `overflows(level)` lays the bar out
+ * at that level and says whether it is still short of room (`topbarCompact`), or null while it is
+ * not laid out (keep the last answer). Each level is measured on its own, from level 0 up and no
+ * further than needed, so the answer never depends on the one before and cannot flip back and
+ * forth; the last level is the answer when even it is short, as there is nothing tighter.
+ */
+export function compactLevel(
+  overflows: (level: CompactLevel) => boolean | null,
+): CompactLevel | null {
+  for (const level of [0, 1] as const) {
+    const short = overflows(level);
+    if (short === null) return null;
+    if (!short) return level;
+  }
+  return 2;
+}

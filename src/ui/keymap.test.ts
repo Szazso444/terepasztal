@@ -372,9 +372,15 @@ describe('+ and − as the browser types them', () => {
     vi.stubGlobal('document', { addEventListener: () => {} });
     const input = new Input({ addEventListener: () => {} } as unknown as HTMLElement);
     /** a key event with this `code` (where the key sits) and `key` (what it types) */
-    const fire = (type: 'keydown' | 'keyup', code: string, key: string, shiftKey = false) => {
+    const fire = (
+      type: 'keydown' | 'keyup',
+      code: string,
+      key: string,
+      shiftKey = false,
+      mods: { ctrlKey?: boolean; metaKey?: boolean; altKey?: boolean } = {},
+    ) => {
       for (const fn of handlers.get(type) ?? [])
-        fn({ code, key, shiftKey, target: null, preventDefault() {} });
+        fn({ code, key, shiftKey, ...mods, target: null, preventDefault() {} });
     };
     return { input, fire };
   }
@@ -415,6 +421,22 @@ describe('+ and − as the browser types them', () => {
     // and Shift+Digit6 types '6' there: the same piece
     expect(press('play', 'Digit6', '6', true, { categoryOpen: true })).toEqual(['selectPiece(5)']);
   });
+
+  it.each(['ctrlKey', 'metaKey', 'altKey'] as const)(
+    'Ctrl, Meta or Alt (%s) with + or − zooms the browser, and is no speed step',
+    (mod) => {
+      for (const [, code, key, shift] of TYPED) {
+        const { input, fire } = browserInput();
+        fire('keydown', code, key, shift, { [mod]: true });
+        expect(input.wasPressed('Char+'), `${code} ${key}`).toBe(false);
+        expect(input.wasPressed('Char-'), `${code} ${key}`).toBe(false);
+        const { host, calls } = fakeHost('play');
+        handlePlayKeys(input, host);
+        expect(calls, `${mod} ${code} ${key}`).not.toContain('stepSpeed(1)');
+        expect(calls, `${mod} ${code} ${key}`).not.toContain('stepSpeed(-1)');
+      }
+    },
+  );
 
   it('a + typed as Shift+3 is no digit 3: it picks no piece and sets no 3x', () => {
     expect(press('play', 'Digit3', '+', true, { categoryOpen: true })).not.toContain(
