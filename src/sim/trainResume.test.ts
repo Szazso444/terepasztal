@@ -581,9 +581,6 @@ function layoutScene(c: Layout): World {
   return { ...w, fleet };
 }
 
-/** A warehouse is worth collecting from with what a level 1 store holds (as in fleet.test.ts). */
-const roamingRules = () => void (rules.collectMin = 30);
-
 /**
  * The fleet's own memory of when a train last loaded at each station, which a roaming train's
  * pick weighs. A save does not hold it and src/sim/fleet.ts is outside issue #81, so the roaming
@@ -694,7 +691,6 @@ describe('a single train saved at any tick of a generated line', () => {
   });
 
   it('carries on as if never saved when roaming', SLOWEST, () => {
-    roamingRules();
     forAll(
       (rng) => layout(rng, ROAMING),
       (c) => carriesOnFrom(c, true),
@@ -709,7 +705,6 @@ describe('a single train saved at any tick of a generated line', () => {
       // A train under way looks for a service every five seconds and heads there before its stop
       // once a tank is under 0.4 full; saved between two looks or on its way there, it carries on
       // as the uninterrupted run does.
-      roamingRules();
       forAll(serviceLayout, (c) => carriesOnFrom(c, true), {
         shrink: shrinkLayout,
         shrinkBudget: LAYOUT_SHRINK,
@@ -769,7 +764,6 @@ describe('a freight train saved at a stop where it put goods down', () => {
     // The quarry's stone goes to the warehouse, whose pile is then the one worth fetching: the
     // train that put it there neither takes it back nor stops there again. A save keeps that
     // (`dropped`), so a train loaded while it unloads, or just after, does the same.
-    roamingRules();
     const c: Layout = {
       loco: 'f7',
       mode: 'freight',
@@ -845,7 +839,6 @@ describe('a train heading for a fuel or water service when saved', () => {
       // way to it any more, the train drops it for its stop as dispatch drops it. Loaded with the
       // service on a tile without track, it does tick for tick what it does loaded with none: it
       // keeps its speed for the stop, and looks for a service again when its next look is due.
-      roamingRules();
       let heading = 0;
       forAll(
         serviceSave,
@@ -895,7 +888,6 @@ describe('a train heading for a fuel or water service when saved', () => {
   it('saved again before the first tick, is the save that was loaded', SLOWEST, () => {
     // The service it heads for, what that hands out, and when it next looks for one survive a
     // load and a save with no tick between them.
-    roamingRules();
     let heading = 0;
     forAll(
       serviceSave,
@@ -1052,7 +1044,6 @@ describe('a train under way whose saved way it can no longer run', () => {
     // or the service it heads to); otherwise it plans the path again as every load before v17
     // did. Loaded with its way edited so it cannot be run, the train does tick for tick what
     // the same save with no way (`way: null`, what the step from v16 fills) does.
-    roamingRules();
     const edited = new Map<WayEdit, number>();
     let toService = 0;
     forAll(
@@ -1111,7 +1102,6 @@ describe('a load moves no car', () => {
     // The save keeps each car's place as it was; a load that plans the path again along
     // another line than the one the train stands on (the other route through a switch) shows
     // here as a jump. Each case loads 240 times, so it runs on fewer seeds.
-    roamingRules();
     forAll(
       (rng) => ({ ...layout(rng, ['schedule', ...ROAMING]), tick: 0 }),
       (c) =>
@@ -1131,7 +1121,6 @@ describe('a load moves no car', () => {
       // The run of a line with a service while the tanks run low, loaded every quarter second:
       // a load that planned the path to the stop instead of the service, or to both, or stood
       // the train for a tick, shows here as another end to its way or another speed.
-      roamingRules();
       let heading = 0;
       forAll(
         (rng) => ({ ...serviceLayout(rng), tick: 0 }),
@@ -1183,7 +1172,6 @@ describe('a save made after a load, before the first tick', () => {
   it('is the save that was loaded', SLOWER, () => {
     // The game saves on a wall-clock timer and when the page closes, also while the clock stands:
     // a game loaded paused can be saved again before any train has ticked.
-    roamingRules();
     forAll(
       (rng) => layout(rng, ['schedule', ...ROAMING]),
       (c) => {
@@ -2729,7 +2717,6 @@ describe('a train stopped dry on its way to a fuel or water service when saved',
       // train runs on to that service, not to its stop, and takes it as the uninterrupted one does.
       // What it does is compared with the uninterrupted train's: a roaming train may end idle or
       // without a route. A way measured from another start may move an arrival by a tick.
-      roamingRules();
       const n = Object.fromEntries(Object.keys(DRY_LEAST).map((k) => [k, 0])) as DryCounts;
       forAll(
         drySave,
@@ -2819,7 +2806,6 @@ describe('a train stopped dry on its way to a fuel or water service when saved',
       // Loaded with the service it heads for moved to a tile without track, a train standing dry
       // runs on as a load of the same save with no service does once it is refilled: it plans its
       // path again, finds no way to the service and drops it for its stop, as `dispatch` drops it.
-      roamingRules();
       let stopped = 0;
       let moving = 0;
       forAll(

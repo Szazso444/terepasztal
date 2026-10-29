@@ -34,8 +34,6 @@ import { storeWith } from '../testing/storeFixtures';
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
-  // a warehouse is worth collecting from with what a level 1 store holds
-  rules.collectMin = 30;
   setSupplyMode(DEFAULT_SUPPLY);
   resetTrainIds();
   resetStationIds();

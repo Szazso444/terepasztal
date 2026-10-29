@@ -312,8 +312,9 @@ export class Station {
   level = 1;
   storage = new Map<string, number>();
   /**
-   * The store a depot, or a warehouse, keeps its goods in (`StoreRegistry.refresh` binds it; not
-   * saved). While it is set the station's goods are the store's: `storage` is not used.
+   * The store a depot, a warehouse or a Townhouse keeps its goods in (`StoreRegistry.refresh`
+   * binds it; not saved). While it is set the station's goods are the store's: `storage` is not
+   * used.
    */
   dock: ResourceStore | null = null;
   /**
@@ -324,6 +325,21 @@ export class Station {
    * still holds from before.
    */
   outlet: ResourceStore | null = null;
+  /**
+   * Its goods are a store's: a depot, a warehouse or a Townhouse (`dock`; a depot or a warehouse
+   * the registry has not bound yet keeps them in `storage`). Trains on a schedule load and unload
+   * at one; a roaming freight train only puts goods down there.
+   */
+  get isStore() {
+    return !!this.dock || !!this.def.pool || !!this.def.stockpile;
+  }
+  /**
+   * Whether a roaming freight train may come to take goods on here: a producer that keeps its
+   * own pile, never a store (`isStore`) nor a harvester whose goods go to its town's (`outlet`).
+   */
+  get pickupPile() {
+    return !this.isStore && !this.outlet;
+  }
   /** trains currently occupying a platform */
   occupants = new Set<number>();
   /** spot-market satiety per accepted cargo (0 = hungry, 1 = glutted) */
@@ -431,12 +447,14 @@ export class Station {
     if (this.def.depot) return this.def.long ? 1 : 2;
     return LEVELS.platforms[this.level - 1];
   }
-  /** Goods trains may take from here: what it makes, plus a warehouse's stored kinds. */
+  /**
+   * Goods trains may take from here: what it makes, plus every kind its dock's store holds (a
+   * depot's, a warehouse's, a Townhouse's), or an unbound warehouse's own.
+   */
   availableCargo(): string[] {
     const out = this.producedCargo();
-    if (this.def.stockpile)
-      for (const [c, v] of this.dock ? this.dock.held() : this.storage)
-        if (v >= 1 && !out.includes(c)) out.push(c);
+    const held = this.dock ? this.dock.held() : this.def.stockpile ? this.storage : null;
+    if (held) for (const [c, v] of held) if (v >= 1 && !out.includes(c)) out.push(c);
     return out;
   }
   /**
@@ -526,12 +544,15 @@ export class Station {
     }
     return best;
   }
-  /** How full the station is, 0 .. 1: `fullest()` against `capacity`. */
+  /**
+   * How full the station is, 0 .. 1: `fullest()` against `capacity`, never past full (a harvester
+   * in a town counts its town store's stock, a store loaded past its cap holds more than it).
+   */
   fill(): number {
-    if (!this.dock) return this.totalStored() / Math.max(1, this.capacity);
+    if (!this.dock) return Math.min(1, this.totalStored() / Math.max(1, this.capacity));
     let f = 0;
     for (const [c, v] of this.dock.held()) f = Math.max(f, v / Math.max(1, this.dock.cap(c)));
-    return f;
+    return Math.min(1, f);
   }
   /**
    * What a panel shows against `capacity`: `fullest()`, never past it. A harvester in a town counts

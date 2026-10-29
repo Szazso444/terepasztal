@@ -703,9 +703,14 @@ export class StoreRegistry {
     if (k >= 0) this.townAtTile.set(k, out);
     return out;
   }
-  /** Where a station's goods go in and out: a depot or warehouse, a warehouse in a town as the town. */
+  /**
+   * Where a station's goods go in and out: a depot's and a warehouse's own store; a Townhouse's,
+   * and a warehouse's in a town, the town's. No other station has one.
+   */
   dockOf(st: Station): ResourceStore | null {
     if (st.def.depot) return this.storeOf(stationKey(st));
+    // a Townhouse stands at the heart of its own town's reach
+    if (st.def.id === 'town') return this.townStore(st.x, st.y);
     if (st.def.stockpile) return this.townStore(st.x, st.y) ?? this.storeOf(stationKey(st));
     return null;
   }

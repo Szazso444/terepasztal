@@ -166,9 +166,10 @@ export interface StopPlan {
   maxDwell?: number;
 }
 /**
- * The store a train fills its tanks from at a station: a depot's or warehouse's own (its dock, a
- * warehouse in a town the town's); at another station that refuels, its trackside supplier within
- * `rules.fuelReach` (`StoreRegistry.fuelSupplierFor`); none at any other.
+ * The store a train fills its tanks from at a station: its dock (a depot's or a warehouse's own, a
+ * Townhouse's and a warehouse's in a town the town's); at another station that refuels, its
+ * trackside supplier within `rules.fuelReach` (`StoreRegistry.fuelSupplierFor`); none at any
+ * other.
  */
 export function stationStore(stores: StoreRegistry, st: Station): ResourceStore | null {
   const dock = stores.dockOf(st);
@@ -2439,10 +2440,10 @@ export class Train {
       ? { ...defaultStop(st.id), load: 'none', unload: 'none', waitFull: false }
       : (this.currentStop ?? defaultStop(st.id));
     if (stop.refuel && this.stateTime < gdt * 1.5) {
-      // top up once on arrival (a fuel detour too): a depot or warehouse fills every tank from
-      // its store, a station supplied with fuel or water what it supplies from its trackside
-      // supplier in reach (`stationStore`); the crew settles what it owes there. Elsewhere
-      // nothing.
+      // top up once on arrival (a fuel detour too): a station with a dock (a depot, a warehouse,
+      // a Townhouse) fills every tank from its store, a station supplied with fuel or water what
+      // it supplies from its trackside supplier in reach (`stationStore`); the crew settles what
+      // it owes there. Elsewhere nothing.
       const store = stationStore(ctx.stores, st);
       const all = !!ctx.stores.dockOf(st);
       const taken = store
@@ -2491,23 +2492,22 @@ export class Train {
         }
         continue;
       }
-      // where the load can go: a depot's or a warehouse's store, or a station that wants it
-      // (contract or spot market)
-      const room = st.def.pool || st.def.stockpile ? st.roomFor(w.cargo) : 0;
-      const contractable = !st.def.pool && !st.def.stockpile && st.accepts(w.cargo);
-      if (!st.def.pool && !st.def.stockpile && !contractable) continue;
-      let n = Math.min(w.amount, budget, contractable ? w.amount : room);
+      // where the load can go: a contract for it here first, then the store of a depot, a
+      // warehouse or a Townhouse, up to its room
+      const contractable = !st.def.pool && st.accepts(w.cargo);
+      if (!st.isStore && !contractable) continue;
+      let n = Math.min(w.amount, budget);
       if (n <= 1e-6) continue;
-      let credited = 0;
-      if (contractable || st.def.stockpile)
-        credited = ctx.onDelivery({
-          cargo: w.cargo,
-          amount: n,
-          origin: w.origin ?? -1,
-          station: st,
-          train: this,
-        });
-      const toStore = Math.min(n - credited, room);
+      const credited = contractable
+        ? ctx.onDelivery({
+            cargo: w.cargo,
+            amount: n,
+            origin: w.origin ?? -1,
+            station: st,
+            train: this,
+          })
+        : 0;
+      const toStore = st.isStore ? Math.min(n - credited, st.roomFor(w.cargo)) : 0;
       n = credited + toStore;
       if (n <= 1e-6) continue;
       if (toStore > 0) {
@@ -2526,29 +2526,20 @@ export class Train {
       }
     }
     if (this.flowTimer >= 90) this.flushFlow(ctx, st);
-    // load what the station makes (or, at a warehouse, keeps) when a later stop takes it: a
-    // depot takes anything, a warehouse anything from a producer, a town what it accepts
-    // what may be taken on here: a freight train takes what a producer makes and any goods a
-    // warehouse keeps, but nothing at a warehouse it is dumping goods into (it put goods down
-    // there, or still carries some from elsewhere), so what goes in does not come out again; a
-    // transport train only takes passengers
+    // load what the station makes, or its store holds, when a later stop takes it. A roaming
+    // train takes goods on only at a producer's own pile (`pickupPile`): never out of a store,
+    // so what it puts down there stays; a transport train only takes passengers
     const job = this.job;
-    const dumping =
-      this.mode === 'freight' &&
-      !job &&
-      st.def.stockpile &&
-      (this.dropped ||
-        this.wagons.some(
-          (w) => w.cargo && w.amount > 0 && w.origin !== st.id && cargoClass(w.cargo) !== 'people',
-        ));
-    const produced = st.availableCargo().filter((c) => {
-      // at a contract's origin only the contract's cargo comes aboard
-      if (job && st.id === job.originId) return c === job.cargo;
-      if (this.mode === 'freight')
-        return !st.def.stockpile || (!dumping && cargoClass(c) !== 'people');
-      if (this.mode === 'transport') return cargoClass(c) === 'people';
-      return true;
-    });
+    const roaming = this.dynamic && !job;
+    const produced =
+      roaming && !st.pickupPile
+        ? []
+        : st.availableCargo().filter((c) => {
+            // at a contract's origin only the contract's cargo comes aboard
+            if (job && st.id === job.originId) return c === job.cargo;
+            if (this.mode === 'transport') return cargoClass(c) === 'people';
+            return true;
+          });
     // a dynamic train has no fixed route: any other station may take what it loads here; a
     // train on a contract follows the job's two stops
     const routeStations = (
@@ -2556,13 +2547,13 @@ export class Train {
         ? ctx.builder.stations.filter((s) => ctx.builder.platformTiles(s).length > 0)
         : this.route.map((id) => ctx.builder.stationById(id))
     ).filter((s): s is Station => !!s && s !== st);
+    // goods go on to a station that wants them, or to a store that is not the one they came out
+    // of (two warehouses of one town are one store; two unbound warehouses count as one too)
+    const oneStore = (a: Station, b: Station) =>
+      a.dock && b.dock ? a.dock.key === b.dock.key : !!a.def.stockpile && !!b.def.stockpile;
     const taker = (c: string) =>
       routeStations.some((s) =>
-        cargoClass(c) === 'people'
-          ? s.accepts(c)
-          : s.def.pool ||
-            (s.def.stockpile && !st.def.stockpile) ||
-            (!s.def.stockpile && s.accepts(c)),
+        cargoClass(c) === 'people' ? s.accepts(c) : s.isStore ? !oneStore(s, st) : s.accepts(c),
       );
     let allFull = true;
     let canLoadAny = false;

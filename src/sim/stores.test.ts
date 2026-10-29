@@ -271,7 +271,7 @@ describe('a store', () => {
 });
 
 describe('binding docks at refresh', () => {
-  it('gives depots and warehouses their dock and every other station none', () => {
+  it('gives depots, warehouses and Townhouses their dock and every other station none', () => {
     const { w, stores } = world();
     const hall = station(w, 'town', 20, 29);
     const depot = station(w, 'depot', 30, 24);
@@ -279,7 +279,9 @@ describe('binding docks at refresh', () => {
     wh.level = 2;
     const producer = station(w, 'lumber', 40, 29);
     sync(w, stores);
-    expect(hall.dock).toBeNull();
+    // a Townhouse is a dock of its town store (spec section 6)
+    expect(hall.dock).toBe(stores.dockOf(hall));
+    expect(hall.dock!.key).toBe(`town:${w.towns.byStation(hall.id)!.id}`);
     expect(producer.dock).toBeNull();
     expect(depot.dock).toBe(stores.dockOf(depot));
     expect(depot.dock!.key).toBe(`st:${depot.id}`);
@@ -709,6 +711,7 @@ describe('trains at a harvester in a town', () => {
     town.add('wheat', farm.capacity + 150);
     expect(farm.stored('wheat')).toBe(farm.capacity + 150);
     expect(farm.shownStored()).toBe(farm.capacity);
+    expect(farm.fill(), 'no fuller than full').toBe(1);
     town.take('wheat', 160);
     expect(farm.shownStored()).toBe(farm.capacity - 10);
   });

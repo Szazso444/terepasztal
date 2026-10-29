@@ -23,14 +23,13 @@ import { storeWith } from '../testing/storeFixtures';
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
 // The Freight route mode (issue #233): one mode for what Production and Collection did. An empty
-// train ranks producers and warehouses by how full they are; a load taken from a warehouse goes to
-// a depot and one taken at producers to a warehouse; a loaded train tops up at producers only;
-// and a train never takes out of a warehouse what it put into it.
+// train ranks the producers that keep their own pile by how full they are; a store (a depot, a
+// warehouse, a Townhouse) is never a pickup, only where loads go: the nearest one with room that
+// they did not come from (the town stores, final review C1); a loaded train tops up at producers
+// only; and a train never takes out of a store what it put into it.
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
-  // a warehouse is worth picking with what a level 1 store holds
-  rules.collectMin = 30;
   setSupplyMode(DEFAULT_SUPPLY);
   resetTrainIds();
   resetStationIds();
@@ -103,27 +102,26 @@ function launch(w: World, t: Train) {
 const reach = (a: Station, b: Station) => Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy);
 
 /**
- * A quarry and a warehouse either side of a train whose head is at column `hx` (`s` 1: quarry
- * west), each with a depot on the side facing the train, laid so that the way there and on to the
- * depot is as long for both: the sum the ranking weighs (`Fleet.chooseNext`). The quarry is one
- * tile, its middle 14 from the train and its depot's 3.5 on; the warehouse two along x (2 x 1),
- * its middle half a tile further, 14.5, and its depot's half a tile nearer, 3.
+ * Two quarries either side of a train whose head is at column `hx`, each with a depot on the side
+ * facing the train, laid so that the way there and on to the depot is as long for both: the sum
+ * the ranking weighs (`Fleet.chooseNext`). Each quarry's middle is 14 from the train and its
+ * depot's 3.5 on. The west one is at level `levels[0]`, the east one at `levels[1]` (which sets
+ * the room each has), and each holds `stored`.
  */
-function flanks(
+function twins(
   w: World,
   hx: number,
-  s: number,
-  quarry: Record<string, number>,
-  house: Record<string, number>,
+  levels: readonly [number, number],
+  stored: Record<string, number>,
 ) {
-  const q = put(w, 'quarry', Math.round(hx - s * 14), quarry);
-  const h = put(w, 'warehouse', Math.round(hx + s * 14) - (s < 0 ? 1 : 0), house);
-  put(w, 'depot', q.x + (s > 0 ? 3 : -4));
-  put(w, 'depot', h.x + (s > 0 ? -3 : 3));
-  const [d1, d2] = w.builder.stations.filter((x) => x.def.pool);
+  const west = put(w, 'quarry', Math.floor(hx - 14), stored);
+  const east = put(w, 'quarry', Math.ceil(hx + 14), stored);
+  [west.level, east.level] = levels;
+  const d1 = put(w, 'depot', west.x + 3);
+  const d2 = put(w, 'depot', east.x - 4);
   const way = (st: Station, d: Station) => Math.abs(st.cx - hx) + reach(d, st);
-  expect(way(q, d1), 'premise: as far there and on').toBe(way(h, d2));
-  return { q, house: h };
+  expect(way(west, d1), 'premise: as far there and on').toBe(way(east, d2));
+  return { west, east };
 }
 
 describe('the route modes', () => {
@@ -153,125 +151,75 @@ describe('the route modes', () => {
 // ------------------------------------------------------------------ ranking an empty train
 
 describe('an empty freight train choosing a stop', () => {
-  /**
-   * A quarry and a warehouse, each holding 40 stone, either side of a train standing at column
-   * 30, each with a depot on the side facing the train, the way there and on to the depot as long
-   * for both (`flanks`). The
-   * quarry's room is `capacityMul` of 60 and the warehouse's `warehouseCap`, which sets how full
-   * each is. `mirror` puts the quarry to the east instead of the west.
-   */
-  function pair(capacityMul: number, warehouseCap: number, mirror: boolean) {
-    rules.capacityMul = capacityMul;
-    rules.warehouseCap = warehouseCap;
+  it('never picks a store, however much it holds, and picks a producer instead', () => {
+    rules.warehouseCap = 45;
     const w = world();
     const t = train(w, 30);
-    const hx = t.poses[0].x;
-    const s = mirror ? -1 : 1;
-    const { q, house } = flanks(w, hx, s, { stone: 40 }, { stone: 40 });
-    return { w, t, q, house };
-  }
-
-  it('picks the fuller of a producer and a warehouse, whichever is which', () => {
-    // the quarry holds 40 of 60 (two thirds); the warehouse 40 of its capacity
-    const cases: [mul: number, cap: number, fuller: 'quarry' | 'warehouse'][] = [
-      [1, 45, 'warehouse'],
-      [1, 80, 'quarry'],
-      [1, 1000, 'quarry'],
-      // both past four fifths, which counts for more still: the fuller of the two
-      [0.75, 41, 'warehouse'],
-      [0.7, 1000, 'quarry'],
-      [0.75, 48, 'quarry'],
-    ];
-    for (const [mul, cap, fuller] of cases)
-      for (const mirror of [false, true]) {
-        const { w, t, q, house } = pair(mul, cap, mirror);
-        expect(w.fleet.chooseNext(t), `${fuller} fuller, quarry ${mirror ? 'east' : 'west'}`).toBe(
-          fuller === 'quarry' ? q.id : house.id,
-        );
-      }
-  });
-
-  it('picks the fuller whatever the layout, with equal hauls and legs', { timeout: 60_000 }, () => {
-    forAll(
-      (rng: Rng) => ({
-        mul: rng.pick([0.5, 0.75, 1, 1.5, 2]),
-        cap: rng.pick([42, 45, 50, 60, 80, 120, 400, 1000]),
-        mirror: rng.chance(0.5),
-      }),
-      ({ mul, cap, mirror }) => {
-        const { w, t, q, house } = pair(mul, cap, mirror);
-        const fillQ = q.totalStored() / q.capacity;
-        const fillW = house.totalStored() / house.capacity;
-        const press = (f: number) => 1 + f + (f >= 0.8 ? 1 : 0);
-        // equal pressure is a tie the order of the stations breaks: not asked here
-        if (press(fillQ) === press(fillW)) return;
-        expect(w.fleet.chooseNext(t)).toBe(press(fillQ) > press(fillW) ? q.id : house.id);
-      },
-    );
-  });
-
-  it('leaves a warehouse alone below the pickup pile, however full it is, and moves the line', () => {
-    rules.warehouseCap = 30;
-    const w = world();
-    const t = train(w, 30);
-    // 29 of 30 is nearly full for its capacity
-    const house = put(w, 'warehouse', 50, { stone: 29 });
+    // a warehouse nearly full for its room, and a depot holding a lot, both near the train
+    put(w, 'warehouse', 44, { stone: 44 });
+    put(w, 'depot', 20, { stone: 500 });
+    expect(w.fleet.chooseNext(t)).toBeNull();
+    // a thin pile at a quarry far off is a stop
     const far = put(w, 'quarry', 80, { stone: 12 });
-    put(w, 'depot', 70);
     expect(w.fleet.chooseNext(t)).toBe(far.id);
-    for (const [min, picked] of [
-      [29, true],
-      [29.5, false],
-      [10, true],
-      [100, false],
-    ] as const) {
-      rules.collectMin = min;
-      expect(w.fleet.chooseNext(t) === house.id, `pickup pile ${min}`).toBe(picked);
-    }
-    // and a warehouse alone with it is no stop at all
-    rules.collectMin = 30;
-    w.builder.stations.splice(w.builder.stations.indexOf(far), 1);
-    expect(w.fleet.chooseNext(t)).toBeNull();
   });
 
-  it('counts only what the train can haul towards the pickup pile', () => {
+  it('picks the fuller of two producers, whichever side it is on', () => {
+    // 40 stone: two thirds of a level 1 quarry's 60, a third of a level 2's 120
+    for (const levels of [
+      [1, 2],
+      [2, 1],
+      [3, 1],
+      [2, 4],
+    ] as const) {
+      const w = world();
+      const t = train(w, 30);
+      const { west, east } = twins(w, t.poses[0].x, levels, { stone: 40 });
+      const fuller = levels[0] < levels[1] ? west : east;
+      expect(w.fleet.chooseNext(t), `levels ${levels.join(', ')}`).toBe(fuller.id);
+    }
+  });
+
+  it('counts only what the train can haul', () => {
     const w = world();
     const t = train(w, 30);
-    // a hopper takes no water: 500 of it is no pile, and the 10 stone beside it are too few
-    const house = put(w, 'warehouse', 50, { water: 500, stone: 10 });
+    // a hopper takes no water: 500 of it is no pile
+    put(w, 'pump', 50, { water: 500 });
     put(w, 'depot', 70);
     expect(w.fleet.chooseNext(t)).toBeNull();
-    // with the pickup pile at nothing a handful of stone is still too little to send a train for,
-    // and the credit a producer filling up gets is none to a warehouse that holds a lot besides
-    rules.collectMin = 0;
-    house.storage.set('stone', 1);
+    // a single unit of stone is too little to send a train for; ten are worth it
+    const q = put(w, 'quarry', 56, { stone: 1 });
     expect(w.fleet.chooseNext(t)).toBeNull();
-    house.storage.set('stone', 10);
-    expect(w.fleet.chooseNext(t)).toBe(house.id);
+    q.storage.set('stone', 10);
+    expect(w.fleet.chooseNext(t)).toBe(q.id);
   });
 });
 
 // ------------------------------------------------------------------ where a load goes
 
 describe('a loaded freight train choosing a stop', () => {
-  it('takes goods from a warehouse to a depot, though a warehouse with room is nearer', () => {
-    const w = world();
-    const src = put(w, 'warehouse', 6, { stone: 100 });
-    const near = put(w, 'warehouse', 34);
-    const depot = put(w, 'depot', 70);
-    const t = train(w, 30, [stoneFrom(src.id), stoneFrom(src.id)]);
-    expect(w.fleet.chooseNext(t)).toBe(depot.id);
-    expect(near.roomFor('stone')).toBeGreaterThan(5);
+  it('takes any load to the nearest store with room, a depot or a warehouse alike', () => {
+    for (const [houseX, depotX, nearer] of [
+      [34, 70, 'warehouse'],
+      [70, 34, 'depot'],
+    ] as const) {
+      const w = world();
+      // goods from a warehouse (a load a scheduled train took on) go where any goods go
+      const src = put(w, 'warehouse', 6, { stone: 100 });
+      const house = put(w, 'warehouse', houseX);
+      const depot = put(w, 'depot', depotX);
+      const t = train(w, 30, [stoneFrom(src.id), stoneFrom(src.id)]);
+      expect(w.fleet.chooseNext(t), nearer).toBe((nearer === 'depot' ? depot : house).id);
+    }
   });
 
-  it('takes goods from a warehouse to another warehouse only when no depot is reachable', () => {
+  it('never takes goods back to the station they came from', () => {
     const w = world();
-    const src = put(w, 'warehouse', 6, { stone: 100 });
-    const near = put(w, 'warehouse', 34);
+    const src = put(w, 'warehouse', 33, { stone: 100 });
+    const far = put(w, 'warehouse', 70);
     const t = train(w, 30, [stoneFrom(src.id), stoneFrom(src.id)]);
-    expect(w.fleet.chooseNext(t)).toBe(near.id);
-    // never back into the one it came from
-    w.builder.stations.splice(w.builder.stations.indexOf(near), 1);
+    expect(w.fleet.chooseNext(t)).toBe(far.id);
+    w.builder.stations.splice(w.builder.stations.indexOf(far), 1);
     expect(w.fleet.chooseNext(t)).toBeNull();
   });
 
@@ -285,40 +233,30 @@ describe('a loaded freight train choosing a stop', () => {
     expect(w.fleet.chooseNext(t)).toBe(near.id);
   });
 
-  it('takes goods from producers to a depot when that is clearly nearer', () => {
+  it('passes a store with no room for the goods', () => {
+    rules.warehouseCap = 30;
     const w = world();
     const q = put(w, 'quarry', 6, { stone: 40 });
-    put(w, 'warehouse', 70);
-    const depot = put(w, 'depot', 33);
+    // full of stone, with room for wheat only
+    put(w, 'warehouse', 34, { stone: 30 });
+    const depot = put(w, 'depot', 70);
     const t = train(w, 30, [stoneFrom(q.id), stoneFrom(q.id)]);
     expect(w.fleet.chooseNext(t)).toBe(depot.id);
   });
 
-  it('takes any load with goods from a warehouse in it to a depot', () => {
+  it('tops up at a producer, never at a store', () => {
+    rules.warehouseCap = 300;
     const w = world();
-    const q = put(w, 'quarry', 6, { stone: 40 });
-    const src = put(w, 'warehouse', 12, { stone: 100 });
-    put(w, 'warehouse', 36);
-    const depot = put(w, 'depot', 75);
-    const t = train(w, 30, [stoneFrom(q.id), stoneFrom(src.id)]);
-    expect(w.fleet.chooseNext(t)).toBe(depot.id);
-    // and with only producer goods aboard, to the warehouse
-    t.wagons[1].origin = q.id;
-    expect(w.fleet.chooseNext(t)).toBe(w.builder.stations.find((s) => s.x === 36)!.id);
-  });
-
-  it('tops up at a producer, never at a warehouse that is not where the goods go', () => {
-    const w = world();
-    const src = put(w, 'warehouse', 2, { stone: 100 });
+    const src = put(w, 'quarry', 2, { stone: 0 });
+    // a warehouse full of stone near by: no place to put the goods, nor to take more on
     const pile = put(w, 'warehouse', 33, { stone: 300 });
-    const depot = put(w, 'depot', 64);
-    // half full of stone from a warehouse, room for as much again
+    const depot = put(w, 'depot', 70);
+    // half full of stone, room for as much again
     const t = train(w, 30, [stoneFrom(src.id), { ...empty() }]);
-    // the only other store of stone worth a detour is a warehouse: the train goes to the depot
     expect(w.fleet.chooseNext(t)).toBe(depot.id);
-    expect(pile.stored('stone')).toBeGreaterThan(rules.collectMin);
-    // with a quarry off to the west, nearer than the depot, it tops up there first
-    const q = put(w, 'quarry', 10, { stone: 40 });
+    expect(pile.roomFor('stone')).toBe(0);
+    // with a quarry to the east, nearer than the depot, it tops up there first
+    const q = put(w, 'quarry', 44, { stone: 40 });
     expect(w.fleet.chooseNext(t)).toBe(q.id);
   });
 
@@ -467,12 +405,11 @@ describe('a freight train at a warehouse', () => {
   );
 
   it(
-    'stays out of the warehouse it filled when nothing else is worth a trip, for another train to empty',
+    'leaves the load it put into a warehouse there, and so does a train new to the line',
     { timeout: 60_000 },
     () => {
-      // the quarry holds one load and makes no more: the train hauls it to the warehouse, whose
-      // pile is then the one thing worth fetching, and the train that put it there is not the one
-      // to fetch it
+      // the quarry holds one load and makes no more: the train hauls it to the warehouse, and the
+      // pile there is no pickup for it nor for any other roaming train
       const w = world();
       const q = put(w, 'quarry', 20, { stone: 40 });
       const house = put(w, 'warehouse', 45);
@@ -485,29 +422,37 @@ describe('a freight train at a warehouse', () => {
       expect(house.stored('stone'), 'and left it there').toBeGreaterThan(30);
       expect(first.state).toBe('idle');
       expect(watch.problems).toEqual([]);
-      // another train, new to the line, takes the pile to the depot
+      // another train, new to the line, finds nothing to fetch
+      const pile = house.stored('stone');
       const second = launch(w, train(w, 60, undefined, false));
+      expect(w.fleet.chooseNext(second)).toBeNull();
       run(w, [watch, new Watch(second)], 300, false, filled);
       expect(watch.problems).toEqual([]);
-      expect(house.stored('stone')).toBeLessThan(1);
-      expect(depot.stored('stone')).toBeGreaterThan(30);
+      expect(house.stored('stone')).toBeCloseTo(pile, 6);
+      expect(depot.stored('stone')).toBe(0);
+      expect(aboard(second).size).toBe(0);
     },
   );
 
-  it('picks a warehouse pile up when it arrives empty, and takes it to the depot', () => {
+  it('never picks up a warehouse pile, arriving empty', () => {
     const w = world();
     const house = put(w, 'warehouse', 45, { stone: 60 });
     put(w, 'warehouse', 52);
     const depot = put(w, 'depot', 75);
     const t = launch(w, train(w, 30));
-    let atDepot = false;
-    for (let i = 0, now = 0; i < 400 / GDT; i++) {
+    // sent there on a stop of its own, it still takes nothing aboard
+    t.schedule = [defaultStop(house.id)];
+    expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
+    t.onPathReady({ builder: w.builder });
+    let at = false;
+    for (let i = 0, now = 0; i < 300 / GDT; i++) {
       w.fleet.tick(GDT, (now += GDT));
-      if (t.atStation === depot) atDepot = true;
+      if (t.atStation === house) at = true;
     }
-    expect(atDepot, 'it reached the depot').toBe(true);
-    expect(house.stored('stone')).toBeLessThan(60);
-    expect(depot.stored('stone')).toBeGreaterThan(0);
+    expect(at, 'it called at the warehouse').toBe(true);
+    expect(house.stored('stone')).toBe(60);
+    expect(depot.stored('stone')).toBe(0);
+    expect(aboard(t).size).toBe(0);
   });
 
   it('holds for any layout, with one train or two', { timeout: 120_000 }, () => {
@@ -632,7 +577,9 @@ describe('a freight train unloading at a station with a store', () => {
     expect(store.get('wood')).toBeCloseTo(20, 6);
     expect(b.stored('wood'), 'the other warehouse shows the same goods').toBeCloseTo(20, 6);
     expect(b.availableCargo()).toContain('wood');
+    // a train on a schedule loads at a store's station
     const loader = train(w, 70, [flatbed(), flatbed()], false);
+    loader.mode = 'schedule';
     const depot = put(w, 'depot', 10);
     sync();
     const most = visit(w, loader, b, [depot]);
@@ -663,12 +610,13 @@ describe('a freight train unloading at a station with a store', () => {
 describe('a freight train that put goods down at a stop', () => {
   it('says so in its save, and drops that on setting off', () => {
     const w = world();
-    put(w, 'quarry', 20, { stone: 55 });
+    const q = put(w, 'quarry', 20, { stone: 55 });
     const house = put(w, 'warehouse', 45);
     put(w, 'depot', 75);
     const t = launch(w, train(w, 30));
     let seen = false;
-    for (let i = 0, now = 0; i < 400 / GDT && !seen; i++) {
+    let now = 0;
+    for (let i = 0; i < 400 / GDT && !seen; i++) {
       w.fleet.tick(GDT, (now += GDT));
       const dropped = t.toJSON().dropped;
       if (t.atStation === house && dropped) {
@@ -678,8 +626,14 @@ describe('a freight train that put goods down at a stop', () => {
       }
     }
     expect(seen, 'a train put goods down at the warehouse').toBe(true);
-    // it sets off, and what it put down no longer holds it
-    for (let i = 0, now = 100; i < 60 / GDT; i++) w.fleet.tick(GDT, (now += GDT));
+    // more stone at the quarry: it sets off for it, and what it put down no longer holds it
+    q.storage.set('stone', 40);
+    let away = false;
+    for (let i = 0; i < 400 / GDT && !away; i++) {
+      w.fleet.tick(GDT, (now += GDT));
+      away = t.state === 'moving' && t.atStation === null;
+    }
+    expect(away, 'it set off').toBe(true);
     expect(t.toJSON().dropped).toBe(false);
   });
 });
@@ -770,47 +724,26 @@ function* shrinkLoaded(c: LoadedCase): Iterable<LoadedCase> {
 }
 
 /**
- * Where a loaded freight train's goods may go, said without the fleet's own helpers: a load with
- * anything from a warehouse in it to a depot (to a warehouse that is not a source only if there is
- * no depot), a load from producers only to the nearest warehouse with room that is not a source,
- * or a depot that is nearer. `ok` is every station that is right; ties in distance give several.
+ * Where a loaded freight train's goods may go, said without the fleet's own helpers: the nearest
+ * store (a depot or a warehouse) with room for `min(units, 5)` of the stone at least, that is not
+ * one the goods came from. `ok` is every station that is right; ties in distance give several.
  */
 function dumpsFor(w: World, t: Train) {
   const head = t.poses[0];
   const far = (s: Station) => Math.abs(s.cx - head.x) + Math.abs(s.cy - head.y);
   const all = w.builder.stations;
-  const depots = all.filter((s) => s.def.pool);
   const houses = all.filter((s) => s.def.stockpile);
+  const stores = all.filter((s) => s.def.pool || s.def.stockpile);
   const sources = new Set(t.wagons.map((g) => g.origin).filter((o): o is number => o !== null));
   const loaded = t.wagons.filter((g) => g.cargo && g.amount > 0);
   const units = loaded.reduce((a, g) => a + g.amount, 0);
   const fromStore = loaded.some((g) => houses.some((s) => s.id === g.origin));
-  const nearest = (xs: Station[]) => {
-    const m = Math.min(...xs.map(far));
-    return xs.filter((s) => far(s) === m);
-  };
-  const ok: Station[] = [];
-  if (fromStore) {
-    if (depots.length) ok.push(...nearest(depots));
-    else {
-      const roomy = houses.filter((s) => !sources.has(s.id) && s.roomFor('stone') > 1);
-      if (roomy.length) ok.push(...nearest(roomy));
-    }
-  } else {
-    const roomy = houses.filter(
-      (s) => !sources.has(s.id) && s.roomFor('stone') >= Math.min(units, 5),
-    );
-    if (!roomy.length) {
-      if (depots.length) ok.push(...nearest(depots));
-    } else {
-      const house = nearest(roomy);
-      const depot = depots.length ? nearest(depots) : [];
-      // the warehouse, unless a depot is nearer: then either (how much nearer is pinned below)
-      if (!depot.length || far(depot[0]) >= far(house[0])) ok.push(...house);
-      else ok.push(...house, ...depot);
-    }
-  }
-  return { ok, fromStore, houses, depots, sources };
+  const roomy = stores.filter(
+    (s) => !sources.has(s.id) && s.roomFor('stone') >= Math.min(units, 5),
+  );
+  const m = Math.min(...roomy.map(far));
+  const ok = roomy.filter((s) => far(s) === m);
+  return { ok, fromStore, houses, sources };
 }
 
 describe('where a loaded freight train is bound, over generated lines', () => {
@@ -832,68 +765,39 @@ describe('where a loaded freight train is bound, over generated lines', () => {
   }
   const SEEDS = Array.from({ length: 60 }, (_, i) => i + 1);
 
-  it('takes goods from a warehouse to a depot, or to another warehouse only if none exists', () => {
-    const seen = { fromStore: 0, noDepot: 0, depotNotNearest: 0 };
+  it('takes a load to the nearest store with room that is not its source, wherever it came from', () => {
+    const seen = { fromStore: 0, house: 0, depot: 0, nowhere: 0 };
     forAll(
       genLoaded,
       (c) => {
         const { w, t } = build(full(c));
         const spec = dumpsFor(w, t);
-        if (!spec.fromStore) return;
-        seen.fromStore++;
-        if (!spec.depots.length) seen.noDepot++;
         const got = w.fleet.chooseNext(t);
         if (!spec.ok.length) {
           expect(got, 'nowhere to send it').toBeNull();
+          seen.nowhere++;
           return;
         }
         expect(
           spec.ok.map((s) => s.id),
           'the stop',
         ).toContain(got);
-        // a depot is bound for though a warehouse with room is nearer
-        const roomier = spec.houses.some((s) => s.roomFor('stone') > 1 && !spec.sources.has(s.id));
-        if (roomier && spec.depots.length) seen.depotNotNearest++;
-      },
-      { seeds: SEEDS, shrink: shrinkLoaded },
-    );
-    // the layouts are worth running: both rules were asked
-    expect(seen.fromStore).toBeGreaterThan(10);
-    expect(seen.noDepot).toBeGreaterThan(0);
-    expect(seen.depotNotNearest).toBeGreaterThan(0);
-  });
-
-  it('takes goods from producers to a warehouse that is not their source, or a depot nearer', () => {
-    const seen = { producerOnly: 0, house: 0, depot: 0 };
-    forAll(
-      genLoaded,
-      (c) => {
-        const { w, t } = build(full(c));
-        const spec = dumpsFor(w, t);
-        if (spec.fromStore) return;
-        seen.producerOnly++;
-        const got = w.fleet.chooseNext(t);
-        if (!spec.ok.length) {
-          expect(got, 'nowhere to send it').toBeNull();
-          return;
-        }
-        expect(
-          spec.ok.map((s) => s.id),
-          'the stop',
-        ).toContain(got);
+        expect(spec.sources.has(got!), 'back to its source').toBe(false);
+        if (spec.fromStore) seen.fromStore++;
         const stop = w.builder.stations.find((s) => s.id === got)!;
         if (stop.def.stockpile) seen.house++;
         else seen.depot++;
-        expect(spec.sources.has(got!), 'back to its source').toBe(false);
       },
       { seeds: SEEDS, shrink: shrinkLoaded },
     );
-    expect(seen.producerOnly).toBeGreaterThan(10);
-    expect(seen.house).toBeGreaterThan(0);
-    expect(seen.depot).toBeGreaterThan(0);
+    // the layouts are worth running: loads from a store and from producers, to either kind
+    expect(seen.fromStore).toBeGreaterThan(5);
+    expect(seen.house).toBeGreaterThan(5);
+    expect(seen.depot).toBeGreaterThan(5);
+    expect(seen.nowhere).toBeGreaterThan(0);
   });
 
-  it('tops up at a producer holding what it carries, or goes where the goods go, no warehouse else', () => {
+  it('tops up at a producer holding what it carries, or goes where the goods go, no store else', () => {
     const seen = { topUp: 0, dump: 0, houseHeldStone: 0 };
     forAll(
       genLoaded,
@@ -926,113 +830,67 @@ describe('where a loaded freight train is bound, over generated lines', () => {
     expect(seen.houseHeldStone).toBeGreaterThan(10);
   });
 
-  it('keeps the rule Production had for a depot that is nearer: a depot only when clearly so', () => {
-    // a load from a quarry, and a warehouse with room: the warehouse unless the depot is more than
-    // half as near again
+  it('takes a load from a quarry to whichever of a warehouse and a depot is nearer', () => {
     const at = (houseX: number, depotX: number) => {
       const w = world();
       const q = put(w, 'quarry', 6, { stone: 40 });
       const house = put(w, 'warehouse', houseX);
       const depot = put(w, 'depot', depotX);
       const t = train(w, 30, [stoneFrom(q.id), stoneFrom(q.id)]);
-      const head = t.poses[0];
-      const far = (s: Station) => Math.abs(s.cx - head.x) + Math.abs(s.cy - head.y);
-      return { stop: w.fleet.chooseNext(t), house, depot, ratio: far(house) / far(depot) };
+      return { stop: w.fleet.chooseNext(t), house, depot };
     };
-    const near = at(60, 52);
-    expect(near.ratio, 'premise: nearer, but not by half').toBeGreaterThan(1);
-    expect(near.ratio).toBeLessThan(1.5);
-    expect(near.stop).toBe(near.house.id);
-    const clear = at(80, 44);
-    expect(clear.ratio, 'premise: nearer by more than half').toBeGreaterThan(1.5);
-    expect(clear.stop).toBe(clear.depot.id);
+    const house = at(52, 60);
+    expect(house.stop).toBe(house.house.id);
+    const depot = at(60, 52);
+    expect(depot.stop).toBe(depot.depot.id);
   });
 });
 
 // ---- ranking an empty train
 
-describe('an empty freight train ranking a producer and a warehouse, over generated piles', () => {
-  interface Pair {
+describe('an empty freight train ranking producers, over generated piles', () => {
+  interface Twins {
     /** units of stone in each: equal, so the haul is too */
     stored: number;
-    /** the quarry's room is 60 times this */
+    /** a quarry's room is `capacityMul` of its level's */
     mul: number;
-    /** the warehouse's room */
-    cap: number;
-    /** `rules.collectMin`, at most `stored` so that the warehouse is a candidate */
-    pickup: number;
-    mirror: boolean;
+    /** the levels of the west and the east quarry */
+    levels: [number, number];
   }
-  /**
-   * A quarry and a warehouse either side of the train, each with a depot on the side facing the
-   * train (`flanks`): the way there and on, the haul and the time since a train last loaded are
-   * equal, and only how full each is differs.
-   */
-  function pairAt(c: Pair) {
-    rules.capacityMul = c.mul;
-    rules.warehouseCap = c.cap;
-    rules.collectMin = c.pickup;
-    const w = world();
-    const t = train(w, 30);
-    const hx = t.poses[0].x;
-    const s = c.mirror ? -1 : 1;
-    const { q, house } = flanks(w, hx, s, { stone: c.stored }, { stone: c.stored });
-    return { w, t, q, house };
-  }
-  const fill = (s: Station) => s.totalStored() / s.capacity;
 
-  it('picks the one that is fuller for its room, whatever the pile it must hold at least', () => {
-    const seen = { quarry: 0, house: 0, fullHouseBigPile: 0 };
+  it('picks the one that is fuller for its room, with equal hauls and legs', () => {
+    const seen = { west: 0, east: 0 };
+    const press = (f: number) => 1 + f + (f >= 0.8 ? 1 : 0);
     forAll(
-      (rng: Rng): Pair => {
-        const stored = rng.pick([10, 25, 40, 100, 400]);
-        return {
-          stored,
-          mul: rng.pick([0.5, 0.75, 1, 1.5, 2, 4]),
-          cap: rng.pick([12, 30, 45, 60, 100, 500, 1000]),
-          pickup: rng.pick([0, 1, 10, stored]),
-          mirror: rng.chance(0.5),
-        };
-      },
+      (rng: Rng): Twins => ({
+        stored: rng.pick([10, 25, 40, 100, 400]),
+        mul: rng.pick([0.5, 0.75, 1, 1.5, 2, 4]),
+        levels: [rng.int(1, 4), rng.int(1, 4)],
+      }),
       (c) => {
-        const { w, t, q, house } = pairAt(c);
-        // the same fullness is a tie the order of the stations breaks: nothing to say of it
-        if (fill(q) === fill(house)) return;
-        const fuller = fill(q) > fill(house) ? q : house;
-        expect(w.fleet.chooseNext(t), `quarry ${fill(q)} full, warehouse ${fill(house)}`).toBe(
+        rules.capacityMul = c.mul;
+        const w = world();
+        const t = train(w, 30);
+        const { west, east } = twins(w, t.poses[0].x, c.levels, { stone: c.stored });
+        // the same pressure is a tie the order of the stations breaks: nothing to say of it
+        if (press(west.fill()) === press(east.fill())) return;
+        const fuller = press(west.fill()) > press(east.fill()) ? west : east;
+        expect(w.fleet.chooseNext(t), `fill ${west.fill()} west, ${east.fill()} east`).toBe(
           fuller.id,
         );
-        if (fuller === q) seen.quarry++;
-        else seen.house++;
-        // a warehouse holding many times the pile it needs, and fuller than a producer or not
-        if (c.stored >= 4 * Math.max(1, c.pickup) && fuller === q) seen.fullHouseBigPile++;
+        if (fuller === west) seen.west++;
+        else seen.east++;
       },
       {
         seeds: Array.from({ length: 80 }, (_, i) => i + 1),
         shrink: function* (c) {
-          if (c.mirror) yield { ...c, mirror: false };
-          if (c.pickup > 0) yield { ...c, pickup: 0 };
+          if (c.stored !== 40) yield { ...c, stored: 40 };
+          if (c.mul !== 1) yield { ...c, mul: 1 };
         },
       },
     );
-    expect(seen.quarry).toBeGreaterThan(5);
-    expect(seen.house).toBeGreaterThan(5);
-    // a big pile does not outweigh the room it sits in: the producer that is fuller still wins
-    expect(seen.fullHouseBigPile).toBeGreaterThan(3);
-  });
-
-  it('weighs a pile the warehouse holds many times over the pickup pile no more than its fill', () => {
-    // 100 stone against a pickup pile of 5: a pull that grew with the pile past the pickup pile
-    // would carry the warehouse past a producer that is two thirds full
-    const { w, t, q, house } = pairAt({
-      stored: 100,
-      mul: 1.5,
-      cap: 1000,
-      pickup: 5,
-      mirror: false,
-    });
-    expect(fill(q)).toBeGreaterThan(fill(house));
-    expect(w.fleet.chooseNext(t)).toBe(q.id);
+    expect(seen.west).toBeGreaterThan(5);
+    expect(seen.east).toBeGreaterThan(5);
   });
 });
 
@@ -1254,18 +1112,15 @@ describe('what a freight train takes on at the stations it serves', () => {
     expect(depot.stored('wheat') - wheat0).toBeGreaterThan(10);
   });
 
-  it('loads every kind of goods a warehouse holds that the wagons take, as Collection did', () => {
+  it('takes nothing a warehouse holds, however much, as Collection did no more', () => {
     const w = world();
     const house = put(w, 'warehouse', 50, { stone: 60, wheat: 60 });
     const depot = put(w, 'depot', 75);
     const t = launch(w, train(w, 30, [empty(), flat()]));
-    const before = { stone: depot.stored('stone'), wheat: depot.stored('wheat') };
     const most = peak(w, t, 200);
-    expect(most.get('stone') ?? 0, 'stone aboard').toBeGreaterThan(10);
-    expect(most.get('wheat') ?? 0, 'wheat aboard').toBeGreaterThan(10);
-    expect(house.stored('stone') + house.stored('wheat')).toBeLessThan(120);
-    expect(depot.stored('stone') - before.stone).toBeGreaterThan(10);
-    expect(depot.stored('wheat') - before.wheat).toBeGreaterThan(10);
+    expect(most.size, 'nothing aboard').toBe(0);
+    expect(house.stored('stone') + house.stored('wheat')).toBe(120);
+    expect(depot.totalStored()).toBe(0);
   });
 
   it('loads nothing at a warehouse while carrying goods from elsewhere, and unloads what it can', () => {
@@ -1301,8 +1156,9 @@ describe('what a freight train takes on at the stations it serves', () => {
     expect(carried?.has('wheat')).toBe(false);
     run(w, [watch], 150, false, now);
     expect(watch.problems).toEqual([]);
-    // the 10 that did not fit reached the depot, and then the pile the train left behind
-    expect(depot.stored('stone') - stone0, 'the rest reached the depot').toBeGreaterThanOrEqual(10);
+    // the 10 that did not fit reached the depot; the pile the train left behind stays
+    expect(depot.stored('stone') - stone0, 'the rest reached the depot').toBeCloseTo(10, 6);
+    expect(house.stored('stone')).toBeCloseTo(30, 6);
   });
 
   it('takes nothing at a warehouse it could put none of its goods into, though it holds some', () => {

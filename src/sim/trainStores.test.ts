@@ -16,6 +16,7 @@ import {
 } from './trains';
 import type { Station } from './stations';
 import { StorePool } from './stores';
+import { SimStep, startStock, type StepContext } from './step';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -363,5 +364,133 @@ describe('trains and the stores', () => {
     t.oil = 40;
     w.fleet.recall(t);
     expect(store.get(t.oilKind)).toBeCloseTo(40, 9);
+  });
+});
+
+// Goods between the stores (the final review's C1 and I3): a train on a schedule loads and unloads
+// at any station whose goods are a store's (a depot, a warehouse, a Townhouse) or at a harvester in
+// a town; a roaming freight train never picks goods up at one, it only takes a producer's own pile
+// to the nearest store.
+describe('trains moving goods between stores', () => {
+  /** A finished house with residents at (x, y), in the editor's way. */
+  function home(w: SimWorld, x: number, y: number) {
+    w.builder.free = true;
+    expect(w.builder.spawnDecor(x, y, 'townhouse', 0)).not.toBeNull();
+    w.builder.free = false;
+    w.houses.finishAll();
+  }
+  /** The town store of the Townhouse `hall`, as the registry keeps it. */
+  const townOf = (w: SimWorld, hall: Station) =>
+    w.stores.byKey(`town:${w.towns.byStation(hall.id)!.id}`)!;
+  /** Step the whole world (`SimStep`) until `done` holds. */
+  function stepUntil(w: SimWorld, done: () => boolean, max = 40000) {
+    const step = new SimStep(w);
+    const ctx: StepContext = { mode: 'play', weather: false };
+    let n = 0;
+    for (; n < max && !done(); n++) w.clock.run((gdt) => step.run(gdt, ctx));
+    expect(done(), `done within ${max} steps`).toBe(true);
+  }
+  /** An empty roaming freight train of an F7 and two hoppers at column `x`, facing west. */
+  function roamer(w: SimWorld, x: number) {
+    const t = onLine(w, 'f7', x);
+    t.wagons.push({ ...t.wagons[0], uid: 3 });
+    t.oil = t.oilCap;
+    expect(w.fleet.setMode(t, 'freight')).toEqual({ ok: true });
+    return t;
+  }
+
+  it('full mode: a scheduled train takes the start food from the depot to a town, whose residents are fed', () => {
+    const w = grass('full');
+    const { depot, store } = depotLine(w);
+    for (const [id, n] of Object.entries(startStock())) store.amounts.set(id, n);
+    // a flatbed takes the good of its kind the depot holds most of
+    const bulk = ['food', 'wheat', 'wood', 'wire'];
+    expect(
+      bulk.every((c) => c === 'food' || store.get(c) < store.get('food')),
+      'premise: food is the most of it',
+    ).toBe(true);
+    const hall = station(w, 'town', 44, ROW - 1);
+    const house = station(w, 'warehouse', 40, ROW - 1);
+    const town = townOf(w, hall);
+    expect(house.dock!.key, 'premise: the warehouse is a dock of the town store').toBe(town.key);
+    home(w, 46, ROW - 4);
+    expect(w.houses.residentsTotal(), 'premise: people live there').toBeGreaterThan(0);
+    const food = store.get('food');
+    const t = onLine(w, 'f7', 20, [depot, house], 'flatbed');
+    t.oil = t.oilCap;
+    // a player's run: load at the depot, unload in the town
+    t.schedule = [
+      { ...defaultStop(depot.id), unload: 'none' },
+      { ...defaultStop(house.id), load: 'none' },
+    ];
+    // it loads at the depot, then unloads in the town and sets off again
+    let unloaded = false;
+    stepUntil(w, () => {
+      if (t.atStation === house && town.get('food') > 0) unloaded = true;
+      return unloaded && t.atStation !== house;
+    });
+    expect(store.get('food'), 'out of the depot store').toBeLessThan(food);
+    expect(town.get('food'), 'into the town store').toBeGreaterThan(0);
+    // a day later the residents have eaten from it and are not starving
+    const day = w.clock.time + daySeconds();
+    stepUntil(w, () => w.clock.time >= day);
+    expect(town.famine).toBe(false);
+    expect(town.get('food')).toBeGreaterThan(0);
+  });
+
+  it('a scheduled train unloads at a Townhouse into its town store, and loads there', () => {
+    const w = grass('full');
+    const { depot } = depotLine(w);
+    const hall = station(w, 'town', 44, ROW - 1);
+    const town = townOf(w, hall);
+    expect(w.stores.dockOf(hall)?.key, 'the Townhouse is a dock of its town store').toBe(town.key);
+    expect(hall.dock?.key).toBe(town.key);
+    const t = onLine(w, 'f7', 20, [hall, depot]);
+    t.oil = t.oilCap;
+    t.wagons[0] = { ...t.wagons[0], cargo: 'food', amount: 20, origin: depot.id };
+    t.schedule = [{ ...defaultStop(hall.id), load: 'none' }, quiet(depot.id)];
+    runUntil(w, () => t.atStation === hall && t.wagons[0].amount === 0);
+    expect(town.get('food')).toBeCloseTo(20, 9);
+    expect(hall.availableCargo()).toContain('food');
+    expect(hall.stored('food')).toBeCloseTo(20, 9);
+  });
+
+  it('a roaming freight train never picks goods up at a depot, a warehouse, a Townhouse or a harvester in a town', () => {
+    const w = grass('full');
+    const { depot, store } = depotLine(w);
+    store.amounts.set('stone', 500);
+    const hall = station(w, 'town', 30, ROW - 1);
+    const inTown = station(w, 'warehouse', 26, ROW - 1);
+    const farm = station(w, 'farm', 34, ROW - 1);
+    const alone = station(w, 'warehouse', 56, ROW - 1);
+    const town = townOf(w, hall);
+    town.amounts.set('stone', 500);
+    town.amounts.set('wheat', 500);
+    w.stores.byKey(`st:${alone.id}`)!.amounts.set('stone', 500);
+    expect(farm.outlet, 'premise: the farm makes into the town store').not.toBeNull();
+    for (const s of [depot, inTown, hall, farm, alone])
+      expect(s.availableCargo().length, `premise: goods on hand at ${s.name}`).toBeGreaterThan(0);
+    const t = roamer(w, 44);
+    expect(w.fleet.chooseNext(t)).toBeNull();
+    // and running, nothing comes aboard anywhere
+    runUntil(w, () => w.clock.time > 300, 1e6);
+    expect(t.wagons.every((g) => !g.cargo && g.amount === 0)).toBe(true);
+    expect(t.trip.loaded).toEqual({});
+  });
+
+  it('a roaming freight train takes a harvester outside every town to the nearest store, a Townhouse too', () => {
+    const w = grass('full');
+    const { store } = depotLine(w);
+    const quarry = station(w, 'quarry', 30, ROW - 1);
+    quarry.storage.set('stone', 40);
+    const hall = station(w, 'town', 42, ROW - 1);
+    const town = townOf(w, hall);
+    expect(quarry.outlet, 'premise: the quarry is outside every town').toBeNull();
+    const t = roamer(w, 20);
+    expect(w.fleet.chooseNext(t), 'the quarry is the pickup').toBe(quarry.id);
+    // the Townhouse is nearer the quarry than the depot: the stone goes there
+    runUntil(w, () => town.get('stone') >= 20, 1e6);
+    expect(store.get('stone'), 'none to the depot').toBe(0);
+    expect(quarry.stored('stone')).toBeLessThan(40);
   });
 });
