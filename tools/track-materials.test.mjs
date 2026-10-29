@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import { PNG } from 'pngjs';
-import { loopStrip } from './track-materials.mjs';
+import { loopStrip, solidRows } from './track-materials.mjs';
 
 /** A strip whose every texel holds its own column number in red, its row in green. */
 function ramp(width, height) {
@@ -31,6 +31,14 @@ describe('packing the painted track materials', () => {
     expect(out.data[(3 * 256 + 50) * 4 + 1]).toBe(3);
   });
 
+  it('finds the rows of a strip painted solid inside its fade', () => {
+    const png = ramp(8, 6);
+    const alphas = [0, 40, 200, 255, 120, 0];
+    for (let y = 0; y < 6; y++)
+      for (let x = 0; x < 8; x++) png.data[(y * 8 + x) * 4 + 3] = alphas[y];
+    expect(solidRows(png)).toEqual([2, 3]);
+  });
+
   it('ships a bed, an edge and a sleeper for every standard line and Narrow Gauge', () => {
     const dir = 'public/assets/track-materials';
     const index = JSON.parse(fs.readFileSync(`${dir}/materials.json`, 'utf8'));
@@ -39,7 +47,11 @@ describe('packing the painted track materials', () => {
       for (const name of ['bed', 'edge', 'sleeper']) {
         const png = PNG.sync.read(fs.readFileSync(`${dir}/${line}/${name}.png`));
         expect([png.width, png.height], `${line}/${name}`).toEqual(index.lines[line][name]);
-        if (name !== 'sleeper') expect(png.width, `${line}/${name}`).toBe(256);
+        if (name !== 'sleeper') {
+          expect(png.width, `${line}/${name}`).toBe(256);
+          const [a, b] = index.lines[line].solid[name];
+          expect(0 <= a && a < b && b < png.height, `${line}/${name} solid`).toBe(true);
+        }
       }
   });
 });

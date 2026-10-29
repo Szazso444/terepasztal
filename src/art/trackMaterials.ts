@@ -20,6 +20,8 @@ export interface LineMaterials {
   tufts?: MaterialImage;
   /** a kilometre post */
   post?: MaterialImage;
+  /** the first and last row of the bed and of the edge painted solid, inside their soft fades */
+  solid?: Partial<Record<'bed' | 'edge', [number, number]>>;
 }
 export interface TrackMaterials {
   pxPerTile: number;
@@ -36,12 +38,12 @@ export async function loadTrackMaterials(base: string): Promise<TrackMaterials> 
     if (!res.ok) return NO_MATERIALS;
     const index = (await res.json()) as {
       pxPerTile: number;
-      lines: Record<string, Record<string, unknown>>;
+      lines: Record<string, Record<string, unknown> & { solid?: LineMaterials['solid'] }>;
     };
     const lines: TrackMaterials['lines'] = {};
     await Promise.all(
       Object.entries(index.lines).map(async ([line, files]) => {
-        const got: LineMaterials = {};
+        const got: LineMaterials = { solid: files.solid };
         await Promise.all(
           NAMES.filter((n) => n in files).map(async (n) => {
             const image = new Image();

@@ -196,9 +196,8 @@ export function railSleepers(path: RailPath, scale = 1): number[] {
 const project = (p: Vec2) => ({ x: OX + (p.x - p.y) * 32, y: OY + (p.x + p.y) * 16 });
 /** The painted materials the frames are drawn with (`generateIllustratedTrackAtlas`). */
 let MATERIALS: TrackMaterials = NO_MATERIALS;
-/** How far the painted shoulder reaches past the bed, and how far it tucks under it, in tiles. */
-const EDGE_OUT = 0.094,
-  EDGE_IN = 0.031;
+/** How far the shoulder's solid paint reaches in under the bed's solid edge, in tiles. */
+const EDGE_TUCK = 0.02;
 /** Spacing of the places a tuft may grow along the track, and the share of them that get one. */
 const TUFT_STEP = 0.07,
   TUFT_SHARE = 0.32;
@@ -420,11 +419,23 @@ function paintedBed(
     const shift = (start * stretch * px) % img.width;
     drawStrip(c, pr, img, points, normals, from, to, px, stretch, 1.6, shift);
   };
-  const half = (mat.bed!.height / px / 2) * scale;
-  strip(mat.bed!, half, -half);
-  if (mat.edge)
-    for (const side of [1, -1])
-      strip(mat.edge, side * (half + EDGE_OUT * scale), side * (half - EDGE_IN * scale));
+  const bed = mat.bed!;
+  const half = (bed.height / px / 2) * scale;
+  const row = scale / px;
+  // the shoulders first, their solid paint butted in under the bed's, so the bed's own soft edge
+  // runs out over them instead of over the ground
+  if (mat.edge) {
+    const [bedTop, bedBottom] = mat.solid?.bed ?? [0, bed.height - 1];
+    const [, edgeInner] = mat.solid?.edge ?? [0, mat.edge.height - 1];
+    const tuck = EDGE_TUCK * scale;
+    const top = half - bedTop * row - tuck,
+      bottom = half - (bedBottom + 1) * row + tuck;
+    const reach = (edgeInner + 1) * row,
+      depth = mat.edge.height * row;
+    strip(mat.edge, top + reach, top + reach - depth);
+    strip(mat.edge, bottom - reach, bottom - reach + depth);
+  }
+  strip(bed, half, -half);
   if (!mat.tufts) return;
   const cells = Math.max(1, Math.floor(mat.tufts.width / mat.tufts.height));
   const cell = mat.tufts.height;

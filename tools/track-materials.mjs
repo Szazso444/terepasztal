@@ -5,6 +5,8 @@
  * strips (bed, edge) repeat every tile instead of every two, since one frame of straight track is
  * one tile long and must meet itself: the first tile of the strip is kept, and a narrow band at its
  * start is cross-faded into the strip's continuation past the tile, so the seam is the strip's own.
+ * It also notes each strip's solid rows (`solidRows`), so the game can butt the shoulder against
+ * the bed where the paint is solid rather than where its fade runs out.
  *
  * Run: node tools/track-materials.mjs <track-art folder> [out folder]
  * The out folder defaults to public/assets/track-materials.
@@ -23,6 +25,8 @@ const SRC_PX = 512;
 const OUT_PX = 256;
 /** px of the packed strip cross-faded at its seam */
 const SEAM = 24;
+/** Mean opacity a row of a strip needs to count as painted solid. */
+const SOLID = 0.5;
 
 /** Halve a picture with a 2x2 box filter, alpha-weighted so transparent texels lend no colour. */
 function half(png) {
@@ -74,6 +78,20 @@ export function loopStrip(png, period) {
   return out;
 }
 
+/**
+ * The first and last row of a strip that are painted solid (mean alpha at least SOLID): the bed's
+ * edge and the shoulder's inner edge, inside the soft fade the painting runs out with.
+ */
+export function solidRows(png) {
+  const rows = [];
+  for (let y = 0; y < png.height; y++) {
+    let a = 0;
+    for (let x = 0; x < png.width; x++) a += png.data[(y * png.width + x) * 4 + 3];
+    if (a / png.width / 255 >= SOLID) rows.push(y);
+  }
+  return rows.length ? [rows[0], rows[rows.length - 1]] : [0, png.height - 1];
+}
+
 export function packMaterials(src, out) {
   const report = {};
   for (const line of LINES) {
@@ -85,7 +103,10 @@ export function packMaterials(src, out) {
       const file = path.join(dir, `${name}.png`);
       if (!fs.existsSync(file)) continue;
       let png = half(PNG.sync.read(fs.readFileSync(file)));
-      if (STRIPS.includes(name)) png = loopStrip(png, OUT_PX);
+      if (STRIPS.includes(name)) {
+        png = loopStrip(png, OUT_PX);
+        (report[line].solid ??= {})[name] = solidRows(png);
+      }
       fs.writeFileSync(path.join(out, line, `${name}.png`), PNG.sync.write(png));
       report[line][name] = [png.width, png.height];
     }
