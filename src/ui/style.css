@@ -1462,6 +1462,19 @@ input.text {
   background: var(--border-dark);
   border: 1px solid var(--border-dark);
 }
+/* the model image (public/assets/portraits): full card width, 3:2, era text below */
+.rcard-body-portrait {
+  flex-direction: column;
+  gap: 4px;
+}
+.rcard-portrait {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  background: #000;
+  border: 1px solid var(--border-dark);
+}
 .gacha-featured {
   padding: 6px 8px;
   border: 1px solid var(--border-dark);

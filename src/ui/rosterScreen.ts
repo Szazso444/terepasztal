@@ -18,6 +18,7 @@ import type { Fleet } from '../sim/fleet';
 import type { Commands } from '../sim/commands';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg, frameForItem } from './spritePreview';
+import { portraitImg } from './rosterPortraits';
 
 type KindFilter = 'all' | 'loco' | 'wagon';
 type SortKey = 'rarity' | 'name' | 'level' | 'newest';
@@ -214,6 +215,8 @@ export class RosterScreen implements Screen {
       lvl.append(fit);
     } else if (it.kind === 'loco' && (it.inCab || locoDef(it.defId).inCab))
       lvl.append(el('span', { class: 'dim', text: STR.roster.hasInCab }));
+    // the model image where there is one, the atlas sprite otherwise
+    const portrait = portraitImg(it.defId, 'rcard-portrait');
     return el(
       'div',
       { class: `rcard rarity-${d.rarity}` },
@@ -224,12 +227,19 @@ export class RosterScreen implements Screen {
         el('span', { class: 'name', text: d.name }),
         el('span', { class: 'num', text: STR.roster.lv(it.level) }),
       ),
-      el(
-        'div',
-        { class: 'rcard-body' },
-        spriteImg(this.atlas, frameForItem(it.defId), 2, 'sprite-preview rcard-art'),
-        el('div', { class: 'gcard-era', text: d.era }),
-      ),
+      portrait
+        ? el(
+            'div',
+            { class: 'rcard-body rcard-body-portrait' },
+            portrait,
+            el('div', { class: 'gcard-era', text: d.era }),
+          )
+        : el(
+            'div',
+            { class: 'rcard-body' },
+            spriteImg(this.atlas, frameForItem(it.defId), 2, 'sprite-preview rcard-art'),
+            el('div', { class: 'gcard-era', text: d.era }),
+          ),
       el('div', { class: 'sub' }, ...stats.map((s) => el('div', { text: s }))),
       lvl,
       el('div', {
