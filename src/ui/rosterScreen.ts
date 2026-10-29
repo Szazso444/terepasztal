@@ -202,7 +202,7 @@ export class RosterScreen implements Screen {
       up.title = STR.roster.levelUpHint;
       lvl.append(up);
     }
-    // in-cab signalling: the one hard requirement of high-speed track, fitted for money
+    // in-cab signalling, fitted for money: with in-cab signals the train runs on the shorter headway
     if (it.kind === 'loco' && !it.inCab && !locoDef(it.defId).inCab) {
       const fit = btn(
         STR.roster.fitInCab(rules.inCabCost),
