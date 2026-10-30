@@ -1468,6 +1468,7 @@ export const STR = {
     ownNetwork: (line: string) => `Runs only on ${line}.`,
     age: 'Available from this age.',
     rarity: 'How rare the model is.',
+    contractRarity: 'How rare the contract is.',
   },
   compat: {
     wrongNetwork: (line: string) => `not built for ${line}`,

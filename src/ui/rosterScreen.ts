@@ -15,7 +15,7 @@ import {
 } from '../gacha/items';
 import { cargoDef } from '../sim/cargo';
 import { runsOn } from '../sim/compat';
-import { RARITY_STARS, vehicleLabels } from './labels';
+import { rarityStar, vehicleLabels } from './labels';
 import type { Fleet } from '../sim/fleet';
 import type { Commands } from '../sim/commands';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -58,22 +58,23 @@ export class RosterScreen implements Screen {
     b.innerHTML = '';
     const group = (
       label: string,
-      opts: { v: string; t: string }[],
+      opts: { v: string; t: string; star?: string }[],
       cur: string,
       set: (v: string) => void,
     ) => {
       const g = el('div', { class: 'tb-group' }, el('span', { class: 'tb-label', text: label }));
-      for (const o of opts)
-        g.append(
-          btn(
-            o.t,
-            () => {
-              set(o.v);
-              this.render();
-            },
-            `small ${cur === o.v ? 'active' : ''}`,
-          ),
+      for (const o of opts) {
+        const b = btn(
+          o.t,
+          () => {
+            set(o.v);
+            this.render();
+          },
+          `small ${cur === o.v ? 'active' : ''}`,
         );
+        if (o.star) b.prepend(rarityStar(`rarity-${o.star}`));
+        g.append(b);
+      }
       return g;
     };
     b.append(
@@ -91,7 +92,7 @@ export class RosterScreen implements Screen {
         STR.roster.rarity,
         [
           { v: 'all', t: STR.roster.all },
-          ...RARITIES.map((r) => ({ v: r, t: '★'.repeat(RARITY_STARS[r]) })),
+          ...RARITIES.map((r) => ({ v: r, t: STR.craft.quality[r] ?? r, star: r })),
         ],
         this.rarity,
         (v) => (this.rarity = v),
@@ -227,7 +228,7 @@ export class RosterScreen implements Screen {
       el(
         'div',
         { class: 'rcard-head' },
-        el('span', { class: 'name', text: d.name }),
+        el('span', { class: `name rarity-${d.rarity}`, text: d.name }),
         el('span', { class: 'num', text: STR.roster.lv(it.level) }),
       ),
       vehicleLabels(d),

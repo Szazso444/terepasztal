@@ -34,6 +34,12 @@
   --line-trunk: #32373b;
   --line-trunk-ink: #dfe5e8;
   --line-trunk-edge: #8f989e;
+  /* rarity: one colour each, for models and contracts alike */
+  --rarity-common: #a3a3a0;
+  --rarity-uncommon: #5ee04f;
+  --rarity-rare: #4f9fff;
+  --rarity-epic: #b96bf5;
+  --rarity-legendary: #ff8c1a;
   /* a class's icon (src/ui/lineBadge.ts): one look for all, its own apart from the lines' colours */
   --class-plate: #2b2a24;
   --class-edge: #6d6a58;
@@ -945,32 +951,35 @@ body {
   white-space: nowrap;
 }
 .rarity-N {
-  color: var(--limestone);
+  color: var(--rarity-common);
 }
 .rarity-R {
-  color: #7cc0d8;
+  color: var(--rarity-uncommon);
 }
 .rarity-SR {
-  color: #c99ad8;
+  color: var(--rarity-rare);
 }
 .rarity-SSR {
-  color: var(--amber);
+  color: var(--rarity-epic);
+}
+.rarity-L {
+  color: var(--rarity-legendary);
 }
 /* contract rarities */
 .crarity-common {
-  color: var(--limestone);
+  color: var(--rarity-common);
 }
 .crarity-uncommon {
-  color: #a6c47a;
+  color: var(--rarity-uncommon);
 }
 .crarity-rare {
-  color: #7cc0d8;
+  color: var(--rarity-rare);
 }
 .crarity-epic {
-  color: #c99ad8;
+  color: var(--rarity-epic);
 }
 .crarity-legendary {
-  color: var(--amber);
+  color: var(--rarity-legendary);
   text-shadow: 0 0 6px rgba(255, 200, 80, 0.5);
 }
 input.text {
@@ -1256,11 +1265,17 @@ input.text {
 .gcard.flipped .gcard-front {
   transform: rotateY(0deg);
 }
+.gcard.flipped.rarity-R .gcard-front {
+  border-color: var(--rarity-uncommon);
+}
 .gcard.flipped.rarity-SR .gcard-front {
-  border-color: #c99ad8;
+  border-color: var(--rarity-rare);
+}
+.gcard.flipped.rarity-L .gcard-front {
+  border-color: var(--rarity-legendary);
 }
 .gcard.flipped.rarity-SSR .gcard-front {
-  border-color: var(--amber);
+  border-color: var(--rarity-epic);
   animation: ssr-pulse 1.2s ease-in-out 2;
 }
 @keyframes ssr-pulse {
@@ -1345,11 +1360,17 @@ input.text {
   border: 1px solid var(--border-dark);
   background: var(--stone);
 }
-.craft-recipe.rarity-SSR {
-  border-color: var(--amber-dark);
+.craft-recipe.rarity-R {
+  border-color: var(--rarity-uncommon);
 }
 .craft-recipe.rarity-SR {
-  border-color: #6d5680;
+  border-color: var(--rarity-rare);
+}
+.craft-recipe.rarity-SSR {
+  border-color: var(--rarity-epic);
+}
+.craft-recipe.rarity-L {
+  border-color: var(--rarity-legendary);
 }
 .craft-recipe .body {
   flex: 1;
@@ -1423,11 +1444,17 @@ input.text {
   flex-direction: column;
   gap: 3px;
 }
-.rcard.rarity-SSR {
-  border-color: var(--amber-dark);
+.rcard.rarity-R {
+  border-color: var(--rarity-uncommon);
 }
 .rcard.rarity-SR {
-  border-color: #6d5680;
+  border-color: var(--rarity-rare);
+}
+.rcard.rarity-SSR {
+  border-color: var(--rarity-epic);
+}
+.rcard.rarity-L {
+  border-color: var(--rarity-legendary);
 }
 .rcard-head {
   display: flex;
@@ -1437,7 +1464,6 @@ input.text {
 .rcard-head .name {
   flex: 1;
   font-weight: bold;
-  color: var(--text);
 }
 .rcard {
   color: var(--text);
@@ -2297,9 +2323,12 @@ table.market td {
   color: var(--amber);
 }
 .rarity-label {
-  font-size: 12px;
-  letter-spacing: 1px;
+  display: inline-flex;
+}
+.rarity-star {
+  font-size: 13px;
   line-height: 1;
+  margin-right: 3px;
 }
 /* an age's icon in a line of text */
 .age-icon {

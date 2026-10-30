@@ -2,6 +2,7 @@ import { showVehiclePreview } from './vehiclePreview';
 import { vehicleProperties } from './vehicleProperties';
 import { ageIcon } from './ageIcon';
 import { el, btn, fmtMoney } from './dom';
+import { rarityStar } from './labels';
 import { AGE_ORDER, STR } from '../strings';
 import type { Screen } from './modal';
 import {
@@ -170,7 +171,12 @@ export class CraftingScreen implements Screen {
     for (const r of [...RARITIES].reverse()) {
       const ids = pool.filter((id) => craftRarity(id) === r);
       if (!ids.length) continue;
-      const line = el('div', { class: `sub rarity-${r}` }, `${STR.craft.quality[r] ?? r}: `);
+      const line = el(
+        'div',
+        { class: `sub rarity-${r}` },
+        rarityStar(`rarity-${r}`),
+        `${STR.craft.quality[r] ?? r}: `,
+      );
       ids.forEach((id, i) => {
         line.append(
           el('span', {
@@ -259,7 +265,12 @@ export class CraftingScreen implements Screen {
         el(
           'div',
           { class: 'gcard-top' },
-          el('div', { class: `gcard-rarity rarity-${r}`, text: STR.craft.quality[r] ?? r }),
+          el(
+            'div',
+            { class: `gcard-rarity rarity-${r}` },
+            rarityStar(`rarity-${r}`),
+            STR.craft.quality[r] ?? r,
+          ),
           spriteImg(this.atlas, frameForItem(id), 2, 'sprite-preview gcard-art'),
         ),
         el('div', { class: 'gcard-name', text: d.name }),
@@ -360,7 +371,7 @@ export class CraftingScreen implements Screen {
           {},
           el('span', {
             class: `rarity-${d.rarity}`,
-            text: STR.craft.quality[d.rarity] ?? d.rarity,
+            text: `★ ${STR.craft.quality[d.rarity] ?? d.rarity}`,
           }),
           ' ',
           el('span', { class: 'name', text: d.name }),

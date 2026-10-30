@@ -20,17 +20,30 @@ export function ageLabel(tier: number): HTMLElement {
   return ttLabel(s, 'age-label', name, () => [ttTitle(name), ttDim(STR.badge.age)]);
 }
 
-/** Stars by rarity: the letters N and R would read as the lines' letters. */
-export const RARITY_STARS: Record<string, number> = { N: 1, R: 2, SR: 3, SSR: 4, L: 5 };
+/** A rarity's mark: one star in its colour (grey common, green uncommon, blue rare, and so on). */
+export function rarityStar(colour: string): HTMLElement {
+  return el('span', { class: `rarity-star ${colour}`, text: '★' });
+}
 
-/** The label of a rarity: its stars in the rarity's colour, the name in its tooltip. */
-export function rarityLabel(rarity: string): HTMLElement {
-  const stars = el('span', { text: '★'.repeat(RARITY_STARS[rarity] ?? 1) });
-  const name = STR.craft.quality[rarity] ?? rarity;
-  return ttLabel(stars, `rarity-label rarity-${rarity}`, name, () => [
-    ttTitle(name),
-    ttDim(STR.badge.rarity),
+function starLabel(colour: string, name: string, text: string): HTMLElement {
+  return ttLabel(rarityStar(colour), 'rarity-label', name, () => [
+    ttTitle(el('span', { class: colour, text: name })),
+    ttDim(text),
   ]);
+}
+
+/** The label of a model's rarity: its star, the name in its tooltip. */
+export function rarityLabel(rarity: string): HTMLElement {
+  return starLabel(`rarity-${rarity}`, STR.craft.quality[rarity] ?? rarity, STR.badge.rarity);
+}
+
+/** The label of a contract's rarity: the same star, in the same colours. */
+export function contractRarityLabel(rarity: string): HTMLElement {
+  return starLabel(
+    `crarity-${rarity}`,
+    STR.contracts.rarity[rarity] ?? rarity,
+    STR.badge.contractRarity,
+  );
 }
 
 /** The labels of a train: its class and the lines it runs on. */

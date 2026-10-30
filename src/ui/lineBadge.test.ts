@@ -92,6 +92,18 @@ describe('train class icons', () => {
       expect(css, t).toContain(`--class-${t}:`);
   });
 
+  it('has one colour for every rarity, of models and contracts alike', () => {
+    const css = fs.readFileSync('src/ui/style.css', 'utf8');
+    const rule = (cls: string, token: string) =>
+      new RegExp(`\\.${cls} \\{\\s+color: var\\(--rarity-${token}\\)`);
+    const models = { N: 'common', R: 'uncommon', SR: 'rare', SSR: 'epic', L: 'legendary' };
+    for (const [r, token] of Object.entries(models)) {
+      expect(css, token).toContain(`--rarity-${token}:`);
+      expect(css, r).toMatch(rule(`rarity-${r}`, token));
+      expect(css, token).toMatch(rule(`crarity-${token}`, token));
+    }
+  });
+
   it('says in its tooltip what it is', () => {
     expect(lineBadgeTip('main')).toEqual(['Main Line', 'Built for Destroyer class trains.']);
     expect(classBadgeTip('frigate')).toEqual([
