@@ -6,12 +6,12 @@ import { TrackGraph } from '../world/track';
 import { Builder, DECOR_DEFS, unbuildable } from './build';
 import { BUILDING_DEFS } from './buildings';
 import { Economy } from './economy';
-import { Stockpile } from './stockpile';
 import { STATION_DEFS, stationFootprint, stationGates } from './stations';
 import { depotSiteBlocked } from './startDepot';
 import { DEFAULT_RULES, rules } from './rules';
 import { STAND_ON } from '../data/content';
 import { STR } from '../strings';
+import { storeWith } from '../testing/storeFixtures';
 
 // the build rules play a sound when a piece goes down
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -47,7 +47,7 @@ function grassWorld() {
     regions,
     new TrackGraph(SIZE, SIZE),
     new Economy(),
-    new Stockpile(),
+    storeWith({}).stores,
   );
   builder.free = true;
   builder.groundCheck = () => true;

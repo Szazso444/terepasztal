@@ -26,11 +26,11 @@ import { buildingDef, buildingToJSON } from '../sim/buildings';
 import { Builder, DECOR_DEFS, unbuildable } from '../sim/build';
 import { Roads } from '../sim/roads';
 import { Economy } from '../sim/economy';
-import { Stockpile } from '../sim/stockpile';
 import { STR } from '../strings';
 import { generatorOf, groundOf, type GeneratedWorld } from '../sim/ground';
 import type { SaveGame } from '../sim/save';
 import { forAll, shrinkArray } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 // the builder plays a sound when it lays something; the context that plays it is a browser's
 vi.mock('./audio', () => ({ sfx: vi.fn() }));
@@ -925,7 +925,7 @@ function builderOn(t: Terrain, size = 9) {
     regions,
     new TrackGraph(size, size),
     new Economy(),
-    new Stockpile(),
+    storeWith({}).stores,
   );
   builder.free = true;
   return { map, builder };

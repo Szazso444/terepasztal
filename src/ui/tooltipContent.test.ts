@@ -202,11 +202,12 @@ describe('the works tooltip', () => {
     expect(cargo).toEqual(want);
   });
 
-  it('words each status from STR, closed and full and running as plain lines', () => {
+  it('words each status from STR, closed and full and running and no store as plain lines', () => {
     const said = (status: WorksStatus) => lines(worksTip(works(plain1, { status })))[2];
     expect(said({ kind: 'running' })).toBe(STR.building.running);
     expect(said({ kind: 'full' })).toBe(STR.building.full);
     expect(said({ kind: 'closed' })).toBe(STR.upgrade.closed);
+    expect(said({ kind: 'noStore', range: 24 })).toBe(STR.stores.noStoreNear(24));
   });
 
   it('names what a waiting works lacks as a resource: its icon and its underlined name', () => {

@@ -4,10 +4,10 @@ import { Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph, pieceCost } from '../world/track';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { rules, DEFAULT_RULES } from './rules';
 import { STR } from '../strings';
+import { storeWith } from '../testing/storeFixtures';
 
 /** An economy in the Electric Age: Main and Trunk Line are open. */
 const electricAge = () => Object.assign(new Economy(), { tier: 2 });
@@ -18,11 +18,11 @@ beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 function world(ground = Terrain.Grass) {
   const map = emptyMap(4242, 48, 48, ground),
     track = new TrackGraph(48, 48),
-    stock = new Stockpile(),
+    { stores, depot: stock } = storeWith({}, { x: 24, y: 24 }),
     economy = electricAge();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, stores);
   for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 1000);
   // a dead-end run of four Branch Line straights
   for (let x = 5; x <= 8; x++) track.place(x, 10, 'straight', 1, 'branch');

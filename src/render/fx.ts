@@ -130,16 +130,49 @@ export class Glows {
   }
 }
 
-/** Additive light diamonds on the tiles around lanterns and in front of locomotives. */
+/**
+ * Each layer's surface version (`Landscape.surfaceVersion`), by the layer: a ground light stands
+ * on the surface of its tile, and stays where it is until this changes.
+ */
+export const surfaceVersions = new WeakMap<Container, () => number>();
+
+/** A lit tile: where it is and how bright its light is. */
+interface Lit {
+  x: number;
+  y: number;
+  alpha: number;
+}
+
+/** One number per tile, for a map up to 65536 tiles across. */
+const tileKey = (x: number, y: number) => y * 65536 + x;
+
+/**
+ * Additive light diamonds on the tiles around lanterns and in front of locomotives. The lights are
+ * worked out again only when what they come from changes: the night, the surface, the stations
+ * (where they are and their level) or the tiles in front of the trains. A train moving on to a new
+ * tile relights only the tiles it left and entered.
+ */
 export class GroundLights {
-  private pool = new Map<string, Sprite>();
+  private pool = new Map<number, Sprite>();
+  /** What the station lights were worked out from: x, y and level of each station, in order. */
+  private stationsSeen: number[] = [];
+  /** The tile in front of each train when the train lights were worked out, x and y each. */
+  private trainsSeen: number[] = [];
+  private night = -1;
+  private surfaceSeen = -1;
+  /** The surface version the pooled sprites were placed on. */
+  private placedOn = -1;
+  /** The tiles the stations light, in the order they were first lit. */
+  private stationLit = new Map<number, Lit>();
+  /** The tiles the trains light, with what they show there, the stations' light added. */
+  private trainLit = new Map<number, Lit>();
   constructor(
     private readonly atlas: AtlasRegistry,
     private readonly layer: Container,
     private readonly surface: (x: number, y: number) => { x: number; y: number },
     private readonly inBounds: (x: number, y: number) => boolean,
   ) {}
-  private get(key: string) {
+  private get(key: number, x: number, y: number) {
     let s = this.pool.get(key);
     if (!s) {
       const f = this.atlas.get('fx/light_tile');
@@ -147,54 +180,159 @@ export class GroundLights {
       s.anchor.set(f.anchorX, f.anchorY);
       s.blendMode = 'add';
       s.cullable = true;
+      const p = this.surface(x, y);
+      s.position.set(p.x, p.y);
       this.layer.addChild(s);
       this.pool.set(key, s);
     }
     return s;
   }
+  private drop(key: number) {
+    this.pool.get(key)?.destroy();
+    this.pool.delete(key);
+  }
   update(stations: Station[], trains: Train[], night: number) {
-    const seen = new Set<string>();
-    if (night > 0.02) {
-      const R = 2;
-      for (const st of stations)
-        for (let dy = -R; dy <= R; dy++)
-          for (let dx = -R; dx <= R; dx++) {
-            const d = Math.abs(dx) + Math.abs(dy);
-            if (d > R) continue;
-            const x = st.x + dx;
-            const y = st.y + dy;
-            if (!this.inBounds(x, y)) continue;
-            const key = `${x},${y}`;
-            const s = this.get(key);
-            const p = this.surface(x, y);
-            s.position.set(p.x, p.y);
-            const a = night * (1 - d / (R + 1)) * (0.55 + st.level * 0.08);
-            s.alpha = seen.has(key) ? Math.min(1, s.alpha + a * 0.5) : a;
-            s.visible = true;
-            seen.add(key);
-          }
-      for (const t of trains) {
-        const pose = t.poses[0];
-        if (!pose) continue;
-        const dir = pose.heading + (t.reversed ? Math.PI : 0);
-        const x = Math.floor(pose.x + Math.cos(dir) * 1.1 + 0.5);
-        const y = Math.floor(pose.y + Math.sin(dir) * 1.1 + 0.5);
-        if (!this.inBounds(x, y)) continue;
-        const key = `${x},${y}`;
-        const s = this.get(key);
-        const p = this.surface(x, y);
-        s.position.set(p.x, p.y);
-        s.alpha = seen.has(key) ? Math.min(1, s.alpha + 0.4 * night) : 0.75 * night;
-        s.visible = true;
-        seen.add(key);
-      }
+    if (!(night > 0.02)) {
+      if (this.pool.size || this.stationLit.size) this.clear();
+      return;
     }
+    const surface = surfaceVersions.get(this.layer)?.() ?? 0;
+    const stationsChanged = seeStations(this.stationsSeen, stations);
+    if (stationsChanged || night !== this.night || surface !== this.surfaceSeen) {
+      this.night = night;
+      this.surfaceSeen = surface;
+      seeTrains(this.trainsSeen, trains);
+      this.lightAll(stations, trains, night, surface);
+      return;
+    }
+    if (seeTrains(this.trainsSeen, trains)) this.lightTrains(trains, night);
+  }
+  /** Every light worked out again; each sprite placed on the surface as it is now. */
+  private lightAll(stations: Station[], trains: Train[], night: number, surface: number) {
+    this.stationLit = this.stationLights(stations, night);
+    this.trainLit = this.trainLights(trains, night);
+    const moved = surface !== this.placedOn;
+    this.placedOn = surface;
     for (const [key, s] of this.pool)
-      if (!seen.has(key)) {
+      if (!this.stationLit.has(key) && !this.trainLit.has(key)) {
         s.destroy();
         this.pool.delete(key);
       }
+    for (const lit of [this.stationLit, this.trainLit])
+      for (const [key, l] of lit) {
+        const s = this.get(key, l.x, l.y);
+        if (moved) {
+          const p = this.surface(l.x, l.y);
+          s.position.set(p.x, p.y);
+        }
+        s.alpha = (this.trainLit.get(key) ?? l).alpha;
+        s.visible = true;
+      }
   }
+  /** The trains moved on to other tiles: the tiles they left and entered are lit again. */
+  private lightTrains(trains: Train[], night: number) {
+    const before = this.trainLit;
+    this.trainLit = this.trainLights(trains, night);
+    for (const key of before.keys())
+      if (!this.trainLit.has(key)) {
+        const st = this.stationLit.get(key);
+        if (st) this.pool.get(key)!.alpha = st.alpha;
+        else this.drop(key);
+      }
+    for (const [key, l] of this.trainLit) {
+      const s = this.get(key, l.x, l.y);
+      s.alpha = l.alpha;
+      s.visible = true;
+    }
+  }
+  /** Each station lights the tiles within two steps of it, the nearer the brighter. */
+  private stationLights(stations: Station[], night: number) {
+    const lit = new Map<number, Lit>();
+    const R = 2;
+    for (const st of stations)
+      for (let dy = -R; dy <= R; dy++)
+        for (let dx = -R; dx <= R; dx++) {
+          const d = Math.abs(dx) + Math.abs(dy);
+          if (d > R) continue;
+          const x = st.x + dx;
+          const y = st.y + dy;
+          if (!this.inBounds(x, y)) continue;
+          const key = tileKey(x, y);
+          const a = night * (1 - d / (R + 1)) * (0.55 + st.level * 0.08);
+          const l = lit.get(key);
+          if (l) l.alpha = Math.min(1, l.alpha + a * 0.5);
+          else lit.set(key, { x, y, alpha: a });
+        }
+    return lit;
+  }
+  /** Each train lights the tile in front of it, over what the stations light there. */
+  private trainLights(trains: Train[], night: number) {
+    const lit = new Map<number, Lit>();
+    for (const t of trains) {
+      const at = headTile(t);
+      if (!at || !this.inBounds(at.x, at.y)) continue;
+      const key = tileKey(at.x, at.y);
+      const l = lit.get(key) ?? this.stationLit.get(key);
+      const alpha = l ? Math.min(1, l.alpha + 0.4 * night) : 0.75 * night;
+      lit.set(key, { x: at.x, y: at.y, alpha });
+    }
+    return lit;
+  }
+  private clear() {
+    for (const s of this.pool.values()) s.destroy();
+    this.pool.clear();
+    this.stationLit.clear();
+    this.trainLit.clear();
+    this.stationsSeen = [];
+    this.trainsSeen = [];
+    this.night = -1;
+  }
+}
+
+/** The tile a train's lamp lights, just in front of it; null for a train not on the map yet. */
+function headTile(t: Train) {
+  const pose = t.poses[0];
+  if (!pose) return null;
+  const dir = pose.heading + (t.reversed ? Math.PI : 0);
+  return {
+    x: Math.floor(pose.x + Math.cos(dir) * 1.1 + 0.5),
+    y: Math.floor(pose.y + Math.sin(dir) * 1.1 + 0.5),
+  };
+}
+
+/**
+ * Have the stations changed (in number, order, place or level) since `seen` was taken? `seen`
+ * holds x, y and level of each and takes the stations' when they have.
+ */
+function seeStations(seen: number[], stations: Station[]) {
+  let same = seen.length === stations.length * 3;
+  for (let i = 0; same && i < stations.length; i++) {
+    const st = stations[i];
+    same = seen[3 * i] === st.x && seen[3 * i + 1] === st.y && seen[3 * i + 2] === st.level;
+  }
+  if (same) return false;
+  seen.length = 0;
+  for (const st of stations) seen.push(st.x, st.y, st.level);
+  return true;
+}
+
+/**
+ * Has any train's lamp tile (`headTile`) changed since `seen` was taken, or a train come or gone?
+ * `seen` holds x and y of each (-1 for none) and takes the trains' when they have.
+ */
+function seeTrains(seen: number[], trains: Train[]) {
+  let same = seen.length === trains.length * 2;
+  for (let i = 0; same && i < trains.length; i++) {
+    const at = headTile(trains[i]);
+    same = seen[2 * i] === (at ? at.x : -1) && seen[2 * i + 1] === (at ? at.y : -1);
+  }
+  if (same) return false;
+  seen.length = 0;
+  for (const t of trains) {
+    const at = headTile(t);
+    seen.push(at ? at.x : -1, at ? at.y : -1);
+  }
+  return true;
 }
 
 /** Screen-space rain streaks; density follows the weather intensity. */

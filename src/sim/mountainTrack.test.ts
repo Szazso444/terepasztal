@@ -26,7 +26,6 @@ import { BUILDING_DEFS } from './buildings';
 import { Catenary } from './catenary';
 import { Economy } from './economy';
 import { Fleet } from './fleet';
-import { Stockpile } from './stockpile';
 import { STATION_DEFS, Station, resetStationIds } from './stations';
 import { Train, resetTrainIds, type TickCtx } from './trains';
 import { setSupplyMode } from './supply';
@@ -35,6 +34,7 @@ import { rules, DEFAULT_RULES } from './rules';
 import { STR } from '../strings';
 import { applyTileRepairs, repairBuiltTiles, type BuiltObjects } from '../engine/loadRepair';
 import { onRails } from './mountainTrack';
+import { storeWith } from '../testing/storeFixtures';
 
 /** An economy in the Electric Age: Main and Trunk Line are open. */
 const electricAge = () => Object.assign(new Economy(), { tier: 2 });
@@ -67,7 +67,7 @@ const name = (t: Terrain) => TERRAIN_NAMES[t];
 function field(free = false) {
   const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass),
     track = new TrackGraph(SIZE, SIZE),
-    stock = new Stockpile();
+    { stores, depot: stock } = storeWith({}, { x: SIZE / 2, y: SIZE / 2 });
   for (let y = 8; y < 32; y++)
     for (let x = 8; x < 32; x++) {
       const inner = x >= 10 && x < 30 && y >= 10 && y < 30;
@@ -76,7 +76,7 @@ function field(free = false) {
     }
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, electricAge(), stock);
+  const builder = new Builder(map, regions, track, electricAge(), stores);
   builder.free = free;
   builder.groundCheck = (x, y, need) => groundAllowsOn(map, x, y, need);
   for (const k of RES) stock.amounts.set(k, 1e6);
@@ -568,11 +568,13 @@ describe('mountain lines on generated maps', () => {
       genLineCase,
       (c) => {
         const map = generateMap(c.seed, { w: c.size, h: c.size, rockLevel: c.rockLevel });
+        // one store, in reach of the whole map
+        rules.buildReach = map.w;
         const track = new TrackGraph(map.w, map.h),
-          stock = new Stockpile(),
+          { stores, depot: stock } = storeWith({}),
           regions = new RegionState(map);
         for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-        const builder = new Builder(map, regions, track, electricAge(), stock);
+        const builder = new Builder(map, regions, track, electricAge(), stores);
         builder.groundCheck = (x, y, need) => groundAllowsOn(map, x, y, need);
         for (const k of RES) stock.amounts.set(k, 1e9);
         const rng = new Rng(c.pick);
@@ -649,11 +651,10 @@ describe('a train on mountain track', () => {
   function freeSpeed(biome: number, paint: (map: GameMap, hx: number, hy: number) => void) {
     const map = emptyMap(4242, 96, 96, Terrain.Grass),
       track = new TrackGraph(96, 96),
-      stock = new Stockpile(),
       economy = electricAge();
-    const builder = new Builder(map, new RegionState(map), track, economy, stock);
+    const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
     builder.free = true;
-    const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+    const fleet = new Fleet(track, builder, map, new Inventory(), economy);
     for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
     const t = new Train([
       { uid: 1, level: 0, def: content.locomotives.find((d) => d.id === 'f7')! },

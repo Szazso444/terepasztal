@@ -5,7 +5,7 @@ import { levelLocked, type PlacementCheck } from '../sim/build';
 import { LAST_AGE } from '../sim/ages';
 import { MAX_LEVEL } from '../sim/levels';
 import { rules, DEFAULT_RULES } from '../sim/rules';
-import { fmtCost } from '../sim/stockpile';
+import { fmtCost } from '../sim/stores';
 import { UPGRADE_HOURS, hoursLeft, startWork, workProgress } from '../sim/upgrade';
 import { upgradeHours, upgradeView } from './upgradeView';
 

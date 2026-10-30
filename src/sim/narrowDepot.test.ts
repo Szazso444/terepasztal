@@ -5,7 +5,6 @@ import { RegionState } from '../world/regions';
 import { TrackGraph, makePiece } from '../world/track';
 import { Dir } from '../engine/iso';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Fleet } from './fleet';
 import { Inventory } from '../gacha/inventory';
@@ -13,20 +12,20 @@ import { Station, stationFootprint } from './stations';
 import { locoDef } from '../gacha/items';
 import { rules, DEFAULT_RULES } from './rules';
 import { STR } from '../strings';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 function world() {
   const map = emptyMap(4242, 64, 64, Terrain.Grass),
     track = new TrackGraph(64, 64),
-    stock = new Stockpile(),
     economy = new Economy();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   const inventory = new Inventory();
-  const fleet = new Fleet(track, builder, map, inventory, economy, stock);
+  const fleet = new Fleet(track, builder, map, inventory, economy);
   return { map, track, builder, fleet, inventory };
 }
 

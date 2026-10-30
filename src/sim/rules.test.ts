@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Rng } from '../engine/rng';
 import { SEEDS, forAll } from '../testing/property';
 import type { RuleMeta, Rules } from './rules';
-import { STR } from '../strings';
 
 type RulesModule = typeof import('./rules');
 
@@ -106,27 +105,11 @@ describe('the two tables', () => {
   });
 });
 
-describe('the warehouse pile before pickup', () => {
-  it('is labelled with the name of the Freight mode, its key and range as they were', async () => {
-    // an empty freight train picks a warehouse once it holds this much: the saved key is the same
-    // `collectMin`, so a game saved before the Collection mode went keeps the player's setting
-    const m = await load();
-    const meta = m.RULE_META.find((x) => x.key === 'collectMin')!;
-    expect(meta.label.startsWith(STR.train.mode.freight)).toBe(true);
-    expect(meta.label).not.toMatch(/collection|production/i);
-    expect({
-      min: meta.min,
-      max: meta.max,
-      step: meta.step,
-      default: m.DEFAULT_RULES.collectMin,
-    }).toEqual({ min: 0, max: 1000, step: 10, default: 100 });
-    expect(m.rulesFrom({ collectMin: 250 }).collectMin).toBe(250);
-  });
-});
-
 describe('rules an older build wrote', () => {
-  // `reputationMul` and `tradeCycleDays` were settings no screen showed and nothing read.
-  const old = { reputationMul: 3, tradeCycleDays: 2 };
+  // `reputationMul` and `tradeCycleDays` were settings no screen showed and nothing read;
+  // `collectMin` was the pile a warehouse held before a freight train came for it, and freight
+  // takes nothing out of a store any more.
+  const old = { reputationMul: 3, tradeCycleDays: 2, collectMin: 30 };
   const gone = (r: object) => {
     for (const k of Object.keys(old)) expect(Object.hasOwn(r, k), k).toBe(false);
   };

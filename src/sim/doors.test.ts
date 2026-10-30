@@ -16,7 +16,6 @@ import {
 } from '../data/content';
 import { Builder, decorDef } from './build';
 import { buildingDef } from './buildings';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds, stationDef, stationGates, stationSpan } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
@@ -42,6 +41,7 @@ import {
   type PlaceDef,
 } from './doors';
 import { forAll, shrinkArray } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -75,7 +75,7 @@ function bare(side: number, seed = 7) {
     new RegionState(map),
     new TrackGraph(side, side),
     new Economy(),
-    new Stockpile(),
+    storeWith({}).stores,
   );
   return { map, builder };
 }

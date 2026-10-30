@@ -5,7 +5,6 @@ import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { Rng } from '../engine/rng';
 import { Builder, type LinePiece } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { resetStationIds } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
@@ -20,6 +19,7 @@ import {
   type Person,
 } from './people';
 import { SEEDS, forAll, shrinkArray } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -44,7 +44,13 @@ function site(water: (x: number, y: number) => boolean) {
   for (let y = 0; y < S; y++)
     for (let x = 0; x < S; x++) if (water(x, y)) map.terrain[y * S + x] = Terrain.Water;
   const track = new TrackGraph(S, S);
-  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  const builder = new Builder(
+    map,
+    new RegionState(map),
+    track,
+    new Economy(),
+    storeWith({}).stores,
+  );
   builder.free = true;
   return { map, track, builder, roads: builder.roads, decks: roadDecks(builder) };
 }

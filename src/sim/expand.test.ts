@@ -48,7 +48,7 @@ function partsOf(world: SaveParts['world']): SaveParts {
     weather: {},
     world,
     rules: {},
-    stockpile: { amounts: {} },
+    stores: [],
     buildings: [],
     regions: [true],
     seasonOffset: 0,

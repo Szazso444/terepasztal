@@ -1,4 +1,5 @@
 import { Texture, ImageSource, Rectangle } from 'pixi.js';
+import type { AtlasCache } from './atlasCache';
 
 /** One frame inside an atlas. Anchor is in pixels from the frame's top-left. */
 export interface FrameDef {
@@ -59,11 +60,23 @@ function atlasFileUrl(base: string, group: string, ext: 'json' | 'png') {
  * or server: it is warned about once, on the console. A group with no file is procedural by design
  * and stays quiet. A file that breaks the frame contract falls back the same way, so it costs only
  * its own group.
+ *
+ * With a cache (`src/engine/atlasCache.ts`), what a generator would supply comes from the cache
+ * when it holds the group at the current content version, and the generator runs only on a miss;
+ * the groups generated in a load are stored once the load is over (`cacheWrites`). A file still
+ * comes from the server on every load and a partial one still wins over the generated frames.
  */
 export class AtlasRegistry {
   private frames = new Map<string, FrameInfo>();
   private sources: ImageSource[] = [];
   readonly groupOrigin = new Map<string, 'png' | 'procedural' | 'png+procedural'>();
+  /** For each group with generated frames, whether this load drew them or read them from the cache. */
+  readonly generatedFrom = new Map<string, 'generator' | 'cache'>();
+  /**
+   * Settles once the groups the last load generated are stored in the cache, or failed to be.
+   * Never rejects. The boot does not wait for it; tests and the boot probe do.
+   */
+  cacheWrites: Promise<void> = Promise.resolve();
   /** Raw atlas images by group, kept for the debug atlas viewer. */
   readonly images = new Map<string, HTMLCanvasElement | HTMLImageElement>();
   /** shipped groups already warned about */
@@ -74,6 +87,8 @@ export class AtlasRegistry {
     private readonly shipped: ReadonlySet<string> = SHIPPED_GROUPS,
     /** the base path the files are served under; the build's unless a test gives one */
     private readonly base: string = import.meta.env.BASE_URL,
+    /** where generated groups are kept between boots; none generates every group every load */
+    private readonly cache: AtlasCache | null = null,
   ) {}
 
   /**
@@ -85,32 +100,56 @@ export class AtlasRegistry {
     onSettled?: (settled: number, total: number) => void,
   ) {
     let settled = 0;
+    const generated: [string, AtlasImage][] = [];
     await Promise.all(
       groups.map(async (g) => {
-        await this.loadGroup(g.name, g.generate);
+        const drawn = await this.loadGroup(g.name, g.generate);
+        if (drawn) generated.push([g.name, drawn]);
         onSettled?.(++settled, groups.length);
       }),
     );
+    this.cacheWrites = this.keepGenerated(generated);
   }
 
-  private async loadGroup(name: string, generate: AtlasGenerator) {
+  /** Loads one group; returns what its generator drew in this load, for the cache to keep. */
+  private async loadGroup(name: string, generate: AtlasGenerator): Promise<AtlasImage | null> {
+    // the file and the cache are asked at once; the cache answers null when it has nothing
+    const cached = this.cache ? this.cache.read(name) : Promise.resolve(null);
     const fromFile = await this.tryLoadFile(name);
-    if (typeof fromFile !== 'string') {
-      // generated first, so the file's frames win where the names collide
-      if (fromFile.partial) this.register(await generate());
+    if (typeof fromFile !== 'string' && !fromFile.partial) {
       this.register(fromFile);
       this.images.set(name, fromFile.image);
-      this.groupOrigin.set(name, fromFile.partial ? 'png+procedural' : 'png');
-      return;
+      this.groupOrigin.set(name, 'png');
+      return null;
     }
-    if (this.shipped.has(name) && !this.warned.has(name)) {
+    if (typeof fromFile === 'string' && this.shipped.has(name) && !this.warned.has(name)) {
       this.warned.add(name);
       console.warn(`Atlas: ${name} falls back to procedural art: ${fromFile}`);
     }
-    const gen = await generate();
+    const hit = await cached;
+    const gen = hit ?? (await generate());
+    this.generatedFrom.set(name, hit ? 'cache' : 'generator');
+    // generated first, so a partial file's frames win where the names collide
     this.register(gen);
-    this.images.set(name, gen.image);
-    this.groupOrigin.set(name, 'procedural');
+    if (typeof fromFile !== 'string') {
+      this.register(fromFile);
+      this.images.set(name, fromFile.image);
+      this.groupOrigin.set(name, 'png+procedural');
+    } else {
+      this.images.set(name, gen.image);
+      this.groupOrigin.set(name, 'procedural');
+    }
+    return hit ? null : gen;
+  }
+
+  /**
+   * Keeps the groups a load generated for the next one. Never rejects. The writes run together:
+   * the browser encodes a PNG in idle time, so each takes about a second however small it is, while
+   * the main thread spends well under a tenth of that on all of them.
+   */
+  private async keepGenerated(generated: [string, AtlasImage][]) {
+    const cache = this.cache;
+    if (cache) await Promise.all(generated.map(([name, atlas]) => cache.write(name, atlas)));
   }
 
   /** The group's file pair, or why it cannot be used. */
@@ -258,7 +297,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 /** One entry of a file's frame table that `register` can turn into a texture. */
-function isFrameDef(v: unknown): v is FrameDef {
+export function isFrameDef(v: unknown): v is FrameDef {
   const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
   return (
     isRecord(v) &&

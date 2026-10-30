@@ -7,9 +7,9 @@ import type { PathSegment } from '../world/pathfinding';
 import { Dir } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds, type StationJSON } from './stations';
+import type { StoreJSON } from './stores';
 import {
   Train,
   defaultStop,
@@ -37,6 +37,7 @@ import {
   SCENARIO_ROW,
   SCENARIO_TICK_RATE,
 } from '../testing/trafficScenario';
+import { storeWith } from '../testing/storeFixtures';
 
 // Trains carry on after a load (issue #81). A train saved while moving or loading, taken through
 // toJSON, JSON and fromJSON into a fresh fleet on the same track, runs on as the uninterrupted
@@ -104,7 +105,6 @@ interface World {
   map: GameMap;
   track: TrackGraph;
   regions: RegionState;
-  stock: Stockpile;
   economy: Economy;
   builder: Builder;
   fleet: Fleet;
@@ -114,7 +114,7 @@ interface World {
 
 /** A fleet over `builder`, reporting arrivals into the world's list. */
 function fleetOf(w: Omit<World, 'fleet'>): Fleet {
-  const fleet = new Fleet(w.track, w.builder, w.map, new Inventory(), w.economy, w.stock);
+  const fleet = new Fleet(w.track, w.builder, w.map, new Inventory(), w.economy);
   fleet.onArrive = (_t, s) => void w.arrivals.push(s.id);
   return fleet;
 }
@@ -129,15 +129,14 @@ function scene(): World {
   const track = new TrackGraph(SIZE, SIZE);
   for (let x = 2; x < 90; x++) track.place(x, ROW, 'straight', 1);
   const regions = new RegionState(map);
-  const stock = new Stockpile();
   const economy = new Economy();
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   const quarry = new Station('quarry', 20, ROW - 1);
   quarry.storage.set('stone', 40);
   const warehouse = new Station('warehouse', 70, ROW - 1);
   builder.stations.push(quarry, warehouse);
-  const w = { map, track, regions, stock, economy, builder, arrivals: [] as number[] };
+  const w = { map, track, regions, economy, builder, arrivals: [] as number[] };
   const fleet = fleetOf(w);
   const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
   t.wagons = [
@@ -150,38 +149,40 @@ function scene(): World {
   return { ...w, fleet };
 }
 
-/** What a save keeps of a world: its trains, stations, stockpile and economy, as JSON. */
+/** What a save keeps of a world: its trains, stations, stores and economy, as JSON. */
 function saved(w: World): string {
   return JSON.stringify({
     trains: w.fleet.trains.map((t) => t.toJSON()),
     stations: w.builder.stations.map((s) => s.toJSON()),
-    stock: w.stock.toJSON(),
+    stores: w.builder.stores.toJSON(),
     economy: w.economy.toJSON(),
   });
 }
 
 /**
- * The world a load builds from `text`: the same map, track and decor, the stations, stockpile and
- * economy read back, and the trains through `Train.fromJSON` into a fresh fleet.
+ * The world a load builds from `text`: the same map, track and decor, the stations, stores (a
+ * depot store where the world's stood) and economy read back, and the trains through
+ * `Train.fromJSON` into a fresh fleet.
  */
 function loaded(w: World, text: string, edit?: (j: { stations: StationJSON[] }) => void): World {
   const j = JSON.parse(text) as {
     trains: TrainJSON[];
     stations: StationJSON[];
-    stock: ReturnType<Stockpile['toJSON']>;
+    stores: StoreJSON[];
     economy: ReturnType<Economy['toJSON']>;
   };
   edit?.(j);
-  const stock = new Stockpile();
-  stock.load(j.stock);
+  const depot = w.builder.stores.all().find((s) => s.kind === 'depot')!;
+  const { stores } = storeWith({}, depot.anchor);
+  stores.load(j.stores);
   const economy = new Economy();
   economy.load(j.economy);
-  const builder = new Builder(w.map, w.regions, w.track, economy, stock);
+  const builder = new Builder(w.map, w.regions, w.track, economy, stores);
   builder.free = true;
   for (const s of j.stations) builder.stations.push(Station.fromJSON(s));
   for (const [key, d] of w.builder.decor) builder.decor.set(key, { ...d });
   const { map, track, regions } = w;
-  const back = { map, track, regions, stock, economy, builder, arrivals: [] as number[] };
+  const back = { map, track, regions, economy, builder, arrivals: [] as number[] };
   const fleet = fleetOf(back);
   for (const t of j.trains) fleet.trains.push(Train.fromJSON(t, track));
   return { ...back, fleet };
@@ -484,7 +485,7 @@ interface Layout {
   tick: number;
   /**
    * the column of a coaling stage, with a water tower east of it, two rows south of the line, and
-   * coal, fuel and water in the stockpile for them to hand out; none when absent
+   * coal, fuel and water in the store for them to hand out; none when absent
    */
   service?: number;
 }
@@ -535,9 +536,16 @@ function layoutScene(c: Layout): World {
     for (let y = ROW + 2; y <= ROW + 9; y++) track.place(c.siding, y, 'straight', 0);
   }
   const regions = new RegionState(map);
-  const stock = new Stockpile();
   const economy = new Economy();
-  const builder = new Builder(map, regions, track, economy, stock);
+  // a depot store by the fuel and water service, within its reach (`rules.fuelReach`), stocked
+  const { stores } =
+    c.service === undefined
+      ? storeWith({})
+      : storeWith(Object.fromEntries(['coal', dieselFuelId(), 'water'].map((id) => [id, 1000])), {
+          x: c.service,
+          y: ROW + 4,
+        });
+  const builder = new Builder(map, regions, track, economy, stores);
   builder.free = true;
   const put = (kind: Kind, x: number, y: number, stocked: boolean) => {
     const s = new Station(kind, x, y);
@@ -556,9 +564,8 @@ function layoutScene(c: Layout): World {
       ['water_tower', c.service + 1],
     ] as const)
       builder.decor.set((ROW + 2) * map.w + x, { id, x, y: ROW + 2, rot: 0 });
-    for (const id of ['coal', dieselFuelId(), 'water']) stock.add(id, 1000);
   }
-  const w = { map, track, regions, stock, economy, builder, arrivals: [] as number[] };
+  const w = { map, track, regions, economy, builder, arrivals: [] as number[] };
   const fleet = fleetOf(w);
   const t = new Train([{ uid: 1, level: 1, def: locoDef(c.loco) }]);
   t.wagons = [
@@ -573,9 +580,6 @@ function layoutScene(c: Layout): World {
   if (c.mode !== 'schedule') expect(fleet.setMode(t, c.mode)).toEqual({ ok: true });
   return { ...w, fleet };
 }
-
-/** A warehouse is worth collecting from with what a level 1 store holds (as in fleet.test.ts). */
-const roamingRules = () => void (rules.collectMin = 30);
 
 /**
  * The fleet's own memory of when a train last loaded at each station, which a roaming train's
@@ -687,7 +691,6 @@ describe('a single train saved at any tick of a generated line', () => {
   });
 
   it('carries on as if never saved when roaming', SLOWEST, () => {
-    roamingRules();
     forAll(
       (rng) => layout(rng, ROAMING),
       (c) => carriesOnFrom(c, true),
@@ -702,7 +705,6 @@ describe('a single train saved at any tick of a generated line', () => {
       // A train under way looks for a service every five seconds and heads there before its stop
       // once a tank is under 0.4 full; saved between two looks or on its way there, it carries on
       // as the uninterrupted run does.
-      roamingRules();
       forAll(serviceLayout, (c) => carriesOnFrom(c, true), {
         shrink: shrinkLayout,
         shrinkBudget: LAYOUT_SHRINK,
@@ -762,7 +764,6 @@ describe('a freight train saved at a stop where it put goods down', () => {
     // The quarry's stone goes to the warehouse, whose pile is then the one worth fetching: the
     // train that put it there neither takes it back nor stops there again. A save keeps that
     // (`dropped`), so a train loaded while it unloads, or just after, does the same.
-    roamingRules();
     const c: Layout = {
       loco: 'f7',
       mode: 'freight',
@@ -838,7 +839,6 @@ describe('a train heading for a fuel or water service when saved', () => {
       // way to it any more, the train drops it for its stop as dispatch drops it. Loaded with the
       // service on a tile without track, it does tick for tick what it does loaded with none: it
       // keeps its speed for the stop, and looks for a service again when its next look is due.
-      roamingRules();
       let heading = 0;
       forAll(
         serviceSave,
@@ -888,7 +888,6 @@ describe('a train heading for a fuel or water service when saved', () => {
   it('saved again before the first tick, is the save that was loaded', SLOWEST, () => {
     // The service it heads for, what that hands out, and when it next looks for one survive a
     // load and a save with no tick between them.
-    roamingRules();
     let heading = 0;
     forAll(
       serviceSave,
@@ -1045,7 +1044,6 @@ describe('a train under way whose saved way it can no longer run', () => {
     // or the service it heads to); otherwise it plans the path again as every load before v17
     // did. Loaded with its way edited so it cannot be run, the train does tick for tick what
     // the same save with no way (`way: null`, what the step from v16 fills) does.
-    roamingRules();
     const edited = new Map<WayEdit, number>();
     let toService = 0;
     forAll(
@@ -1104,7 +1102,6 @@ describe('a load moves no car', () => {
     // The save keeps each car's place as it was; a load that plans the path again along
     // another line than the one the train stands on (the other route through a switch) shows
     // here as a jump. Each case loads 240 times, so it runs on fewer seeds.
-    roamingRules();
     forAll(
       (rng) => ({ ...layout(rng, ['schedule', ...ROAMING]), tick: 0 }),
       (c) =>
@@ -1124,7 +1121,6 @@ describe('a load moves no car', () => {
       // The run of a line with a service while the tanks run low, loaded every quarter second:
       // a load that planned the path to the stop instead of the service, or to both, or stood
       // the train for a tick, shows here as another end to its way or another speed.
-      roamingRules();
       let heading = 0;
       forAll(
         (rng) => ({ ...serviceLayout(rng), tick: 0 }),
@@ -1176,7 +1172,6 @@ describe('a save made after a load, before the first tick', () => {
   it('is the save that was loaded', SLOWER, () => {
     // The game saves on a wall-clock timer and when the page closes, also while the clock stands:
     // a game loaded paused can be saved again before any train has ticked.
-    roamingRules();
     forAll(
       (rng) => layout(rng, ['schedule', ...ROAMING]),
       (c) => {
@@ -1346,12 +1341,17 @@ function trafficControl(c: TrafficCase): TrafficControl {
 /** The control's save after `tick`, loaded into a fresh fleet on the same track. */
 function trafficLoaded(c: TrafficControl, tick: number): Fleet {
   const j = JSON.parse(c.texts[tick]) as { trains: TrainJSON[]; stations: StationJSON[] };
-  const stock = new Stockpile();
   const economy = new Economy();
-  const builder = new Builder(c.map, new RegionState(c.map), c.track, economy, stock);
+  const builder = new Builder(
+    c.map,
+    new RegionState(c.map),
+    c.track,
+    economy,
+    storeWith({}).stores,
+  );
   builder.free = true;
   for (const s of j.stations) builder.stations.push(Station.fromJSON(s));
-  const fleet = new Fleet(c.track, builder, c.map, new Inventory(), economy, stock);
+  const fleet = new Fleet(c.track, builder, c.map, new Inventory(), economy);
   for (const t of j.trains) fleet.trains.push(Train.fromJSON(t, c.track));
   return fleet;
 }
@@ -1858,12 +1858,11 @@ function grownLoaded(c: TrafficControl, tick: number): Fleet {
   for (const [x, y, kind, rot, cls, cls2] of save.track)
     track.place(x, y, kind, rot, cls ?? 'branch', cls2);
   track.refreshSwitchForms();
-  const stock = new Stockpile();
   const economy = new Economy();
-  const builder = new Builder(map, new RegionState(map), track, economy, stock);
+  const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
   for (const s of save.stations) builder.stations.push(Station.fromJSON(s));
-  const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+  const fleet = new Fleet(track, builder, map, new Inventory(), economy);
   for (const t of save.trains as TrainJSON[]) fleet.trains.push(Train.fromJSON(t, track));
   return fleet;
 }
@@ -2212,11 +2211,12 @@ function wantsThroughIdle(w: SimWorld): boolean {
   });
 }
 
-/** What a save keeps of an idle scene: its trains and stations, as JSON. */
+/** What a save keeps of an idle scene: its trains, stations and stores, as JSON. */
 const idleSaved = (w: SimWorld) =>
   JSON.stringify({
     trains: w.fleet.trains.map((t) => t.toJSON()),
     stations: w.builder.stations.map((s) => s.toJSON()),
+    stores: w.stores.toJSON(),
   });
 /**
  * The scene laid afresh with the stations read back and the trains through `Train.fromJSON`, as a
@@ -2224,9 +2224,15 @@ const idleSaved = (w: SimWorld) =>
  */
 function idleLoaded(sc: IdleScene, text: string): SimWorld {
   const { w } = sc.lay();
-  const j = JSON.parse(text) as { trains: TrainJSON[]; stations: StationJSON[] };
+  const j = JSON.parse(text) as {
+    trains: TrainJSON[];
+    stations: StationJSON[];
+    stores: StoreJSON[];
+  };
   const stations = j.stations.map((s) => Station.fromJSON(s));
   w.builder.stations.splice(0, w.builder.stations.length, ...stations);
+  // the stores follow the stations read back, and get their goods
+  w.stores.load(j.stores);
   w.fleet.trains = j.trains.map((t) => Train.fromJSON(t, w.track));
   return w;
 }
@@ -2711,7 +2717,6 @@ describe('a train stopped dry on its way to a fuel or water service when saved',
       // train runs on to that service, not to its stop, and takes it as the uninterrupted one does.
       // What it does is compared with the uninterrupted train's: a roaming train may end idle or
       // without a route. A way measured from another start may move an arrival by a tick.
-      roamingRules();
       const n = Object.fromEntries(Object.keys(DRY_LEAST).map((k) => [k, 0])) as DryCounts;
       forAll(
         drySave,
@@ -2801,7 +2806,6 @@ describe('a train stopped dry on its way to a fuel or water service when saved',
       // Loaded with the service it heads for moved to a tile without track, a train standing dry
       // runs on as a load of the same save with no service does once it is refilled: it plans its
       // path again, finds no way to the service and drops it for its stop, as `dispatch` drops it.
-      roamingRules();
       let stopped = 0;
       let moving = 0;
       forAll(
@@ -2945,7 +2949,7 @@ function clearCause(cause: Cause, w: World) {
   if (cause === 'noPower') {
     w.fleet.powered = () => true;
     w.fleet.supplyAt = () => 'catenary';
-    w.stock.add('power', 1e9);
+    w.builder.stores.grid.amounts.set('power', 1e9);
   } else Object.assign(w.fleet.trains[0].wagons[0], { cargo: null, amount: 0 });
 }
 /**

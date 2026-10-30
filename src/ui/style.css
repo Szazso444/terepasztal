@@ -1515,6 +1515,19 @@ input.text {
   background: var(--border-dark);
   border: 1px solid var(--border-dark);
 }
+/* the model image (public/assets/portraits): full card width, 3:2, era text below */
+.rcard-body-portrait {
+  flex-direction: column;
+  gap: 4px;
+}
+.rcard-portrait {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  background: #000;
+  border: 1px solid var(--border-dark);
+}
 .gacha-featured {
   padding: 6px 8px;
   border: 1px solid var(--border-dark);
@@ -1831,6 +1844,14 @@ input[type='range'] {
 }
 #resbar .spacer {
   flex: 1;
+}
+/* the store the bar shows; a click steps to the next */
+#resbar .res-store {
+  margin: 0 6px 0 4px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 #resbar .res-right {
   display: flex;
@@ -2354,4 +2375,86 @@ table.market td {
 .tb-name .line-badge {
   margin-right: 4px;
   vertical-align: middle;
+}
+/* ---- credits (stáblista) ---- */
+.credits {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  padding: 8px;
+}
+.credits-roll {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--stone-dark);
+  border: 1px solid var(--border-dark);
+  text-align: center;
+  padding: 0 24px;
+  line-height: 1.5;
+}
+.credits-roll a {
+  color: var(--cyan);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.credits-roll a:hover {
+  text-decoration: underline;
+}
+.credits-spacer {
+  height: 220px;
+}
+.credits-game {
+  font-family: var(--font-title);
+  font-size: 34px;
+  color: var(--text-bright);
+}
+.credits-intro {
+  margin: 6px auto 0;
+  max-width: 560px;
+  color: var(--text-dim);
+}
+.credits-head {
+  font-family: var(--font-title);
+  font-size: 22px;
+  color: var(--amber);
+  margin-top: 64px;
+}
+.credits-note {
+  max-width: 560px;
+  margin: 2px auto 18px;
+  font-size: 11px;
+}
+.credit-entry,
+.credit-group {
+  margin: 0 auto 26px;
+  max-width: 620px;
+}
+.credit-kind {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.credit-title {
+  font-family: var(--font-title);
+  font-size: 18px;
+  color: var(--text-bright);
+}
+.credit-author {
+  color: var(--amber);
+}
+.credit-author-name {
+  font-family: var(--font-title);
+  font-size: 17px;
+  color: var(--amber);
+  margin-bottom: 2px;
+}
+.credit-line,
+.credit-links {
+  font-size: 12px;
+}
+.credits-licences {
+  margin-top: 40px;
+}
+.credits-kind-head {
+  margin: 34px auto 14px;
 }

@@ -24,6 +24,7 @@ You write only these paths (`tools/agents/ownership.json`):
 - `assets/**`
 - `public/assets/*.{png,json}`
 - `public/assets/track-materials/**`
+- `public/assets/portraits/**`
 - `docs/art-direction/**`
 - `docs/mcp-setup.md`
 - `src/render/bridgeKit.json`

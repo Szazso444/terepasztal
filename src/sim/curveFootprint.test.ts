@@ -7,7 +7,7 @@ import { RAIL_CLEARANCE, unitDef, type SwitchForm } from '../world/trackGeom';
 import { Builder } from './build';
 import { buildingFootprint } from './buildings';
 import { Economy } from './economy';
-import { Stockpile } from './stockpile';
+import { storeWith } from '../testing/storeFixtures';
 import { STR } from '../strings';
 
 const SIZE = 32;
@@ -16,7 +16,7 @@ function world() {
   const track = new TrackGraph(SIZE, SIZE);
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, new Economy(), new Stockpile());
+  const builder = new Builder(map, regions, track, new Economy(), storeWith({}).stores);
   builder.free = true;
   return { track, builder };
 }

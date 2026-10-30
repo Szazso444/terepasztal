@@ -1,5 +1,6 @@
 import { Container, Sprite } from 'pixi.js';
 import { SurfaceAssets, windowSprite } from './surfaceAssets';
+import { setOwnTint } from './atmosphere';
 import type { AtlasRegistry } from '../engine/atlas';
 import { tileToWorld, depthKey } from '../engine/iso';
 import type { Train } from '../sim/trains';
@@ -285,7 +286,8 @@ export class TrainRenderer {
             const light = this.windowLights.get(s);
             if (light) light.visible = false;
           }
-          s.tint = tint;
+          // under the night's colour where the layer has one (atmosphere.ts)
+          setOwnTint(s, tint);
           c.undercarriage.zIndex = Math.min(c.undercarriage.zIndex, s.zIndex - 1);
           if (c.spec.drawBogies)
             seg.bogies.forEach((b, k) => {
@@ -332,7 +334,7 @@ export class TrainRenderer {
               this.pose(c.load, (f) => loadFrame(kind, f, thin), x, y, shown, 16);
               const col =
                 (PAL as unknown as Record<string, RGB>)[cargoDef(w.cargo).color] ?? PAL.white;
-              c.load.tint = hex(col);
+              setOwnTint(c.load, hex(col));
             } else c.load.visible = false;
           }
         });

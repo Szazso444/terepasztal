@@ -20,12 +20,12 @@ import type { Cost } from '../data/content';
 import { Builder, type LinePiece } from './build';
 import { BUILDING_DEFS } from './buildings';
 import { bridgeCapacity } from './bridges';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { resetStationIds } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
 import { forAll, shrinkArray, type ForAllOptions } from '../testing/property';
 import { STR } from '../strings';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
@@ -42,11 +42,11 @@ const BRIDGES = BUILDING_DEFS.filter((d) => d.bridge).map((d) => d.id);
 function world(size = 24) {
   const map = emptyMap(4242, size, size, Terrain.Grass),
     track = new TrackGraph(size, size),
-    stock = new Stockpile(),
+    { stores, depot: stock } = storeWith({}, { x: size / 2, y: size / 2 }),
     economy = new Economy();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, stores);
   for (const k of RES) stock.amounts.set(k, 1000);
   const ground = (x: number, y: number, t: Terrain) => (map.terrain[y * size + x] = t);
   const held = () => RES.map((k) => stock.get(k));
@@ -246,7 +246,10 @@ describe('a line of track', () => {
       .join(', ');
     const before = snapshot(w);
     const c = w.builder.checkLine(line);
-    expect(c).toMatchObject({ ok: false, reason: STR.build.needResources(missing) });
+    expect(c).toMatchObject({
+      ok: false,
+      reason: STR.build.noStoreInReach(rules.buildReach, missing),
+    });
     expect(c.cost).toEqual(total);
     expect(c.at).toBeUndefined();
     expect(w.builder.placeLine(line)).toBe(false);
@@ -945,7 +948,12 @@ describe.each(GENERATORS)('lines over seeded %s', (_name, gen, seeds) => {
             );
           if (step.ok) {
             expect(tracked, `${at}: passed over track`).toBe(false);
-            expect(tool, `${at}: the single tool's verdict`).toEqual({ ok: true, cost: step.cost });
+            // paid from the world's one depot, when anything is paid
+            expect(tool, `${at}: the single tool's verdict`).toEqual({
+              ok: true,
+              cost: step.cost,
+              payer: tool.payer && twin.stock.key,
+            });
             expect(single(twin, p), at).toBe(true);
             for (const [k, v] of Object.entries(step.cost)) total[k] = (total[k] ?? 0) + v;
             lays = true;
@@ -969,7 +977,7 @@ describe.each(GENERATORS)('lines over seeded %s', (_name, gen, seeds) => {
           const missing = Object.entries(w.stock.missing(total))
             .map(([k, v]) => `${v} ${k}`)
             .join(', ');
-          expect(check.reason).toBe(STR.build.needResources(missing));
+          expect(check.reason).toBe(STR.build.noStoreInReach(rules.buildReach, missing));
         }
 
         const held = w.held(),
@@ -1043,7 +1051,7 @@ describe.each(GENERATORS)('lines over seeded %s', (_name, gen, seeds) => {
           expect(c).toMatchObject({
             ok: false,
             cost: whole.cost,
-            reason: STR.build.needResources(`1 ${RES[i]}`),
+            reason: STR.build.noStoreInReach(rules.buildReach, `1 ${RES[i]}`),
           });
           expect(c.at).toBeUndefined();
           expect(w.builder.placeLine(s.line)).toBe(false);

@@ -140,6 +140,7 @@ export interface MainMenuActions extends SlotActions, AudioActions {
   tuning(): void;
   content(): void;
   settings(): void;
+  credits(): void;
 }
 
 /** Title screen. Overlays the (paused) world. */
@@ -271,6 +272,7 @@ export class MainMenu {
         'menu-btn',
       ),
       btn(STR.topbar.settings, () => this.actions.settings(), 'menu-btn'),
+      btn(STR.menu.credits, () => this.actions.credits(), 'menu-btn'),
       audioRows(this.actions),
       el('div', { class: 'col-title', style: 'margin-top:8px', text: STR.menu.savedGames }),
       slotList(this.actions, this.prompt, () => this.render(save, levels, custom)),

@@ -114,7 +114,10 @@ function fullParts(): SaveParts {
     weather: { kind: 'clear', intensity: 0, nextChangeAt: 5, rng: 9 },
     world: { kind: 'generated', seed: 777, params: { ...DEFAULT_MAP_PARAMS } },
     rules: { contractOfferCount: 1 },
-    stockpile: { amounts: { food: 600 }, famine: false },
+    stores: [
+      { key: 'town:1', amounts: { food: 600 }, famine: false },
+      { key: 'grid', amounts: { power: 40 }, famine: false },
+    ],
     buildings: [[7, 7, 'sawmill', 0.5, 2]],
     regions: [true, false],
     seasonOffset: 1,
@@ -156,7 +159,7 @@ describe('the migration registry', () => {
     // station's, past the step that starts the works list, a works with no level, no work and no
     // rotation for the steps that fill a works', and past the step that builds the world
     // description, a generated world with no ground stored for the step that starts its store, and
-    // a wide straight and a transition for the step from v20 that lays the six lines.
+    // a wide straight and a transition for the step from v21 that lays the six lines.
     for (const m of MIGRATIONS) {
       const file: SaveGame = {
         ...oldestSave(),
@@ -169,7 +172,7 @@ describe('the migration registry', () => {
         trains: [{ id: 1 }],
         stations: [stationOf('farm', undefined)],
         ...(m.from > 3 ? { buildings: [[7, 7, 'kiln', 0] as BuildingJSON] } : {}),
-        ...(m.from === 20
+        ...(m.from === 21
           ? {
               track: [
                 [3, 3, 'straight', 1, 'regular'],
@@ -200,6 +203,7 @@ describe('the migration registry', () => {
       [8, 'supply', (v) => typeof v === 'string'],
       [9, 'crafting', block],
       [19, 'roads', list],
+      [20, 'stores', list],
     ];
     for (let version = SAVE_MIN_VERSION; version < SAVE_VERSION; version++) {
       const j = migrate({ ...oldestSave(), version });
@@ -257,7 +261,7 @@ const DECLARED: Record<keyof Declared<SaveGame>, true> = {
   weather: true,
   world: true,
   rules: true,
-  stockpile: true,
+  stores: true,
   buildings: true,
   regions: true,
   seasonOffset: true,
@@ -822,7 +826,13 @@ describe('v11 to v12', () => {
     // the step to v15 then says the bridge is not being strengthened, and the step to v16 that it
     // stands at rotation 0
     expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1, null, 0]);
-    expect(j.stockpile).toEqual({ amounts: { wheat: 200, coal: 50, food: 1000 }, famine: false });
+    // the step to v21 then moves the stockpile into the town: it has no depot and no warehouse
+    expect(j.stockpile).toBeUndefined();
+    expect(j.stores).toContainEqual({
+      key: 'town:7',
+      amounts: { wheat: 200, coal: 50, food: 1000 },
+      famine: false,
+    });
     expect(j.economy.money).toBe(1000);
   });
 
@@ -1666,6 +1676,95 @@ describe('v17 to v18', () => {
       const back = Train.fromJSON(asStored(read.save.trains[0]) as TrainJSON, track);
       expect(asStored(back.toJSON()), `dropped ${dropped}`).toEqual(saved);
     }
+  });
+});
+
+describe('v20 to v21', () => {
+  /** A v20 station of `defId` holding `storage`. */
+  const st = (id: number, defId: string, storage: Record<string, number> = {}): StationJSON => ({
+    id,
+    defId,
+    name: `S ${id}`,
+    x: id * 4,
+    y: 2,
+    level: 1,
+    storage,
+    rot: 0,
+    work: null,
+  });
+  /** A v20 file of `stations` whose global stockpile holds wood 400 and power 50, in famine. */
+  const v20 = (stations: StationJSON[], extra: Partial<SaveGame> = {}): SaveGame => ({
+    ...oldestSave(),
+    version: 20,
+    stations,
+    stockpile: { amounts: { wood: 400, power: 50 }, famine: true },
+    ...extra,
+  });
+  const grid = { key: 'grid', amounts: { power: 50 }, famine: false };
+
+  it('a v20 save keeps its stockpile in the start depot and its warehouse goods', () => {
+    const j = runStep(
+      20,
+      v20([
+        st(4, 'depot'),
+        st(2, 'narrow_depot'),
+        st(3, 'warehouse', { stone: 80 }),
+        st(5, 'farm', { wheat: 9 }),
+      ]),
+    );
+    expect(j.stockpile).toBeUndefined();
+    // the depot of the lowest id is the start depot; power goes to the grid. The stockpile's
+    // famine is not carried: those who went hungry eat at their own stores now, whose next meals
+    // declare a famine again (one carried to a depot nobody eats at would only be told as ended)
+    expect(j.stores).toEqual([
+      { key: 'st:2', amounts: { wood: 400 }, famine: false },
+      grid,
+      { key: 'st:3', amounts: { stone: 80 }, famine: false },
+    ]);
+    expect(j.stations.find((s) => s.id === 3)!.storage).toEqual({});
+    // a station that is no warehouse keeps what it holds
+    expect(j.stations.find((s) => s.id === 5)!.storage).toEqual({ wheat: 9 });
+  });
+
+  it('puts the stockpile of a save with no depot in its first warehouse, else its first town', () => {
+    const toWarehouse = runStep(
+      20,
+      v20([st(1, 'farm'), st(3, 'warehouse', { wood: 5, stone: 80 }), st(2, 'warehouse')]),
+    );
+    expect(toWarehouse.stores).toEqual([
+      { key: 'st:3', amounts: { wood: 405, stone: 80 }, famine: false },
+      grid,
+      { key: 'st:2', amounts: {}, famine: false },
+    ]);
+    const toTown = runStep(
+      20,
+      v20([st(1, 'farm'), st(6, 'town')], {
+        towns: [{ id: 9, name: 'Alder', stationId: 6, custom: false, color: 0 }],
+      }),
+    );
+    expect(toTown.stores).toEqual([{ key: 'town:9', amounts: { wood: 400 }, famine: false }, grid]);
+    // with no place at all, the goods wait for the depot a load grants (`StoreRegistry.load`)
+    const nowhere = runStep(20, v20([st(1, 'farm')]));
+    expect(nowhere.stores).toEqual([
+      { key: 'unplaced', amounts: { wood: 400 }, famine: false },
+      grid,
+    ]);
+  });
+
+  it('moves no goods it does not find, and copes with what no version wrote', () => {
+    const none = runStep(20, v20([st(3, 'warehouse', { stone: 80 })], { stockpile: undefined }));
+    expect(none.stores).toEqual([{ key: 'st:3', amounts: { stone: 80 }, famine: false }]);
+    const odd = v20([st(3, 'warehouse')], { stockpile: { amounts: 'none' } });
+    (odd.stations[0] as { storage: unknown }).storage = null;
+    expect(runStep(20, odd).stores).toEqual([{ key: 'st:3', amounts: {}, famine: false }]);
+    expect(odd.stockpile).toBeUndefined();
+  });
+
+  it('records its note', () => {
+    const j = migrate(v20([st(2, 'depot')]));
+    expect(j.migrationNotes?.[0]).toBe(
+      'v20→v21: the global stockpile moved into the start depot; each warehouse keeps its own goods',
+    );
   });
 });
 
@@ -2869,11 +2968,11 @@ describe('v12 to v13', () => {
   });
 });
 
-describe('v20 to v21', () => {
+describe('v21 to v22', () => {
   it('turns wide and high-speed track into Branch Line, and a transition into a straight on its axis', () => {
     const j = migrate({
       ...oldestSave(),
-      version: 20,
+      version: 21,
       track: [
         [2, 4, 'straight', 1, 'regular'],
         [3, 4, 'transition', 3, 'regular'],
@@ -2897,7 +2996,7 @@ describe('v20 to v21', () => {
       [11, 4, 'crossing', 1, 'branch', 'branch'],
       [13, 4, 'switch', 5, 'narrow'],
     ]);
-    expect(MIGRATIONS.find((m) => m.from === 20)!.note).toMatch(/Branch Line/);
+    expect(MIGRATIONS.find((m) => m.from === 21)!.note).toMatch(/Branch Line/);
   });
 });
 

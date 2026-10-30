@@ -5,14 +5,20 @@ import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { Dir } from '../engine/iso';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 function world() {
   const map = emptyMap(4242, 40, 40, Terrain.Grass),
     track = new TrackGraph(40, 40);
-  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  const builder = new Builder(
+    map,
+    new RegionState(map),
+    track,
+    new Economy(),
+    storeWith({}).stores,
+  );
   builder.free = true;
   const changed: string[] = [];
   builder.onTrackChanged = (x, y) => changed.push(`${x},${y}`);

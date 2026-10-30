@@ -6,7 +6,6 @@ import { TrackGraph } from '../world/track';
 import { Rng } from '../engine/rng';
 import { content } from '../data/content';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
 import { startWork } from './upgrade';
@@ -30,6 +29,7 @@ import {
 import { forAll, shrinkInt, SEEDS } from '../testing/property';
 import { streetDoor } from './doors';
 import { buildingDef } from './buildings';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -99,7 +99,13 @@ afterEach(() => vi.restoreAllMocks());
 function flat(seed: number, w: number, h: number, row: number) {
   const map = emptyMap(seed, w, h, Terrain.Grass);
   const track = new TrackGraph(w, h);
-  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  const builder = new Builder(
+    map,
+    new RegionState(map),
+    track,
+    new Economy(),
+    storeWith({}).stores,
+  );
   builder.free = true;
   for (let x = 2; x < w - 2; x++) track.place(x, row, 'straight', 1);
   return { map, builder };

@@ -1,8 +1,7 @@
 /**
  * Production-chain mode of the running game, chosen when a game starts and stored in the save.
  *
- * - `simple`: works run from the global stockpile, warehouses top up from the stockpile when
- *   their own store runs dry, diesel engines burn oil.
+ * - `simple`: the stores on one rail network share their goods, diesel engines burn oil.
  * - `full`: a second data set of cargo, stations and works (`*_full.json`) joins the game:
  *   collieries on coal deposits, mines and ironworks, derricks and refineries making diesel,
  *   sand for traction and copper wire. Warehouses refuel only from what trains bring them.

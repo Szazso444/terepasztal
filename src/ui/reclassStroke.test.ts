@@ -5,10 +5,10 @@ import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { stepTiles } from '../world/reclass';
 import { Builder } from '../sim/build';
-import { Stockpile } from '../sim/stockpile';
 import { Economy } from '../sim/economy';
 import { rules, DEFAULT_RULES } from '../sim/rules';
 import { ReclassStroke } from './reclassStroke';
+import { storeWith } from '../testing/storeFixtures';
 
 /** An economy in the Electric Age: Main and Trunk Line are open. */
 const electricAge = () => Object.assign(new Economy(), { tier: 2 });
@@ -106,11 +106,11 @@ describe('a stroke on real track', () => {
   function world() {
     const map = emptyMap(4242, 48, 48, Terrain.Grass),
       track = new TrackGraph(48, 48),
-      stock = new Stockpile(),
+      { stores, depot: stock } = storeWith({}, { x: 10, y: 10 }),
       economy = electricAge();
     const regions = new RegionState(map);
     for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-    const builder = new Builder(map, regions, track, economy, stock);
+    const builder = new Builder(map, regions, track, economy, stores);
     for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 5000);
     // a north-south and a west-east line of Main Line, crossing at (10, 10); the Downgrade tool
     // takes Main down to Branch, and the crossing takes Branch on the line the stroke runs along

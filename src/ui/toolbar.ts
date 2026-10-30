@@ -1,7 +1,7 @@
 import { rules } from '../sim/rules';
 import { ageIcon } from './ageIcon';
 import { el, btn } from './dom';
-import { fmtCost } from '../sim/stockpile';
+import { fmtCost } from '../sim/stores';
 import { BUILDING_DEFS } from '../sim/buildings';
 import { AGE_ORDER, STR } from '../strings';
 import {

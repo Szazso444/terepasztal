@@ -10,7 +10,7 @@ import { STATION_DEFS, Station, stationDef, type StationJSON } from './stations'
 import { BUILDING_DEFS, buildingDef } from './buildings';
 import { decorDef } from './build';
 import { CARGO } from './cargo';
-import { RESOURCE_IDS } from './stockpile';
+import { RESOURCE_IDS } from './stores';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { Train, defaultStop, jobStop, resetTrainIds, type StopPlan, type TrainJob } from './trains';
@@ -147,7 +147,10 @@ function oldSave(track: TrackGraph): SaveGame {
       [10, 10, 'windmill', 0, 1],
       [12, 10, 'gone', 0.5, 2],
     ],
-    stockpile: { amounts: { wheat: 100, food: 50 }, famine: false },
+    stores: [
+      { key: 'st:3', amounts: { wheat: 100, food: 50 }, famine: false },
+      { key: 'grid', amounts: {}, famine: false },
+    ],
   };
 }
 /** The same save with only shipped content in it. */
@@ -218,17 +221,17 @@ describe('pruneUnknownContent', () => {
     expect(j.economy.tickets).toBe(3 + report.tickets);
   });
 
-  it('salvages goods into the stockpile and unhooks contracts, stops and inventory', () => {
+  it('salvages goods into the stores and unhooks contracts, stops and inventory', () => {
     const j = oldSave(line());
     pruneUnknownContent(j);
-    // mill storage (wheat 40, food 10; passengers are not stockpiled), the gone wagon's stone,
-    // and the wood of train 1, taken off the line with no locomotive left
-    expect((j.stockpile as { amounts: Record<string, number> }).amounts).toEqual({
-      wheat: 140,
-      food: 60,
-      stone: 15,
-      wood: 20,
-    });
+    // mill storage (wheat 40, food 10; passengers are not stored), the gone wagon's stone, and
+    // the wood of train 1, taken off the line with no locomotive left: with no depot in the save
+    // they wait for the one the load grants (`StoreRegistry.load`)
+    expect(j.stores).toEqual([
+      { key: 'st:3', amounts: { wheat: 100, food: 50 }, famine: false },
+      { key: 'grid', amounts: {}, famine: false },
+      { key: 'unplaced', amounts: { wheat: 40, food: 10, stone: 15, wood: 20 }, famine: false },
+    ]);
     expect(j.stations.map((s) => s.id)).toEqual([1, 3]);
     const book = j.contracts as { contracts: { id: number }[] };
     expect(book.contracts.map((c) => c.id)).toEqual([1]);
@@ -244,6 +247,29 @@ describe('pruneUnknownContent', () => {
       [6, null],
       [7, 2],
     ]);
+  });
+
+  it("salvages goods into the start depot's store: the known depot of the lowest id", () => {
+    const j = oldSave(line());
+    j.stations.push(station(6, 'depot'), station(5, 'narrow_depot'), station(4, 'old_halt'));
+    j.stores!.push({ key: 'st:6', amounts: { coal: 3 }, famine: false });
+    pruneUnknownContent(j);
+    expect(j.stores).toEqual([
+      { key: 'st:3', amounts: { wheat: 100, food: 50 }, famine: false },
+      { key: 'grid', amounts: {}, famine: false },
+      { key: 'st:6', amounts: { coal: 3 }, famine: false },
+      { key: 'st:5', amounts: { wheat: 40, food: 10, stone: 15, wood: 20 }, famine: false },
+    ]);
+    // a depot the save already keeps goods for takes them in with what it holds
+    const k = oldSave(line());
+    k.stations.push(station(6, 'depot'));
+    k.stores!.push({ key: 'st:6', amounts: { coal: 3, wood: 1 }, famine: false });
+    pruneUnknownContent(k);
+    expect(k.stores![2]).toEqual({
+      key: 'st:6',
+      amounts: { coal: 3, wood: 21, wheat: 40, food: 10, stone: 15 },
+      famine: false,
+    });
   });
 
   it('leaves a save with nothing unknown as it was, and finds nothing on a second run', () => {
@@ -370,7 +396,7 @@ interface SaveSpec {
   spares: string[];
   works: string[];
   decor: string[];
-  /** null: the save has no stockpile */
+  /** null: the save has no stores; else the goods of a town store it has */
   stock: [string, number][] | null;
   /** shipped ids declared unknown, per predicate */
   unknown: { station: string[]; works: string[]; decor: string[]; vehicle: string[] };
@@ -380,8 +406,13 @@ type ContractJSON = ReturnType<typeof contract>;
 const trainsOf = (j: SaveGame) => j.trains as TrainJSON[];
 const itemsOf = (j: SaveGame) => (j.inventory as { items: ItemJSON[] }).items;
 const contractsOf = (j: SaveGame) => (j.contracts as { contracts: ContractJSON[] }).contracts;
-const stockOf = (j: SaveGame) =>
-  (j.stockpile as { amounts: Record<string, number> } | undefined)?.amounts;
+/** Every store's goods in the save, together; undefined when it has no stores. */
+const stockOf = (j: SaveGame) => {
+  if (!j.stores) return undefined;
+  const n: Record<string, number> = {};
+  for (const s of j.stores) for (const [c, a] of Object.entries(s.amounts)) n[c] = (n[c] ?? 0) + a;
+  return n;
+};
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
 function genSpec(rng: Rng, removed = true): SaveSpec {
@@ -604,7 +635,8 @@ function buildSave(spec: SaveSpec): SaveGame {
     decor: spec.decor.map((id, i) => [i, 8, id, 0]),
     buildings: spec.works.map((id, i) => [i * 3, 10, id, 0, 1]),
   };
-  if (spec.stock) save.stockpile = { amounts: Object.fromEntries(spec.stock), famine: false };
+  if (spec.stock)
+    save.stores = [{ key: 'town:1', amounts: Object.fromEntries(spec.stock), famine: false }];
   return clone(save);
 }
 
@@ -721,7 +753,7 @@ describe('pruneUnknownContent over random saves', () => {
           trains: null,
           decor: null,
           buildings: null,
-          stockpile: null,
+          stores: null,
           economy: { ...s.economy, money: null, tickets: null },
           contracts: { ...(s.contracts as object), contracts: null },
           inventory: { ...(s.inventory as object), items: null },
@@ -773,14 +805,14 @@ describe('pruneUnknownContent over random saves', () => {
     );
   });
 
-  it('moves the storable goods of what went into the stockpile, so none are made or lost', () => {
+  it("moves the storable goods of what went into the start depot's store, so none are made or lost", () => {
     forAll(
       genSpec,
       (spec) => {
-        const { j, before } = pruned(spec);
+        const { j, before, known } = pruned(spec);
         const stock = stockOf(j);
         if (!stock) {
-          expect(j.stockpile, 'no stockpile is made up').toBeUndefined();
+          expect(j.stores, 'no stores are made up').toBeUndefined();
           return;
         }
         const held = (s: SaveGame) => {
@@ -794,7 +826,15 @@ describe('pruneUnknownContent over random saves', () => {
           return n;
         };
         expect(held(j)).toEqual(held(before));
-        // passengers and cargo the game dropped are never stockpiled
+        // into the store of the known depot of the lowest id, or with none into the goods a load
+        // hands the depot it grants; every other store stays as it was
+        const depots = before.stations
+          .filter((st) => known.station(st.defId) && stationDef(st.defId).depot)
+          .map((st) => st.id);
+        const to = depots.length ? `st:${Math.min(...depots)}` : 'unplaced';
+        const others = (s: SaveGame) => s.stores!.filter((e) => e.key !== to);
+        expect(others(j)).toEqual(others(before));
+        // passengers and cargo the game dropped are never stored
         for (const c of Object.keys(stock))
           expect(c in stockOf(before)! || RESOURCE_IDS.includes(c), c).toBe(true);
       },

@@ -5,7 +5,7 @@ import { RegionState } from '../world/regions';
 import { LINES, TRACK_CLASSES, TrackGraph, itemAge, lineAge } from '../world/track';
 import { AGE_DEFS } from './ages';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
+import { storeWith } from '../testing/storeFixtures';
 import { Economy } from './economy';
 import { rules, DEFAULT_RULES } from './rules';
 import { STR } from '../strings';
@@ -20,11 +20,11 @@ const STEAM = 0,
 function world(age: number) {
   const map = emptyMap(4242, 32, 32, Terrain.Grass),
     track = new TrackGraph(32, 32),
-    stock = new Stockpile(),
+    { stores, depot: stock } = storeWith({}),
     economy = Object.assign(new Economy(), { tier: age });
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, stores);
   for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 10000);
   return { track, builder };
 }

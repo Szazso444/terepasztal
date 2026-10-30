@@ -14,7 +14,6 @@ import { DIRS, DIR_DX, DIR_DY, Dir, opposite } from '../engine/iso';
 import { STR } from '../strings';
 import { content } from '../data/content';
 import { Builder, decorDef, type LinePiece } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { resetStationIds, stationFootprint } from './stations';
 import { resetTrainIds } from './trains';
@@ -41,6 +40,7 @@ import { repairBuiltRoads, repairBuiltTiles } from '../engine/loadRepair';
 import { bridgeSpan } from './bridges';
 import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { simWorld, line, station } from '../testing/simWorld';
+import { depotWith, storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -64,15 +64,16 @@ const EW = 1;
 
 /**
  * A grass map of 64 by 64 tiles, four chunks of which the player owns the north-west one (x and y
- * below 32), and a builder that pays: nothing in stock until a test puts it there.
+ * below 32), and a builder that pays from a depot there: nothing in it until a test puts it there.
  */
 function world(seed = 7) {
   const map = emptyMap(seed, W, W, Terrain.Grass);
   const regions = new RegionState(map);
   regions.load([true, false, false, false]);
   const track = new TrackGraph(W, W);
-  const stock = new Stockpile();
-  const builder = new Builder(map, regions, track, new Economy(), stock);
+  // the depot the builder pays from, in reach of the whole owned chunk
+  const { stores, depot: stock } = storeWith({}, { x: 16, y: 16 });
+  const builder = new Builder(map, regions, track, new Economy(), stores);
   return { map, regions, track, stock, builder, roads: builder.roads };
 }
 type World = ReturnType<typeof world>;
@@ -115,7 +116,11 @@ describe('laying a road', () => {
     w.stock.add('stone', 10);
     w.stock.add('wood', 10);
     w.stock.add('iron', 10);
-    expect(w.builder.checkRoad(5, 5)).toEqual({ ok: true, cost: { stone: cost.stone } });
+    expect(w.builder.checkRoad(5, 5)).toEqual({
+      ok: true,
+      cost: { stone: cost.stone },
+      payer: w.stock.key,
+    });
     expect(w.builder.placeRoad(5, 5)).toBe(true);
     expect(w.roads.has(5, 5)).toBe(true);
     expect(w.stock.get('stone')).toBe(10 - cost.stone);
@@ -131,14 +136,14 @@ describe('laying a road', () => {
   it('is refused without the stone, and takes nothing', () => {
     const w = world();
     w.stock.add('stone', roadCost().stone - 1);
-    const was = JSON.stringify(w.stock.toJSON());
+    const was = JSON.stringify([...w.stock.amounts]);
     const c = w.builder.checkRoad(5, 5);
     expect(c.ok).toBe(false);
-    expect(c.reason).toBe(STR.build.needResources(`1 stone`));
+    expect(c.reason).toBe(STR.build.noStoreInReach(rules.buildReach, `1 stone`));
     expect(w.builder.placeRoad(5, 5)).toBe(false);
     expect(w.roads.has(5, 5)).toBe(false);
     expect(w.roads.size).toBe(0);
-    expect(JSON.stringify(w.stock.toJSON())).toBe(was);
+    expect(JSON.stringify([...w.stock.amounts])).toBe(was);
   });
 
   it('goes only on owned land', () => {
@@ -374,11 +379,11 @@ describe('a road on a bridge platform (#493)', () => {
     w.stock.add('wood', 100);
     expect(w.builder.placeBuilding(13, 10, 'bridge_wood')).not.toBeNull();
     expect(w.builder.placeRoad(13, 10)).toBe(true);
-    const stock = JSON.stringify(w.stock.toJSON());
+    const stock = JSON.stringify([...w.stock.amounts]);
     expect(w.builder.removeBuilding(13, 10)).toBe(false);
     expect(w.builder.buildingAt(13, 10)?.id).toBe('bridge_wood');
     expect(w.roads.has(13, 10)).toBe(true);
-    expect(JSON.stringify(w.stock.toJSON())).toBe(stock);
+    expect(JSON.stringify([...w.stock.amounts])).toBe(stock);
     expect(w.builder.removeRoad(13, 10)).toBe(true);
     expect(w.builder.removeBuilding(13, 10)).toBe(true);
     expect(w.builder.buildingAt(13, 10)).toBeUndefined();
@@ -581,8 +586,7 @@ describe('a level crossing', () => {
       /** A quarry and a warehouse on a line with a train between them; roads across it or none. */
       const play = (crossings: boolean) => {
         const w = simWorld({ terrain: 'grass', size: 48 });
-        for (const [id, n] of Object.entries(startStock())) w.stock.add(id, n);
-        station(w, 'depot', 4, 20);
+        depotWith(w, startStock(), { x: 4, y: 20 });
         line(w, 6, 20, 40);
         const quarry = station(w, 'quarry', 10, 19);
         const warehouse = station(w, 'warehouse', 34, 19);
@@ -596,7 +600,7 @@ describe('a level crossing', () => {
         const train = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
         if (typeof train === 'string') throw new Error(`fleet.create: ${train}`);
         const step = new SimStep(w);
-        const ctx = { mode: 'play', weather: false, stockCap: () => 1e9 } as const;
+        const ctx = { mode: 'play', weather: false } as const;
         const trace: string[] = [];
         const heads = new Set<string>();
         for (let i = 0; i < 3000; i++) {
@@ -784,7 +788,13 @@ function site(c: { ground: number[]; ops: Op[] }) {
     map.terrain[i] = [Terrain.Water, Terrain.Rock, Terrain.Mountain][n % 3];
   });
   const track = new TrackGraph(SIDE, SIDE);
-  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  const builder = new Builder(
+    map,
+    new RegionState(map),
+    track,
+    new Economy(),
+    storeWith({}).stores,
+  );
   builder.free = true;
   return { map, track, builder, roads: builder.roads };
 }
@@ -991,7 +1001,13 @@ function deckSite(c: DeckCase) {
     map.terrain[i] = [Terrain.Water, Terrain.Rock, Terrain.Mountain][n % 3];
   });
   const track = new TrackGraph(SIDE, SIDE);
-  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  const builder = new Builder(
+    map,
+    new RegionState(map),
+    track,
+    new Economy(),
+    storeWith({}).stores,
+  );
   builder.free = true;
   return { map, track, builder, roads: builder.roads };
 }
@@ -1247,6 +1263,7 @@ describe('roads and the save', () => {
       const j = migrate(oldSave(version));
       expect(j.roads, `from v${version}`).toEqual([]);
     }
+    // the step from v19 says so, and the steps after it say their own
     const v19 = migrate(oldSave(19));
     // the road step's note first, then those of the steps after it
     expect(v19.migrationNotes?.[0]).toBe(
@@ -1256,7 +1273,7 @@ describe('roads and the save', () => {
     // the step only fills in: a list the file has is kept
     const kept = migrate({ ...oldSave(19), roads: [[1, 2]] });
     expect(kept.roads).toEqual([[1, 2]]);
-    const now = migrate({ ...oldSave(20), roads: [[4, 5]] });
+    const now = migrate({ ...oldSave(SAVE_VERSION), roads: [[4, 5]] });
     expect(now.roads).toEqual([[4, 5]]);
     expect((now.migrationNotes ?? []).filter((n) => /road/.test(n))).toEqual([]);
   });
@@ -1614,7 +1631,13 @@ describe('a walk with roads', () => {
   it('is the walk a walker sets out on', () => {
     const map = emptyMap(1, 40, 40, Terrain.Grass);
     const track = new TrackGraph(40, 40);
-    const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+    const builder = new Builder(
+      map,
+      new RegionState(map),
+      track,
+      new Economy(),
+      storeWith({}).stores,
+    );
     builder.free = true;
     for (let x = 4; x < 36; x++) track.place(x, 20, 'straight', EW);
     const st = builder.placeStation(10, 19, 'station')!;
@@ -1698,7 +1721,13 @@ function townOf(c: TownCase) {
   for (let y = 30; y <= 31; y++)
     for (let x = 14; x <= 18; x++) map.terrain[y * TOWN + x] = Terrain.Hill;
   const track = new TrackGraph(TOWN, TOWN);
-  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  const builder = new Builder(
+    map,
+    new RegionState(map),
+    track,
+    new Economy(),
+    storeWith({}).stores,
+  );
   builder.free = true;
   for (let x = 4; x < 44; x++) track.place(x, 24, 'straight', EW);
   const stations = (
@@ -1860,7 +1889,7 @@ describe('the pace on a road', () => {
           new RegionState(map),
           track,
           new Economy(),
-          new Stockpile(),
+          storeWith({}).stores,
         );
         builder.free = true;
         for (let x = 4; x < 36; x++) track.place(x, 20, 'straight', EW);

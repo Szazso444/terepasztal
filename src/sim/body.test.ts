@@ -295,3 +295,80 @@ describe('Polyline', () => {
     );
   });
 });
+
+describe('Polyline from kept lengths', () => {
+  /** `nearest` as it read the points before they were kept as flat arrays. */
+  function nearestOf(pl: Polyline, P: { x: number; y: number }, arcGuess: number, window = 1.5) {
+    const pts = pl.pts;
+    if (pts.length === 1) return { p: pts[0], arc: 0 };
+    const seg = (arc: number) => {
+      const cum = pl.cum;
+      let lo = 1;
+      let hi = cum.length - 1;
+      if (hi < 1) return 1;
+      if (arc <= cum[0]) return 1;
+      if (arc >= cum[hi]) return hi;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (cum[mid] < arc) lo = mid + 1;
+        else hi = mid;
+      }
+      return lo;
+    };
+    const i0 = Math.max(1, seg(arcGuess - window));
+    const i1 = Math.min(pts.length - 1, seg(arcGuess + window));
+    let best = { p: pts[i0 - 1], arc: pl.cum[i0 - 1] };
+    let bd = Infinity;
+    for (let i = i0; i <= i1; i++) {
+      const a = pts[i - 1];
+      const b = pts[i];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const l2 = dx * dx + dy * dy;
+      let t = l2 > 1e-12 ? ((P.x - a.x) * dx + (P.y - a.y) * dy) / l2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      const q = { x: a.x + dx * t, y: a.y + dy * t };
+      const d = (q.x - P.x) ** 2 + (q.y - P.y) ** 2;
+      if (d < bd) {
+        bd = d;
+        best = { p: q, arc: pl.cum[i - 1] + Math.sqrt(l2) * t };
+      }
+    }
+    return best;
+  }
+
+  it('measures, samples and finds the nearest point exactly as from the points alone', () => {
+    forAll(
+      (rng) => {
+        // a wandering line of points, some of them repeated, as a trail can hold
+        const pts = [{ x: rng.range(-5, 5), y: rng.range(-5, 5) }];
+        for (let n = rng.int(0, 80); n > 0; n--) {
+          const last = pts[pts.length - 1];
+          pts.push(
+            rng.chance(0.05)
+              ? { ...last }
+              : { x: last.x + rng.range(-0.2, 0.2), y: last.y + rng.range(-0.2, 0.2) },
+          );
+        }
+        const probes = Array.from({ length: 8 }, () => ({
+          P: { x: rng.range(-6, 6), y: rng.range(-6, 6) },
+          arc: rng.range(-1, 20),
+        }));
+        return { pts, probes };
+      },
+      ({ pts, probes }) => {
+        const lens = pts.map((p, i) =>
+          i ? Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y) : 0,
+        );
+        const plain = new Polyline(pts);
+        const kept = new Polyline(pts, lens);
+        expect(kept.cum).toEqual(plain.cum);
+        for (const { P, arc } of probes) {
+          expect(kept.nearest(P, arc)).toEqual(nearestOf(plain, P, arc));
+          expect(kept.at(arc)).toEqual(plain.at(arc));
+          expect(kept.tangent(arc)).toEqual(plain.tangent(arc));
+        }
+      },
+    );
+  });
+});

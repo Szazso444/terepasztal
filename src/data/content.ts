@@ -214,7 +214,7 @@ export interface StationDef {
   needsWater?: boolean;
   /** local store: holds anything trains bring, per level */
   stockpile?: boolean;
-  /** deliveries here enter the player's stockpile (depots) */
+  /** deliveries here enter the depot's store */
   pool?: boolean;
   /** engine shed: trains are built here; limited by owned chunks; two gates on two sides */
   depot?: boolean;
@@ -424,7 +424,7 @@ export interface TrackConfig {
     /** consumption cut per matching refuelling cart, and the most the carts cut together */
     cartSaving: number;
     cartSavingCap: number;
-    /** power units a battery cart takes from the stockpile per tile on live track */
+    /** power units a battery cart takes from its store per tile on live track */
     batteryChargePerTile: number;
   };
 }
@@ -433,7 +433,7 @@ export type CraftRarity = Rarity | 'L';
 export type CraftKind = 'loco' | 'wagon';
 /**
  * Crafting: recipes are unlocked with money (three cards per draw, keep one), instances are built
- * from stockpile resources with a rarity-dependent failure chance.
+ * from stored resources with a rarity-dependent failure chance.
  */
 export interface CraftingConfig {
   /** money per age (0 steam, 1 diesel, 2 electric), per vehicle kind */
