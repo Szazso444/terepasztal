@@ -15,7 +15,7 @@ import {
 } from '../gacha/items';
 import { cargoDef } from '../sim/cargo';
 import { runsOn } from '../sim/compat';
-import { rarityStar, vehicleLabels } from './labels';
+import { rarityStars, vehicleLabels } from './labels';
 import type { Fleet } from '../sim/fleet';
 import type { Commands } from '../sim/commands';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -72,7 +72,7 @@ export class RosterScreen implements Screen {
           },
           `small ${cur === o.v ? 'active' : ''}`,
         );
-        if (o.star) b.prepend(rarityStar(`rarity-${o.star}`));
+        if (o.star) b.prepend(rarityStars(o.star, `rarity-${o.star}`));
         g.append(b);
       }
       return g;

@@ -2325,10 +2325,13 @@ table.market td {
 .rarity-label {
   display: inline-flex;
 }
+/* close together: five stars take little more room than a word */
 .rarity-star {
-  font-size: 13px;
+  font-size: 11px;
+  letter-spacing: -1.5px;
   line-height: 1;
-  margin-right: 3px;
+  margin-right: 4px;
+  white-space: nowrap;
 }
 /* an age's icon in a line of text */
 .age-icon {

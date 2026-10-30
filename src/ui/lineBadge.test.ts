@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import { TRAIN_CLASSES } from '../sim/compat';
 import { TRACK_CLASSES } from '../world/track';
+import { starsOf } from './labels';
 import {
   CLASS_ICON,
   CLASS_STEP,
@@ -102,6 +103,13 @@ describe('train class icons', () => {
       expect(css, r).toMatch(rule(`rarity-${r}`, token));
       expect(css, token).toMatch(rule(`crarity-${token}`, token));
     }
+  });
+
+  it('gives each rarity one more star, of models and contracts alike', () => {
+    expect(['N', 'R', 'SR', 'SSR', 'L'].map(starsOf)).toEqual(['★', '★★', '★★★', '★★★★', '★★★★★']);
+    expect(['common', 'uncommon', 'rare', 'epic', 'legendary'].map(starsOf)).toEqual(
+      ['N', 'R', 'SR', 'SSR', 'L'].map(starsOf),
+    );
   });
 
   it('says in its tooltip what it is', () => {

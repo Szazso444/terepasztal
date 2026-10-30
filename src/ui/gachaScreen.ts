@@ -1,4 +1,5 @@
 import { el, btn } from './dom';
+import { starsOf } from './labels';
 import { STR } from '../strings';
 import type { Screen } from './modal';
 import {
@@ -108,7 +109,10 @@ export class GachaScreen implements Screen {
         el(
           'div',
           { class: 'kv' },
-          el('span', { class: `k rarity-${r}`, text: `★ ${STR.craft.quality[r] ?? r}` }),
+          el('span', {
+            class: `k rarity-${r}`,
+            text: `${starsOf(r)} ${STR.craft.quality[r] ?? r}`,
+          }),
           el('span', { class: 'v', text: `${(RATES[r] * 100).toFixed(0)}%` }),
         ),
       );
@@ -168,7 +172,7 @@ export class GachaScreen implements Screen {
             el('div', { class: `name rarity-${d.rarity}`, text: d.name }),
             el('div', {
               class: `sub rarity-${d.rarity}`,
-              text: `★ ${STR.craft.quality[d.rarity] ?? d.rarity}`,
+              text: `${starsOf(d.rarity)} ${STR.craft.quality[d.rarity] ?? d.rarity}`,
             }),
           ),
         );
@@ -223,7 +227,7 @@ export class GachaScreen implements Screen {
             { class: 'gcard-top' },
             el('div', {
               class: `gcard-rarity rarity-${r.rarity}`,
-              text: `★ ${STR.craft.quality[r.rarity] ?? r.rarity}`,
+              text: `${starsOf(r.rarity)} ${STR.craft.quality[r.rarity] ?? r.rarity}`,
             }),
             spriteImg(this.atlas, frameForItem(r.defId), 2, 'sprite-preview gcard-art'),
           ),
