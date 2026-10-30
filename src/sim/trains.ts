@@ -224,6 +224,79 @@ function bump(rec: Record<string, number>, k: string, v: number) {
   rec[k] = (rec[k] ?? 0) + v;
 }
 
+/** One tile of a train's path ahead: the tile, how it is run, and the arc it starts at. */
+export interface AheadTile {
+  readonly x: number;
+  readonly y: number;
+  readonly in: Dir;
+  readonly out: Dir;
+  readonly arc: number;
+}
+const NO_TILES: readonly AheadTile[] = [];
+
+/** A path's points grouped into runs on one segment (one per tile), with a tile lookup. */
+export interface PathTiles {
+  /** the points it was built from, and how many there were */
+  readonly pts: readonly unknown[];
+  readonly n: number;
+  /** one entry per run, at the arc of its first point */
+  readonly tiles: AheadTile[];
+  /** for every point, the index of its run */
+  readonly run: Int32Array;
+  /** map width `keys` is for (-1 before the first lookup) */
+  w: number;
+  /** tile key of every run */
+  keys: Int32Array;
+}
+
+/** The run each list `pathAhead` built starts at, in the grouping it came from. */
+const AHEAD_RUNS = new WeakMap<readonly AheadTile[], { tiles: PathTiles; from: number }>();
+
+/**
+ * For a list `Train.pathAhead()` returned whole: the tile keys (`y * w + x`) of its path's tiles,
+ * `list[i]` standing on `keys[from + i]`, and the grouping they belong to (the same object for as
+ * long as the train runs that path). Null for any other list.
+ */
+export function aheadRun(
+  list: readonly AheadTile[],
+  w: number,
+): { keys: Int32Array; from: number; tiles: PathTiles } | null {
+  const run = AHEAD_RUNS.get(list);
+  if (!run) return null;
+  const tiles = run.tiles;
+  if (tiles.w !== w) {
+    tiles.w = w;
+    tiles.keys = Int32Array.from(tiles.tiles, (t) => t.y * w + t.x);
+  }
+  return { keys: tiles.keys, from: run.from, tiles };
+}
+
+/** Whether two lists of bodies pose alike: the same lengths and segments, vehicle by vehicle. */
+function sameSpecs(a: readonly VehicleSpec[], b: readonly VehicleSpec[]) {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const p = a[i];
+    const q = b[i];
+    if (p.L !== q.L || p.segments.length !== q.segments.length) return false;
+    for (let k = 0; k < p.segments.length; k++) {
+      const s = p.segments[k];
+      const t = q.segments[k];
+      if (
+        s.part !== t.part ||
+        s.L !== t.L ||
+        s.W !== t.W ||
+        s.nb !== t.nb ||
+        s.bogie !== t.bogie ||
+        s.front !== t.front ||
+        !!s.mirror !== !!t.mirror
+      )
+        return false;
+    }
+  }
+  return true;
+}
+
 /** The first index from 1 on whose running sum reaches `arc` (`cum.length` when none does). */
 function reach(cum: readonly number[], arc: number) {
   let lo = 1;
@@ -527,10 +600,17 @@ export class Train {
   // geometry
   private trail: TrailPoint[] = [];
   private trailCum: number[] = [];
+  /** `trailLen[i]`: length from trail point i - 1 to i, kept by `pushTrail` for `trailLenOf` */
+  private trailLen: number[] = [];
+  private trailLenOf: TrailPoint[] | null = null;
   private path: PathSegment[] | null = null;
   private pathPts: { x: number; y: number; seg: PathSegment; factor: number }[] = [];
   private pathCum: number[] = [];
   private pathPos = 0;
+  /** `pathPts` grouped by tile, built once per path (`pathTiles`) */
+  private tilesOfPath: PathTiles | null = null;
+  /** the last `pathAhead` list, kept while the head stays at the same path point */
+  private aheadList: { tiles: PathTiles; from: number; list: readonly AheadTile[] } | null = null;
   private trackVersion = -1;
   /** stockpile deliveries at the current stop, flushed to `onFlow` every second or so */
   private flowAcc: Record<string, number> = {};
@@ -1371,6 +1451,8 @@ export class Train {
     const { back, need, laid } = trackBehind(track, seg, this.length);
     this.trail = [];
     this.trailCum = [];
+    this.trailLen = [];
+    this.trailLenOf = this.trail;
     // the consist stands behind the gate: where the rails end (inside the shed) a straight
     // virtual run carries the rest of the cars, hidden under the shed until they roll out
     const first = back[0] ?? seg;
@@ -1403,6 +1485,8 @@ export class Train {
   restoreTrail(points: number[][], reversed: boolean) {
     this.trail = [];
     this.trailCum = [];
+    this.trailLen = [];
+    this.trailLenOf = this.trail;
     const segs = new Map<string, PathSegment>();
     for (const [x, y, sx, sy, sin, sout, route] of points) {
       const key = `${sx},${sy},${sin},${sout},${route}`;
@@ -1413,9 +1497,9 @@ export class Train {
         segs.set(key, seg);
       }
       const last = this.trail[this.trail.length - 1];
-      this.trailCum.push(
-        last ? this.trailCum[this.trailCum.length - 1] + Math.hypot(x - last.x, y - last.y) : 0,
-      );
+      const d = last ? Math.hypot(x - last.x, y - last.y) : 0;
+      this.trailCum.push(last ? this.trailCum[this.trailCum.length - 1] + d : 0);
+      this.trailLen.push(d);
       this.trail.push({ x, y, seg });
     }
     this.reversed = reversed;
@@ -1440,7 +1524,11 @@ export class Train {
         return;
       }
       this.trailCum.push(this.trailCum[this.trailCum.length - 1] + d);
-    } else this.trailCum.push(0);
+      this.trailLen.push(d);
+    } else {
+      this.trailCum.push(0);
+      this.trailLen.push(0);
+    }
     this.trail.push(p);
     // trim
     const total = this.trailCum[this.trailCum.length - 1];
@@ -1448,6 +1536,7 @@ export class Train {
     while (this.trail.length > 2 && total - this.trailCum[1] > keep) {
       this.trail.shift();
       this.trailCum.shift();
+      this.trailLen.shift();
     }
   }
 
@@ -1477,16 +1566,55 @@ export class Train {
 
   updatePoses() {
     const specs = this.vehicleSpecs;
+    // poses follow from the trail, the direction and the bodies alone: with none of them changed
+    // since the last call (a standing train) they are the ones already there
+    const trail = this.trail;
+    const kept = this.posedFor;
+    if (
+      kept &&
+      kept.trail === trail &&
+      kept.n === trail.length &&
+      kept.first === trail[0] &&
+      kept.last === trail[trail.length - 1] &&
+      kept.reversed === this.reversed &&
+      sameSpecs(kept.specs, specs)
+    )
+      return;
     const order = this.reversed ? [...specs].reverse() : specs;
     const fronts = vehicleFronts(order.map((s) => s.L));
-    const pl = new Polyline(this.trail);
+    // the lengths between trail points, kept with the trail (`pushTrail`); worked out again for a
+    // trail set some other way
+    if (this.trailLenOf !== trail || this.trailLen.length !== trail.length) {
+      this.trailLen = trail.map((p, i) =>
+        i ? Math.hypot(p.x - trail[i - 1].x, p.y - trail[i - 1].y) : 0,
+      );
+      this.trailLenOf = trail;
+    }
+    const pl = new Polyline(trail, this.trailLen);
     const total = pl.length;
     const vposes = order.map((s, i) => poseVehicle(pl, total - fronts[i], s, this.reversed));
     // keep the arrays in car order (loco first) regardless of travel direction
     if (this.reversed) vposes.reverse();
     this.vehiclePoses = vposes;
     this.poses = vposes.map((v) => ({ x: v.x, y: v.y, heading: v.heading }));
+    this.posedFor = {
+      trail,
+      n: trail.length,
+      first: trail[0],
+      last: trail[trail.length - 1],
+      reversed: this.reversed,
+      specs,
+    };
   }
+  /** What the current poses were worked out from (`updatePoses`). */
+  private posedFor: {
+    trail: TrailPoint[];
+    n: number;
+    first: TrailPoint | undefined;
+    last: TrailPoint | undefined;
+    reversed: boolean;
+    specs: VehicleSpec[];
+  } | null = null;
 
   /** Facing index (of 24) for a car (loco faces backwards when pushed). */
   facingOf(_carIndex: number, pose: CarPose) {
@@ -1714,28 +1842,75 @@ export class Train {
   get pathProgress() {
     return this.pathPos;
   }
-  /** Tiles of the path from the head onwards (one entry per tile, with the arc it starts at). */
-  pathAhead(maxTiles = Infinity): { x: number; y: number; in: Dir; out: Dir; arc: number }[] {
-    const out: { x: number; y: number; in: Dir; out: Dir; arc: number }[] = [];
-    if (!this.path) return out;
-    let last: PathSegment | null = null;
-    for (let i = 0; i < this.pathPts.length; i++) {
-      if (this.pathCum[i] < this.pathPos - 0.5) continue;
-      const seg = this.pathPts[i].seg;
-      if (seg === last) continue;
-      last = seg;
-      out.push({ x: seg.x, y: seg.y, in: seg.in, out: seg.out, arc: this.pathCum[i] });
-      if (out.length >= maxTiles) break;
+  /**
+   * Tiles of the path from the head onwards (one entry per tile, with the arc it starts at): the
+   * first from half a tile behind the head. The list is shared by every caller until the head
+   * passes the next path point, so it is read-only.
+   */
+  pathAhead(maxTiles = Infinity): readonly AheadTile[] {
+    if (!this.path) return NO_TILES;
+    const from = this.firstPointFrom(this.pathPos - 0.5);
+    if (from >= this.pathPts.length) return NO_TILES;
+    const tiles = this.pathTiles();
+    const kept = this.aheadList;
+    let list: readonly AheadTile[];
+    if (kept && kept.tiles === tiles && kept.from === from) list = kept.list;
+    else {
+      // the first entry starts at the first point ahead, which may lie inside its tile
+      const run = tiles.run[from];
+      const seg = this.pathPts[from].seg;
+      const out: AheadTile[] = [
+        { x: seg.x, y: seg.y, in: seg.in, out: seg.out, arc: this.pathCum[from] },
+      ];
+      for (let r = run + 1; r < tiles.tiles.length; r++) out.push(tiles.tiles[r]);
+      list = out;
+      this.aheadList = { tiles, from, list };
+      AHEAD_RUNS.set(list, { tiles, from: run });
     }
-    return out;
+    return maxTiles < list.length ? list.slice(0, maxTiles) : list;
+  }
+  /** The first path point at or beyond `arc` (`pathPts.length` when none is). */
+  private firstPointFrom(arc: number) {
+    const cum = this.pathCum;
+    let lo = 0;
+    let hi = cum.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (cum[mid] < arc) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
+  /** `pathPts` grouped into runs on one segment, one per tile, rebuilt when the path changes. */
+  private pathTiles(): PathTiles {
+    const pts = this.pathPts;
+    const kept = this.tilesOfPath;
+    if (kept && kept.pts === pts && kept.n === pts.length) return kept;
+    const tiles: AheadTile[] = [];
+    const run = new Int32Array(pts.length);
+    for (let i = 0; i < pts.length; i++) {
+      const seg = pts[i].seg;
+      if (i === 0 || seg !== pts[i - 1].seg)
+        tiles.push({ x: seg.x, y: seg.y, in: seg.in, out: seg.out, arc: this.pathCum[i] });
+      run[i] = tiles.length - 1;
+    }
+    const built: PathTiles = {
+      pts,
+      n: pts.length,
+      tiles,
+      run,
+      w: -1,
+      keys: new Int32Array(0),
+    };
+    this.tilesOfPath = built;
+    return built;
   }
   get pathTotal() {
     return this.pathCum[this.pathCum.length - 1] ?? 0;
   }
 
   private factorAt(arc: number) {
-    let i = 0;
-    while (i + 1 < this.pathCum.length && this.pathCum[i + 1] < arc) i++;
+    const i = Math.min(reach(this.pathCum, arc), this.pathCum.length) - 1;
     const p = this.pathPts[Math.min(i + 1, this.pathPts.length - 1)];
     let f = p.factor;
     if (p.seg && p.factor === 1) {
@@ -1995,9 +2170,8 @@ export class Train {
       const own = new Set<number>();
       for (const p of this.poses)
         own.add(Math.floor(p.y + 0.5) * ctx.track.w + Math.floor(p.x + 0.5));
-      for (let i = 0; i < this.pathPts.length; i++) {
+      for (let i = this.firstPointFrom(from); i < this.pathPts.length; i++) {
         const arc = this.pathCum[i];
-        if (arc < from) continue;
         if (arc > to) break;
         const p = this.pathPts[i];
         if (own.has(p.seg.y * ctx.track.w + p.seg.x)) continue;
@@ -2039,9 +2213,8 @@ export class Train {
       // path around it now instead of stopping later
       this.anticipateAt = ctx.now + 4;
       let oncoming = 0;
-      for (let i = 0; i < this.pathPts.length; i++) {
+      for (let i = this.firstPointFrom(this.pathPos + 0.5); i < this.pathPts.length; i++) {
         const arc = this.pathCum[i];
-        if (arc < this.pathPos + 0.5) continue;
         if (arc > this.pathPos + 8) break;
         const s = this.pathPts[i].seg;
         const other = ctx.reservedBy(s.x, s.y, this.id);
@@ -2947,8 +3120,7 @@ export class Train {
       for (const s of this.wantTiles) out.add(s.y * w + s.x);
     for (const s of this.shunt ?? []) out.add(s.y * w + s.x);
     if (this.path)
-      for (let i = 0; i < this.pathPts.length; i++) {
-        if (this.pathCum[i] < this.pathPos - 0.5) continue;
+      for (let i = this.firstPointFrom(this.pathPos - 0.5); i < this.pathPts.length; i++) {
         if (this.pathCum[i] > this.pathPos + ahead) break;
         const s = this.pathPts[i].seg;
         out.add(s.y * w + s.x);
