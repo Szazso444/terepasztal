@@ -14,7 +14,7 @@ import { rules } from '../sim/rules';
 import { setSupplyMode, type SupplyMode } from '../sim/supply';
 import { GameClock } from '../sim/time';
 import { Economy } from '../sim/economy';
-import { Stockpile } from '../sim/stockpile';
+import { StoreRegistry } from '../sim/stores';
 import { Builder, type Decor } from '../sim/build';
 import { buildingDef, type Building } from '../sim/buildings';
 import { type Station, resetStationIds } from '../sim/stations';
@@ -59,7 +59,8 @@ export interface SimWorld {
   readonly track: TrackGraph;
   readonly builder: Builder;
   readonly economy: Economy;
-  readonly stock: Stockpile;
+  /** every store; the builder pays from them */
+  readonly stores: StoreRegistry;
   readonly towns: TownRegistry;
   readonly houses: HouseRegistry;
   readonly power: PowerGrid;
@@ -98,17 +99,19 @@ export function mapParams(size: number): MapGenParams {
  * Defaults: seed SIM_WORLD_SEED (4242), size `rules.mapSize` read at the call (160 unless a test
  * changed the rules), terrain `generated` (generateMap with the parameters a new game gets from
  * the rules), supply unset (simple). The clock stands at 0 and nothing is placed, paid or stocked:
- * `Game.startFresh` (money, stock, the first depot, a season from the wall clock) is not run.
+ * `Game.startFresh` (money, the start goods, the first depot, a season from the wall clock) is not run.
  *
  * Only callbacks between simulation objects are wired. Where Game wires a builder event to a
  * method that both draws and simulates, the simulating half is kept, so building through
  * `builder` changes the rest of the world as in the game: track and bridges refresh bridge
  * capacity and `fleet.railBeds` (which Game refreshes before its next step), signals rebuild the
  * fleet's signals, decor syncs houses and towns, works refresh towns, power lines, plants and
- * substations rebuild power and catenary, supply changes rebuild the catenary, and a placed
- * station gets its season and biome production multiplier. Contract offers follow
- * DEFAULT_SETTINGS (every rarity asks, so an offer waits for `contracts.accept`) and the fleet's
- * signalling level is the default. Toasts, sounds, renderer updates and the notices Game pushes
+ * substations rebuild power and catenary, supply changes rebuild the catenary, and a station
+ * refreshes the towns, a placed one also getting its season and biome production multiplier. The
+ * store registry is attached to the builder, which derives the stores again after each station
+ * or power plant change; the stores start empty, so paid building needs goods put in one first.
+ * Contract offers follow DEFAULT_SETTINGS (every rarity asks, so an offer waits for
+ * `contracts.accept`) and the fleet's signalling level is the default. Toasts, sounds, renderer updates and the notices Game pushes
  * for the notice panel (junction alerts, a failed contract, an age-up) are left unset;
  * `builder.groundCheck` asks the renderer in the game and stays unset here, so all ground counts
  * as level.
@@ -127,7 +130,7 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   const clock = new GameClock();
   const economy = new Economy();
   const inventory = new Inventory();
-  const stock = new Stockpile();
+  const stores = new StoreRegistry();
   const notices = new Notices();
   const trade = new TradeDesk();
   trade.seed = seed;
@@ -139,9 +142,10 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
       : generateMap(seed, mapParams(size), supply);
   const regions = new RegionState(map, 0);
   const track = new TrackGraph(map.w, map.h);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, stores);
   const towns = new TownRegistry(builder);
-  const houses = new HouseRegistry(builder, towns, stock);
+  stores.attach({ builder, towns, track });
+  const houses = new HouseRegistry(builder, towns);
   towns.residentsAt = (x, y) => houses.residentsAt(x, y);
   builder.onIndustryPlaced = (x, y) => houses.industryPlaced(x, y);
   const power = new PowerGrid(map);
@@ -149,7 +153,7 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   builder.catenary = catenary;
   const weather = new Weather(new Rng(seed ^ 0x77ea));
   inventory.seedStarter(0);
-  const fleet = new Fleet(track, builder, map, inventory, economy, stock);
+  const fleet = new Fleet(track, builder, map, inventory, economy);
 
   // The simulating halves of Game's onSupplyChanged, onBuildingChanged, onTrackChanged,
   // onDecorChanged, onStationChanged, rebuildPower and refreshRails.
@@ -177,6 +181,7 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
     refreshRails();
   };
   builder.onStationChanged = (s: Station, removed: boolean) => {
+    towns.refresh();
     if (removed) return;
     const biome = biomeDef(biomeAt(map, s.x, s.y)).production[s.def.id] ?? 1;
     // Game keeps the season of its last step, with weather on as in DEFAULT_SETTINGS
@@ -196,12 +201,11 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   fleet.gridBegin = () => catenary.beginTick();
   fleet.signals.level = DEFAULT_SETTINGS.signalling ?? 'auto';
   fleet.onArrive = (_t, s) => houses.arrival(s, clock.time);
-  fleet.stockCap = (id) => stock.cap(id, builder.depotCount(), builder.plantCount());
   const people = new PeopleSim(map, builder);
   fleet.onPassengers = (st, n, boarding) => (boarding ? people.board(st, n) : people.alight(st, n));
   const contracts = new ContractBoard(new Rng(seed ^ 0x5eed), builder, economy);
   const gacha = new Gacha(new Rng(seed ^ 0x9ac4a), inventory);
-  const crafting = new Crafting(new Rng(seed ^ 0xc4af7), inventory, economy, stock);
+  const crafting = new Crafting(new Rng(seed ^ 0xc4af7), inventory, economy);
   crafting.grantFromInventory();
   fleet.onDelivery = (e) => contracts.onDelivery(e);
   const contractJobs = new ContractDispatcher(fleet, contracts, builder, track, notices);
@@ -225,7 +229,7 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
     track,
     builder,
     economy,
-    stock,
+    stores,
     towns,
     houses,
     power,

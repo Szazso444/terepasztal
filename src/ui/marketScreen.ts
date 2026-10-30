@@ -1,7 +1,7 @@
 import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
 import type { Screen } from './modal';
-import type { Stockpile } from '../sim/stockpile';
+import type { StoreRegistry } from '../sim/stores';
 import type { Economy } from '../sim/economy';
 import { CARGO } from '../sim/cargo';
 import { daySeconds } from '../sim/rules';
@@ -9,7 +9,10 @@ import { inSupplyMode } from '../sim/supply';
 import type { TradeDesk } from '../sim/trade';
 import type { Commands } from '../sim/commands';
 
-/** Buy and sell resources for money. Oil is normally bought here until a refinery runs. */
+/**
+ * Buy and sell resources for money, into and out of the selected store (the top bar's), and set
+ * the standing deals that settle with it. Oil is normally bought here until a refinery runs.
+ */
 export class MarketScreen implements Screen {
   readonly id = 'market';
   readonly title = STR.market.title;
@@ -17,9 +20,8 @@ export class MarketScreen implements Screen {
   private body = el('div', { class: 'col-body' });
   private foot = el('div', { class: 'col-foot' });
   constructor(
-    private readonly stock: Stockpile,
+    private readonly stores: StoreRegistry,
     private readonly economy: Economy,
-    private readonly cap: (id: string) => number,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
     private readonly trade: TradeDesk,
     private readonly now: () => number,
@@ -36,6 +38,9 @@ export class MarketScreen implements Screen {
   private render() {
     const b = this.body;
     b.innerHTML = '';
+    const store = this.stores.selected;
+    if (store)
+      b.append(el('div', { class: 'sub', text: STR.market.store(this.stores.label(store)) }));
     const table = el('table', { class: 'market' });
     table.append(
       el(
@@ -60,26 +65,28 @@ export class MarketScreen implements Screen {
         const bb = btn(
           `${STR.market.buy} ${n}`,
           () => {
-            const done = this.commands.spotBuy(c.id, n, this.cap(c.id));
+            if (!store) return;
+            const done = this.commands.spotBuy(c.id, n, store);
             if (!done.ok) return this.toast(done.message, 'warn');
             this.render();
           },
           'small',
         );
-        bb.disabled = this.economy.money < buy * Math.min(n, 1);
+        bb.disabled = !store || this.economy.money < buy * Math.min(n, 1);
         actions.append(bb);
       }
       for (const n of [10, 100]) {
         const sb = btn(
           `${STR.market.sell} ${n}`,
           () => {
-            const done = this.commands.spotSell(c.id, n);
+            if (!store) return;
+            const done = this.commands.spotSell(c.id, n, store);
             if (!done.ok) return this.toast(done.message, 'warn');
             this.render();
           },
           'small',
         );
-        sb.disabled = this.stock.get(c.id) < 1;
+        sb.disabled = !store || store.get(c.id) < 1;
         actions.append(sb);
       }
       table.append(
@@ -89,7 +96,7 @@ export class MarketScreen implements Screen {
           el('td', { text: c.name }),
           el('td', {
             class: 'num',
-            text: `${Math.floor(this.stock.get(c.id))} / ${this.cap(c.id)}`,
+            text: store ? `${Math.floor(store.get(c.id))} / ${store.cap(c.id)}` : '-',
           }),
           el('td', { class: 'num', text: fmtMoney(buy) }),
           el('td', { class: 'num', text: fmtMoney(sell) }),
@@ -108,9 +115,13 @@ export class MarketScreen implements Screen {
     // standing deals: so much per cycle, settled automatically
     const cycleDays = 7;
     const left = Math.max(0, this.trade.nextAt - this.now());
+    const settles = this.trade.storeIn(this.stores);
     b.append(
       el('div', { class: 'col-title', style: 'margin-top:12px', text: STR.market.deals }),
       el('div', { class: 'sub dim', text: STR.market.dealsHint(cycleDays) }),
+      settles
+        ? el('div', { class: 'sub', text: STR.market.dealsAt(this.stores.label(settles)) })
+        : '',
     );
     const dt = el('table', { class: 'market' });
     dt.append(
@@ -138,6 +149,8 @@ export class MarketScreen implements Screen {
         inp.addEventListener('keydown', (e) => e.stopPropagation());
         inp.addEventListener('change', () => {
           const v = Math.max(0, Math.min(5000, Math.floor(Number(inp.value) || 0)));
+          // a deal set here settles with the store selected now, the others with it too
+          this.trade.storeKey = this.stores.selected?.key ?? null;
           this.trade.set(c.id, kind === 'buy' ? v : -v);
           this.render();
         });

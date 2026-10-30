@@ -19,7 +19,6 @@ import { LAST_AGE } from './ages';
 import { Builder, unbuildable } from './build';
 import { BIOME_DEFS } from './biomes';
 import { Economy } from './economy';
-import { Stockpile } from './stockpile';
 import {
   HARVEST_FLOOR,
   STATION_DEFS,
@@ -33,6 +32,7 @@ import { pruneUnknownContent } from './saveContent';
 import { DEFAULT_RULES, rules, weekSeconds } from './rules';
 import { mapParams } from '../testing/simWorld';
 import { STR } from '../strings';
+import { storeWith } from '../testing/storeFixtures';
 
 // the build rules play a sound when a piece goes down
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -56,7 +56,7 @@ function grassWorld() {
     regions,
     new TrackGraph(SIZE, SIZE),
     new Economy(),
-    new Stockpile(),
+    storeWith({}).stores,
   );
   builder.free = true;
   return { map, builder };
@@ -181,7 +181,7 @@ describe('where a water pump stands', () => {
     builder.free = false;
     const c = builder.checkStation(X, Y, 'pump');
     expect(c.ok).toBe(false);
-    expect(c.reason?.startsWith(STR.build.needResources(''))).toBe(true);
+    expect(c.reason?.startsWith(STR.build.noStoreInReach(rules.buildReach, ''))).toBe(true);
   });
 
   it('places as checked, with the ground factor its harvest gives it', () => {
@@ -220,7 +220,7 @@ interface PumpCase {
   game: boolean;
   /** the one chunk is owned */
   owned: boolean;
-  /** the stock can pay for anything */
+  /** the depot can pay for anything */
   stocked: boolean;
   x: number;
   y: number;
@@ -320,12 +320,13 @@ function pumpCaseWorld(c: PumpCase) {
   const regions = new RegionState(map);
   regions.unlocked[0] = c.owned;
   const economy = new Economy();
-  const stock = new Stockpile();
-  const builder = new Builder(map, regions, new TrackGraph(c.w, c.h), economy, stock);
+  // a depot in reach of the whole case
+  const { stores, depot } = storeWith({});
+  const builder = new Builder(map, regions, new TrackGraph(c.w, c.h), economy, stores);
   builder.free = !c.game;
   builder.groundCheck = (x, y) => c.level[y * c.w + x];
   economy.tier = LAST_AGE;
-  if (c.stocked) for (const k of content.cargo) stock.add(k.id, 1e6);
+  if (c.stocked) for (const k of content.cargo) depot.amounts.set(k.id, 1e6);
   for (const [x, y, rot] of c.track) builder.track.place(x, y, 'straight', rot, 'regular');
   for (const [x, y] of c.taken) builder.decor.set(y * c.w + x, { id: 'townhouse', x, y, rot: 0 });
   return { map, builder };
@@ -352,7 +353,8 @@ describe("the water pump's check, against a plain station's and the ground aroun
   it('is refused first for what refuses a plain station, then ground, then water, then price', () => {
     expect(plain, 'a plain one-tile station to hold the pump against').toBeDefined();
     const seen = { general: 0, ground: 0, water: 0, ok: 0, price: 0 };
-    const priced = (r: string | undefined) => !!r?.startsWith(STR.build.needResources(''));
+    const priced = (r: string | undefined) =>
+      !!r?.startsWith(STR.build.noStoreInReach(rules.buildReach, ''));
     forAll(
       genPumpCase,
       (c) => {
@@ -431,7 +433,7 @@ describe("the water pump's check, against a plain station's and the ground aroun
             regions,
             new TrackGraph(6, 6),
             new Economy(),
-            new Stockpile(),
+            storeWith({}).stores,
           );
           builder.free = true;
           builder.track.place(1, 2, 'straight', 1, 'regular');
@@ -584,7 +586,7 @@ function startChunkPumpTile(map: GameMap): { x: number; y: number } | null {
     regions,
     new TrackGraph(map.w, map.h),
     new Economy(),
-    new Stockpile(),
+    storeWith({}).stores,
   );
   // the editor's leave: no cost, so only the ground decides; the chunk is kept to by hand
   builder.free = true;

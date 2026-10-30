@@ -2,8 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { DEFAULT_CONTENT, validateContent, type Banner } from '../data/content';
 import { Rng } from '../engine/rng';
 import { Economy } from '../sim/economy';
-import { Stockpile } from '../sim/stockpile';
 import { forAll, shrinkArray } from '../testing/property';
+import { looseStore } from '../testing/storeFixtures';
 import {
   LOCOS,
   WAGONS,
@@ -50,13 +50,12 @@ function workshop(seed: number) {
   const inventory = new Inventory();
   const economy = new Economy();
   economy.money = 1e12;
-  const stock = new Stockpile();
-  for (const k of craftResources()) stock.add(k, 1e9);
+  const stock = looseStore(Object.fromEntries(craftResources().map((k) => [k, 1e9])));
   return {
     inventory,
     economy,
     stock,
-    crafting: new Crafting(new Rng(seed), inventory, economy, stock),
+    crafting: new Crafting(new Rng(seed), inventory, economy),
   };
 }
 /**
@@ -259,12 +258,12 @@ describe('the workshop and retired models', () => {
             const draw = w.crafting.draw(kind, tier);
             if (!draw) break;
             expect(draw.cards.filter(isRetired)).toEqual([]);
-            expect(w.crafting.choose(pick.pick(draw.cards))).not.toBeNull();
+            expect(w.crafting.choose(pick.pick(draw.cards), w.stock)).not.toBeNull();
           }
       expect(w.crafting.recipes.size).toBeGreaterThan(RARITIES.length);
       expect([...w.crafting.recipes].filter(isRetired)).toEqual([]);
       for (const id of w.crafting.known())
-        for (let n = 0; n < 4; n++) expect(w.crafting.craft(id, 0)).not.toBeNull();
+        for (let n = 0; n < 4; n++) expect(w.crafting.craft(id, w.stock, 0)).not.toBeNull();
       expect(w.inventory.items.length).toBeGreaterThan(0);
       expect(w.inventory.ownedDefs().filter(isRetired)).toEqual([]);
     }
@@ -272,28 +271,28 @@ describe('the workshop and retired models', () => {
 
   it('refuses to build a retired model even with its recipe in hand, the stock untouched', () => {
     const w = workshop(3);
-    const stock = () => JSON.stringify(w.stock.toJSON());
+    const stock = () => JSON.stringify([...w.stock.amounts]);
     for (const id of RETIRED) {
       w.crafting.recipes.add(id);
       const had = stock();
-      expect(w.crafting.canCraft(id)).toBe(false);
-      expect(w.crafting.craft(id, 0)).toBeNull();
+      expect(w.crafting.canCraft(id, w.stock)).toBe(false);
+      expect(w.crafting.craft(id, w.stock, 0)).toBeNull();
       expect(stock()).toBe(had);
     }
     expect(w.inventory.items).toEqual([]);
     expect(w.crafting.stats.crafts).toBe(0);
     // the same workshop still builds a model that is not retired
     w.crafting.recipes.add('rocket');
-    expect(w.crafting.canCraft('rocket')).toBe(true);
+    expect(w.crafting.canCraft('rocket', w.stock)).toBe(true);
   });
 
   it('refuses to keep a retired card left over in a draw', () => {
     const w = workshop(4);
     w.crafting.pending = { kind: 'loco', tier: 0, cards: [RETIRED[0], 'rocket'] };
-    expect(w.crafting.choose(RETIRED[0])).toBeNull();
+    expect(w.crafting.choose(RETIRED[0], w.stock)).toBeNull();
     expect(w.crafting.knows(RETIRED[0])).toBe(false);
     // the draw is still open for the card that is left
-    expect(w.crafting.choose('rocket')).toEqual({ defId: 'rocket', owned: false });
+    expect(w.crafting.choose('rocket', w.stock)).toEqual({ defId: 'rocket', owned: false });
   });
 
   it('drops the recipes and drawn cards of retired models when a save loads', () => {
@@ -387,22 +386,22 @@ function nothingRetiredHandedOut() {
       expect(draw === null, `${kind} age ${tier} draw`).toBe(age.length === 0);
       if (!draw) continue;
       expect(retiredOf(draw.cards), `${kind} age ${tier} draw`).toEqual([]);
-      expect(w.crafting.choose(draw.cards[0])?.defId).toBe(draw.cards[0]);
+      expect(w.crafting.choose(draw.cards[0], w.stock)?.defId).toBe(draw.cards[0]);
     }
 
   // a recipe in hand and a card left in a draw: refused, the stock untouched, the draw kept open
-  const stock = () => JSON.stringify(w.stock.toJSON());
+  const stock = () => JSON.stringify([...w.stock.amounts]);
   for (const id of off) {
     w.crafting.recipes.add(id);
     const had = stock();
-    expect(w.crafting.canCraft(id), id).toBe(false);
-    expect(w.crafting.craft(id, 0), id).toBeNull();
+    expect(w.crafting.canCraft(id, w.stock), id).toBe(false);
+    expect(w.crafting.craft(id, w.stock, 0), id).toBeNull();
     expect(stock(), id).toBe(had);
   }
   w.crafting.pending = { kind: 'loco', tier: 0, cards: [...ALL] };
-  for (const id of off) expect(w.crafting.choose(id), id).toBeNull();
+  for (const id of off) expect(w.crafting.choose(id, w.stock), id).toBeNull();
   const kept = on(ALL)[0];
-  if (kept) expect(w.crafting.choose(kept)?.defId).toBe(kept);
+  if (kept) expect(w.crafting.choose(kept, w.stock)?.defId).toBe(kept);
 
   // a save's recipes and drawn cards; a draw left with no card it may keep is dropped, or the
   // workshop would wait for ever on a choice it refuses

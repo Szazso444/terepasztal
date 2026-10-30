@@ -18,7 +18,13 @@ export const MUSIC_TRACKS = [
  * `MUSIC_TRACKS`.
  */
 export const AGE_MUSIC: Record<string, readonly string[]> = {
-  steam: [],
+  // placeholders until the steam age's own arrangement exists
+  steam: [
+    '/assets/audio/music/steam/whispering-wheel.mp3',
+    '/assets/audio/music/steam/anearach-na-heireann.mp3',
+    '/assets/audio/music/steam/interlocking-routes.mp3',
+    '/assets/audio/music/steam/sparse-pulse.mp3',
+  ],
   diesel: [],
   electric: [],
   nuclear: [],

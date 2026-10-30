@@ -7,7 +7,6 @@ import { findPath } from '../world/pathfinding';
 import { Dir } from '../engine/iso';
 import { content, validateContent, DEFAULT_CONTENT } from '../data/content';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station } from './stations';
 import { Train, type TickCtx } from './trains';
@@ -16,8 +15,6 @@ import { Inventory } from '../gacha/inventory';
 import { bridgeSpan, bridgeCapacity, BRIDGE_SLOW_FACTOR, BRIDGE_SLOW_SHARE } from './bridges';
 import { Signals } from './signals';
 import { tickBuildings, buildingRecipe, type Building } from './buildings';
-import { HouseRegistry } from './houses';
-import { TownRegistry } from './towns';
 import { cityTiles } from './city';
 import { weekSeconds, daySeconds, rules, DEFAULT_RULES } from './rules';
 import { TradeDesk } from './trade';
@@ -27,95 +24,173 @@ import { AGE_DEFS } from './ages';
 import { referencePath } from './compat';
 import { STR } from '../strings';
 import { upgradeSeconds } from './upgrade';
+import { setSupplyMode } from './supply';
+import { depotWith, storeWith, storesWith } from '../testing/storeFixtures';
+import { fmtCost } from './stores';
+import { simWorld, line, station } from '../testing/simWorld';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
-function world() {
+/**
+ * A grass world with a line along row 30, its builder paying from, and its trains filling up at,
+ * the depot stores at the places given (one empty store at the corner by default): `depots`.
+ */
+function world(at: { x: number; y: number }[] = [{ x: 0, y: 0 }]) {
   const map = emptyMap(4242, 96, 96, Terrain.Grass),
     track = new TrackGraph(96, 96),
-    stock = new Stockpile(),
     economy = new Economy();
-  const builder = new Builder(map, new RegionState(map), track, economy, stock);
+  const { stores, depots } = storesWith(at.map((a) => ({ amounts: {}, at: a })));
+  const builder = new Builder(map, new RegionState(map), track, economy, stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+  const fleet = new Fleet(track, builder, map, new Inventory(), economy);
   for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
-  return { map, track, stock, economy, builder, fleet };
+  return { map, track, economy, builder, fleet, depots };
 }
 function train(id = 'f7') {
   return new Train([{ uid: 1, level: 0, def: content.locomotives.find((d) => d.id === id)! }]);
 }
-beforeEach(() => Object.assign(rules, DEFAULT_RULES));
+beforeEach(() => {
+  Object.assign(rules, DEFAULT_RULES);
+  // a world built by hand leaves the mode as the last test set it
+  setSupplyMode('simple');
+});
 
 describe('weekly food economy and housing', () => {
-  it('colors actual weekly stock movements, excludes initial stock, and expires old flows', () => {
-    const s = new Stockpile();
-    s.add('stone', 300);
+  it('colors actual weekly store movements, excludes initial goods, and expires old flows', () => {
+    const { stores, depot } = storeWith({ stone: 300 });
+    depot.capOf = () => 320;
+    const s = stores.poolOf(depot);
     expect(s.weeklyFlow('stone')).toEqual({ produced: 0, consumed: 0 });
-    s.tick(1);
-    s.add('stone', 50, 320);
+    stores.tickUpkeep(1, new Map());
+    s.add('stone', 50);
     s.spend({ stone: 10 });
     expect(s.weeklyFlow('stone')).toEqual({ produced: 20, consumed: 10 });
-    s.tick(weekSeconds());
+    stores.tickUpkeep(weekSeconds(), new Map());
     expect(s.weeklyFlow('stone')).toEqual({ produced: 0, consumed: 0 });
     s.take('stone', 5);
     expect(s.weeklyFlow('stone').consumed).toBe(5);
-    s.load(s.toJSON());
+    stores.beginFlowHistory();
     expect(s.weeklyFlow('stone').consumed).toBe(0);
   });
   it('validates all shipped cargo, recipes and passenger vehicles', () =>
     expect(validateContent(DEFAULT_CONTENT)).toEqual([]));
-  it('eats food once per weekly rate and leaves wheat for the mill', () => {
-    const s = new Stockpile();
-    s.population = 20;
-    s.workforce = 4;
-    s.add('food', 100);
-    s.add('wheat', 20);
-    for (let i = 0; i < 7; i++) s.tick(daySeconds());
-    expect(s.get('food')).toBeCloseTo(76);
-    expect(s.get('wheat')).toBe(20);
-  });
   it('processes a week at 1:5, improves to 1:11, and never spends inputs into a full output store', () => {
-    const s = new Stockpile();
-    s.add('wheat', 1000);
+    const { stores, depot } = storeWith({ wheat: 1000 });
+    const s = stores.poolOf(depot);
     const b: Building = { id: 'windmill', x: 1, y: 1, acc: 0, active: false, rate: 0 };
-    tickBuildings([b], s, weekSeconds(), false, 0, 0);
+    tickBuildings([b], () => s, weekSeconds());
     expect(s.get('food')).toBe(300);
     expect(s.get('wheat')).toBe(940);
     b.level = 4;
     expect(buildingRecipe(b).out.food).toBe(11);
-    s.add('food', 1000 - s.get('food'));
-    tickBuildings([b], s, weekSeconds(), false, 0, 0);
+    s.add('food', s.cap('food') - s.get('food'));
+    tickBuildings([b], () => s, weekSeconds());
     expect(s.get('wheat')).toBe(940);
   });
   it('grows only into completed, paid-for housing and stops without free upgrades or houses', () => {
-    const w = world(),
-      towns = new TownRegistry(w.builder),
-      houses = new HouseRegistry(w.builder, towns, w.stock);
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    line(w, 2, 30, 90);
+    const hall = station(w, 'town', 36, 29);
+    const store = w.stores.townStore(hall.x, hall.y)!;
+    w.builder.free = true;
     const d = w.builder.spawnDecor(40, 29, 'townhouse', 0)!;
-    houses.sync(d, false);
-    houses.finishAll();
-    w.stock.add('food', 1000);
-    for (let i = 0; i < 100; i++) houses.tick(daySeconds(), i * daySeconds());
-    const h = houses.at(40, 29)!;
+    w.houses.finishAll();
+    store.add('food', 300);
+    for (let i = 0; i < 100; i++) w.houses.tick(daySeconds(), i * daySeconds());
+    const h = w.houses.at(d.x, d.y)!;
     expect(h.residents).toBe(20);
     expect(h.level).toBe(1);
-    expect(houses.houses.size).toBe(1);
+    expect(w.houses.houses.size).toBe(1);
     // the player pays for the second level, which the Diesel age opens
     w.builder.free = false;
-    w.stock.add('wood', 60);
-    w.stock.add('stone', 40);
-    const wood = w.stock.get('wood');
-    expect(houses.upgrade(h)).toBe(false);
+    store.add('wood', 60);
+    store.add('stone', 40);
+    const wood = store.get('wood');
+    expect(w.houses.upgrade(h)).toBe(false);
     w.economy.setAge(1);
-    expect(houses.upgrade(h)).toBe(true);
-    expect(w.stock.get('wood')).toBe(wood - 60);
+    expect(w.houses.upgrade(h)).toBe(true);
+    expect(store.get('wood')).toBe(wood - 60);
     // the work takes its game time; nobody moves in meanwhile
-    houses.tick(daySeconds() * 100, daySeconds() * 101);
+    w.houses.tick(daySeconds() * 100, daySeconds() * 101);
     expect([h.level, h.residents]).toEqual([1, 20]);
-    houses.tickWorks(upgradeSeconds(2));
+    w.houses.tickWorks(upgradeSeconds(2));
     expect(h.level).toBe(2);
-    houses.tick(daySeconds() * 100, daySeconds() * 200);
+    w.houses.tick(daySeconds() * 100, daySeconds() * 200);
     expect(h.residents).toBe(60);
     expect(h.level).toBe(2);
+  });
+  it("a house grows on its own town's food, not another's, and not at all outside every town", () => {
+    // Full mode: in Simple mode two towns on one line are one store
+    const w = simWorld({ terrain: 'grass', size: 96, supply: 'full' });
+    line(w, 2, 30, 90);
+    const hallA = station(w, 'town', 20, 29);
+    const hallB = station(w, 'town', 46, 29);
+    const storeA = w.stores.townStore(hallA.x, hallA.y)!;
+    const storeB = w.stores.townStore(hallB.x, hallB.y)!;
+    w.builder.free = true;
+    const inA = w.builder.spawnDecor(24, 29, 'townhouse', 0)!;
+    const alone = w.builder.spawnDecor(80, 20, 'townhouse', 0)!;
+    w.houses.finishAll();
+    const [a, b] = [w.houses.at(inA.x, inA.y)!, w.houses.at(alone.x, alone.y)!];
+    expect([w.houses.store(a), w.houses.store(b)]).toEqual([storeA, null]);
+    const start = [a.residents, b.residents];
+    storeB.add('food', 300);
+    for (let i = 0; i < 10; i++) w.houses.tick(daySeconds(), i * daySeconds());
+    expect(a.residents).toBe(start[0]);
+    expect(w.houses.growthDaysLeft(a)).toBeNull();
+    // with no store to eat from, nobody moves in (and nobody starves)
+    expect(b.residents).toBe(start[1]);
+    expect(w.houses.growthDaysLeft(b)).toBeNull();
+    // fed from its own town's store, it grows; a famine there stops it again
+    storeA.add('food', 300);
+    expect(w.houses.growthDaysLeft(a)).not.toBeNull();
+    for (let i = 10; i < 20; i++) w.houses.tick(daySeconds(), i * daySeconds());
+    expect(a.residents).toBeGreaterThan(start[0]);
+    expect(b.residents).toBe(start[1]);
+    w.stores.byKey(storeA.key)!.famine = true;
+    expect(w.houses.foodOk(a)).toBe(false);
+  });
+  it('a house upgrade pays from the nearest store in reach that holds the cost', () => {
+    // Full mode: in Simple mode the town and the depot on one line are one store
+    const w = simWorld({ terrain: 'grass', size: 96, supply: 'full' });
+    line(w, 2, 30, 90);
+    const hall = station(w, 'town', 20, 29);
+    const town = w.stores.townStore(hall.x, hall.y)!;
+    // 16 tiles from the house, within the 24 that building draws from
+    const depot = w.stores.poolOf(depotWith(w, {}, { x: 40, y: 24 }));
+    w.builder.free = true;
+    const d = w.builder.spawnDecor(24, 29, 'townhouse', 0)!;
+    const next = w.builder.spawnDecor(22, 27, 'townhouse', 0)!;
+    w.houses.finishAll();
+    w.builder.free = false;
+    w.economy.setAge(1);
+    const h = w.houses.at(d.x, d.y)!;
+    const cost = w.houses.upgradeCost(h)!;
+    expect(Object.keys(cost).length).toBeGreaterThan(0);
+    // no store in reach holds it: refused, with what the nearest (its town's) lacks
+    const refused = w.houses.canUpgrade(h);
+    expect(refused.ok).toBe(false);
+    expect(refused.reason).toBe(STR.build.noStoreInReach(rules.buildReach, fmtCost(cost)));
+    expect(w.houses.upgrade(h)).toBe(false);
+    // its town store is empty, the depot holds it: the depot pays
+    for (const [k, v] of Object.entries(cost)) depot.add(k, v);
+    expect(w.houses.canUpgrade(h)).toMatchObject({ ok: true, payer: depot.key });
+    expect(w.houses.upgrade(h)).toBe(true);
+    for (const k of Object.keys(cost)) {
+      expect(depot.get(k), k).toBe(0);
+      expect(town.get(k), k).toBe(0);
+    }
+    // with both stocked, the nearer, its town store, pays
+    for (const [k, v] of Object.entries(cost)) {
+      depot.add(k, v);
+      town.add(k, v);
+    }
+    const h2 = w.houses.at(next.x, next.y)!;
+    expect(w.houses.canUpgrade(h2)).toMatchObject({ ok: true, payer: town.key });
+    expect(w.houses.upgrade(h2)).toBe(true);
+    for (const [k, v] of Object.entries(cost)) {
+      expect(town.get(k), k).toBe(0);
+      expect(depot.get(k), k).toBe(v);
+    }
   });
   it('separates passenger stops from the persistent town anchor', () => {
     const town = new Station('town', 2, 2),
@@ -132,14 +207,14 @@ describe('weekly food economy and housing', () => {
   });
   it('settles and drifts markets weekly', () => {
     const desk = new TradeDesk(),
-      s = new Stockpile(),
+      { stores, depot: s } = storeWith({}),
       e = new Economy();
     desk.set('food', 10);
-    desk.tick(1, s, e, () => 1000);
-    desk.tick(daySeconds() * 6, s, e, () => 1000);
+    desk.tick(1, stores, e);
+    desk.tick(daySeconds() * 6, stores, e);
     expect(s.get('food')).toBe(0);
     expect(desk.fuelMul).toBe(1);
-    desk.tick(weekSeconds() + 1, s, e, () => 1000);
+    desk.tick(weekSeconds() + 1, stores, e);
     expect(s.get('food')).toBe(10);
     expect(desk.nextAt).toBe(2 * weekSeconds() + 1);
   });
@@ -259,20 +334,47 @@ describe('bridges, reversing and refuelling', () => {
     expect(t.speed).toBeLessThanOrEqual(t.maxSpeed * t.loadFactor * BRIDGE_SLOW_FACTOR + 1e-6);
   });
   it('refuels a selected group atomically at twice the materials', () => {
-    const w = world(),
+    // both trains stand where the one depot store supplies them
+    const w = world([{ x: 45, y: 33 }]),
       a = train(),
       b = train();
+    const [depot] = w.depots;
+    a.spawnAt(w.track, 40, 30, Dir.W);
+    b.spawnAt(w.track, 50, 30, Dir.W);
     w.fleet.trains.push(a, b);
-    w.stock.add('oil', 2 * (a.oilCap + b.oilCap) - 1);
-    const have = w.stock.get('oil');
+    depot.add('oil', 2 * (a.oilCap + b.oilCap) - 1);
+    const have = depot.get('oil');
     expect(w.fleet.refuelAll([a, b])).toBe(false);
     expect(a.oil).toBe(0);
-    expect(w.stock.get('oil')).toBe(have);
-    w.stock.add('oil', 1);
+    expect(depot.get('oil')).toBe(have);
+    depot.add('oil', 1);
     expect(w.fleet.refuelAll([a, b])).toBe(true);
     expect(a.oil).toBe(a.oilCap);
     expect(b.oil).toBe(b.oilCap);
-    expect(w.stock.get('oil')).toBeCloseTo(0);
+    expect(depot.get('oil')).toBeCloseTo(0);
+  });
+  it('refuels each train of a group from the store that supplies it, or none of them', () => {
+    // the west store supplies the train at column 10, the east one the train at column 80
+    const w = world([
+        { x: 10, y: 33 },
+        { x: 80, y: 33 },
+      ]),
+      a = train(),
+      b = train();
+    const [west, east] = w.depots;
+    a.spawnAt(w.track, 10, 30, Dir.W);
+    b.spawnAt(w.track, 80, 30, Dir.W);
+    w.fleet.trains.push(a, b);
+    west.add('oil', 2 * (a.oilCap + b.oilCap));
+    expect(w.fleet.refuelAll([a, b]), 'the east store holds nothing').toBe(false);
+    expect(a.oil).toBe(0);
+    expect(west.get('oil')).toBe(2 * (a.oilCap + b.oilCap));
+    east.add('oil', 2 * b.oilCap);
+    expect(w.fleet.refuelAll([a, b])).toBe(true);
+    expect(a.oil).toBe(a.oilCap);
+    expect(b.oil).toBe(b.oilCap);
+    expect(west.get('oil')).toBeCloseTo(2 * b.oilCap);
+    expect(east.get('oil')).toBeCloseTo(0);
   });
   it.each(['mallard', 'f7', 'dda40x', 'big_boy', 'crocodile', 'gmam'])(
     'keeps %s segments in place when reversing on a curve',
@@ -299,7 +401,11 @@ describe('bridges, reversing and refuelling', () => {
     },
   );
   it('routes low reserves to the nearer reachable rail service and then resumes its destination', () => {
-    const w = world(),
+    // a store by each service: both are stocked
+    const w = world([
+        { x: 30, y: 34 },
+        { x: 60, y: 34 },
+      ]),
       t = train('mallard');
     t.spawnAt(w.track, 20, 30, Dir.W);
     const st = new Station('quarry', 80, 29);
@@ -311,8 +417,10 @@ describe('bridges, reversing and refuelling', () => {
     w.builder.placeDecor(30, 31, 'fuel_stop', 0);
     w.builder.placeDecor(60, 29, 'water_tower', 0);
     w.builder.placeDecor(60, 31, 'fuel_stop', 0);
-    w.stock.add('coal', 1000);
-    w.stock.add('water', 1000);
+    for (const d of w.depots) {
+      d.add('coal', 1000);
+      d.add('water', 1000);
+    }
     w.fleet.trains.push(t);
     const ctx = (w.fleet as unknown as { ctx(n: number, s: number): TickCtx }).ctx(0, 1);
     expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
@@ -324,7 +432,8 @@ describe('bridges, reversing and refuelling', () => {
     expect(t.route).toEqual([st.id]);
   });
   it('visits separate fuel and water services in order of the limiting reserve', () => {
-    const w = world(),
+    // one store within reach of both services
+    const w = world([{ x: 26, y: 34 }]),
       t = train('mallard');
     t.spawnAt(w.track, 20, 30, Dir.W);
     const st = new Station('quarry', 80, 29);
@@ -335,8 +444,8 @@ describe('bridges, reversing and refuelling', () => {
     t.water = t.waterRate * 35;
     w.builder.placeDecor(23, 29, 'fuel_stop', 0);
     w.builder.placeDecor(30, 29, 'water_tower', 0);
-    w.stock.add('coal', 1000);
-    w.stock.add('water', 1000);
+    w.depots[0].add('coal', 1000);
+    w.depots[0].add('water', 1000);
     w.fleet.trains.push(t);
     const ctx = (w.fleet as unknown as { ctx(n: number, s: number): TickCtx }).ctx(0, 1);
     expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);

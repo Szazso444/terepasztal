@@ -149,12 +149,29 @@ export function vehicleSpec(def: BodyFields): VehicleSpec {
 
 /** A sampled track path with arc-length lookup. */
 export class Polyline {
-  readonly cum: number[] = [];
-  constructor(readonly pts: Vec2[]) {
+  readonly cum: number[];
+  /** the points' coordinates as flat arrays, for `nearest` */
+  private readonly xs: Float64Array;
+  private readonly ys: Float64Array;
+  /**
+   * `lens[i]`, when given, is `Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y)`
+   * already worked out (a train keeps them for its trail), so the arc lengths are the same sums.
+   */
+  constructor(
+    readonly pts: Vec2[],
+    lens?: ArrayLike<number>,
+  ) {
+    const n = pts.length;
+    this.cum = [];
+    this.xs = new Float64Array(n);
+    this.ys = new Float64Array(n);
     let a = 0;
-    for (let i = 0; i < pts.length; i++) {
-      if (i) a += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+    for (let i = 0; i < n; i++) {
+      const p = pts[i];
+      if (i) a += lens ? lens[i] : Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y);
       this.cum.push(a);
+      this.xs[i] = p.x;
+      this.ys[i] = p.y;
     }
   }
   get length() {
@@ -214,20 +231,24 @@ export class Polyline {
     const i0 = Math.max(1, this.seg(arcGuess - window));
     const i1 = Math.min(pts.length - 1, this.seg(arcGuess + window));
     // the closest so far, kept in numbers: this runs for every body segment every tick
+    const xs = this.xs;
+    const ys = this.ys;
+    const px = P.x;
+    const py = P.y;
     let bx = 0;
     let by = 0;
     let arc = 0;
     let bd = Infinity;
     for (let i = i0; i <= i1; i++) {
-      const a = pts[i - 1];
-      const b = pts[i];
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
+      const ax = xs[i - 1];
+      const ay = ys[i - 1];
+      const dx = xs[i] - ax;
+      const dy = ys[i] - ay;
       const l2 = dx * dx + dy * dy;
-      let t = l2 > 1e-12 ? ((P.x - a.x) * dx + (P.y - a.y) * dy) / l2 : 0;
+      let t = l2 > 1e-12 ? ((px - ax) * dx + (py - ay) * dy) / l2 : 0;
       t = Math.max(0, Math.min(1, t));
-      const qx = a.x + dx * t;
-      const qy = a.y + dy * t;
+      const qx = ax + dx * t;
+      const qy = ay + dy * t;
       const d = (qx - P.x) ** 2 + (qy - P.y) ** 2;
       if (d < bd) {
         bd = d;

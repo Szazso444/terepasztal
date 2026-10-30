@@ -1,9 +1,9 @@
-import { el } from './dom';
+import { el, btn } from './dom';
 import { STR } from '../strings';
-import { RESOURCE_IDS, type Stockpile } from '../sim/stockpile';
+import { RESOURCE_IDS, type ResourceStore } from '../sim/stores';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
-import type { ResourceStat } from '../sim/stats';
+import { ShownFlows } from '../sim/stats';
 import { supplyMode, type SupplyMode } from '../sim/supply';
 import { fmtMoney } from './numberFormat';
 import { ttTerm, type Tooltip } from './tooltip';
@@ -11,34 +11,41 @@ import { tipBuild } from './tooltipRender';
 import { resourceTip, type ResourceSnapshot } from './tooltipContent';
 import { RESOURCE_GROUPS, barGroups } from './resourceOrder';
 
-/** What the stockpile holds: these have a cap and open the market when clicked. */
+/** What a store holds: these have a cap and open the market when clicked. */
 const STOCKPILED = new Set(RESOURCE_IDS);
 
 /** The cells overflow their box: tighten the spacing. */
 export const needsCompact = (scrollWidth: number, clientWidth: number) => scrollWidth > clientWidth;
 
 /**
- * Second row under the top bar: funds first, then the resources in their groups (`RESOURCE_GROUPS`),
- * each cell a term whose tooltip links the buildings that make and use it. A resource shows once its
- * age has come or it is in stock (`barGroups`); the famine warning and `right` (tickets, age) end it.
+ * Second row under the top bar: funds first, then the store it shows (a button that steps to the
+ * next one) and what that store holds in its groups (`RESOURCE_GROUPS`), each cell a term whose
+ * tooltip links the buildings that make and use it. A resource shows once its age has come or it is
+ * in stock (`barGroups`); the famine warning and `right` (tickets, age) end it.
  */
 export class ResourceBar {
   readonly root = el('div', { id: 'resbar', class: 'panel' });
   readonly right = el('div', { class: 'res-right' });
   /** the groups and the famine warning: it shrinks and clips so `right` stays on screen */
   private cellsBox = el('div', { class: 'res-cells' });
+  /** the name of the store shown; a click asks for the next one (`onNextStore`) */
+  private storeBtn = btn('', () => this.onNextStore?.(), 'small res-store');
   /** each resource's value, and the term around its cell that is hidden or shown */
   private values = new Map<string, HTMLElement>();
   private cells = new Map<string, HTMLElement>();
   /** each group's wrapper, with the separator before it (none before the first) */
   private groups: { root: HTMLElement; sep: HTMLElement | null }[] = [];
   private famine = el('span', { class: 'value red', text: STR.res.famine });
-  /** Supplied by the game: actual rolling weekly flows. */
-  stats: (() => Record<string, ResourceStat>) | null = null;
+  /** the rolling weekly flows of the store shown, worked out on `refreshFlows` */
+  private flows = new ShownFlows(RESOURCE_IDS);
+  /** Supplied by the game: residents, and the food they and the crews eat a week. */
+  people: (() => { residents: number; foodPerWeek: number }) | null = null;
   /** Supplied by the game: the passengers waiting at the player's stations. */
   passengers: (() => number) | null = null;
-  private stock: Stockpile | null = null;
-  private cap: (id: string) => number = () => Infinity;
+  /** the store button was clicked: show the next store */
+  onNextStore: (() => void) | null = null;
+  private store: ResourceStore | null = null;
+  private totals = new Map<string, number>();
   private money = 0;
   private tier = 0;
   /**
@@ -50,6 +57,7 @@ export class ResourceBar {
   private inStock = new Set<string>();
 
   constructor(atlas: AtlasRegistry, tooltip: Tooltip, onClick: () => void) {
+    this.storeBtn.title = STR.res.nextStore;
     RESOURCE_GROUPS.forEach((ids, i) => {
       const group = el('div', { class: 'res-group' });
       for (const id of ids) {
@@ -73,6 +81,8 @@ export class ResourceBar {
       const sep = i ? el('div', { class: 'res-sep' }) : null;
       if (sep) this.cellsBox.append(sep);
       this.cellsBox.append(group);
+      // the funds are everyone's, what follows the store's
+      if (!i) this.cellsBox.append(this.storeBtn);
       this.groups.push({ root: group, sep });
     });
     this.cellsBox.append(this.famine);
@@ -100,17 +110,20 @@ export class ResourceBar {
   /** What a cell's tooltip shows, read when it opens. */
   private snapshot(id: string): ResourceSnapshot {
     const tier = this.tier;
-    const st = this.stock;
+    const st = this.store;
     // nothing counts money, births or passengers in and out: those tooltips show no flows
     if (id === 'money') return { id, have: this.money, cap: Infinity, tier };
-    if (id === 'population')
-      return { id, have: st?.population ?? 0, cap: Infinity, eats: st?.foodPerWeek() ?? 0, tier };
+    if (id === 'population') {
+      const p = this.people?.() ?? { residents: 0, foodPerWeek: 0 };
+      return { id, have: p.residents, cap: Infinity, eats: p.foodPerWeek, tier };
+    }
     if (id === 'passengers') return { id, have: this.passengers?.() ?? 0, cap: Infinity, tier };
-    const flow = this.stats?.()[id];
+    const flow = st ? this.flows.of(st)[id] : undefined;
     return {
       id,
       have: st?.get(id) ?? 0,
-      cap: STOCKPILED.has(id) ? this.cap(id) : Infinity,
+      cap: STOCKPILED.has(id) ? (st?.cap(id) ?? Infinity) : Infinity,
+      total: this.totals.get(id) ?? 0,
       produced: flow?.produced ?? 0,
       consumed: flow?.consumed ?? 0,
       tier,
@@ -118,8 +131,8 @@ export class ResourceBar {
   }
 
   /** Show the cells and groups `barGroups` lists, and hide the rest. */
-  private layout(stock: Stockpile) {
-    const shown = new Set(barGroups(this.tier, (id) => stock.get(id)).flat());
+  private layout(store: ResourceStore) {
+    const shown = new Set(barGroups(this.tier, (id) => store.get(id)).flat());
     for (const [id, cell] of this.cells) {
       const on = shown.has(id);
       if ((cell.style.display === 'none') === on) cell.style.display = on ? '' : 'none';
@@ -134,15 +147,27 @@ export class ResourceBar {
     });
   }
 
-  update(stock: Stockpile, cap: (id: string) => number, money: number, tier: number) {
-    this.stock = stock;
-    this.cap = cap;
+  /**
+   * Show `store` (with the grid's power beside it), named `label` on the store button; `totals` is
+   * what every store holds together, for the tooltips.
+   */
+  update(
+    store: ResourceStore,
+    label: string,
+    totals: Map<string, number>,
+    money: number,
+    tier: number,
+  ) {
+    this.store = store;
+    this.totals = totals;
     this.money = money;
     this.tier = tier;
+    const renamed = this.storeBtn.textContent !== label;
+    if (renamed) this.storeBtn.textContent = label;
     // the shown cells change only with the age or the chain, or when a stock crosses zero
     let relayout = tier !== this.laidTier || supplyMode() !== this.laidSupply;
     for (const id of this.cells.keys()) {
-      const has = stock.get(id) > 0;
+      const has = store.get(id) > 0;
       if (has === this.inStock.has(id)) continue;
       if (has) this.inStock.add(id);
       else this.inStock.delete(id);
@@ -151,40 +176,44 @@ export class ResourceBar {
     if (relayout) {
       this.laidTier = tier;
       this.laidSupply = supplyMode();
-      this.layout(stock);
+      this.layout(store);
     }
-    // a longer value can push the bar over too: a new digit, not every frame
-    let longer = relayout;
-    const stats = this.stats?.();
+    // a longer value or store name can push the bar over too: a new digit, not every frame
+    let longer = relayout || renamed;
+    const stats = this.flows.of(store);
     for (const [id, v] of this.values) {
       if (this.cells.get(id)!.style.display === 'none') continue;
       if (!STOCKPILED.has(id)) {
         const text =
           id === 'money'
             ? fmtMoney(money)
-            : `${Math.floor(id === 'population' ? stock.population : (this.passengers?.() ?? 0))}`;
+            : `${Math.floor(id === 'population' ? (this.people?.().residents ?? 0) : (this.passengers?.() ?? 0))}`;
         if (v.textContent !== text) {
           longer ||= text.length !== v.textContent?.length;
           v.textContent = text;
         }
         continue;
       }
-      const have = Math.floor(stock.get(id));
+      const have = Math.floor(store.get(id));
       const text = `${have}`;
       if (v.textContent !== text) {
         longer ||= text.length !== v.textContent?.length;
         v.textContent = text;
       }
-      const net = (stats?.[id]?.produced ?? 0) - (stats?.[id]?.consumed ?? 0);
+      const net = (stats[id]?.produced ?? 0) - (stats[id]?.consumed ?? 0);
       v.classList.toggle('red', net < -0.01);
       v.classList.toggle('good', net > 0.01);
-      v.classList.toggle('amber', Math.abs(net) <= 0.01 && have >= cap(id));
+      v.classList.toggle('amber', Math.abs(net) <= 0.01 && have >= store.cap(id));
     }
-    const famine = stock.famine ? '' : 'none';
+    const famine = store.famine ? '' : 'none';
     if (this.famine.style.display !== famine) {
       this.famine.style.display = famine;
       longer = true;
     }
     if (longer) this.fit();
+  }
+  /** The weekly flows are worked out again at the next `update` (the panels' refresh). */
+  refreshFlows() {
+    this.flows.refresh();
   }
 }

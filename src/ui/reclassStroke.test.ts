@@ -5,10 +5,10 @@ import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { stepTiles } from '../world/reclass';
 import { Builder } from '../sim/build';
-import { Stockpile } from '../sim/stockpile';
 import { Economy } from '../sim/economy';
 import { rules, DEFAULT_RULES } from '../sim/rules';
 import { ReclassStroke } from './reclassStroke';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
@@ -103,11 +103,11 @@ describe('a stroke on real track', () => {
   function world() {
     const map = emptyMap(4242, 48, 48, Terrain.Grass),
       track = new TrackGraph(48, 48),
-      stock = new Stockpile(),
+      { stores, depot: stock } = storeWith({}, { x: 10, y: 10 }),
       economy = new Economy();
     const regions = new RegionState(map);
     for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-    const builder = new Builder(map, regions, track, economy, stock);
+    const builder = new Builder(map, regions, track, economy, stores);
     for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 5000);
     // a north-south line and a west-east line, crossing at (10, 10)
     for (let y = 5; y <= 15; y++) if (y !== 10) track.place(10, y, 'straight', 0, 'regular');

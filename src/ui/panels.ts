@@ -10,7 +10,7 @@ import { listLevels } from '../world/level';
 import { ageStatus, type AgeSnapshot } from '../sim/ages';
 import type { GameClock } from '../sim/time';
 import type { Economy } from '../sim/economy';
-import { RESOURCE_IDS, scaleCost, type Stockpile } from '../sim/stockpile';
+import { RESOURCE_IDS, scaleCost } from '../sim/stores';
 import type { Fleet } from '../sim/fleet';
 import type { Builder, Decor } from '../sim/build';
 import type { ContractBoard } from '../sim/contracts';
@@ -23,9 +23,8 @@ import type { Station } from '../sim/stations';
 import type { Train } from '../sim/trains';
 import type { Commands } from '../sim/commands';
 import { cargoDef } from '../sim/cargo';
-import { resourceStats } from '../sim/stats';
 import { withoutInCab } from '../sim/compat';
-import { listRulePresets, stageNewGameTuning } from '../sim/rules';
+import { listRulePresets, rules, stageNewGameTuning } from '../sim/rules';
 import { supplyMode, type SupplyMode } from '../sim/supply';
 import {
   SAVE_VERSION,
@@ -69,6 +68,7 @@ import { ResourceBar } from './resourceBar';
 import { TuningScreen } from './tuningScreen';
 import { ContentScreen } from './contentScreen';
 import { SettingsScreen } from './settingsScreen';
+import { CreditsScreen } from './creditsScreen';
 import { GachaScreen } from './gachaScreen';
 import { CraftingScreen } from './craftingScreen';
 import { RosterScreen } from './rosterScreen';
@@ -107,7 +107,6 @@ import { startNewGame } from './newGameTuning';
 export interface PlayUiDomains {
   clock: GameClock;
   economy: Economy;
-  stock: Stockpile;
   inventory: Inventory;
   fleet: Fleet;
   builder: Builder;
@@ -163,8 +162,6 @@ export interface UiHost {
   readonly overviewTrainId: number | null;
   /** the live numbers the age goals are measured against */
   ageSnapshot(): AgeSnapshot;
-  /** storage cap for one resource at the current warehouse and plant count */
-  stockCap(id: string): number;
 
   // ------------------------------------------------------------ camera and view
   /** close the screens and look at the train */
@@ -213,7 +210,7 @@ export interface UiHost {
   applySeason(force?: boolean): void;
   /** ask for a town's name; `fresh` marks a just-founded town (its default name is offered) */
   renameTown(t: Town, fresh?: boolean): void;
-  /** money, tickets and a full stockpile, for testing */
+  /** money, tickets and the selected store filled, for testing */
   cheat(): void;
 
   // ------------------------------------------------------------ storage and reloads
@@ -335,17 +332,17 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     }
     sfx(sc ? 'ui.open' : 'ui.close');
   };
-  const trainScreen = new TrainScreen(d.fleet, d.builder, d.stock, d.commands, d.atlas, toast);
+  const trainScreen = new TrainScreen(d.fleet, d.builder, d.commands, d.atlas, toast);
   trainScreen.onLocate = (t) => host.focusTrain(t);
   const trainDetails = (t: Train) => {
     trainScreen.open(t);
     d.screens.open(trainScreen);
   };
   depot.onDetails = trainDetails;
+  const stores = d.builder.stores;
   const marketScreen = new MarketScreen(
-    d.stock,
+    stores,
     d.economy,
-    (id) => host.stockCap(id),
     toast,
     d.trade,
     () => d.clock.time,
@@ -368,16 +365,30 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   });
   // the money is the bar's first cell; tickets and the age stay in the HUD's block at its end
   resourceBar.right.append(hud.funds);
-  resourceBar.stats = () => resourceStats(d.stock, RESOURCE_IDS);
   resourceBar.passengers = () => {
     let n = 0;
     for (const s of d.builder.stations) n += s.stored('passengers');
     return n;
   };
+  resourceBar.people = () => {
+    const residents = d.houses.residentsTotal();
+    const crews = d.builder.crewTotal() + d.fleet.crewTotal();
+    return { residents, foodPerWeek: (residents + crews) * rules.wheatPerCrew };
+  };
+  // the bar steps through the stores in label order, from the one it shows
+  resourceBar.onNextStore = () => {
+    const all = stores.choices();
+    if (!all.length) return;
+    const now = stores.selected;
+    const at = now ? all.findIndex((c) => c.key === now.key) : -1;
+    stores.selected = all[(at + 1) % all.length];
+  };
   const tuningScreen = new TuningScreen(
     () => {
       host.applySeason(true);
       toolbar.refresh();
+      // a town's cap and the tiles in building and fuel reach are derived from the rules
+      stores.refresh();
     },
     // a tuning saved or deleted there changes the title screen's New game choice, in place
     () => mainMenu.refreshTunings(),
@@ -386,6 +397,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     if (host.mode === 'play' && !menuOpen()) host.save(true);
     host.reloadToMenu();
   });
+  const creditsScreen = new CreditsScreen();
   const settingsScreen = new SettingsScreen(
     d.settings,
     () => host.applySettings(),
@@ -439,7 +451,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const craftingScreen = new CraftingScreen(
     d.crafting,
     d.economy,
-    d.stock,
+    stores,
     d.inventory,
     () => d.clock.time,
     toast,
@@ -473,7 +485,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     giveTickets: () => (d.economy.tickets += 10),
     nextAge: () => d.economy.setAge(d.economy.tier + 1),
     giveResources: () => {
-      for (const id of RESOURCE_IDS) d.stock.add(id, 200, host.stockCap(id));
+      const store = stores.selected;
+      if (store) for (const id of RESOURCE_IDS) stores.withGrid(store).add(id, 200);
     },
     spawnContract: () => {
       const c = d.contracts.generate(d.clock.time, true);
@@ -506,7 +519,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   toolbar.refresh();
   const buildingPanel = new BuildingPanel(
     d.builder,
-    d.stock,
     () => d.build.selectedBuilding && d.build.selectBuilding(null),
   );
   const decorPanel = new DecorPanel(d.builder, d.power, d.commands, toast, () => {
@@ -540,7 +552,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   trainSide.onDetails = trainDetails;
   trainSide.onLocate = (t) => host.focusTrain(t);
   trainSide.onHover = (t) => host.setHoverTrain(t);
-  const buildInfo = new BuildInfo(d.atlas, d.stock, d.builder);
+  const buildInfo = new BuildInfo(d.atlas, d.builder, () => d.build.placement);
   buildInfo.onTrainDetails = trainDetails;
   buildInfo.onTrainLocate = (t) => host.focusTrain(t);
   buildInfo.onTrainClose = () => host.selectFieldTrain(null);
@@ -559,9 +571,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       bindTerms: (scope) => d.tooltip.bindTerms(scope),
     },
   );
-  const townPanel = new TownPanel(d.towns, d.houses);
+  const townPanel = new TownPanel(d.towns, d.houses, stores);
   townPanel.onGo = (t) => {
     const st = d.towns.station(t);
+    const store = stores.byKey(`town:${t.id}`);
+    if (store) stores.selected = stores.poolOf(store);
     if (st) host.returnToRts(st.x, st.y);
   };
   townPanel.onRename = (t) => host.renameTown(t);
@@ -577,6 +591,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   };
   d.build.onSelect = (s) => {
     if (s) host.selectFieldTrain(null);
+    // a town's Townhouse, a depot or a warehouse: the top bar shows its store
+    const store = s && (s.def.id === 'town' ? stores.townStore(s.x, s.y) : stores.dockOf(s));
+    if (store) stores.selected = store;
     if (s) stationPanel.open(s);
     else if (stationPanel.station) stationPanel.close();
   };
@@ -759,6 +776,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       tuning: () => d.screens.open(tuningScreen),
       content: () => d.screens.open(contentScreen),
       settings: () => d.screens.open(settingsScreen),
+      credits: () => d.screens.open(creditsScreen),
     },
     d.namePrompt,
   );

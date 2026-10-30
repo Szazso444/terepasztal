@@ -23,6 +23,7 @@ import {
 } from '../sim/body';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { simWorld, line, station } from '../testing/simWorld';
+import { depotWith } from '../testing/storeFixtures';
 import { rules, DEFAULT_RULES } from '../sim/rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from '../sim/supply';
 import { resetTrainIds } from '../sim/trains';
@@ -774,13 +775,11 @@ describe('TrainRenderer running gear on a simulated train', () => {
     const RUN = 14,
       x = 10,
       y = 20;
-    station(w, 'depot', x, y);
+    depotWith(w, { coal: 400, water: 400 }, { x, y });
     line(w, x + 2, y, x + 2 + RUN);
     const quarry = station(w, 'quarry', x + 8, y - 1);
     const warehouse = station(w, 'warehouse', x + RUN, y - 1);
     quarry.store('stone', 40);
-    w.stock.add('coal', 400);
-    w.stock.add('water', 400);
     const loco = w.inventory.add('gmam', 0);
     const hopper = w.inventory.add('wood_hopper', 0);
     const made = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);

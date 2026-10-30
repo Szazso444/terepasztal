@@ -7,7 +7,7 @@
  */
 import { STR } from '../strings';
 import type { PlacementCheck } from '../sim/build';
-import { fmtCost } from '../sim/stockpile';
+import { fmtCost } from '../sim/stores';
 import { hoursLeft, upgradeSeconds, workProgress, type Work } from '../sim/upgrade';
 
 export type UpgradeView =

@@ -3,7 +3,7 @@ import { TradeDesk, BUY_MUL, SELL_MUL, DRIFTING } from './trade';
 import { CARGO } from './cargo';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
-import { Stockpile } from './stockpile';
+import { storeWith, storesWith } from '../testing/storeFixtures';
 import { Economy } from './economy';
 import { forAll, shrinkInt } from '../testing/property';
 
@@ -69,21 +69,82 @@ describe('TradeDesk.cycleSeconds', () => {
         rules.daySeconds = day;
         const week = 7 * day;
         const desk = new TradeDesk();
-        const stock = new Stockpile();
+        const { stores, depot: stock } = storeWith({});
         const economy = new Economy();
-        const cap = () => 1000;
         expect(desk.cycleSeconds(), 'the cycle').toBe(week);
 
         desk.set('food', 10);
-        desk.tick(now, stock, economy, cap);
+        desk.tick(now, stores, economy);
         expect(desk.nextAt, 'the first tick starts the cycle').toBe(now + week);
-        desk.tick(now + week - 1, stock, economy, cap);
+        desk.tick(now + week - 1, stores, economy);
         expect(stock.get('food'), 'nothing settles before the cycle is out').toBe(0);
-        desk.tick(now + week, stock, economy, cap);
+        desk.tick(now + week, stores, economy);
         expect(stock.get('food'), 'the deal settles when it is').toBe(10);
         expect(desk.nextAt, 'the next cycle follows on').toBe(now + 2 * week);
       },
       { shrink: ({ day, now }) => [...shrinkInt(now, 1)].map((n) => ({ day, now: n })) },
     );
+  });
+});
+
+describe('TradeDesk and its store', () => {
+  /** Two depot stores far apart, the second selected, and a desk that buys 10 food a cycle. */
+  function desk() {
+    const { stores, depots, stations } = storesWith([
+      { amounts: {}, at: { x: 0, y: 0 } },
+      { amounts: {}, at: { x: 200, y: 200 } },
+    ]);
+    const [a, b] = depots;
+    stores.selected = stores.poolOf(b);
+    const trade = new TradeDesk();
+    const economy = new Economy();
+    economy.money = 1e6;
+    trade.set('food', 10);
+    return { stores, stations, a, b, trade, economy };
+  }
+
+  it('a standing deal settles with its store, and with the selected store once that store is gone', () => {
+    const { stores, stations, a, b, trade, economy } = desk();
+    const week = trade.cycleSeconds();
+    trade.storeKey = a.key;
+    trade.tick(1, stores, economy);
+    trade.tick(1 + week, stores, economy);
+    expect(a.get('food'), 'its own store').toBe(10);
+    expect(b.get('food'), 'not the selected one').toBe(0);
+
+    // the depot goes; its goods go to the other store, out of reach as it is
+    stations.splice(0, 1);
+    stores.refresh();
+    expect(stores.byKey(a.key)).toBeUndefined();
+    expect(b.get('food'), 'what the depot held').toBe(10);
+    trade.tick(1 + 2 * week, stores, economy);
+    expect(b.get('food'), 'the selected store').toBe(20);
+    expect(trade.storeKey, 'the desk keeps the key it was given').toBe(a.key);
+  });
+
+  it('settles with the selected store when it was given none, and buys only up to the cap', () => {
+    const { stores, b, trade, economy } = desk();
+    b.amounts.set('food', b.cap('food') - 4);
+    trade.tick(1, stores, economy);
+    trade.tick(1 + trade.cycleSeconds(), stores, economy);
+    expect(b.get('food')).toBe(b.cap('food'));
+  });
+
+  it('keeps its store through a save, and an old desk has none', () => {
+    const trade = new TradeDesk();
+    trade.set('coal', -5);
+    trade.storeKey = 'town:3';
+    const back = new TradeDesk();
+    back.load(JSON.parse(JSON.stringify(trade.toJSON())));
+    expect(back.storeKey).toBe('town:3');
+    expect(back.toJSON()).toEqual(trade.toJSON());
+    // a desk with no store saves as a desk always did
+    expect('storeKey' in new TradeDesk().toJSON()).toBe(false);
+    const old = new TradeDesk();
+    old.storeKey = 'st:9';
+    old.load({ deals: { coal: -5 }, nextAt: 10, fuelMul: 1, driftDay: 0 });
+    expect(old.storeKey).toBeNull();
+    old.load(undefined);
+    expect(old.storeKey).toBeNull();
   });
 });

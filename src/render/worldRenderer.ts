@@ -85,6 +85,7 @@ import { paintedRoads } from './roadPaint';
 import { RoadWalk, roadWalks } from './roadWalk';
 import { crossingAxis, levelCrossingFrame } from './levelCrossing';
 import { AtmosphereTint, setOwnTint } from './atmosphere';
+import { cullByChunk } from './chunkCull';
 import { surfaceVersions } from './fx';
 
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
@@ -385,13 +386,6 @@ export class WorldRenderer {
     surfaceVersions.set(this.lights, () => this.landscape.surfaceVersion);
     this.objects.sortableChildren = true;
     this.piers.sortableChildren = true;
-    this.objects.cullableChildren = true;
-    this.ground.cullableChildren = true;
-    this.fog.cullableChildren = true;
-    this.track.cullableChildren = true;
-    this.crossings.cullableChildren = true;
-    this.border.cullableChildren = true;
-    this.lights.cullableChildren = true;
     this.root.addChild(
       this.border,
       this.landscape.root,
@@ -408,6 +402,22 @@ export class WorldRenderer {
       this.fog,
       this.overlay,
     );
+    // Pixi's culler measured every child of these layers each frame; they are culled by chunk
+    // instead (chunkCull.ts), keeping their children, and so the depth order, as they are
+    cullByChunk(this.root, [
+      this.border,
+      this.landscape.root,
+      this.ground,
+      this.contactGround,
+      this.piers,
+      this.platforms,
+      this.track,
+      this.crossings,
+      this.lights,
+      this.objects,
+      this.fog,
+      this.overlay,
+    ]);
     this.buildBorder();
     this.buildGround();
     this.buildProps();

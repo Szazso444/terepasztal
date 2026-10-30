@@ -5,7 +5,6 @@ import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
 import { Rng } from '../engine/rng';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { resetStationIds } from './stations';
 import { rules, DEFAULT_RULES, daySeconds } from './rules';
@@ -19,6 +18,7 @@ import {
 } from './save';
 import type { DeliveryEvent } from './trains';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -31,7 +31,7 @@ function world() {
     track = new TrackGraph(96, 96),
     economy = new Economy();
   const regions = new RegionState(map);
-  const builder = new Builder(map, regions, track, economy, new Stockpile());
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
   for (const [x, id] of [
@@ -307,7 +307,13 @@ function line(c: BoardCase) {
   resetStationIds(1);
   const map = emptyMap(4242, 96, 96, Terrain.Grass),
     track = new TrackGraph(96, 96);
-  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  const builder = new Builder(
+    map,
+    new RegionState(map),
+    track,
+    new Economy(),
+    storeWith({}).stores,
+  );
   builder.free = true;
   for (let x = 2; x < 94; x++) track.place(x, LINE, 'straight', 1);
   // a spot already taken, or a town too close to another, is left out

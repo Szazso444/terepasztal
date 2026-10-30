@@ -10,8 +10,8 @@ import {
   missingInput,
   type Building,
 } from '../sim/buildings';
-import type { Stockpile } from '../sim/stockpile';
-import { fmtCost } from '../sim/stockpile';
+import { rules } from '../sim/rules';
+import { fmtCost, type ResourceStore } from '../sim/stores';
 import { cargoName } from '../sim/cargo';
 import { upgradeView } from './upgradeView';
 import { upgradeRow } from './upgradeRow';
@@ -26,7 +26,6 @@ export class BuildingPanel {
 
   constructor(
     private readonly builder: Builder,
-    private readonly stock: Stockpile,
     private readonly onClose: () => void,
   ) {
     this.root = el(
@@ -56,18 +55,24 @@ export class BuildingPanel {
   /**
    * What a works is doing. A works is closed while it is upgraded; a bridge being strengthened
    * still carries trains, so it reads as it does without one. The panel words it in `status`; the
-   * hover tooltip words it from this (`WorksSnapshot.status`), so the two cannot disagree.
+   * hover tooltip words it from this (`WorksSnapshot.status`), so the two cannot disagree. A
+   * starved works names the input its store (`StoreRegistry.worksStore`) is short of; one with
+   * no store at all says no store is in reach.
    */
-  static statusKind(b: Building, stock: Stockpile): WorksStatus {
+  static statusKind(b: Building, store: Pick<ResourceStore, 'get'> | null): WorksStatus {
     const def = buildingDef(b.id);
     if (b.work && !def.bridge) return { kind: 'closed' };
     if (b.reason === 'full') return { kind: 'full' };
-    if (b.reason === 'inputs') return { kind: 'starved', missing: missingInput(def, stock) };
+    if (b.reason === 'inputs' && !store) return { kind: 'noStore', range: rules.buildReach };
+    if (b.reason === 'inputs') return { kind: 'starved', missing: missingInput(def, store) };
     return { kind: 'running' };
   }
   /** One-line status of the panel, with the colour class it is shown in. */
-  static status(b: Building, stock: Stockpile): { text: string; cls: string } {
-    const s = BuildingPanel.statusKind(b, stock);
+  static status(
+    b: Building,
+    store: Pick<ResourceStore, 'get'> | null,
+  ): { text: string; cls: string } {
+    const s = BuildingPanel.statusKind(b, store);
     switch (s.kind) {
       case 'closed':
         return { text: STR.upgrade.closed, cls: 'amber' };
@@ -80,6 +85,8 @@ export class BuildingPanel {
         };
       case 'running':
         return { text: STR.building.running, cls: 'good' };
+      case 'noStore':
+        return { text: STR.stores.noStoreNear(s.range), cls: 'red' };
     }
   }
   /** The crew the panel shows: none while the works is closed for its upgrade (`crewTotal`). */
@@ -110,7 +117,9 @@ export class BuildingPanel {
         el('span', { class: 'k', text: k }),
         el('span', { class: `v ${cls}`, text: v }),
       );
-    const st = BuildingPanel.status(b, this.stock);
+    // what it runs from: its town's store, else the nearest in reach
+    const store = this.builder.stores.worksStore(b);
+    const st = BuildingPanel.status(b, store);
     body.append(el('div', { class: 'flavor', text: def.flavor }));
     const capacity = bridgeCapacity(b);
     if (capacity !== null)
@@ -132,7 +141,9 @@ export class BuildingPanel {
         .join(', ');
       body.append(row(STR.building.made, made || '-'));
       for (const k of Object.keys(def.recipe.out))
-        body.append(row(STR.building.inStock(cargoName(k)), String(Math.floor(this.stock.get(k)))));
+        body.append(
+          row(STR.building.inStock(cargoName(k)), String(Math.floor(store?.get(k) ?? 0))),
+        );
     } else {
       body.append(el('p', { class: 'dim', text: STR.building.bridgeHint }));
     }
