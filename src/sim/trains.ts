@@ -271,6 +271,32 @@ export function aheadRun(
   return { keys: tiles.keys, from: run.from, tiles };
 }
 
+/** Whether two lists of bodies pose alike: the same lengths and segments, vehicle by vehicle. */
+function sameSpecs(a: readonly VehicleSpec[], b: readonly VehicleSpec[]) {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const p = a[i];
+    const q = b[i];
+    if (p.L !== q.L || p.segments.length !== q.segments.length) return false;
+    for (let k = 0; k < p.segments.length; k++) {
+      const s = p.segments[k];
+      const t = q.segments[k];
+      if (
+        s.part !== t.part ||
+        s.L !== t.L ||
+        s.W !== t.W ||
+        s.nb !== t.nb ||
+        s.bogie !== t.bogie ||
+        s.front !== t.front ||
+        !!s.mirror !== !!t.mirror
+      )
+        return false;
+    }
+  }
+  return true;
+}
+
 /** The first index from 1 on whose running sum reaches `arc` (`cum.length` when none does). */
 function reach(cum: readonly number[], arc: number) {
   let lo = 1;
@@ -574,6 +600,9 @@ export class Train {
   // geometry
   private trail: TrailPoint[] = [];
   private trailCum: number[] = [];
+  /** `trailLen[i]`: length from trail point i - 1 to i, kept by `pushTrail` for `trailLenOf` */
+  private trailLen: number[] = [];
+  private trailLenOf: TrailPoint[] | null = null;
   private path: PathSegment[] | null = null;
   private pathPts: { x: number; y: number; seg: PathSegment; factor: number }[] = [];
   private pathCum: number[] = [];
@@ -1422,6 +1451,8 @@ export class Train {
     const { back, need, laid } = trackBehind(track, seg, this.length);
     this.trail = [];
     this.trailCum = [];
+    this.trailLen = [];
+    this.trailLenOf = this.trail;
     // the consist stands behind the gate: where the rails end (inside the shed) a straight
     // virtual run carries the rest of the cars, hidden under the shed until they roll out
     const first = back[0] ?? seg;
@@ -1454,6 +1485,8 @@ export class Train {
   restoreTrail(points: number[][], reversed: boolean) {
     this.trail = [];
     this.trailCum = [];
+    this.trailLen = [];
+    this.trailLenOf = this.trail;
     const segs = new Map<string, PathSegment>();
     for (const [x, y, sx, sy, sin, sout, route] of points) {
       const key = `${sx},${sy},${sin},${sout},${route}`;
@@ -1464,9 +1497,9 @@ export class Train {
         segs.set(key, seg);
       }
       const last = this.trail[this.trail.length - 1];
-      this.trailCum.push(
-        last ? this.trailCum[this.trailCum.length - 1] + Math.hypot(x - last.x, y - last.y) : 0,
-      );
+      const d = last ? Math.hypot(x - last.x, y - last.y) : 0;
+      this.trailCum.push(last ? this.trailCum[this.trailCum.length - 1] + d : 0);
+      this.trailLen.push(d);
       this.trail.push({ x, y, seg });
     }
     this.reversed = reversed;
@@ -1491,7 +1524,11 @@ export class Train {
         return;
       }
       this.trailCum.push(this.trailCum[this.trailCum.length - 1] + d);
-    } else this.trailCum.push(0);
+      this.trailLen.push(d);
+    } else {
+      this.trailCum.push(0);
+      this.trailLen.push(0);
+    }
     this.trail.push(p);
     // trim
     const total = this.trailCum[this.trailCum.length - 1];
@@ -1499,6 +1536,7 @@ export class Train {
     while (this.trail.length > 2 && total - this.trailCum[1] > keep) {
       this.trail.shift();
       this.trailCum.shift();
+      this.trailLen.shift();
     }
   }
 
@@ -1528,16 +1566,55 @@ export class Train {
 
   updatePoses() {
     const specs = this.vehicleSpecs;
+    // poses follow from the trail, the direction and the bodies alone: with none of them changed
+    // since the last call (a standing train) they are the ones already there
+    const trail = this.trail;
+    const kept = this.posedFor;
+    if (
+      kept &&
+      kept.trail === trail &&
+      kept.n === trail.length &&
+      kept.first === trail[0] &&
+      kept.last === trail[trail.length - 1] &&
+      kept.reversed === this.reversed &&
+      sameSpecs(kept.specs, specs)
+    )
+      return;
     const order = this.reversed ? [...specs].reverse() : specs;
     const fronts = vehicleFronts(order.map((s) => s.L));
-    const pl = new Polyline(this.trail);
+    // the lengths between trail points, kept with the trail (`pushTrail`); worked out again for a
+    // trail set some other way
+    if (this.trailLenOf !== trail || this.trailLen.length !== trail.length) {
+      this.trailLen = trail.map((p, i) =>
+        i ? Math.hypot(p.x - trail[i - 1].x, p.y - trail[i - 1].y) : 0,
+      );
+      this.trailLenOf = trail;
+    }
+    const pl = new Polyline(trail, this.trailLen);
     const total = pl.length;
     const vposes = order.map((s, i) => poseVehicle(pl, total - fronts[i], s, this.reversed));
     // keep the arrays in car order (loco first) regardless of travel direction
     if (this.reversed) vposes.reverse();
     this.vehiclePoses = vposes;
     this.poses = vposes.map((v) => ({ x: v.x, y: v.y, heading: v.heading }));
+    this.posedFor = {
+      trail,
+      n: trail.length,
+      first: trail[0],
+      last: trail[trail.length - 1],
+      reversed: this.reversed,
+      specs,
+    };
   }
+  /** What the current poses were worked out from (`updatePoses`). */
+  private posedFor: {
+    trail: TrailPoint[];
+    n: number;
+    first: TrailPoint | undefined;
+    last: TrailPoint | undefined;
+    reversed: boolean;
+    specs: VehicleSpec[];
+  } | null = null;
 
   /** Facing index (of 24) for a car (loco faces backwards when pushed). */
   facingOf(_carIndex: number, pose: CarPose) {
