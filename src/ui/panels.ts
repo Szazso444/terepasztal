@@ -68,6 +68,7 @@ import { ResourceBar } from './resourceBar';
 import { TuningScreen } from './tuningScreen';
 import { ContentScreen } from './contentScreen';
 import { SettingsScreen } from './settingsScreen';
+import { CreditsScreen } from './creditsScreen';
 import { GachaScreen } from './gachaScreen';
 import { CraftingScreen } from './craftingScreen';
 import { RosterScreen } from './rosterScreen';
@@ -390,6 +391,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     if (host.mode === 'play' && !menuOpen()) host.save(true);
     host.reloadToMenu();
   });
+  const creditsScreen = new CreditsScreen();
   const settingsScreen = new SettingsScreen(
     d.settings,
     () => host.applySettings(),
@@ -768,6 +770,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       tuning: () => d.screens.open(tuningScreen),
       content: () => d.screens.open(contentScreen),
       settings: () => d.screens.open(settingsScreen),
+      credits: () => d.screens.open(creditsScreen),
     },
     d.namePrompt,
   );

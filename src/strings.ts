@@ -1176,6 +1176,7 @@ export const STR = {
     newGame: 'New game',
     tuning: 'Game tuning',
     content: 'Content editor',
+    credits: 'Credits',
     modified: '(modified)',
     levels: 'Levels',
     noLevels: 'No saved levels yet. Create one below or import a level.',
@@ -1231,6 +1232,19 @@ export const STR = {
         'Kiln, grinder and refinery make coal, iron and oil from stored goods; diesels burn oil; the stores on one rail network share their goods.',
       full: 'Collieries on coal seams, iron and copper mines, ironworks, oil derricks on seeps, a refinery making diesel, sand for grip and copper wire. Warehouses refuel only from what trains bring.',
     } as Record<string, string>,
+  },
+  credits: {
+    title: 'Credits',
+    intro: 'Terepasztal is built with the work of these creators. Thank you!',
+    required: 'Used under a licence that asks for credit',
+    requiredNote:
+      "Changes: each model was cleaned up, scaled, repainted where needed and rendered into the game's sprites.",
+    thanks: 'With thanks',
+    thanksNote: 'These licences ask for no credit; their creators are listed here with our thanks.',
+    by: (author: string) => `by ${author}`,
+    usedFor: (names: string) => `In the game: ${names}`,
+    source: 'Source',
+    licence: 'Licence',
   },
   prompt: {
     ok: 'OK',

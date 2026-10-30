@@ -144,8 +144,8 @@ individual sound effects can be overridden file by file (see below).
 
 Music is one melody, Pastoral Pulse, arranged differently for each age. The default set is the
 original and three variations in `public/assets/audio/music`; each of the six ages can have its
-own set in `public/assets/audio/music/<age id>/`, and none has one yet, so every age plays the
-default. A set opens on its first track and then plays all its tracks in shuffled rounds; entering
+own set in `public/assets/audio/music/<age id>/`. For now only the steam age has one, four
+placeholder tracks, so the other ages play the default. A set opens on its first track and then plays all its tracks in shuffled rounds; entering
 an age with a different set fades the current track out and starts that set. If every file of an
 age's set fails to play, the default set takes over, and if those fail too, the synthesized
 ambient loop in `src/engine/synth.ts` plays, so a build without any music file still has music.

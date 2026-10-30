@@ -1,0 +1,874 @@
+{
+  "licences": {
+    "cc-by-4.0": {
+      "name": "CC BY 4.0",
+      "url": "https://creativecommons.org/licenses/by/4.0/",
+      "required": true
+    },
+    "3dw-gml": {
+      "name": "3D Warehouse General Model License",
+      "url": "https://3dwarehouse.sketchup.com/tos",
+      "required": false
+    },
+    "cc0": {
+      "name": "CC0 1.0",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "required": false
+    },
+    "suno": {
+      "name": "Made with Suno",
+      "url": "https://suno.com",
+      "required": false
+    }
+  },
+  "credits": [
+    {
+      "kind": "3D model",
+      "vehicles": ["daylight"],
+      "title": "southern pacific SP 4449 Engine",
+      "author": "zairiq zairiq 8",
+      "url": "https://sketchfab.com/3d-models/028a65074e684928bd93f297981ef181",
+      "licence": "cc-by-4.0"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["daylight"],
+      "title": "southern pacific SP 4449 Tender",
+      "author": "zairiq zairiq 8",
+      "url": "https://sketchfab.com/3d-models/a64e36c61aef4ac9a61bcef3f1027090",
+      "licence": "cc-by-4.0"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["deltic"],
+      "title": "Class 55 BR Green - D9009 Alycidon",
+      "author": "timblewee",
+      "url": "https://sketchfab.com/3d-models/81372105e1514230b6e0000d4a653cbb",
+      "licence": "cc-by-4.0"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["drg01"],
+      "title": "BR 01 german steam locomotive",
+      "author": "Tom Zimmermann",
+      "url": "https://sketchfab.com/3d-models/cdf7e415aa75441897c0b5dfb384302f",
+      "licence": "cc-by-4.0"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["m62"],
+      "title": "Diesel locomotive ČSD class T679.1 (M62, 1971)",
+      "author": "Dominik P.",
+      "url": "https://3dwarehouse.sketchup.com/model/a498870a-af42-412d-879f-d7d508627f89",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["tgv"],
+      "title": "Motrices TGV PSE",
+      "author": "Johan R.",
+      "url": "https://3dwarehouse.sketchup.com/model/f67e96d7-0ea7-4afd-91e9-ce85db02ff8f",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["black_five"],
+      "title": "Locomotives by Mylyn \"BLACK 5\"",
+      "author": "MylynPoddley",
+      "url": "https://3dwarehouse.sketchup.com/model/a7e73fbb-73f5-420b-bcf4-dda08fabb5d1",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["sd40"],
+      "title": "EMD SD40-2 AWVR 1206 the Unstoppable",
+      "author": "Fat_Bear",
+      "url": "https://3dwarehouse.sketchup.com/model/b5b5aa07-8eaf-4840-a3b4-940b670b3224",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["big_boy"],
+      "title": "Union Pacific \"Big Boy\" no. 4002",
+      "author": "Andrew T.",
+      "url": "https://3dwarehouse.sketchup.com/model/b5b615c7-8125-47f0-8ccd-71aca227f3b5",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["mallard"],
+      "title": "50 Steam locomotive, ‘Mallard’",
+      "author": "nottamun",
+      "url": "https://3dwarehouse.sketchup.com/model/ucc3f9f79-8969-42b3-a3b8-dc2236b7185d",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["flying_scotsman", "coal_cart"],
+      "title": "The Flying Scotsman LNER Class A3 4472",
+      "author": "wasp2",
+      "url": "https://3dwarehouse.sketchup.com/model/210891be5182a77a74b43df14d002c9d",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["class08"],
+      "title": "British Railways No. 13000 (1953)",
+      "author": "Elizabeth's Railways and Vehicles",
+      "url": "https://3dwarehouse.sketchup.com/model/2e7151cb-aff0-4928-b22a-5e8b0a54ceb2",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["gg1"],
+      "title": "GE/Westinghouse GG1: PRR 4884",
+      "author": "John W.",
+      "url": "https://3dwarehouse.sketchup.com/model/1e1219c19b3c104c385420111c985d8c",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["dda40x"],
+      "title": "EMD DDA40X #6924 Union Pacific Railway",
+      "author": "ViktorMKD",
+      "url": "https://3dwarehouse.sketchup.com/model/u5d14ffe0-80ab-4a43-a7dd-78fcc76dea1b",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["re460"],
+      "title": "SLM, ABB - Lok 2000 / SBB Re 460",
+      "author": "trainboy2004",
+      "url": "https://3dwarehouse.sketchup.com/model/f26e122bb890e6ee810c01b1498aa2b",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["taurus"],
+      "title": "Siemens EuroSprinter ES64U2 \"Taurus\" (MÁV Class 470)",
+      "author": "Richárd S.",
+      "url": "https://3dwarehouse.sketchup.com/model/da3191f5-5269-4b5c-8ec3-2dd845e9f66c",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["mav424"],
+      "title": "Steam locomotive ČSD class 465.0 (1943; MÁV 424)",
+      "author": "Dominik P.",
+      "url": "https://3dwarehouse.sketchup.com/model/dc168c81-2e2f-4c92-a9b6-038f90f6b2b9",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["mav375"],
+      "title": "Steam locomotive ČSD class 331.0 (1949; MÁV 375)",
+      "author": "Dominik P.",
+      "url": "https://3dwarehouse.sketchup.com/model/907d3794-bbc2-4290-950a-43a046215786",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["general"],
+      "title": "The General (locomotive)",
+      "author": "Nathan H.",
+      "url": "https://3dwarehouse.sketchup.com/model/ubdf78a8d-b169-4cae-af57-2d06616ea038",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["rocket"],
+      "title": "Steam locomotive The Rocket 1829",
+      "author": "Kragten, J. J.",
+      "url": "https://3dwarehouse.sketchup.com/model/c1d3f37a-0600-4185-b4d7-411a75c404eb",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["k4s"],
+      "title": "Pennsylvania Railroad No. 1737 (1914)",
+      "author": "Elizabeth's Railways and Vehicles",
+      "url": "https://3dwarehouse.sketchup.com/model/5ff707a8-fad9-4f05-9895-867fd808074a",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["nine_f"],
+      "title": "Locomotives by Mylyn \"EVENING STAR\" 9F 92220",
+      "author": "MylynPoddley",
+      "url": "https://3dwarehouse.sketchup.com/model/5b52b5a4-c48b-4099-a944-92d9efcecdee",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["f7"],
+      "title": "EMD F7 - New York Central",
+      "author": "Trans-Galactic Express",
+      "url": "https://3dwarehouse.sketchup.com/model/ac3a980d-3dd6-4e42-a9a9-d7951469553f",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["nklj_aeg"],
+      "title": "NKlJ AEG",
+      "author": "Lardman",
+      "url": "https://3dwarehouse.sketchup.com/model/a6379623690fa49f5483aac47b870866",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["grubenlok"],
+      "title": "Grubenlok vor dem Gibraltar Erbstollen",
+      "author": "NotAvailable N.",
+      "url": "https://3dwarehouse.sketchup.com/model/319fb537501f7e6135a819a9a0b4cc",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["nuclear_freight"],
+      "title": "Nuclear Powered Train",
+      "author": "Gabriel G.",
+      "url": "https://3dwarehouse.sketchup.com/model/109b2945-f26b-4496-9bde-1c0e1460d120",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["atomic_m9010"],
+      "title": "General Atomics Nuclear-Division M9010 6-8-4 Train and Tender",
+      "author": "Tristan B.",
+      "url": "https://3dwarehouse.sketchup.com/model/177cb5f3-af63-4b83-b11d-f250b5ec01d4",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["shanghai_maglev", "maglev_end", "maglev_mid"],
+      "title": "Shanghai Maglev Train 上海磁浮列车",
+      "author": "zengwish",
+      "url": "https://3dwarehouse.sketchup.com/model/3d2bd584387f9de1e7ffda54a3638b3",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["jr_maglev"],
+      "title": "Maglev",
+      "author": "Towerdude",
+      "url": "https://3dwarehouse.sketchup.com/model/3f34f36397613d556f7b037dfb69c305",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["hyperloop_pod"],
+      "title": "Hyperloop Pod",
+      "author": "Steven Samuel",
+      "url": "https://3dwarehouse.sketchup.com/model/881477f4-9eab-4df5-b8f7-2605e35f8ba4",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["sd70ace"],
+      "title": "EMD SD70ACe - BNSF Railway",
+      "author": "Train Repair Guy",
+      "url": "https://3dwarehouse.sketchup.com/model/081d3af4-2e07-44a4-bdba-2f2de663c61e",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["2te10v"],
+      "title": "Тепловоз 2ТЭ10В",
+      "author": "Faust",
+      "url": "https://3dwarehouse.sketchup.com/model/71d66d7f79d07528144c282bfc1c8b38",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["e499"],
+      "title": "Electric locomotive class E499.0 (1953-1958)",
+      "author": "Dominik P.",
+      "url": "https://3dwarehouse.sketchup.com/model/ad90370b-5dc0-46e5-beb1-a066d386ff98",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["aem7"],
+      "title": "aem-7",
+      "author": "emory S.",
+      "url": "https://3dwarehouse.sketchup.com/model/6c1bb604-733d-4f8b-94bf-739bf595fecb",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["vl80"],
+      "title": "train Vl-80 (v2)",
+      "author": "defar D.",
+      "url": "https://3dwarehouse.sketchup.com/model/1fee0527788d5f6fbefe0ffe2abbe914",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["dmir_yellowstone"],
+      "title": "DM&IR Yellowstone 2-8-8-4",
+      "author": "Joey P.",
+      "url": "https://3dwarehouse.sketchup.com/model/u9e27f396-0667-4291-99ba-29950403bcfe",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["mav651"],
+      "title": "Steam locomotive ČSD class 623.0 (1913; MÁV 651)",
+      "author": "Dominik P.",
+      "url": "https://3dwarehouse.sketchup.com/model/56aa735d-469d-4140-ae32-878059a0b970",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["bm50"],
+      "title": "GLS 30",
+      "author": "zdanwoj",
+      "url": "https://3dwarehouse.sketchup.com/model/95ada3cc-2ccc-4d6e-a104-508b071cb2c5",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["c50"],
+      "title": "Lokomotywa wąskotorowa Wls50 (Ld1) v.1",
+      "author": "Hortenix",
+      "url": "https://3dwarehouse.sketchup.com/model/a1ceaa55af7bdaa74054f11f5d9166d1",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["muki"],
+      "title": "BN 30 PŽ č.10",
+      "author": "Koblih",
+      "url": "https://3dwarehouse.sketchup.com/model/edd7deef-d751-42af-b7af-b7eabb0b7896",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["mav490"],
+      "title": "Tw 29",
+      "author": "zdanwoj",
+      "url": "https://3dwarehouse.sketchup.com/model/58c1e80e-db19-4e8e-9838-d0a9f6b6e17e",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["rezet"],
+      "title": "Px 48",
+      "author": "zdanwoj",
+      "url": "https://3dwarehouse.sketchup.com/model/91de2659-409e-48fb-b7b6-f4d517c03c86",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["mk45"],
+      "title": "Diesel locomotive ČSD class T334.0 (1961)",
+      "author": "Dominik P.",
+      "url": "https://3dwarehouse.sketchup.com/model/a30a81ef-1460-4bbe-929a-c08fa2c47604",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["mk48"],
+      "title": "Тепловоз ТУ2",
+      "author": "Станислав В.",
+      "url": "https://3dwarehouse.sketchup.com/model/uac9b35b0-5c47-4ad4-b9cc-03625634412f",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["crocodile"],
+      "title": "DRG Class E 94",
+      "author": "TGEX Euro Railroad",
+      "url": "https://3dwarehouse.sketchup.com/model/a7a0cbcf-7735-4d6f-986d-faf5ae4e71f4",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["gmam"],
+      "title": "Garratt Steam Locomotive 590",
+      "author": "José Manuel",
+      "url": "https://3dwarehouse.sketchup.com/model/53dc644209d810026ee79ab3c736e281",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["ice1", "ice_cab", "ice_coach"],
+      "title": "ICE 2",
+      "author": "kineo",
+      "url": "https://3dwarehouse.sketchup.com/model/2fb42e08b0decf2765ae6400a93eedaf",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["j94"],
+      "title": "Interact Railway No.27 Hunslet Austerity",
+      "author": "Reece A.",
+      "url": "https://3dwarehouse.sketchup.com/model/962d40b7-1c53-41a3-87f5-fb71b6ea1b00",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["jupiter"],
+      "title": "4-4-0 Grant (repainted)",
+      "author": "color-changer 101 (mesh by losgom)",
+      "url": "https://3dwarehouse.sketchup.com/model/89e7c9bbe62ed24fcea8d0e97d819254",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["kando_v40"],
+      "title": "Locomotives by Mylyn \"Rescue of the SJ D 313\"",
+      "author": "MylynPoddley",
+      "url": "https://3dwarehouse.sketchup.com/model/7f079270-5d47-447e-ac08-3cc0a3be0008",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["sw1"],
+      "title": "EMD MP15T - CSX Transportation",
+      "author": "Train Repair Guy",
+      "url": "https://3dwarehouse.sketchup.com/model/8a814ada-9a6d-481c-95bd-caa22a0a9d3e",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["v63"],
+      "title": "Yugoslav Railways electric locomotive class 441",
+      "author": "ViktorMKD",
+      "url": "https://3dwarehouse.sketchup.com/model/f28d9882-6414-4ad4-b0af-1e479b8af6e9",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["wood_hopper"],
+      "title": "Vysokostěný otevřený vůz s brzdařskou budkou",
+      "author": "Petr Š.",
+      "url": "https://3dwarehouse.sketchup.com/model/95cde5bbda00794c94ad0553455fe87e",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["flatbed"],
+      "title": "Plošinový vůz s klanicemi",
+      "author": "Petr Š.",
+      "url": "https://3dwarehouse.sketchup.com/model/197026e660c42ca32e15c8431ddf0522",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["riveted_tank"],
+      "title": "Kotlový vůz",
+      "author": "Petr Š.",
+      "url": "https://3dwarehouse.sketchup.com/model/e0fadbcb54ca1d72e15c8431ddf0522",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["steel_hopper"],
+      "title": "Open Top Hopper Car",
+      "author": "Bean",
+      "url": "https://3dwarehouse.sketchup.com/model/22b1aec6fe8d83ed6a1b6347b9c225be",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["bolster_flat"],
+      "title": "Rgs 31 65 394 4 064-0 Macedonian Railways Platform Freight Wagon",
+      "author": "ViktorMKD",
+      "url": "https://3dwarehouse.sketchup.com/model/0d22e50b-763d-4d29-ab2d-d0163b5d90d6",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["welded_tank"],
+      "title": "Zacens - 79 m3 Tank Wagon",
+      "author": "TGEX Euro Railroad",
+      "url": "https://3dwarehouse.sketchup.com/model/e81bc37d-d7db-42f6-b3bb-01c708b1ccf2",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["bathtub"],
+      "title": "Southern Railway Coal Gondola Car 50 Feet",
+      "author": "ZeroSpaulding",
+      "url": "https://3dwarehouse.sketchup.com/model/5ca656eef32e7da1863e5964cba093",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["bulkhead_flat"],
+      "title": "Bulkhead Flatcar",
+      "author": "tnolan55",
+      "url": "https://3dwarehouse.sketchup.com/model/28033fde32b0205996f75ca3bbb32a56",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["pressure_tank"],
+      "title": "ARI 33,700 Gallon Pressure Tank Car - MULX",
+      "author": "Train Repair Guy",
+      "url": "https://3dwarehouse.sketchup.com/model/1840241a-2efc-4c53-9c40-4c9c7ccef4db",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["dump_hopper"],
+      "title": "Falls Coal Hopper ČD Cargo",
+      "author": "Petr Š.",
+      "url": "https://3dwarehouse.sketchup.com/model/852b4a8972aa61eff7034dab0beb70c5",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["heavy_flat"],
+      "title": "Train Car 26",
+      "author": "XDude",
+      "url": "https://3dwarehouse.sketchup.com/model/df43ac0ebed07e427745e9b6b461e93",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["wooden_coach"],
+      "title": "Passenger carriage Ci (1885)",
+      "author": "Dominik P.",
+      "url": "https://3dwarehouse.sketchup.com/model/e678e690-9d67-40f3-b849-b86098bda802",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["steel_coach"],
+      "title": "Passenger carriage Ca & BCa type \"Grégr\" (1937 - 1941)",
+      "author": "Dominik P.",
+      "url": "https://3dwarehouse.sketchup.com/model/729fd4ef-5e51-4170-8942-6d70401679a3",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["pullman"],
+      "title": "Pullman 70' Madison Heavyweight Passenger Coach",
+      "author": "Trans-Galactic Express",
+      "url": "https://3dwarehouse.sketchup.com/model/bb60a21d-575a-4a40-92f5-425849fd349b",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["brake_van"],
+      "title": "BR 20 Ton Brake van in Railfreight livery",
+      "author": "dan",
+      "url": "https://3dwarehouse.sketchup.com/model/c8645284ecefc0caa5e12deb37e3ef08",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["boxcar"],
+      "title": "Krytý vůz Taes",
+      "author": "Petr Š.",
+      "url": "https://3dwarehouse.sketchup.com/model/e468ecfe42b023e32e15c8431ddf0522",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["fuel_cart"],
+      "title": "Gatx ketelwagon",
+      "author": "Arman Y.",
+      "url": "https://3dwarehouse.sketchup.com/model/28b68655-215a-4164-9be7-d05eed1bf0c7",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["mine_tub"],
+      "title": "Kipplore",
+      "author": "Dj Copniker",
+      "url": "https://3dwarehouse.sketchup.com/model/bd096d56-10f1-4b7d-bcac-16906317f575",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["narrow_box"],
+      "title": "Talyllyn Railway Van No.6",
+      "author": "Elizabeth's Railways and Vehicles",
+      "url": "https://3dwarehouse.sketchup.com/model/109d65eb-7c9f-42e3-8037-f59847a47ad2",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["narrow_coach"],
+      "title": "Wagon de parc d'attractions - Theme park coach",
+      "author": "Eureka Modèles",
+      "url": "https://3dwarehouse.sketchup.com/model/f45f2a3e-edf5-451b-b664-148ac61533b8",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["modern_coach"],
+      "title": "Osobní vůz 2. třídy Bpee",
+      "author": "Petr Š.",
+      "url": "https://3dwarehouse.sketchup.com/model/247d95cfde33c45afb596a154f0a2d9",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["baggage_coach"],
+      "title": "Osobní vůz BDs s přepravou zavazadel",
+      "author": "Petr Š.",
+      "url": "https://3dwarehouse.sketchup.com/model/1db89533a0f69b335176b359c67b3356",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["sleeping_car"],
+      "title": "Sleeping carriage CIWL type Z (1926)",
+      "author": "Dominik P.",
+      "url": "https://3dwarehouse.sketchup.com/model/3ad93dc9-96ee-4d9a-a3a8-98cbea5996c9",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["mail_van"],
+      "title": "ČSD Gbkkqs-z railway mail car",
+      "author": "Petr Š.",
+      "url": "https://3dwarehouse.sketchup.com/model/1964743e3d8100aff7034dab0beb70c5",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["reefer"],
+      "title": "Рефрижераторный вагон",
+      "author": "Faust",
+      "url": "https://3dwarehouse.sketchup.com/model/ebc1015db89a3a87144c282bfc1c8b38",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["cement_silo"],
+      "title": "ČSD class Raj \"Rajka\" or \"onion\" to transport cement",
+      "author": "Petr Š.",
+      "url": "https://3dwarehouse.sketchup.com/model/444bba0774dabe0d1d8ef23228237d0b",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["container_flat"],
+      "title": "Lgjns-wk",
+      "author": "Rasmus R.",
+      "url": "https://3dwarehouse.sketchup.com/model/ae04dbe51bdafed1eb34db531a289b8e",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["coil_wagon"],
+      "title": "ERR - Steel Coil Transporter - Shimmns",
+      "author": "trainboy2004",
+      "url": "https://3dwarehouse.sketchup.com/model/a9c9ad88e5b800ae810c01b1498aa2b",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["sliding_van"],
+      "title": "Hbbins",
+      "author": "Rasmus R.",
+      "url": "https://3dwarehouse.sketchup.com/model/556a0b9a789abc71eb34db531a289b8e",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["mow_loco"],
+      "title": "Locomotive 701 557-1 \"Piggy\"",
+      "author": "Petr Š.",
+      "url": "https://3dwarehouse.sketchup.com/model/cb45e47c83b8a851ae0bc4b0af15767b",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["mow_crane_car"],
+      "title": "MUV 69.1 s hydraulickým ramenem vpředu",
+      "author": "Petr Š.",
+      "url": "https://3dwarehouse.sketchup.com/model/b8e04bb188f3bcb4f7034dab0beb70c5",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["tamper"],
+      "title": "PLASSER & THEURER",
+      "author": "Edson Sales",
+      "url": "https://3dwarehouse.sketchup.com/model/394d318d-3868-43fc-9517-2e40f745d41b",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["ballast_regulator"],
+      "title": "Ballast Regulating Machine PBR-400 R (ITD)",
+      "author": "wat",
+      "url": "https://3dwarehouse.sketchup.com/model/ba74648834eafe8cf304cc6c7f8cfd2b",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["ballast_hopper"],
+      "title": "Ballast Hopper Wagon (ITD)",
+      "author": "wat",
+      "url": "https://3dwarehouse.sketchup.com/model/d14b4805a6bf980bd1f51557d1dc0216",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["crane_flat"],
+      "title": "Flat Wagon with Crane No.2 (ITD)",
+      "author": "wat",
+      "url": "https://3dwarehouse.sketchup.com/model/7d75b330654672ced1f51557d1dc0216",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["catenary_car"],
+      "title": "MVTV2-044",
+      "author": "Petr Š.",
+      "url": "https://3dwarehouse.sketchup.com/model/bbac1f63aa98f3941e27e195b21e72ec",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["narrow_work_loco"],
+      "title": "BN 30",
+      "author": "Koblih",
+      "url": "https://3dwarehouse.sketchup.com/model/6399e8c8-a72f-4250-8890-f203d1157d13",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["narrow_draisine"],
+      "title": "County Donegal Railways Rail Car No. 1",
+      "author": "Graham F.",
+      "url": "https://3dwarehouse.sketchup.com/model/a4f9ade9-04ce-4ea3-b7bf-3fcd3672d36a",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["std_ballast_hopper"],
+      "title": "hopper car",
+      "author": "Bradley P.",
+      "url": "https://3dwarehouse.sketchup.com/model/de81a56462fcc19a4a332f7973a1284d",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["rail_flat"],
+      "title": "Plošinový vagon Sgs11",
+      "author": "Jakub Z.",
+      "url": "https://3dwarehouse.sketchup.com/model/cebba692-ae8a-4b5e-b18f-55b18e478155",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["tgv_trailer"],
+      "title": "TGV PSE gris",
+      "author": "Sunlight",
+      "url": "https://3dwarehouse.sketchup.com/model/94320662-d945-4e7d-9f95-86a8b22782bf",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["nightjet_cab"],
+      "title": "Siemens Vectrain ÖBB Nightjet steering car",
+      "author": "Arman Y.",
+      "url": "https://3dwarehouse.sketchup.com/model/4f99e257-d23b-4872-8c5c-c3c919afa8bf",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["nightjet_coach"],
+      "title": "Siemens Vectrain/DANI ÖBB Nightjet",
+      "author": "Arman Y.",
+      "url": "https://3dwarehouse.sketchup.com/model/3e735ce4-960e-4187-9183-1291abcc5c2e",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["sbb_ec_coach"],
+      "title": "SBB Bpm Eurocity wagen 2e klasse",
+      "author": "Arman Y.",
+      "url": "https://3dwarehouse.sketchup.com/model/54c45ecd-63c8-45c4-bcf4-122753841c16",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["amfleet_coach"],
+      "title": "Budd Amfleet I - Amtrak",
+      "author": "Train Repair Guy",
+      "url": "https://3dwarehouse.sketchup.com/model/3d1ed413-37cc-4839-8a77-6278868e716a",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["amtrak_cab"],
+      "title": "Budd Metroliner Cab Car Conversion - Amtrak",
+      "author": "Train Repair Guy",
+      "url": "https://3dwarehouse.sketchup.com/model/2df55cce-2b84-4866-8ee7-711eb2c5c46e",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["oga_loco"],
+      "title": "Locomotive (fictional)",
+      "author": "32kda",
+      "url": "https://opengameart.org/content/locomotive-1",
+      "licence": "cc0"
+    },
+    {
+      "kind": "Music",
+      "title": "Pastoral Pulse",
+      "author": "Suno",
+      "url": "https://suno.com",
+      "licence": "suno"
+    },
+    {
+      "kind": "Music",
+      "title": "Pastoral Pulse (Genshin style)",
+      "author": "Suno",
+      "url": "https://suno.com",
+      "licence": "suno"
+    },
+    {
+      "kind": "Music",
+      "title": "Pastoral Pulse (chillstep)",
+      "author": "Suno",
+      "url": "https://suno.com",
+      "licence": "suno"
+    },
+    {
+      "kind": "Music",
+      "title": "Pastoral Pulse (liquid drum and bass)",
+      "author": "Suno",
+      "url": "https://suno.com",
+      "licence": "suno"
+    },
+    {
+      "kind": "Music",
+      "title": "Whispering Wheel",
+      "author": "Suno",
+      "url": "https://suno.com",
+      "licence": "suno"
+    },
+    {
+      "kind": "Music",
+      "title": "Anearach na hÉireann",
+      "author": "Suno",
+      "url": "https://suno.com",
+      "licence": "suno"
+    },
+    {
+      "kind": "Music",
+      "title": "Interlocking Routes",
+      "author": "Suno",
+      "url": "https://suno.com",
+      "licence": "suno"
+    },
+    {
+      "kind": "Music",
+      "title": "Sparse Pulse",
+      "author": "Suno",
+      "url": "https://suno.com",
+      "licence": "suno"
+    }
+  ]
+}
