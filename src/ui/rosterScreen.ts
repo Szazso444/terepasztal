@@ -14,8 +14,8 @@ import {
   locoDef,
 } from '../gacha/items';
 import { cargoDef } from '../sim/cargo';
-import { classOf, runsOn } from '../sim/compat';
-import { classBadge } from './lineBadge';
+import { runsOn } from '../sim/compat';
+import { RARITY_STARS, vehicleLabels } from './labels';
 import type { Fleet } from '../sim/fleet';
 import type { Commands } from '../sim/commands';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -89,7 +89,10 @@ export class RosterScreen implements Screen {
       ),
       group(
         STR.roster.rarity,
-        [{ v: 'all', t: STR.roster.all }, ...RARITIES.map((r) => ({ v: r, t: r }))],
+        [
+          { v: 'all', t: STR.roster.all },
+          ...RARITIES.map((r) => ({ v: r, t: '★'.repeat(RARITY_STARS[r]) })),
+        ],
         this.rarity,
         (v) => (this.rarity = v),
       ),
@@ -224,10 +227,10 @@ export class RosterScreen implements Screen {
       el(
         'div',
         { class: 'rcard-head' },
-        el('span', { class: `rarity-${d.rarity}`, text: d.rarity }),
-        el('span', { class: 'name' }, classBadge(classOf(d)), d.name),
+        el('span', { class: 'name', text: d.name }),
         el('span', { class: 'num', text: STR.roster.lv(it.level) }),
       ),
+      vehicleLabels(d),
       el(
         'div',
         { class: 'rcard-body' },

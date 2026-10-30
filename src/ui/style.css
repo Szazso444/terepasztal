@@ -34,6 +34,12 @@
   --line-trunk: #32373b;
   --line-trunk-ink: #dfe5e8;
   --line-trunk-edge: #8f989e;
+  /* a class's icon (src/ui/lineBadge.ts): one look for all, its own apart from the lines' colours */
+  --class-plate: #2b2a24;
+  --class-edge: #6d6a58;
+  --class-ink: #efe6c8;
+  --class-pip: #e0a94a;
+  --class-pip-off: #8a8670;
   --line-maglev: #93b9c6;
   --line-maglev-ink: #1b3540;
   --line-hyperloop: #a99dc6;
@@ -340,9 +346,10 @@ body {
   height: 0;
   pointer-events: none !important;
 }
+/* above the modal screens (70) and the hover cards (80): a label in a screen has its tooltip too */
 .tt {
   position: fixed;
-  z-index: 50;
+  z-index: 85;
   max-width: 300px;
   padding: 5px 9px 7px;
   font-family: var(--font-body);
@@ -2259,20 +2266,53 @@ table.market td {
   line-height: 0;
   flex: 0 0 auto;
 }
-/* a class badge carries an engine: drawn a little taller so its size reads */
-.class-badge svg {
-  height: 18px;
-  width: auto;
+.tt-label {
+  cursor: help;
 }
-.line-badge + .line-badge {
-  margin-left: 2px;
+.tt-label > span {
+  display: inline-flex;
+}
+.track-badges {
+  display: inline-flex;
+  gap: 2px;
+}
+/* a vehicle's labels: class, lines, age, rarity */
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 3px 0;
+  flex-wrap: wrap;
+}
+.age-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  background: var(--class-plate);
+  border: 1px solid var(--class-edge);
+  box-sizing: border-box;
+  color: var(--amber);
+}
+.rarity-label {
+  font-size: 12px;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+/* an age's icon in a line of text */
+.age-icon {
+  display: inline-flex;
+  vertical-align: -2px;
+  margin: 0 3px 0 1px;
+  color: var(--amber);
 }
 .btn.tb-type {
   display: inline-flex;
   align-items: center;
   gap: 5px;
 }
-.tb-name .line-badge,
-.name .line-badge {
+.tb-name .line-badge {
   margin-right: 4px;
 }

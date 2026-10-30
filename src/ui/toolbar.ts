@@ -1,8 +1,9 @@
 import { rules } from '../sim/rules';
+import { ageIcon } from './ageIcon';
 import { el, btn } from './dom';
 import { fmtCost } from '../sim/stockpile';
 import { BUILDING_DEFS } from '../sim/buildings';
-import { STR } from '../strings';
+import { AGE_ORDER, STR } from '../strings';
 import {
   BUILDABLE_CLASSES,
   LINES,
@@ -473,7 +474,11 @@ export class Toolbar {
         // a line not open yet says from which age it is
         if (b.disabled) {
           const ages = items.filter((i) => i.group === g.id && i.tier > tier).map((i) => i.tier);
-          if (ages.length) b.title = STR.build.tierLocked(Math.min(...ages));
+          if (ages.length) {
+            const age = Math.min(...ages);
+            b.title = STR.build.tierLocked(age);
+            b.append(ageIcon(AGE_ORDER[age]));
+          }
         }
         b.classList.toggle('active', g.id === shown);
         this.groupRow.append(b);
@@ -503,7 +508,10 @@ export class Toolbar {
         ),
       ) as HTMLButtonElement;
       b.disabled = !enabled;
-      if (!enabled) b.title = STR.build.tierLocked(it.tier);
+      if (!enabled) {
+        b.title = STR.build.tierLocked(it.tier);
+        b.append(ageIcon(AGE_ORDER[it.tier]));
+      }
       b.addEventListener('click', () => this.select(it.tool));
       b.addEventListener('mouseenter', () => this.onHover?.(it));
       b.addEventListener('mouseleave', () => this.onHover?.(null));

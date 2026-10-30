@@ -1,7 +1,8 @@
 import { showVehiclePreview } from './vehiclePreview';
 import { vehicleProperties } from './vehicleProperties';
+import { ageIcon } from './ageIcon';
 import { el, btn, fmtMoney } from './dom';
-import { STR } from '../strings';
+import { AGE_ORDER, STR } from '../strings';
 import type { Screen } from './modal';
 import {
   CRAFT_CONFIG,
@@ -111,7 +112,7 @@ export class CraftingScreen implements Screen {
     c.innerHTML = '';
     const group = (
       label: string,
-      opts: { v: string; t: string }[],
+      opts: { v: string; t: string; age?: string }[],
       cur: string,
       set: (v: string) => void,
     ) => {
@@ -120,17 +121,18 @@ export class CraftingScreen implements Screen {
         { class: 'craft-choice' },
         el('span', { class: 'tb-label', text: label }),
       );
-      for (const o of opts)
-        g.append(
-          btn(
-            o.t,
-            () => {
-              set(o.v);
-              this.render();
-            },
-            `small ${cur === o.v ? 'active' : ''}`,
-          ),
+      for (const o of opts) {
+        const b = btn(
+          o.t,
+          () => {
+            set(o.v);
+            this.render();
+          },
+          `small ${cur === o.v ? 'active' : ''}`,
         );
+        if (o.age) b.prepend(ageIcon(o.age));
+        g.append(b);
+      }
       return g;
     };
     c.append(
@@ -145,7 +147,11 @@ export class CraftingScreen implements Screen {
       ),
       group(
         STR.craft.age,
-        CRAFT_TIERS.map((t) => ({ v: String(t), t: STR.craft.ages[t] ?? String(t) })),
+        CRAFT_TIERS.map((t) => ({
+          v: String(t),
+          t: STR.craft.ages[t] ?? String(t),
+          age: AGE_ORDER[t],
+        })),
         String(this.tier),
         (v) => (this.tier = Number(v)),
       ),

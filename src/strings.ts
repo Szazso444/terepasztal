@@ -1459,8 +1459,15 @@ export const STR = {
   } as Record<string, string>,
   /** tooltips of the line and class badges (src/ui/lineBadge.ts) */
   badge: {
-    line: (line: string, cls: string) => `${line}: built for ${cls} class trains`,
-    cls: (cls: string, line: string) => `${cls} class: needs ${line} or bigger`,
+    line: (cls: string) => `Built for ${cls} class trains.`,
+    cls: (cls: string) => `${cls} class`,
+    step: (step: number, of: number, line: string) =>
+      `Size ${step} of ${of}. Needs ${line} or bigger.`,
+    carrier: (step: number, of: number, line: string) =>
+      `Size ${step} of ${of}, reactor-powered. Needs ${line}.`,
+    ownNetwork: (line: string) => `Runs only on ${line}.`,
+    age: 'Available from this age.',
+    rarity: 'How rare the model is.',
   },
   compat: {
     wrongNetwork: (line: string) => `not built for ${line}`,

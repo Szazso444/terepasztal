@@ -1,4 +1,6 @@
 import type { AtlasRegistry } from '../engine/atlas';
+import { withAgeIcons } from './ageIcon';
+import { el } from './dom';
 import {
   ttDim,
   ttHint,
@@ -53,7 +55,10 @@ function renderParts(parts: Parts, atlas: AtlasRegistry): (Node | string)[] {
 }
 
 function renderInline(p: Inline, atlas: AtlasRegistry): Node | string {
-  if (typeof p === 'string') return p;
+  if (typeof p === 'string') {
+    const parts = withAgeIcons(p);
+    return parts.length === 1 ? parts[0] : el('span', {}, ...parts);
+  }
   if ('num' in p) return ttNum(p.num);
   if ('res' in p) return ttRes(atlas, p.res, p.name);
   if ('dim' in p) return ttQuiet(p.dim);

@@ -1,5 +1,6 @@
 import { el, btn, fmtMoney, fmtInt } from './dom';
 import { STR } from '../strings';
+import { withAgeIcons } from './ageIcon';
 import type { GameClock } from '../sim/time';
 import type { AgeStatus, GoalKind, GoalStatus } from '../sim/ages';
 
@@ -145,7 +146,7 @@ export class Hud {
         el(
           'div',
           { class: `kv ${a.current ? 'amber' : a.unlocked ? 'dim' : ''}` },
-          el('span', { class: 'k', text: ageName(a.id) }),
+          el('span', { class: 'k' }, ...withAgeIcons(ageName(a.id))),
           el('span', { class: 'v', text: state }),
         ),
       );
@@ -203,7 +204,7 @@ export class Hud {
     const ages = this.ages();
     const cur = ages[Math.min(m.tier, ages.length - 1)];
     const label = cur ? ageName(cur.id) : String(m.tier);
-    if (this.age.textContent !== label) this.age.textContent = label;
+    if (this.age.textContent !== label) this.age.replaceChildren(...withAgeIcons(label));
     if (this.ageHover) this.renderAges();
     this.day.textContent = STR.hud.day(this.clock.day);
     this.clockEl.textContent = this.clock.formatClock();
