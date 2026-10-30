@@ -84,6 +84,9 @@ import { doorSides, roadCode, roadSides } from './roadShape';
 import { paintedRoads } from './roadPaint';
 import { RoadWalk, roadWalks } from './roadWalk';
 import { crossingAxis, levelCrossingFrame } from './levelCrossing';
+import { AtmosphereTint, setOwnTint } from './atmosphere';
+import { cullByChunk } from './chunkCull';
+import { surfaceVersions } from './fx';
 
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
 /** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
@@ -110,6 +113,34 @@ const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
 >;
 
 const CHUNK = 8;
+/** How far (world px) past the view's edge a water ripple is still drawn. */
+const RIPPLE_MARGIN = 20;
+
+/**
+ * The tiles of a `w` x `h` map whose centres can lie in `view` grown by `margin` world px on
+ * every side, as rows: `y0` to `y1`, and in row y from `x0(y)` to `x1(y)` (an empty row has
+ * `x0(y) > x1(y)`). Each bound reaches one tile further than the exact edge, so a caller that
+ * tests the centre itself sees every tile that passes in the same order as a scan of the whole
+ * map, row by row.
+ */
+export function viewTileRows(
+  view: { x: number; y: number; w: number; h: number },
+  margin: number,
+  w: number,
+  h: number,
+) {
+  // a tile centre is at ((x - y) * HALF_W, (x + y) * HALF_H)
+  const u0 = (view.x - margin) / HALF_W,
+    u1 = (view.x + view.w + margin) / HALF_W,
+    s0 = (view.y - margin) / HALF_H,
+    s1 = (view.y + view.h + margin) / HALF_H;
+  return {
+    y0: Math.max(0, Math.floor((s0 - u1) / 2) - 1),
+    y1: Math.min(h - 1, Math.ceil((s1 - u0) / 2) + 1),
+    x0: (y: number) => Math.max(0, Math.floor(Math.max(y + u0, s0 - y)) - 1),
+    x1: (y: number) => Math.min(w - 1, Math.ceil(Math.min(y + u1, s1 - y)) + 1),
+  };
+}
 /** How far off a road deck's run (tiles) the bank's ground it meets is read (`roadDeckProfile`). */
 const BANK_READ = 0.02;
 
@@ -209,6 +240,8 @@ export class WorldRenderer {
   private platformSprites = new Map<number, Sprite>();
   private platformMasks = new Map<number, Graphics>();
   readonly objects = new Container();
+  /** The night and season colour over the objects (`setAtmosphereTint`). */
+  private readonly atmosphere = new AtmosphereTint(this.objects);
   readonly overlay = new Container(); // cursors, ghosts – drawn over objects
   readonly fog = new Container();
   /** additive ground lights (per-tile lighting), drawn over track and under objects */
@@ -349,15 +382,10 @@ export class WorldRenderer {
       this.wheat.destroy();
     });
     roadWalks.set(this.objects, this.roadWalk);
+    // the ground lights stand on the surface, and move only when it does
+    surfaceVersions.set(this.lights, () => this.landscape.surfaceVersion);
     this.objects.sortableChildren = true;
     this.piers.sortableChildren = true;
-    this.objects.cullableChildren = true;
-    this.ground.cullableChildren = true;
-    this.fog.cullableChildren = true;
-    this.track.cullableChildren = true;
-    this.crossings.cullableChildren = true;
-    this.border.cullableChildren = true;
-    this.lights.cullableChildren = true;
     this.root.addChild(
       this.border,
       this.landscape.root,
@@ -374,6 +402,22 @@ export class WorldRenderer {
       this.fog,
       this.overlay,
     );
+    // Pixi's culler measured every child of these layers each frame; they are culled by chunk
+    // instead (chunkCull.ts), keeping their children, and so the depth order, as they are
+    cullByChunk(this.root, [
+      this.border,
+      this.landscape.root,
+      this.ground,
+      this.contactGround,
+      this.piers,
+      this.platforms,
+      this.track,
+      this.crossings,
+      this.lights,
+      this.objects,
+      this.fog,
+      this.overlay,
+    ]);
     this.buildBorder();
     this.buildGround();
     this.buildProps();
@@ -978,19 +1022,20 @@ export class WorldRenderer {
     if (this.rippleRefresh > 0.12 && this.view) {
       this.rippleRefresh = 0;
       this.waterDetails.clear();
-      const view = this.view;
-      for (let y = 0; y < this.map.h; y++)
-        for (let x = 0; x < this.map.w; x++) {
+      const view = this.view,
+        rows = viewTileRows(view, RIPPLE_MARGIN, this.map.w, this.map.h);
+      for (let y = rows.y0; y <= rows.y1; y++)
+        for (let x = rows.x0(y), x1 = rows.x1(y); x <= x1; x++) {
           if (this.map.terrain[y * this.map.w + x] !== Terrain.Water || !this.isBuilt(x, y))
             continue;
           const h = hash2(x + this.map.originX, y + this.map.originY, this.map.seed + 95);
           if (h > 0.28) continue;
           const p = tileToWorld(x, y);
           if (
-            p.x < view.x - 20 ||
-            p.x > view.x + view.w + 20 ||
-            p.y < view.y - 20 ||
-            p.y > view.y + view.h + 20
+            p.x < view.x - RIPPLE_MARGIN ||
+            p.x > view.x + view.w + RIPPLE_MARGIN ||
+            p.y < view.y - RIPPLE_MARGIN ||
+            p.y > view.y + view.h + RIPPLE_MARGIN
           )
             continue;
           const phase = this.waterClock * 0.7 + h * 71,
@@ -1205,13 +1250,13 @@ export class WorldRenderer {
         }
         const p = this.surfacePoint(x, y);
         s.position.set(p.x, p.y);
-        s.tint = this.groundTint;
+        setOwnTint(s, this.groundTint);
       }
   }
   setSeasonTint(ground: number, props: number) {
     this.groundTint = ground;
     this.landscape.setTint(ground);
-    for (const s of this.summitSprites.values()) s.tint = ground;
+    for (const s of this.summitSprites.values()) setOwnTint(s, ground);
     this.propTint = props;
     for (let i = 0; i < this.groundSprites.length; i++) {
       const s = this.groundSprites[i];
@@ -1219,8 +1264,8 @@ export class WorldRenderer {
       if (this.map.terrain[i] === Terrain.Water) continue;
       s.tint = this.city.has(i) ? 0xffffff : ground;
     }
-    for (const list of this.propSprites.values()) for (const s of list) s.tint = props;
-    for (const fit of this.groundFits.values()) fit.weeds.tint = props;
+    for (const list of this.propSprites.values()) for (const s of list) setOwnTint(s, props);
+    for (const fit of this.groundFits.values()) setOwnTint(fit.weeds, props);
   }
   /** Apply the current season tint to a freshly built region. */
   private applyTintTo(x0: number, y0: number, x1: number, y1: number) {
@@ -1230,8 +1275,8 @@ export class WorldRenderer {
         const s = this.groundSprites[i];
         if (s && this.map.terrain[i] !== Terrain.Water)
           s.tint = this.city.has(i) ? 0xffffff : this.groundTint;
-        for (const p of this.propSprites.get(i) ?? []) p.tint = this.propTint;
-        for (const p of this.scatterSprites.get(i) ?? []) p.s.tint = this.propTint;
+        for (const p of this.propSprites.get(i) ?? []) setOwnTint(p, this.propTint);
+        for (const p of this.scatterSprites.get(i) ?? []) setOwnTint(p.s, this.propTint);
       }
   }
 
@@ -2066,7 +2111,7 @@ export class WorldRenderer {
     fit.x = Math.round(x);
     fit.y = Math.round(y);
     this.growWeeds(fit);
-    fit.weeds.tint = this.propTint;
+    setOwnTint(fit.weeds, this.propTint);
     placeGroundFit(fit, s);
     return art;
   }
@@ -2235,19 +2280,13 @@ export class WorldRenderer {
       light.rotation = owner.rotation;
     }
   }
-  private atmosphereTints = new WeakMap<Container, { base: number; applied: number }>();
-  /** Ground is tinted by the multiply layer. Objects tint before their emissive masks. */
+  /**
+   * Ground is tinted by the multiply layer. Objects tint before their emissive masks: each shows
+   * its own tint times `color`. Only a new colour walks the whole layer; otherwise just the
+   * objects added since the last call are tinted (atmosphere.ts).
+   */
   setAtmosphereTint(color: number) {
-    for (const object of this.objects.children) {
-      if (object.label === 'emissive') continue;
-      const previous = this.atmosphereTints.get(object);
-      const base = previous && object.tint === previous.applied ? previous.base : object.tint;
-      let applied = 0;
-      for (const shift of [0, 8, 16])
-        applied |= Math.round((((base >> shift) & 255) * ((color >> shift) & 255)) / 255) << shift;
-      object.tint = applied;
-      this.atmosphereTints.set(object, { base, applied });
-    }
+    this.atmosphere.apply(color);
   }
   /** A structure's window lights, ground fit, yard and plinth, which only a building has. */
   private dropBuildingDressing(id: string) {

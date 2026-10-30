@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { AtlasRegistry, type AtlasImage } from './atlas';
+import { AtlasCache, type AtlasCodec, type AtlasStore, type CachedAtlas } from './atlasCache';
 
 // How a group's file pair can come back from the server. `ok` is a good pair; every other way
 // leaves the group to its generator.
@@ -20,6 +21,8 @@ type Way = keyof typeof WAYS;
 
 /** The way each group's files come back in the current test, by group name. */
 let served = new Map<string, Way>();
+/** Groups whose good file is partial: it carries `<group>/a` (colliding) and `<group>/file`. */
+let partial = new Set<string>();
 /** Every url fetched or set as an image source in the current test, in order. */
 let requested: string[] = [];
 
@@ -63,7 +66,18 @@ function respond(path: string): Promise<Response> {
         ),
       );
     default:
-      return Promise.resolve(json(JSON.stringify({ frames })));
+      return Promise.resolve(
+        json(
+          JSON.stringify(
+            partial.has(name)
+              ? {
+                  frames: { ...frames, [`${name}/file`]: { x: 2, y: 0, w: 3, h: 3, ax: 1, ay: 3 } },
+                  partial: true,
+                }
+              : { frames },
+          ),
+        ),
+      );
   }
 }
 
@@ -90,6 +104,7 @@ function generator(name: string) {
 let warn: MockInstance<typeof console.warn>;
 beforeEach(() => {
   served = new Map();
+  partial = new Set();
   requested = [];
   vi.stubGlobal('fetch', (path: string) => respond(path));
   vi.stubGlobal('Image', StubImage);
@@ -224,5 +239,194 @@ describe('AtlasRegistry', () => {
     // a group is counted once it is in the registry, and as it settles rather than all at the end
     for (const h of heard) expect(h.loaded).toBeGreaterThanOrEqual(h.settled);
     expect(heard[0].loaded).toBeLessThan(names.length);
+  });
+});
+
+/** A store in a map, which counts what it was asked. */
+function memoryStore() {
+  const records = new Map<string, CachedAtlas>();
+  const store: AtlasStore & { records: Map<string, CachedAtlas>; puts: number } = {
+    records,
+    puts: 0,
+    get: (group) => Promise.resolve(records.get(group)),
+    put: (group, record) => {
+      store.puts++;
+      records.set(group, record);
+      return Promise.resolve();
+    },
+  };
+  return store;
+}
+
+/** A picture stands for itself in JSON: its size and the group that drew it. */
+const jsonCodec: AtlasCodec = {
+  encode: (image) => Promise.resolve(new Blob([JSON.stringify(image)])),
+  decode: async (png) => JSON.parse(await png.text()) as HTMLCanvasElement,
+};
+
+/** A generator of two frames that counts its runs; `<name>/a` collides with a partial file. */
+function countedGenerator(name: string) {
+  const generate = vi.fn((): AtlasImage => ({
+    image: { width: 8, height: 4, drawnBy: name } as unknown as HTMLCanvasElement,
+    frames: {
+      [`${name}/a`]: { x: 0, y: 0, w: 1, h: 1, ax: 0, ay: 1 },
+      [`${name}/gen`]: { x: 1, y: 0, w: 5, h: 4, ax: 2.5, ay: 4 },
+    },
+  }));
+  return { name, generate };
+}
+
+/** Every frame of a registry as key, world size, anchor and texture rectangle: what the game reads. */
+function frameTable(atlas: AtlasRegistry) {
+  return Object.fromEntries(
+    atlas.keys('').map((k) => {
+      const f = atlas.get(k);
+      const t = f.texture.frame;
+      return [k, [f.w, f.h, f.anchorX, f.anchorY, t.x, t.y, t.width, t.height].join(',')];
+    }),
+  );
+}
+
+describe('AtlasRegistry with a cache', () => {
+  /** procedural, a partial file over its generator, a full file, a broken shipped file */
+  function setUp() {
+    served.set('props', 'ok');
+    partial.add('props');
+    served.set('terrain', 'ok');
+    served.set('icons', 'garbled');
+    return ['track', 'props', 'terrain', 'icons'].map(countedGenerator);
+  }
+  const shipped = new Set(['props', 'terrain', 'icons']);
+  const runs = (groups: ReturnType<typeof setUp>) =>
+    Object.fromEntries(groups.map((g) => [g.name, g.generate.mock.calls.length]));
+  const cacheIn = (store: AtlasStore, version: string) =>
+    new AtlasCache(Promise.resolve(store), version, jsonCodec);
+  /** One boot: a fresh registry over the cache, loaded, its writes settled. */
+  async function boot(groups: ReturnType<typeof setUp>, cache: AtlasCache | null) {
+    const atlas = new AtlasRegistry(shipped, '/', cache);
+    await atlas.load(groups);
+    await atlas.cacheWrites;
+    return atlas;
+  }
+
+  it('generates on the first boot, stores what it generated, and reads it back on the second', async () => {
+    const groups = setUp();
+    const store = memoryStore();
+
+    const first = await boot(groups, cacheIn(store, 'v1'));
+    // the full file's group never runs its generator and is never stored
+    expect(runs(groups)).toEqual({ track: 1, props: 1, terrain: 0, icons: 1 });
+    expect(Object.fromEntries(first.generatedFrom)).toEqual({
+      track: 'generator',
+      props: 'generator',
+      icons: 'generator',
+    });
+    expect([...store.records.keys()].sort()).toEqual(['icons', 'props', 'track']);
+    for (const r of store.records.values()) expect(r.version).toBe('v1');
+
+    const second = await boot(groups, cacheIn(store, 'v1'));
+    // no generator ran again and nothing was rewritten
+    expect(runs(groups)).toEqual({ track: 1, props: 1, terrain: 0, icons: 1 });
+    expect(store.puts).toBe(3);
+    expect(Object.fromEntries(second.generatedFrom)).toEqual({
+      track: 'cache',
+      props: 'cache',
+      icons: 'cache',
+    });
+    // every frame key, size, anchor and texture rectangle as the first boot had them
+    expect(frameTable(second)).toEqual(frameTable(first));
+    expect(Object.keys(frameTable(second))).toHaveLength(8);
+    expect(Object.fromEntries(second.groupOrigin)).toEqual(Object.fromEntries(first.groupOrigin));
+    expect(second.groupOrigin.get('props')).toBe('png+procedural');
+    // the cached picture is the one the generator drew
+    expect(second.get('track/gen').image).toEqual({ width: 8, height: 4, drawnBy: 'track' });
+  });
+
+  it('lets a partial file win over cached frames as it does over generated ones', async () => {
+    const groups = setUp();
+    const store = memoryStore();
+    for (const from of ['generator', 'cache']) {
+      const atlas = await boot(groups, cacheIn(store, 'v1'));
+      expect(atlas.generatedFrom.get('props')).toBe(from);
+      // the file's 2x2 frame over the generator's 1x1, the file's own frame, the generator's other
+      expect(atlas.get('props/a').w).toBe(2);
+      expect(atlas.get('props/file').w).toBe(3);
+      expect(atlas.get('props/gen').w).toBe(5);
+      expect(atlas.images.get('props')).toBeInstanceOf(StubImage);
+    }
+  });
+
+  it('generates again after a content-version change, and stores the new version', async () => {
+    const groups = setUp();
+    const store = memoryStore();
+    await boot(groups, cacheIn(store, 'v1'));
+    await boot(groups, cacheIn(store, 'v1'));
+    expect(runs(groups)).toEqual({ track: 1, props: 1, terrain: 0, icons: 1 });
+
+    const changed = await boot(groups, cacheIn(store, 'v2'));
+    expect(runs(groups)).toEqual({ track: 2, props: 2, terrain: 0, icons: 2 });
+    expect([...changed.generatedFrom.values()]).toEqual(['generator', 'generator', 'generator']);
+    for (const r of store.records.values()) expect(r.version).toBe('v2');
+
+    // and the boot after that reads the new version
+    const after = await boot(groups, cacheIn(store, 'v2'));
+    expect(runs(groups)).toEqual({ track: 2, props: 2, terrain: 0, icons: 2 });
+    expect([...after.generatedFrom.values()]).toEqual(['cache', 'cache', 'cache']);
+  });
+
+  it('boots exactly as without a cache when the cache cannot be had or keeps failing', async () => {
+    const plain = await boot(setUp(), null);
+    const failing: [string, () => Promise<AtlasCache>][] = [
+      ['no IndexedDB', async () => new AtlasCache(Promise.resolve(null), 'v1', jsonCodec)],
+      [
+        'IndexedDB fails to open',
+        async () => new AtlasCache(Promise.reject(new Error('blocked')), 'v1', jsonCodec),
+      ],
+      [
+        'every read and write fails',
+        async () =>
+          new AtlasCache(
+            Promise.resolve({
+              get: () => Promise.reject(new Error('read')),
+              put: () => Promise.reject(new Error('write')),
+            }),
+            'v1',
+            jsonCodec,
+          ),
+      ],
+      [
+        'a stored picture does not decode and a new one does not encode',
+        async () => {
+          const store = memoryStore();
+          await cacheIn(store, 'v1').write('track', countedGenerator('track').generate());
+          return new AtlasCache(Promise.resolve(store), 'v1', {
+            encode: () => Promise.reject(new Error('toBlob')),
+            decode: () => Promise.reject(new Error('decode')),
+          });
+        },
+      ],
+    ];
+    for (const [why, cache] of failing) {
+      const groups = setUp();
+      const atlas = new AtlasRegistry(shipped, '/', await cache());
+      await atlas.load(groups);
+      await expect(atlas.cacheWrites, why).resolves.toBeUndefined();
+      expect(runs(groups), why).toEqual({ track: 1, props: 1, terrain: 0, icons: 1 });
+      expect(frameTable(atlas), why).toEqual(frameTable(plain));
+      expect([...atlas.generatedFrom.values()], why).toEqual([
+        'generator',
+        'generator',
+        'generator',
+      ]);
+    }
+  });
+
+  it('without a cache generates every load and stores nothing', async () => {
+    const groups = setUp();
+    const atlas = new AtlasRegistry(shipped, '/');
+    await atlas.load(groups);
+    await atlas.load(groups);
+    await atlas.cacheWrites;
+    expect(runs(groups)).toEqual({ track: 2, props: 2, terrain: 0, icons: 2 });
   });
 });

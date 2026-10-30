@@ -330,6 +330,18 @@ export const STR = {
     needTransition: 'Different track classes join through a transition piece',
     gaugeBreak: 'Narrow and wide gauge do not join: cross them with a crossing piece',
     narrowLocked: 'Narrow gauge is not unlocked yet',
+    /** a dragged run meets a curve or a switch: no crossing piece meets a line at an angle */
+    crossAngle: 'Lines cross only at right angles',
+    crossTransition: 'No crossing on a class transition: cross the line beside it',
+    crossBridge: 'No crossing on a bridge: lines cross off the water',
+    /** a straight over the very crossing or straight it would lay */
+    standsAlready: 'Already laid here',
+    /** a dragged run meets a line of a class it has no crossing piece with */
+    crossApart: (run: string, line: string) =>
+      `${run} track cannot cross ${line} track: it needs a bridge or an underpass`,
+    /** crossings a dragged run lays by itself where it meets a line at right angles */
+    autoCrossings: (n: number) =>
+      `+${n} crossing${n === 1 ? '' : 's'}, laid automatically, turned to the run`,
     reclassCost: (what: string, cost: string) => `${what}: ${cost}`,
     reclassFree: (what: string) => `${what}: free`,
     reclassIdle: (what: string) => `${what}: click a piece or drag along the line`,
@@ -416,6 +428,11 @@ export const STR = {
     free: 'free',
     rotate: 'R: rotate',
     dragHint: 'drag to lay a line',
+    /** a dragged run's straights, its crossings and curves told apart */
+    runPieces: (n: number, kind: string) => `${n} x ${kind}`,
+    runCurves: (n: number) => `+${n} curve${n === 1 ? '' : 's'}`,
+    /** while a drag turns: R swaps which leg runs first */
+    dragTurn: 'R: turn at the other corner',
   },
   toolbar: {
     track: 'Track',

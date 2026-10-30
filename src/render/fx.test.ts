@@ -1,0 +1,203 @@
+import { describe, expect, it } from 'vitest';
+import { Container, Sprite, Texture } from 'pixi.js';
+import type { AtlasRegistry } from '../engine/atlas';
+import { Rng } from '../engine/rng';
+import type { Station } from '../sim/stations';
+import type { Train } from '../sim/trains';
+import { GroundLights, surfaceVersions } from './fx';
+
+const ATLAS = {
+  get: () => ({ texture: Texture.EMPTY, anchorX: 0.5, anchorY: 0.5 }),
+} as unknown as AtlasRegistry;
+
+/** The ground lights as they were before #555: everything worked out again every frame. */
+class EveryFrame {
+  private pool = new Map<string, Sprite>();
+  constructor(
+    private readonly layer: Container,
+    private readonly surface: (x: number, y: number) => { x: number; y: number },
+    private readonly inBounds: (x: number, y: number) => boolean,
+  ) {}
+  private get(key: string) {
+    let s = this.pool.get(key);
+    if (!s) {
+      s = new Sprite(Texture.EMPTY);
+      this.layer.addChild(s);
+      this.pool.set(key, s);
+    }
+    return s;
+  }
+  update(stations: Station[], trains: Train[], night: number) {
+    const seen = new Set<string>();
+    if (night > 0.02) {
+      const R = 2;
+      for (const st of stations)
+        for (let dy = -R; dy <= R; dy++)
+          for (let dx = -R; dx <= R; dx++) {
+            const d = Math.abs(dx) + Math.abs(dy);
+            if (d > R) continue;
+            const x = st.x + dx;
+            const y = st.y + dy;
+            if (!this.inBounds(x, y)) continue;
+            const key = `${x},${y}`;
+            const s = this.get(key);
+            const p = this.surface(x, y);
+            s.position.set(p.x, p.y);
+            const a = night * (1 - d / (R + 1)) * (0.55 + st.level * 0.08);
+            s.alpha = seen.has(key) ? Math.min(1, s.alpha + a * 0.5) : a;
+            s.visible = true;
+            seen.add(key);
+          }
+      for (const t of trains) {
+        const pose = t.poses[0];
+        if (!pose) continue;
+        const dir = pose.heading + (t.reversed ? Math.PI : 0);
+        const x = Math.floor(pose.x + Math.cos(dir) * 1.1 + 0.5);
+        const y = Math.floor(pose.y + Math.sin(dir) * 1.1 + 0.5);
+        if (!this.inBounds(x, y)) continue;
+        const key = `${x},${y}`;
+        const s = this.get(key);
+        const p = this.surface(x, y);
+        s.position.set(p.x, p.y);
+        s.alpha = seen.has(key) ? Math.min(1, s.alpha + 0.4 * night) : 0.75 * night;
+        s.visible = true;
+        seen.add(key);
+      }
+    }
+    for (const [key, s] of this.pool)
+      if (!seen.has(key)) {
+        s.destroy();
+        this.pool.delete(key);
+      }
+  }
+}
+
+/** What a layer shows: each light's place, brightness and visibility, in a stable order. */
+function shown(layer: Container) {
+  return layer.children
+    .filter((s) => !s.destroyed)
+    .map((s) => `${s.x},${s.y},${s.alpha},${s.visible}`)
+    .sort();
+}
+
+const W = 40,
+  H = 30;
+const inBounds = (x: number, y: number) => x >= 0 && y >= 0 && x < W && y < H;
+
+describe('GroundLights', () => {
+  it('lights exactly what the every-frame pass lit, frame after frame', () => {
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const rng = new Rng(seed);
+      // a surface that rises in places; an edit raises a tile and moves the version on
+      const raised = new Map<number, number>();
+      let version = 0;
+      const surface = (x: number, y: number) => ({
+        x: (x - y) * 32,
+        y: (x + y) * 16 - (raised.get(y * W + x) ?? 0),
+      });
+      const ours = new Container(),
+        theirs = new Container();
+      surfaceVersions.set(ours, () => version);
+      const lights = new GroundLights(ATLAS, ours, surface, inBounds),
+        reference = new EveryFrame(theirs, surface, inBounds);
+      const stations: Station[] = [];
+      const trains: Train[] = [];
+      let night = 1;
+      for (let frame = 0; frame < 300; frame++) {
+        const op = rng.next();
+        if (op < 0.06)
+          stations.push({ x: rng.int(-1, W), y: rng.int(-1, H), level: rng.int(0, 3) } as Station);
+        else if (op < 0.08 && stations.length) stations.splice(rng.int(0, stations.length - 1), 1);
+        else if (op < 0.1 && stations.length) stations[rng.int(0, stations.length - 1)].level++;
+        else if (op < 0.15)
+          trains.push({
+            poses: rng.chance(0.9)
+              ? [{ x: rng.range(0, W), y: rng.range(0, H), heading: rng.range(-4, 4) }]
+              : [],
+            reversed: rng.chance(0.5),
+          } as unknown as Train);
+        else if (op < 0.17 && trains.length) trains.splice(rng.int(0, trains.length - 1), 1);
+        else if (op < 0.2) night = rng.chance(0.3) ? rng.range(0, 0.05) : rng.range(0, 1);
+        else if (op < 0.23) {
+          raised.set(rng.int(0, W * H - 1), rng.int(1, 30));
+          version++;
+        }
+        // trains run on every frame, some only a little, some on to the next tile
+        for (const t of trains) {
+          const p = t.poses[0];
+          if (p && rng.chance(0.5)) {
+            (p as { x: number }).x += rng.range(-0.6, 0.6);
+            (p as { y: number }).y += rng.range(-0.6, 0.6);
+          }
+        }
+        lights.update(stations, trains, night);
+        reference.update(stations, trains, night);
+        expect(shown(ours)).toEqual(shown(theirs));
+      }
+    }
+  });
+
+  it('does no work in a frame where nothing changed', () => {
+    let calls = 0;
+    const layer = new Container();
+    const lights = new GroundLights(
+      ATLAS,
+      layer,
+      (x, y) => {
+        calls++;
+        return { x, y };
+      },
+      (x, y) => {
+        calls++;
+        return inBounds(x, y);
+      },
+    );
+    const stations = [{ x: 5, y: 5, level: 1 } as Station, { x: 6, y: 5, level: 0 } as Station];
+    const trains = [{ poses: [{ x: 10, y: 10, heading: 0 }], reversed: false } as unknown as Train];
+    lights.update(stations, trains, 1);
+    expect(calls).toBeGreaterThan(0);
+    const before = shown(layer);
+    calls = 0;
+    for (let i = 0; i < 10; i++) lights.update(stations, trains, 1);
+    expect(calls).toBe(0);
+    expect(shown(layer)).toEqual(before);
+    // a train moving within its tile changes nothing either
+    (trains[0].poses[0] as { x: number }).x += 0.2;
+    lights.update(stations, trains, 1);
+    expect(calls).toBe(0);
+    // moving on to the next tile lights that one and only touches the tiles concerned
+    (trains[0].poses[0] as { x: number }).x += 1;
+    lights.update(stations, trains, 1);
+    expect(calls).toBeGreaterThan(0);
+    expect(calls).toBeLessThan(10);
+  });
+
+  it('moves the lights when the surface under them changes', () => {
+    let lift = 0,
+      version = 0;
+    const layer = new Container();
+    surfaceVersions.set(layer, () => version);
+    const lights = new GroundLights(ATLAS, layer, (x, y) => ({ x, y: y - lift }), inBounds);
+    const stations = [{ x: 5, y: 5, level: 0 } as Station];
+    lights.update(stations, [], 1);
+    const at = layer.children.map((s) => s.y);
+    lift = 7;
+    lights.update(stations, [], 1);
+    expect(layer.children.map((s) => s.y)).toEqual(at);
+    version++;
+    lights.update(stations, [], 1);
+    expect(layer.children.map((s) => s.y)).toEqual(at.map((y) => y - 7));
+  });
+
+  it('puts every light out by day', () => {
+    const layer = new Container();
+    const lights = new GroundLights(ATLAS, layer, (x, y) => ({ x, y }), inBounds);
+    const stations = [{ x: 5, y: 5, level: 0 } as Station];
+    lights.update(stations, [], 1);
+    expect(layer.children.length).toBe(13);
+    lights.update(stations, [], 0);
+    expect(layer.children.length).toBe(0);
+    lights.update(stations, [], 1);
+    expect(layer.children.length).toBe(13);
+  });
+});
