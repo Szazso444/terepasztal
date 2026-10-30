@@ -65,15 +65,15 @@ export function trainLabels(tc: TrainClass | null): HTMLElement | null {
   return tc ? el('div', { class: 'label-row' }, classBadge(tc), trackBadges(tc)) : null;
 }
 
-/** The labels of a vehicle: class, lines, age and rarity. */
+/** The labels of a vehicle: class, age (a locomotive's fuel), lines and rarity. */
 export function vehicleLabels(def: LocoDef | WagonDef): HTMLElement {
   const tc = classOf(def);
   return el(
     'div',
     { class: 'label-row' },
     classBadge(tc),
-    trackBadges(tc),
     ageLabel(craftTier(def.id)),
+    trackBadges(tc),
     rarityLabel(def.rarity),
   );
 }
