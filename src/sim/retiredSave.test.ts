@@ -13,7 +13,7 @@ import { Fleet } from './fleet';
 import { rules, DEFAULT_RULES } from './rules';
 import { SAVE_VERSION, SAVE_MIN_VERSION, migrate, parseSave, type SaveGame } from './save';
 import { pruneUnknownContent } from './saveContent';
-import { gaugeOf } from './compat';
+import { gaugeLine, gaugeOf } from './compat';
 import { Inventory } from '../gacha/inventory';
 import { Gacha } from '../gacha/gacha';
 import { Crafting } from '../gacha/crafting';
@@ -55,7 +55,7 @@ interface Pair {
   wagon: string;
 }
 /** Adler and John Bull are regular-gauge engines; wood_hopper is a regular wagon to match. */
-const RETIRED_PAIR: Pair = { engines: RETIRED, cls: 'regular', wagon: 'wood_hopper' };
+const RETIRED_PAIR: Pair = { engines: RETIRED, cls: 'branch', wagon: 'wood_hopper' };
 /** BM-50 and Muki are narrow-gauge diesels; the mine tub is a narrow wagon to match. */
 const KEPT_PAIR: Pair = { engines: KEPT, cls: 'narrow', wagon: 'mine_tub' };
 
@@ -136,7 +136,7 @@ function load(text: string) {
   const pruned = pruneUnknownContent(j);
   const w = world();
   for (const [x, y, kind, rot, cls, cls2] of j.track)
-    w.track.place(x, y, kind, rot, cls ?? 'regular', cls2);
+    w.track.place(x, y, kind, rot, cls ?? 'branch', cls2);
   w.track.refreshSwitchForms();
   resetStationIds(1);
   for (const sj of j.stations) w.builder.stations.push(Station.fromJSON(sj));
@@ -173,7 +173,7 @@ describe.each([
     expect(w.fleet.trains.map((t) => t.locoDef.id)).toEqual(pair.engines);
     for (const [i, id] of pair.engines.entries()) {
       // each stays an engine of the gauge it was saved on
-      expect(gaugeOf(locoDef(id)), id).toBe(pair.cls);
+      expect(gaugeLine(gaugeOf(locoDef(id))), id).toBe(pair.cls);
       expect(w.inventory.count(id), id).toBe(2);
       expect(w.inventory.byUid(10 + i)?.assigned, id).toBe(w.fleet.trains[i].id);
       // the spare is still offered to the depot for a new train

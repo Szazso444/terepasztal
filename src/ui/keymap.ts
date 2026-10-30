@@ -1,5 +1,5 @@
 import type { Input } from '../engine/input';
-import type { WideClass } from '../world/reclass';
+import type { ReclassDir } from '../world/reclass';
 
 /**
  * The play keymap: every hotkey of the game in one table, and the handler that runs it each
@@ -45,8 +45,8 @@ export interface KeyHost {
   toggleOverview(): void;
   /** the next (1) or the previous (-1) tool of the open category */
   cycleTool(dir: 1 | -1): void;
-  /** take up or put down the tool that turns wide track into `target` */
-  toggleReclass(target: WideClass): void;
+  /** take up or put down the tool that moves track one standard line up or down */
+  toggleReclass(dir: ReclassDir): void;
   /** the next (1) or the previous (-1) type of the open category (track by gauge) */
   cycleType(dir: 1 | -1): void;
   /** the piece in slot `index` (0-based) of the open category */
@@ -174,11 +174,11 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
     return false;
   },
   upgradeTrack: (h) => {
-    if (!h.screenOpen) h.toggleReclass('high_speed');
+    if (!h.screenOpen) h.toggleReclass('up');
     return false;
   },
   downgradeTrack: (h) => {
-    if (!h.screenOpen) h.toggleReclass('regular');
+    if (!h.screenOpen) h.toggleReclass('down');
     return false;
   },
   prevType: (h) => {

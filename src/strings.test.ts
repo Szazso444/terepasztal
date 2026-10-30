@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { AGE_ORDER, STR } from './strings';
 import { AGE_DEFS } from './sim/ages';
 import { RULE_META } from './sim/rules';
-import { runsOn, withoutInCab } from './sim/compat';
+import { runsOn } from './sim/compat';
 import { content, type Cost } from './data/content';
 import { fmtCost } from './sim/stores';
 import { DYNAMIC_MODES } from './sim/trains';
@@ -33,11 +33,14 @@ function texts(node: unknown, out: string[] = []): string[] {
 }
 
 describe('track names the player reads', () => {
-  it('calls the regular class wide', () => {
-    expect(STR.toolbar.trackClass).toMatchObject({
-      regular: 'Wide',
-      high_speed: 'High-speed',
-      narrow: 'Narrow',
+  it('names the six lines', () => {
+    expect(STR.toolbar.trackClass).toEqual({
+      narrow: 'Narrow Gauge',
+      branch: 'Branch Line',
+      main: 'Main Line',
+      trunk: 'Trunk Line',
+      maglev: 'Maglev Guideway',
+      hyperloop: 'Hyperloop Tube',
     });
   });
 
@@ -47,35 +50,37 @@ describe('track names the player reads', () => {
   });
 
   it('names the tuning value and the track a vehicle runs on', () => {
-    expect(RULE_META.find((m) => m.key === 'lineSpeedRegular')!.label).toBe('Wide line speed');
+    expect(RULE_META.find((m) => m.key === 'lineSpeedBranch')!.label).toBe('Branch Line speed');
     const boxcar = content.wagons.find((w) => w.id === 'boxcar')!;
-    expect(runsOn(boxcar)).toBe('Runs on wide and high-speed track');
-    expect(STR.compat.wrongGauge(true)).toBe('Wide gauge: cannot run on narrow track');
+    expect(runsOn(boxcar)).toBe('Frigate · runs on Branch Line, Main Line, Trunk Line');
+    const blackFive = content.locomotives.find((l) => l.id === 'black_five')!;
+    expect(runsOn(blackFive)).toBe('Destroyer · runs on Main Line, Trunk Line');
+    expect(STR.build.crossingLine).toBe('No level crossings on this line');
+  });
+
+  it('names the train classes and says which one is too big for a line', () => {
+    expect(STR.trainClass).toEqual({
+      corvette: 'Corvette',
+      frigate: 'Frigate',
+      destroyer: 'Destroyer',
+      cruiser: 'Cruiser',
+      carrier: 'Carrier',
+      hydrofoil: 'Hydrofoil',
+      submarine: 'Submarine',
+    });
+    expect(STR.compat.tooBig('Destroyer', 'Branch Line')).toBe(
+      'a Destroyer is too big for Branch Line',
+    );
+    expect(STR.compat.runsOn('Hydrofoil', [])).toBe('Hydrofoil · runs on no track yet');
   });
 });
 
 describe('what the upgrade tool tells the player', () => {
-  it('counts the trains that cannot run on high-speed track', () => {
-    const loco = (own: boolean, built: boolean) => ({ inCab: own, def: { inCab: built } });
-    const trains = [
-      { locos: [loco(false, false)] },
-      // fitted to one locomotive of the consist, or built into its type: the train may run
-      { locos: [loco(false, false), loco(true, false)] },
-      { locos: [loco(false, true)] },
-      { locos: [loco(false, false), loco(false, false)] },
-    ];
-    expect(withoutInCab(trains)).toEqual({ barred: 2, total: 4 });
-    expect(withoutInCab([])).toEqual({ barred: 0, total: 0 });
-  });
-
-  it('says what an upgrade does to trains without in-cab signalling', () => {
-    expect(STR.toolbar.upgradeHint).toMatch(/in-cab signalling/);
-    expect(STR.build.reclassBarred(2, 5)).toBe(
-      '2 of 5 trains have no in-cab signalling and cannot run on high-speed track',
-    );
-    expect(STR.build.reclassBarred(1, 1)).toBe(
-      '1 of 1 train has no in-cab signalling and cannot run on high-speed track',
-    );
+  it('says what Upgrade and Downgrade do, and why a piece stays as it is', () => {
+    expect(STR.toolbar.upgradeHint).toMatch(/Branch to Main, Main to Trunk/);
+    expect(STR.toolbar.downgradeHint).toMatch(/Trunk to Main, Main to Branch/);
+    for (const why of ['separate', 'size', 'noLine', 'nothing'])
+      expect(STR.build.reclass[why], why).toBeTruthy();
     // a tool in hand over empty ground still says what it is for
     expect(STR.build.reclassIdle('Upgrade')).toBe('Upgrade: click a piece or drag along the line');
   });

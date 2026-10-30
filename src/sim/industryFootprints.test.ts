@@ -172,7 +172,7 @@ for (const c of CASES) {
               void w.builder.placeTrack(
                 t.x,
                 t.y,
-                { kind: 'straight', cls: 'regular', cls2: 'regular' },
+                { kind: 'straight', cls: 'branch', cls2: 'branch' },
                 1,
               ),
           ],

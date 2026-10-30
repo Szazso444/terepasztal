@@ -55,9 +55,9 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 const W = 64;
-const STRAIGHT: TrackItem = { kind: 'straight', cls: 'regular' };
+const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
 const NARROW: TrackItem = { kind: 'straight', cls: 'narrow' };
-const HIGH_SPEED: TrackItem = { kind: 'straight', cls: 'high_speed' };
+const TRUNK: TrackItem = { kind: 'straight', cls: 'trunk' };
 /** A straight's turn: 0 runs north to south, 1 east to west. */
 const NS = 0;
 const EW = 1;
@@ -490,16 +490,15 @@ describe('a level crossing', () => {
     expect(before.roads.size).toBe(1);
   });
 
-  it('is refused over a curve, a switch, a track crossing or a transition', () => {
+  it('is refused over a curve, a switch or a track crossing', () => {
     const pieces: [TrackItem, number][] = [
-      [{ kind: 'curve', cls: 'regular' }, 0],
+      [{ kind: 'curve', cls: 'branch' }, 0],
       [{ kind: 'curve', cls: 'narrow' }, 1],
-      [{ kind: 'switch', cls: 'regular' }, 2],
+      [{ kind: 'switch', cls: 'branch' }, 2],
       [{ kind: 'switch', cls: 'narrow' }, 5],
-      [{ kind: 'crossing', cls: 'regular', cls2: 'regular' }, 0],
-      [{ kind: 'crossing', cls: 'narrow', cls2: 'regular' }, 1],
-      [{ kind: 'transition', cls: 'regular' }, 1],
-      [{ kind: 'curve', cls: 'high_speed' }, 3],
+      [{ kind: 'crossing', cls: 'branch', cls2: 'branch' }, 0],
+      [{ kind: 'crossing', cls: 'narrow', cls2: 'branch' }, 1],
+      [{ kind: 'curve', cls: 'branch' }, 3],
     ];
     for (const [item, rot] of pieces) {
       const w = world();
@@ -519,12 +518,12 @@ describe('a level crossing', () => {
     }
   });
 
-  it('is refused across high-speed track', () => {
+  it('is refused across a line with no level crossings', () => {
     for (const rot of [NS, EW]) {
       const w = world();
       w.builder.free = true;
-      lay(w, 10, 10, HIGH_SPEED, rot);
-      expect(refusal(w, 10, 10)).toBe(STR.build.crossingHighSpeed);
+      lay(w, 10, 10, TRUNK, rot);
+      expect(refusal(w, 10, 10)).toBe(STR.build.crossingLine);
       expect(w.builder.placeRoad(10, 10)).toBe(false);
       expect(w.roads.size).toBe(0);
     }
@@ -543,13 +542,13 @@ describe('a level crossing', () => {
     ]);
     // a line along the road is refused, across it is a level crossing
     expect(w.builder.checkTrack(10, 10, STRAIGHT, EW).reason).toBe(STR.build.crossingAlong);
-    expect(w.builder.checkTrack(10, 10, HIGH_SPEED, NS).reason).toBe(STR.build.crossingHighSpeed);
+    expect(w.builder.checkTrack(10, 10, TRUNK, NS).reason).toBe(STR.build.crossingLine);
     expect(w.builder.checkTrack(10, 10, { kind: 'curve', cls: 'narrow' }, 0).reason).toBe(
       STR.build.crossingStraight,
     );
     // a wide curve with any of its four tiles on the road
-    const curve: TrackItem = { kind: 'curve', cls: 'regular' };
-    expect(footprintOf(9, 9, 'curve', 0, 'regular').some((t) => w.roads.has(t.x, t.y))).toBe(true);
+    const curve: TrackItem = { kind: 'curve', cls: 'branch' };
+    expect(footprintOf(9, 9, 'curve', 0, 'branch').some((t) => w.roads.has(t.x, t.y))).toBe(true);
     expect(w.builder.checkTrack(9, 9, curve, 0).reason).toBe(STR.build.crossingStraight);
     const track = trackOf(w.track);
     expect(w.builder.placeTrack(10, 10, STRAIGHT, EW)).toBe(false);
@@ -577,36 +576,6 @@ describe('a level crossing', () => {
     }));
     expect(w.builder.placeLine(across)).toBe(true);
     expect(w.roads.isCrossing(12, 10)).toBe(true);
-  });
-
-  it('keeps the track under it from becoming high speed or a transition', () => {
-    const w = world();
-    w.builder.free = true;
-    for (let x = 4; x <= 24; x++) lay(w, x, 10, STRAIGHT, EW);
-    pave(w, [
-      [14, 9],
-      [14, 10],
-      [14, 11],
-    ]);
-    const track = trackOf(w.track);
-    const stroke = [12, 13, 14, 15, 16].map((x) => ({ x, y: 10 }));
-    const c = w.builder.checkReclass(stroke, 'high_speed');
-    expect(c.ok).toBe(false);
-    expect(c.reason).toBe(STR.build.crossingHighSpeed);
-    expect(w.builder.reclassTrack(stroke, 'high_speed')).toBe(false);
-    expect(trackOf(w.track)).toBe(track);
-    // a stroke starting on the crossing makes a transition of its piece
-    const from = [14, 15, 16, 17].map((x) => ({ x, y: 10 }));
-    const plan = w.builder.checkReclass(from, 'high_speed');
-    expect(plan.changes.find((p) => p.x === 14 && p.y === 10)?.kind).toBe('transition');
-    expect(plan.ok).toBe(false);
-    expect(plan.reason).toBe(STR.build.crossingStraight);
-    expect(w.builder.reclassTrack(from, 'high_speed')).toBe(false);
-    expect(trackOf(w.track)).toBe(track);
-    // away from it the line converts
-    const away = [5, 6, 7].map((x) => ({ x, y: 10 }));
-    expect(w.builder.reclassTrack(away, 'high_speed')).toBe(true);
-    expect(w.roads.isCrossing(14, 10)).toBe(true);
   });
 
   // slow: two 3000-tick runs of the whole sim step, about 1.4 s alone
@@ -666,10 +635,10 @@ describe('the crossing keys', () => {
     expect(d.builder.roads.has(8, 11)).toBe(true);
   });
 
-  it('are the road tiles on a plain straight of regular or narrow track, whatever a save put where', () => {
+  it('are the road tiles on a plain straight of a line with level crossings, whatever a save put where', () => {
     // A save is loaded without the build rules (`Roads.load`, the track as it was stored), so the
     // keys are read off the tiles, not off how they came to be: a road a rule would refuse, on a
-    // curve, a switch or high-speed track, is no level crossing.
+    // curve, a switch or a Main Line straight, is no level crossing.
     forAll(
       (rng) => ({
         pieces: Array.from({ length: rng.int(0, 30) }, () => ({
@@ -729,7 +698,7 @@ describe('the crossing keys', () => {
 type Op =
   | { op: 'road' | 'unroad' | 'untrack'; x: number; y: number }
   | { op: 'track'; x: number; y: number; item: TrackItem; rot: number }
-  | { op: 'reclass'; x: number; y: number; n: number; rot: number; hs: boolean }
+  | { op: 'reclass'; x: number; y: number; n: number; rot: number; up: boolean }
   | { op: 'line'; x: number; y: number; n: number; rot: number; cls: TrackItem['cls'] }
   | { op: 'decor'; x: number; y: number; id: string }
   | { op: 'station' | 'works' | 'house' | 'signal'; x: number; y: number };
@@ -739,6 +708,8 @@ const ITEMS: TrackItem[] = [
   { kind: 'curve', cls: 'narrow' },
   { kind: 'switch', cls: 'narrow' },
   { kind: 'crossing', cls: 'narrow', cls2: 'narrow' },
+  // a line no road may cross on the level
+  { kind: 'straight', cls: 'trunk' },
 ];
 const SIDE = 14;
 function genOps(rng: Rng): { ground: number[]; ops: Op[] } {
@@ -759,18 +730,18 @@ function genOps(rng: Rng): { ground: number[]; ops: Op[] } {
     if (r < 0.62) return { op: 'unroad', ...p };
     if (r < 0.69) return { op: 'untrack', ...p };
     if (r < 0.76) {
-      const hs = rng.chance(0.7);
+      const up = rng.chance(0.7);
       // mostly a stroke along a line dragged earlier, where there is track to convert
       if (!lines.length || rng.chance(0.2))
-        return { op: 'reclass', ...p, n: rng.int(1, 6), rot: rng.int(0, 1), hs };
+        return { op: 'reclass', ...p, n: rng.int(1, 6), rot: rng.int(0, 1), up };
       const l = rng.pick(lines);
       const from = rng.int(0, l.n - 1);
       const n = rng.int(1, l.n - from);
       const start = l.rot === EW ? { x: l.x + from, y: l.y } : { x: l.x, y: l.y + from };
-      return { op: 'reclass', ...start, n, rot: l.rot, hs };
+      return { op: 'reclass', ...start, n, rot: l.rot, up };
     }
     if (r < 0.84) {
-      const cls = rng.pick(['regular', 'regular', 'narrow', 'high_speed'] as const);
+      const cls = rng.pick(['branch', 'branch', 'narrow', 'trunk'] as const);
       const rot = rng.int(0, 1);
       // as long as the map leaves room for, from 2 to 10 tiles
       const n = Math.min(rng.int(2, 10), SIDE - (rot === EW ? p.x : p.y));
@@ -804,10 +775,12 @@ function lineOf(o: Extract<Op, { op: 'line' }>): LinePiece[] {
 }
 /**
  * A piece a road may cross, as the issue words it, kept apart from `crossable` so the test does
- * not take the rule from the code it checks: a one-tile straight of regular or narrow track.
+ * not take the rule from the code it checks: a one-tile straight of Narrow Gauge, Branch or Main Line.
  */
 const takesARoad = (p: TrackPiece) =>
-  p.kind === 'straight' && !p.unit && (p.cls === 'regular' || p.cls === 'narrow');
+  p.kind === 'straight' &&
+  !p.unit &&
+  (p.cls === 'branch' || p.cls === 'main' || p.cls === 'narrow');
 /** A small map to play the ops on, `ground` tiles of it water, rock or a mountain by turns. */
 function site(c: { ground: number[]; ops: Op[] }) {
   const map = emptyMap(3, SIDE, SIDE, Terrain.Grass);
@@ -845,7 +818,7 @@ function perform(w: ReturnType<typeof site>, o: Op) {
             ? { x: Math.min(SIDE - 1, o.x + i), y: o.y }
             : { x: o.x, y: Math.min(SIDE - 1, o.y + i) },
         ),
-        o.hs ? 'high_speed' : 'regular',
+        o.up ? 'up' : 'down',
       );
     case 'line':
       return b.placeLine(lineOf(o));
@@ -885,7 +858,7 @@ function broken(w: ReturnType<typeof site>): string {
 describe('roads, whatever is built in whatever order', () => {
   // slow: seeded sites of builder steps, the roads judged after each, 0.6 s alone; the limit is
   // room for a busy machine
-  it('cross only plain straights of regular or narrow track at right angles, off every footprint', () => {
+  it('cross only plain straights of the lines with level crossings at right angles, off every footprint', () => {
     forAll(
       genOps,
       (c) => {
@@ -898,7 +871,11 @@ describe('roads, whatever is built in whatever order', () => {
         const keys = new Set<number>();
         for (const { x, y } of w.roads.list()) {
           const p = w.track.get(x, y);
-          if (p?.kind === 'straight' && p.cls !== 'high_speed') keys.add(w.track.key(x, y));
+          if (
+            p?.kind === 'straight' &&
+            (p.cls === 'branch' || p.cls === 'main' || p.cls === 'narrow')
+          )
+            keys.add(w.track.key(x, y));
         }
         expect([...w.roads.crossingKeys()].sort((a, b) => a - b)).toEqual(
           [...keys].sort((a, b) => a - b),
@@ -1005,7 +982,7 @@ function genDeckOps(rng: Rng): DeckCase {
       // across the river (turn 1) from its west bank, or down it (turn 0)
       const start = rot === EW ? { x: rng.int(2, RIVER[0]), y: p.y } : p;
       const n = Math.min(rng.int(1, 6), SIDE - (rot === EW ? start.x : start.y));
-      const cls = rng.pick(['regular', 'regular', 'narrow'] as const);
+      const cls = rng.pick(['branch', 'branch', 'narrow'] as const);
       const carries = rng.pick(['rail', 'rail', 'road', 'road', 'bare'] as const);
       return { op: 'bridge', ...start, n, rot, id: rng.pick(DECKS), carries, cls };
     }
@@ -1157,7 +1134,15 @@ describe('roads and bridge platforms, whatever is built in whatever order (#493)
             } else if (deck) {
               const dec = w.builder.decorAt(x, y);
               if (!dec || decorDef(dec.id).onTrack) {
-                expect(w.builder.checkRoad(x, y).reason, at).toBeUndefined();
+                // unless the road would run on along the track of a level crossing beside it
+                const along = DIRS.some((d) => {
+                  const nx = x + DIR_DX[d],
+                    ny = y + DIR_DY[d];
+                  return w.roads.isCrossing(nx, ny) && w.track.opensTo(nx, ny, opposite(d));
+                });
+                expect(w.builder.checkRoad(x, y).reason, at).toBe(
+                  along ? STR.build.crossingAlong : undefined,
+                );
                 seen.bareDecks++;
               }
             } else if (w.map.terrain[y * SIDE + x] === Terrain.Water)
@@ -1267,7 +1252,7 @@ describe('roads and the save', () => {
     if (!('save' in read)) throw new Error(read.error);
     expect(read.save.version).toBe(SAVE_VERSION);
     const back = world();
-    back.track.place(10, 10, 'straight', EW, 'regular');
+    back.track.place(10, 10, 'straight', EW, 'branch');
     back.roads.load(read.save.roads);
     expect(back.roads.toJSON()).toEqual(w.roads.toJSON());
     expect([...back.roads.crossingKeys()]).toEqual([...w.roads.crossingKeys()]);
@@ -1280,15 +1265,17 @@ describe('roads and the save', () => {
     }
     // the step from v19 says so, and the steps after it say their own
     const v19 = migrate(oldSave(19));
+    // the road step's note first, then those of the steps after it
     expect(v19.migrationNotes?.[0]).toBe(
       'v19→v20: no road had been built: the road list started empty',
     );
+    expect(v19.migrationNotes).toHaveLength(SAVE_VERSION - 19);
     // the step only fills in: a list the file has is kept
     const kept = migrate({ ...oldSave(19), roads: [[1, 2]] });
     expect(kept.roads).toEqual([[1, 2]]);
     const now = migrate({ ...oldSave(SAVE_VERSION), roads: [[4, 5]] });
     expect(now.roads).toEqual([[4, 5]]);
-    expect(now.migrationNotes).toBeUndefined();
+    expect((now.migrationNotes ?? []).filter((n) => /road/.test(n))).toEqual([]);
   });
 
   it('load only whole [x, y] pairs on the map, each tile once', () => {
@@ -2227,7 +2214,7 @@ function firstShortestByHand(c: SpurPatch, bound: number, whole: boolean) {
 /** Ask `findSpur` for the patch's spur, its rails laid as regular straights. */
 function patchSpur(c: SpurPatch) {
   const track = new TrackGraph(c.w, c.h);
-  for (const r of c.rails) track.place(r.x, r.y, 'straight', r.ns ? NS : EW, 'regular');
+  for (const r of c.rails) track.place(r.x, r.y, 'straight', r.ns ? NS : EW, 'branch');
   const roads = new Roads(track);
   for (const r of c.roads) roads.add(r.x, r.y);
   const { at, net } = patchRules(c);
@@ -2246,7 +2233,7 @@ describe('the spur search', () => {
       genPatch,
       (c) => {
         const track = new TrackGraph(c.w, c.h);
-        for (const r of c.rails) track.place(r.x, r.y, 'straight', r.ns ? NS : EW, 'regular');
+        for (const r of c.rails) track.place(r.x, r.y, 'straight', r.ns ? NS : EW, 'branch');
         // the patch's rails are the track's
         for (const r of c.rails)
           expect([...track.get(r.x, r.y)!.links[0]].sort()).toEqual(
@@ -2326,7 +2313,7 @@ describe('the spur search', () => {
   it('gives the same spur every time it is asked, and leaves the roads as they were', () => {
     forAll(genPatch, (c) => {
       const track = new TrackGraph(c.w, c.h);
-      for (const r of c.rails) track.place(r.x, r.y, 'straight', r.ns ? NS : EW, 'regular');
+      for (const r of c.rails) track.place(r.x, r.y, 'straight', r.ns ? NS : EW, 'branch');
       const roads = new Roads(track);
       for (const r of c.roads) roads.add(r.x, r.y);
       const before = { list: roads.toJSON(), version: roads.version };

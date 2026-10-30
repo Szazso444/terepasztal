@@ -1,5 +1,5 @@
 import { DIRS, DIR_DX, DIR_DY, opposite, type Dir } from '../engine/iso';
-import type { TrackGraph, TrackPiece } from '../world/track';
+import { LINES, type TrackGraph, type TrackPiece } from '../world/track';
 import { content, type Cost } from '../data/content';
 import { STR } from '../strings';
 import { streetDoors, type Door, type PlaceAt } from './doors';
@@ -32,16 +32,16 @@ export function roadCost(): Cost {
   return content.track.road.cost;
 }
 
-/** A road may cross this piece: a plain one-tile straight of regular or narrow track. */
+/** A road may cross this piece: a plain one-tile straight of a line with level crossings. */
 export function crossable(piece: TrackPiece): boolean {
-  return piece.kind === 'straight' && !piece.unit && piece.cls !== 'high_speed';
+  return piece.kind === 'straight' && !piece.unit && LINES[piece.cls].roadCrossing;
 }
 
 /**
  * Why a road on (x, y) may not share the tile with `piece`, or null when it may: there is no
- * track there, or the road crosses a plain straight of regular or narrow track at right angles,
- * so neither tile the rails run on to holds a road (`road`). No road crosses a curve, a switch, a
- * track crossing or a transition, nor any high-speed track.
+ * track there, or the road crosses a plain straight of a line with level crossings at right
+ * angles, so neither tile the rails run on to holds a road (`road`). No road crosses a curve, a
+ * switch or a track crossing, nor a line without level crossings.
  */
 export function crossingRefusal(
   piece: TrackPiece | undefined,
@@ -51,7 +51,7 @@ export function crossingRefusal(
 ): string | null {
   if (!piece) return null;
   if (piece.kind !== 'straight' || piece.unit) return STR.build.crossingStraight;
-  if (piece.cls === 'high_speed') return STR.build.crossingHighSpeed;
+  if (!LINES[piece.cls].roadCrossing) return STR.build.crossingLine;
   for (const d of piece.links[0] ?? [])
     if (road(x + DIR_DX[d], y + DIR_DY[d])) return STR.build.crossingAlong;
   return null;

@@ -4,7 +4,7 @@ import type { GameMap } from './tiles';
 /**
  * What a piece needs of the ground under a tile (the renderer's `groundAllows`, in
  * `src/render/terrainRelief.ts`, takes the same two words):
- * - `straight`: a straight, crossing or class transition, which may climb;
+ * - `straight`: a straight or crossing, which may climb;
  * - `level`: a curve, switch, station or building, which needs flat ground.
  */
 export type GroundNeed = 'straight' | 'level';

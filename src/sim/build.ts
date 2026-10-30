@@ -6,6 +6,8 @@ import {
   pieceCost,
   footprintOf,
   isUnitKind,
+  itemAge,
+  memberClear,
   makePiece,
   portClass,
   classesJoin,
@@ -49,7 +51,7 @@ import { STR } from '../strings';
 import { bridgeCapacity } from './bridges';
 import { climbAxes, supportedDeck } from '../world/railProfile';
 import { sfx } from '../engine/audio';
-import { planReclass, type PieceChange, type WideClass } from '../world/reclass';
+import { planReclass, type PieceChange, type ReclassDir } from '../world/reclass';
 import { continuesLine, onRails, stone } from './mountainTrack';
 import {
   Roads,
@@ -196,9 +198,9 @@ export class Builder {
   onUpgraded: ((e: Upgraded) => void) | null = null;
   /**
    * fired once by `reclassTrack` after a stroke relaid track, with the anchor of every piece it
-   * relaid (neighbours turned into transitions included) and the class it converted to
+   * relaid and which way it moved them
    */
-  onReclassed: ((tiles: { x: number; y: number }[], target: WideClass) => void) | null = null;
+  onReclassed: ((tiles: { x: number; y: number }[], dir: ReclassDir) => void) | null = null;
 
   constructor(
     readonly map: GameMap,
@@ -515,6 +517,7 @@ export class Builder {
     kind: TrackKind,
     anchor: boolean,
     replace: boolean,
+    clear = false,
   ): string | null {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
@@ -523,13 +526,17 @@ export class Builder {
       return STR.build.needBridge;
     if (t !== Terrain.Water && kind === 'bridge') return STR.build.bridgeOnWater;
     const st = this.stationAt(x, y);
-    // a depot is a through-station: plain pieces may run through the shed
-    if ((st && !(st.def.depot && anchor)) || (this.buildingAt(x, y) && !this.bridgeAt(x, y)))
+    // a depot is a through-station: plain pieces may run through the shed. A clear member of a
+    // curve or switch (no rail on it) may go over whatever stands there.
+    if (
+      !clear &&
+      ((st && !(st.def.depot && anchor)) || (this.buildingAt(x, y) && !this.bridgeAt(x, y)))
+    )
       return STR.build.occupied;
     // a platform carries rail or a road, never both: no level crossing on a bridge (#493)
     if (this.bridgeAt(x, y) && this.roads.has(x, y)) return STR.build.bridgeCarriesRoad;
     const dec = this.decorAt(x, y);
-    if (dec && !decorDef(dec.id).onTrack) return STR.build.occupied;
+    if (dec && !clear && !decorDef(dec.id).onTrack) return STR.build.occupied;
     const existing = this.track.get(x, y);
     // a wide piece needs its whole footprint free of track; a one-tile piece may replace another
     // one-tile piece (outside a line) but never a member of a wide one
@@ -539,7 +546,7 @@ export class Builder {
   /**
    * Can a piece with its anchor at (x,y) be laid? Checks every footprint tile, that a piece on rock
    * or a mountain continues a line, the ground under it, then that each open edge meeting existing
-   * track joins a compatible class (a transition piece joins any).
+   * track joins a line of the same network.
    */
   checkTrack(x: number, y: number, item: TrackItem, rot = 0): PlacementCheck {
     const c = this.trackRules(x, y, item, rot, true);
@@ -559,10 +566,13 @@ export class Builder {
     const kind = item.kind;
     if ((item.cls === 'narrow' || item.cls2 === 'narrow') && !rules.narrowUnlocked)
       return { ok: false, cost: {}, reason: STR.build.narrowLocked };
+    if (this.lineLocked(itemAge(item)))
+      return { ok: false, cost: {}, reason: STR.build.tierLocked(itemAge(item)) };
     const wide = isUnitKind(kind, item.cls);
     const tiles = footprintOf(x, y, kind, rot, item.cls);
-    for (const t of tiles) {
-      const why = this.checkTrackTile(t.x, t.y, kind, !wide, replace);
+    for (const [i, t] of tiles.entries()) {
+      const clear = wide && memberClear(kind, item.cls, rot, i);
+      const why = this.checkTrackTile(t.x, t.y, kind, !wide, replace, clear);
       if (why) return { ok: false, cost: {}, reason: why };
     }
     // class compatibility with the neighbours the new piece would open onto
@@ -585,8 +595,7 @@ export class Builder {
       !continuesLine(this.track, probe, tiles)
     )
       return { ok: false, cost: {}, reason: STR.build.mountainLine };
-    // Straights, crossings and class transitions may climb. Curves and switches (regular and
-    // high speed) need smooth ground on every tile, or a bridge platform under every tile: then
+    // Straights and crossings may climb. Curves and switches need smooth ground on every tile, or a bridge platform under every tile: then
     // they sit at the deck, the level of the rails they meet off the bridge.
     const members = tiles.map((t) => ({ ...t, links: probe.get(t.x, t.y)?.links ?? [] })),
       // Members of a wide piece are parts of a curve or switch, whatever their links look like.
@@ -611,12 +620,9 @@ export class Builder {
           if (!q || !this.track.opensTo(nx, ny, opposite(d))) continue;
           const mine = portClass(p, d),
             theirs = portClass(q, opposite(d));
-          if (!classesJoin(mine, theirs)) {
-            // no piece joins the two gauges; only regular and high speed meet at a transition
-            const gauges = mine === 'narrow' || theirs === 'narrow';
-            const reason = gauges ? STR.build.gaugeBreak : STR.build.needTransition;
-            return { ok: false, cost: {}, reason };
-          }
+          // the standard lines join each other; a separate network joins only itself
+          if (!classesJoin(mine, theirs))
+            return { ok: false, cost: {}, reason: STR.build.gaugeBreak };
         }
     }
     let mul = 0;
@@ -677,27 +683,44 @@ export class Builder {
   }
 
   /**
-   * What converting the pieces on `tiles` to `target` would change and cost. An upgrade to high
-   * speed charges, piece by piece, what the new piece costs above the old one; a downgrade is free
-   * and returns nothing. `from` is the tile a stroke came from (it picks a crossing's line).
+   * What moving the pieces on `tiles` one line up or down would change and cost. An upgrade
+   * charges, piece by piece, what the new piece costs above the old one; a downgrade is free and
+   * returns nothing. `from` is the tile a stroke came from (it picks a crossing's line). `left`
+   * holds the anchors of the pieces that stay as they are although the move would change them: a
+   * curve or switch of the wrong size, or anything the check refuses.
    */
   checkReclass(
     tiles: { x: number; y: number }[],
-    target: WideClass,
+    dir: ReclassDir,
     from?: { x: number; y: number },
-  ): PlacementCheck & { changes: PieceChange[] } {
-    const plan = planReclass(this.track, tiles, target, from);
-    if (!plan.changes.length)
+  ): PlacementCheck & { changes: PieceChange[]; left: { x: number; y: number }[] } {
+    const plan = planReclass(this.track, tiles, dir, from);
+    const sized = plan.left.map(({ x, y }) => ({ x, y }));
+    if (!plan.changes.length) {
+      const first = plan.left[0];
       return {
         ok: false,
         cost: {},
         changes: [],
-        reason: STR.build.reclass[plan.reason ?? 'nothing'],
+        left: sized,
+        reason: first
+          ? STR.build.reclassSize(STR.toolbar.trackClass[first.to], first.need, first.n)
+          : STR.build.reclass[plan.reason ?? 'nothing'],
       };
+    }
+    const refused = (reason: string) => ({
+      ok: false,
+      cost: {},
+      changes: plan.changes,
+      left: [...sized, ...plan.changes.map(({ x, y }) => ({ x, y }))],
+      reason,
+    });
+    const locked = plan.changes.map(itemAge).find((age) => this.lineLocked(age));
+    if (locked !== undefined) return refused(STR.build.tierLocked(locked));
     const crossing = this.reclassCrossing(plan.changes);
-    if (crossing) return { ok: false, cost: {}, changes: plan.changes, reason: crossing };
+    if (crossing) return refused(crossing);
     const cost: Cost = {};
-    if (target === 'high_speed')
+    if (dir === 'up')
       for (const c of plan.changes) {
         const old = this.track.get(c.x, c.y)!;
         let mul = 0;
@@ -711,11 +734,13 @@ export class Builder {
       }
     // a stroke pays from its first tile
     const at = tiles[0] ?? { x: 0, y: 0 };
-    return { ...this.affordable(cost, at.x, at.y), changes: plan.changes };
+    const paid = this.affordable(cost, at.x, at.y);
+    if (!paid.ok) return { ...refused(paid.reason ?? ''), cost };
+    return { ...paid, changes: plan.changes, left: sized };
   }
   /**
-   * Why converting would leave a level crossing on a piece no road may cross (high-speed track, a
-   * transition), or null when it would not: a road keeps its tile, so the piece laid there in the
+   * Why converting would leave a level crossing on a piece no road may cross (a line without
+   * level crossings), or null when it would not: a road keeps its tile, so the piece laid there in the
    * place of the old one has to take it (`crossingRefusal`).
    */
   private reclassCrossing(changes: readonly PieceChange[]): string | null {
@@ -729,13 +754,17 @@ export class Builder {
       }
     return null;
   }
-  /** Convert the pieces on `tiles` between wide and high-speed track, keeping the line joined. */
+  /** Is a line of age `age` still closed? Main Line opens in the Diesel Age, Trunk Line in the Electric. */
+  private lineLocked(age: number) {
+    return !this.free && !!rules.lineAgeLocks && age > this.economy.tier;
+  }
+  /** Move the pieces on `tiles` one standard line up or down. */
   reclassTrack(
     tiles: { x: number; y: number }[],
-    target: WideClass,
+    dir: ReclassDir,
     from?: { x: number; y: number },
   ): boolean {
-    const c = this.checkReclass(tiles, target, from);
+    const c = this.checkReclass(tiles, dir, from);
     const at = tiles[0] ?? { x: 0, y: 0 };
     if (!c.ok || !this.pay(c, at.x, at.y)) return false;
     const laid: { x: number; y: number }[] = [];
@@ -745,19 +774,18 @@ export class Builder {
       this.refreshBridgeCapacity(t.x, t.y);
       this.onTrackChanged?.(t.x, t.y);
     }
-    // switches keep the form they had: re-choosing it here could swing a branch over to a stub
-    // that only now matches its class, and part the lane it carried
+    // switches keep the form they had: the track around them did not change
     for (const t of laid) this.checkOrphans(t.x, t.y);
     sfx('build.place');
     this.onReclassed?.(
       c.changes.map((p) => ({ x: p.x, y: p.y })),
-      target,
+      dir,
     );
     return true;
   }
-  /** Compatibility: lay a regular piece by kind. */
+  /** Compatibility: lay a Branch Line piece by kind. */
   placeTrackKind(x: number, y: number, kind: TrackKind, rot: number) {
-    return this.placeTrack(x, y, { kind, cls: 'regular', cls2: 'regular' }, rot);
+    return this.placeTrack(x, y, { kind, cls: 'branch', cls2: 'branch' }, rot);
   }
   removeTrack(x: number, y: number): boolean {
     const p = this.track.get(x, y);
@@ -885,7 +913,7 @@ export class Builder {
       const bad = unbuildable(terrainAt(this.map, tx, ty));
       if (bad) return { ok: false, cost: {}, reason: bad };
       if (
-        this.track.has(tx, ty) ||
+        this.track.railOn(tx, ty) ||
         this.stationAt(tx, ty) ||
         this.decorAt(tx, ty) ||
         this.buildingAt(tx, ty)
@@ -1059,12 +1087,12 @@ export class Builder {
     if (!this.unlocked(x, y)) return STR.build.locked;
     if (this.decorAt(x, y) || this.buildingAt(x, y)) return STR.build.occupied;
     if (onRails(defId)) {
-      if (!this.track.has(x, y)) return STR.build.needTrackHere;
+      if (!this.track.railOn(x, y)) return STR.build.needTrackHere;
     } else {
       const bad = unbuildable(terrainAt(this.map, x, y));
       if (bad) return bad;
       if (this.stationAt(x, y)) return STR.build.occupied;
-      if (!def.anyTile && this.track.has(x, y)) return STR.build.occupied;
+      if (!def.anyTile && this.track.railOn(x, y)) return STR.build.occupied;
       // a road keeps its tile from what stands off the rails; a pole goes beside it
       if (!def.anyTile && this.roads.has(x, y)) return STR.build.roadInWay;
       if (!def.anyTile && this.groundCheck && !this.groundCheck(x, y, 'level'))
@@ -1172,7 +1200,7 @@ export class Builder {
       if (!def.bridge && this.groundCheck && !this.groundCheck(tx, ty, 'level'))
         return { ok: false, cost: {}, reason: STR.build.notLevel };
       if (
-        this.track.has(tx, ty) ||
+        (def.bridge ? this.track.has(tx, ty) : this.track.railOn(tx, ty)) ||
         this.stationAt(tx, ty) ||
         this.decorAt(tx, ty) ||
         this.buildingAt(tx, ty)
@@ -1274,7 +1302,7 @@ export class Builder {
    * or a mountain) with no road on it yet, off every station's footprint and works and off the
    * tile of decor that stands off the rails (a house, a tower), as a road meets a building only at
    * a street door, from the tile outside it (#408); a signal or a pole may share its tile. On track
-   * it is a level crossing, which only a plain straight of regular or narrow track takes, the road
+   * it is a level crossing, which only a plain straight of a line with level crossings takes, the road
    * across it (`Roads.trackRefusal`). A bridge platform carries a road where it carries no rail,
    * on water as on land: one tile holds rail or road, never both, so a platform with rail on it
    * refuses the road (#493). Each tile costs `roadCost`, scaled by the build cost tuning, whatever

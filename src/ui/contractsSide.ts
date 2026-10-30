@@ -1,4 +1,5 @@
 import { el } from './dom';
+import { contractRarityLabel } from './labels';
 import { STR } from '../strings';
 import type { ContractBoard } from '../sim/contracts';
 import type { Builder } from '../sim/build';
@@ -52,10 +53,12 @@ export class ContractsSide {
         el(
           'div',
           { class: 'sc-line' },
-          el('span', {
-            class: `crarity-${c.rarity}`,
-            text: `${Math.round(c.amount)} ${cargoDef(c.cargo).name}`,
-          }),
+          el(
+            'span',
+            { class: `crarity-${c.rarity}` },
+            contractRarityLabel(c.rarity),
+            `${Math.round(c.amount)} ${cargoDef(c.cargo).name}`,
+          ),
           el('span', { class: 'num', text: fmtDuration(Math.max(0, c.expires - now)) }),
         ),
         el(

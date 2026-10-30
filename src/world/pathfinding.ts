@@ -15,7 +15,8 @@ export interface PathSegment {
  * Dijkstra over (tile, entryEdge) states. A state means "inside tile, having entered through
  * that edge". Trains cannot reverse mid-tile, so this naturally handles switches and curves.
  * A step leaves a tile only where `TrackGraph.connected` joins it to the next, so a path never
- * crosses a class or gauge break that has no transition piece.
+ * crosses from one network to another. `access` bars pieces; `tollOf` multiplies the cost of
+ * running through a piece entered through `entry`.
  * Returns the segment list starting at the start tile, or null.
  */
 export function findPath(
@@ -25,7 +26,7 @@ export function findPath(
   maxCost = 100000,
   avoid?: (x: number, y: number) => boolean,
   access?: (piece: TrackPiece, entry: Dir) => boolean,
-  tollOf?: (piece: TrackPiece) => number,
+  tollOf?: (piece: TrackPiece, entry: Dir) => number,
 ): PathSegment[] | null {
   const key = (x: number, y: number, d: Dir) => (y * track.w + x) * 4 + d;
   const dist = new Map<number, number>();
@@ -58,7 +59,7 @@ export function findPath(
       if (access && !access(track.get(nx, ny)!, nin)) continue;
       const piece = track.get(x, y)!;
       let cost = track.segLength(x, y, dir, out);
-      if (tollOf) cost *= tollOf(piece);
+      if (tollOf) cost *= tollOf(piece, dir);
       if (piece.kind === 'switch' && isCurveLink(dir, out)) cost += 0.2;
       const nk = key(nx, ny, nin);
       const nd = d + cost;
@@ -103,7 +104,7 @@ export function findPath(
 
 /**
  * Walk backwards from a tile/heading to collect the tiles behind a spawn point. The walk stops
- * where the track ends or at a joint `TrackGraph.connected` refuses (a class or gauge break).
+ * where the track ends or at a joint `TrackGraph.connected` refuses (a break between networks).
  */
 export function walkBack(
   track: TrackGraph,

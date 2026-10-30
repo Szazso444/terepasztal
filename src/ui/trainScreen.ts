@@ -1,5 +1,6 @@
 import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
+import { vehicleLabels } from './labels';
 import type { Screen } from './modal';
 import {
   DYNAMIC_MODES,
@@ -184,6 +185,7 @@ export class TrainScreen implements Screen {
             class: `name rarity-${lo.def.rarity}`,
             text: STR.train.locoLevel(lo.def.name, lo.level),
           }),
+          vehicleLabels(lo.def),
           el('div', {
             class: 'sub',
             text: `${STR.roster.type[lo.def.type]} · ${Math.round(lo.def.power * levelMul(lo.level))} t · ${STR.roster.fuelLine(lo.def)}`,
@@ -310,6 +312,7 @@ export class TrainScreen implements Screen {
             'div',
             { style: 'flex:1' },
             el('div', { class: `name rarity-${w.def.rarity}`, text: w.def.name }),
+            vehicleLabels(w.def),
             el('div', {
               class: 'sub',
               text: w.cargo

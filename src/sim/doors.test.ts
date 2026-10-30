@@ -904,7 +904,7 @@ const STOP = { x: 26, y: 21 };
 /** A walker at `p` stands on tile `t`: inside its edge. */
 const onTile = (p: { x: number; y: number }, t: { x: number; y: number }) =>
   Math.max(Math.abs(p.x - t.x), Math.abs(p.y - t.y)) < 0.5;
-const STRAIGHT: TrackItem = { kind: 'straight', cls: 'regular' };
+const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
 
 /**
  * A townhouse at HOUSE turned to `rot`, a straight of regular track on the tile outside its street

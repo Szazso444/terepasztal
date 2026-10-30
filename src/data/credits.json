@@ -19,6 +19,11 @@
       "name": "Made with Suno",
       "url": "https://suno.com",
       "required": false
+    },
+    "mit": {
+      "name": "MIT License",
+      "url": "https://opensource.org/license/mit",
+      "required": true
     }
   },
   "credits": [
@@ -869,6 +874,13 @@
       "author": "Suno",
       "url": "https://suno.com",
       "licence": "suno"
+    },
+    {
+      "kind": "Icons",
+      "title": "Tabler Icons (the age icons)",
+      "author": "Paweł Kuna",
+      "url": "https://tabler.io/icons",
+      "licence": "mit"
     }
   ]
 }

@@ -1212,10 +1212,8 @@ const whereIs = (s: Sprite) => ({ x: s.x, y: s.y, z: s.zIndex });
 const TRACK: { name: string; piece: TrackPiece; trees: 'along y' | 'along x' | 'cleared' }[] = [
   { name: 'straight along y', piece: makePiece('straight', 0), trees: 'along y' },
   { name: 'straight along x', piece: makePiece('straight', 1), trees: 'along x' },
-  { name: 'high speed straight', piece: makePiece('straight', 0, 'high_speed'), trees: 'along y' },
   { name: 'narrow straight', piece: makePiece('straight', 1, 'narrow'), trees: 'along x' },
   { name: 'bridge', piece: makePiece('bridge', 0), trees: 'along y' },
-  { name: 'transition', piece: makePiece('transition', 1), trees: 'along x' },
   { name: 'regular curve', piece: member(makePiece('curve', 0)), trees: 'cleared' },
   { name: 'narrow curve', piece: makePiece('curve', 2, 'narrow'), trees: 'cleared' },
   { name: 'regular switch', piece: member(makePiece('switch', 1)), trees: 'cleared' },
@@ -1325,7 +1323,7 @@ describe('a wheat field under track', () => {
 const EVERY_PIECE: TrackPiece[] = [
   ...TRACK_ITEMS,
   // the bridge is laid by the builder rather than offered as an item, in every class
-  ...(['regular', 'high_speed', 'narrow'] as const).map((cls) => ({
+  ...(['branch', 'narrow'] as const).map((cls) => ({
     kind: 'bridge' as const,
     cls,
   })),

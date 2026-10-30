@@ -1,5 +1,6 @@
 import { SIGNAL_LEVELS } from '../sim/signals';
 import { el, btn } from './dom';
+import { contractRarityLabel } from './labels';
 import { STR } from '../strings';
 import type { Screen } from './modal';
 import { confirmDeleteSlot, slotLines, type Confirm } from './menu';
@@ -128,7 +129,12 @@ export class SettingsScreen implements Screen {
       return el(
         'div',
         { class: 'kv' },
-        el('span', { class: `k crarity-${r}`, text: STR.contracts.rarity[r] ?? r }),
+        el(
+          'span',
+          { class: `k crarity-${r}` },
+          contractRarityLabel(r),
+          STR.contracts.rarity[r] ?? r,
+        ),
         el('span', { class: 'row', style: 'margin:0;gap:3px' }, ...buttons),
       );
     });

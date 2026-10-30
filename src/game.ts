@@ -1,7 +1,6 @@
 import { Application, Sprite, extensions, CullerPlugin } from 'pixi.js';
 import { AtlasRegistry } from './engine/atlas';
 import { browserAtlasCache } from './engine/atlasCache';
-import { content } from './data/content';
 import type { BootProgressHook } from './engine/boot';
 import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
@@ -64,7 +63,8 @@ import {
 } from './ui/tooltipContent';
 import { tileTip, type TileSnapshot } from './ui/tileTooltip';
 import { STR } from './strings';
-import { TrackGraph } from './world/track';
+import { content } from './data/content';
+import { TrackGraph, liftLegacyTrack } from './world/track';
 import { Builder } from './sim/build';
 import { Economy } from './sim/economy';
 import { BuildController } from './ui/buildController';
@@ -146,14 +146,13 @@ import { Floaters } from './render/floaters';
 import { Halos } from './render/halo';
 import { WorkBars } from './render/workBars';
 import { hoursLeft, type Upgraded } from './sim/upgrade';
-import type { WideClass } from './world/reclass';
+import type { ReclassDir } from './world/reclass';
 import { PowerLines } from './render/powerLines';
 import { buildingDef as buildingDefOf } from './sim/buildings';
 import { Notices, type Notice } from './sim/notices';
 import type { Tip } from './ui/advisor';
 import { locoFrame, structureFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
-import { buildCompatTable } from './sim/compat';
 import { Catenary, type SupplyKind } from './sim/catenary';
 import { biomeDef, biomeAt } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
@@ -564,10 +563,12 @@ export class Game implements UiHost {
 
   /** Place a level's pre-built content into a fresh world (no economy). */
   placeLevelContent(level: LevelData) {
-    const track = level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track);
+    const track = liftLegacyTrack(
+      level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track),
+    );
     for (const [x, y, kind, rot, cls, cls2] of track) {
       if (!inBounds(this.map, x, y)) continue;
-      for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
+      for (const t of this.track.place(x, y, kind, rot, cls ?? 'branch', cls2))
         this.onTrackChanged(t.x, t.y);
     }
     for (const t of this.track.refreshSwitchForms()) this.onTrackChanged(t.x, t.y);
@@ -901,7 +902,6 @@ export class Game implements UiHost {
       ATLAS_GROUPS,
       (settled, total) => void onProgress?.('pictures', settled / total),
     );
-    buildCompatTable();
     await onProgress?.('pictures', 1);
 
     if (this.spec.kind === 'level') this.map = mapFromLevel(this.spec.level, this.supply);
@@ -948,7 +948,7 @@ export class Game implements UiHost {
     this.builder.onStationOrphaned = (s, orphaned) => this.onStationOrphaned(s, orphaned);
     this.builder.onUpgraded = (e) => this.onUpgraded(e);
     this.houses.onUpgraded = (e) => this.onUpgraded(e);
-    this.builder.onReclassed = (tiles, target) => this.onReclassed(tiles, target);
+    this.builder.onReclassed = (tiles, dir) => this.onReclassed(tiles, dir);
     this.weather = new Weather(new Rng(this.seed ^ 0x77ea));
     validateBanners();
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
@@ -1292,7 +1292,7 @@ export class Game implements UiHost {
     this.minimap.rebuildBase();
     this.toolbar.refresh();
     for (const [x, y, kind, rot, cls, cls2] of j.track) {
-      for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
+      for (const t of this.track.place(x, y, kind, rot, cls ?? 'branch', cls2))
         this.onTrackChanged(t.x, t.y);
     }
     // switch forms follow the track around them: chosen again once every piece is down
@@ -1832,11 +1832,11 @@ export class Game implements UiHost {
       });
   }
   /**
-   * Track relaid as high speed shimmers piece by piece (`startPieceHalos`); going back to regular
-   * track does not. Each halo covers its whole piece, not only the anchor tile.
+   * Track raised to a bigger line shimmers piece by piece (`startPieceHalos`); track lowered does
+   * not. Each halo covers its whole piece, not only the anchor tile.
    */
-  private onReclassed(anchors: { x: number; y: number }[], target: WideClass) {
-    if (target === 'regular') return;
+  private onReclassed(anchors: { x: number; y: number }[], dir: ReclassDir) {
+    if (dir === 'down') return;
     for (const a of anchors) {
       const tiles = this.track.unitTiles(a.x, a.y);
       if (!tiles.length) continue;
@@ -2535,6 +2535,14 @@ export class Game implements UiHost {
       power: t.power,
     };
   }
+  /** The piece on a tile with its line, as the toolbar names it: "Curve (Main Line)". */
+  private trackName(x: number, y: number): string | null {
+    const p = this.track.get(x, y);
+    if (!p) return null;
+    const L = STR.toolbar.trackClass;
+    const line = p.cls2 && p.cls2 !== p.cls ? `${L[p.cls]} × ${L[p.cls2]}` : L[p.cls];
+    return `${content.track.pieces[p.kind]?.name ?? p.kind} (${line})`;
+  }
   private tileSnap(x: number, y: number): TileSnapshot {
     const dec = this.builder.decorAt(x, y);
     return {
@@ -2542,7 +2550,7 @@ export class Game implements UiHost {
       x,
       y,
       charted: this.regions.isTileUnlocked(x, y),
-      track: this.track.get(x, y)?.kind ?? null,
+      track: this.trackName(x, y),
       decor: dec
         ? {
             name: decorDefOf(dec.id).name,

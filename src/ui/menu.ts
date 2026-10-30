@@ -1,3 +1,4 @@
+import { withAgeIcons } from './ageIcon';
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { LevelData } from '../world/level';
@@ -68,7 +69,7 @@ export function slotLines(meta: SlotMeta, now: number, cls = 'sub'): HTMLElement
 
 /** One `cls` line each of what `slotText` or `continueText` says, the date as the time line's title. */
 function textLines(t: SlotText, cls: string): HTMLElement[] {
-  const lines = [el('div', { class: cls, text: t.detail })];
+  const lines = [el('div', { class: cls }, ...withAgeIcons(t.detail))];
   if (t.saved) lines.push(el('div', { class: cls, text: t.saved, title: t.savedAt ?? '' }));
   if (t.format) lines.push(el('div', { class: cls, text: t.format }));
   return lines;

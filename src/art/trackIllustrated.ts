@@ -9,6 +9,7 @@ import {
   type SwitchForm,
 } from '../world/trackGeom';
 import {
+  TRACK_CLASSES,
   TRACK_ITEMS,
   CLASS_N,
   itemKey,
@@ -19,6 +20,7 @@ import {
   type TrackItem,
 } from '../world/track';
 import { PAL, css, mix, shade, type RGB } from './palette';
+import { NO_MATERIALS, drawSprite, drawStrip, type TrackMaterials } from './trackMaterials';
 
 const R = 4,
   W = 72,
@@ -27,10 +29,9 @@ const R = 4,
   OY = 20;
 /**
  * One rail line on a frame. A line the frame holds whole lays its sleepers over its own length.
- * `run` is for a line that is only part of a longer one drawn in several classes (the transition's
- * two halves): `start` is the distance along the whole run at which this part begins, `length`
- * the whole run's length and `cls` the class whose spacing the whole run takes, so the sleepers
- * keep one pitch across the change of class.
+ * `run` is for a line that is only part of a longer one drawn in several parts: `start` is the
+ * distance along the whole run at which this part begins, `length` the whole run's length and
+ * `cls` the line whose spacing the whole run takes, so the sleepers keep one pitch across the parts.
  */
 export type RailPath = {
   points: Vec2[];
@@ -38,70 +39,90 @@ export type RailPath = {
   run?: { start: number; length: number; cls: TrackClass };
 };
 /**
- * Per class: each rail's offset from the centre line, half a sleeper's length, sleeper spacing,
- * ballast shoulder, sleeper colours and rail line widths. Narrow gauge puts its rails half as far
- * apart on short, closely spaced timber sleepers laid straight on the ground, with no ballast,
- * like a forest or mine line.
+ * Per line: each rail's offset from the centre line, half a sleeper's length, sleeper spacing,
+ * ballast shoulder and colours, sleeper colours, rail line widths and colours. Narrow Gauge puts
+ * its rails half as far apart on short, closely spaced timber sleepers laid straight on the
+ * ground, with no ballast, like a forest or mine line. Branch Line lies on timber in warm stone;
+ * Main Line on concrete sleepers in a wider, cleaner bed; Trunk Line has heavier, darker rail on
+ * wide concrete sleepers in deep dark basalt.
  */
-const STYLE: Record<
-  TrackClass,
-  {
-    rail: number;
-    sleeper: number;
-    step: number;
-    shoulder: number;
-    /** a bed of ballast under the sleepers */
-    bed: boolean;
-    tie: string;
-    tieHi: string;
-    widths: [number, number, number];
-  }
-> = {
-  regular: {
-    rail: 0.16,
-    sleeper: 0.235,
-    step: 0.14,
-    shoulder: 0.29,
-    bed: true,
-    tie: '#725039',
-    tieHi: '#a17c52',
-    widths: [1.25, 0.95, 0.4],
+interface LineStyle {
+  rail: number;
+  sleeper: number;
+  step: number;
+  shoulder: number;
+  /** a bed of ballast under the sleepers */
+  bed: boolean;
+  /** the bed's fill, then its stones: light, dark and the rest */
+  ballast: [string, string, string, string];
+  tie: string;
+  tieHi: string;
+  widths: [number, number, number];
+  /** the rail's foot, web and head (`RAIL_LINES`) */
+  railColors: [string, string, string];
+}
+const RAIL_STEEL: LineStyle['railColors'] = ['#4c4940', '#827d70', '#d1c7ac'];
+const BRANCH: LineStyle = {
+  rail: 0.16,
+  sleeper: 0.235,
+  step: 0.14,
+  shoulder: 0.29,
+  bed: true,
+  ballast: ['#827b69', '#a99c82', '#6f695b', '#918570'],
+  tie: '#725039',
+  tieHi: '#a17c52',
+  widths: [1.25, 0.95, 0.4],
+  railColors: RAIL_STEEL,
+};
+const STYLE: Record<TrackClass, LineStyle> = {
+  branch: BRANCH,
+  main: {
+    ...BRANCH,
+    shoulder: 0.35,
+    // pale cool granite chips: clearly lighter than Branch's warm stone, far lighter than Trunk
+    ballast: ['#a9aaa7', '#d0d2ce', '#8b8d8a', '#babcb8'],
+    tie: '#cdc9bd',
+    tieHi: '#e6e2d7',
   },
-  high_speed: {
-    rail: 0.16,
-    sleeper: 0.235,
-    step: 0.14,
-    shoulder: 0.34,
-    bed: true,
-    tie: '#b9b3a0',
-    tieHi: '#d1cbb7',
-    widths: [1.25, 0.95, 0.4],
+  trunk: {
+    ...BRANCH,
+    sleeper: 0.255,
+    shoulder: 0.38,
+    // near-black basalt with darker concrete: the darkest bed of all
+    ballast: ['#3c3b3a', '#5a5855', '#2a2a29', '#474644'],
+    tie: '#8e8b83',
+    tieHi: '#aeaba2',
+    widths: [1.5, 1.15, 0.48],
+    railColors: ['#35332e', '#67635a', '#c2b89e'],
   },
+  // Maglev and Hyperloop have no pieces to draw yet: they take Branch's look
+  maglev: BRANCH,
+  hyperloop: BRANCH,
   narrow: {
     rail: 0.08,
     sleeper: 0.14,
     step: 0.115,
     shoulder: 0.19,
     bed: false,
+    ballast: BRANCH.ballast,
     tie: '#664631',
     tieHi: '#8f6c47',
     widths: [0.95, 0.72, 0.32],
+    railColors: RAIL_STEEL,
   },
 };
 
-const perClass = <T>(pick: (style: (typeof STYLE)[TrackClass]) => T) => ({
-  regular: pick(STYLE.regular),
-  high_speed: pick(STYLE.high_speed),
-  narrow: pick(STYLE.narrow),
-});
+const perClass = <T>(pick: (style: (typeof STYLE)[TrackClass]) => T) =>
+  Object.fromEntries(TRACK_CLASSES.map((c) => [c, pick(STYLE[c])])) as Record<TrackClass, T>;
 /** Each rail's offset from the centre line, per class, in tiles: half the gauge. */
 export const RAIL_OFFSET: Readonly<Record<TrackClass, number>> = perClass((s) => s.rail);
 /** How far the ballast bed reaches from the centre line, per class, in tiles. */
 export const BED_SHOULDER: Readonly<Record<TrackClass, number>> = perClass((s) => s.shoulder);
 
-/** The classes a road crosses on the level; never high speed (Q36 a). */
+/** The lines a road crosses on the level (`LineDef.roadCrossing`). */
 export const LEVEL_CROSSING_CLASSES = [
-  'regular',
+  'branch',
+  'main',
   'narrow',
 ] as const satisfies readonly TrackClass[];
 export type LevelCrossingClass = (typeof LEVEL_CROSSING_CLASSES)[number];
@@ -109,10 +130,11 @@ export type LevelCrossingClass = (typeof LEVEL_CROSSING_CLASSES)[number];
 export const LEVEL_CROSSING_MARGIN = 0.1;
 /**
  * Half a level crossing deck's size across the track, in tiles from the centre line: 0.1 tile
- * outside each rail (0.26 regular, 0.18 narrow), inside the class's ballast bed.
+ * outside each rail (0.26 Branch and Main, 0.18 Narrow), inside the line's ballast bed.
  */
 export const LEVEL_CROSSING_ACROSS: Readonly<Record<LevelCrossingClass, number>> = {
-  regular: RAIL_OFFSET.regular + LEVEL_CROSSING_MARGIN,
+  branch: RAIL_OFFSET.branch + LEVEL_CROSSING_MARGIN,
+  main: RAIL_OFFSET.main + LEVEL_CROSSING_MARGIN,
   narrow: RAIL_OFFSET.narrow + LEVEL_CROSSING_MARGIN,
 };
 /** Half a level crossing deck's size along the track, in tiles: half the road's 0.32 (#329). */
@@ -172,16 +194,23 @@ export function railSleepers(path: RailPath, scale = 1): number[] {
 }
 
 const project = (p: Vec2) => ({ x: OX + (p.x - p.y) * 32, y: OY + (p.x + p.y) * 16 });
+/** The painted materials the frames are drawn with (`generateIllustratedTrackAtlas`). */
+let MATERIALS: TrackMaterials = NO_MATERIALS;
+/** How far the shoulder's solid paint reaches in under the bed's solid edge, in tiles. */
+const EDGE_TUCK = 0.02;
+/** Spacing of the places a tuft may grow along the track, and the share of them that get one. */
+const TUFT_STEP = 0.07,
+  TUFT_SHARE = 0.32;
 const offset = (p: Vec2, n: Vec2, d: number) => ({ x: p.x + n.x * d, y: p.y + n.y * d });
 
 /**
  * The three strokes of a rail, bottom to top: the dark foot dropped a little, the web, the lit
- * head raised a little. `width` indexes the class's `widths`, `dy` is in world px.
+ * head raised a little. `width` indexes the line's `widths` and `railColors`, `dy` is in world px.
  */
-const RAIL_LINES: { color: string; width: 0 | 1 | 2; dy: number }[] = [
-  { color: '#4c4940', width: 0, dy: 0.35 },
-  { color: '#827d70', width: 1, dy: 0 },
-  { color: '#d1c7ac', width: 2, dy: -0.3 },
+const RAIL_LINES: { width: 0 | 1 | 2; dy: number }[] = [
+  { width: 0, dy: 0.35 },
+  { width: 1, dy: 0 },
+  { width: 2, dy: -0.3 },
 ];
 
 /**
@@ -241,8 +270,14 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
       return { x: -(b.y - a.y) / l, y: (b.x - a.x) / l };
     }),
   }));
-  for (const { points, normals, cls } of rows) {
+  for (const { points, normals, cls, run } of rows) {
+    const mat = bridge ? undefined : MATERIALS.lines[cls];
+    if (mat?.bed) {
+      paintedBed(c, points, normals, cls, run, seed, scale);
+      continue;
+    }
     if (!STYLE[cls].bed && !bridge) continue;
+    const [, light, dark, rest] = STYLE[cls].ballast;
     const shoulder = STYLE[cls].shoulder * scale;
     for (const [extra, alpha] of bridge
       ? [[0, 1]]
@@ -258,7 +293,7 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
           ...points.map((p, i) => offset(p, normals[i], shoulder + extra)),
           ...points.map((p, i) => offset(p, normals[i], -shoulder - extra)).reverse(),
         ],
-        bridge ? '#826446' : '#827b69',
+        bridge ? '#826446' : STYLE[cls].ballast[0],
       );
     }
     c.globalAlpha = 1;
@@ -273,10 +308,10 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
             ? '#997958'
             : '#72573e'
           : k > 0.72
-            ? '#a99c82'
+            ? light
             : k < 0.28
-              ? '#6f695b'
-              : '#918570';
+              ? dark
+              : rest;
         c.beginPath();
         c.ellipse(
           p.x + (k - 0.5) * 0.8,
@@ -311,6 +346,22 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
         const n = normals[i],
           along = { x: n.y, y: -n.x },
           half = st.sleeper;
+        const painted = MATERIALS.lines[cls]?.sleeper;
+        if (painted && !bridge) {
+          const px = MATERIALS.pxPerTile;
+          drawSprite(
+            c,
+            { ox: OX, oy: OY },
+            painted,
+            p,
+            along,
+            n,
+            (painted.width / px) * scale,
+            (painted.height / px) * scale,
+          );
+          k++;
+          continue;
+        }
         const corners = [
           offset(offset(p, n, -half), along, -0.028),
           offset(offset(p, n, half), along, -0.028),
@@ -335,36 +386,106 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
     const widths = st.widths.map((w) => w * Math.max(scale, 0.75));
     for (const side of [-st.rail * scale, st.rail * scale]) {
       const rail = points.map((p, i) => offset(p, normals[i], side));
-      for (const { color, width, dy } of RAIL_LINES) line(rail, color, widths[width], dy);
+      for (const { width, dy } of RAIL_LINES) line(rail, st.railColors[width], widths[width], dy);
     }
   }
   return image();
 }
 
 /**
+ * The painted bed of one rail line: the ballast strip, the shoulder along both its edges and, on
+ * lines that have them, grass tufts. Along the line the strips repeat a whole number of times over
+ * the run, so every piece starts and ends on a repeat and meets the next one seamlessly.
+ */
+function paintedBed(
+  c: CanvasRenderingContext2D,
+  points: Vec2[],
+  normals: Vec2[],
+  cls: TrackClass,
+  run: RailPath['run'],
+  seed: number,
+  scale: number,
+) {
+  const mat = MATERIALS.lines[cls]!;
+  const px = MATERIALS.pxPerTile;
+  const pr = { ox: OX, oy: OY };
+  const own = pathLength(points),
+    start = run?.start ?? 0,
+    length = run?.length ?? own;
+  const repeats = Math.max(1, Math.round(length / scale));
+  const stretch = repeats / length;
+  const strip = (img: NonNullable<typeof mat.bed>, from: number, to: number) => {
+    // drawStrip starts its repeats at the start of `points`: shift them to the run's start
+    const shift = (start * stretch * px) % img.width;
+    drawStrip(c, pr, img, points, normals, from, to, px, stretch, 1.6, shift);
+  };
+  const bed = mat.bed!;
+  const half = (bed.height / px / 2) * scale;
+  const row = scale / px;
+  // the shoulders first, their solid paint butted in under the bed's, so the bed's own soft edge
+  // runs out over them instead of over the ground
+  if (mat.edge) {
+    const [bedTop, bedBottom] = mat.solid?.bed ?? [0, bed.height - 1];
+    const [, edgeInner] = mat.solid?.edge ?? [0, mat.edge.height - 1];
+    const tuck = EDGE_TUCK * scale;
+    const top = half - bedTop * row - tuck,
+      bottom = half - (bedBottom + 1) * row + tuck;
+    const reach = (edgeInner + 1) * row,
+      depth = mat.edge.height * row;
+    strip(mat.edge, top + reach, top + reach - depth);
+    strip(mat.edge, bottom - reach, bottom - reach + depth);
+  }
+  strip(bed, half, -half);
+  if (!mat.tufts) return;
+  const cells = Math.max(1, Math.floor(mat.tufts.width / mat.tufts.height));
+  const cell = mat.tufts.height;
+  const size = (cell / px) * scale;
+  const sites = Math.floor(own / (TUFT_STEP * scale));
+  let distance = 0,
+    i = 1;
+  for (let s = 0; s < sites; s++) {
+    const d = (s + 0.5) * TUFT_STEP * scale;
+    const k = hash2(Math.floor((start + d) * 100), 7, seed + 31);
+    if (k > TUFT_SHARE) continue;
+    while (i < points.length - 1 && distance + segLen(points, i) < d)
+      distance += segLen(points, i++);
+    const a = points[i - 1],
+      b = points[i],
+      t = (d - distance) / (segLen(points, i) || 1);
+    const p = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+    const n = normals[i];
+    const along = { x: n.y, y: -n.x };
+    // narrow gauge grows grass anywhere across; branch line mostly in its shoulders
+    const u = hash2(s, 11, seed + 53) * 2 - 1;
+    const across =
+      cls === 'narrow' ? u * half * 0.95 : Math.sign(u || 1) * half * (0.55 + 0.4 * Math.abs(u));
+    const cellIndex = Math.floor(hash2(s, 17, seed + 71) * cells) % cells;
+    drawSprite(
+      c,
+      pr,
+      mat.tufts,
+      offset(p, n, across),
+      along,
+      n,
+      size,
+      size,
+      cellIndex * cell,
+      cell,
+    );
+  }
+}
+const segLen = (points: Vec2[], i: number) =>
+  Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);
+
+/**
  * The rail lines of a piece that fits one tile, in tile coordinates (the tile centre is the
- * origin), as `generateIllustratedTrackAtlas` draws them. A transition is one run of sleepers over
- * its whole length, drawn as a regular half and a high-speed half.
+ * origin), as `generateIllustratedTrackAtlas` draws them.
  */
 export function tilePaths(it: TrackItem, rotation: number): RailPath[] {
   const paths: RailPath[] = pieceLinks(it.kind, rotation).map((link, i) => ({
     points: linkPoints(link[0], link[1], 96),
     cls: it.kind === 'crossing' && i === 1 ? (it.cls2 ?? it.cls) : it.cls,
   }));
-  if (it.kind === 'transition') {
-    const points = paths[0].points,
-      mid = Math.floor(points.length / 2),
-      first = points.slice(0, mid + 1),
-      length = pathLength(points);
-    return [
-      { points: first, cls: 'regular', run: { start: 0, length, cls: 'regular' } },
-      {
-        points: points.slice(mid),
-        cls: 'high_speed',
-        run: { start: pathLength(first), length, cls: 'regular' },
-      },
-    ];
-  }
   return paths;
 }
 
@@ -484,7 +605,7 @@ function drawLevelCrossing(cls: LevelCrossingClass, rotation: number, seed: numb
   );
   c.closePath();
   c.clip();
-  if (cls === 'regular') {
+  if (cls !== 'narrow') {
     const joint = 0.006,
       pitch = 0.1;
     quad(-across, across, -along, along, SETT_JOINT);
@@ -568,7 +689,15 @@ function drawLevelCrossing(cls: LevelCrossingClass, rotation: number, seed: numb
 }
 
 /** Source-inspired timber/steel materials on the real track polylines, in every orientation. */
-export function generateIllustratedTrackAtlas(): AtlasImage {
+/**
+ * Every track frame. With painted `materials` (`loadTrackMaterials`) the lines that have them are
+ * laid with their painted bed, shoulders, sleepers and tufts; the rest, and every line without
+ * them, keep the procedural look.
+ */
+export function generateIllustratedTrackAtlas(
+  materials: TrackMaterials = NO_MATERIALS,
+): AtlasImage {
+  MATERIALS = materials;
   const ab = new AtlasBuilder();
   for (const it of TRACK_ITEMS)
     for (let rotation = 0; rotation < rotationCount(it.kind); rotation++) {

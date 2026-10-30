@@ -6,6 +6,7 @@ import type { JunctionStats } from './junctions';
 import type { PathSegment } from '../world/pathfinding';
 import { blockingGroups, RecoveryReservations, turnIndex } from './recovery';
 import { STR } from '../strings';
+import { classRank } from './compat';
 
 /** How far ahead (tiles) a moving train claims track beyond the section it is entering. */
 const HORIZON = 6;
@@ -13,6 +14,10 @@ const HORIZON = 6;
 const STUCK_AFTER = 30;
 /** Minimum head movement (tiles) that counts as progress. */
 const PROGRESS_EPS = 0.05;
+/** Room (tiles) beyond its stopping distance a train needs to give a claimed stretch away. */
+const GIVE_WAY_ROOM = 1;
+
+type Ahead = { x: number; y: number; in: number; out: number; arc: number }[];
 
 export type EpisodeKind =
   'stuck' | 'unstuck' | 'deadlock' | 'overlap' | 'yield' | 'headOn' | 'recovery';
@@ -131,6 +136,10 @@ function isJunctionUnit(p: TrackPiece) {
  * or ahead of them, which gives the first claimant the section. A train following another in
  * the same direction may enter behind it. Trains stop short of the first tile they could not
  * claim ("claim limit"), which the fleet uses to park waiting trains off the holder's path.
+ *
+ * Priority: a bigger train class goes first (`classRank`). It is served before smaller trains,
+ * and it takes over a stretch a smaller train has claimed but not yet reached when that train
+ * can still stop short of it (`giveWay`).
  *
  * Statistics: per-train blocked time, yields, stuck episodes, overlaps; an episode log; a
  * report for the debug panel and the console.
@@ -391,6 +400,7 @@ export class Traffic {
     const order = [...trains].sort(
       (a, b) =>
         Number(this.recoveries.active.has(b.id)) - Number(this.recoveries.active.has(a.id)) ||
+        classRank(b.trainClass) - classRank(a.trainClass) ||
         (this.stats.get(a.id)?.lastMoveAt ?? now) - (this.stats.get(b.id)?.lastMoveAt ?? now) ||
         b.yieldCount - a.yieldCount ||
         b.weight - a.weight ||
@@ -408,25 +418,7 @@ export class Traffic {
         const first = ahead[i];
         if (i > 0 && first.arc - pos > HORIZON) break;
         const section = secs[k0 + i];
-        let end = i + 1;
-        if (section > 0) {
-          while (end < ahead.length && secs[k0 + end] === section) end++;
-        } else {
-          // Reserve a junction's exit far enough for the rear to clear it before entering.
-          // Adjacent junctions extend the required exit; a queue cannot occupy the crossing.
-          const junction = (p: { x: number; y: number }) => {
-            const piece = this.track.get(p.x, p.y);
-            return !!piece && (piece.links.length > 1 || isJunctionUnit(piece));
-          };
-          if (junction(first)) {
-            let exitArc = first.arc;
-            while (end < ahead.length) {
-              const next = ahead[end++];
-              if (junction(next)) exitArc = next.arc;
-              else if (next.arc - exitArc >= t.length + 1) break;
-            }
-          }
-        }
+        const end = this.claimGroupEnd(ahead, i, t.length, secs, k0);
         let conflict = -1;
         let holder: number | null = null;
         // the tiles not yet claimed by this train, to claim when the whole stretch is free
@@ -443,6 +435,18 @@ export class Traffic {
             conflict = j;
             break;
           }
+        }
+        if (
+          conflict >= 0 &&
+          holder !== null &&
+          this.giveWay(t, ahead, i, end, paths, byId, occupied)
+        ) {
+          conflict = -1;
+          holder = null;
+          // the scan stopped at the holder: the rest of the stretch is t's to claim as well
+          unclaimed = 0;
+          for (let j = i; j < end; j++)
+            if (this.claims.get(keys[k0 + j]) !== t.id) this.toClaim[unclaimed++] = keys[k0 + j];
         }
         if (conflict >= 0 && holder !== null) {
           const p = ahead[conflict];
@@ -486,6 +490,103 @@ export class Traffic {
         i = end;
       }
     }
+  }
+
+  /**
+   * May `t` take tiles `from`..`to` of its path from the smaller trains that claimed them? Only
+   * when every holder is a smaller class on the standard network, has no escape leased, stands
+   * neither on that stretch nor anywhere on `t`'s path, and can still stop before the claim group
+   * of its own the stretch falls in. On success the holders' claims from that group on are
+   * dropped, so they claim again behind `t` (they come later in the order).
+   */
+  private giveWay(
+    t: Train,
+    ahead: readonly Ahead[number][],
+    from: number,
+    to: number,
+    paths: Map<number, readonly Ahead[number][]>,
+    byId: Map<number, Train>,
+    occupied: Map<number, number>,
+  ) {
+    const rank = classRank(t.trainClass);
+    if (rank <= 1 || this.recoveries.active.has(t.id)) return false;
+    const contested = new Set<number>();
+    const holders = new Set<number>();
+    for (let j = from; j < to; j++) {
+      const key = this.key(ahead[j].x, ahead[j].y);
+      if (this.recoveries.ownerAt(key, t.id) !== null) return false;
+      const h = this.claims.get(key);
+      if (h === undefined || h === t.id) continue;
+      if (occupied.get(key) === h) return false;
+      const other = byId.get(h);
+      if (!other || this.recoveries.active.has(h) || classRank(other.trainClass) >= rank)
+        return false;
+      contested.add(key);
+      holders.add(h);
+    }
+    if (!holders.size) return false;
+    const onPath = new Set(ahead.map((p) => this.key(p.x, p.y)));
+    const release: [number, number][] = [];
+    for (const h of holders) {
+      const other = byId.get(h)!;
+      for (const key of this.carTiles(other)) if (onPath.has(key)) return false;
+      const hp = paths.get(h) ?? [];
+      const k = hp.findIndex((p) => contested.has(this.key(p.x, p.y)));
+      if (k <= 0) return false;
+      const g = this.groupStart(hp, k, other.length);
+      if (g <= 0 || hp[g].arc - other.pathProgress < other.stopDistance + GIVE_WAY_ROOM)
+        return false;
+      for (let m = g; m < hp.length; m++) {
+        const key = this.key(hp[m].x, hp[m].y);
+        if (this.claims.get(key) === h && occupied.get(key) !== h) release.push([key, h]);
+      }
+    }
+    for (const [key] of release) this.claims.delete(key);
+    return true;
+  }
+  /**
+   * End (exclusive) of the claim group that starts at `path[i]`: the rest of a plain section, or
+   * a junction with its exit long enough for a train of `length` to clear it.
+   */
+  private claimGroupEnd(
+    path: readonly Ahead[number][],
+    i: number,
+    length: number,
+    secs?: ArrayLike<number>,
+    k0 = 0,
+  ) {
+    const first = path[i];
+    const sectionAt = (j: number) => (secs ? secs[k0 + j] : this.sectionOf(path[j].x, path[j].y));
+    const section = sectionAt(i);
+    let end = i + 1;
+    if (section > 0) {
+      while (end < path.length && sectionAt(end) === section) end++;
+      return end;
+    }
+    // Reserve a junction's exit far enough for the rear to clear it before entering.
+    // Adjacent junctions extend the required exit; a queue cannot occupy the crossing.
+    const junction = (p: { x: number; y: number }) => {
+      const piece = this.track.get(p.x, p.y);
+      return !!piece && (piece.links.length > 1 || isJunctionUnit(piece));
+    };
+    if (junction(first)) {
+      let exitArc = first.arc;
+      while (end < path.length) {
+        const next = path[end++];
+        if (junction(next)) exitArc = next.arc;
+        else if (next.arc - exitArc >= length + 1) break;
+      }
+    }
+    return end;
+  }
+  /** Start of the claim group holding `path[k]`, as the train on `path` groups its claims. */
+  private groupStart(path: readonly Ahead[number][], k: number, length: number) {
+    for (let i = 0; i < path.length;) {
+      const end = this.claimGroupEnd(path, i, length);
+      if (k < end) return i;
+      i = end;
+    }
+    return -1;
   }
 
   // ------------------------------------------------------------------ statistics

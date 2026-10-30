@@ -1,4 +1,5 @@
 import { el, btn, fmtMoney } from './dom';
+import { contractRarityLabel } from './labels';
 import { STR } from '../strings';
 import type { Screen } from './modal';
 import type { ContractBoard, Contract } from '../sim/contracts';
@@ -91,6 +92,7 @@ export class ContractsScreen implements Screen {
       el(
         'div',
         { class: 'name' },
+        contractRarityLabel(c.rarity),
         el('span', {
           class: `crarity-${c.rarity}`,
           text: `${STR.contracts.rarity[c.rarity] ?? c.rarity} · `,

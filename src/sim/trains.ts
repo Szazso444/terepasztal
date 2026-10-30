@@ -3,13 +3,20 @@ import type { TrackGraph, TrackPiece } from '../world/track';
 import { curveFactor } from '../world/trackGeom';
 import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
 import { lineSpeedCap, approachCap } from './lineSpeed';
-import { consistAccess, consistGauge, pieceClassFor, type ConsistAccess } from './compat';
+import {
+  consistAccess,
+  consistGauge,
+  lineToll,
+  pieceClassFor,
+  trainClassOf,
+  type ConsistAccess,
+} from './compat';
 import { collectorCeiling, type SupplyKind } from './catenary';
 import { BRIDGE_SLOW_FACTOR, slowsOnBridge } from './bridges';
 import type { Signals } from './signals';
 import { Terrain, terrainAt, type GameMap } from '../world/tiles';
 import { locoDef, wagonDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
-import type { LocoType } from '../data/content';
+import type { LocoType, TrainClass } from '../data/content';
 import type { ResourceStore, StoreRegistry } from './stores';
 import type { Builder } from './build';
 import type { Station } from './stations';
@@ -1148,29 +1155,34 @@ export class Train {
   }
   /** Poses of every body segment and bogie, in car order (loco first). */
   vehiclePoses: VehiclePose[] = [];
-  private accessCache: { key: string; access: ConsistAccess } | null = null;
-  /** Track classes every vehicle of the consist may use, and who bars the rest. */
-  get access(): ConsistAccess {
+  private accessCache: { key: string; access: ConsistAccess; cls: TrainClass | null } | null = null;
+  private consistInfo() {
     const key = [...this.locos.map((l) => l.def.id), ...this.wagons.map((w) => w.def.id)].join(',');
-    const inCab = this.locos.some((l) => l.inCab || l.def.inCab);
-    const fullKey = `${key}|${inCab ? 'cab' : ''}`;
-    if (!this.accessCache || this.accessCache.key !== fullKey)
-      this.accessCache = {
-        key: fullKey,
-        access: consistAccess(
-          [...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)],
-          inCab,
-        ),
-      };
-    return this.accessCache.access;
+    if (!this.accessCache || this.accessCache.key !== key) {
+      const defs = [...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)];
+      this.accessCache = { key, access: consistAccess(defs), cls: trainClassOf(defs) };
+    }
+    return this.accessCache;
+  }
+  /** Track lines every vehicle of the consist may use, and who bars the rest. */
+  get access(): ConsistAccess {
+    return this.consistInfo().access;
+  }
+  /** Distance (tiles) the train needs to stop from its current speed. */
+  get stopDistance() {
+    return (this.speed * this.speed) / (2 * DECEL);
+  }
+  /** Train class: its biggest vehicle's (null for an empty consist). */
+  get trainClass(): TrainClass | null {
+    return this.consistInfo().cls;
   }
   /** Pathfinding predicate: may the consist enter this piece through `entry`? */
   readonly canUse = (p: TrackPiece, entry: Dir) =>
     this.access.classes.has(pieceClassFor(p, entry)) && this.mass <= (p.bridgeCapacity ?? Infinity);
-  /** route cost multiplier: stock that is not built for speed keeps off high-speed lines when it can */
-  readonly tollOf = (p: TrackPiece) =>
-    p.cls === 'high_speed' && !this.locos.some((l) => l.def.highSpeed) ? 3 : 1;
-  /** findPath with this consist's class access applied. */
+  /** Route cost multiplier: a smaller train pays extra on a bigger line (`lineToll`). */
+  readonly tollOf = (p: TrackPiece, entry: Dir) =>
+    lineToll(this.trainClass, pieceClassFor(p, entry));
+  /** findPath with this consist's class access and line tolls applied. */
   private pathTo(
     track: TrackGraph,
     start: { x: number; y: number; in: Dir },
@@ -2388,7 +2400,7 @@ export class Train {
         cap = Math.min(cap, Math.sqrt(crossing * crossing + 2 * DECEL * Math.max(0, d - 0.25)));
       }
     }
-    // line speed: regular and narrow track cap top speed, braking ahead of a lower cap
+    // line speed: some lines cap top speed, braking ahead of a lower cap
     for (const s of this.pathAhead(12)) {
       const piece = ctx.track.get(s.x, s.y);
       if (!piece) continue;
@@ -2429,9 +2441,6 @@ export class Train {
     const from = this.pathPos;
     this.pathPos += step;
     this.distance += step;
-    // access charge: high-speed track costs money per tile run
-    if (step > 0 && headT && ctx.track.get(headT.x, headT.y)?.cls === 'high_speed')
-      ctx.spend(rules.hsAccessCharge * step);
     if (step > 0) {
       const problem = this.fuelProblem(ctx, step);
       if (problem) {

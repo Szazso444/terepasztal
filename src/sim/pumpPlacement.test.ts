@@ -44,7 +44,7 @@ const Y = 10;
 /** the refusals the approved demo gives, word for word */
 const GROUND = 'A water pump goes only on grass or forest.';
 const WATER = 'A water pump needs water right beside it.';
-const STRAIGHT: TrackItem = { kind: 'straight', cls: 'regular', cls2: 'regular' };
+const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch', cls2: 'branch' };
 
 /** A builder in editor mode (no cost, no age or chunk lock) on level grass, every chunk owned. */
 function grassWorld() {
@@ -153,7 +153,7 @@ describe('where a water pump stands', () => {
     slope.builder.groundCheck = (x, y, need) => need !== 'level' || x !== X || y !== Y;
     expect(slope.builder.checkStation(X, Y, 'pump').reason).toBe(STR.build.notLevel);
     const taken = site(Terrain.Sand, null);
-    taken.builder.track.place(X, Y, 'straight', 0, 'regular');
+    taken.builder.track.place(X, Y, 'straight', 0, 'branch');
     expect(taken.builder.checkStation(X, Y, 'pump').reason).toBe(STR.build.occupied);
     // where nothing can be built, that says so, water beside it or not
     for (const ground of [Terrain.Rock, Terrain.Mountain, Terrain.Water]) {
@@ -327,7 +327,7 @@ function pumpCaseWorld(c: PumpCase) {
   builder.groundCheck = (x, y) => c.level[y * c.w + x];
   economy.tier = LAST_AGE;
   if (c.stocked) for (const k of content.cargo) depot.amounts.set(k.id, 1e6);
-  for (const [x, y, rot] of c.track) builder.track.place(x, y, 'straight', rot, 'regular');
+  for (const [x, y, rot] of c.track) builder.track.place(x, y, 'straight', rot, 'branch');
   for (const [x, y] of c.taken) builder.decor.set(y * c.w + x, { id: 'townhouse', x, y, rot: 0 });
   return { map, builder };
 }
@@ -436,7 +436,7 @@ describe("the water pump's check, against a plain station's and the ground aroun
             storeWith({}).stores,
           );
           builder.free = true;
-          builder.track.place(1, 2, 'straight', 1, 'regular');
+          builder.track.place(1, 2, 'straight', 1, 'branch');
           // the footprint is (2, 2) to (3, 3); the ring is the eight tiles beside it, outside it
           const foot = [
             [2, 2],
@@ -528,7 +528,7 @@ describe('a pump a save holds where it may no longer be placed', () => {
       seed: 12345,
       clock: { time: 0, speedIndex: 1 },
       economy: { money: 1000, tickets: 0, tier: 0, granted: [] },
-      track: [[X - 1, Y, 'straight', 1, 'regular', 'regular']],
+      track: [[X - 1, Y, 'straight', 1, 'branch', 'branch']],
       stations: [
         { id: 1, defId: 'pump', name: 'Water Pump', x: X, y: Y, level: 2, storage: { water: 5 } },
       ],
@@ -567,7 +567,7 @@ describe('a pump a save holds where it may no longer be placed', () => {
       pump.tick(weekSeconds());
       expect(pump.stored('water')).toBeGreaterThan(before);
       // a new pump is refused there, the one standing is not touched
-      builder.track.place(X + 2, Y, 'straight', 1, 'regular');
+      builder.track.place(X + 2, Y, 'straight', 1, 'branch');
       expect(builder.checkStation(X + 3, Y, 'pump').reason).toBe(GROUND);
       expect(builder.stations).toEqual([pump]);
     }
@@ -608,7 +608,7 @@ function startChunkPumpTile(map: GameMap): { x: number; y: number } | null {
         if (!inChunk(tx, ty)) continue;
         const rot = DIR_DX[d] ? 1 : 0;
         if (!builder.checkTrack(tx, ty, STRAIGHT, rot).ok) continue;
-        builder.track.place(tx, ty, 'straight', rot, 'regular');
+        builder.track.place(tx, ty, 'straight', rot, 'branch');
         const ok = builder.checkStation(x, y, 'pump').ok;
         builder.track.removeAt(tx, ty);
         if (ok) return { x, y };

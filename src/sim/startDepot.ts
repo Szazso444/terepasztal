@@ -1,5 +1,5 @@
 import { inBounds, startRegion, terrainAt, type GameMap } from '../world/tiles';
-import type { TrackClass, TrackItem, TrackPiece } from '../world/track';
+import { networkOf, type TrackClass, type TrackItem, type TrackPiece } from '../world/track';
 import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Gauge } from '../data/content';
 import { STR } from '../strings';
@@ -7,7 +7,7 @@ import { rules } from './rules';
 import { unbuildable, type Builder } from './build';
 import { stationDef, stationFootprint, stationGates, type Station } from './stations';
 import { rotationAxis } from './rotation';
-import { gaugeOf, pieceClassFor } from './compat';
+import { gaugeLine, gaugeNetwork, gaugeOf, pieceClassFor } from './compat';
 
 /** How far from the start chunk's middle a depot is looked for, in tiles (Chebyshev). */
 export const START_DEPOT_REACH = 24;
@@ -29,7 +29,7 @@ export function startDepotCentre(map: GameMap): { x: number; y: number } {
  * follow the axis of the shed's rotation.
  */
 function gateTrack(defId: string, rot: number): { item: TrackItem; rot: number } {
-  const cls = stationDef(defId).gauge ?? 'regular';
+  const cls = gaugeLine(stationDef(defId).gauge ?? 'regular');
   return { item: { kind: 'straight', cls, cls2: cls }, rot: rotationAxis(rot) === 0 ? 1 : 0 };
 }
 
@@ -38,8 +38,8 @@ function gateTrack(defId: string, rot: number): { item: TrackItem; rot: number }
  * `Fleet.depotClasses` reads a placed depot's gate: the piece's link toward the shed when it has
  * one, else its first link, through `pieceClassFor` (a crossing gives the class of the axis that
  * runs into the shed). The shed does not stand yet, so the edge facing it is found from `shed`,
- * the tiles of the site's footprint. A piece with no links (the unused tile of a regular or high
- * speed curve or switch) is judged by its own `cls`.
+ * the tiles of the site's footprint. A piece with no links (the unused tile of a wide curve or
+ * switch) is judged by its own `cls`.
  */
 function gateClass(
   piece: TrackPiece,
@@ -56,9 +56,9 @@ function gateClass(
   return entry === undefined ? piece.cls : pieceClassFor(piece, entry);
 }
 
-/** Is track of class `cls` in `gauge`? Regular and high speed share a gauge; narrow has its own. */
+/** Does stock of `gauge` run on line `cls`'s network? */
 function inGauge(cls: TrackClass, gauge: Gauge) {
-  return (cls === 'narrow') === (gauge === 'narrow');
+  return networkOf(cls) === gaugeNetwork(gauge);
 }
 
 /** Run `fn` with the builder granting: no cost, age, supply or depot-count limits. */
@@ -77,8 +77,8 @@ function granting<T>(builder: Builder, fn: () => T): T {
  * null when it can: the shed passes `Builder.checkStation` on owned ground, and every gate is on
  * owned, clear ground and is served: either track of the depot's gauge is already there, or the
  * gate takes the gate straight (`Builder.checkTrack`), so no gate is left bare. Track already on a
- * gate counts only in the depot's gauge (a narrow depot takes narrow, a regular one regular and
- * high speed), judged by the class a train leaving the shed would meet (`gateClass`); other-gauge
+ * gate counts only in the depot's gauge (a narrow depot takes Narrow Gauge, a regular one the
+ * standard lines), judged by the class a train leaving the shed would meet (`gateClass`); other-gauge
  * track there gives `STR.build.gaugeBreak`, as no train of the depot could leave by that gate.
  */
 export function depotSiteBlocked(
@@ -155,7 +155,7 @@ export function grantDepot(
       builder.removeStation(d);
       return null;
     }
-    if (gate.item.cls === 'regular') d.name = STR.station.depotName;
+    if (gate.item.cls === 'branch') d.name = STR.station.depotName;
     builder.onStationChanged?.(d, false);
     return d;
   });

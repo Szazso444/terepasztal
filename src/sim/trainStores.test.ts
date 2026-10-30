@@ -99,7 +99,7 @@ describe('trains and the stores', () => {
     store.amounts.set('coal', 1000);
     store.amounts.set('water', 1000);
     // a nearly empty tender: enough for the 16 tiles to the depot
-    const t = onLine(w, 'mallard', 20, [depot, quarry]);
+    const t = onLine(w, 'general', 20, [depot, quarry]);
     t.coal = 10;
     t.water = t.waterCap;
     runUntil(w, () => t.coal >= t.coalCap - 1e-9);
@@ -120,7 +120,7 @@ describe('trains and the stores', () => {
     expect(w.builder.placeDecor(32, ROW + 1, 'water_tower', 0)).not.toBeNull();
     w.builder.free = false;
     const quarry = station(w, 'quarry', 50, ROW - 1);
-    const t = onLine(w, 'mallard', 10, [quarry]);
+    const t = onLine(w, 'general', 10, [quarry]);
     t.coal = t.coalCap * 0.3;
     t.water = t.waterCap * 0.3;
     // eastward: the train turns to face the quarry
@@ -149,7 +149,7 @@ describe('trains and the stores', () => {
         w.stores.poolOf(store),
       );
       const quarry = station(w, 'quarry', 56, ROW - 1);
-      const t = onLine(w, 'mallard', 10, [quarry]);
+      const t = onLine(w, 'general', 10, [quarry]);
       t.coal = t.coalCap * 0.3;
       t.water = t.waterCap * 0.3;
       return { planned: t.planFuelDetour(ctxOf(w)), end: t.pathAhead().at(-1) };
@@ -256,7 +256,7 @@ describe('trains and the stores', () => {
     const quarry = station(w, 'quarry', 40, ROW - 1);
     store.amounts.set('coal', 1000);
     store.amounts.set('water', 1000);
-    const loco = w.inventory.add('mallard', 0);
+    const loco = w.inventory.add('general', 0);
     const t = w.fleet.create([loco.uid], [], [depot.id, quarry.id]);
     if (typeof t === 'string') throw new Error(`fleet.create: ${t}`);
     expect(t.coal).toBe(t.coalCap);

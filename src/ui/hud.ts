@@ -6,7 +6,7 @@ import type { AtlasRegistry } from '../engine/atlas';
 import { ttTerm, type Tooltip } from './tooltip';
 import { tipBuild } from './tooltipRender';
 import { ageTip, eraView } from './ageTooltip';
-import { ageIcon } from './ageIcons';
+import { ageIconSvg } from './ageIcon';
 import { compactLevel, topbarCompact, type CompactLevel } from './fit';
 
 export interface HudModel {
@@ -188,8 +188,8 @@ export class Hud {
     const v = eraView(this.ages(), tier);
     if (v.id !== this.eraId) {
       this.eraId = v.id;
-      // fixed markup from ageIcons.ts, never from data
-      this.eraIcon.innerHTML = ageIcon(v.id);
+      // fixed markup from ageIcon.ts, never from data
+      this.eraIcon.innerHTML = ageIconSvg(v.id, 16);
     }
     if (this.eraName.textContent !== v.name) {
       this.eraName.textContent = v.name;

@@ -2,13 +2,13 @@ import type { TrackClass } from '../world/track';
 import { rules } from './rules';
 
 /**
- * Line speed: regular and narrow track cap a train's top speed, high-speed track does not. That
- * is what high-speed lines are for. In the units of `Train.maxSpeed`.
+ * Line speed: Narrow Gauge and Branch Line cap a train's top speed; the bigger lines do not, their
+ * wide curves are what they are built for. In the units of `Train.maxSpeed`.
  */
 export function lineSpeedCap(cls: TrackClass): number {
-  if (cls === 'high_speed') return Infinity;
-  const v = cls === 'narrow' ? rules.lineSpeedNarrow : rules.lineSpeedRegular;
-  return v * rules.trainSpeedMul;
+  if (cls === 'narrow') return rules.lineSpeedNarrow * rules.trainSpeedMul;
+  if (cls === 'branch') return rules.lineSpeedBranch * rules.trainSpeedMul;
+  return Infinity;
 }
 /** Speed allowed `distance` tiles before a stretch capped at `limit`, braking at `decel`. */
 export function approachCap(limit: number, distance: number, decel: number): number {
