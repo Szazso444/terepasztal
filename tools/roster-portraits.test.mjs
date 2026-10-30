@@ -7,6 +7,7 @@ import {
   SOURCES,
   bodyBounds,
   buildPortrait,
+  opaqueBounds,
   portraitWindow,
 } from './roster-portraits.mjs';
 
@@ -51,5 +52,18 @@ describe('roster portraits tool', () => {
     expect(bodyBounds(rgb, 300, 200)).toEqual({ x0: 100, y0: 80, x1: 200, y1: 120 });
     const built = PNG.sync.read(buildPortrait(png).png);
     expect([built.width, built.height]).toEqual([SIZE.width, SIZE.height]);
+    expect(opaqueBounds(png)).toBeNull();
+  });
+
+  it('finds a dark body on a transparent ground by its alpha', () => {
+    const png = new PNG({ width: 300, height: 200 });
+    for (let y = 0; y < 200; y++)
+      for (let x = 0; x < 300; x++) {
+        const i = (y * 300 + x) * 4;
+        const body = x >= 100 && x < 200 && y >= 80 && y < 120;
+        png.data[i] = png.data[i + 1] = png.data[i + 2] = body ? 20 : 0;
+        png.data[i + 3] = body ? 255 : 0;
+      }
+    expect(opaqueBounds(png)).toEqual({ x0: 100, y0: 80, x1: 200, y1: 120 });
   });
 });
