@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { Builder } from '../sim/build';
 import { Economy } from '../sim/economy';
-import { Stockpile } from '../sim/stockpile';
 import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
 import { Terrain } from '../world/tiles';
 import { TrackGraph } from '../world/track';
 import type { LevelData } from '../world/level';
 import { Editor } from './editor';
+import { storeWith } from '../testing/storeFixtures';
 
 const W = 32;
 
@@ -16,7 +16,13 @@ function harness() {
   const map = emptyMap(7, W, W, Terrain.Grass);
   const regions = new RegionState(map);
   regions.load([true, false, false, false]);
-  const builder = new Builder(map, regions, new TrackGraph(W, W), new Economy(), new Stockpile());
+  const builder = new Builder(
+    map,
+    regions,
+    new TrackGraph(W, W),
+    new Economy(),
+    storeWith({}).stores,
+  );
   builder.free = true;
   const world = { retile: () => {}, setFlattened: () => {} };
   const editor = new Editor(map, builder, world as never, {} as LevelData);

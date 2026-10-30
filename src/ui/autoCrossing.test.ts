@@ -14,7 +14,7 @@ import {
 } from '../world/track';
 import { Dir } from '../engine/iso';
 import { Builder } from '../sim/build';
-import { Stockpile } from '../sim/stockpile';
+import { storeWith } from '../testing/storeFixtures';
 import { Economy } from '../sim/economy';
 import { rules, DEFAULT_RULES } from '../sim/rules';
 import { STR } from '../strings';
@@ -26,12 +26,15 @@ beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 const RES = ['wood', 'stone', 'iron'];
 function world(size = 24) {
   const map = emptyMap(4242, size, size, Terrain.Grass),
-    track = new TrackGraph(size, size),
-    stock = new Stockpile();
+    track = new TrackGraph(size, size);
+  // one depot in the middle reaches every tile
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, new Economy(), stock);
-  for (const k of RES) stock.amounts.set(k, 1000);
+  const { stores, depot: stock } = storeWith(Object.fromEntries(RES.map((k) => [k, 1000])), {
+    x: size >> 1,
+    y: size >> 1,
+  });
+  const builder = new Builder(map, regions, track, new Economy(), stores);
   return { track, builder, stock };
 }
 const straight = (cls: TrackClass): TrackItem => ({ kind: 'straight', cls });

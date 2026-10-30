@@ -3,7 +3,7 @@ import { Sprite } from 'pixi.js';
 import { Builder } from '../sim/build';
 import { Economy } from '../sim/economy';
 import { DEFAULT_RULES, rules } from '../sim/rules';
-import { Stockpile } from '../sim/stockpile';
+import { storeWith } from '../testing/storeFixtures';
 import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
 import { Terrain } from '../world/tiles';
@@ -26,10 +26,10 @@ function harness() {
   const map = emptyMap(7, W, W, Terrain.Grass);
   const regions = new RegionState(map);
   regions.load([true, false, false, false]);
-  const stock = new Stockpile();
-  for (const k of ['wood', 'stone', 'iron']) stock.add(k, 1000);
+  // a depot in the middle of the owned quarter reaches all of it
+  const { stores } = storeWith({ wood: 1000, stone: 1000, iron: 1000 }, { x: 16, y: 16 });
   const track = new TrackGraph(W, W);
-  const builder = new Builder(map, regions, track, new Economy(), stock);
+  const builder = new Builder(map, regions, track, new Economy(), stores);
   const keys = new Set<string>();
   const input = {
     wasPressed: (k: string) => keys.has(k),

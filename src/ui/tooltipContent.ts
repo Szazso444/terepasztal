@@ -56,6 +56,8 @@ export interface StationSnapshot {
  */
 export type WorksStatus =
   | { kind: 'running' | 'full' | 'closed' }
+  /** it stands out of every store's reach (`range` tiles), so nothing can feed it */
+  | { kind: 'noStore'; range: number }
   | {
       kind: 'starved';
       /** the cargo id of the primary input it is short of (`missingInput`), null if none is found */
@@ -124,6 +126,8 @@ function statusLine(s: WorksStatus): Block {
       return line(STR.building.full);
     case 'running':
       return line(STR.building.running);
+    case 'noStore':
+      return line(STR.stores.noStoreNear(s.range));
     case 'starved':
       return text(
         ...fill(STR.building.waiting, {

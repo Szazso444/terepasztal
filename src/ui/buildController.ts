@@ -7,12 +7,12 @@ import type { Input } from '../engine/input';
 import { itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
 import type { SupplyKind } from '../sim/catenary';
 import { inBounds } from '../world/tiles';
-import type { Builder } from '../sim/build';
+import type { Builder, PlacementCheck } from '../sim/build';
 import type { WorldRenderer } from '../render/worldRenderer';
 import type { Station } from '../sim/stations';
 import type { Tool } from './toolbar';
 import { STR } from '../strings';
-import { fmtCost, scaleCost } from '../sim/stockpile';
+import { fmtCost, scaleCost } from '../sim/stores';
 import { buildingDef, type Building } from '../sim/buildings';
 import { stationSpan, stationDef } from '../sim/stations';
 import type { Decor } from '../sim/build';
@@ -64,6 +64,15 @@ export interface PlacingOut<C = unknown> {
   season(): Season;
 }
 
+/**
+ * The builder's verdict on the work under the pointer, as the status line shows it, and the tile
+ * that work is paid at (`Builder.affordable`): the build card names its payer from it.
+ */
+export interface Placement {
+  check: PlacementCheck;
+  at: Tile;
+}
+
 /** Interactive placement: ghost previews, rotation, drag-laying, removal, selection. */
 export class BuildController {
   tool: Tool = { kind: 'none' };
@@ -108,6 +117,11 @@ export class BuildController {
   private escapeSpent = false;
   /** the placing tooltip and the yield label's way out, set by createPlayUi */
   placing: PlacingOut | null = null;
+  /**
+   * This frame's verdict on the work under the pointer, priced and paid as placing it would be;
+   * null over a panel, off the map, during a drag of single pieces, or with no tool that builds.
+   */
+  placement: Placement | null = null;
   /** the tile the placing root stands for, as of the last frame it was not locked */
   private placingRoot: (Tile & { key: string }) | null = null;
   /** the tile of a locked placing root: its label and lit tiles stay there */
@@ -180,6 +194,7 @@ export class BuildController {
 
   /** Called every frame while the RTS view is active and the pointer is not over UI. */
   update(active: boolean) {
+    this.placement = null;
     const inp = this.input;
     const t = this.tileUnderMouse();
     const inMap = inBounds(this.builder.map, t.x, t.y);
@@ -354,6 +369,7 @@ export class BuildController {
     const shown = step?.crossing ? step.item : item,
       rot = step?.crossing ? step.rot : this.rot;
     const check = step ?? this.builder.checkTrack(t.x, t.y, item, this.rot);
+    this.placement = { check, at: t };
     const key = itemKey(shown);
     if (isUnitKind(item.kind, item.cls)) {
       // one ghost per footprint tile
@@ -482,6 +498,7 @@ export class BuildController {
       return;
     }
     const check = this.builder.checkStation(t.x, t.y, tool.defId, this.rot);
+    this.placement = { check, at: t };
     const def = stationDef(tool.defId);
     const g = this.ensureGhost(stationGhostFrame(this.world.atlas, def, this.rot));
     // a sprite of more than one tile is anchored at its footprint centre
@@ -558,6 +575,7 @@ export class BuildController {
       return;
     }
     const check = this.builder.checkSupply(t.x, t.y, tool.supply);
+    this.placement = { check, at: t };
     const g = this.ensureGhost(frameOf(t.x, t.y));
     this.placeGhostAt(g, t.x, t.y, check.ok);
     this.world.setSpriteFrame(
@@ -584,6 +602,7 @@ export class BuildController {
     const def = decorDef(tool.defId);
     this.showReach(t, def.power ? 2 : (def.radius ?? 0));
     const check = this.builder.checkDecor(t.x, t.y, tool.defId);
+    this.placement = { check, at: t };
     const g = this.ensureGhost(structureFrame(this.world.atlas, `structures/${def.id}`, this.rot));
     this.placeGhostAt(g, t.x, t.y, check.ok);
     const off = decorOffset({ id: def.id, rot: this.rot });
@@ -615,6 +634,7 @@ export class BuildController {
     // a bridge platform does not turn: it stays at rotation 0
     const rot = this.turns() ? this.rot : 0;
     const check = this.builder.checkBuilding(t.x, t.y, tool.defId, rot);
+    this.placement = { check, at: t };
     const g = this.ensureGhost(structureFrame(this.world.atlas, `structures/${def.id}`, rot));
     this.placeGhostAt(g, t.x, t.y, check.ok);
     this.world.setSpriteFrame(
@@ -673,10 +693,11 @@ export class BuildController {
   }
 
   /**
-   * Roads (#328): press and drag a straight run, let go to lay it, tile by tile (`placeRoad`). The
-   * drag shows the build preview's diamond on each tile, red where the release would not lay a
-   * road, with the total cost and every reason a tile is refused in the status line. Before the
-   * press the one tile under the cursor shows, priced or refused.
+   * Roads (#328): press and drag a straight run, let go to lay it, tile by tile, the whole run paid
+   * from its first tile (`placeRoads`). The drag shows the build preview's diamond on each tile,
+   * red where the release would not lay a road, with the total cost and every reason a tile is
+   * refused in the status line. Before the press the one tile under the cursor shows, priced or
+   * refused.
    */
   private updateRoadTool(t: Tile, inMap: boolean) {
     const inp = this.input;
@@ -688,6 +709,7 @@ export class BuildController {
     if (this.dragStart && inp.buttons.has(0)) {
       const stroke = this.roadStroke(this.dragStart, t);
       this.showRoadMarks(stroke.steps);
+      this.roadPlacement(stroke, this.dragStart);
       this.status(strokeStatus(stroke));
       return;
     }
@@ -695,7 +717,7 @@ export class BuildController {
       const tiles = strokeTiles(this.dragStart, this.roadEnd(t));
       this.dragStart = null;
       for (const g of this.lineGhosts) g.visible = false;
-      for (const r of tiles) this.builder.placeRoad(r.x, r.y);
+      this.builder.placeRoads(tiles, tiles[0]);
       return;
     }
     // the button is up: a stroke whose release fell over a panel lays nothing, and is over
@@ -707,7 +729,13 @@ export class BuildController {
     }
     const one = this.roadStroke(t, t);
     this.showRoadMarks(one.steps);
+    this.roadPlacement(one, t);
     this.status(hoverStatus(one.steps[0], !!this.builder.bridgeAt(t.x, t.y)));
+  }
+  /** What the release of a road stroke from `start` would pay, and from where (`placeRoads`). */
+  private roadPlacement(stroke: RoadStrokeCheck, start: Tile) {
+    if (!stroke.laid) return;
+    this.placement = { check: this.builder.affordable(stroke.cost, start.x, start.y), at: start };
   }
 
   /**
@@ -750,7 +778,7 @@ export class BuildController {
 
   /** The road stroke from `start` to the cursor on `t`, judged as its release would lay it. */
   private roadStroke(start: Tile, t: Tile): RoadStrokeCheck {
-    return judgeStroke(strokeTiles(start, this.roadEnd(t)), builderJudge(this.builder));
+    return judgeStroke(strokeTiles(start, this.roadEnd(t)), builderJudge(this.builder, start));
   }
 
   /** The build preview's tile diamond on each tile of a road stroke: red where it is refused. */
@@ -806,6 +834,7 @@ export class BuildController {
     }
     const from = down ? this.stroke.entry(t, piece.kind === 'crossing') : undefined;
     const check = this.builder.checkReclass([t], tool.target, from);
+    this.placement = { check, at: t };
     // red only where something stops the conversion; track already converted is fine
     const fine = check.ok || check.reason === STR.build.reclass.nothing;
     this.world.setSpriteFrame(this.ghostDiamond, fine ? 'terrain/ghost_ok' : 'terrain/ghost_bad');

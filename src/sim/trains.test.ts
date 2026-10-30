@@ -16,7 +16,6 @@ import { unitDef } from '../world/trackGeom';
 import { Dir, DIRS, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
 import { Train, aheadRun, defaultStop, resetTrainIds, type RouteMode } from './trains';
@@ -31,12 +30,11 @@ import { Inventory } from '../gacha/inventory';
 import { buildTrafficScenario, SCENARIO_GDT, SCENARIO_TICK_RATE } from '../testing/trafficScenario';
 import { locoDef, wagonDef } from '../gacha/items';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
-  // a warehouse is worth collecting from with what a level 1 store holds
-  rules.collectMin = 30;
   setSupplyMode(DEFAULT_SUPPLY);
   resetTrainIds();
   resetStationIds();
@@ -111,14 +109,13 @@ function* shrinkClosing(c: Closing): Iterable<Closing> {
 function world() {
   const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass),
     track = new TrackGraph(SIZE, SIZE),
-    stock = new Stockpile(),
     economy = new Economy(),
     inventory = new Inventory();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, inventory, economy, stock);
+  const fleet = new Fleet(track, builder, map, inventory, economy);
   for (let x = 2; x < 90; x++) track.place(x, ROW, 'straight', 1);
   return { map, track, builder, fleet };
 }

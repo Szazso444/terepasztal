@@ -12,7 +12,7 @@ import {
 } from '../world/track';
 import { DIRS, DIR_DX, DIR_DY, Dir, opposite } from '../engine/iso';
 import { Builder } from '../sim/build';
-import { Stockpile } from '../sim/stockpile';
+import { storeWith } from '../testing/storeFixtures';
 import { Economy } from '../sim/economy';
 import { rules, DEFAULT_RULES } from '../sim/rules';
 import { STR } from '../strings';
@@ -120,12 +120,15 @@ describe('a drag that turns', () => {
 
 function world(size = 30) {
   const map = emptyMap(4242, size, size, Terrain.Grass),
-    track = new TrackGraph(size, size),
-    stock = new Stockpile();
+    track = new TrackGraph(size, size);
+  // one depot in the middle reaches every tile
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, new Economy(), stock);
-  for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 1000);
+  const { stores, depot: stock } = storeWith(
+    { wood: 1000, stone: 1000, iron: 1000 },
+    { x: size >> 1, y: size >> 1 },
+  );
+  const builder = new Builder(map, regions, track, new Economy(), stores);
   return { track, builder, stock };
 }
 

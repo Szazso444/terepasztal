@@ -1,9 +1,9 @@
 // Seeded traffic runs stepped tick by tick: every tick is folded into a digest of the whole train
 // and claim state, held against golden values, and checked against the traffic and separation
 // properties of docs/process/verification.md. The goldens pin the outcome of every step: they were
-// recorded before #557 (route cursor, `aheadRun`, `ClaimMap`, the sections cache) and are a
-// contract, not a number to update; a change that moves any train or claim by a millionth of a
-// tile on any tick fails them.
+// recorded before #557 (route cursor, `aheadRun`, `ClaimMap`, the sections cache), re-recorded for
+// #306 (see GOLDEN), and are a contract, not a number to update; a change that moves any train or
+// claim by a millionth of a tile on any tick fails them.
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createHash, type Hash } from 'node:crypto';
@@ -346,9 +346,6 @@ function linesWorld(
   const w = simWorld({ size: 64, terrain: 'grass', seed });
   w.builder.free = true;
   for (let i = 0; i < w.regions.unlocked.length; i++) w.regions.own(i);
-  w.stock.add('coal', 1e7, 1e9);
-  w.stock.add('water', 1e7, 1e9);
-  w.stock.add('oil', 1e7, 1e9);
   w.economy.money = 1e9;
   const rows = Array.from({ length: lines }, (_, k) => 8 + 7 * k);
   for (const y of rows) line(w, LINE_X0, y, LINE_X1);
@@ -358,6 +355,9 @@ function linesWorld(
     const depot = station(w, 'depot', LINE_X0 - 2, y);
     const quarry = station(w, 'quarry', LINE_X0 + 8, y - 1);
     const warehouse = station(w, 'warehouse', LINE_X1 - 10, y - 1);
+    // the depot's store keeps every train it sends out fuelled
+    const store = w.stores.byKey(`st:${depot.id}`)!;
+    for (const r of ['coal', 'water', 'oil']) store.add(r, 1e7);
     if (level)
       for (let x = LINE_X0 + 12; x < LINE_X1 - 4; x += 6) {
         w.builder.placeDecor(x, y, 'signal', Dir.E);
@@ -429,70 +429,72 @@ function linesRun(name: string, lines: Lines, ticks: number, disrupt?: (tick: nu
 // The runs and their goldens
 
 /**
- * Every run's outcome. Recorded on develop before #557 (1586dc42) and unchanged since: a run that
- * differs has changed what the simulation does on some tick, which is a question for the author,
- * not a number to re-record.
+ * Every run's outcome. Recorded on develop before #557 (1586dc42), and re-recorded once, with the
+ * author's yes, for the local stores (#306): a crew now owes its food train by train instead of
+ * the whole fleet slowing in a famine, so the unfed trains here run at full speed for their first
+ * day and carry `owed` in their saved state. A run that differs has changed what the simulation
+ * does on some tick, which is a question for the author, not a number to re-record.
  */
 const GOLDEN: Record<string, Outcome> = {
   'refuge 3': {
-    digest: '53ea320aa4426929',
-    quarters: ['928a0c7da8', '088ebd9dc3', '2aa1335a0a', '53ea320aa4'],
+    digest: 'c01d3611251b83a7',
+    quarters: ['ba97373ffe', '1490beddf6', '354b2c5923', 'c01d361125'],
     summary:
       '{"passed":true,"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":2,"headOn":0,"waits":774},"firstRecovery":80,"cycles":{"first":0,"longest":81,"formed":2,"open":null},"trains":[[101,"noRoute",1,35.9],[102,"noRoute",0,24.7],[103,"noRoute",1,57.05]]}',
   },
   'refuge 4 pinned': {
-    digest: 'a47ea62d0281fd32',
-    quarters: ['5c020408e3', 'b1e6828b15', '5cb74d8996', 'a47ea62d02'],
+    digest: '3febb6196946afcf',
+    quarters: ['86d9ef05cc', 'bd6ab4fb9f', 'c3aeb86a15', '3febb61969'],
     summary:
       '{"passed":true,"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":2,"headOn":0,"waits":1269},"firstRecovery":80,"cycles":{"first":0,"longest":81,"formed":2,"open":null},"trains":[[101,"noRoute",1,41.8],[102,"noRoute",0,24.7],[103,"noRoute",1,62.95],[104,"noRoute",0,30.6]]}',
   },
   'refuge 8': {
-    digest: '9df192d05a297629',
-    quarters: ['af9918765f', '03431b9a60', '6b2fb1b1e0', '9df192d05a'],
+    digest: '543466583562f3f6',
+    quarters: ['181d764348', '4b608b3d29', 'a1da614d63', '5434665835'],
     summary:
       '{"passed":true,"counters":{"stuck":1,"deadlocks":0,"overlaps":0,"yields":2,"headOn":0,"waits":5666},"firstRecovery":80,"cycles":{"first":0,"longest":81,"formed":2,"open":null},"trains":[[101,"noRoute",1,76.6],[102,"noRoute",1,97.55],[103,"noRoute",0,33.15],[104,"noRoute",0,37.5],[105,"noRoute",0,43.4],[106,"noRoute",0,49.3],[107,"noRoute",0,55.2],[108,"noRoute",0,61.1]]}',
   },
   'lines none': {
-    digest: '7a4b9757fb2f791a',
-    quarters: ['b8cad9c9ab', '48f14c3eac', '2ef700ba45', '7a4b9757fb'],
+    digest: '4245f478be971ff3',
+    quarters: ['a6844eb0a1', '7777d56506', 'f91a69a6a8', '4245f478be'],
     summary:
-      '{"trains":4,"refused":["8:2","15:2"],"states":{"moving":2,"yielding":2},"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":2,"headOn":0,"waits":876},"signals":0,"crossings":4,"run":121}',
+      '{"trains":4,"refused":["8:2","15:2"],"states":{"moving":2,"yielding":2},"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":2,"headOn":0,"waits":780},"signals":0,"crossings":4,"run":141}',
   },
   'lines auto': {
-    digest: 'f467d8a665171115',
-    quarters: ['b8cad9c9ab', 'd118e31954', '1bc5ff5e41', 'f467d8a665'],
+    digest: '5e4ff08a9d4b1b0c',
+    quarters: ['a6844eb0a1', '1d3e1e8f0d', 'bacbff04dd', '5e4ff08a9d'],
     summary:
-      '{"trains":4,"refused":["8:2","15:2"],"states":{"yielding":2,"moving":2},"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":4,"headOn":0,"waits":657},"signals":12,"crossings":4,"run":124}',
+      '{"trains":4,"refused":["8:2","15:2"],"states":{"yielding":2,"moving":2},"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":4,"headOn":0,"waits":535},"signals":12,"crossings":4,"run":140}',
   },
   'lines token': {
-    digest: '0c68bd60053d2215',
-    quarters: ['2a51e9da81', '5d0bc93159', 'cbf55ddb41', '0c68bd6005'],
+    digest: '79769ccff8b10067',
+    quarters: ['6ad82fe547', '4402549045', 'a014b626ef', '79769ccff8'],
     summary:
-      '{"trains":4,"refused":["8:2","15:2"],"states":{"moving":2,"yielding":2},"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":2,"headOn":0,"waits":876},"signals":12,"crossings":4,"run":121}',
+      '{"trains":4,"refused":["8:2","15:2"],"states":{"moving":2,"yielding":2},"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":2,"headOn":0,"waits":780},"signals":12,"crossings":4,"run":141}',
   },
   'lines absolute_block': {
-    digest: '8376ce35337ea432',
-    quarters: ['4ac768c506', '4645a0e973', '6194332edc', '8376ce3533'],
+    digest: '21eae0eed8003171',
+    quarters: ['7e0b518345', 'c792c54acf', '4256c8ad49', '21eae0eed8'],
     summary:
-      '{"trains":4,"refused":["8:2","15:2"],"states":{"yielding":2,"moving":2},"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":4,"headOn":0,"waits":418},"signals":12,"crossings":4,"run":127}',
+      '{"trains":4,"refused":["8:2","15:2"],"states":{"yielding":2,"moving":2},"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":4,"headOn":0,"waits":375},"signals":12,"crossings":4,"run":142}',
   },
   'lines ctc': {
-    digest: '03764a5347078d0a',
-    quarters: ['239143b60e', 'a46213c26d', 'cbd95d2303', '03764a5347'],
+    digest: 'fd670b77dfb11e08',
+    quarters: ['f63583d754', '6d582ad898', 'ceae147464', 'fd670b77df'],
     summary:
-      '{"trains":4,"refused":["8:2","15:2"],"states":{"yielding":2,"moving":2},"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":4,"headOn":0,"waits":657},"signals":12,"crossings":4,"run":124}',
+      '{"trains":4,"refused":["8:2","15:2"],"states":{"yielding":2,"moving":2},"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":4,"headOn":0,"waits":535},"signals":12,"crossings":4,"run":141}',
   },
   'lines in_cab': {
-    digest: '8376ce35337ea432',
-    quarters: ['4ac768c506', '4645a0e973', '6194332edc', '8376ce3533'],
+    digest: '21eae0eed8003171',
+    quarters: ['7e0b518345', 'c792c54acf', '4256c8ad49', '21eae0eed8'],
     summary:
-      '{"trains":4,"refused":["8:2","15:2"],"states":{"yielding":2,"moving":2},"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":4,"headOn":0,"waits":418},"signals":12,"crossings":4,"run":127}',
+      '{"trains":4,"refused":["8:2","15:2"],"states":{"yielding":2,"moving":2},"counters":{"stuck":0,"deadlocks":0,"overlaps":0,"yields":4,"headOn":0,"waits":375},"signals":12,"crossings":4,"run":142}',
   },
   'disrupted lines': {
-    digest: 'e00787cb1fe5426d',
-    quarters: ['1af1fca183', '8d1e3fed48', 'f1187e67df', 'e00787cb1f'],
+    digest: 'f3e60c8c4e1da8da',
+    quarters: ['d2b19ba542', 'daf726a120', '92c2c252bf', 'f3e60c8c4e'],
     summary:
-      '{"trains":4,"refused":["8:2","15:2"],"states":{"yielding":2,"moving":2},"counters":{"stuck":0,"deadlocks":1,"overlaps":0,"yields":6,"headOn":0,"waits":595},"signals":12,"crossings":4,"run":116}',
+      '{"trains":4,"refused":["8:2","15:2"],"states":{"yielding":2,"moving":2},"counters":{"stuck":1,"deadlocks":0,"overlaps":0,"yields":5,"headOn":0,"waits":520},"signals":12,"crossings":4,"run":149}',
   },
 };
 

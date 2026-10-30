@@ -128,6 +128,9 @@ const PAST = {
     delete pump.standOn;
     delete pump.needsWater;
     pump.flavor = 'Pumps water for steam engines and the works. Fills water tanks completely.';
+    // the warehouse before the stores (#306)
+    defs.find((d) => d.id === 'warehouse')!.flavor =
+      'Local store: holds 1000 units per level of anything trains bring. Trains take goods out again; only a Depot feeds the stockpile.';
     return { levels: clone(PRE_92_STATION_LEVELS) as unknown as StationLevels, defs };
   },
   buildings: () => {

@@ -10,6 +10,7 @@ import type { SupplyMode } from './supply';
 import type { SignalLevel } from './signals';
 import type { PeopleJSON } from './people';
 import type { RoadJSON } from './roads';
+import type { StoreJSON } from './stores';
 import type { BuildingJSON } from './buildings';
 import type { ChunkStore, MapGenerator } from '../world/chunks';
 import { CHUNK_TILES } from './expand';
@@ -31,7 +32,7 @@ export type WorldSpec =
     }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 20;
+export const SAVE_VERSION = 21;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -97,8 +98,11 @@ export interface SaveParts {
   world: WorldSpec;
   /** v3: the rules the game was played with */
   rules: Partial<Rules>;
-  /** v4: global resources */
-  stockpile: unknown;
+  /**
+   * v21: the goods and famine of every store (`StoreRegistry.toJSON`); they replace the global
+   * stockpile (v4 to v20), which the step from v20 moves into the start depot
+   */
+  stores: StoreJSON[];
   /**
    * v4: processing buildings, as `buildingToJSON` writes them (v15: the upgrade under way; v16:
    * the rotation)
@@ -256,6 +260,14 @@ export interface Migration {
   /** what the step fills in with defaults, shown to the player */
   note: string;
   run(j: SaveGame): void;
+}
+/** The station kinds that were depots when the stores replaced the global stockpile (v21). */
+const V20_DEPOTS = new Set(['depot', 'narrow_depot']);
+/** The goods of an old stockpile or station: every amount that is a number. */
+function goodsOf(r: Record<string, unknown>): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(r).filter((e): e is [string, number] => typeof e[1] === 'number'),
+  );
 }
 /** Starter models version 13 added: John Bull took the Rocket's place, and narrow wagons arrived. */
 const V13_STARTERS: [id: string, kind: 'loco' | 'wagon', copies: number][] = [
@@ -585,6 +597,51 @@ export const MIGRATIONS: Migration[] = [
     note: 'no road had been built: the road list started empty',
     run: (j) => (j.roads = j.roads ?? []),
   },
+  {
+    from: 20,
+    note: 'the global stockpile moved into the start depot; each warehouse keeps its own goods',
+    run: (j) => {
+      const stores: StoreJSON[] = [];
+      /** Add `goods` to the store of `key`, made at the end of the list when it is not there yet. */
+      const put = (key: string, goods: Record<string, number>) => {
+        let s = stores.find((e) => e.key === key);
+        if (!s) stores.push((s = { key, amounts: {}, famine: false }));
+        for (const [id, n] of Object.entries(goods)) s.amounts[id] = (s.amounts[id] ?? 0) + n;
+      };
+      const stations = j.stations.filter((s) => isRecord(s) && typeof s.id === 'number');
+      const warehouses = stations.filter((s) => s.defId === 'warehouse');
+      const stock: unknown = j.stockpile;
+      if (isRecord(stock) && isRecord(stock.amounts)) {
+        const { power, ...goods } = goodsOf(stock.amounts);
+        // the start depot is the depot of the lowest id; with none, the first warehouse, else
+        // the first Townhouse's town; with no place at all the goods wait for the depot a load
+        // grants (`StoreRegistry.load`)
+        const depots = stations.filter((s) => V20_DEPOTS.has(s.defId)).map((s) => s.id);
+        const towns = Array.isArray(j.towns) ? j.towns.filter(isRecord) : [];
+        const town = stations
+          .filter((s) => s.defId === 'town')
+          .map((s) => towns.find((t) => t.stationId === s.id))
+          .find((t) => t !== undefined);
+        const key = depots.length
+          ? `st:${Math.min(...depots)}`
+          : warehouses.length
+            ? `st:${warehouses[0].id}`
+            : town
+              ? `town:${town.id}`
+              : 'unplaced';
+        // its famine stays behind: the eaters are at their own stores now, whose next meals say
+        // whether they starve (carried to a depot nobody eats at, it would only be told as ended)
+        put(key, goods);
+        put('grid', power === undefined ? {} : { power });
+      }
+      for (const w of warehouses) {
+        put(`st:${w.id}`, isRecord(w.storage) ? goodsOf(w.storage) : {});
+        w.storage = {};
+      }
+      j.stores = stores;
+      delete j.stockpile;
+    },
+  },
 ];
 /** Every field of `SaveParts`, once: leaving one out, or naming one it lacks, fails to compile. */
 const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
@@ -604,7 +661,7 @@ const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
   weather: true,
   world: true,
   rules: true,
-  stockpile: true,
+  stores: true,
   buildings: true,
   regions: true,
   seasonOffset: true,

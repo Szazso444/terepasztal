@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { simWorld, line, station, mapParams, SIM_WORLD_SEED, type SimWorld } from './simWorld';
+import { depotWith } from './storeFixtures';
 import { generateMap } from '../world/mapgen';
 import { Terrain, terrainAt } from '../world/tiles';
 import { railProfile } from '../world/railProfile';
@@ -50,27 +51,25 @@ function findSite(w: SimWorld): { x: number; y: number } | null {
 
 /**
  * The same build on any world: a depot at the site, a line from its east gate RUN tiles on, a
- * quarry holding 40 stone and a warehouse beside the line, coal and water in the stockpile for the
- * tanks, and one train of an Adler and a wood hopper of its own from fleet.create, running between
- * the quarry and the warehouse.
+ * quarry holding 40 stone and a warehouse beside the line, coal and water in the depot's store for
+ * the tanks, and one train of an Adler and a wood hopper of its own from fleet.create, running
+ * between the quarry and the warehouse.
  */
 function build(w: SimWorld) {
   const site = findSite(w);
   if (!site) throw new Error(`seed ${w.seed}: no site for the line`);
   const { x, y } = site;
-  station(w, 'depot', x, y);
+  const depot = depotWith(w, { coal: 400, water: 400 }, { x, y });
   line(w, x + 2, y, x + 2 + RUN);
   const quarry = station(w, 'quarry', x + 8, y - 1);
   const warehouse = station(w, 'warehouse', x + RUN, y - 1);
   quarry.store('stone', 40);
-  w.stock.add('coal', 400);
-  w.stock.add('water', 400);
   // the starter kit is narrow gauge: the regular line gets an Adler and a hopper of its own
   const loco = w.inventory.add('adler', 0);
   const hopper = w.inventory.add('wood_hopper', 0);
   const train = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
   if (typeof train === 'string') throw new Error(`seed ${w.seed}: fleet.create: ${train}`);
-  return { quarry, warehouse, train };
+  return { depot, quarry, warehouse, train };
 }
 
 /** `steps` calls of fleet.tick at SIM_STEP, the clock moving with them. */
@@ -100,12 +99,12 @@ function planeDiffs(a: SimWorld['map'], b: SimWorld['map']) {
 }
 const SAME_PLANES = { size: true, terrain: -1, biome: -1, variant: -1, props: true };
 
-/** What the run decides, as JSON: the trains, the stations, the stockpile and the economy. */
+/** What the run decides, as JSON: the trains, the stations, the stores and the economy. */
 function state(w: SimWorld) {
   return {
     fleet: JSON.stringify(w.fleet.trains.map((t) => t.toJSON())),
     stations: JSON.stringify(w.builder.stations.map((s) => s.toJSON())),
-    stock: JSON.stringify(w.stock.toJSON()),
+    stock: JSON.stringify(w.stores.toJSON()),
     economy: JSON.stringify(w.economy.toJSON()),
   };
 }
@@ -128,12 +127,12 @@ describe('simWorld from one seed', () => {
       for (const k of ['fleet', 'stations', 'stock', 'economy'] as const)
         expect(b.state[k], `seed ${seed}: ${k} JSON`).toBe(a.state[k]);
       // Not vacuous: the train left the depot, loaded at the quarry and unloaded at the warehouse,
-      // and its tanks were filled from the stockpile.
-      const { quarry, warehouse, train } = a.built;
+      // and its tanks were filled from the depot's store.
+      const { depot, quarry, warehouse, train } = a.built;
       expect(train.distance, `seed ${seed}: tiles run`).toBeGreaterThan(RUN - 8);
       expect(quarry.stored('stone'), `seed ${seed}: stone left at the quarry`).toBeLessThan(40);
       expect(warehouse.stored('stone'), `seed ${seed}: stone at the warehouse`).toBeGreaterThan(0);
-      expect(a.w.stock.get('coal'), `seed ${seed}: coal left`).toBeLessThan(400);
+      expect(depot.get('coal'), `seed ${seed}: coal left`).toBeLessThan(400);
     },
     20_000,
   );
@@ -279,9 +278,8 @@ describe('simWorld wiring', () => {
     expect(w.fleet.railBeds).toEqual(beds());
     line(w, 5, 30, 20);
     expect(w.fleet.railBeds).toEqual(beds());
-    expect(w.fleet.stockCap('stone')).toBe(
-      w.stock.cap('stone', w.builder.depotCount(), w.builder.plantCount()),
-    );
+    // the trains fill up from the world's stores
+    expect(w.fleet.builder.stores).toBe(w.stores);
   });
 
   it("gives a placed station its season's and biome's production", () => {

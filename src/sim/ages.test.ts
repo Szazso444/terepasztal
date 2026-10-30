@@ -22,10 +22,10 @@ import {
 } from './ages';
 import { Economy } from './economy';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { resetStationIds } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
 import { ContractBoard, type Contract } from './contracts';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -277,7 +277,13 @@ describe('the ages table', () => {
 function world() {
   const map = emptyMap(4242, 96, 96, Terrain.Grass),
     track = new TrackGraph(96, 96);
-  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  const builder = new Builder(
+    map,
+    new RegionState(map),
+    track,
+    new Economy(),
+    storeWith({}).stores,
+  );
   builder.free = true;
   for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
   for (const [x, id] of [

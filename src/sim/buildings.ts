@@ -1,5 +1,5 @@
 import { content, type BuildingDef, type Cost } from '../data/content';
-import type { Stockpile } from './stockpile';
+import type { ResourceStore } from './stores';
 import { rules, weekSeconds } from './rules';
 import { MAX_LEVEL, levelCap } from './levels';
 import { workFromJSON, workToJSON, type Work } from './upgrade';
@@ -167,24 +167,39 @@ export function buildingToLevel(b: Building): LevelBuilding {
 export function buildingFromLevel([x, y, id, rot]: LevelBuilding): Building {
   return { id, x, y, acc: 0, active: false, rate: 0, rot: wrapRotation(rot) };
 }
-/** Which primary input is short, if any. */
-export function missingInput(def: BuildingDef, stock: Stockpile): string | null {
-  for (const [k, v] of Object.entries(def.recipe.in)) if (stock.get(k) < v) return k;
+/** Which primary input is short at the store, if any; with no store, the first input. */
+export function missingInput(
+  def: BuildingDef,
+  store: Pick<ResourceStore, 'get'> | null,
+): string | null {
+  for (const [k, v] of Object.entries(def.recipe.in)) if (!store || store.get(k) < v) return k;
   return null;
 }
 
 /**
- * Run every building's recipe against the stockpile. Inputs are consumed continuously; when the
- * primary inputs run short the alternative input set is tried (power plants burn oil instead of coal).
- * A building being upgraded is skipped: it takes nothing in and makes nothing.
+ * Whether a works moves any good but power, in or out: one that does needs a store to run
+ * (`StoreRegistry.worksStore`); one that does not (a hydro plant, a bridge) runs on the grid.
+ */
+export function needsStore(b: Building): boolean {
+  const def = buildingDef(b.id);
+  const r = buildingRecipe(b);
+  return [r.in, r.out, def.altIn ?? {}].some((c) => Object.keys(c).some((k) => k !== 'power'));
+}
+
+/** What a works makes while the crews at its store starve (the step's `FAMINE_PRODUCTION_MUL`). */
+const FAMINE_MUL = 0.5;
+
+/**
+ * Run every building's recipe against its store (`storeOf`; the game's is
+ * `StoreRegistry.worksStore`). Inputs are consumed continuously; when the primary inputs run
+ * short the alternative input set is tried (power plants burn oil instead of coal). A works with no
+ * store does not run, and one whose store is in famine runs at half its rate. A building being
+ * upgraded is skipped: it takes nothing in and makes nothing.
  */
 export function tickBuildings(
   buildings: Iterable<Building>,
-  stock: Stockpile,
+  storeOf: (b: Building) => ResourceStore | null,
   gameDt: number,
-  famine: boolean,
-  plants: number,
-  depots: number,
 ) {
   for (const b of buildings) {
     if (b.work) {
@@ -194,38 +209,26 @@ export function tickBuildings(
       b.rate *= 0.95;
       continue;
     }
+    const store = storeOf(b);
     const def = buildingDef(b.id);
     const recipe = buildingRecipe(b);
-    const rate = buildingRate(b);
-    const batches = ((rate * (famine ? 0.5 : 1) * rules.productionMul) / weekSeconds()) * gameDt;
-    // can the next batch run at all? (inputs on hand, room for the output)
-    const outOk = Object.entries(recipe.out).every(
-      ([k, v]) => stock.get(k) + v <= stock.cap(k, depots, plants) + 1e-6,
-    );
-    const inputs = stock.canAfford(recipe.in)
-      ? recipe.in
-      : def.altIn && stock.canAfford(def.altIn)
-        ? def.altIn
-        : null;
-    const running = outOk && !!inputs;
-    b.reason = running ? '' : !outOk ? 'full' : 'inputs';
+    const rate = buildingRate(b) * (store?.famine ? FAMINE_MUL : 1) * rules.productionMul;
+    const batches = (rate / weekSeconds()) * gameDt;
+    const room = (st: ResourceStore) =>
+      Object.entries(recipe.out).every(([k, v]) => st.get(k) + v <= st.cap(k) + 1e-6);
+    const inputsAt = (st: ResourceStore): Cost | null =>
+      st.canAfford(recipe.in) ? recipe.in : def.altIn && st.canAfford(def.altIn) ? def.altIn : null;
+    // can the next batch run at all? (a store, room for the output, inputs on hand)
+    const outOk = !!store && room(store);
+    const running = !!store && outOk && !!inputsAt(store);
+    b.reason = running ? '' : store && !outOk ? 'full' : 'inputs';
     if (running) b.acc += batches;
-    while (b.acc >= 1) {
-      const pick: Cost | null = stock.canAfford(recipe.in)
-        ? recipe.in
-        : def.altIn && stock.canAfford(def.altIn)
-          ? def.altIn
-          : null;
-      if (
-        !pick ||
-        !Object.entries(recipe.out).every(
-          ([k, v]) => stock.get(k) + v <= stock.cap(k, depots, plants) + 1e-6,
-        )
-      )
-        break;
-      stock.spend(pick);
+    while (store && b.acc >= 1) {
+      const pick = inputsAt(store);
+      if (!pick || !room(store)) break;
+      store.spend(pick);
       for (const [k, v] of Object.entries(recipe.out)) {
-        stock.add(k, v, stock.cap(k, depots, plants));
+        store.add(k, v);
         b.made = b.made ?? {};
         b.made[k] = (b.made[k] ?? 0) + v;
       }
@@ -234,7 +237,7 @@ export function tickBuildings(
     if (b.acc > 1) b.acc = 1;
     b.active = running;
     // smoothed batches/week estimate for the UI
-    b.rate = b.rate * 0.95 + (running ? rate * (famine ? 0.5 : 1) * rules.productionMul : 0) * 0.05;
+    b.rate = b.rate * 0.95 + (running ? rate : 0) * 0.05;
   }
 }
 

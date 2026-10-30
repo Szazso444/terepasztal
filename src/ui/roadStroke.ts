@@ -1,12 +1,12 @@
 import type { Cost } from '../data/content';
 import type { Builder, PlacementCheck } from '../sim/build';
-import { fmtCost } from '../sim/stockpile';
+import { fmtCost } from '../sim/stores';
 import { STR } from '../strings';
 
 /**
  * The road tool's drag (#328), DOM-free: the tiles a stroke covers, and what its release comes to,
- * judged tile by tile in the order the release lays them (`Builder.placeRoad`, one tile after
- * another). The rules are the builder's (`checkRoad`) and the roads' (`Roads.trackRefusal`); this
+ * judged tile by tile in the order the release lays them (`Builder.placeRoads`, one tile after
+ * another, the whole stroke paid by the store that pays it from its first tile). The rules are the builder's (`checkRoad`) and the roads' (`Roads.trackRefusal`); this
  * module only adds them up. The free spur the game lays to a street door after a tile (#408) is not
  * part of the stroke, nor of its price.
  */
@@ -55,7 +55,7 @@ export interface RoadStrokeCheck {
   reasons: string[];
 }
 
-/** What a stroke is judged by: the builder's rules and the stock (`builderJudge`). */
+/** What a stroke is judged by: the builder's rules and its stores (`builderJudge`). */
 export interface StrokeJudge {
   /** a road lies on the tile already */
   has(t: Tile): boolean;
@@ -63,9 +63,9 @@ export interface StrokeJudge {
   check(t: Tile): PlacementCheck;
   /** `t` is laid: the tiles after it are checked with its road there */
   lay(t: Tile): void;
-  /** the stock pays `total` */
+  /** a store pays `total` */
   canPay(total: Cost): boolean;
-  /** why the stock does not pay `total` */
+  /** why no store pays `total` */
   short(total: Cost): string;
 }
 
@@ -127,18 +127,20 @@ export function judgeStroke(tiles: readonly Tile[], judge: StrokeJudge): RoadStr
  * (`Roads.trackRefusal`) once more on a copy of the roads that holds the stroke's tiles laid before
  * it, as the builder judges a spur (`Builder.laySpur`): a stroke that runs along a line of track
  * makes one crossing on it, and its release refuses the next tile of that line, which this shows.
- * A tile `checkRoad` refuses only for its price (the stock is short of even that one tile) passes
- * here with that price, so `judgeStroke` says what the whole stroke is short of.
+ * A tile `checkRoad` refuses only for its price (no store in reach of it holds even that one tile)
+ * passes here with that price: the stroke pays from its first tile, `from`, and the store that
+ * pays the stroke so far from there (`Builder.affordable`) pays all of it, as `placeRoads` lays
+ * it, so `judgeStroke` says what the whole stroke is short of.
  */
-export function builderJudge(builder: Builder): StrokeJudge {
+export function builderJudge(builder: Builder, from: Tile): StrokeJudge {
   const tried = builder.roads.copy();
   return {
     has: (t) => builder.roads.has(t.x, t.y),
     check: (t) => {
       const c = builder.checkRoad(t.x, t.y);
       // the rules take the tile when only its price refuses it: a refusal of the rules carries no
-      // price, which any stock pays
-      const rulesTake = c.ok || !builder.stock.canAfford(c.cost);
+      // price, which any store pays
+      const rulesTake = c.ok || Object.keys(c.cost).length > 0;
       if (!rulesTake) return c;
       const why = tried.trackRefusal(t.x, t.y);
       return why ? { ok: false, cost: {}, reason: why } : { ok: true, cost: c.cost };
@@ -146,8 +148,8 @@ export function builderJudge(builder: Builder): StrokeJudge {
     lay: (t) => {
       tried.add(t.x, t.y);
     },
-    canPay: (total) => builder.stock.canAfford(total),
-    short: (total) => STR.build.needResources(fmtCost(builder.stock.missing(total))),
+    canPay: (total) => builder.affordable(total, from.x, from.y).ok,
+    short: (total) => builder.affordable(total, from.x, from.y).reason ?? '',
   };
 }
 

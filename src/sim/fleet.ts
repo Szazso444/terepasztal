@@ -32,13 +32,13 @@ import type { Inventory } from '../gacha/inventory';
 import { wagonDef, locoDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
 import { DIR_DX, DIR_DY, DIRS, type Dir } from '../engine/iso';
 import type { Economy } from './economy';
-import type { Stockpile } from './stockpile';
+import { previewOf, type ResourceStore } from './stores';
 import { cargoDef } from './cargo';
 import type { Station } from './stations';
 import { sfx } from '../engine/audio';
 import { STR } from '../strings';
 import { biomeDef, biomeAt } from './biomes';
-import { rules, daySeconds } from './rules';
+import { daySeconds } from './rules';
 import { Traffic } from './traffic';
 import { Junctions } from './junctions';
 import { Signals, HEADWAY } from './signals';
@@ -70,7 +70,6 @@ export class Fleet {
   gridFactor: (x: number, y: number) => number = () => 1;
   gridDraw: (x: number, y: number, u: number) => void = () => {};
   gridBegin: () => void = () => {};
-  stockCap: (id: string) => number = () => Infinity;
   /** a train entered or left service */
   onChanged: (() => void) | null = null;
 
@@ -80,7 +79,6 @@ export class Fleet {
     readonly map: GameMap,
     readonly inventory: Inventory,
     readonly economy: Economy,
-    readonly stock: Stockpile,
   ) {
     this.traffic = new Traffic(track, builder);
     this.signals = new Signals(track);
@@ -88,26 +86,56 @@ export class Fleet {
     this.traffic.junctionReport = () => this.junctions.report();
   }
 
+  /**
+   * The store that supplies the tile the train's head stands on (`StoreRegistry.supplierFor`):
+   * where an emergency delivery comes from, and its tanks go back to on a recall.
+   */
+  supplierOf(t: Train): ResourceStore | null {
+    const head = t.headTile;
+    return head ? this.builder.stores.supplierFor(head.x, head.y) : null;
+  }
+  /**
+   * Emergency refuel: carts bring every tank full from the train's supplier (`supplierOf`), the
+   * battery from the grid, at twice the materials; the crew settles what it owes there. With no
+   * supplier only the battery charges. Returns what was taken.
+   */
+  emergencyRefuel(t: Train): Record<string, number> {
+    const store = this.supplierOf(t);
+    const grid = this.builder.stores.grid;
+    if (!store) return t.refuel(grid, { fuel: true, water: false }, 2);
+    return t.fillUp(store, grid, { fuel: true, water: true }, 2);
+  }
+  /**
+   * Emergency refuel for every train of the group, or for none: each fills from its own supplier
+   * (`emergencyRefuel`), and it is done only when, tried out on copies of the stores first, every
+   * one of them would be full.
+   */
   refuelAll(trains: Train[]) {
     const valid = [...new Set(trains)].filter((t) => this.trains.includes(t));
-    const preview = new (this.stock.constructor as typeof Stockpile)();
-    preview.amounts = new Map(this.stock.amounts);
-    const clones = valid.map((t) => {
+    // trains that share a supplier, or a rail network of stores, draw on one copy of it
+    const copies = new Map<ResourceStore, ResourceStore>();
+    const copyOf = (r: ResourceStore) => {
+      const whole = this.builder.stores.networkPool(r);
+      let c = copies.get(whole);
+      if (!c) copies.set(whole, (c = previewOf(whole)));
+      return c;
+    };
+    const grid = copyOf(this.builder.stores.grid);
+    for (const t of valid) {
+      const store = this.supplierOf(t);
       const c = Object.create(Object.getPrototypeOf(t)) as Train;
       Object.assign(c, t);
-      return c;
-    });
-    for (const t of clones) {
-      t.refuel(preview, { fuel: true, water: true }, 2);
+      if (store) c.refuel(copyOf(store), { fuel: true, water: true }, 2);
+      c.refuel(grid, { fuel: true, water: false }, 2);
       if (
-        t.coal < t.coalCap - 1e-6 ||
-        t.oil < t.oilCap - 1e-6 ||
-        t.water < t.waterCap - 1e-6 ||
-        t.battery < t.batteryCap - 1e-6
+        c.coal < c.coalCap - 1e-6 ||
+        c.oil < c.oilCap - 1e-6 ||
+        c.water < c.waterCap - 1e-6 ||
+        c.battery < c.batteryCap - 1e-6
       )
         return false;
     }
-    for (const t of valid) t.refuel(this.stock, { fuel: true, water: true }, 2);
+    for (const t of valid) this.emergencyRefuel(t);
     return true;
   }
   byId(id: number) {
@@ -482,8 +510,9 @@ export class Fleet {
     for (const l of locoItems) l!.assigned = t.id;
     for (const w of wagons) w!.assigned = t.id;
     this.trains.push(t);
-    // tanks start with whatever the stockpile can spare
-    t.refuel(this.stock, { fuel: true, water: true });
+    // tanks start with whatever the depot's store can spare
+    const dock = this.builder.stores.dockOf(depot);
+    if (dock) t.fillUp(dock, this.builder.stores.grid, { fuel: true, water: true });
     sfx('train.dispatch');
     this.rebuildOccupancy();
     if (t.dispatch(this.track, this.builder, this.map)) t.onPathReady(this.ctx(0, 1));
@@ -558,7 +587,10 @@ export class Fleet {
     t.idle();
   }
 
-  /** Remove a train; cargo aboard is salvaged at 40 % of base price, tank contents return to the stockpile. */
+  /**
+   * Remove a train; cargo aboard is salvaged at 40 % of base price, tank contents go to
+   * `drainStore` (the battery to the grid).
+   */
   recall(t: Train): number {
     t.recall();
     let salvage = 0;
@@ -566,7 +598,7 @@ export class Fleet {
       if (w.cargo && w.amount > 0) salvage += w.amount * cargoDef(w.cargo).price * 0.4;
     salvage = Math.round(salvage);
     if (salvage > 0) this.economy.earn(salvage);
-    t.drainTo(this.stock);
+    t.drainTo(this.drainStore(t), this.builder.stores.grid);
     const i = this.trains.indexOf(t);
     if (i >= 0) this.trains.splice(i, 1);
     for (const it of this.inventory.items) if (it.assigned === t.id) it.assigned = null;
@@ -574,6 +606,20 @@ export class Fleet {
     // its tiles are free at once: a train built right after (clock paused) must see the gate clear
     this.rebuildOccupancy();
     return salvage;
+  }
+
+  /**
+   * Where a recalled train's tanks go: the store that supplies the tile of its head (or of the
+   * station it stands at), else the nearest store at all; with no place on the map, the first
+   * depot's store.
+   */
+  private drainStore(t: Train): ResourceStore | null {
+    const stores = this.builder.stores;
+    const at = t.headTile ?? t.atStation;
+    if (at)
+      return stores.supplierFor(at.x, at.y) ?? stores.nearest(at.x, at.y, Infinity)[0] ?? null;
+    const depot = this.builder.stations.find((s) => s.def.depot);
+    return depot ? stores.dockOf(depot) : null;
   }
 
   /** Token working: a plain section may hold one train; another must wait outside it. */
@@ -625,8 +671,7 @@ export class Fleet {
       occupants: (x, y) => this.occ.get(y * this.map.w + x) ?? [],
       now,
       speedFactor,
-      stockpile: this.stock,
-      stockCap: (id) => this.stockCap(id),
+      stores: this.builder.stores,
       powered: (x, y) => this.powered(x, y),
       supplyAt: (x, y) => this.supplyAt(x, y),
       gridFactor: (x, y) => this.gridFactor(x, y),
@@ -699,15 +744,13 @@ export class Fleet {
   /**
    * Stops chosen on the fly. With cargo aboard: a contract's destination, else a town for
    * passengers, else where the goods go, after a top-up at another producer while room is left
-   * and the dump is not nearer. Goods taken from a warehouse go to the nearest depot (the only
-   * way into the stockpile), a warehouse with room only when no depot is reachable; goods taken
-   * only at producers go to the nearest warehouse with room that they did not come from, or to a
-   * depot when that is clearly nearer. Empty, a freight train picks the producer or warehouse with
-   * the biggest load waiting, weighed against the way there and on to where it would go, the time
-   * since a train last loaded there and how full the station is, producer and warehouse alike. A
-   * warehouse is a candidate only once it holds `rules.collectMin` of something the train can
-   * haul. Stations other free-roaming trains are bound for are skipped, and so are stations the
-   * tanks could not reach and leave again.
+   * and the dump is not nearer. Goods go to the nearest store with room for them (a depot, a
+   * warehouse or a Townhouse) that they did not come from. Empty, a freight train picks the
+   * producer with the biggest load waiting in its own pile (`Station.pickupPile`: never a store,
+   * nor a harvester whose goods go to its town's), weighed against the way there and on to where
+   * it would go, the time since a train last loaded there and how full the station is. Stations
+   * other free-roaming trains are bound for are skipped, and so are stations the tanks could not
+   * reach and leave again.
    */
   chooseNext(t: Train): number | null {
     const head = t.poses[0] ?? { x: 0, y: 0 };
@@ -722,8 +765,7 @@ export class Fleet {
       if (!plat.length) return false;
       return !reach || plat.some((p) => reach.has(p.y * this.map.w + p.x));
     });
-    const depots = withPlat.filter((s) => s.def.pool);
-    const warehouses = withPlat.filter((s) => s.def.stockpile);
+    const stores = withPlat.filter((s) => s.isStore);
     const fuelPoints = withPlat.filter((s) => s.refuelsFuel && s.refuelsWater);
     const range = t.rangeTiles;
     const now = this.clockTime;
@@ -735,43 +777,22 @@ export class Fleet {
       const onward = f ? between(f, s) : 0;
       return (dist(s) + onward) * 1.3 + 4 <= range;
     };
-    // where a load of goods goes, never back into a store it came from (`origins`): goods taken
-    // from a warehouse (`fromStore`) go to a depot, and to a warehouse with room only when no
-    // depot is reachable; goods taken only at producers go to a warehouse with room (a depot when
-    // that is clearly nearer)
+    // where a load of goods goes: the nearest store with room for some of it (the cap is per
+    // kind), never back to a station it came from (`origins`)
     const origins = new Set(t.wagons.map((w) => w.origin).filter((o): o is number => o !== null));
-    const isStore = (id: number | null) =>
-      id !== null && !!this.builder.stationById(id)?.def.stockpile;
     const dumpFor = (
       from: { x: number; y: number },
       loadUnits: number,
-      fromStore: boolean,
+      cargos: readonly string[],
       not: ReadonlySet<number>,
-    ) => {
-      const okDepots = depots.filter(ok);
-      if (t.mode === 'freight' && !fromStore) {
-        const roomy = warehouses.filter(
-          (s) => ok(s) && !not.has(s.id) && s.room >= Math.min(loadUnits, 5),
-        );
-        const w = this.nearest(roomy, from);
-        const d = this.nearest(okDepots, from);
-        if (
-          w &&
-          (!d ||
-            between(w, { cx: from.x, cy: from.y } as Station) <=
-              between(d, { cx: from.x, cy: from.y } as Station) * 1.5)
-        )
-          return w;
-        return d ?? w ?? null;
-      }
-      return (
-        this.nearest(okDepots, from) ??
-        this.nearest(
-          warehouses.filter((s) => ok(s) && !not.has(s.id) && s.room > 1),
-          from,
-        )
+    ) =>
+      this.nearest(
+        stores.filter(
+          (s) =>
+            ok(s) && !not.has(s.id) && cargos.some((c) => s.roomFor(c) >= Math.min(loadUnits, 5)),
+        ),
+        from,
       );
-    };
     const taken = this.dynamicTargets(t.id);
     const trainCap = t.wagons.reduce((a, w) => a + w.def.capacity * levelMul(w.level), 0) || 1;
     const loaded = t.wagons.filter((w) => w.cargo && w.amount > 0);
@@ -798,12 +819,12 @@ export class Fleet {
       const dump = dumpFor(
         head,
         units,
-        loaded.some((w) => isStore(w.origin)),
+        loaded.map((w) => w.cargo!),
         origins,
       );
       // room left for the kinds already aboard (and empty wagons): top up at another producer
-      // before dumping, unless a dump is nearer or lies on the way there. A warehouse is no
-      // place to top up: the train would unload its load into it first
+      // before dumping, unless a dump is nearer or lies on the way there. A store is no place to
+      // top up: it is no pickup
       const kinds = new Set(loaded.map((w) => w.cargo!));
       const spare = Math.max(0, t.power - t.weight);
       let room = 0;
@@ -816,8 +837,7 @@ export class Fleet {
       if (roomFrac > 0.15 && spare > 1) {
         let best: { s: Station; score: number } | null = null;
         for (const s of withPlat) {
-          if (s.def.pool || !ok(s) || taken.has(s.id) || !reachable(s)) continue;
-          if (s.def.stockpile) continue;
+          if (!s.pickupPile || !ok(s) || taken.has(s.id) || !reachable(s)) continue;
           let top = 0;
           for (const c of kinds) {
             if (!s.availableCargo().includes(c)) continue;
@@ -852,8 +872,8 @@ export class Fleet {
         // distance counts at half weight and a town left alone climbs in priority
         score = ((waiting + 0.5) * this.neglect(s.id, now)) / (10 + 0.5 * dist(s));
       } else {
-        // a producer, or a warehouse once a pile in it is worth the trip
-        const store = !!s.def.stockpile;
+        // a producer's own pile: a store's goods are never picked up
+        if (!s.pickupPile) continue;
         let haul = 0;
         const spare = Math.max(0, t.power - t.weight);
         for (const c of s.availableCargo()) {
@@ -862,20 +882,18 @@ export class Fleet {
           const cap = Math.min(Fleet.capacityFor(t, c), spare / cargoDef(c).weight);
           if (cap < 1) continue;
           const stored = s.stored(c);
-          // a warehouse lets its piles accumulate: nothing below the pickup amount
-          if (store && stored < rules.collectMin) continue;
           haul = Math.max(haul, Math.min(cap, stored) + 0.25 * stored);
         }
         // a producer that is filling up counts even before the pile is big
-        if (!store && haul > 0 && haul < trainCap * 0.15 && s.productionPerWeek > 0)
-          haul = Math.max(haul, Math.min(trainCap, s.totalStored()) + 0.25 * s.totalStored());
+        if (haul > 0 && haul < trainCap * 0.15 && s.productionPerWeek > 0)
+          haul = Math.max(haul, Math.min(trainCap, s.fullest()) + 0.25 * s.fullest());
         if (haul < Math.min(trainCap * 0.15, 8)) continue;
-        const dump = dumpFor({ x: s.cx, y: s.cy }, haul, store, new Set([s.id]));
+        const dump = dumpFor({ x: s.cx, y: s.cy }, haul, s.availableCargo(), new Set([s.id]));
         const onward = dump ? between(dump, s) : 0;
-        // fuller stations first, producer and warehouse alike: a producer near its cap is
-        // throwing output away; distance counts at half weight so a full pile far away beats a
-        // thin one next door; stations left alone climb in priority
-        const fill = s.totalStored() / Math.max(1, s.capacity);
+        // fuller stations first: a producer near its cap is throwing output away; distance counts
+        // at half weight so a full pile far away beats a thin one next door; stations left alone
+        // climb in priority
+        const fill = s.fill();
         const pressure = 1 + fill + (fill >= 0.8 ? 1 : 0);
         score =
           (pressure * this.neglect(s.id, now) * haul) / trainCap / (12 + 0.5 * (dist(s) + onward));

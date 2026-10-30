@@ -151,9 +151,11 @@ function findSite(w: SimWorld): { x: number; y: number } {
  */
 function build(w: SimWorld) {
   const { x, y } = findSite(w);
-  for (const [id, n] of Object.entries(startStock()))
-    w.stock.add(id, Math.round(n * rules.startStock));
   const depot = station(w, 'depot', x, y);
+  // the start stock in the depot's store, where the train fills its tanks
+  const store = w.stores.byKey(`st:${depot.id}`)!;
+  for (const [id, n] of Object.entries(startStock()))
+    store.amounts.set(id, Math.round(n * rules.startStock));
   line(w, x + 2, y, x + 20);
   const quarry = station(w, 'quarry', x + 8, y - 1);
   const warehouse = station(w, 'warehouse', x + 18, y - 1);
@@ -170,7 +172,8 @@ function build(w: SimWorld) {
   const train = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
   if (typeof train === 'string') throw new Error(`seed ${w.seed}: fleet.create: ${train}`);
   w.economy.setAge(1);
-  for (const [id, n] of Object.entries(quarry.upgradeCost())) w.stock.add(id, n);
+  // the depot pays for the upgrade
+  for (const [id, n] of Object.entries(quarry.upgradeCost())) store.add(id, n);
   w.economy.money += 1e5;
   if (!w.builder.upgradeStation(quarry)) throw new Error(`seed ${w.seed}: no upgrade`);
   if (!quarry.work) throw new Error(`seed ${w.seed}: the upgrade took no time`);
@@ -204,7 +207,7 @@ function partsOf(w: SimWorld, step: SimStep, camera: SaveParts['camera']): SaveP
     world: { kind: 'generated', seed: w.seed, params: mapParams(w.map.w) },
     supply: supplyMode(),
     rules: { ...rules },
-    stockpile: w.stock.toJSON(),
+    stores: w.stores.toJSON(),
     regions: w.regions.toJSON(),
     seasonOffset: getSeasonOffset(),
     towns: w.towns.toJSON(),
@@ -216,12 +219,11 @@ function partsOf(w: SimWorld, step: SimStep, camera: SaveParts['camera']): SaveP
   };
 }
 
-/** Play mode with the weather setting as given and Game's storage cap. */
+/** Play mode with the weather setting as given. */
 function context(w: SimWorld, weather: boolean): StepContext {
   return {
     mode: 'play',
     weather,
-    stockCap: (id) => w.stock.cap(id, w.builder.depotCount(), w.builder.plantCount()),
   };
 }
 

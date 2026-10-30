@@ -12,11 +12,11 @@ import { findPath, type PathSegment } from '../world/pathfinding';
 import { Dir } from '../engine/iso';
 import { content } from '../data/content';
 import { Builder } from '../sim/build';
-import { Stockpile } from '../sim/stockpile';
 import { Economy } from '../sim/economy';
 import { Fleet } from '../sim/fleet';
 import { Train, type TrainState } from '../sim/trains';
 import { Inventory } from '../gacha/inventory';
+import { storeWith } from './storeFixtures';
 
 /** Side of the square grass map: the default `rules.mapSize`, room for the line at x 125. */
 export const SCENARIO_MAP_SIZE = 160;
@@ -109,11 +109,10 @@ export interface TrafficScenario {
 export function buildTrafficScenario(count = 3, pinned = false): TrafficScenario {
   const map = emptyMap(4242, SCENARIO_MAP_SIZE, SCENARIO_MAP_SIZE, Terrain.Grass);
   const track = new TrackGraph(SCENARIO_MAP_SIZE, SCENARIO_MAP_SIZE);
-  const stock = new Stockpile();
   const economy = new Economy();
-  const builder = new Builder(map, new RegionState(map), track, economy, stock);
+  const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+  const fleet = new Fleet(track, builder, map, new Inventory(), economy);
 
   const y = SCENARIO_ROW;
   for (let x = 20; x <= 125; x++) track.place(x, y, 'straight', 1);

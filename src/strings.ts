@@ -25,7 +25,6 @@ export const STR = {
     /** the prompt that ends the loading: the click starts the fade, the reveal and the music */
     begin: 'Click to begin',
     tips: [
-      'Only cargo unloaded at a Depot reaches your stockpile.',
       'Crews eat wheat every day. Run out and production halves and trains slow.',
       'Space pauses the game, and 1, 2 and 3 set the speed.',
       'M switches between the field view and the overview map.',
@@ -416,6 +415,11 @@ export const STR = {
     roadNotLaid: (tiles: number, reasons: readonly string[]) =>
       `${tiles} ${tiles === 1 ? 'tile' : 'tiles'} not laid: ${reasons.join(' · ')}`,
     needResources: (m: string) => `Need ${m}`,
+    /** building: no store within the reach holds the cost; `missing` is the nearest one's shortfall */
+    noStoreInReach: (range: number, missing: string) =>
+      `No store within ${range} tiles holds ${missing}`,
+    /** the build card: the store that pays for the work on the hovered tile (`Builder.payerAt`) */
+    paidFrom: (label: string) => `Paid from ${label}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
     levelOpens: (level: number, age: string) => `Level ${level} opens in the ${age}`,
     upgradingNow: 'Already being upgraded',
@@ -477,9 +481,9 @@ export const STR = {
         'On track or any free tile. Poles link within 2 tiles of each other and of a Power Plant; rails within 1 tile of a live pole are powered.',
       building: 'On a free grass, forest, sand or level hill tile.',
       works:
-        'On a free grass, forest, sand or level hill tile. Runs from the stockpile; no track needed.',
+        'On a free grass, forest, sand or level hill tile. Runs from the nearest store; no track needed.',
       deposit: (k: string) =>
-        `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
+        `Only on a tile with a ${k} deposit (marked on the map). Runs from the nearest store; no track needed.`,
       plant:
         'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
       road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight wide or narrow track at right angles, as a level crossing; never high-speed track.',
@@ -538,9 +542,9 @@ export const STR = {
     progress: 'Batch progress',
     crew: 'Crew',
     made: 'Produced so far',
-    inStock: (n: string) => `${n} in stockpile`,
+    inStock: (n: string) => `${n} in store`,
     running: 'Running',
-    full: 'Stopped: stockpile full',
+    full: 'Stopped: store full',
     starved: (n: string) => `Waiting for ${n}`,
     /**
      * The same status for the works tooltip, which shows the resource as an icon with its name
@@ -595,7 +599,8 @@ export const STR = {
     orphaned: (n: string) => `${n}: no platform track`,
     unwired: (n: string) => `${n}: no power line connected`,
     starved: (n: string, r: string) => `${n}: waiting for ${r}`,
-    full: (n: string) => `${n}: stockpile full, output stopped`,
+    noStore: (n: string, range: number) => `${n}: no store within ${range} tiles`,
+    full: (n: string) => `${n}: store full, output stopped`,
     contractFailed: (n: string) => `Contract failed: ${n}`,
     contractDone: (n: string) => `Contract completed: ${n}`,
     contractNoTrain: (n: string) => `No train can work "${n}": wrong wagons, no rails or no range`,
@@ -619,12 +624,12 @@ export const STR = {
         'Open the Depot (F), pick the locomotive and wagons and press Dispatch. The route is automatic.',
       idleStock: (n: number) =>
         `${n} locomotive(s) sit idle in the depot. Dispatch them to earn more.`,
-      lowWheat:
-        'Food is running low. Bring wheat from a farm to the depot and build a Windmill, or buy food on the Market (K).',
+      lowWheat: (store: string) =>
+        `Food is running low at ${store}. Bring wheat from a farm and build a Windmill, or buy food on the Market (K).`,
       famine:
         'The crews need food: production halved. Supply a Windmill or buy food on the Market (K).',
       outOfFuel: (n: string) =>
-        `${n} is out of fuel. Fill the stockpile (Market K, a kiln or a lumber yard for wood) or use Emergency refuel in the train details.`,
+        `${n} is out of fuel. Fill the store (Market K, a kiln or a lumber yard for wood) or use Emergency refuel in the train details.`,
       lowCoal:
         'Coal is short. Build a Charcoal Kiln (Works) to turn wood into coal, or buy coal on the Market.',
       noWater:
@@ -638,8 +643,8 @@ export const STR = {
       offers: (n: number) => `${n} contract offer(s) are waiting on the Contract Board (C).`,
       failed: (n: string) =>
         `Contract "${n}" failed. Accept only contracts your trains already pass through, and watch the deadline.`,
-      capFull: (r: string) =>
-        `The stockpile is full of ${r}. A second depot raises the cap; warehouses hold goods locally; or sell on the Market.`,
+      capFull: (r: string, store: string) =>
+        `${store} is full of ${r}. A Warehouse raises a town's cap and holds goods of its own; or sell on the Market.`,
       blocked: (n: string) =>
         `${n} is stuck behind another train. Add a passing loop with switches or a second track.`,
     },
@@ -704,7 +709,7 @@ export const STR = {
       contract:
         'Dynamic: works contracts. Waits on its platform until a contract it can carry is accepted, is chosen for it ahead of busier trains, runs it origin to destination and returns to waiting. Refuels on its own.',
       freight:
-        'Dynamic: heads for the producer or warehouse with the fullest, biggest pile within reach (a warehouse only once it holds the pickup pile set in Game tuning), then tops up at another producer while room is left. Takes producer goods to the nearest warehouse with room, or to a depot when that is clearly nearer, and goods taken from a warehouse to a depot (to another warehouse only when no depot is reachable). Takes nothing out of a warehouse it has just put goods into. Re-plans at every stop and refuels on its own.',
+        'Dynamic: heads for the producer with the fullest, biggest pile within reach, then tops up at another producer while room is left, and takes the goods to the nearest store with room: a depot, a warehouse or a Townhouse. Never takes goods out of a store, and a producer in a town puts its goods into the town store itself. Re-plans at every stop and refuels on its own.',
     } as Record<string, string>,
     dynamicTag: 'dynamic',
     routeAutoHint:
@@ -744,7 +749,6 @@ export const STR = {
     scheduleHint: 'Stops, loading and departure direction are edited in the train details.',
     scheduleLiveHint:
       'Changes apply at once. Each stop: what to load and unload, wait for full wagons, refuel, and which way to leave.',
-    stockpileTag: 'stockpile',
     fuelTag: 'refuel',
     waterTag: 'water',
     opt: {
@@ -897,7 +901,8 @@ export const STR = {
     failedNothing: (name: string) => `${name} failed on the bench; the materials are lost`,
     stats: (recipes: number, crafts: number, failures: number) =>
       `${recipes} recipes · ${crafts} built · ${failures} failed`,
-    resources: 'Stockpile',
+    /** the workshop's foot: the materials of the selected store, named */
+    resources: (label: string) => `Materials at ${label}`,
     filterLabel: 'Vehicle type',
     filter: {
       all: 'All railcraft',
@@ -1223,7 +1228,7 @@ export const STR = {
     supplyModes: { simple: 'Simple', full: 'Full' } as Record<string, string>,
     supplyHint: {
       simple:
-        'Kiln, grinder and refinery make coal, iron and oil from the stockpile; diesels burn oil; warehouses top up fuel from the stockpile.',
+        'Kiln, grinder and refinery make coal, iron and oil from stored goods; diesels burn oil; the stores on one rail network share their goods.',
       full: 'Collieries on coal seams, iron and copper mines, ironworks, oil derricks on seeps, a refinery making diesel, sand for grip and copper wire. Warehouses refuel only from what trains bring.',
     } as Record<string, string>,
   },
@@ -1343,7 +1348,7 @@ export const STR = {
     water: 'Water',
     oil: 'Oil',
     power: 'Power',
-    stockPower: (n: number) => `${n} in the battery`,
+    stockPower: (n: number) => `${n} on the grid`,
     battery: 'Battery carts',
     effort: 'Tractive effort',
     mass: 'Mass',
@@ -1357,6 +1362,8 @@ export const STR = {
     tiles: 'tiles',
     prefer: 'Steam fuel:',
     routing: 'Routing',
+    /** the crew owes more than a day of food (`Train.hungry`) */
+    hungry: 'Crew hungry: runs slower until it reaches a store with food',
     clickHint: 'Click to select',
     /** the train tooltip's state and the station the train heads for */
     toward: '{state} → {station}',
@@ -1372,7 +1379,7 @@ export const STR = {
       transport: 'Dynamic: passengers between Stations.',
       contract: 'Dynamic: carries accepted contracts from origin to destination.',
       freight:
-        'Dynamic: fullest producer or warehouse first (a warehouse once it holds the pickup pile set in Game tuning), tops up at another producer while room is left. Producer goods go to the nearest warehouse with room or a depot, warehouse goods to a depot, and nothing is taken back out of a warehouse it just filled. Re-plans at every stop and refuels on its own.',
+        'Dynamic: fullest producer first, tops up at another producer while room is left. The goods go to the nearest store with room (depot, warehouse or Townhouse); nothing is taken out of a store. Re-plans at every stop and refuels on its own.',
     } as Record<string, string>,
     coal: 'Coal',
     wood: 'Wood',
@@ -1386,28 +1393,35 @@ export const STR = {
     delivered: 'Delivered',
     income: 'Income',
     emergency: 'Emergency refuel (2x cost)',
-    emergencyHint: 'Fills the tanks from the stockpile at double cost, wherever the train is.',
+    emergencyHint:
+      "Fills the tanks at double cost from the store in reach of the train: its town's, or the " +
+      'nearest one within building reach. Its crew pays what it owes there.',
     emergencyDone: (s: string) => `Delivered by road: ${s}`,
-    emergencyNone: 'Nothing in the stockpile to send',
+    emergencyNone: 'Nothing to send in the store in reach',
+    emergencyNoStore: 'No store in reach of the train to send from',
   },
   market: {
     title: 'Market',
     resource: 'Resource',
-    have: 'Stockpile',
+    have: 'In store',
     buyPrice: 'Buy',
     sellPrice: 'Sell',
     buy: 'Buy',
     sell: 'Sell',
-    full: 'Stockpile is full',
+    full: 'The store is full',
     nothingToBuy: 'Nothing to buy',
-    nothingToSell: 'None in the stockpile to sell',
+    nothingToSell: 'None in the store to sell',
+    /** the market's head: the store it buys into and sells from (the selected one) */
+    store: (label: string) => `Trading at ${label}. Pick another store on the top bar.`,
+    /** the store the standing deals settle with (`TradeDesk.storeKey`) */
+    dealsAt: (label: string) => `Deals settle at ${label}`,
     trend: 'Trend',
     driftPct: (p: number) => `${p >= 0 ? '+' : ''}${p}%`,
     driftHint: 'Fuel prices (oil, diesel, crude) wander up to ±40 % on a slow weekly walk.',
-    hint: 'Prices are per unit. Each depot raises the stockpile cap.',
+    hint: 'Prices are per unit. A store holds up to its cap of each good.',
     deals: 'Standing deals',
     dealsHint: (d: number) =>
-      `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the stockpile cap or when funds run out; selling takes what is on hand.`,
+      `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the store's cap or when funds run out; selling takes what is on hand.`,
     dealBuy: 'Buy / cycle',
     dealSell: 'Sell / cycle',
     perCycle: 'Money / cycle',
@@ -1425,7 +1439,11 @@ export const STR = {
     famine: 'NO WHEAT',
     foodPerWeek: 'food/week',
     openMarket: 'Open the market',
-    have: 'Stockpile / cap',
+    have: 'In store / cap',
+    /** the top bar's card: the good in every store together */
+    allStores: (n: number) => `All stores: ${n}`,
+    /** the top bar's store button: what a click does */
+    nextStore: 'The store the bar shows. Click: the next store',
     producedDay: 'Received / last week',
     consumedDay: 'Spent / last week',
     netDay: 'Net / last week',
@@ -1513,6 +1531,15 @@ export const STR = {
     cheat: 'Cheat',
     cheated: '+$10,000 and every resource topped up',
   },
+  stores: {
+    grid: 'Power grid',
+    /** the eaters at a store went short for too long (`StoreRegistry.tickUpkeep`) */
+    famine: (name: string) => `${name}: the crews are out of food: production halved`,
+    /** a store in famine has food again, or nobody left to feed */
+    fed: (name: string) => `${name}: food is back; crews are fed again`,
+    /** a works with no store in reach (`StoreRegistry.worksStore`) */
+    noStoreNear: (range: number) => `No store within ${range} tiles`,
+  },
   town: {
     title: 'Towns',
     none: 'No towns yet. Place a Townhouse, then a House and a warehouse within 7 tiles of it.',
@@ -1521,6 +1548,8 @@ export const STR = {
       `${st} station${st === 1 ? '' : 's'}, ${works} works, ${houses} house${houses === 1 ? '' : 's'}`,
     needs: (house: boolean, wh: boolean) =>
       `Not founded yet: needs ${[house ? 'a House' : '', wh ? 'a warehouse' : ''].filter(Boolean).join(' and ')} within 7 tiles`,
+    /** the town store's fullest good against its cap per good */
+    store: (fullest: number, cap: number) => `Store: up to ${fullest} of a good, cap ${cap} each`,
     makes: 'Makes / week',
     uses: 'Uses / week',
     /** power among what a town makes or uses, lowercase like the cargo names beside it */
