@@ -306,6 +306,45 @@
       ]
     },
     {
+      "id": "maglev_depot",
+      "name": "Maglev Depot",
+      "flavor": "Sealed hall at the end of a guideway. Builds and powers maglev sets, which run on nothing else.",
+      "cost": {},
+      "tier": 4,
+      "produces": [],
+      "accepts": [
+        "water",
+        "wheat",
+        "stone",
+        "wood",
+        "coal",
+        "oil",
+        "iron",
+        "iron_ore",
+        "crude",
+        "diesel",
+        "sand",
+        "copper_ore",
+        "wire",
+        "food"
+      ],
+      "art": "depot_narrow",
+      "long": true,
+      "gauge": "maglev",
+      "pool": true,
+      "depot": true,
+      "fuel": false,
+      "water": false,
+      "contracts": false,
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "S"
+        }
+      ]
+    },
+    {
       "id": "station",
       "name": "Station",
       "flavor": "Passenger platforms serving nearby homes. Connect two stations with coaches to carry people between towns.",

@@ -14,6 +14,9 @@ import { consistPhysics } from '../sim/trains';
 import { rules, DEFAULT_RULES } from '../sim/rules';
 import { LOCOS, LEVEL_CAP, type LocoDef } from '../gacha/items';
 
+/** A maglev floats: it has no wheels to turn. */
+const hasWheels = (def: LocoDef) => def.gauge !== 'maglev';
+
 const STILL = 'rolling/loco_rocket_body_f6';
 
 /** An atlas stub holding `keys`, recording every key it is asked about. */
@@ -418,7 +421,7 @@ describe('WHEEL_CYCLE_TILES basis', () => {
   it('no locomotive at any item level runs half a wheel turn in one sim step at 1x', () => {
     // the phase moves once a sim step, and half a turn or more reads as turning backwards
     expect(LOCOS.length).toBeGreaterThan(0);
-    for (const def of LOCOS)
+    for (const def of LOCOS.filter(hasWheels))
       for (let level = 1; level <= LEVEL_CAP; level++)
         expect(topSpeed(def, level) * SIM_STEP, `${def.id} at level ${level}`).toBeLessThan(
           WHEEL_CYCLE_TILES / 2,
@@ -427,7 +430,7 @@ describe('WHEEL_CYCLE_TILES basis', () => {
 
   it('no locomotive at level 1 runs over a tenth of a turn a frame at 60 fps', () => {
     // so up to 10 phases change at most once per rendered frame, the constant's stated basis
-    for (const def of LOCOS)
+    for (const def of LOCOS.filter(hasWheels))
       expect(topSpeed(def, 1) * 10, def.id).toBeLessThanOrEqual(60 * WHEEL_CYCLE_TILES);
   });
 });

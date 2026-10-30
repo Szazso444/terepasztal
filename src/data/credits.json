@@ -69,6 +69,14 @@
     },
     {
       "kind": "3D model",
+      "vehicles": ["transrapid"],
+      "title": "Shanghai Maglev Train",
+      "author": "zengwish",
+      "url": "https://3dwarehouse.sketchup.com/model/3d2bd584387f9de1e7ffda54a3638b3",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
       "vehicles": ["tgv"],
       "title": "Motrices TGV PSE",
       "author": "Johan R.",

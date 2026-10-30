@@ -140,6 +140,8 @@ const STANDARD_LINES: readonly StandardLine[] = ['branch', 'main', 'trunk'];
  * The layouts of each line a locomotive is run on: the smallest line of its train class, the one
  * with the tightest curves it may take (a Destroyer runs on Main Line, a Cruiser on Trunk Line).
  */
+/** The engines that run on rails: this file lays no guideway. */
+const RAIL_LOCOS = content.locomotives.filter((d) => d.gauge !== 'maglev');
 const LAYOUTS: Partial<Record<TrackClass, Layout[]>> = {
   narrow: [straight('narrow'), ...GAPS.map(narrowSteps)],
 };
@@ -314,7 +316,7 @@ describe('a train that ran to where it stands, reversing', () => {
       const rows: string[] = [];
       let runs = 0;
       let onAnEdge = 0;
-      for (const def of content.locomotives) {
+      for (const def of RAIL_LOCOS) {
         const narrow = def.gauge === 'narrow';
         for (const layout of LAYOUTS[CLASS_LINE[classOf(def)]]!)
           for (const wagons of consists(narrow)) {
@@ -346,7 +348,7 @@ describe('a train that ran to where it stands, reversing', () => {
       expect(rows).toEqual([]);
       // every consist ran, and some stood with the rear end on an edge
       expect(runs).toBe(
-        content.locomotives.reduce((n, d) => n + 4 * consists(d.gauge === 'narrow').length, 0),
+        RAIL_LOCOS.reduce((n, d) => n + 4 * consists(d.gauge === 'narrow').length, 0),
       );
       expect(onAnEdge).toBeGreaterThan(0);
     },
@@ -554,8 +556,10 @@ interface Winding {
 
 function stockOf(narrow: boolean) {
   return {
-    locos: content.locomotives.filter((d) => (d.gauge === 'narrow') === narrow).map((d) => d.id),
-    wagons: content.wagons.filter((d) => (d.gauge === 'narrow') === narrow).map((d) => d.id),
+    locos: RAIL_LOCOS.filter((d) => (d.gauge === 'narrow') === narrow).map((d) => d.id),
+    wagons: content.wagons
+      .filter((d) => d.gauge !== 'maglev' && (d.gauge === 'narrow') === narrow)
+      .map((d) => d.id),
   };
 }
 

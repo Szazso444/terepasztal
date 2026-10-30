@@ -882,7 +882,7 @@ export const STR = {
     unlock: 'Unlock a recipe',
     kind: 'Kind',
     age: 'Age',
-    ages: ['Age of Steam', 'Diesel Era', 'Electric Line'] as string[],
+    ages: ['Age of Steam', 'Diesel Era', 'Electric Line', 'Nuclear Age', 'Magnetic Line'] as string[],
     quality: {
       N: 'Common',
       R: 'Uncommon',
@@ -1555,6 +1555,7 @@ export const STR = {
     mixedGaugeTrain: 'Narrow Gauge and standard stock in one train: recall it and build it again',
     wrongDepot: (name: string) => `${name} builds only trains of its own gauge.`,
     noNarrowDepot: 'Build a Narrow Depot first: Narrow Gauge trains roll out of one',
+    noMaglevDepot: 'Build a Maglev Depot first: maglev sets roll out of one',
     depotBusy: (n: string) => `Every gate at ${n} has a train on it`,
     depotNoGate: (n: string) => `${n} has no track at its gates`,
     depotNoRoute: (d: string, s: string) =>

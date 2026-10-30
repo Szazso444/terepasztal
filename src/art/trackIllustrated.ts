@@ -95,8 +95,17 @@ const STYLE: Record<TrackClass, LineStyle> = {
     widths: [1.5, 1.15, 0.48],
     railColors: ['#35332e', '#67635a', '#c2b89e'],
   },
-  // Maglev and Hyperloop have no pieces to draw yet: they take Branch's look
-  maglev: BRANCH,
+  // a pale concrete guideway: no ballast, close stator plates, two guide rails
+  maglev: {
+    ...BRANCH,
+        shoulder: 0.3,
+    ballast: ['#b8bcbd', '#c9cdce', '#a9adae', '#bfc3c4'],
+    tie: '#a4aaac',
+    tieHi: '#b4babc',
+    widths: [1.1, 0.85, 0.45],
+    railColors: ['#59646a', '#7c8a91', '#c3dce4'],
+  },
+  // Hyperloop has no pieces to draw yet: it takes Branch's look
   hyperloop: BRANCH,
   narrow: {
     rail: 0.08,

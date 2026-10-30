@@ -15,14 +15,17 @@ import { scaleCost, type ResourceStore } from '../sim/stores';
 
 export type { CraftKind };
 export const CRAFT_CONFIG: CraftingConfig = content.crafting;
-/** ages a recipe can belong to: 0 steam, 1 diesel, 2 electric */
-export const CRAFT_TIERS = [0, 1, 2] as const;
+/** ages a recipe can belong to: 0 steam, 1 diesel, 2 electric, 4 magnetic */
+export const CRAFT_TIERS = [0, 1, 2, 4] as const;
 export type CraftTier = (typeof CRAFT_TIERS)[number];
 const LOCO_TYPES: LocoDef['type'][] = ['steam', 'diesel', 'electric'];
 
-/** Age of a model: locomotives by traction type, wagons by their tier field. */
+/** Age of a model: locomotives by traction type unless they say, wagons by their tier field. */
 export function craftTier(defId: string): number {
-  if (itemKind(defId) === 'loco') return LOCO_TYPES.indexOf((itemDef(defId) as LocoDef).type);
+  if (itemKind(defId) === 'loco') {
+    const def = itemDef(defId) as LocoDef;
+    return def.tier ?? LOCO_TYPES.indexOf(def.type);
+  }
   return WAGONS.find((w) => w.id === defId)?.tier ?? 0;
 }
 export function craftSize(defId: string): VehicleSize {

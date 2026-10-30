@@ -32,8 +32,8 @@ describe('the six track lines', () => {
     );
     expect(mul).toEqual([0.6, 1, 1.5, 2.5, 4, 4]);
   });
-  it('has Narrow Gauge and the three standard lines to build', () => {
-    expect(BUILDABLE_CLASSES).toEqual(['narrow', 'branch', 'main', 'trunk']);
+  it('has Narrow Gauge, the three standard lines and Maglev Guideway to build', () => {
+    expect(BUILDABLE_CLASSES).toEqual(['narrow', 'branch', 'main', 'trunk', 'maglev']);
     expect(TRACK_ITEMS.some((i) => (i.kind as string) === 'transition')).toBe(false);
   });
 });

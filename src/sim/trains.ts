@@ -1348,6 +1348,8 @@ export class Train {
    */
   wireCeiling(ctx: TickCtx): number | null {
     const head = this.headTile;
+    // a guideway is its own supply: no wire to hang, no ceiling
+    if (head && ctx.track.get(head.x, head.y)?.cls === 'maglev') return Infinity;
     if (!head || !ctx.powered(head.x, head.y)) return null;
     const kind = ctx.supplyAt(head.x, head.y);
     if (!kind) return null;

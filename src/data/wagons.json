@@ -210,7 +210,7 @@
     "weight": 12,
     "tier": 0,
     "size": "medium",
-    "vmax": 3.0,
+    "vmax": 3,
     "bogieAxles": 3
   },
   {
@@ -352,5 +352,21 @@
     "tier": 0,
     "size": "small",
     "gauge": "narrow"
+  },
+  {
+    "id": "transrapid_car",
+    "class": "hydrofoil",
+    "name": "Transrapid Car",
+    "rarity": "SR",
+    "era": "A long, quiet saloon that never touches the guideway.",
+    "body": "coach",
+    "paint": "iron",
+    "bogieStyle": "none",
+    "carries": "people",
+    "capacity": 48,
+    "weight": 12,
+    "tier": 4,
+    "size": "medium",
+    "gauge": "maglev"
   }
 ]
