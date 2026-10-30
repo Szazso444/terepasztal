@@ -280,8 +280,6 @@ describe('the aspects posts show', () => {
     const w = simWorld({ size: 160, terrain: 'grass', seed: 4242 });
     w.builder.free = true;
     for (let i = 0; i < w.regions.unlocked.length; i++) w.regions.own(i);
-    w.stock.add('coal', 1e7, 1e9);
-    w.stock.add('water', 1e7, 1e9);
     w.economy.money = 1e9;
     const pending: {
       at: number;
@@ -302,6 +300,8 @@ describe('the aspects posts show', () => {
       const q = station(w, 'quarry', 12, y - 1);
       const wh = station(w, 'warehouse', 104, y - 1);
       q.store('stone', 1000);
+      const store = w.stores.byKey(`st:${depot.id}`)!;
+      for (const r of ['coal', 'water']) store.add(r, 1e7);
       for (let x = 20; x < 110; x += 9) w.builder.placeDecor(x, y, 'signal', k % 2 ? Dir.W : Dir.E);
       for (let t = 0; t < 2; t++)
         pending.push({
