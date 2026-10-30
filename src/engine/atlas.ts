@@ -18,7 +18,7 @@ export interface AtlasImage {
   /** a file atlas that replaces only its own frames and keeps the generator for the rest */
   partial?: boolean;
 }
-export type AtlasGenerator = () => AtlasImage;
+export type AtlasGenerator = () => AtlasImage | Promise<AtlasImage>;
 
 export interface FrameInfo {
   image: HTMLCanvasElement | HTMLImageElement;
@@ -127,7 +127,7 @@ export class AtlasRegistry {
       console.warn(`Atlas: ${name} falls back to procedural art: ${fromFile}`);
     }
     const hit = await cached;
-    const gen = hit ?? generate();
+    const gen = hit ?? (await generate());
     this.generatedFrom.set(name, hit ? 'cache' : 'generator');
     // generated first, so a partial file's frames win where the names collide
     this.register(gen);

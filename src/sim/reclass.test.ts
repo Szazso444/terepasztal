@@ -9,6 +9,9 @@ import { rules, DEFAULT_RULES } from './rules';
 import { STR } from '../strings';
 import { storeWith } from '../testing/storeFixtures';
 
+/** An economy in the Electric Age: Main and Trunk Line are open. */
+const electricAge = () => Object.assign(new Economy(), { tier: 2 });
+
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
@@ -16,13 +19,13 @@ function world(ground = Terrain.Grass) {
   const map = emptyMap(4242, 48, 48, ground),
     track = new TrackGraph(48, 48),
     { stores, depot: stock } = storeWith({}, { x: 24, y: 24 }),
-    economy = new Economy();
+    economy = electricAge();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
   const builder = new Builder(map, regions, track, economy, stores);
   for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 1000);
-  // a dead-end run of four wide straights
-  for (let x = 5; x <= 8; x++) track.place(x, 10, 'straight', 1, 'regular');
+  // a dead-end run of four Branch Line straights
+  for (let x = 5; x <= 8; x++) track.place(x, 10, 'straight', 1, 'branch');
   const run = [5, 6, 7, 8].map((x) => ({ x, y: 10 }));
   const held = () => ['wood', 'stone', 'iron'].map((k) => stock.get(k));
   return { map, track, builder, stock, run, held };
@@ -31,11 +34,11 @@ function world(ground = Terrain.Grass) {
 describe('upgrading and downgrading track', () => {
   it('charges the difference for an upgrade', () => {
     const { builder, track, run, held } = world();
-    const wide = pieceCost('straight', 'regular'),
-      fast = pieceCost('straight', 'high_speed');
+    const branch = pieceCost('straight', 'branch'),
+      main = pieceCost('straight', 'main');
     const each = (k: string) =>
-      (fast[k] - wide[k]) * builder.terrainMul(5, 10) * rules.buildCostMul;
-    const check = builder.checkReclass(run, 'high_speed');
+      (main[k] - branch[k]) * builder.terrainMul(5, 10) * rules.buildCostMul;
+    const check = builder.checkReclass(run, 'up');
     expect(check.ok).toBe(true);
     expect(check.changes).toHaveLength(4);
     expect(check.cost).toEqual({
@@ -44,87 +47,68 @@ describe('upgrading and downgrading track', () => {
       iron: 4 * each('iron'),
     });
     const before = held();
-    expect(builder.reclassTrack(run, 'high_speed')).toBe(true);
+    expect(builder.reclassTrack(run, 'up')).toBe(true);
     expect(held()).toEqual([
       before[0] - check.cost.wood,
       before[1] - check.cost.stone,
       before[2] - check.cost.iron,
     ]);
     for (const t of run)
-      expect(track.get(t.x, t.y)).toMatchObject({ kind: 'straight', cls: 'high_speed' });
+      expect(track.get(t.x, t.y)).toMatchObject({ kind: 'straight', cls: 'main' });
   });
 
-  it('charges the difference of the list prices on any ground, however the stroke gets there', () => {
-    // sand and forest cost more than grass, and prices round up: rounding a difference, or
-    // rounding once for the transition a tile passes through and once more for the high-speed
-    // piece, must not add to the bill
+  it('charges the difference of the list prices on any ground, stroke by stroke', () => {
+    // sand and forest cost more than grass, and prices round up: rounding a difference instead
+    // of each price must not add to the bill
     for (const ground of [Terrain.Sand, Terrain.Forest]) {
       const { builder, track, run, held } = world(ground);
       expect(builder.terrainMul(5, 10)).toBeGreaterThan(1);
-      const list = (cls: 'regular' | 'high_speed') =>
+      const list = (cls: 'branch' | 'main') =>
         builder.checkTrack(5, 14, { kind: 'straight', cls }, 1).cost;
-      const wide = list('regular'),
-        fast = list('high_speed');
+      const branch = list('branch'),
+        main = list('main');
       const before = held();
-      // a stroke: tile by tile, each step knowing the tile before it
       let prev: { x: number; y: number } | undefined;
       for (const t of run) {
-        expect(builder.reclassTrack([t], 'high_speed', prev)).toBe(true);
+        expect(builder.reclassTrack([t], 'up', prev)).toBe(true);
         prev = t;
       }
-      for (const t of run)
-        expect(track.get(t.x, t.y)).toMatchObject({ kind: 'straight', cls: 'high_speed' });
+      for (const t of run) expect(track.get(t.x, t.y)!.cls).toBe('main');
       const paid = held().map((v, i) => before[i] - v);
       expect(paid, `terrain ${ground}`).toEqual(
-        ['wood', 'stone', 'iron'].map((k) => run.length * (fast[k] - wide[k])),
+        ['wood', 'stone', 'iron'].map((k) => run.length * (main[k] - branch[k])),
       );
     }
   });
 
-  it('charges a transition as the piece it is', () => {
-    const { builder, run } = world();
-    // the first two of the run: one high-speed straight, one transition at the frontier
-    const check = builder.checkReclass(run.slice(0, 2), 'high_speed');
-    const wide = pieceCost('straight', 'regular'),
-      fast = pieceCost('straight', 'high_speed'),
-      joint = pieceCost('transition', 'regular');
-    const k = builder.terrainMul(5, 10) * rules.buildCostMul;
-    for (const res of ['wood', 'stone', 'iron'])
-      expect(check.cost[res] ?? 0).toBe(
-        (fast[res] - wide[res] + Math.max(0, joint[res] - wide[res])) * k,
-      );
-  });
-
   it('downgrades for nothing and returns nothing', () => {
     const { builder, track, run, held } = world();
-    builder.reclassTrack(run, 'high_speed');
+    builder.reclassTrack(run, 'up');
     const before = held();
-    expect(builder.checkReclass(run, 'regular')).toMatchObject({ ok: true, cost: {} });
-    expect(builder.reclassTrack(run, 'regular')).toBe(true);
+    expect(builder.checkReclass(run, 'down')).toMatchObject({ ok: true, cost: {} });
+    expect(builder.reclassTrack(run, 'down')).toBe(true);
     expect(held()).toEqual(before);
-    for (const t of run)
-      expect(track.get(t.x, t.y)).toMatchObject({ kind: 'straight', cls: 'regular' });
+    for (const t of run) expect(track.get(t.x, t.y)!.cls).toBe('branch');
   });
 
   it('changes nothing when the upgrade cannot be paid for', () => {
     const { builder, track, stock, run, held } = world();
-    stock.amounts.set('iron', 3);
-    const check = builder.checkReclass(run, 'high_speed');
+    stock.amounts.set('iron', 0);
+    const check = builder.checkReclass(run, 'up');
     expect(check.ok).toBe(false);
     expect(check.reason).toMatch(/iron/);
     const before = held();
-    expect(builder.reclassTrack(run, 'high_speed')).toBe(false);
+    expect(builder.reclassTrack(run, 'up')).toBe(false);
     expect(held()).toEqual(before);
-    for (const t of run) expect(track.get(t.x, t.y)!.cls).toBe('regular');
+    for (const t of run) expect(track.get(t.x, t.y)!.cls).toBe('branch');
   });
 
-  it('costs nothing where building is free', () => {
-    const { builder, run, held } = world();
-    builder.free = true;
-    const before = held();
-    expect(builder.checkReclass(run, 'high_speed').cost).toEqual({});
-    expect(builder.reclassTrack(run, 'high_speed')).toBe(true);
-    expect(held()).toEqual(before);
+  it('has nowhere to go below Branch or above Trunk', () => {
+    const { builder, run } = world();
+    expect(builder.checkReclass(run, 'down').reason).toBe(STR.build.reclass.noLine);
+    builder.reclassTrack(run, 'up');
+    builder.reclassTrack(run, 'up');
+    expect(builder.checkReclass(run, 'up').reason).toBe(STR.build.reclass.noLine);
   });
 
   it('keeps what stands on the track', () => {
@@ -133,125 +117,71 @@ describe('upgrading and downgrading track', () => {
     expect(signal).not.toBeNull();
     track.get(7, 10)!.bridgeCapacity = 80;
     const refresh = vi.spyOn(builder, 'refreshBridgeCapacity');
-    builder.reclassTrack(run, 'high_speed');
+    builder.reclassTrack(run, 'up');
     expect(builder.decorAt(6, 10)).toBe(signal);
     // a bridge's capacity is read again for every tile that was relaid
     expect(refresh.mock.calls.map(([x]) => x).sort()).toEqual([5, 6, 7, 8]);
   });
+});
 
-  it('tells the renderer about every tile that changed', () => {
+describe('curves and switches of another size', () => {
+  it('leaves them as they are, red, and converts the straights beside them', () => {
     const { builder, track } = world();
-    const tiles = track.place(20, 20, 'curve', 0, 'regular');
-    const seen: string[] = [];
-    builder.onTrackChanged = (x, y) => seen.push(`${x},${y}`);
-    builder.reclassTrack([{ x: 20, y: 20 }], 'high_speed');
-    for (const t of tiles) expect(seen).toContain(`${t.x},${t.y}`);
-    expect(track.get(20, 20)!.cls).toBe('high_speed');
+    track.place(9, 10, 'curve', 0, 'branch');
+    const curve = builder.checkReclass([{ x: 9, y: 10 }], 'up');
+    expect(curve.ok).toBe(false);
+    expect(curve.reason).toBe(STR.build.reclassSize('Main Line', 3, 2));
+    // the whole curve is left, by its anchor, whichever of its tiles was pointed at
+    const anchor = track.anchorOf(9, 10);
+    for (const t of track.unitTiles(9, 10))
+      expect(builder.checkReclass([t], 'up').left).toEqual([anchor]);
+    const stroke = [
+      { x: 8, y: 10 },
+      { x: 9, y: 10 },
+    ];
+    const both = builder.checkReclass(stroke, 'up');
+    expect(both.ok).toBe(true);
+    expect(both.changes.map(({ x, y }) => ({ x, y }))).toEqual([{ x: 8, y: 10 }]);
+    expect(both.left).toEqual([anchor]);
+    expect(builder.reclassTrack(stroke, 'up')).toBe(true);
+    expect(track.get(8, 10)!.cls).toBe('main');
+    expect(track.get(9, 10)).toMatchObject({ kind: 'curve', cls: 'branch' });
   });
 
-  it('leaves a switch in the form it had, so the lane it joins stays joined', () => {
-    // a wide switch bent into an S towards a parallel track, and a high-speed stub that faces its
-    // unused turn exit: once the switch is high speed too, that stub could join it
+  it('converts a curve whose next line has curves of its size', () => {
     const { builder, track } = world();
-    const axis = (out: number) => (out % 2 === 0 ? 0 : 1);
-    for (const rot of [0, 3, 5]) {
-      const x = 20 + rot * 5,
-        y = 30;
-      track.place(x, y, 'switch', rot, 'regular');
-      const lane = track.switchExit(x, y, rot, 'regular', 'parallel');
-      const side = track.switchExit(x, y, rot, 'regular', 'turn');
-      track.place(lane.x, lane.y, 'straight', axis(lane.out), 'regular');
-      track.place(side.x, side.y, 'straight', axis(side.out), 'high_speed');
-      track.refreshSwitchForms();
-      expect(track.get(x, y)!.form, `rot ${rot}`).toBe('parallel');
-      expect(builder.reclassTrack([{ x, y }], 'high_speed'), `rot ${rot}`).toBe(true);
-      expect(track.get(x, y), `rot ${rot}`).toMatchObject({ cls: 'high_speed', form: 'parallel' });
-      // the lane's piece still joins the switch: high speed itself, or a transition
-      const beyond = track.get(lane.x, lane.y)!;
-      expect(beyond.kind === 'transition' || beyond.cls === 'high_speed', `rot ${rot}`).toBe(true);
-    }
+    track.place(20, 20, 'curve', 0, 'main');
+    const check = builder.checkReclass([{ x: 20, y: 20 }], 'up');
+    expect(check.reason).toBe(STR.build.reclassSize('Trunk Line', 4, 3));
+    expect(builder.checkReclass([{ x: 20, y: 20 }], 'down').left).toEqual([track.anchorOf(20, 20)]);
   });
+});
 
-  /** Every report the builder makes of a relaid stroke, each with the classes found on its tiles then. */
-  function reports(builder: Builder, track: TrackGraph) {
-    const got: { tiles: string[]; target: string; found: string[] }[] = [];
-    builder.onReclassed = (tiles, target) =>
-      got.push({
-        tiles: tiles.map((t) => `${t.x},${t.y}`).sort(),
-        target,
-        found: tiles.map((t) => track.get(t.x, t.y)?.cls ?? 'none'),
-      });
-    return got;
-  }
-  /** The anchors a stroke's plan relays, as `x,y`, sorted. */
-  const anchors = (changes: { x: number; y: number }[]) =>
-    changes.map((c) => `${c.x},${c.y}`).sort();
-
-  it('reports the pieces an upgrade relaid, once and after relaying them', () => {
+describe('pieces a stroke must leave', () => {
+  it('lists every piece of a line not open yet', () => {
     const { builder, track, run } = world();
-    // a curve covers four tiles and is one piece: its anchor is what is reported
-    track.place(20, 20, 'curve', 0, 'regular');
-    for (const stroke of [run, [{ x: 20, y: 20 }]]) {
-      const planned = anchors(builder.checkReclass(stroke, 'high_speed').changes);
-      expect(planned.length).toBeGreaterThan(0);
-      const got = reports(builder, track);
-      expect(builder.reclassTrack(stroke, 'high_speed')).toBe(true);
-      expect(got).toHaveLength(1);
-      expect(got[0].tiles).toEqual(planned);
-      expect(got[0].target).toBe('high_speed');
-      expect(got[0].found.every((cls) => cls === 'high_speed')).toBe(true);
-    }
+    Object.assign(builder.economy, { tier: 0 });
+    const check = builder.checkReclass(run, 'up');
+    expect(check.ok).toBe(false);
+    expect(check.left).toEqual(run);
+    for (const t of run) expect(track.get(t.x, t.y)!.cls).toBe('branch');
   });
 
-  it('reports a part stroke with the transition it laid', () => {
+  it('lists the pieces it cannot pay for, with the bill', () => {
+    const { builder, stock, run } = world();
+    stock.amounts.set('iron', 0);
+    const check = builder.checkReclass(run, 'up');
+    expect(check.ok).toBe(false);
+    expect(check.left).toEqual(run);
+    expect(Object.keys(check.cost).length).toBeGreaterThan(0);
+  });
+
+  it('lists nothing for track already converted or off the standard network', () => {
     const { builder, track, run } = world();
-    const stroke = run.slice(0, 2);
-    const plan = builder.checkReclass(stroke, 'high_speed').changes;
-    expect(plan.some((c) => c.kind === 'transition')).toBe(true);
-    const got = reports(builder, track);
-    expect(builder.reclassTrack(stroke, 'high_speed')).toBe(true);
-    expect(got.map((r) => r.tiles)).toEqual([anchors(plan)]);
-    // each reported anchor holds the piece the plan laid there
-    for (const c of plan)
-      expect(track.get(c.x, c.y)).toMatchObject({ kind: c.kind, rot: c.rot, cls: c.cls });
-  });
-
-  it('reports a downgrade with its target', () => {
-    const { builder, track, run } = world();
-    builder.reclassTrack(run, 'high_speed');
-    const planned = anchors(builder.checkReclass(run, 'regular').changes);
-    const got = reports(builder, track);
-    expect(builder.reclassTrack(run, 'regular')).toBe(true);
-    expect(got).toHaveLength(1);
-    expect(got[0]).toMatchObject({ tiles: planned, target: 'regular' });
-    expect(got[0].found.every((cls) => cls === 'regular')).toBe(true);
-  });
-
-  it('reports nothing for a stroke that changes nothing', () => {
-    const { builder, track, stock, run } = world();
-    const got = reports(builder, track);
-    // track already of the class, narrow track, bare ground
-    expect(builder.reclassTrack(run, 'regular')).toBe(false);
     track.place(5, 20, 'straight', 1, 'narrow');
-    expect(builder.reclassTrack([{ x: 5, y: 20 }], 'high_speed')).toBe(false);
-    expect(builder.reclassTrack([{ x: 30, y: 30 }], 'high_speed')).toBe(false);
-    // an upgrade that cannot be paid for
-    stock.amounts.set('iron', 3);
-    expect(builder.reclassTrack(run, 'high_speed')).toBe(false);
-    for (const t of run) expect(track.get(t.x, t.y)!.cls).toBe('regular');
-    expect(got).toEqual([]);
-  });
-
-  it('says why nothing can be converted', () => {
-    const { builder, track } = world();
-    track.place(5, 20, 'straight', 1, 'narrow');
-    expect(builder.checkReclass([{ x: 5, y: 20 }], 'high_speed')).toMatchObject({
-      ok: false,
-      reason: STR.build.reclass.narrow,
-    });
-    expect(builder.checkReclass([{ x: 30, y: 30 }], 'high_speed').reason).toBe(
-      STR.build.reclass.nothing,
-    );
-    expect(builder.reclassTrack([{ x: 5, y: 20 }], 'high_speed')).toBe(false);
+    expect(builder.checkReclass([{ x: 5, y: 20 }], 'up').left).toEqual([]);
+    builder.reclassTrack(run, 'up');
+    builder.reclassTrack(run, 'up');
+    expect(builder.checkReclass(run, 'up').left).toEqual([]);
   });
 });

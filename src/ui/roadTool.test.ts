@@ -323,7 +323,7 @@ describe('removing a road', () => {
   it('takes a level crossing apart road first, the track staying', () => {
     const h = harness();
     h.builder.free = true;
-    expect(h.builder.placeTrack(8, 8, { kind: 'straight', cls: 'regular' }, 1)).toBe(true);
+    expect(h.builder.placeTrack(8, 8, { kind: 'straight', cls: 'branch' }, 1)).toBe(true);
     expect(h.builder.placeRoad(8, 8)).toBe(true);
     h.builder.free = false;
     h.b.setTool({ kind: 'remove' });
@@ -345,7 +345,7 @@ describe('a road on a bridge platform', () => {
     h.builder.free = false;
     return h;
   }
-  const STRAIGHT = { kind: 'straight', cls: 'regular' } as const;
+  const STRAIGHT = { kind: 'straight', cls: 'branch' } as const;
 
   it('shows the ghost, the price and a line for the bridge on a platform with no rail', () => {
     const h = bridge();

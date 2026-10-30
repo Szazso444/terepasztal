@@ -18,12 +18,11 @@ import {
  */
 export type CrossingPick =
   | { ok: true; item: TrackItem; rot: number }
-  | { ok: false; why: 'angle' | 'apart' | 'transition' | 'bridge'; other: TrackClass };
+  | { ok: false; why: 'angle' | 'apart' | 'bridge'; other: TrackClass };
 
 /** The class a piece presents along the axis a straight at `rot` runs (0: N–S, 1: E–W). */
 function axisClass(p: TrackPiece, rot: number): TrackClass {
-  const c = portClass(p, rot % 2 === 0 ? Dir.N : Dir.E);
-  return c === 'any' ? p.cls : c;
+  return portClass(p, rot % 2 === 0 ? Dir.N : Dir.E);
 }
 
 /**
@@ -35,7 +34,7 @@ function axisClass(p: TrackPiece, rot: number): TrackClass {
  * `TRACK_ITEMS`), turned so the run's class lies on the run's axis; a crossing at rotation 0 has its
  * first class on N–S, like a straight at rotation 0. A pair with no crossing piece is a pair of
  * separate worlds, and a curve or a switch meets the run at an angle: both are refused, and so is
- * a class transition or a bridge across the run, which no crossing piece can stand in for.
+ * a bridge across the run, which no crossing piece can stand in for.
  */
 export function crossingFor(
   cls: TrackClass,
@@ -47,11 +46,8 @@ export function crossingFor(
   if (existing.kind === 'curve' || existing.kind === 'switch')
     return { ok: false, why: 'angle', other: existing.cls };
   const across = (rot + 1) % 2;
-  // a transition lies along its rotation's axis, as a straight does (0, 2: N–S; 1, 3: E–W)
-  if (existing.kind === 'transition' || existing.kind === 'bridge')
-    return existing.rot % 2 === across
-      ? { ok: false, why: existing.kind, other: existing.cls }
-      : null;
+  if (existing.kind === 'bridge')
+    return existing.rot % 2 === across ? { ok: false, why: 'bridge', other: existing.cls } : null;
   if (existing.kind !== 'straight' && existing.kind !== 'crossing') return null;
   if (existing.kind === 'straight' && existing.rot % 2 !== across) return null;
   const other = axisClass(existing, across);
@@ -91,7 +87,6 @@ export function bridgeCrossing(rot: number, existing: TrackPiece | undefined): C
 export function crossingRefusal(cls: TrackClass, pick: Extract<CrossingPick, { ok: false }>) {
   const name = (c: TrackClass) => STR.toolbar.trackClass[c] ?? c;
   if (pick.why === 'angle') return STR.build.crossAngle;
-  if (pick.why === 'transition') return STR.build.crossTransition;
   if (pick.why === 'bridge') return STR.build.crossBridge;
   return STR.build.crossApart(name(cls), name(pick.other).toLowerCase());
 }

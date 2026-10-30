@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
-import { TrackGraph } from '../world/track';
+import { TrackGraph, type TrackClass } from '../world/track';
 import { findPath } from '../world/pathfinding';
 import { Dir } from '../engine/iso';
 import { content, validateContent, DEFAULT_CONTENT } from '../data/content';
@@ -31,10 +31,11 @@ import { simWorld, line, station } from '../testing/simWorld';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 /**
- * A grass world with a line along row 30, its builder paying from, and its trains filling up at,
- * the depot stores at the places given (one empty store at the corner by default): `depots`.
+ * A grass world with a line along row 30, a Destroyer (e.g. the Mallard) needs `main` to run on it;
+ * its builder pays from, and its trains fill up at, the depot stores at the places given (one
+ * empty store at the corner by default): `depots`.
  */
-function world(at: { x: number; y: number }[] = [{ x: 0, y: 0 }]) {
+function world(line: TrackClass = 'branch', at: { x: number; y: number }[] = [{ x: 0, y: 0 }]) {
   const map = emptyMap(4242, 96, 96, Terrain.Grass),
     track = new TrackGraph(96, 96),
     economy = new Economy();
@@ -42,7 +43,7 @@ function world(at: { x: number; y: number }[] = [{ x: 0, y: 0 }]) {
   const builder = new Builder(map, new RegionState(map), track, economy, stores);
   builder.free = true;
   const fleet = new Fleet(track, builder, map, new Inventory(), economy);
-  for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
+  for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1, line);
   return { map, track, economy, builder, fleet, depots };
 }
 function train(id = 'f7') {
@@ -244,12 +245,7 @@ describe('bridges, reversing and refuelling', () => {
     for (let x = 40; x < 46; x++) {
       expect(w.builder.placeBuilding(x, 40, 'bridge_wood')).not.toBeNull();
       expect(
-        w.builder.placeTrack(
-          x,
-          40,
-          { kind: x === 43 ? 'transition' : 'straight', cls: x > 43 ? 'high_speed' : 'regular' },
-          1,
-        ),
+        w.builder.placeTrack(x, 40, { kind: 'straight', cls: x > 43 ? 'main' : 'branch' }, 1),
       ).toBe(true);
     }
     expect(bridgeSpan(w.builder, w.builder.buildingAt(42, 40)!)).toMatchObject({
@@ -284,7 +280,7 @@ describe('bridges, reversing and refuelling', () => {
     );
   });
   it('reverses tender segments and wagons without changing positions or interpolating a half-turn', () => {
-    const w = world(),
+    const w = world('main'),
       t = train('mallard');
     t.wagons.push({
       uid: 2,
@@ -335,7 +331,7 @@ describe('bridges, reversing and refuelling', () => {
   });
   it('refuels a selected group atomically at twice the materials', () => {
     // both trains stand where the one depot store supplies them
-    const w = world([{ x: 45, y: 33 }]),
+    const w = world('branch', [{ x: 45, y: 33 }]),
       a = train(),
       b = train();
     const [depot] = w.depots;
@@ -355,7 +351,7 @@ describe('bridges, reversing and refuelling', () => {
   });
   it('refuels each train of a group from the store that supplies it, or none of them', () => {
     // the west store supplies the train at column 10, the east one the train at column 80
-    const w = world([
+    const w = world('branch', [
         { x: 10, y: 33 },
         { x: 80, y: 33 },
       ]),
@@ -380,7 +376,7 @@ describe('bridges, reversing and refuelling', () => {
     'keeps %s segments in place when reversing on a curve',
     (id) => {
       const t = train(id),
-        pl = referencePath('high_speed', 0.01);
+        pl = referencePath('branch', 0.01);
       const points: number[][] = [];
       for (let arc = 0; arc <= 6.4; arc += 0.01) {
         const p = pl.at(arc);
@@ -402,7 +398,7 @@ describe('bridges, reversing and refuelling', () => {
   );
   it('routes low reserves to the nearer reachable rail service and then resumes its destination', () => {
     // a store by each service: both are stocked
-    const w = world([
+    const w = world('main', [
         { x: 30, y: 34 },
         { x: 60, y: 34 },
       ]),
@@ -433,7 +429,7 @@ describe('bridges, reversing and refuelling', () => {
   });
   it('visits separate fuel and water services in order of the limiting reserve', () => {
     // one store within reach of both services
-    const w = world([{ x: 26, y: 34 }]),
+    const w = world('main', [{ x: 26, y: 34 }]),
       t = train('mallard');
     t.spawnAt(w.track, 20, 30, Dir.W);
     const st = new Station('quarry', 80, 29);
@@ -484,7 +480,7 @@ describe('semaphore boundaries and growing worlds', () => {
   it('shifts bridge levels, houses, wires, track classes, car trails, escapes, ways, wanted ways and service stops together during expansion', () => {
     const save = {
       world: { kind: 'generated', seed: 4242, params: { w: 96, h: 96 } },
-      track: [[20, 20, 'straight', 1, 'high_speed']],
+      track: [[20, 20, 'straight', 1, 'main']],
       stations: [],
       buildings: [[20, 20, 'bridge_stone', 0.5, 3]],
       decor: [[25, 25, 'townhouse', 0]],
@@ -528,7 +524,7 @@ describe('semaphore boundaries and growing worlds', () => {
       clock: { time: 500, speedIndex: 2 },
     } as unknown as SaveGame;
     const grown = expandSave(save);
-    expect(grown.track[0]).toEqual([52, 52, 'straight', 1, 'high_speed']);
+    expect(grown.track[0]).toEqual([52, 52, 'straight', 1, 'main']);
     expect(grown.buildings?.[0]).toEqual([52, 52, 'bridge_stone', 0.5, 3]);
     expect(grown.houses?.list[0]).toMatchObject({ x: 57, y: 57, residents: 100 });
     expect(grown.wires?.[0]).toEqual([52, 52, 'catenary']);
@@ -564,19 +560,15 @@ describe('semaphore boundaries and growing worlds', () => {
   });
 });
 describe('line speed', () => {
-  function runFast(cls: 'regular' | 'high_speed') {
-    const w = world(),
-      t = new Train([
-        { uid: 1, level: 1, def: content.locomotives.find((d) => d.id === 'mallard')! },
-      ]);
-    if (cls === 'high_speed') for (let x = 2; x < 90; x++) w.track.place(x, 30, 'straight', 1, cls);
-    for (const l of t.locos) l.inCab = true;
+  function runFast(cls: 'branch' | 'main') {
+    // a fast Frigate, so the same engine runs on both lines
+    const w = world(cls),
+      t = new Train([{ uid: 1, level: 1, def: content.locomotives.find((d) => d.id === 'f7')! }]);
     t.spawnAt(w.track, 40, 30, Dir.E);
     const st = new Station('quarry', 85, 29);
     w.builder.stations.push(st);
     t.route = [st.id];
-    t.coal = t.coalCap;
-    t.water = t.waterCap;
+    t.oil = t.oilCap;
     t.speed = t.maxSpeed * t.loadFactor;
     w.fleet.trains.push(t);
     expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
@@ -585,22 +577,13 @@ describe('line speed', () => {
     for (let i = 0; i < 40; i++) t.tick(0.05, ctx);
     return t;
   }
-  it('holds an engine to the regular cap and lets it run free on high-speed track', () => {
+  it('holds an engine to the Branch Line cap and lets it run free on Main Line', () => {
     // a cap below what the engine runs at, so the cap is what binds
-    rules.lineSpeedRegular = 0.8;
-    const reg = runFast('regular');
-    expect(reg.speed).toBeLessThanOrEqual(0.8 * rules.trainSpeedMul + 1e-6);
-    const hs = runFast('high_speed');
-    expect(hs.speed).toBeGreaterThan(0.8 * rules.trainSpeedMul + 0.1);
-  });
-});
-describe('high speed without a quest', () => {
-  it('lets a player lay high-speed track from the start', () => {
-    const { builder, economy } = world();
-    builder.free = false;
-    economy.hsUnlocked = false;
-    const c = builder.checkTrack(40, 40, { kind: 'straight', cls: 'high_speed' }, 1);
-    expect(c.reason ?? '').not.toMatch(/not unlocked/i);
+    rules.lineSpeedBranch = 0.8;
+    const branch = runFast('branch');
+    expect(branch.speed).toBeLessThanOrEqual(0.8 * rules.trainSpeedMul + 1e-6);
+    const main = runFast('main');
+    expect(main.speed).toBeGreaterThan(0.8 * rules.trainSpeedMul + 0.1);
   });
 });
 

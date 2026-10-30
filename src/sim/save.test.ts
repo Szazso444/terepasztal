@@ -59,7 +59,7 @@ import { locoDef, wagonDef } from '../gacha/items';
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap } from '../world/mapgen';
 import { levelFromMap, mapFromLevel } from '../world/level';
 import { RegionState } from '../world/regions';
-import { TrackGraph } from '../world/track';
+import { TrackGraph, type TrackTuple } from '../world/track';
 import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
 import { hash2, type Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
@@ -99,8 +99,8 @@ function fullParts(): SaveParts {
     clock: { time: 1234.5, speedIndex: 2 },
     economy: { money: 12345, tickets: 3, tier: 2, granted: [0, 1, 2], earned: 9000 },
     track: [
-      [4, 8, 'straight', 1, 'regular', 'regular'],
-      [12, 8, 'crossing', 0, 'narrow', 'high_speed'],
+      [4, 8, 'straight', 1, 'branch', 'branch'],
+      [12, 8, 'crossing', 0, 'narrow', 'branch'],
     ],
     stations: [{ id: 1, defId: 'town', name: 'Alder', x: 3, y: 3, level: 1, storage: {}, rot: 0 }],
     trains: [{ id: 1 }],
@@ -158,7 +158,8 @@ describe('the migration registry', () => {
     // fill a train's fields, a station with no turn and no work for the steps that fill a
     // station's, past the step that starts the works list, a works with no level, no work and no
     // rotation for the steps that fill a works', and past the step that builds the world
-    // description, a generated world with no ground stored for the step that starts its store.
+    // description, a generated world with no ground stored for the step that starts its store, and
+    // a wide straight and a transition for the step from v21 that lays the six lines.
     for (const m of MIGRATIONS) {
       const file: SaveGame = {
         ...oldestSave(),
@@ -171,6 +172,14 @@ describe('the migration registry', () => {
         trains: [{ id: 1 }],
         stations: [stationOf('farm', undefined)],
         ...(m.from > 3 ? { buildings: [[7, 7, 'kiln', 0] as BuildingJSON] } : {}),
+        ...(m.from === 21
+          ? {
+              track: [
+                [3, 3, 'straight', 1, 'regular'],
+                [4, 3, 'transition', 1, 'regular'],
+              ] as unknown as TrackTuple[],
+            }
+          : {}),
       };
       const before = asStored(file);
       m.run(file);
@@ -789,7 +798,7 @@ describe('v11 to v12', () => {
         },
       ],
       towns: [{ id: 7, stationId: 45, name: 'My Town', custom: true, color: 2 }],
-      track: [[4, 8, 'bridge', 1, 'high_speed']],
+      track: [[4, 8, 'bridge', 1, 'high_speed']] as unknown as TrackTuple[],
       contracts: {
         contracts: [
           { cargo: 'passengers', status: 'active' },
@@ -813,7 +822,7 @@ describe('v11 to v12', () => {
         { cargo: 'stone', status: 'active' },
       ],
     });
-    expect(j.track[0]).toEqual([4, 8, 'straight', 1, 'high_speed', undefined]);
+    expect(j.track[0]).toEqual([4, 8, 'straight', 1, 'branch']);
     // the step to v15 then says the bridge is not being strengthened, and the step to v16 that it
     // stands at rotation 0
     expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1, null, 0]);
@@ -1753,9 +1762,9 @@ describe('v20 to v21', () => {
 
   it('records its note', () => {
     const j = migrate(v20([st(2, 'depot')]));
-    expect(j.migrationNotes).toEqual([
+    expect(j.migrationNotes?.[0]).toBe(
       'v20→v21: the global stockpile moved into the start depot; each warehouse keeps its own goods',
-    ]);
+    );
   });
 });
 
@@ -2903,15 +2912,15 @@ describe('v12 to v13', () => {
         [8, 8, 'straight', 1, 'regular'],
         [10, 8, 'curve', 0, 'high_speed'],
         [12, 8, 'crossing', 0, 'regular', 'high_speed'],
-      ],
+      ] as unknown as TrackTuple[],
     });
     expect(j.version).toBe(SAVE_VERSION);
     expect(j.track).toEqual([
-      [4, 8, 'curve', 1, 'narrow', undefined],
-      [6, 8, 'switch', 5, 'narrow', undefined],
-      [8, 8, 'straight', 1, 'regular', undefined],
-      [10, 8, 'curve', 0, 'high_speed', undefined],
-      [12, 8, 'crossing', 0, 'regular', 'high_speed'],
+      [4, 8, 'curve', 1, 'narrow'],
+      [6, 8, 'switch', 5, 'narrow'],
+      [8, 8, 'straight', 1, 'branch'],
+      [10, 8, 'curve', 0, 'branch'],
+      [12, 8, 'crossing', 0, 'branch', 'branch'],
     ]);
   });
 
@@ -2951,11 +2960,43 @@ describe('v12 to v13', () => {
       convertOneTileRegular([
         [1, 1, 'curve', 2, 'regular'],
         [2, 1, 'straight', 0],
-      ]),
+      ] as unknown as TrackTuple[]),
     ).toEqual([
       [1, 1, 'curve', 2, 'narrow', undefined],
       [2, 1, 'straight', 0, undefined, undefined],
     ]);
+  });
+});
+
+describe('v21 to v22', () => {
+  it('turns wide and high-speed track into Branch Line, and a transition into a straight on its axis', () => {
+    const j = migrate({
+      ...oldestSave(),
+      version: 21,
+      track: [
+        [2, 4, 'straight', 1, 'regular'],
+        [3, 4, 'transition', 3, 'regular'],
+        [4, 4, 'straight', 1, 'high_speed'],
+        [6, 2, 'transition', 2],
+        [6, 6, 'curve', 1, 'high_speed'],
+        [9, 4, 'crossing', 0, 'narrow', 'regular'],
+        [11, 4, 'crossing', 1, 'regular', 'high_speed'],
+        [13, 4, 'switch', 5, 'narrow'],
+      ] as unknown as TrackTuple[],
+    });
+    expect(j.version).toBe(SAVE_VERSION);
+    expect(j.track).toEqual([
+      [2, 4, 'straight', 1, 'branch'],
+      // turns 3 and 2 lie along the axes of straights 1 and 0
+      [3, 4, 'straight', 1, 'branch'],
+      [4, 4, 'straight', 1, 'branch'],
+      [6, 2, 'straight', 0, 'branch'],
+      [6, 6, 'curve', 1, 'branch'],
+      [9, 4, 'crossing', 0, 'narrow', 'branch'],
+      [11, 4, 'crossing', 1, 'branch', 'branch'],
+      [13, 4, 'switch', 5, 'narrow'],
+    ]);
+    expect(MIGRATIONS.find((m) => m.from === 21)!.note).toMatch(/Branch Line/);
   });
 });
 

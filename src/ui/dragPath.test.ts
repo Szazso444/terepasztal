@@ -70,9 +70,9 @@ describe('a drag that turns', () => {
 
   it('gives the curve its footprint out of both legs', () => {
     // east, then south: a 2×2 curve at the corner of (20..26, 20) and (26, 20..25)
-    const path = turnPath({ x: 20, y: 20 }, { x: 26, y: 25 }, 'x', 'regular');
+    const path = turnPath({ x: 20, y: 20 }, { x: 26, y: 25 }, 'x', 'branch');
     const curve = path.find((p) => p.item)!;
-    expect(footprintOf(curve.x, curve.y, 'curve', curve.rot, 'regular')).toEqual(
+    expect(footprintOf(curve.x, curve.y, 'curve', curve.rot, 'branch')).toEqual(
       expect.arrayContaining([
         { x: 25, y: 20 },
         { x: 26, y: 21 },
@@ -92,7 +92,7 @@ describe('a drag that turns', () => {
   it('turns the other way round when the drag set off along the other axis', () => {
     const a = { x: 20, y: 20 },
       b = { x: 26, y: 25 };
-    const down = turnPath(a, b, 'y', 'regular');
+    const down = turnPath(a, b, 'y', 'branch');
     expect(down[0]).toMatchObject({ x: 20, y: 20, rot: 0 });
     expect(down[down.length - 1]).toMatchObject({ x: 26, y: 25, rot: 1 });
   });
@@ -111,10 +111,10 @@ describe('a drag that turns', () => {
     const a = { x: 20, y: 20 };
     for (let off = 0; off < TURN_AFTER; off++) {
       const b = { x: 28, y: 20 + off };
-      expect(turnPath(a, b, 'x', 'regular')).toEqual(lineTiles(a, b));
+      expect(turnPath(a, b, 'x', 'branch')).toEqual(lineTiles(a, b));
     }
     // no first leg at all: straight on along the cursor's axis
-    expect(turnPath(a, { x: 20, y: 28 }, 'x', 'regular')).toEqual(lineTiles(a, { x: 20, y: 28 }));
+    expect(turnPath(a, { x: 20, y: 28 }, 'x', 'branch')).toEqual(lineTiles(a, { x: 20, y: 28 }));
   });
 });
 
@@ -135,12 +135,12 @@ function world(size = 30) {
 describe('a turning run laid', () => {
   it('prices the straights and the curve, and lays one joined line', () => {
     const { track, builder } = world();
-    const path = turnPath({ x: 5, y: 5 }, { x: 12, y: 11 }, 'x', 'regular');
-    const plan = planRun(builder, path, { kind: 'straight', cls: 'regular' });
+    const path = turnPath({ x: 5, y: 5 }, { x: 12, y: 11 }, 'x', 'branch');
+    const plan = planRun(builder, path, { kind: 'straight', cls: 'branch' });
     expect(plan.end).toBe(path.length);
     expect(plan.curves).toBe(1);
-    const one = pieceCost('straight', 'regular'),
-      curve = pieceCost('curve', 'regular'),
+    const one = pieceCost('straight', 'branch'),
+      curve = pieceCost('curve', 'branch'),
       straights = path.length - 1;
     for (const k of new Set([...Object.keys(one), ...Object.keys(curve)]))
       expect(plan.cost[k]).toBe((one[k] ?? 0) * straights + (curve[k] ?? 0));
@@ -149,16 +149,16 @@ describe('a turning run laid', () => {
     expect(track.opensTo(10, 5, Dir.E) && track.opensTo(11, 5, Dir.W)).toBe(true);
     expect(track.opensTo(12, 6, Dir.S) && track.opensTo(12, 7, Dir.N)).toBe(true);
     // dragged again, it all stands
-    const again = planRun(builder, path, { kind: 'straight', cls: 'regular' });
+    const again = planRun(builder, path, { kind: 'straight', cls: 'branch' });
     expect(again.steps.every((s) => s.stands)).toBe(true);
     expect(again.cost).toEqual({});
   });
 
   it('lays no second leg when the stock runs out at the curve', () => {
     const { track, builder, stock } = world();
-    const path = turnPath({ x: 5, y: 5 }, { x: 12, y: 11 }, 'x', 'regular');
+    const path = turnPath({ x: 5, y: 5 }, { x: 12, y: 11 }, 'x', 'branch');
     const turn = path.findIndex((p) => p.item);
-    const ample = planRun(builder, path, { kind: 'straight', cls: 'regular' });
+    const ample = planRun(builder, path, { kind: 'straight', cls: 'branch' });
     const straight = ample.steps[0].cost,
       curve = ample.steps[turn].cost;
     // a resource the curve needs more of than a straight: the first leg leaves one short of the
@@ -167,7 +167,7 @@ describe('a turning run laid', () => {
     expect(k).toBeDefined();
     for (const r of new Set([...Object.keys(straight), ...Object.keys(curve)]))
       stock.amounts.set(r, (straight[r] ?? 0) * turn + (r === k ? curve[r] - 1 : 1000));
-    const plan = planRun(builder, path, { kind: 'straight', cls: 'regular' });
+    const plan = planRun(builder, path, { kind: 'straight', cls: 'branch' });
     expect(plan.end).toBe(path.length);
     expect(layRun(builder, plan)).toBe(turn);
     expect(track.get(11, 5)).toBeUndefined();
@@ -175,7 +175,7 @@ describe('a turning run laid', () => {
   });
 
   it('stops at a curve with track in its way, and never cuts that track', () => {
-    for (const cls of ['regular', 'narrow'] as const) {
+    for (const cls of ['branch', 'narrow'] as const) {
       const { track, builder } = world();
       // a north-south line down the corner column
       for (let y = 2; y <= 14; y++)

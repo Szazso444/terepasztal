@@ -1,4 +1,4 @@
-import type { TrackClass, TrackKind } from '../world/track';
+import { liftLegacyTrack, type TrackTuple } from '../world/track';
 import type { StationJSON } from './stations';
 import type { MapGenParams } from '../world/mapgen';
 import { DEFAULT_MAP_PARAMS } from '../world/mapgen';
@@ -32,14 +32,15 @@ export type WorldSpec =
     }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
  */
 export function convertOneTileRegular(track: SaveGame['track']): SaveGame['track'] {
   return track.map(([x, y, kind, rot, cls, cls2]) =>
-    (kind === 'curve' || kind === 'switch') && (cls ?? 'regular') === 'regular'
+    (kind === 'curve' || kind === 'switch') &&
+    ((cls as string | undefined) ?? 'regular') === 'regular'
       ? [x, y, kind, rot, 'narrow', cls2]
       : [x, y, kind, rot, cls, cls2],
   );
@@ -68,7 +69,7 @@ export interface SaveParts {
     reputation?: number;
   };
   /** anchor tiles: x, y, kind, rotation, class (v9), second class of crossings (v9) */
-  track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
+  track: TrackTuple[];
   /**
    * v15: each with the upgrade under way (`work`), null for none; v16: `rot` one of the four
    * rotations, 0 to 3
@@ -641,6 +642,11 @@ export const MIGRATIONS: Migration[] = [
       j.stores = stores;
       delete j.stockpile;
     },
+  },
+  {
+    from: 21,
+    note: 'the six track lines replaced the track classes: wide and high-speed track became Branch Line, and transitions became Branch Line straights',
+    run: (j) => (j.track = liftLegacyTrack(j.track)),
   },
 ];
 /** Every field of `SaveParts`, once: leaving one out, or naming one it lacks, fails to compile. */

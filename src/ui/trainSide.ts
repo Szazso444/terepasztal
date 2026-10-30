@@ -1,6 +1,7 @@
 import { wagonFrame } from '../art/frames';
 import { el, btn } from './dom';
 import { STR } from '../strings';
+import { trainLabels } from './labels';
 import type { Train } from '../sim/trains';
 import type { Builder } from '../sim/build';
 import type { Commands } from '../sim/commands';
@@ -118,6 +119,7 @@ export class TrainSide {
     const state = `${t.blocked && t.state === 'moving' ? STR.depot.state.held : (STR.depot.state[t.state] ?? t.state)}${next ? ` → ${next.name}` : ''}`;
     const card = el('div', { class: `ts-card state-${t.state}` });
     card.append(
+      trainLabels(t.trainClass) ?? '',
       el(
         'div',
         { class: 'ts-head' },

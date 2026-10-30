@@ -34,7 +34,9 @@ function world(size = 24) {
     x: size >> 1,
     y: size >> 1,
   });
-  const builder = new Builder(map, regions, track, new Economy(), stores);
+  // the Electric Age: every line is open
+  const economy = Object.assign(new Economy(), { tier: 2 });
+  const builder = new Builder(map, regions, track, economy, stores);
   return { track, builder, stock };
 }
 const straight = (cls: TrackClass): TrackItem => ({ kind: 'straight', cls });
@@ -42,7 +44,7 @@ const straight = (cls: TrackClass): TrackItem => ({ kind: 'straight', cls });
 const nsRun = (x: number, y0: number, y1: number) =>
   Array.from({ length: y1 - y0 + 1 }, (_, i) => ({ x, y: y0 + i, rot: 0 }));
 /** An east-west line of `cls` straights on row y. */
-function ewLine(b: Builder, y: number, x0: number, x1: number, cls: TrackClass = 'regular') {
+function ewLine(b: Builder, y: number, x0: number, x1: number, cls: TrackClass = 'branch') {
   for (let x = x0; x <= x1; x++) expect(b.placeTrack(x, y, straight(cls), 1)).toBe(true);
 }
 const crossable = (a: TrackClass, b: TrackClass) =>
@@ -74,45 +76,41 @@ describe('the crossing a run lays by itself', () => {
         }
   });
 
-  it('picks the mixed piece in either turn: a wide line under a high-speed run and the reverse', () => {
-    expect(crossingFor('high_speed', 1, makePiece('straight', 0, 'regular'))).toEqual({
+  it('picks the mixed piece in either turn: a Branch Line under a Main Line run and the reverse', () => {
+    expect(crossingFor('main', 1, makePiece('straight', 0, 'branch'))).toEqual({
       ok: true,
-      item: { kind: 'crossing', cls: 'regular', cls2: 'high_speed' },
+      item: { kind: 'crossing', cls: 'branch', cls2: 'main' },
       rot: 0,
     });
-    expect(crossingFor('regular', 1, makePiece('straight', 0, 'high_speed'))).toEqual({
+    expect(crossingFor('branch', 1, makePiece('straight', 0, 'main'))).toEqual({
       ok: true,
-      item: { kind: 'crossing', cls: 'regular', cls2: 'high_speed' },
+      item: { kind: 'crossing', cls: 'branch', cls2: 'main' },
       rot: 1,
     });
-    expect(crossingFor('narrow', 0, makePiece('straight', 1, 'regular'))).toEqual({
+    expect(crossingFor('narrow', 0, makePiece('straight', 1, 'branch'))).toEqual({
       ok: true,
-      item: { kind: 'crossing', cls: 'narrow', cls2: 'regular' },
+      item: { kind: 'crossing', cls: 'narrow', cls2: 'branch' },
       rot: 0,
     });
   });
 
   it('leaves alone what is not a line across the run', () => {
-    expect(crossingFor('regular', 0, undefined)).toBeNull();
+    expect(crossingFor('branch', 0, undefined)).toBeNull();
     // along the run: a junction, not a crossing
-    expect(crossingFor('regular', 0, makePiece('straight', 0, 'regular'))).toBeNull();
-    expect(crossingFor('regular', 1, makePiece('straight', 1, 'high_speed'))).toBeNull();
-    // a transition along the run is the ordinary rules' to judge
-    expect(crossingFor('regular', 0, makePiece('transition', 0))).toBeNull();
-    expect(crossingFor('regular', 1, makePiece('transition', 3))).toBeNull();
-    expect(crossingFor('regular', 0, makePiece('bridge', 0))).toBeNull();
+    expect(crossingFor('branch', 0, makePiece('straight', 0, 'branch'))).toBeNull();
+    expect(crossingFor('branch', 1, makePiece('straight', 1, 'main'))).toBeNull();
+    expect(crossingFor('branch', 0, makePiece('bridge', 0))).toBeNull();
   });
 
   it('refuses a bridge across the run, and a bridge run across any line', () => {
-    expect(crossingFor('regular', 0, makePiece('bridge', 1))).toEqual({
+    expect(crossingFor('branch', 0, makePiece('bridge', 1))).toEqual({
       ok: false,
       why: 'bridge',
-      other: 'regular',
+      other: 'branch',
     });
     for (const [kind, rot] of [
       ['straight', 1],
       ['bridge', 1],
-      ['transition', 3],
       ['crossing', 0],
     ] as const)
       expect(bridgeCrossing(0, makePiece(kind, rot)), `${kind} ${rot}`).toMatchObject({
@@ -122,47 +120,38 @@ describe('the crossing a run lays by itself', () => {
     expect(bridgeCrossing(0, makePiece('curve', 0))).toMatchObject({ ok: false, why: 'angle' });
     expect(bridgeCrossing(0, makePiece('bridge', 0))).toBeNull();
     expect(bridgeCrossing(1, undefined)).toBeNull();
-    expect(crossingRefusal('regular', { ok: false, why: 'bridge', other: 'regular' })).toBe(
+    expect(crossingRefusal('branch', { ok: false, why: 'bridge', other: 'branch' })).toBe(
       STR.build.crossBridge,
     );
-  });
-
-  it('refuses a transition across the run: no crossing stands in for it', () => {
-    for (const rot of [0, 1])
-      for (const t of [rot + 1, rot + 3]) {
-        const pick = crossingFor('regular', rot, makePiece('transition', t % 4));
-        expect(pick).toEqual({ ok: false, why: 'transition', other: 'regular' });
-        expect(crossingRefusal('regular', pick as never)).toBe(STR.build.crossTransition);
-      }
   });
 
   it('refuses curves and switches: lines cross only at right angles', () => {
     for (const kind of ['curve', 'switch'] as const)
       for (const rot of [0, 1])
-        expect(crossingFor('regular', rot, makePiece(kind, 0, 'narrow'))).toEqual({
+        expect(crossingFor('branch', rot, makePiece(kind, 0, 'narrow'))).toEqual({
           ok: false,
           why: 'angle',
           other: 'narrow',
         });
-    expect(crossingRefusal('regular', { ok: false, why: 'angle', other: 'regular' })).toBe(
+    expect(crossingRefusal('branch', { ok: false, why: 'angle', other: 'branch' })).toBe(
       STR.build.crossAngle,
     );
   });
 
   it('passes through a crossing that carries its class along the run, keeping its turn', () => {
-    const mixed = makePiece('crossing', 1, 'regular', 'high_speed');
-    // at rotation 1 the wide line runs east-west and the high-speed line north-south
-    expect(crossingFor('high_speed', 0, mixed)).toEqual({
+    const mixed = makePiece('crossing', 1, 'branch', 'main');
+    // at rotation 1 the Branch Line runs east-west and the Main Line north-south
+    expect(crossingFor('main', 0, mixed)).toEqual({
       ok: true,
-      item: { kind: 'crossing', cls: 'regular', cls2: 'high_speed' },
+      item: { kind: 'crossing', cls: 'branch', cls2: 'main' },
       rot: 1,
     });
-    const plain = makePiece('crossing', 1, 'regular', 'regular');
-    expect(crossingFor('regular', 0, plain)).toMatchObject({ ok: true, rot: 1 });
-    // a high-speed run across the wide crossing makes it the mixed one, turned to the run
-    expect(crossingFor('high_speed', 0, plain)).toEqual({
+    const plain = makePiece('crossing', 1, 'branch', 'branch');
+    expect(crossingFor('branch', 0, plain)).toMatchObject({ ok: true, rot: 1 });
+    // a Main Line run across the Branch crossing makes it the mixed one, turned to the run
+    expect(crossingFor('main', 0, plain)).toEqual({
       ok: true,
-      item: { kind: 'crossing', cls: 'regular', cls2: 'high_speed' },
+      item: { kind: 'crossing', cls: 'branch', cls2: 'main' },
       rot: 1,
     });
   });
@@ -173,66 +162,53 @@ describe('a run laid across lines', () => {
     const { track, builder } = world();
     ewLine(builder, 10, 4, 14);
     const line = nsRun(9, 5, 15);
-    const plan = planRun(builder, line, straight('high_speed'));
+    const plan = planRun(builder, line, straight('main'));
     expect(plan.end).toBe(line.length);
     expect(plan.crossings).toBe(1);
     // the status counts the crossing once, apart from the straights
     expect(plan.straights).toBe(10);
     // ten straights and the crossing in place of the eleventh
-    const crossing = pieceCost('crossing', 'regular', 'high_speed'),
-      one = pieceCost('straight', 'high_speed');
+    const crossing = pieceCost('crossing', 'branch', 'main'),
+      one = pieceCost('straight', 'main');
     for (const [k, v] of Object.entries(one))
       expect(plan.cost[k]).toBe(v * 10 + (crossing[k] ?? 0));
     layRun(builder, plan);
     const p = track.get(9, 10)!;
     expect(p.kind).toBe('crossing');
-    expect(portClass(p, Dir.N)).toBe('high_speed');
-    expect(portClass(p, Dir.E)).toBe('regular');
+    expect(portClass(p, Dir.N)).toBe('main');
+    expect(portClass(p, Dir.E)).toBe('branch');
     // the east-west line still runs through
     expect(track.opensTo(8, 10, Dir.E) && track.opensTo(9, 10, Dir.W)).toBe(true);
     expect(track.opensTo(10, 10, Dir.W) && track.opensTo(9, 10, Dir.E)).toBe(true);
     // a second drag over the same tiles stands already: nothing to lay or pay
-    const again = planRun(builder, line, straight('high_speed'));
+    const again = planRun(builder, line, straight('main'));
     expect(again.steps.every((s) => s.stands)).toBe(true);
     expect(again.cost).toEqual({});
   });
 
   it('stops before a line of another world, and never cuts it', () => {
     const { track, builder } = world();
-    ewLine(builder, 10, 4, 14, 'high_speed');
+    ewLine(builder, 10, 4, 14, 'main');
     const line = nsRun(9, 5, 15);
     const plan = planRun(builder, line, straight('narrow'));
     expect(plan.end).toBe(5);
-    expect(plan.reason).toBe(STR.build.crossApart(STR.toolbar.trackClass.narrow, 'high-speed'));
+    expect(plan.reason).toBe(STR.build.crossApart(STR.toolbar.trackClass.narrow, 'main line'));
     expect(plan.crossings).toBe(0);
     layRun(builder, plan);
     for (let y = 5; y < 10; y++) expect(track.get(9, y)?.cls).toBe('narrow');
-    expect(track.get(9, 10)).toMatchObject({ kind: 'straight', cls: 'high_speed', rot: 1 });
+    expect(track.get(9, 10)).toMatchObject({ kind: 'straight', cls: 'main', rot: 1 });
     for (let y = 11; y <= 15; y++) expect(track.get(9, y)).toBeUndefined();
-  });
-
-  it('stops before a class transition across it, and never cuts that line', () => {
-    const { track, builder } = world();
-    ewLine(builder, 10, 4, 8);
-    expect(builder.placeTrack(9, 10, { kind: 'transition', cls: 'regular' }, 1)).toBe(true);
-    ewLine(builder, 10, 10, 14, 'high_speed');
-    const plan = planRun(builder, nsRun(9, 5, 15), straight('regular'));
-    expect(plan.end).toBe(5);
-    expect(plan.reason).toBe(STR.build.crossTransition);
-    layRun(builder, plan);
-    expect(track.get(9, 10)?.kind).toBe('transition');
-    expect(track.get(9, 11)).toBeUndefined();
   });
 
   it('stops laying at the first piece the stock can no longer pay, leaving no loose track', () => {
     const { track, builder, stock } = world();
     const line = nsRun(9, 5, 14);
-    const plan = planRun(builder, line, straight('regular'));
+    const plan = planRun(builder, line, straight('branch'));
     const one = plan.steps[0].cost;
     // enough for four straights, judged one by one every piece looks affordable
     for (const k of Object.keys(stock.amounts)) stock.amounts.set(k, 0);
     for (const [k, v] of Object.entries(one)) stock.amounts.set(k, v * 4);
-    const judged = planRun(builder, line, straight('regular'));
+    const judged = planRun(builder, line, straight('branch'));
     expect(judged.steps.every((s) => s.ok)).toBe(true);
     expect(layRun(builder, judged)).toBe(4);
     for (let y = 5; y < 9; y++) expect(track.get(9, y)?.kind).toBe('straight');
@@ -245,8 +221,8 @@ describe('a run laid across lines', () => {
     for (let y = 6; y <= 14; y++)
       for (let x = 5; x <= 13; x++) map.terrain[y * map.w + x] = Terrain.Water;
     for (let x = 6; x <= 12; x++)
-      expect(builder.placeTrack(x, 10, { kind: 'bridge', cls: 'regular' }, 1)).toBe(true);
-    const plan = planRun(builder, nsRun(9, 7, 13), { kind: 'bridge', cls: 'regular' });
+      expect(builder.placeTrack(x, 10, { kind: 'bridge', cls: 'branch' }, 1)).toBe(true);
+    const plan = planRun(builder, nsRun(9, 7, 13), { kind: 'bridge', cls: 'branch' });
     expect(plan.end).toBe(3);
     expect(plan.reason).toBe(STR.build.crossBridge);
     layRun(builder, plan);
@@ -274,12 +250,11 @@ describe('a run laid across lines', () => {
     const { track, builder } = world();
     const map = builder.map;
     for (let y = 6; y <= 12; y++) map.terrain[y * map.w + 9] = Terrain.Rock;
-    for (let y = 3; y <= 5; y++)
-      expect(builder.placeTrack(9, y, straight('regular'), 0)).toBe(true);
+    for (let y = 3; y <= 5; y++) expect(builder.placeTrack(9, y, straight('branch'), 0)).toBe(true);
     const line = nsRun(9, 6, 12);
     // alone, a rock tile beyond the foot does not continue a line yet
-    expect(builder.checkTrack(9, 8, straight('regular'), 0).reason).toBe(STR.build.mountainLine);
-    const plan = planRun(builder, line, straight('regular'));
+    expect(builder.checkTrack(9, 8, straight('branch'), 0).reason).toBe(STR.build.mountainLine);
+    const plan = planRun(builder, line, straight('branch'));
     expect(plan.steps.every((s) => s.ok)).toBe(true);
     expect(plan.straights).toBe(line.length);
     // judging changed nothing
@@ -305,7 +280,7 @@ describe('a run laid across lines', () => {
     ewLine(builder, 12, 4, 14, 'narrow');
     rules.narrowUnlocked = 0;
     // a wide run reaches the wide line, then the narrow line it may cross only once narrow is open
-    const plan = planRun(builder, nsRun(9, 8, 14), straight('regular'));
+    const plan = planRun(builder, nsRun(9, 8, 14), straight('branch'));
     expect(plan.end).toBe(4);
     expect(plan.reason).toBe(STR.build.narrowLocked);
     expect(plan.crossings).toBe(1);

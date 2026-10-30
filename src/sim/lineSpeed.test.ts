@@ -5,11 +5,12 @@ import { rules, DEFAULT_RULES } from './rules';
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
 describe('line speed', () => {
-  it('caps regular and narrow track, never high speed', () => {
-    expect(lineSpeedCap('high_speed')).toBe(Infinity);
-    expect(lineSpeedCap('regular')).toBeCloseTo(2.0 * rules.trainSpeedMul);
+  it('caps Branch Line and Narrow Gauge, never the bigger lines', () => {
+    for (const cls of ['main', 'trunk', 'maglev', 'hyperloop'] as const)
+      expect(lineSpeedCap(cls), cls).toBe(Infinity);
+    expect(lineSpeedCap('branch')).toBeCloseTo(2.0 * rules.trainSpeedMul);
     expect(lineSpeedCap('narrow')).toBeCloseTo(1.2 * rules.trainSpeedMul);
-    expect(lineSpeedCap('narrow')).toBeLessThan(lineSpeedCap('regular'));
+    expect(lineSpeedCap('narrow')).toBeLessThan(lineSpeedCap('branch'));
   });
 
   it('brakes towards a lower cap ahead and holds it once there', () => {
@@ -21,7 +22,7 @@ describe('line speed', () => {
   });
 
   it('follows the tuning values', () => {
-    rules.lineSpeedRegular = 3;
-    expect(lineSpeedCap('regular')).toBeCloseTo(3 * rules.trainSpeedMul);
+    rules.lineSpeedBranch = 3;
+    expect(lineSpeedCap('branch')).toBeCloseTo(3 * rules.trainSpeedMul);
   });
 });

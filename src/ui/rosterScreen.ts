@@ -14,6 +14,8 @@ import {
   locoDef,
 } from '../gacha/items';
 import { cargoDef } from '../sim/cargo';
+import { runsOn } from '../sim/compat';
+import { rarityStars, vehicleLabels } from './labels';
 import type { Fleet } from '../sim/fleet';
 import type { Commands } from '../sim/commands';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -57,22 +59,23 @@ export class RosterScreen implements Screen {
     b.innerHTML = '';
     const group = (
       label: string,
-      opts: { v: string; t: string }[],
+      opts: { v: string; t: string; star?: string }[],
       cur: string,
       set: (v: string) => void,
     ) => {
       const g = el('div', { class: 'tb-group' }, el('span', { class: 'tb-label', text: label }));
-      for (const o of opts)
-        g.append(
-          btn(
-            o.t,
-            () => {
-              set(o.v);
-              this.render();
-            },
-            `small ${cur === o.v ? 'active' : ''}`,
-          ),
+      for (const o of opts) {
+        const b = btn(
+          o.t,
+          () => {
+            set(o.v);
+            this.render();
+          },
+          `small ${cur === o.v ? 'active' : ''}`,
         );
+        if (o.star) b.prepend(rarityStars(o.star, `rarity-${o.star}`));
+        g.append(b);
+      }
       return g;
     };
     b.append(
@@ -88,7 +91,10 @@ export class RosterScreen implements Screen {
       ),
       group(
         STR.roster.rarity,
-        [{ v: 'all', t: STR.roster.all }, ...RARITIES.map((r) => ({ v: r, t: r }))],
+        [
+          { v: 'all', t: STR.roster.all },
+          ...RARITIES.map((r) => ({ v: r, t: STR.craft.quality[r] ?? r, star: r })),
+        ],
         this.rarity,
         (v) => (this.rarity = v),
       ),
@@ -172,6 +178,8 @@ export class RosterScreen implements Screen {
       );
       if (wd.service) stats.push(STR.roster.serviceLine(wd.service, wd.serviceCap ?? 0));
     }
+    // its train class and the lines it may run on
+    stats.push(runsOn(d as LocoDef | WagonDef));
     const train = it.assigned !== null ? this.fleet.byId(it.assigned) : null;
     const spares = this.inventory.spares(it).length;
     const lvl = el(
@@ -199,7 +207,7 @@ export class RosterScreen implements Screen {
       up.title = STR.roster.levelUpHint;
       lvl.append(up);
     }
-    // in-cab signalling: the one hard requirement of high-speed track, fitted for money
+    // in-cab signalling, fitted for money: with in-cab signals the train runs on the shorter headway
     if (it.kind === 'loco' && !it.inCab && !locoDef(it.defId).inCab) {
       const fit = btn(
         STR.roster.fitInCab(rules.inCabCost),
@@ -223,10 +231,10 @@ export class RosterScreen implements Screen {
       el(
         'div',
         { class: 'rcard-head' },
-        el('span', { class: `rarity-${d.rarity}`, text: d.rarity }),
-        el('span', { class: 'name', text: d.name }),
+        el('span', { class: `name rarity-${d.rarity}`, text: d.name }),
         el('span', { class: 'num', text: STR.roster.lv(it.level) }),
       ),
+      vehicleLabels(d),
       portrait
         ? el(
             'div',

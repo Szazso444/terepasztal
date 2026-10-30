@@ -232,7 +232,7 @@ describe('building review sheets', () => {
     const game = readFileSync('src/art/trackIllustrated.ts', 'utf8');
     const of = (cls) => {
       const m = new RegExp(
-        `${cls}: \\{\\s*rail: ([\\d.]+),\\s*sleeper: ([\\d.]+),\\s*step: [\\d.]+,\\s*shoulder: ([\\d.]+),\\s*bed: (true|false)`,
+        `(?:${cls}: |const ${cls.toUpperCase()}: LineStyle = )\\{\\s*rail: ([\\d.]+),\\s*sleeper: ([\\d.]+),\\s*step: [\\d.]+,\\s*shoulder: ([\\d.]+),\\s*bed: (true|false)`,
       ).exec(game);
       return {
         rail: Number(m[1]),
@@ -241,12 +241,12 @@ describe('building review sheets', () => {
         ballast: m[4] === 'true',
       };
     };
-    // the depot stands on regular track, which shows as wide as its ballast; the narrow depot on
+    // the depot stands on Branch Line, which shows as wide as its ballast; the narrow depot on
     // narrow gauge, which has none and shows as wide as its sleepers
-    const regular = of('regular'),
+    const branch = of('branch'),
       narrow = of('narrow');
-    expect(regular.ballast).toBe(true);
-    expect(TRACK.t2x2).toEqual({ rail: regular.rail, bed: regular.shoulder });
+    expect(branch.ballast).toBe(true);
+    expect(TRACK.t2x2).toEqual({ rail: branch.rail, bed: branch.shoulder });
     expect(narrow.ballast).toBe(false);
     expect(TRACK.t1x2).toEqual({ rail: narrow.rail, bed: narrow.sleeper });
     // and so it is drawn: across the track before the portal wall, from its middle outwards

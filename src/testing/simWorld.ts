@@ -266,12 +266,12 @@ function freely<T>(w: SimWorld, act: () => T): T {
  * tile that cannot take the piece and the builder's reason.
  */
 export function line(w: SimWorld, x0: number, y: number, x1: number): void {
-  const item = { kind: 'straight', cls: 'regular', cls2: 'regular' } as const;
+  const item = { kind: 'straight', cls: 'branch', cls2: 'branch' } as const;
   freely(w, () => {
     for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) {
       const p = w.track.get(x, y);
       // placeTrack refuses a piece identical to the one already there
-      if (p?.kind === 'straight' && p.rot === 1 && (p.cls2 ?? p.cls) === 'regular') continue;
+      if (p?.kind === 'straight' && p.rot === 1 && (p.cls2 ?? p.cls) === 'branch') continue;
       if (w.builder.placeTrack(x, y, item, 1)) continue;
       const why = w.builder.checkTrack(x, y, item, 1).reason ?? 'refused';
       throw new Error(`line: no straight at ${x},${y}: ${why}`);

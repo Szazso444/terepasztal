@@ -23,7 +23,7 @@ function line(
   y: number,
   x0: number,
   x1: number,
-  cls: 'regular' | 'narrow' = 'regular',
+  cls: 'branch' | 'narrow' = 'branch',
 ) {
   for (let x = x0; x <= x1; x++) g.place(x, y, 'straight', 1, cls);
 }
@@ -96,13 +96,13 @@ describe('sections', () => {
 
   it('gives every member of a multi-tile switch its own node id', () => {
     const g = new TrackGraph(16, 16);
-    const tiles = g.place(6, 6, 'switch', 0, 'regular');
+    const tiles = g.place(6, 6, 'switch', 0, 'branch');
     const t = trafficOn(g);
     for (const tile of tiles) expect(t.sectionOf(tile.x, tile.y)).toBeLessThan(0);
   });
 
-  it('chains a 2×2 curve into the single line it sits on', () => {
-    for (const cls of ['regular', 'high_speed'] as const) {
+  it('chains a curve of n×n tiles into the single line it sits on', () => {
+    for (const cls of ['branch', 'main', 'trunk'] as const) {
       const g = new TrackGraph(24, 24);
       const tiles = g.place(10, 10, 'curve', 0, cls);
       const inUnit = (x: number, y: number) => tiles.some((m) => m.x === x && m.y === y);

@@ -10,6 +10,9 @@ import { rules, DEFAULT_RULES } from '../sim/rules';
 import { ReclassStroke } from './reclassStroke';
 import { storeWith } from '../testing/storeFixtures';
 
+/** An economy in the Electric Age: Main and Trunk Line are open. */
+const electricAge = () => Object.assign(new Economy(), { tier: 2 });
+
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
@@ -104,47 +107,53 @@ describe('a stroke on real track', () => {
     const map = emptyMap(4242, 48, 48, Terrain.Grass),
       track = new TrackGraph(48, 48),
       { stores, depot: stock } = storeWith({}, { x: 10, y: 10 }),
-      economy = new Economy();
+      economy = electricAge();
     const regions = new RegionState(map);
     for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
     const builder = new Builder(map, regions, track, economy, stores);
     for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 5000);
-    // a north-south line and a west-east line, crossing at (10, 10)
-    for (let y = 5; y <= 15; y++) if (y !== 10) track.place(10, y, 'straight', 0, 'regular');
-    for (let x = 5; x <= 15; x++) if (x !== 10) track.place(x, 10, 'straight', 1, 'regular');
-    track.place(10, 10, 'crossing', 0, 'regular', 'regular');
+    // a north-south and a west-east line of Main Line, crossing at (10, 10); the Downgrade tool
+    // takes Main down to Branch, and the crossing takes Branch on the line the stroke runs along
+    for (let y = 5; y <= 15; y++) if (y !== 10) track.place(10, y, 'straight', 0, 'main');
+    for (let x = 5; x <= 15; x++) if (x !== 10) track.place(x, 10, 'straight', 1, 'main');
+    track.place(10, 10, 'crossing', 0, 'main', 'main');
     return { track, builder };
   }
-  const lineOf = (track: TrackGraph, axis: 'ns' | 'ew') => {
-    const p = track.get(10, 10)!;
-    const northSouth = p.links[0].some((d) => d === 0 || d === 2) ? 0 : 1;
-    const i = axis === 'ns' ? northSouth : 1 - northSouth;
-    return i === 0 ? p.cls : (p.cls2 ?? p.cls);
-  };
 
-  it("upgrades only the stroke's line of a crossing when the hand wobbles beside it", () => {
+  it("converts only the stroke's line when the hand wobbles beside a crossing", () => {
     const { track, builder } = world();
     const crossing = (t: { x: number; y: number }) => track.get(t.x, t.y)?.kind === 'crossing';
     const s = new ReclassStroke();
     for (const t of [at(10, 7), at(10, 8), at(9, 9), at(10, 10), at(10, 11), at(10, 12)])
-      for (const step of s.move(t, crossing))
-        builder.reclassTrack([step.tile], 'high_speed', step.from);
-    expect(lineOf(track, 'ns')).toBe('high_speed');
-    expect(lineOf(track, 'ew')).toBe('regular');
-    // the cross line beside the crossing is untouched wide track
+      for (const step of s.move(t, crossing)) builder.reclassTrack([step.tile], 'down', step.from);
+    for (const y of [7, 8, 9, 11, 12])
+      expect(track.get(10, y), `10,${y}`).toMatchObject({ kind: 'straight', cls: 'branch' });
+    // at turn 0 the first line runs north-south: that one is Branch now, the cross line Main
+    expect(track.get(10, 10)).toMatchObject({
+      kind: 'crossing',
+      rot: 0,
+      cls: 'branch',
+      cls2: 'main',
+    });
+    // the cross line beside the crossing, which the cursor never touched, is untouched
     for (const x of [9, 11])
-      expect(track.get(x, 10)).toMatchObject({ kind: 'straight', cls: 'regular' });
-    expect(track.get(10, 9)).toMatchObject({ kind: 'straight', cls: 'high_speed' });
+      expect(track.get(x, 10)).toMatchObject({ kind: 'straight', cls: 'main' });
   });
 
-  it('upgrades the line a stroke leaves a crossing along when it starts on it', () => {
+  it('converts the line a stroke leaves a crossing along when it starts on it', () => {
     const { track, builder } = world();
     const crossing = (t: { x: number; y: number }) => track.get(t.x, t.y)?.kind === 'crossing';
     const s = new ReclassStroke();
     for (const t of [at(10, 10), at(11, 10), at(12, 10)])
-      for (const step of s.move(t, crossing))
-        builder.reclassTrack([step.tile], 'high_speed', step.from);
-    expect(lineOf(track, 'ew')).toBe('high_speed');
-    expect(lineOf(track, 'ns')).toBe('regular');
+      for (const step of s.move(t, crossing)) builder.reclassTrack([step.tile], 'down', step.from);
+    for (const x of [11, 12]) expect(track.get(x, 10)).toMatchObject({ cls: 'branch' });
+    for (const y of [9, 11]) expect(track.get(10, y)).toMatchObject({ cls: 'main' });
+    // the west-east line is Branch now: the crossing turns so its first line runs that way
+    expect(track.get(10, 10)).toMatchObject({
+      kind: 'crossing',
+      rot: 1,
+      cls: 'branch',
+      cls2: 'main',
+    });
   });
 });

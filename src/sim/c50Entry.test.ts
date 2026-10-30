@@ -71,10 +71,10 @@ describe('the MÁV C-50 (c50-role: a common narrow diesel, found, not handed out
     expect(spec.segments[0].L).toBeLessThan(SIZE_LEN.small);
   });
 
-  it('runs on narrow track and on no wide class', () => {
+  it('runs on Narrow Gauge and on no standard line', () => {
     expect(vehicleAccess(c50, 'narrow')).toBeNull();
-    expect(vehicleAccess(c50, 'regular')).not.toBeNull();
-    expect(vehicleAccess(c50, 'high_speed')).not.toBeNull();
+    expect(vehicleAccess(c50, 'branch')).not.toBeNull();
+    expect(vehicleAccess(c50, 'main')).not.toBeNull();
   });
 
   it('is drawn from a body and paint the narrow diesels already use, so it adds no atlas frame', () => {

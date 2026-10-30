@@ -1856,7 +1856,7 @@ function grownLoaded(c: TrafficControl, tick: number): Fleet {
   const map = emptyMap(4242, w, h, Terrain.Grass);
   const track = new TrackGraph(w, h);
   for (const [x, y, kind, rot, cls, cls2] of save.track)
-    track.place(x, y, kind, rot, cls ?? 'regular', cls2);
+    track.place(x, y, kind, rot, cls ?? 'branch', cls2);
   track.refreshSwitchForms();
   const economy = new Economy();
   const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
@@ -1990,7 +1990,7 @@ interface IdleLaid {
 /** Lays a piece through the builder, free of cost and region, as the game would. */
 function layPiece(w: SimWorld, x: number, y: number, kind: TrackKind, rot: number) {
   w.builder.free = true;
-  const ok = w.builder.placeTrack(x, y, { kind, cls: 'regular' }, rot);
+  const ok = w.builder.placeTrack(x, y, { kind, cls: 'branch' }, rot);
   w.builder.free = false;
   if (!ok) throw new Error(`no ${kind} at ${x},${y}`);
 }
@@ -2912,15 +2912,16 @@ function* shrinkStoppedSave(s: StoppedSave): Iterable<StoppedSave> {
 }
 /**
  * The layout's world run until its train stops for `cause`, as `RECIPES` in src/sim/fleet.test.ts
- * stops one, and the tick it stopped after: the electric taurus in place of the F7, on a line with
- * no wire, stops as it sets off; the F7 with 100 stone put in its hopper as it loads at the
- * quarry, more than it pulls, finds out as it sets off from there.
+ * stops one, and the tick it stopped after: the electric Re 460 (a Frigate like the F7, so it may
+ * use the generated Branch Line) in place of the F7, on a line with no wire, stops as it sets off;
+ * the F7 with 100 stone put in its hopper as it loads at the quarry, more than it pulls, finds out
+ * as it sets off from there.
  */
 function stoppedRun(cause: Cause, c: Layout): { world: World; tick: number } {
   const world = layoutScene(c);
   if (cause === 'noPower') {
     const was = world.fleet.trains[0];
-    const t = new Train([{ uid: 1, level: 1, def: locoDef('taurus') }], undefined, was.id);
+    const t = new Train([{ uid: 1, level: 1, def: locoDef('re460') }], undefined, was.id);
     t.wagons = was.wagons;
     expect(t.spawnAt(world.track, c.trainX, ROW, c.east ? Dir.W : Dir.E)).toBe(true);
     t.schedule = was.schedule;

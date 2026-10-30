@@ -29,7 +29,13 @@ function harness() {
   // a depot in the middle of the owned quarter reaches all of it
   const { stores } = storeWith({ wood: 1000, stone: 1000, iron: 1000 }, { x: 16, y: 16 });
   const track = new TrackGraph(W, W);
-  const builder = new Builder(map, regions, track, new Economy(), stores);
+  const builder = new Builder(
+    map,
+    regions,
+    track,
+    Object.assign(new Economy(), { tier: 2 }),
+    stores,
+  );
   const keys = new Set<string>();
   const input = {
     wasPressed: (k: string) => keys.has(k),
@@ -56,7 +62,7 @@ function harness() {
   };
   let pointer: Tile = { x: 0, y: 0 };
   const b = new BuildController(input as never, builder, world as never, () => pointer);
-  b.setTool({ kind: 'track', item: { kind: 'straight', cls: 'regular' } });
+  b.setTool({ kind: 'track', item: { kind: 'straight', cls: 'branch' } });
   const status: string[] = [];
   b.onStatus = (t) => status.push(t);
   /** One frame with the pointer on `t`; `active: false` is the pointer over a panel. */
@@ -122,7 +128,7 @@ describe('R while dragging track', () => {
     h.frame({ x: 3, y: 10 }, { press: true });
     h.frame({ x: 8, y: 10 });
     h.frame({ x: 8, y: 10 }, { release: true });
-    h.b.setTool({ kind: 'track', item: { kind: 'straight', cls: 'high_speed' } });
+    h.b.setTool({ kind: 'track', item: { kind: 'straight', cls: 'main' } });
     h.tap({ x: 5, y: 10 });
     expect(h.track.get(5, 10)?.kind).toBe('crossing');
     h.frame({ x: 5, y: 10 });

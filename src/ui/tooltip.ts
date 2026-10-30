@@ -110,6 +110,17 @@ export function ttTerm(label: string | Node, build: TipBuild): HTMLElement {
   return t;
 }
 
+/**
+ * A label: a small mark that says what it is. Its tooltip opens wherever it stands, in a panel or a
+ * screen, with nothing to wire: `TooltipLayer` watches the page for them. `key` says which label
+ * it is: a screen that draws itself again under the pointer makes a new element of the same label.
+ */
+export function ttLabel(mark: Node, cls: string, key: string, build: TipBuild): HTMLElement {
+  const t = el('span', { class: `tt-label ${cls}`, 'data-label': key }, mark);
+  TERMS.set(t, build);
+  return t;
+}
+
 /** A line of plain text. */
 export function ttText(...parts: (Node | string)[]): HTMLElement {
   return el('div', {}, ...parts);
@@ -194,6 +205,9 @@ function circle(cls: string): SVGCircleElement {
 }
 
 /** Draws the stack's tooltips in one layer and reports the pointer to the stack. */
+/** The label an event's target is part of, null for none. */
+const labelAt = (t: EventTarget | null) => (t instanceof Element ? t.closest('.tt-label') : null);
+
 class TooltipLayer implements TipView<TipContent> {
   readonly root = el('div', { id: 'tooltip-stack' });
   private stack: TooltipStack<TipContent> | null = null;
@@ -203,11 +217,40 @@ class TooltipLayer implements TipView<TipContent> {
   private readonly slotOf = new WeakMap<Element, TermSlot>();
   /** the term of a tooltip the pointer is on */
   private over: TermSlot | null = null;
+  /** the key of the label the pointer is on */
+  private label: string | null = null;
   private raf = 0;
   private listening = false;
 
   attach(stack: TooltipStack<TipContent>) {
     this.stack = stack;
+    document.addEventListener('mouseover', (e) => {
+      const t = labelAt(e.target);
+      const key = t?.getAttribute('data-label') ?? null;
+      if (key === this.label) return;
+      this.leaveLabel();
+      if (t) this.enterTerm(t, TERMS.get(t) as TipBuild);
+      this.label = key;
+    });
+    document.addEventListener('mouseout', (e) => {
+      if ((labelAt(e.relatedTarget)?.getAttribute('data-label') ?? null) !== this.label)
+        this.leaveLabel();
+    });
+  }
+  private leaveLabel() {
+    if (this.label) this.stack?.termLeave(-1);
+    this.label = null;
+  }
+  /** Rest on a term or label outside the tooltips: its tooltip opens at level 0. */
+  private enterTerm(t: Element, build: TipBuild) {
+    // a panel drawn again before the tooltip opens takes the term out: anchor where it was
+    const was = t.getBoundingClientRect();
+    this.stack?.termEnter(
+      -1,
+      t,
+      () => termAnchor(t.isConnected ? t.getBoundingClientRect() : was),
+      build,
+    );
   }
 
   open(level: number, content: TipContent, anchor: Point) {
@@ -294,16 +337,7 @@ class TooltipLayer implements TipView<TipContent> {
       const build = TERMS.get(t);
       if (!build || this.wired.has(t)) continue;
       this.wired.add(t);
-      t.addEventListener('mouseenter', () => {
-        // a panel drawn again before the tooltip opens takes the term out: anchor where it was
-        const was = t.getBoundingClientRect();
-        this.stack?.termEnter(
-          -1,
-          t,
-          () => termAnchor(t.isConnected ? t.getBoundingClientRect() : was),
-          build,
-        );
-      });
+      t.addEventListener('mouseenter', () => this.enterTerm(t, build));
       t.addEventListener('mouseleave', () => this.stack?.termLeave(-1));
     }
   }

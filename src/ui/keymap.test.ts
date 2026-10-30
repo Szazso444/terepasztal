@@ -129,11 +129,11 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
   nextTool: () => [{ state: { categoryOpen: true }, calls: ['cycleTool(1)'] }, { calls: [] }],
   prevTool: () => [{ state: { categoryOpen: true }, calls: ['cycleTool(-1)'] }, { calls: [] }],
   upgradeTrack: () => [
-    { calls: ['toggleReclass(high_speed)'] },
+    { calls: ['toggleReclass(up)'] },
     { state: { screenOpen: true }, calls: [] },
   ],
   downgradeTrack: () => [
-    { calls: ['toggleReclass(regular)'] },
+    { calls: ['toggleReclass(down)'] },
     { state: { screenOpen: true }, calls: [] },
   ],
   prevType: () => [{ state: { categoryOpen: true }, calls: ['cycleType(-1)'] }, { calls: [] }],

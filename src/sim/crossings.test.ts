@@ -1555,9 +1555,9 @@ describe('real trains in the step, through every way they stand', () => {
       0,
     ],
     [
-      'an electric engine off the wire with a diesel of twice its pull on standby, running dry',
+      'an electric engine off the wire with a stronger diesel on standby, running dry',
       7,
-      [{ locos: ['kando_v40', 'dda40x'], wagons: ['wood_hopper'], standby: [1], dry: 0 }],
+      [{ locos: ['kando_v40', 'm62'], wagons: ['wood_hopper'], standby: [1], dry: 0 }],
       ['loading', 'moving', 'noPower'],
       0,
     ],

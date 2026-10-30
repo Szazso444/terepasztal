@@ -550,7 +550,7 @@ function worldOf(l: Layout) {
   const w = simWorld({ terrain: 'grass', size: SIDE });
   for (const [x, y] of l.water) w.map.terrain[y * SIDE + x] = Terrain.Water;
   w.builder.free = true;
-  const straight = { kind: 'straight', cls: 'regular', cls2: 'regular' } as const;
+  const straight = { kind: 'straight', cls: 'branch', cls2: 'branch' } as const;
   for (const [y, x0, x1] of l.lines)
     for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++)
       w.builder.placeTrack(x, y, straight, 1);

@@ -1,4 +1,4 @@
-import type { WideClass } from '../world/reclass';
+import type { ReclassDir } from '../world/reclass';
 import { ReclassStroke } from './reclassStroke';
 import { layRun, planRun, type RunPlan, type RunStep } from './autoCrossing';
 import { lineTiles, setOffAxis, turnPath } from './dragPath';
@@ -100,8 +100,10 @@ export class BuildController {
   onToolChanged: ((t: Tool) => void) | null = null;
   /** Upgrade / Downgrade: the stroke under way while the button is held */
   private stroke = new ReclassStroke();
-  /** how many trains may not run on high-speed track, for the Upgrade tool's status line */
-  barredTrains: (() => { barred: number; total: number }) | null = null;
+  /** the anchors of the pieces the last Upgrade / Downgrade stroke left as they were, shown red */
+  private reclassLeft = new Map<number, { x: number; y: number }>();
+  /** the button was down for the Upgrade / Downgrade tool in the last frame */
+  private reclassDown = false;
   hoverStation: Station | null = null;
   hoverBuilding: Building | null = null;
   selectedBuilding: Building | null = null;
@@ -148,6 +150,7 @@ export class BuildController {
     this.tool = t;
     if (!sameShape) this.rot = 0;
     this.stroke.stop();
+    this.reclassLeft.clear();
     this.dragStart = null;
     this.clearGhost();
     this.dropPlacing();
@@ -798,55 +801,86 @@ export class BuildController {
   /**
    * Upgrade / Downgrade: convert the piece under the cursor on a press, and every tile the cursor
    * enters while the button stays down. Each step knows the tile it came from, so a crossing
-   * converts the line the stroke runs along.
+   * converts the line the stroke runs along. The piece under the cursor is outlined whole, and
+   * every piece the stroke had to leave as it was (a curve of the wrong size, a line not open yet)
+   * stays red until the next stroke.
    */
   private updateReclassTool(t: { x: number; y: number }, inMap: boolean) {
-    const tool = this.tool as { kind: 'reclass'; target: WideClass };
+    const tool = this.tool as { kind: 'reclass'; dir: ReclassDir };
     const inp = this.input;
     const track = this.builder.track;
     if (this.ghost) this.ghost.visible = false;
     const isCrossing = (p: { x: number; y: number }) => track.get(p.x, p.y)?.kind === 'crossing';
+    const key = (p: { x: number; y: number }) => p.y * track.w + p.x;
     const convert = (
       steps: { tile: { x: number; y: number }; from?: { x: number; y: number } }[],
     ) => {
-      for (const s of steps) this.builder.reclassTrack([s.tile], tool.target, s.from);
+      for (const s of steps) {
+        const check = this.builder.checkReclass([s.tile], tool.dir, s.from);
+        for (const a of check.left) this.reclassLeft.set(key(a), a);
+        if (check.ok && this.builder.reclassTrack([s.tile], tool.dir, s.from))
+          for (const c of check.changes) this.reclassLeft.delete(key(c));
+      }
     };
     const down = inp.buttons.has(0);
+    // a new stroke starts with a clean slate
+    if (down && !this.reclassDown) this.reclassLeft.clear();
+    this.reclassDown = down;
     if (!down) convert(this.stroke.release());
+    this.ghostDiamond.visible = false;
     if (!inMap) {
       this.stroke.stop();
-      this.ghostDiamond.visible = false;
+      for (const g of this.lineGhosts) g.visible = false;
       return;
     }
     if (down) convert(this.stroke.move(t, isCrossing));
-    const upgrade = tool.target === 'high_speed';
-    const what = upgrade ? STR.toolbar.upgrade : STR.toolbar.downgrade;
-    // an upgrade bars every train without in-cab signalling from the line: say so before it is done
-    const trains = upgrade ? this.barredTrains?.() : null;
-    const warning = trains?.barred
-      ? ` · ${STR.build.reclassBarred(trains.barred, trains.total)}`
-      : '';
+    const what = tool.dir === 'up' ? STR.toolbar.upgrade : STR.toolbar.downgrade;
     const piece = track.get(t.x, t.y);
-    if (!piece) {
-      this.ghostDiamond.visible = false;
-      this.status(STR.build.reclassIdle(what) + warning);
+    const marks: { x: number; y: number; frame: string }[] = [];
+    const outline = (a: { x: number; y: number }, frame: string) => {
+      for (const u of track.unitTiles(a.x, a.y)) marks.push({ ...u, frame });
+    };
+    const hovered = piece ? track.anchorOf(t.x, t.y) : null;
+    for (const [k, a] of this.reclassLeft) {
+      // a piece removed or relaid since is no longer the one that was left
+      const p = track.get(a.x, a.y);
+      const at = p && track.anchorOf(a.x, a.y);
+      if (!at || at.x !== a.x || at.y !== a.y) this.reclassLeft.delete(k);
+      else if (!hovered || key(hovered) !== k) outline(a, 'terrain/ghost_bad');
+    }
+    if (!piece || !hovered) {
+      this.showReclassMarks(marks);
+      this.status(
+        this.reclassLeft.size
+          ? STR.build.reclassLeft(what, this.reclassLeft.size)
+          : STR.build.reclassIdle(what),
+      );
       return;
     }
     const from = down ? this.stroke.entry(t, piece.kind === 'crossing') : undefined;
-    const check = this.builder.checkReclass([t], tool.target, from);
+    const check = this.builder.checkReclass([t], tool.dir, from);
     this.placement = { check, at: t };
     // red only where something stops the conversion; track already converted is fine
     const fine = check.ok || check.reason === STR.build.reclass.nothing;
-    this.world.setSpriteFrame(this.ghostDiamond, fine ? 'terrain/ghost_ok' : 'terrain/ghost_bad');
-    this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
-    this.ghostDiamond.tint = 0xffffff;
+    outline(hovered, fine ? 'terrain/ghost_ok' : 'terrain/ghost_bad');
+    this.showReclassMarks(marks);
     this.status(
-      (check.changes.length
+      check.changes.length
         ? Object.keys(check.cost).length
           ? `${STR.build.reclassCost(what, fmtCost(check.cost))}${check.ok ? '' : ` (${check.reason})`}`
           : STR.build.reclassFree(what)
-        : (check.reason ?? '')) + warning,
+        : (check.reason ?? ''),
     );
+  }
+
+  /** The Upgrade / Downgrade tool's diamonds: the frame carries the colour. */
+  private showReclassMarks(marks: { x: number; y: number; frame: string }[]) {
+    if (!marks.length) {
+      for (const g of this.lineGhosts) g.visible = false;
+      return;
+    }
+    this.showGhosts(marks, true);
+    for (let i = 0; i < marks.length; i++) this.lineGhosts[i].tint = 0xffffff;
   }
 
   private updateTerrainTool(t: { x: number; y: number }, inMap: boolean) {

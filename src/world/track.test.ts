@@ -13,7 +13,6 @@ import {
   classCostMul,
   pieceLinks,
   rotationCount,
-  transitionRot,
   makePiece,
   pieceCost,
   isUnitKind,
@@ -26,31 +25,22 @@ import {
 } from './track';
 
 /** A line of E–W straights of one class along row `y`, from x0 to x1 inclusive. */
-function line(
-  g: TrackGraph,
-  y: number,
-  x0: number,
-  x1: number,
-  cls: 'regular' | 'high_speed' = 'regular',
-) {
+function line(g: TrackGraph, y: number, x0: number, x1: number, cls: TrackClass = 'branch') {
   for (let x = x0; x <= x1; x++) g.place(x, y, 'straight', 1, cls);
 }
 
 describe('track classes', () => {
-  it('derives radius and cost from the class number', () => {
+  it('derives radius from the line number', () => {
     for (const cls of TRACK_CLASSES) expect(classRadius(cls)).toBe(CLASS_N[cls] - 0.5);
-    expect(classCostMul('regular')).toBe(1);
-    expect(classCostMul('high_speed')).toBe(CLASS_N.high_speed * 1.5);
+    expect(classCostMul('branch')).toBe(1);
   });
 
-  it('charges more for the faster class', () => {
-    const reg = pieceCost('straight', 'regular');
-    const hs = pieceCost('straight', 'high_speed');
-    for (const k of Object.keys(reg)) expect(hs[k]).toBeGreaterThan(reg[k]);
+  it('charges more for the bigger line', () => {
+    const branch = pieceCost('straight', 'branch');
+    const main = pieceCost('straight', 'main');
+    for (const k of Object.keys(branch)) expect(main[k]).toBeGreaterThan(branch[k]);
     // A crossing takes the more expensive of its two axes.
-    expect(pieceCost('crossing', 'regular', 'high_speed')).toEqual(
-      pieceCost('crossing', 'high_speed', 'high_speed'),
-    );
+    expect(pieceCost('crossing', 'branch', 'main')).toEqual(pieceCost('crossing', 'main', 'main'));
   });
 
   it('spreads only curves and switches over n x n tiles', () => {
@@ -61,22 +51,22 @@ describe('track classes', () => {
         );
   });
 
-  it('joins like with like, and anything to a transition', () => {
-    expect(classesJoin('regular', 'regular')).toBe(true);
-    expect(classesJoin('regular', 'high_speed')).toBe(false);
-    expect(classesJoin('any', 'high_speed')).toBe(true);
-    expect(classesJoin('regular', 'any')).toBe(true);
-    expect(portClass(makePiece('transition', 0, 'regular'), Dir.N)).toBe('any');
+  it('joins the standard lines with each other, every other line with itself', () => {
+    expect(classesJoin('branch', 'branch')).toBe(true);
+    expect(classesJoin('branch', 'trunk')).toBe(true);
+    expect(classesJoin('branch', 'narrow')).toBe(false);
+    expect(classesJoin('maglev', 'trunk')).toBe(false);
+    expect(classesJoin('hyperloop', 'hyperloop')).toBe(true);
   });
 
   it('gives a crossing its second class on the second axis', () => {
-    const x = makePiece('crossing', 0, 'regular', 'high_speed');
+    const x = makePiece('crossing', 0, 'narrow', 'branch');
     // Rotation 0: the N–S link is the first axis, E–W the second.
-    expect(portClass(x, Dir.N)).toBe('regular');
-    expect(portClass(x, Dir.S)).toBe('regular');
-    expect(portClass(x, Dir.E)).toBe('high_speed');
-    expect(portClass(x, Dir.W)).toBe('high_speed');
-    expect(portClass(makePiece('crossing', 0, 'regular'), Dir.E)).toBe('regular');
+    expect(portClass(x, Dir.N)).toBe('narrow');
+    expect(portClass(x, Dir.S)).toBe('narrow');
+    expect(portClass(x, Dir.E)).toBe('branch');
+    expect(portClass(x, Dir.W)).toBe('branch');
+    expect(portClass(makePiece('crossing', 0, 'branch'), Dir.E)).toBe('branch');
   });
 });
 
@@ -142,20 +132,19 @@ describe('TrackGraph', () => {
     expect(g.opensTo(2, 3, Dir.N)).toBe(false);
   });
 
-  it('refuses to join two classes without a transition', () => {
+  it('refuses to join two networks, and joins two standard lines directly', () => {
     const g = new TrackGraph(8, 8);
-    g.place(1, 1, 'straight', 1, 'regular');
-    g.place(2, 1, 'straight', 1, 'high_speed');
+    g.place(1, 1, 'straight', 1, 'branch');
+    g.place(2, 1, 'straight', 1, 'narrow');
     expect(g.opensTo(1, 1, Dir.E)).toBe(true);
     expect(g.opensTo(2, 1, Dir.W)).toBe(true);
     expect(g.connected(1, 1, Dir.E)).toBe(false);
     expect(g.connected(2, 1, Dir.W)).toBe(false);
 
-    // A transition between them joins both sides.
     const t = new TrackGraph(8, 8);
-    t.place(1, 1, 'straight', 1, 'regular');
-    t.place(2, 1, 'transition', 1);
-    t.place(3, 1, 'straight', 1, 'high_speed');
+    t.place(1, 1, 'straight', 1, 'branch');
+    t.place(2, 1, 'straight', 1, 'main');
+    t.place(3, 1, 'straight', 1, 'trunk');
     expect(t.connected(1, 1, Dir.E)).toBe(true);
     expect(t.connected(2, 1, Dir.E)).toBe(true);
   });
@@ -176,10 +165,10 @@ describe('TrackGraph', () => {
 });
 
 describe('multi-tile pieces', () => {
-  it('writes every member of a high-speed curve against one anchor', () => {
+  it('writes every member of a Main Line curve against one anchor', () => {
     const g = new TrackGraph(16, 16);
-    const tiles = g.place(6, 6, 'curve', 0, 'high_speed');
-    expect(tiles.length).toBe(CLASS_N.high_speed ** 2);
+    const tiles = g.place(6, 6, 'curve', 0, 'main');
+    expect(tiles.length).toBe(CLASS_N.main ** 2);
     for (const t of tiles) {
       const p = g.get(t.x, t.y)!;
       expect(p.unit).toBeDefined();
@@ -192,7 +181,7 @@ describe('multi-tile pieces', () => {
 
   it('takes the whole unit away when any member is removed', () => {
     const g = new TrackGraph(16, 16);
-    const tiles = g.place(6, 6, 'curve', 0, 'high_speed');
+    const tiles = g.place(6, 6, 'curve', 0, 'branch');
     const notTheAnchor = tiles.find((t) => t.x !== 6 || t.y !== 6)!;
     const cleared = g.removeAt(notTheAnchor.x, notTheAnchor.y);
     expect(cleared).toHaveLength(tiles.length);
@@ -211,7 +200,7 @@ describe('multi-tile pieces', () => {
 
   it('joins members of one unit to each other whatever their ports say', () => {
     const g = new TrackGraph(16, 16);
-    const tiles = g.place(6, 6, 'curve', 0, 'high_speed');
+    const tiles = g.place(6, 6, 'curve', 0, 'branch');
     let internal = 0;
     for (const t of tiles)
       for (const d of [Dir.N, Dir.E, Dir.S, Dir.W]) {
@@ -229,47 +218,37 @@ describe('multi-tile pieces', () => {
   });
 });
 
-describe('narrow gauge and 2x2 regular track', () => {
-  it('lays regular and high-speed curves and switches over 2x2, narrow ones on one tile', () => {
-    expect(CLASS_N).toEqual({ regular: 2, high_speed: 2, narrow: 1 });
+describe('narrow gauge and the n x n lines', () => {
+  it('lays curves and switches over n x n, narrow ones on one tile', () => {
     for (const kind of ['curve', 'switch'] as const) {
-      expect(isUnitKind(kind, 'regular')).toBe(true);
-      expect(isUnitKind(kind, 'high_speed')).toBe(true);
+      expect(isUnitKind(kind, 'branch')).toBe(true);
+      expect(isUnitKind(kind, 'trunk')).toBe(true);
       expect(isUnitKind(kind, 'narrow')).toBe(false);
     }
-    const g = new TrackGraph(16, 16);
-    expect(g.place(4, 4, 'curve', 0, 'regular')).toHaveLength(4);
+    const g = new TrackGraph(24, 24);
+    expect(g.place(4, 4, 'curve', 0, 'branch')).toHaveLength(4);
     expect(g.place(10, 4, 'curve', 0, 'narrow')).toEqual([{ x: 10, y: 4 }]);
+    expect(g.place(4, 10, 'curve', 0, 'main')).toHaveLength(9);
+    expect(g.place(12, 10, 'switch', 0, 'trunk')).toHaveLength(16);
   });
 
-  it('joins narrow only to narrow, never through a transition', () => {
-    expect(classesJoin('narrow', 'narrow')).toBe(true);
-    expect(classesJoin('narrow', 'regular')).toBe(false);
-    expect(classesJoin('any', 'narrow')).toBe(false);
-    expect(classesJoin('narrow', 'any')).toBe(false);
-    expect(classesJoin('any', 'regular')).toBe(true);
-  });
-
-  it('prices narrow track below regular and keeps a crossing at its dearer axis', () => {
-    const reg = pieceCost('straight', 'regular');
+  it('prices narrow track below Branch Line and keeps a crossing at its dearer axis', () => {
+    const reg = pieceCost('straight', 'branch');
     const nar = pieceCost('straight', 'narrow');
     for (const k of Object.keys(reg)) expect(nar[k]).toBeLessThanOrEqual(reg[k]);
-    expect(pieceCost('crossing', 'regular', 'high_speed')).toEqual(
-      pieceCost('crossing', 'high_speed', 'high_speed'),
-    );
-    expect(pieceCost('crossing', 'narrow', 'regular')).toEqual(
-      pieceCost('crossing', 'regular', 'regular'),
+    expect(pieceCost('crossing', 'narrow', 'branch')).toEqual(
+      pieceCost('crossing', 'branch', 'branch'),
     );
   });
 
   it('turns a mixed crossing so either line can run either way', () => {
     expect(rotationCount('crossing')).toBe(2);
-    const a = makePiece('crossing', 0, 'narrow', 'regular');
+    const a = makePiece('crossing', 0, 'narrow', 'branch');
     expect(portClass(a, Dir.N)).toBe('narrow');
-    expect(portClass(a, Dir.E)).toBe('regular');
-    const b = makePiece('crossing', 1, 'narrow', 'regular');
+    expect(portClass(a, Dir.E)).toBe('branch');
+    const b = makePiece('crossing', 1, 'narrow', 'branch');
     expect(portClass(b, Dir.E)).toBe('narrow');
-    expect(portClass(b, Dir.N)).toBe('regular');
+    expect(portClass(b, Dir.N)).toBe('branch');
   });
 
   it('offers the narrow pieces and both mixed crossings in the build list', () => {
@@ -279,7 +258,7 @@ describe('narrow gauge and 2x2 regular track', () => {
       'curve_narrow',
       'switch_narrow',
       'crossing_narrow_narrow',
-      'crossing_narrow_regular',
+      'crossing_narrow_branch',
     ])
       expect(keys).toContain(k);
   });
@@ -289,7 +268,7 @@ describe('S-shaped switch', () => {
   /** A regular switch at (4,4) rotation 1: the main line runs E–W, the points face east. */
   function yard() {
     const g = new TrackGraph(20, 20);
-    g.place(4, 4, 'switch', 1, 'regular');
+    g.place(4, 4, 'switch', 1, 'branch');
     return g;
   }
   /** The tile just past the block where a lane of the given form leaves, and the edge it leaves by. */
@@ -321,7 +300,7 @@ describe('S-shaped switch', () => {
     const g = yard();
     const e = exitOf('parallel');
     expect(g.get(4, 4)!.form ?? 'turn').toBe('turn');
-    g.place(e.x, e.y, 'straight', axisRot(e.out), 'regular');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'branch');
     const changed = g.refreshSwitchForms([e]);
     expect(changed.length).toBe(4);
     for (const t of g.unitTiles(4, 4)) expect(g.get(t.x, t.y)!.form).toBe('parallel');
@@ -334,8 +313,8 @@ describe('S-shaped switch', () => {
   it('snaps when the switch is laid next to an existing parallel straight', () => {
     const g = new TrackGraph(20, 20);
     const e = exitOf('parallel');
-    g.place(e.x, e.y, 'straight', axisRot(e.out), 'regular');
-    g.place(4, 4, 'switch', 1, 'regular');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'branch');
+    g.place(4, 4, 'switch', 1, 'branch');
     g.refreshSwitchForms(g.unitTiles(4, 4));
     expect(g.get(4, 4)!.form).toBe('parallel');
   });
@@ -351,9 +330,9 @@ describe('S-shaped switch', () => {
   it('stays a turn while its side exit is connected', () => {
     const g = yard();
     const side = exitOf('turn');
-    g.place(side.x, side.y, 'straight', axisRot(side.out), 'regular');
+    g.place(side.x, side.y, 'straight', axisRot(side.out), 'branch');
     const e = exitOf('parallel');
-    g.place(e.x, e.y, 'straight', axisRot(e.out), 'regular');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'branch');
     g.refreshSwitchForms([side, e]);
     expect(g.get(4, 4)!.form ?? 'turn').toBe('turn');
   });
@@ -361,7 +340,7 @@ describe('S-shaped switch', () => {
   it('flips form under a path without breaking the graph', () => {
     const g = yard();
     const e = exitOf('parallel');
-    g.place(e.x, e.y, 'straight', axisRot(e.out), 'regular');
+    g.place(e.x, e.y, 'straight', axisRot(e.out), 'branch');
     const before = g.version;
     g.refreshSwitchForms([e]);
     expect(g.version).toBeGreaterThan(before);
@@ -378,15 +357,15 @@ describe('S-shaped switch', () => {
 describe('reach', () => {
   const W = 30;
   const key = (x: number, y: number) => y * W + x;
-  const along = (d: Dir, cls: 'narrow' | 'regular') =>
+  const along = (d: Dir, cls: 'narrow' | 'branch') =>
     [0, 1].find((r) => makePiece('straight', r, cls).links[0].includes(d))!;
 
   it('follows the rails through a crossing without joining its two lines', () => {
     const g = new TrackGraph(W, W);
     // rotation 0: narrow runs north-south, regular east-west
-    g.place(10, 10, 'crossing', 0, 'narrow', 'regular');
+    g.place(10, 10, 'crossing', 0, 'narrow', 'branch');
     for (const y of [8, 9, 11, 12]) g.place(10, y, 'straight', along(Dir.N, 'narrow'), 'narrow');
-    for (const x of [8, 9, 11, 12]) g.place(x, 10, 'straight', along(Dir.E, 'regular'), 'regular');
+    for (const x of [8, 9, 11, 12]) g.place(x, 10, 'straight', along(Dir.E, 'branch'), 'branch');
     expect(g.connected(10, 10, Dir.N)).toBe(true);
     expect(g.connected(10, 10, Dir.E)).toBe(true);
     const narrow = g.reach([key(10, 8)]);
@@ -467,34 +446,16 @@ describe('rails of a multi-tile piece', () => {
   });
 });
 
-describe('transition', () => {
-  it('turns four ways, so its high-speed half can face any side', () => {
-    expect(rotationCount('transition')).toBe(4);
-    // the first two turns are what they always were
-    expect(pieceLinks('transition', 0)).toEqual([[Dir.N, Dir.S]]);
-    expect(pieceLinks('transition', 1)).toEqual([[Dir.E, Dir.W]]);
-    expect(pieceLinks('transition', 2)).toEqual([[Dir.S, Dir.N]]);
-    expect(pieceLinks('transition', 3)).toEqual([[Dir.W, Dir.E]]);
-  });
-
-  it('names the turn that puts the high-speed half towards a side', () => {
-    // the piece is drawn wide from its first link end and high speed towards its second
-    for (const d of [Dir.N, Dir.E, Dir.S, Dir.W])
-      expect(pieceLinks('transition', transitionRot(d))[0][1]).toBe(d);
-  });
-});
-
 describe('pathfinding at class joints', () => {
   /** A column of N–S straights (rotation 0) of one class along x, from y0 to y1 inclusive. */
   function column(g: TrackGraph, x: number, y0: number, y1: number, cls: TrackClass) {
     for (let y = y0; y <= y1; y++) g.place(x, y, 'straight', 0, cls);
   }
-  /** Regular straights at (2,1..4), then `beyond` at (2,5..9); a transition at (2,5) if asked. */
-  function joint(beyond: 'narrow' | 'high_speed', transition = false) {
+  /** Branch Line straights at (2,1..4), then `beyond` at (2,5..9). */
+  function joint(beyond: TrackClass) {
     const g = new TrackGraph(6, 12);
-    column(g, 2, 1, 4, 'regular');
+    column(g, 2, 1, 4, 'branch');
     column(g, 2, 5, 9, beyond);
-    if (transition) g.place(2, 5, 'transition', transitionRot(Dir.S));
     return g;
   }
   // entering (2,1) through its north edge heads south, towards +y
@@ -510,40 +471,37 @@ describe('pathfinding at class joints', () => {
     }
   }
 
-  it('finds no route across a regular-to-narrow joint', () => {
-    const g = joint('narrow');
-    expect(g.connected(2, 4, Dir.S)).toBe(false);
-    expect(findPath(g, start, at(2, 9))).toBeNull();
-    expect(findPath(g, start, at(2, 9), undefined, undefined, admitAll)).toBeNull();
-    // the regular side alone still routes: the null comes from the joint
-    expect(findPath(g, start, at(2, 4))).toHaveLength(4);
+  it('finds no route across a joint into another network', () => {
+    for (const beyond of ['narrow', 'maglev'] as const) {
+      const g = joint(beyond);
+      expect(g.connected(2, 4, Dir.S), beyond).toBe(false);
+      expect(findPath(g, start, at(2, 9)), beyond).toBeNull();
+      expect(findPath(g, start, at(2, 9), undefined, undefined, admitAll), beyond).toBeNull();
+      // the Branch Line side alone still routes: the null comes from the joint
+      expect(findPath(g, start, at(2, 4)), beyond).toHaveLength(4);
+    }
   });
 
-  it('finds no route across a regular-to-high-speed joint without a transition', () => {
-    const g = joint('high_speed');
-    expect(g.connected(2, 4, Dir.S)).toBe(false);
-    expect(findPath(g, start, at(2, 9))).toBeNull();
-    expect(findPath(g, start, at(2, 9), undefined, undefined, admitAll)).toBeNull();
-    expect(findPath(g, start, at(2, 4))).toHaveLength(4);
-  });
-
-  it('routes from regular to high speed through a transition', () => {
-    const g = joint('high_speed', true);
-    for (const access of [undefined, admitAll]) {
-      const path = findPath(g, start, at(2, 9), undefined, undefined, access);
-      expect(path).not.toBeNull();
-      expect(path!.map((s) => s.y)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-      joinedThroughout(g, path!);
+  it('routes from Branch Line straight on to Main and Trunk Line', () => {
+    for (const beyond of ['main', 'trunk'] as const) {
+      const g = joint(beyond);
+      expect(g.connected(2, 4, Dir.S), beyond).toBe(true);
+      for (const access of [undefined, admitAll]) {
+        const path = findPath(g, start, at(2, 9), undefined, undefined, access);
+        expect(path, beyond).not.toBeNull();
+        expect(path!.map((s) => s.y)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        joinedThroughout(g, path!);
+      }
     }
   });
 
   it('still runs both lines of a mixed crossing, each on its own class', () => {
     const g = new TrackGraph(12, 12);
-    // rotation 0: narrow runs north-south, regular east-west
-    g.place(5, 5, 'crossing', 0, 'narrow', 'regular');
+    // rotation 0: narrow runs north-south, Branch Line east-west
+    g.place(5, 5, 'crossing', 0, 'narrow', 'branch');
     column(g, 5, 2, 4, 'narrow');
     column(g, 5, 6, 8, 'narrow');
-    for (const x of [2, 3, 4, 6, 7, 8]) g.place(x, 5, 'straight', 1, 'regular');
+    for (const x of [2, 3, 4, 6, 7, 8]) g.place(x, 5, 'straight', 1, 'branch');
     const ns = findPath(g, { x: 5, y: 2, in: Dir.N }, at(5, 8));
     expect(ns?.map((s) => s.y)).toEqual([2, 3, 4, 5, 6, 7, 8]);
     joinedThroughout(g, ns!);
@@ -552,7 +510,7 @@ describe('pathfinding at class joints', () => {
     joinedThroughout(g, ew!);
   });
 
-  it('walks back no further than a regular-to-narrow joint', () => {
+  it('walks back no further than a Branch-to-narrow joint', () => {
     const g = joint('narrow');
     // standing at (2,7) having entered from the north: behind lie (2,6), (2,5), then the joint
     const back = walkBack(g, 2, 7, Dir.N, 10);
@@ -563,8 +521,8 @@ describe('pathfinding at class joints', () => {
     for (const s of back) expect(s.y).toBeGreaterThanOrEqual(5);
   });
 
-  it('walks back through a transition to the end of the regular track', () => {
-    const g = joint('high_speed', true);
+  it('walks back from Main Line to the end of the Branch Line track', () => {
+    const g = joint('main');
     const back = walkBack(g, 2, 7, Dir.N, 10);
     expect(back.map((s) => s.y)).toEqual([1, 2, 3, 4, 5, 6]);
     joinedThroughout(g, [...back, { x: 2, y: 7, in: Dir.N, out: Dir.S }]);
@@ -572,9 +530,9 @@ describe('pathfinding at class joints', () => {
 });
 
 // findPath and walkBack at class joints on seeded layouts: lines and loops of 1×1 pieces whose
-// class changes along the way, with transitions and mixed crossings. Pieces go down with set()
-// whatever their class, regular and high-speed curves included: the joints are what is under test,
-// and connected() reads only a piece's links, the class on each edge and its unit.
+// class changes along the way, with joints between the standard lines and mixed crossings. Pieces
+// go down with set() whatever their class, the n×n lines' curves included: the joints are what is
+// under test, and connected() reads only a piece's links, the class on each edge and its unit.
 
 interface Tile {
   x: number;
@@ -588,7 +546,7 @@ interface State extends Tile {
 
 /** One 1×1 piece. */
 interface Lay extends Tile {
-  kind: 'straight' | 'curve' | 'switch' | 'crossing' | 'transition';
+  kind: 'straight' | 'curve' | 'switch' | 'crossing';
   rot: number;
   cls: TrackClass;
   /** crossings: the class of the second link */
@@ -603,14 +561,19 @@ interface JointCase {
   start: State;
   targets: Tile[];
   avoid: Tile[];
-  /** access admits these classes on the entry edge, and transitions; absent: no predicate */
+  /** access admits these classes on the entry edge; absent: no predicate */
   admits?: TrackClass[];
-  /** tollOf makes a high-speed piece cost three times as much to cross */
+  /** tollOf makes a Main Line piece cost three times as much to cross */
   toll: boolean;
   /** how many tiles walkBack is asked for */
   back: number;
 }
 
+/**
+ * The lines the layouts draw from: two of the standard network, which join each other directly,
+ * and Narrow Gauge, which joins neither.
+ */
+const JOINT_CLASSES: TrackClass[] = ['branch', 'main', 'narrow'];
 const EDGE = 'NESW';
 const tileText = (t: Tile) => `${t.x},${t.y}`;
 const stateKey = (s: State) => `${s.x},${s.y},${s.in}`;
@@ -637,7 +600,7 @@ const SHAPES = (['straight', 'curve', 'switch', 'crossing'] as const).flatMap((k
 function pieceOn(rng: Rng, x: number, y: number, e: Dir[], cls: TrackClass, from?: Dir): Lay {
   if (e.length === 4) {
     const rot = rng.int(0, 1);
-    const other = rng.chance(0.75) ? rng.pick(TRACK_CLASSES.filter((k) => k !== cls)) : cls;
+    const other = rng.chance(0.75) ? rng.pick(JOINT_CLASSES.filter((k) => k !== cls)) : cls;
     if (from !== undefined && pieceLinks('crossing', rot)[1].includes(from))
       return { kind: 'crossing', rot, cls: other, cls2: cls, x, y };
     return { kind: 'crossing', rot, cls, cls2: other, x, y };
@@ -657,8 +620,6 @@ function pieceOn(rng: Rng, x: number, y: number, e: Dir[], cls: TrackClass, from
     .sort()
     .join(' ');
   const { kind, rot } = SHAPES.find((s) => s.pairs === want)!;
-  if (kind === 'straight' && rng.chance(0.25))
-    return { kind: 'transition', rot: rot + 2 * rng.int(0, 1), cls: 'regular', x, y };
   return { kind, rot, cls, x, y };
 }
 
@@ -666,8 +627,8 @@ function pieceOn(rng: Rng, x: number, y: number, e: Dir[], cls: TrackClass, from
  * A row and a column, then up to two more lines or loops round rectangles, joined where they meet:
  * a switch where three edges meet, a crossing where four do. Classes go out breadth first: a tile
  * takes the class its neighbour presents on the edge it was reached through, and one time in six a
- * random one, so some joints are breaks; past a transition the class is drawn afresh. A quarter of
- * the straights are transitions; three crossings in four carry another class on their second line.
+ * random one, so some joints are breaks and some join two lines of the standard network. Three
+ * crossings in four carry another class on their second line.
  */
 function jointLayout(rng: Rng, w: number, h: number): Lay[] {
   const edges = new Map<number, Set<Dir>>();
@@ -709,7 +670,7 @@ function jointLayout(rng: Rng, w: number, h: number): Lay[] {
   const reachedBy = new Map<number, Dir>();
   for (const first of rng.shuffle([...edges.keys()])) {
     if (classOf.has(first)) continue;
-    classOf.set(first, rng.pick(TRACK_CLASSES));
+    classOf.set(first, rng.pick(JOINT_CLASSES));
     const queue = [first];
     while (queue.length) {
       const k = queue.shift()!;
@@ -721,8 +682,9 @@ function jointLayout(rng: Rng, w: number, h: number): Lay[] {
         const n = k + DIR_DY[d] * w + DIR_DX[d];
         if (classOf.has(n)) continue;
         const along = portClass(piece, d);
-        const fresh = along === 'any' || rng.chance(1 / 6);
-        classOf.set(n, fresh ? rng.pick(TRACK_CLASSES) : (along as TrackClass));
+        // past a quarter of the straights the line changes: onto another standard line, or a break
+        const fresh = (lay.kind === 'straight' && rng.chance(0.25)) || rng.chance(1 / 6);
+        classOf.set(n, fresh ? rng.pick(JOINT_CLASSES) : along);
         reachedBy.set(n, opposite(d));
         queue.push(n);
       }
@@ -744,7 +706,7 @@ const joined: Joins = (g, x, y, out) => g.connected(x, y, out);
 /** The rule before it: the tile beyond only has to open back, whatever its class. */
 const opensBack: Joins = (g, x, y, out) =>
   g.opensTo(x + DIR_DX[out], y + DIR_DY[out], opposite(out));
-/** A mistaken rule: like joins only like, so no route runs through a transition. */
+/** A mistaken rule: like joins only like, so no route runs from one standard line onto another. */
 const likeOnly: Joins = (g, x, y, out) =>
   g.connected(x, y, out) &&
   portClass(g.get(x, y)!, out) ===
@@ -752,7 +714,7 @@ const likeOnly: Joins = (g, x, y, out) =>
 /** A mistaken rule: a crossing's class is its first line's on both lines. */
 const byPieceClass: Joins = (g, x, y, out) => {
   if (!g.opensTo(x, y, out) || !opensBack(g, x, y, out)) return false;
-  const cls = (p: TrackPiece) => (p.kind === 'transition' ? 'any' : p.cls);
+  const cls = (p: TrackPiece) => p.cls;
   return classesJoin(cls(g.get(x, y)!), cls(g.get(x + DIR_DX[out], y + DIR_DY[out])!));
 };
 
@@ -796,7 +758,8 @@ function jointCase(rng: Rng): JointCase {
   const start = rng.pick(rng.pick(from));
   const targets = Array.from({ length: rng.int(1, 2) }, somewhere);
   // Most of the time the first target is a tile one of the rules above reaches and connected()
-  // does not, or the other way round: past a break, past a transition, along a mixed crossing.
+  // does not, or the other way round: past a break, from one standard line onto another, along a
+  // mixed crossing.
   const reached = tilesReached(g, start, joined);
   const differ = (joins: Joins) => {
     const theirs = tilesReached(g, start, joins);
@@ -815,14 +778,13 @@ function jointCase(rng: Rng): JointCase {
     access === 0
       ? undefined
       : access === 1
-        ? [...TRACK_CLASSES]
-        : TRACK_CLASSES.filter(() => rng.chance(0.5));
+        ? [...JOINT_CLASSES]
+        : JOINT_CLASSES.filter(() => rng.chance(0.5));
   return { w, h, lays, start, targets, avoid, admits, toll: rng.chance(0.5), back: rng.int(0, 12) };
 }
 
 function* simplerLay(l: Lay): Iterable<Lay> {
-  if (l.kind === 'transition') yield { ...l, kind: 'straight', rot: l.rot % 2 };
-  else if (l.cls !== 'regular') yield { ...l, cls: 'regular' };
+  if (l.cls !== 'branch') yield { ...l, cls: 'branch' };
   if (l.cls2 !== undefined && l.cls2 !== l.cls) yield { ...l, cls2: l.cls };
 }
 
@@ -839,7 +801,7 @@ function* shrinkJointCase(c: JointCase): Iterable<JointCase> {
 
 function formatJointCase(c: JointCase): string {
   const pieces = c.lays.map((l) => {
-    const cls = l.kind === 'transition' ? '' : ` ${l.cls}${l.cls2 ? `/${l.cls2}` : ''}`;
+    const cls = ` ${l.cls}${l.cls2 ? `/${l.cls2}` : ''}`;
     return `${l.kind} ${l.rot}${cls} at ${tileText(l)}`;
   });
   return [
@@ -861,10 +823,10 @@ function jointCallbacks(c: JointCase) {
     access: admits
       ? (p: TrackPiece, entry: Dir) => {
           const k = portClass(p, entry);
-          return k === 'any' || admits.includes(k);
+          return admits.includes(k);
         }
       : undefined,
-    tollOf: c.toll ? (p: TrackPiece) => (p.cls === 'high_speed' ? 3 : 1) : undefined,
+    tollOf: c.toll ? (p: TrackPiece) => (p.cls === 'main' ? 3 : 1) : undefined,
   };
 }
 
@@ -918,11 +880,12 @@ function walkBackCrossesBreak(g: TrackGraph, c: JointCase): boolean {
 describe('class joints on seeded layouts', () => {
   const options = { shrink: shrinkJointCase, format: formatJointCase };
 
-  it('lays cases whose answer turns on a break, a transition or a mixed crossing', () => {
-    // The properties below hold on code that crosses every break, refuses every transition or
-    // reads a crossing's class off its first line, unless enough seeds lay a case where each of
-    // those changes the answer. Counted with the search alone, so a broken findPath cannot lower it.
-    const seeds = { breaks: 0, rerouted: 0, transitions: 0, crossings: 0, walks: 0 };
+  it('lays cases whose answer turns on a break, a joint of two standard lines or a mixed crossing', () => {
+    // The properties below hold on code that crosses every break, refuses every joint of two
+    // different standard lines or reads a crossing's class off its first line, unless enough seeds
+    // lay a case where each of those changes the answer. Counted with the search alone, so a broken
+    // findPath cannot lower it.
+    const seeds = { breaks: 0, rerouted: 0, standard: 0, crossings: 0, walks: 0 };
     for (const seed of SEEDS) {
       const c = jointCase(new Rng(seed));
       const g = layOut(c.w, c.h, c.lays);
@@ -932,16 +895,16 @@ describe('class joints on seeded layouts', () => {
       );
       if (refused) seeds.breaks++;
       if (cheapestUnder(g, c, opensBack) < least) seeds.rerouted++;
-      if (cheapestUnder(g, c, likeOnly) > least) seeds.transitions++;
+      if (cheapestUnder(g, c, likeOnly) > least) seeds.standard++;
       if (cheapestUnder(g, c, byPieceClass) !== least) seeds.crossings++;
       if (walkBackCrossesBreak(g, c)) seeds.walks++;
     }
-    // measured on SEEDS: 84, 21, 15, 17 and 42 of 100
-    expect(seeds.breaks, 'layouts with a break').toBeGreaterThanOrEqual(60);
+    // measured on SEEDS: 73, 23, 11, 15 and 20 of 100
+    expect(seeds.breaks, 'layouts with a break').toBeGreaterThanOrEqual(50);
     expect(seeds.rerouted, 'cases a route past a break would answer').toBeGreaterThanOrEqual(10);
-    expect(seeds.transitions, 'cases answered through a transition').toBeGreaterThanOrEqual(8);
+    expect(seeds.standard, 'cases answered across two standard lines').toBeGreaterThanOrEqual(6);
     expect(seeds.crossings, 'cases answered along a mixed crossing').toBeGreaterThanOrEqual(8);
-    expect(seeds.walks, 'walks back that would cross a break').toBeGreaterThanOrEqual(20);
+    expect(seeds.walks, 'walks back that would cross a break').toBeGreaterThanOrEqual(10);
   });
 
   it('routes only across joints connected() accepts, as cheaply as an exhaustive search does', () => {

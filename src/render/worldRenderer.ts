@@ -534,7 +534,7 @@ export class WorldRenderer {
   }
   /**
    * The axis the road on tile (x, y) runs along where it is a level crossing: a road on a plain
-   * straight of regular or narrow track, square to it. Null for any other tile.
+   * straight of a line with level crossings, square to it. Null for any other tile.
    */
   private crossingAt(x: number, y: number) {
     if (!this.hasRoad(x, y)) return null;
@@ -1850,8 +1850,8 @@ export class WorldRenderer {
     this.updateRoads(around);
   }
   /**
-   * The level-crossing deck on tile (x, y) (#309): its frame over a plain straight of regular or
-   * narrow track where a road lies on it, at the place and with the transform of the track piece
+   * The level-crossing deck on tile (x, y) (#309): its frame over a plain straight of a line with
+   * level crossings where a road lies on it, at the place and with the transform of the track piece
    * under it, tinted as the piece is. None where the road or the track is gone, nor where the
    * atlas lacks the frame.
    */

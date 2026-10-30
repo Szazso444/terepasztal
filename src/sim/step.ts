@@ -64,7 +64,7 @@ export const START_SUPPLIES = { water: 600, wheat: 300, food: 600, coal: 240 } a
 export function startStock(): Record<string, number> {
   const sum = (k: keyof typeof START_CRAFT) => {
     let n = 0;
-    for (const [kind, count] of START_TRACK) n += (pieceCost(kind, 'regular')[k] ?? 0) * count;
+    for (const [kind, count] of START_TRACK) n += (pieceCost(kind, 'branch')[k] ?? 0) * count;
     return n + START_CRAFT[k];
   };
   const s = rules.startingResourceScale;
