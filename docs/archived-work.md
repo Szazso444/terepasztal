@@ -7,19 +7,30 @@ deleted by it: the branch stays next to its tag, among the live branches, until 
 it through a triage issue and decides to merge, keep or drop it. The table marks those branches
 "kept".
 
-| Tag                                        | Commit    | Branch                                                                      | Ahead of `main` | Last commit |
-| ------------------------------------------ | --------- | --------------------------------------------------------------------------- | --------------- | ----------- |
-| `archive/art/rear-views-v1`                | `5d8ad39` | kept                                                                        | 14              | 2026-09-27  |
-| `archive/buildings/ages-upgrading`         | `6f02c30` | kept                                                                        | 2               | 2026-10-04  |
-| `archive/buildings/art-package`            | `688e20a` | kept                                                                        | 39              | 2026-10-08  |
-| `archive/claude/charming-ramanujan-i16mhm` | `edc1d9a` | kept (base of pull request #21)                                             | 1               | 2026-10-01  |
-| `archive/claude/nifty-bohr-vu1pko`         | `201f7ed` | deleted (commit is in `main`'s history; its import was not kept, see below) | 0               | 2026-09-19  |
-| `archive/claude/quirky-ride-ovv7uq`        | `55544df` | kept                                                                        | 26              | 2026-09-17  |
-| `archive/claude/retire-adler-john-bull`    | `2a9d6fa` | kept                                                                        | 1               | 2026-10-01  |
-| `archive/claude/train-slope-pitch`         | `4ae3045` | kept                                                                        | 1               | 2026-10-01  |
-| `archive/local/train-models`               | `48d828b` | kept (head of pull request #21)                                             | 15              | 2026-09-27  |
-| `archive/locomotive-render-v1`             | `2c7e0fc` | kept                                                                        | 13              | 2026-09-27  |
-| `v0.1.0`                                   | `83a4c68` | was a branch; now only the tag                                              | 0               | 2026-09-08  |
+| Tag                                                                           | Commit    | Branch                                                                      | Ahead of `main` | Last commit |
+| ----------------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------- | --------------- | ----------- |
+| `archive/art/535-rotations`                                                   | `0c75c17` | kept                                                                        | 810             | 2026-10-22  |
+| `archive/art/rear-views-v1`                                                   | `5d8ad39` | kept                                                                        | 14              | 2026-09-27  |
+| `archive/art/textured-a`                                                      | `722a2ab` | kept                                                                        | 795             | 2026-10-22  |
+| `archive/art/textured-b`                                                      | `0c0d9dd` | kept                                                                        | 794             | 2026-10-22  |
+| `archive/art/textured-c`                                                      | `e49c02c` | kept                                                                        | 793             | 2026-10-22  |
+| `archive/art/textured-pilot`                                                  | `528bdb9` | kept                                                                        | 792             | 2026-10-21  |
+| `archive/buildings/ages-upgrading`                                            | `6f02c30` | kept                                                                        | 2               | 2026-10-04  |
+| `archive/buildings/art-package`                                               | `688e20a` | kept                                                                        | 39              | 2026-10-08  |
+| `archive/claude/art-scaffolds-review-2`                                       | `791f53c` | kept                                                                        | 803             | 2026-10-22  |
+| `archive/claude/charming-ramanujan-i16mhm`                                    | `edc1d9a` | kept (base of pull request #21)                                             | 1               | 2026-10-01  |
+| `archive/claude/codex-queue`                                                  | `bf819b2` | kept                                                                        | 850             | 2026-10-22  |
+| `archive/claude/nifty-bohr-vu1pko`                                            | `201f7ed` | deleted (commit is in `main`'s history; its import was not kept, see below) | 0               | 2026-09-19  |
+| `archive/claude/optimistic-thompson-ndc4an-archive-backup-local-train-models` | `10fc7d2` | kept                                                                        | 16              | 2026-10-06  |
+| `archive/claude/optimistic-thompson-ndc4an-art-153-train-models`              | `606ba43` | kept                                                                        | 127             | 2026-10-10  |
+| `archive/claude/optimistic-thompson-ndc4an-art-319-roads-finish`              | `72eb9a4` | kept                                                                        | 398             | 2026-10-12  |
+| `archive/claude/optimistic-thompson-ndc4an-core-handoff`                      | `003cde5` | kept                                                                        | 22              | 2026-10-22  |
+| `archive/claude/quirky-ride-ovv7uq`                                           | `55544df` | kept                                                                        | 26              | 2026-09-17  |
+| `archive/claude/retire-adler-john-bull`                                       | `2a9d6fa` | kept                                                                        | 1               | 2026-10-01  |
+| `archive/claude/train-slope-pitch`                                            | `4ae3045` | kept                                                                        | 1               | 2026-10-01  |
+| `archive/local/train-models`                                                  | `48d828b` | kept (head of pull request #21)                                             | 15              | 2026-09-27  |
+| `archive/locomotive-render-v1`                                                | `2c7e0fc` | kept                                                                        | 13              | 2026-09-27  |
+| `v0.1.0`                                                                      | `83a4c68` | was a branch; now only the tag                                              | 0               | 2026-09-08  |
 
 Branches whose work is fully in `main` and that the workflow deletes: `claude/isometric-train-game-k6rk1a`,
 `claude/modest-shannon-d9ik1e`, `claude/nifty-bohr-vu1pko`, `claude/peaceful-lamport-82qoqd`,
@@ -29,6 +40,23 @@ and the branch `v0.1.0`.
 Check a tag out with `git fetch origin tag <tag>` and `git switch --detach <tag>`, take pieces from it with
 `git checkout <tag> -- <path>`, or bring a branch back with `git push origin <tag>^{commit}:refs/heads/<branch>`.
 None of it is live: the game and the asset pipeline do not read it.
+
+## Tags of 2026-10-30
+
+Eleven branches without a pull request, tagged when the daily triage found them idle. All stay as
+live branches next to their tags.
+
+- `archive/art/535-rotations`, `archive/art/textured-a`, `-b`, `-c`, `-pilot`,
+  `archive/claude/art-scaffolds-review-2` and `archive/claude/codex-queue`: the paintings, scaffolds
+  and Codex queue of turnable buildings. The author set turning aside on 2026-10-27 (#563, #564), so
+  this is kept for when it returns.
+- `archive/claude/optimistic-thompson-ndc4an-art-319-roads-finish`: the road set superseded on
+  2026-10-12 (#383). Its `finish-roads.mjs` and `check-final.mjs` can be reused when #319 restarts.
+- `archive/claude/optimistic-thompson-ndc4an-core-handoff`: hand-over pages on a separate history,
+  sharing no commit with `main`. It can never be merged.
+- `archive/claude/optimistic-thompson-ndc4an-art-153-train-models` and
+  `archive/claude/optimistic-thompson-ndc4an-archive-backup-local-train-models`: the train-model
+  pilot, replaced by the 3D models.
 
 ## `archive/claude/quirky-ride-ovv7uq`
 
