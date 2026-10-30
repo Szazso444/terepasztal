@@ -23,6 +23,7 @@ You write only these paths (`tools/agents/ownership.json`):
 - `art-src/**`
 - `assets/**`
 - `public/assets/*.{png,json}`
+- `public/assets/portraits/**`
 - `docs/art-direction/**`
 - `docs/mcp-setup.md`
 - `src/render/bridgeKit.json`

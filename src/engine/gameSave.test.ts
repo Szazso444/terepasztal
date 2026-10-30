@@ -20,6 +20,8 @@ import { Terrain, type GameMap } from '../world/tiles';
 import { STR } from '../strings';
 import { forAll, shrinkArray } from '../testing/property';
 import { simWorld, line, station, mapParams, type SimWorld } from '../testing/simWorld';
+import { townWith } from '../testing/storeFixtures';
+import { startStock } from '../sim/step';
 import type { Rng } from './rng';
 
 // a purchase plays a sound; the context that plays it is a browser's
@@ -1065,6 +1067,59 @@ describe('Game.fixBuiltTiles', () => {
   });
 });
 
+// ------------------------------------------------------------------ a headless Game
+
+/** What the renderer and the panels are to a headless game: all of it is itself, and calling it answers itself. */
+const inert: object = new Proxy(function inert() {}, {
+  get: (_target, key) => (key === 'then' ? undefined : inert),
+  apply: () => inert,
+});
+
+/** A Game with the prototype's methods over the domains of `w`, and no renderer, panels or DOM. */
+function gameOn(w: SimWorld): Game {
+  const host: Record<string, unknown> = Object.create(Game.prototype);
+  Object.assign(host, {
+    seed: w.seed,
+    spec: { kind: 'generated', seed: w.seed, params: mapParams(w.map.w) },
+    map: w.map,
+    regions: w.regions,
+    track: w.track,
+    builder: w.builder,
+    economy: w.economy,
+    stores: w.stores,
+    towns: w.towns,
+    houses: w.houses,
+    power: w.power,
+    catenary: w.catenary,
+    weather: w.weather,
+    inventory: w.inventory,
+    fleet: w.fleet,
+    people: w.people,
+    contracts: w.contracts,
+    gacha: w.gacha,
+    crafting: w.crafting,
+    contractJobs: w.contractJobs,
+    trade: w.trade,
+    clock: w.clock,
+    notices: w.notices,
+    camera: { x: 640, y: 320, zoomIndex: 2, zoom: 1, centerOn() {} },
+    sim: { lastDay: 0 },
+    settings: { weather: false },
+    saveExtra: {},
+    orphaned: new Set<number>(),
+    signalAspect: new Map<number, string>(),
+    ground: null,
+    season: null,
+    toasts: { push() {} },
+    atlas: { has: () => false },
+    world: inert,
+    overview: inert,
+    ui: inert,
+    powerLines: inert,
+  });
+  return host as unknown as Game;
+}
+
 // ------------------------------------------------------------------ roads in a save and a load
 
 // `Game` cannot be constructed under Node, but its `snapshot` and `applySave` run on a stand-in that
@@ -1085,57 +1140,6 @@ describe('roads through Game.snapshot and Game.applySave', () => {
     resetTrainIds(1);
   };
   beforeEach(reset);
-
-  /** What the renderer and the panels are to a headless game: all of it is itself, and calling it answers itself. */
-  const inert: object = new Proxy(function inert() {}, {
-    get: (_target, key) => (key === 'then' ? undefined : inert),
-    apply: () => inert,
-  });
-
-  /** A Game with the prototype's methods over the domains of `w`, and no renderer, panels or DOM. */
-  function gameOn(w: SimWorld): Game {
-    const host: Record<string, unknown> = Object.create(Game.prototype);
-    Object.assign(host, {
-      seed: w.seed,
-      spec: { kind: 'generated', seed: w.seed, params: mapParams(w.map.w) },
-      map: w.map,
-      regions: w.regions,
-      track: w.track,
-      builder: w.builder,
-      economy: w.economy,
-      stock: w.stock,
-      towns: w.towns,
-      houses: w.houses,
-      power: w.power,
-      catenary: w.catenary,
-      weather: w.weather,
-      inventory: w.inventory,
-      fleet: w.fleet,
-      people: w.people,
-      contracts: w.contracts,
-      gacha: w.gacha,
-      crafting: w.crafting,
-      contractJobs: w.contractJobs,
-      trade: w.trade,
-      clock: w.clock,
-      notices: w.notices,
-      camera: { x: 640, y: 320, zoomIndex: 2, zoom: 1, centerOn() {} },
-      sim: { lastDay: 0 },
-      settings: { weather: false },
-      saveExtra: {},
-      orphaned: new Set<number>(),
-      signalAspect: new Map<number, string>(),
-      ground: null,
-      season: null,
-      toasts: { push() {} },
-      atlas: { has: () => false },
-      world: inert,
-      overview: inert,
-      ui: inert,
-      powerLines: inert,
-    });
-    return host as unknown as Game;
-  }
 
   const column = (x: number, y0: number, y1: number) =>
     Array.from({ length: y1 - y0 + 1 }, (_, i) => [x, y0 + i] as [number, number]);
@@ -1217,10 +1221,10 @@ describe('roads through Game.snapshot and Game.applySave', () => {
     const tiles = saved.roads ?? [];
     expect(tiles.length, 'the roads the save keeps').toBeGreaterThan(20);
     const spur = tiles[tiles.length - 1];
-    // a refund would show: the save's tuning pays all of a road back, and with no stockpile saved
-    // (a file from before there was one) the load puts nothing over what the stock holds by then
+    // a refund would show: the save's tuning pays all of a road back, and with no goods saved
+    // the load puts nothing over what the stores hold by then
     saved.rules = { ...saved.rules, refundRate: 1 };
-    saved.stockpile = undefined;
+    saved.stores = undefined;
 
     // the ground this load makes is not the one the roads were laid on: water under a street, rock
     // under a level crossing, a mountain under the road between them, water under the last spur
@@ -1245,11 +1249,12 @@ describe('roads through Game.snapshot and Game.applySave', () => {
     expect([...treated.builder.roads.crossingKeys()]).toEqual([treated.track.key(24, 20)]);
     // nothing was paid back: the money and the stock are the control's, which took nothing off
     expect(treated.economy.money).toBe(control.economy.money);
-    expect(treated.stock.toJSON()).toEqual(control.stock.toJSON());
-    // ... where taking a road up by hand does pay back, under this tuning
-    const stone = control.stock.get('stone');
+    expect(treated.stores.toJSON()).toEqual(control.stores.toJSON());
+    // ... where taking a road up by hand does pay back, under this tuning, to the depot
+    const depot = control.stores.nearest(16, 22, Infinity)[0];
+    const stone = depot.get('stone');
     expect(control.builder.removeRoad(16, 22)).toBe(true);
-    expect(control.stock.get('stone')).toBeGreaterThan(stone);
+    expect(depot.get('stone')).toBeGreaterThan(stone);
     // the repair took the roads off and bent no ground for them
     for (const [x, y, t] of spoilt) expect(treated.map.terrain[y * treated.map.w + x]).toBe(t);
   });
@@ -1332,7 +1337,7 @@ describe('roads through Game.snapshot and Game.applySave', () => {
         const saved = gameOn(w).snapshot();
         // a refund would show, as in the test above
         saved.rules = { ...saved.rules, refundRate: 1 };
-        saved.stockpile = undefined;
+        saved.stores = undefined;
         const tiles = saved.roads ?? [];
 
         // on the ground they were laid on, the roads come back as they were
@@ -1352,7 +1357,6 @@ describe('roads through Game.snapshot and Game.applySave', () => {
           expect(unbuildable(ground(x, y)), `${x},${y}`).toBeNull();
         // nothing was paid back
         expect(treated.economy.money).toBe(control.economy.money);
-        expect(treated.stock.toJSON()).toEqual(control.stock.toJSON());
         // the track under a level crossing stays; one the ground left no road on is no crossing
         expect(treated.track.pieces.size).toBe(control.track.pieces.size);
         const crossings = [...control.builder.roads.crossingKeys()];
@@ -1377,4 +1381,170 @@ describe('roads through Game.snapshot and Game.applySave', () => {
     // the seeds reach roads kept, roads taken off, and level crossings among both
     for (const [what, n] of Object.entries(seen)) expect(n, what).toBeGreaterThan(20);
   }, 20_000);
+});
+
+// ------------------------------------------------------------------ stores in a save and a load
+
+// The goods of every store go through `Game.snapshot` and `Game.applySave`, as the roads do above;
+// a file from before the stores (v20) brings its global stockpile into the start depot, and a new
+// game finds its start stock there.
+describe('stores through Game.snapshot and Game.applySave', () => {
+  const SEED = 11;
+  const SIZE = 64;
+  const reset = () => {
+    Object.assign(rules, DEFAULT_RULES);
+    setSupplyMode(DEFAULT_SUPPLY);
+    setSeasonOffset(0);
+    resetStationIds(1);
+    resetTrainIds(1);
+  };
+  beforeEach(reset);
+
+  const fresh = () => simWorld({ seed: SEED, size: SIZE, terrain: 'grass' });
+  /**
+   * A depot, a town with a warehouse in its reach and a warehouse outside every town, the stores
+   * of each holding goods, and power in the grid.
+   */
+  function scene() {
+    const w = fresh();
+    const depot = station(w, 'depot', 44, 44);
+    // the town and the warehouses stand by track
+    line(w, 8, 13, 20);
+    line(w, 28, 41, 34);
+    const town = townWith(w, { food: 50, wheat: 5 }, { x: 12, y: 12 });
+    const inTown = station(w, 'warehouse', 15, 12);
+    const alone = station(w, 'warehouse', 30, 40);
+    const dock = w.stores.byKey(`st:${depot.id}`)!;
+    dock.amounts.set('wood', 123);
+    dock.amounts.set('coal', 7);
+    w.stores.byKey(`st:${alone.id}`)!.amounts.set('stone', 80);
+    w.stores.grid.amounts.set('power', 30);
+    town.famine = true;
+    return { w, depot, inTown, alone };
+  }
+  /** `save` read back as a load reads it, then loaded into a new world of its seed. */
+  function loaded(save: SaveGame) {
+    const read = readSaveText(JSON.stringify(save));
+    if (!('save' in read)) throw new Error(read.error);
+    const w = fresh();
+    gameOn(w).applySave(read.save);
+    return w;
+  }
+  const goods = (w: SimWorld, key: string) =>
+    Object.fromEntries([...(w.stores.byKey(key)?.amounts ?? [])].filter(([, n]) => n > 0));
+
+  it("keep every store's goods and famine, a depot's too, through a save and a load", () => {
+    const { w, depot } = scene();
+    const saved = gameOn(w).snapshot();
+    expect(saved.stockpile, 'no stockpile is written').toBeUndefined();
+    const back = loaded(saved);
+    expect(back.stores.toJSON()).toEqual(w.stores.toJSON());
+    expect(goods(back, `st:${depot.id}`)).toEqual({ wood: 123, coal: 7 });
+    expect(
+      back.stores
+        .all()
+        .filter((s) => s.famine)
+        .map((s) => s.kind),
+    ).toEqual(['town']);
+  });
+
+  it('a v20 save keeps its stockpile in the start depot and its warehouse goods', () => {
+    const { w, depot, inTown, alone } = scene();
+    const v20 = gameOn(w).snapshot() as SaveGame & { stations: { id: number }[] };
+    v20.version = 20;
+    delete v20.stores;
+    v20.stockpile = { amounts: { wood: 400, power: 50 }, famine: false };
+    const storage = (id: number, s: Record<string, number>) =>
+      (v20.stations.find((st) => st.id === id)!.storage = s);
+    storage(alone.id, { stone: 80 });
+    storage(inTown.id, { iron: 30 });
+
+    const back = loaded(v20);
+    const town = back.stores.all().find((s) => s.kind === 'town')!;
+    expect(goods(back, `st:${depot.id}`)).toEqual({ wood: 400 });
+    expect(goods(back, 'grid')).toEqual({ power: 50 });
+    expect(goods(back, `st:${alone.id}`)).toEqual({ stone: 80 });
+    // a warehouse in a town keeps no store of its own: its goods are the town's
+    expect(back.stores.byKey(`st:${inTown.id}`)).toBeUndefined();
+    expect(goods(back, town.key)).toEqual({ iron: 30 });
+    // and no station holds goods of its own any more
+    for (const s of back.builder.stations) expect(s.storage.size, s.name).toBe(0);
+  });
+
+  it('a save with no depot loads and keeps its goods', () => {
+    const w = fresh();
+    const v20 = gameOn(w).snapshot();
+    expect(v20.stations, 'nothing stands').toEqual([]);
+    v20.version = 20;
+    delete v20.stores;
+    v20.stockpile = { amounts: { wood: 400, power: 50 }, famine: true };
+
+    const back = loaded(v20);
+    // the load grants the depot every game has, and the stockpile waits in it
+    const depot = back.builder.depots()[0];
+    expect(depot, 'the depot granted on load').toBeDefined();
+    expect(goods(back, `st:${depot.id}`)).toEqual({ wood: 400 });
+    // the stockpile's famine is not carried to the depot, where nobody may eat
+    expect(back.stores.byKey(`st:${depot.id}`)!.famine).toBe(false);
+    expect(goods(back, 'grid')).toEqual({ power: 50 });
+  });
+
+  it('start a load from clean stores: nothing of the game it loads over stays', () => {
+    const { w } = scene();
+    const saved = gameOn(w).snapshot();
+    const over = fresh();
+    // the game running before the load: goods under the grid's key, which every save has, and a
+    // famine there
+    over.stores.grid.amounts.set('power', 99);
+    over.stores.grid.amounts.set('coal', 12);
+    over.stores.grid.famine = true;
+    gameOn(over).applySave(structuredClone(saved));
+    expect(over.stores.toJSON()).toEqual(w.stores.toJSON());
+  });
+
+  it('a new game puts the start stock in the start depot', () => {
+    const w = fresh();
+    gameOn(w).startFresh();
+    const depot = w.builder.depots()[0];
+    expect(depot, 'the start depot').toBeDefined();
+    const dock = w.stores.dockOf(depot)!;
+    expect(dock.get('water')).toBe(600 * rules.startStock);
+    for (const [id, n] of Object.entries(startStock()))
+      expect(dock.get(id), id).toBe(Math.round(n * rules.startStock));
+  });
+
+  /** A level's start block: the default goods, in the first age. */
+  const levelStart = { money: 25000, tickets: 3, tier: 0, stockMul: 1 };
+  /** The start stock a level's start block brings, by good. */
+  const levelStock = () =>
+    Object.fromEntries(
+      Object.entries(startStock()).map(([id, n]) => [id, Math.round(n * rules.startStock)]),
+    );
+
+  it('a level with no stations starts with its stock in the depot it is granted', () => {
+    const w = fresh();
+    expect(w.builder.stations, 'premise: nothing stands').toEqual([]);
+    gameOn(w).startFresh(levelStart);
+    const depot = w.builder.depots()[0];
+    expect(depot, 'the start depot').toBeDefined();
+    expect(goods(w, `st:${depot.id}`)).toEqual(levelStock());
+  });
+
+  it("a level with a warehouse and no depot starts with its stock in the warehouse's store", () => {
+    const w = fresh();
+    line(w, 26, 31, 36);
+    const house = station(w, 'warehouse', 30, 30);
+    gameOn(w).startFresh(levelStart);
+    expect(w.builder.depots(), 'no depot is added').toEqual([]);
+    expect(goods(w, `st:${house.id}`)).toEqual(levelStock());
+  });
+
+  it('a level with only a town starts with its stock in the town store', () => {
+    const w = fresh();
+    line(w, 26, 31, 36);
+    const hall = station(w, 'town', 30, 30);
+    gameOn(w).startFresh(levelStart);
+    expect(w.builder.depots(), 'no depot is added').toEqual([]);
+    expect(goods(w, `town:${w.towns.byStation(hall.id)!.id}`)).toEqual(levelStock());
+  });
 });

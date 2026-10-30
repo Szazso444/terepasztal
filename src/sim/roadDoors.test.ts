@@ -9,7 +9,6 @@ import { STR } from '../strings';
 import { content, type BuildingDef, type DecorDef, type StationDef } from '../data/content';
 import { Builder, buildingPlace, decorDef, decorPlace, stationPlace, type Decor } from './build';
 import type { Building } from './buildings';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds, stationFootprint } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
@@ -19,6 +18,7 @@ import { doorsOf, hasDoors, type Door, type PlaceAt, type PlaceDef } from './doo
 import { PeopleSim, OFF_ROAD_STEP, doorstep, findWalk, roadStep } from './people';
 import { ensureStartDepot } from './startDepot';
 import { forAll, shrinkArray } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -45,15 +45,16 @@ const at = (t: Tile) => `${t.x},${t.y}`;
 
 /**
  * A grass map of 64 by 64 tiles, four chunks of which the player owns the north-west one (x and y
- * below 32), and a builder that pays: nothing in stock until a test puts it there.
+ * below 32), and a builder that pays from a depot there: nothing in it until a test puts it there.
  */
 function world() {
   const map = emptyMap(7, W, W, Terrain.Grass);
   const regions = new RegionState(map);
   regions.load([true, false, false, false]);
   const track = new TrackGraph(W, W);
-  const stock = new Stockpile();
-  const builder = new Builder(map, regions, track, new Economy(), stock);
+  // the depot the builder pays from, in reach of the whole owned chunk
+  const { stores, depot: stock } = storeWith({}, { x: 16, y: 16 });
+  const builder = new Builder(map, regions, track, new Economy(), stores);
   return { map, regions, track, stock, builder, roads: builder.roads };
 }
 type World = ReturnType<typeof world>;
@@ -426,7 +427,8 @@ describe('placing a place near a road', () => {
         const price = check(w, e, rot).cost;
         for (const [k, v] of Object.entries(price)) w.stock.add(k, v);
         w.stock.add('stone', 7);
-        expect(check(w, e, rot), what).toEqual({ ok: true, cost: price });
+        const payer = Object.keys(price).length ? w.stock.key : undefined;
+        expect(check(w, e, rot), what).toEqual({ ok: true, cost: price, payer });
         // what it stands on decides the shortest spur: worked out on a twin with no spur
         const twin = world();
         roadRow(twin);
@@ -444,7 +446,7 @@ describe('placing a place near a road', () => {
         expect(spur.length, what).toBe(fewest);
         expect(spur.length, what).toBeGreaterThan(1);
         // the price was taken and nothing more: the seven stone are left
-        expect(w.stock.toJSON().amounts, what).toEqual({
+        expect(Object.fromEntries(w.stock.amounts), what).toEqual({
           ...Object.fromEntries(Object.keys(price).map((k) => [k, 0])),
           stone: 7,
         });
@@ -685,7 +687,7 @@ describe('a road the player lays', () => {
     const [door] = streetOf(house);
     w.stock.add('stone', 10);
     w.stock.add('wood', 10);
-    expect(w.builder.checkRoad(10, 16)).toEqual({ ok: true, cost: roadCost() });
+    expect(w.builder.checkRoad(10, 16)).toEqual({ ok: true, cost: roadCost(), payer: w.stock.key });
     expect(w.builder.placeRoad(10, 16)).toBe(true);
     expect(w.stock.get('stone')).toBe(10 - roadCost().stone);
     expect(w.stock.get('wood')).toBe(10);
@@ -803,7 +805,7 @@ describe('every spur', () => {
         // the player's way, region lock and all, with the stock to pay for whatever is built
         const w = world();
         const b = w.builder;
-        for (const id of ['wood', 'stone', 'iron']) w.stock.add(id, 1e6);
+        for (const id of ['wood', 'stone', 'iron']) w.stock.amounts.set(id, 1e6);
         for (const g of c.ground)
           w.map.terrain[g.y * W + g.x] = [Terrain.Water, Terrain.Rock, Terrain.Mountain][g.n];
         /** what a spur keeps off: every station's platform and every depot's gates */
@@ -1188,7 +1190,7 @@ function stockUp(w: World) {
   const ids = [content.stations.defs, content.buildings, content.decor].flatMap((defs) =>
     defs.flatMap((d) => Object.keys(d.cost)),
   );
-  for (const id of new Set([...ids, ...Object.keys(roadCost())])) w.stock.add(id, 1e6);
+  for (const id of new Set([...ids, ...Object.keys(roadCost())])) w.stock.amounts.set(id, 1e6);
 }
 
 describe('every spur, against an exhaustive search', () => {
@@ -1209,7 +1211,7 @@ describe('every spur, against an exhaustive search', () => {
         c.ops.forEach((o, i) => {
           const step = `op ${i} ${JSON.stringify(o)}`;
           const before = roadsOf(w);
-          const stock = w.stock.toJSON().amounts;
+          const stock = Object.fromEntries(w.stock.amounts);
           const roads = new Set(before.map(keyOf));
           /** the doors that may get a spur */
           let doors: Door[];
@@ -1223,7 +1225,7 @@ describe('every spur, against an exhaustive search', () => {
             laid = roadsOf(w).slice(before.length);
             if (!p) {
               expect(laid, step).toEqual([]);
-              expect(w.stock.toJSON().amounts, step).toEqual(stock);
+              expect(Object.fromEntries(w.stock.amounts), step).toEqual(stock);
               return;
             }
             price = check.cost as Record<string, number>;
@@ -1235,7 +1237,7 @@ describe('every spur, against an exhaustive search', () => {
             const added = roadsOf(w).slice(before.length);
             if (!done) {
               expect(added, step).toEqual([]);
-              expect(w.stock.toJSON().amounts, step).toEqual(stock);
+              expect(Object.fromEntries(w.stock.amounts), step).toEqual(stock);
               return;
             }
             expect(check.cost, step).toEqual(c.free ? {} : roadCost());
@@ -1255,7 +1257,7 @@ describe('every spur, against an exhaustive search', () => {
           const paid = Object.fromEntries(
             Object.entries(stock).map(([id, n]) => [id, n - (price[id] ?? 0)]),
           );
-          expect(w.stock.toJSON().amounts, `${step}: the stock`).toEqual(paid);
+          expect(Object.fromEntries(w.stock.amounts), `${step}: the stock`).toEqual(paid);
           // door by door, in the builder's order, each spur judged on the roads before it
           const off = keptOffByHand(w);
           const reaches = new Set(doorsByHand(w).map((d) => keyOf(d.reach)));
@@ -1589,7 +1591,7 @@ describe('a place and a road, with no stub between them (#455)', () => {
         expect(after.slice(0, before.length), what).toEqual(before);
         const spur = after.slice(before.length);
         expect(
-          Object.values(w.stock.toJSON().amounts).every((n) => n === 0),
+          Object.values(Object.fromEntries(w.stock.amounts)).every((n) => n === 0),
           what,
         ).toBe(true);
         expect(w.builder.roadServes(place), what).toBe(near);

@@ -8,7 +8,7 @@ import type { SaveGame } from './save';
 import type { StopPlan, TrainJob } from './trains';
 import { STATION_DEFS } from './stations';
 import { BUILDING_DEFS } from './buildings';
-import { RESOURCE_IDS } from './stockpile';
+import { RESOURCE_IDS } from './stores';
 import { content } from '../data/content';
 import { LOCOS, WAGONS } from '../gacha/items';
 
@@ -69,11 +69,11 @@ interface ItemSave {
 
 /**
  * Drop from `j` (in place) every station, works, service, train vehicle and inventory item whose
- * id `known` does not define, with what hangs on them: a dropped station's goods go to the
- * stockpile, its contracts are cancelled and trains skip its stops; a train left without a
- * locomotive is taken off the line and its wagons go back to the inventory; a dropped wagon's
- * cargo goes to the stockpile. A vehicle in a train and its inventory entry are one copy and are
- * refunded once. Running it again finds nothing.
+ * id `known` does not define, with what hangs on them: a dropped station's goods go to the start
+ * depot's store (`depotStoreAmounts`), its contracts are cancelled and trains skip its stops; a
+ * train left without a locomotive is taken off the line and its wagons go back to the inventory; a
+ * dropped wagon's cargo goes to the start depot's store. A vehicle in a train and its inventory
+ * entry are one copy and are refunded once. Running it again finds nothing.
  */
 export function pruneUnknownContent(j: SaveGame, known: KnownContent = LIVE_CONTENT): PruneReport {
   const report: PruneReport = { dropped: [], money: 0, tickets: 0 };
@@ -84,10 +84,11 @@ export function pruneUnknownContent(j: SaveGame, known: KnownContent = LIVE_CONT
     if (kind === 'vehicle' || kind === 'item') report.tickets += UNKNOWN_ITEM_REFUND;
     else report.money += UNKNOWN_BUILD_REFUND;
   };
-  const amounts = stockpileAmounts(j);
+  const depotStore = depotStoreAmounts(j, known);
   const toStock = (cargo: string | null, amount: number) => {
     // passengers and goods the game no longer has cannot be stored
-    if (!amounts || !cargo || !(amount > 0) || !RESOURCE_IDS.includes(cargo)) return;
+    if (!depotStore || !cargo || !(amount > 0) || !RESOURCE_IDS.includes(cargo)) return;
+    const amounts = depotStore();
     amounts[cargo] = (amounts[cargo] ?? 0) + amount;
   };
 
@@ -148,7 +149,7 @@ export function pruneUnknownContent(j: SaveGame, known: KnownContent = LIVE_CONT
         return false;
       });
     if (t.locos.length) continue;
-    // nothing left to pull it: the wagons go back to the inventory and unload into the stockpile
+    // nothing left to pull it: the wagons go back to the inventory and unload into a store
     offLine.add(t.id);
     for (const w of t.wagons) toStock(w.cargo, w.amount);
   }
@@ -173,10 +174,30 @@ export function pruneUnknownContent(j: SaveGame, known: KnownContent = LIVE_CONT
   return report;
 }
 
-/** The stockpile's amounts to add salvaged goods to, or null when the save has no stockpile. */
-function stockpileAmounts(j: SaveGame): Record<string, number> | null {
-  const s = j.stockpile as { amounts?: Record<string, number> } | undefined;
-  return s && s.amounts && typeof s.amounts === 'object' ? s.amounts : null;
+/**
+ * The goods of the start depot's store, to add salvaged goods to: the store of the known depot of
+ * the lowest id; in a save with none, goods of no place, which a load hands to the depot it grants
+ * (`StoreRegistry.load`). Read through the function returned, which makes the entry the first time
+ * it is called, so a save that salvages nothing is left as it was. Null when the save keeps no
+ * stores.
+ */
+function depotStoreAmounts(
+  j: SaveGame,
+  known: KnownContent,
+): (() => Record<string, number>) | null {
+  const stores = j.stores;
+  if (!Array.isArray(stores)) return null;
+  const depots = j.stations
+    .filter((s) => known.station(s.defId) && STATION_DEFS.some((d) => d.id === s.defId && d.depot))
+    .map((s) => s.id);
+  const key = depots.length ? `st:${Math.min(...depots)}` : 'unplaced';
+  return () => {
+    // an entry that is no store, in a file no version wrote, is passed over
+    let s = stores.find((e) => e?.key === key);
+    if (!s) stores.push((s = { key, amounts: {}, famine: false }));
+    if (typeof s.amounts !== 'object' || s.amounts === null) s.amounts = {};
+    return s.amounts;
+  };
 }
 
 /**

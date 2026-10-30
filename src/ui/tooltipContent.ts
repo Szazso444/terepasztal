@@ -63,6 +63,8 @@ export interface StationSnapshot {
  */
 export type WorksStatus =
   | { kind: 'running' | 'full' | 'closed' }
+  /** it stands out of every store's reach (`range` tiles), so nothing can feed it */
+  | { kind: 'noStore'; range: number }
   | {
       kind: 'starved';
       /** the cargo id of the primary input it is short of (`missingInput`), null if none is found */
@@ -120,6 +122,8 @@ export interface ResourceSnapshot {
   have: number;
   /** `Infinity`: no cap, and the tooltip leaves it out */
   cap: number;
+  /** what every store holds together; absent for what no store keeps */
+  total?: number;
   /** units received and spent over the last week; absent where nothing counts them */
   produced?: number;
   consumed?: number;
@@ -150,6 +154,8 @@ function statusLine(s: WorksStatus): Block {
       return line(STR.building.full);
     case 'running':
       return line(STR.building.running);
+    case 'noStore':
+      return line(STR.stores.noStoreNear(s.range));
     case 'starved':
       return text(
         ...fill(STR.building.waiting, {
@@ -232,6 +238,7 @@ export function resourceTip(s: ResourceSnapshot): TipDoc {
   return [
     title(icon(s.id), resourceName(s.id)),
     row(STOCK_LABEL[s.id] ?? STR.res.have, stock),
+    ...(s.total !== undefined ? [dim(STR.res.allStores(Math.floor(s.total)))] : []),
     ...(s.produced !== undefined ? [row(STR.res.producedDay, num(s.produced.toFixed(1)))] : []),
     ...(s.consumed !== undefined ? [row(STR.res.consumedDay, num(s.consumed.toFixed(1)))] : []),
     ...(s.eats !== undefined

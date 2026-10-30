@@ -1,6 +1,5 @@
 import { content, type StationDef, type Cost } from '../data/content';
 import type { LevelStation } from '../world/level';
-import { scaleCost } from './stockpile';
 import { weekSeconds } from './rules';
 import { Terrain, inBounds, terrainAt, type GameMap } from '../world/tiles';
 import { rules, type Rules } from './rules';
@@ -10,6 +9,7 @@ import { cargoDef } from './cargo';
 import { MAX_LEVEL } from './levels';
 import { workFromJSON, workToJSON, type Work } from './upgrade';
 import { wrapRotation } from './rotation';
+import { scaleCost, type ResourceStore } from './stores';
 import { placeSpan } from './doors';
 
 export type { StationDef };
@@ -301,6 +301,9 @@ export function terrainFactorAt(map: GameMap, x: number, y: number, defId: strin
   return harvestBreakdown(map, x, y, defId, 1, 'spring', rules, FACTOR_CELLS)?.factor ?? 1;
 }
 
+/** The good a dock's cap is read for: ordinary goods all have the same cap. */
+const DOCK_PROBE = 'stone';
+
 /** A placed station. Storage is a cargo -> units map (produced goods waiting for pickup). */
 export class Station {
   readonly id: number;
@@ -308,6 +311,35 @@ export class Station {
   name: string;
   level = 1;
   storage = new Map<string, number>();
+  /**
+   * The store a depot, a warehouse or a Townhouse keeps its goods in (`StoreRegistry.refresh`
+   * binds it; not saved). While it is set the station's goods are the store's: `storage` is not
+   * used.
+   */
+  dock: ResourceStore | null = null;
+  /**
+   * The town store a harvesting station in a town's reach makes into: its workers carry its output
+   * straight there (`StoreRegistry.refresh` binds it; not saved). While it is set `tick` adds to
+   * it, not to `storage`, which stays for stations outside every town; and trains load the
+   * station's own goods from it (`stored`, `take`, `totalStored`), after whatever its storage
+   * still holds from before.
+   */
+  outlet: ResourceStore | null = null;
+  /**
+   * Its goods are a store's: a depot, a warehouse or a Townhouse (`dock`; a depot or a warehouse
+   * the registry has not bound yet keeps them in `storage`). Trains on a schedule load and unload
+   * at one; a roaming freight train only puts goods down there.
+   */
+  get isStore() {
+    return !!this.dock || !!this.def.pool || !!this.def.stockpile;
+  }
+  /**
+   * Whether a roaming freight train may come to take goods on here: a producer that keeps its
+   * own pile, never a store (`isStore`) nor a harvester whose goods go to its town's (`outlet`).
+   */
+  get pickupPile() {
+    return !this.isStore && !this.outlet;
+  }
   /** trains currently occupying a platform */
   occupants = new Set<number>();
   /** spot-market satiety per accepted cargo (0 = hungry, 1 = glutted) */
@@ -320,7 +352,7 @@ export class Station {
   waterSupply = false;
   /** Residents within the passenger catchment, updated by the game. */
   passengerPopulation = 0;
-  /** a coaling stage stands within reach (engines refuel from the stockpile) */
+  /** a coaling stage stands within reach (engines refuel from a store) */
   fuelSupply = false;
   /** the upgrade under way (`Builder.upgradeStation`); null when none is */
   work: Work | null = null;
@@ -399,8 +431,12 @@ export class Station {
     const dy = Math.max(this.y - y, 0, y - (this.y + this.h - 1));
     return Math.max(dx, dy);
   }
-  /** Storage: produced goods for pickup; a warehouse holds whatever trains bring, per level. */
+  /**
+   * Storage: produced goods for pickup; a warehouse holds whatever trains bring, per level. With
+   * a dock, the dock's cap for one ordinary good (every good has the same cap but power).
+   */
   get capacity() {
+    if (this.dock) return this.dock.cap(DOCK_PROBE);
     if (this.def.stockpile) return Math.round(rules.warehouseCap * this.level);
     return Math.round(LEVELS.capacity[this.level - 1] * rules.capacityMul);
   }
@@ -411,22 +447,34 @@ export class Station {
     if (this.def.depot) return this.def.long ? 1 : 2;
     return LEVELS.platforms[this.level - 1];
   }
-  /** Goods trains may take from here: what it makes, plus a warehouse's stored kinds. */
+  /**
+   * Goods trains may take from here: what it makes, plus every kind its dock's store holds (a
+   * depot's, a warehouse's, a Townhouse's), or an unbound warehouse's own.
+   */
   availableCargo(): string[] {
     const out = this.producedCargo();
-    if (this.def.stockpile)
-      for (const [c, v] of this.storage) if (v >= 1 && !out.includes(c)) out.push(c);
+    const held = this.dock ? this.dock.held() : this.def.stockpile ? this.storage : null;
+    if (held) for (const [c, v] of held) if (v >= 1 && !out.includes(c)) out.push(c);
     return out;
   }
-  /** Room a warehouse has for more goods: none while it is closed. */
-  get room() {
+  /**
+   * Room for more of the cargo: none while the station is closed. A dock has its cap per good;
+   * storage of its own has one cap for all goods together.
+   */
+  roomFor(cargo: string) {
     if (this.closed) return 0;
+    if (this.dock) return Math.max(0, this.dock.cap(cargo) - this.dock.get(cargo));
     return Math.max(0, this.capacity - this.totalStored());
   }
-  /** Put goods into a warehouse's store; returns what fitted (nothing while it is closed). */
+  /**
+   * Put goods into the station's store; returns what fitted (nothing while it is closed). Only
+   * trains call it: into a dock it is a haul (`ResourceStore.weeklyFlow`).
+   */
   store(cargo: string, amount: number): number {
-    const n = Math.max(0, Math.min(amount, this.room));
-    if (n > 0) this.storage.set(cargo, this.stored(cargo) + n);
+    const n = Math.max(0, Math.min(amount, this.roomFor(cargo)));
+    if (n <= 0) return 0;
+    if (this.dock) return this.dock.add(cargo, n, true);
+    this.storage.set(cargo, this.stored(cargo) + n);
     return n;
   }
   /** nearby-resource multiplier, set when placed and after terrain edits */
@@ -459,22 +507,78 @@ export class Station {
     if (this.level >= MAX_LEVEL) return {};
     return scaleCost(this.def.cost, LEVELS.upgradeCostMul[this.level] * rules.buildCostMul);
   }
+  /**
+   * Units of the cargo on hand: a dock's, else its own storage's; with an outlet, also the
+   * outlet's stock of a cargo the station makes (of no other).
+   */
   stored(cargo: string) {
-    return this.storage.get(cargo) ?? 0;
+    if (this.dock) return this.dock.get(cargo);
+    const own = this.storage.get(cargo) ?? 0;
+    return this.outletHolds(cargo) ? own + this.outlet!.get(cargo) : own;
   }
   totalStored() {
     let t = 0;
-    for (const v of this.storage.values()) t += v;
+    if (this.dock) for (const [, v] of this.dock.held()) t += v;
+    else for (const v of this.storage.values()) t += v;
+    if (!this.dock && this.outlet) for (const c of this.producedCargo()) t += this.outlet.get(c);
     return t;
   }
-  /** Take up to `amount` units of cargo out of storage; returns what was taken. */
+  /** Whether trains take this cargo from the outlet: one is bound, and the station makes it. */
+  private outletHolds(cargo: string) {
+    return !!this.outlet && this.producedCargo().includes(cargo);
+  }
+  /**
+   * The amount to show against `capacity`: all goods together for storage of its own; with a dock
+   * the stock of the fullest good, since the cap is per good and a mixed pile is not a full one.
+   */
+  fullest(): number {
+    if (!this.dock) return this.totalStored();
+    let best = 0;
+    let ratio = -1;
+    for (const [c, v] of this.dock.held()) {
+      const r = v / Math.max(1, this.dock.cap(c));
+      if (r > ratio) {
+        ratio = r;
+        best = v;
+      }
+    }
+    return best;
+  }
+  /**
+   * How full the station is, 0 .. 1: `fullest()` against `capacity`, never past full (a harvester
+   * in a town counts its town store's stock, a store loaded past its cap holds more than it).
+   */
+  fill(): number {
+    if (!this.dock) return Math.min(1, this.totalStored() / Math.max(1, this.capacity));
+    let f = 0;
+    for (const [c, v] of this.dock.held()) f = Math.max(f, v / Math.max(1, this.dock.cap(c)));
+    return Math.min(1, f);
+  }
+  /**
+   * What a panel shows against `capacity`: `fullest()`, never past it. A harvester in a town counts
+   * the town store's stock of its goods (`outlet`), which may be far more than it holds itself.
+   */
+  shownStored(): number {
+    return Math.min(this.fullest(), this.capacity);
+  }
+  /**
+   * Take up to `amount` units of cargo out of storage (the dock's; else its own, then the outlet's
+   * for a cargo the station makes); returns what was taken. Only trains call it: out of a dock or
+   * outlet it is a haul (`ResourceStore.weeklyFlow`).
+   */
   take(cargo: string, amount: number): number {
-    const have = this.stored(cargo);
+    if (this.dock) return this.dock.take(cargo, Math.max(0, amount), true);
+    const have = this.storage.get(cargo) ?? 0;
     const n = Math.max(0, Math.min(have, amount));
-    if (n <= 0) return 0;
-    if (have - n < 1e-9) this.storage.delete(cargo);
-    else this.storage.set(cargo, have - n);
-    return n;
+    if (n > 0) {
+      if (have - n < 1e-9) this.storage.delete(cargo);
+      else this.storage.set(cargo, have - n);
+    }
+    // what its own storage lacks comes from the outlet, for a cargo the station makes
+    const more = this.outletHolds(cargo)
+      ? this.outlet!.take(cargo, Math.max(0, amount - n), true)
+      : 0;
+    return n + more;
   }
   hasFreePlatform() {
     return this.occupants.size < this.platforms;
@@ -497,8 +601,9 @@ export class Station {
     this.market.set(cargo, Math.min(1, this.satiety(cargo) + amount / (this.capacity * 1.5)));
   }
   /**
-   * Produce goods over in-game seconds, nothing while closed; storage is shared across produced
-   * cargo types. The market's demand recovers either way.
+   * Produce goods over in-game seconds, nothing while closed: into the outlet when there is one (up
+   * to its cap per good), else into storage, which is shared across produced cargo types. The
+   * market's demand recovers either way.
    */
   tick(gameDt: number) {
     const decay = Math.exp(-gameDt / weekSeconds());
@@ -508,6 +613,10 @@ export class Station {
     if (!produced.length) return;
     const perType =
       ((this.productionPerWeek * this.productionMul) / weekSeconds() / produced.length) * gameDt;
+    if (this.outlet) {
+      for (const c of produced) this.outlet.add(c, perType);
+      return;
+    }
     for (const c of produced) {
       if (this.totalStored() >= this.capacity) break;
       const room = this.capacity - this.totalStored();

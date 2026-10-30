@@ -43,12 +43,13 @@ the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
 ## Gameplay loop
 
 - **Resources** replace money for building: water, wheat, stone, wood, and later coal, oil, iron.
-  Trains collect at producing stations and only cargo unloaded at a **Depot** reaches the
-  stockpile (top bar, second row); Warehouses hold goods locally (1000 per level) for trains to
-  move on later. Crews eat wheat every day; run out and production halves, trains slow.
+  Goods are kept in local stores: towns (Townhouse plus Warehouses), depots, stand-alone
+  Warehouses (1000 per level) and the power grid. Trains unload into them, building pays from the
+  nearest store holding the material, and the top bar shows the selected store. Crews eat wheat
+  every day; run out and production halves, trains slow.
 - **Depot**: a two-by-two engine shed with four gates. Every game starts with one; another unlocks
-  per nine owned chunks. New trains roll out of the depot you pick, and each depot raises the
-  stockpile cap.
+  per nine owned chunks. New trains roll out of the depot you pick, and each depot is a store of its
+  own.
 - **Towns**: a Town Station (25 tiles from any other) with a Townhouse and a Warehouse within seven
   tiles founds a town; name it when placing (rename any time). Stations inside carry the town's
   name, the overview colours its reach and the left-hand panel lists population, output and use.
@@ -143,8 +144,8 @@ individual sound effects can be overridden file by file (see below).
 
 Music is one melody, Pastoral Pulse, arranged differently for each age. The default set is the
 original and three variations in `public/assets/audio/music`; each of the six ages can have its
-own set in `public/assets/audio/music/<age id>/`, and none has one yet, so every age plays the
-default. A set opens on its first track and then plays all its tracks in shuffled rounds; entering
+own set in `public/assets/audio/music/<age id>/`. For now only the steam age has one, four
+placeholder tracks, so the other ages play the default. A set opens on its first track and then plays all its tracks in shuffled rounds; entering
 an age with a different set fades the current track out and starts that set. If every file of an
 age's set fails to play, the default set takes over, and if those fail too, the synthesized
 ambient loop in `src/engine/synth.ts` plays, so a build without any music file still has music.

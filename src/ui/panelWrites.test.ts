@@ -18,10 +18,10 @@ const COMMANDED = new Set([
   'tickets',
 ]);
 /**
- * Calls that change the purse, the stockpile or a stop list past the commands: spending, earning,
- * stockpile moves, and a train's stops handed to the fleet as they are.
+ * Calls that change the purse, a store or a stop list past the commands: spending, earning,
+ * store moves, and a train's stops handed to the fleet as they are.
  */
-const MOVES = /\b((economy|stock)\.(spend|earn|add|take)|fleet\.setSchedule)$/;
+const MOVES = /\b((economy|stores?)\.(spend|earn|add|take)|fleet\.setSchedule)$/;
 /** The debug panel's cheats change the game on purpose. */
 const CHEATS = 'DebugPanel';
 /** Files that edit a level being made, not a running game. */
@@ -96,7 +96,7 @@ describe('what the panels change', () => {
     expect(found, 'call a method of Commands instead').toEqual([]);
   }, 20_000); // parses every panel: room for a busy machine
 
-  it('catches a field write, a step, a spend, a stockpile move and a stop list, and leaves panel state alone', () => {
+  it('catches a field write, a step, a spend, a store move and a stop list, and leaves panel state alone', () => {
     const panel = [
       'train.mode = m;',
       'signal.rot = (signal.rot + 1) % 4;',
@@ -105,11 +105,11 @@ describe('what the panels change', () => {
       'station.name = n;',
       'economy.money++;',
       'if (!this.economy.spend(price)) return;',
-      'this.stock.take(id, 5);',
+      'this.store.take(id, 5);',
       'this.fleet.setSchedule(t, t.schedule);',
       'this.rot = 0; this.schedule = []; this.mode = "x";',
       "el('div', { name: 'x', mode: 1 }); const same = t.mode === m;",
-      'this.commands.setSchedule(t, stops); this.stock.get(id);',
+      'this.commands.setSchedule(t, stops); this.store.get(id);',
       'new DebugPanel(1, { giveMoney: () => (d.economy.money += 10000) });',
     ].join('\n');
     expect(directWrites('panel.ts', panel)).toEqual([
@@ -120,7 +120,7 @@ describe('what the panels change', () => {
       'panel.ts:5: station.name = n',
       'panel.ts:6: economy.money++',
       'panel.ts:7: this.economy.spend(price)',
-      'panel.ts:8: this.stock.take(id, 5)',
+      'panel.ts:8: this.store.take(id, 5)',
       'panel.ts:9: this.fleet.setSchedule(t, t.schedule)',
     ]);
   });

@@ -189,7 +189,7 @@ function board(
     w.fleet.supplyAt = () => kind;
     w.fleet.gridFactor = () => 1;
     w.fleet.gridDraw = () => {};
-    w.stock.add('power', 1e9);
+    w.stores.grid.amounts.set('power', 1e9);
   }
   const t = new Train([{ uid: 1, level: 1, def }]);
   t.wagons = wagons.map((id, i) => ({

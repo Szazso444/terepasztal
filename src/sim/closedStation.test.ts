@@ -9,13 +9,13 @@ import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { locoDef, wagonDef } from '../gacha/items';
 import { Builder } from './build';
 import { Economy } from './economy';
-import { Stockpile } from './stockpile';
 import { MAX_LEVEL, STATION_DEFS, Station, resetStationIds } from './stations';
 import { Train, defaultStop, resetTrainIds, type StopPlan } from './trains';
 import { startWork } from './upgrade';
 import { rules, DEFAULT_RULES, daySeconds, weekSeconds } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { setSeasonOffset } from './weather';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -45,7 +45,7 @@ describe('a station closed for its upgrade, of every kind and level', () => {
       new RegionState(map),
       new TrackGraph(16, 16),
       new Economy(),
-      new Stockpile(),
+      storeWith({}).stores,
     );
     forAll(
       (rng) => ({

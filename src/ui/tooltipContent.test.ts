@@ -221,11 +221,12 @@ describe('the works tooltip', () => {
     expect(cargo).toEqual(want);
   });
 
-  it('words each status from STR, closed and full and running as plain lines', () => {
+  it('words each status from STR, closed and full and running and no store as plain lines', () => {
     const said = (status: WorksStatus) => lines(worksTip(works(plain1, { status })))[2];
     expect(said({ kind: 'running' })).toBe(STR.building.running);
     expect(said({ kind: 'full' })).toBe(STR.building.full);
     expect(said({ kind: 'closed' })).toBe(STR.upgrade.closed);
+    expect(said({ kind: 'noStore', range: 24 })).toBe(STR.stores.noStoreNear(24));
   });
 
   it('names what a waiting works lacks as a resource: its icon and its underlined name', () => {
@@ -932,6 +933,20 @@ describe('the resource tooltips', () => {
     expect(termsOf(doc).map((t) => t.term)).toEqual(
       expect.arrayContaining(['Farm Halt', 'Windmill']),
     );
+  });
+  it('a resource tooltip says what every store holds together; the funds are no store good', () => {
+    const wheat = resourceTip({
+      id: 'wheat',
+      have: 30,
+      cap: 100,
+      total: 345.8,
+      produced: 0,
+      consumed: 0,
+      tier: 0,
+    });
+    expect(lines(wheat)).toContain(STR.res.allStores(345));
+    const funds = lines(resourceTip({ id: 'money', have: 25000, cap: Infinity, tier: 0 }));
+    expect(funds.join('\n')).not.toContain('All stores');
   });
   it('a building tooltip from a resource says what it costs and when it unlocks', () => {
     const ref = makersOf('oil')[0];

@@ -1,8 +1,7 @@
 import type { Builder, Decor, PlacementCheck } from './build';
 import { decorDef, levelLocked } from './build';
 import type { Town, TownRegistry } from './towns';
-import type { Stockpile } from './stockpile';
-import { scaleCost } from './stockpile';
+import { scaleCost, type ResourceStore } from './stores';
 import type { Station } from './stations';
 import { content, type Cost } from '../data/content';
 import { rules, daySeconds } from './rules';
@@ -80,9 +79,10 @@ export interface TownHousing {
 }
 
 /**
- * Houses grow residents while fed, up to their completed housing capacity. Construction and
- * upgrades are paid player actions. Townhouses remain the separate civic anchors. The decor
- * entry owns placement; this registry keeps construction and residential state.
+ * Houses grow residents while their town's store has food, up to their completed housing capacity.
+ * Construction and upgrades are paid player actions, an upgrade from the house's own town store.
+ * Townhouses remain the separate civic anchors. The decor entry owns placement; this registry keeps
+ * construction and residential state.
  */
 export class HouseRegistry {
   readonly houses = new Map<number, House>();
@@ -99,7 +99,6 @@ export class HouseRegistry {
   constructor(
     private readonly builder: Builder,
     private readonly towns: TownRegistry,
-    private readonly stock: Stockpile,
   ) {}
 
   private key(x: number, y: number) {
@@ -172,9 +171,17 @@ export class HouseRegistry {
     for (const h of this.houses.values()) n += h.residents;
     return n;
   }
-  /** People only move in while there is food. */
-  foodOk() {
-    return this.stock.get('food') > 0 && !this.stock.famine;
+  /** The store of the town the house stands in, which feeds it. */
+  store(h: House): ResourceStore | null {
+    return this.builder.stores.townStore(h.x, h.y);
+  }
+  /**
+   * People only move in while their town's store has food and no famine. A house outside every town
+   * has no store to eat from: it eats nothing and starves never, but nobody moves in either.
+   */
+  foodOk(h: House) {
+    const s = this.store(h);
+    return !!s && s.get('food') > 0 && !s.famine;
   }
   /** A house being upgraded lets nobody in. */
   open(h: House) {
@@ -182,7 +189,7 @@ export class HouseRegistry {
   }
   /** Days until the next resident arrives in a house (null when nobody is coming). */
   growthDaysLeft(h: House): number | null {
-    if (!this.open(h) || h.residents >= this.capacity(h) || !this.foodOk()) return null;
+    if (!this.open(h) || h.residents >= this.capacity(h) || !this.foodOk(h)) return null;
     return Math.max(0, this.cfg.growthDays - h.grow);
   }
 
@@ -192,7 +199,11 @@ export class HouseRegistry {
     const c = this.cfg.upgradeCost[h.level - 1] ?? {};
     return this.builder.free ? {} : scaleCost(c, rules.buildCostMul);
   }
-  /** Whether the player may pay for the next level: built, opened by the age, affordable. */
+  /**
+   * Whether the player may pay for the next level: built, opened by the age, affordable at the
+   * nearest store in reach that holds the whole cost (`Builder.affordable`, as for any building
+   * work), which the check names (`payer`).
+   */
   canUpgrade(h: House): PlacementCheck {
     if (h.work) return { ok: false, cost: {}, reason: STR.build.upgradingNow };
     const cost = this.upgradeCost(h);
@@ -201,29 +212,18 @@ export class HouseRegistry {
     if (this.builder.free) return { ok: true, cost };
     const locked = levelLocked(HOUSE_FIRST_AGE, h.level + 1, this.builder.economy.tier);
     if (locked) return { ok: false, cost, reason: locked };
-    if (!this.stock.canAfford(cost)) {
-      const miss = this.stock.missing(cost);
-      return {
-        ok: false,
-        cost,
-        reason: STR.build.needResources(
-          Object.entries(miss)
-            .map(([k, v]) => `${v} ${k}`)
-            .join(', '),
-        ),
-      };
-    }
-    return { ok: true, cost };
+    return this.builder.affordable(cost, h.x, h.y);
   }
   /**
-   * The player pays for a bigger house, and the work starts: the level rises when its time is up
-   * (`tickWorks`), at once in the editor or when upgrades take no time.
+   * The player pays for a bigger house from the store the check named, and the work starts: the
+   * level rises when its time is up (`tickWorks`), at once in the editor or when upgrades take no
+   * time.
    */
   upgrade(h: House) {
     if (this.at(h.x, h.y) !== h) return false;
     const c = this.canUpgrade(h);
     if (!c.ok) return false;
-    if (!this.builder.free && !this.stock.spend(c.cost)) return false;
+    if (!this.builder.pay(c, h.x, h.y)) return false;
     sfx('station.upgrade');
     const work = this.builder.free ? null : startWork(h.level + 1);
     if (!work) {
@@ -291,13 +291,12 @@ export class HouseRegistry {
       mul: this.spawnMul(t),
       cramped: false,
     };
-    const food = this.foodOk();
     for (const h of list) {
       out.capacity += this.capacity(h);
       out.residents += h.residents;
       if (this.finished(h)) {
         out.houses++;
-        if (food && !h.work && h.residents < this.capacity(h))
+        if (!h.work && h.residents < this.capacity(h) && this.foodOk(h))
           out.growthPerDay += 1 / this.cfg.growthDays;
       } else out.building++;
     }
@@ -344,7 +343,6 @@ export class HouseRegistry {
   tick(gdt: number, now: number, spawn = true) {
     const cfg = this.cfg;
     const days = gdt / daySeconds();
-    const food = this.foodOk();
     for (const h of this.houses.values()) {
       if (!this.finished(h)) {
         const before = this.stage(h);
@@ -359,6 +357,7 @@ export class HouseRegistry {
       // closed for its upgrade: the residents stay and nobody moves in
       if (h.work) continue;
       const cap = this.capacity(h);
+      const food = this.foodOk(h);
       if (h.residents < cap) {
         h.full = 0;
         if (!food) continue;
