@@ -14,12 +14,13 @@
    "view": "back",
    "arm": "swing",
    "pose": 1,
-   "top": 472,
-   "bottom": 1440,
-   "headTop": 472,
+   "top": 483,
+   "bottom": 1451,
+   "soleRow": 1440,
+   "headTop": 483,
    "groundPoint": [
     512,
-    1432
+    1443
    ],
    "body": {
     "pelvis": [
@@ -128,85 +129,85 @@
    "canvas": {
     "pelvis": [
      512,
-     932.8
+     943.8
     ],
     "rightHip": [
      572.1,
-     962.9
+     973.9
     ],
     "rightKnee": [
      654.5,
-     1138.6
+     1149.6
     ],
     "rightAnkle": [
      667.7,
-     1367.2
+     1378.2
     ],
     "rightHeel": [
      643.4,
-     1426.4
+     1437.4
     ],
     "rightToe": [
      776.1,
-     1320.3
+     1331.3
     ],
     "rightStage": 1,
     "leftHip": [
      451.9,
-     902.7
+     913.7
     ],
     "leftKnee": [
      487.3,
-     1117.4
+     1128.4
     ],
     "leftAnkle": [
      364.2,
-     1370.3
+     1381.3
     ],
     "leftHeel": [
      320.2,
-     1415.3
+     1426.3
     ],
     "leftToe": [
      449.3,
-     1403.2
+     1414.2
     ],
     "leftStage": 3,
     "head": [
      512,
-     551.5
+     562.5
     ],
     "leftShoulder": [
      396.1,
-     586.8
+     597.8
     ],
     "leftElbow": [
      454,
-     718.1
+     729.1
     ],
     "leftWrist": [
      562.5,
-     765.7
+     776.7
     ],
     "leftHand": [
      588.8,
-     777.2
+     788.2
     ],
     "rightShoulder": [
      627.9,
-     702.8
+     713.8
     ],
     "rightElbow": [
      575.1,
-     891.6
+     902.6
     ],
     "rightWrist": [
      545.6,
-     1061.2
+     1072.2
     ],
     "rightHand": [
      538.5,
-     1102.4
+     1113.4
     ]
    }
   },
@@ -215,12 +216,13 @@
    "view": "back",
    "arm": "swing",
    "pose": 2,
-   "top": 419,
-   "bottom": 1440,
-   "headTop": 419,
+   "top": 428,
+   "bottom": 1449,
+   "soleRow": 1440,
+   "headTop": 428,
    "groundPoint": [
     512,
-    1379
+    1388
    ],
    "body": {
     "pelvis": [
@@ -329,85 +331,85 @@
    "canvas": {
     "pelvis": [
      512,
-     870.2
+     879.2
     ],
     "rightHip": [
      572.1,
-     900.3
+     909.3
     ],
     "rightKnee": [
      585.6,
-     1128.7
+     1137.7
     ],
     "rightAnkle": [
      572.1,
-     1370.7
+     1379.7
     ],
     "rightHeel": [
      537.8,
-     1426.2
+     1435.2
     ],
     "rightToe": [
      675.1,
-     1357.5
+     1366.5
     ],
     "rightStage": 2,
     "leftHip": [
      451.9,
-     840.1
+     849.1
     ],
     "leftKnee": [
      549.2,
-     1000.5
+     1009.5
     ],
     "leftAnkle": [
      451.9,
-     1258.2
+     1267.2
     ],
     "leftHeel": [
      415.2,
-     1312.2
+     1321.2
     ],
     "leftToe": [
      552.3,
-     1254.4
+     1263.4
     ],
     "leftStage": 4,
     "head": [
      512,
-     498.5
+     507.5
     ],
     "leftShoulder": [
      396.1,
-     533.8
+     542.8
     ],
     "leftElbow": [
      398.8,
-     705.3
+     714.3
     ],
     "leftWrist": [
      435.4,
-     839.9
+     848.9
     ],
     "leftHand": [
      444.3,
-     872.6
+     881.6
     ],
     "rightShoulder": [
      627.9,
-     649.8
+     658.8
     ],
     "rightElbow": [
      630.6,
-     821.2
+     830.2
     ],
     "rightWrist": [
      667.3,
-     955.9
+     964.9
     ],
     "rightHand": [
      676.2,
-     988.5
+     997.5
     ]
    }
   },
@@ -416,12 +418,13 @@
    "view": "back",
    "arm": "swing",
    "pose": 3,
-   "top": 423,
-   "bottom": 1440,
-   "headTop": 423,
+   "top": 425,
+   "bottom": 1442,
+   "soleRow": 1440,
+   "headTop": 425,
    "groundPoint": [
     512,
-    1383
+    1385
    ],
    "body": {
     "pelvis": [
@@ -530,85 +533,85 @@
    "canvas": {
     "pelvis": [
      512,
-     883.8
+     885.8
     ],
     "rightHip": [
      572.1,
-     913.9
+     915.9
     ],
     "rightKnee": [
      607.5,
-     1128.5
+     1130.5
     ],
     "rightAnkle": [
      484.5,
-     1381.4
+     1383.4
     ],
     "rightHeel": [
      440.4,
-     1426.4
+     1428.4
     ],
     "rightToe": [
      569.5,
-     1414.3
+     1416.3
     ],
     "rightStage": 3,
     "leftHip": [
      451.9,
-     853.7
+     855.7
     ],
     "leftKnee": [
      534.2,
-     1029.5
+     1031.5
     ],
     "leftAnkle": [
      547.4,
-     1258.1
+     1260.1
     ],
     "leftHeel": [
      523.2,
-     1317.3
+     1319.3
     ],
     "leftToe": [
      655.9,
-     1211.2
+     1213.2
     ],
     "leftStage": 1,
     "head": [
      512,
-     502.5
+     504.5
     ],
     "leftShoulder": [
      396.1,
-     537.8
+     539.8
     ],
     "leftElbow": [
      343.2,
-     726.7
+     728.7
     ],
     "leftWrist": [
      313.8,
-     896.3
+     898.3
     ],
     "leftHand": [
      306.6,
-     937.4
+     939.4
     ],
     "rightShoulder": [
      627.9,
-     653.8
+     655.8
     ],
     "rightElbow": [
      685.8,
-     785
+     787
     ],
     "rightWrist": [
      794.3,
-     832.6
+     834.6
     ],
     "rightHand": [
      820.7,
-     844.1
+     846.1
     ]
    }
   },
@@ -617,12 +620,13 @@
    "view": "back",
    "arm": "swing",
    "pose": 4,
-   "top": 473,
-   "bottom": 1440,
-   "headTop": 473,
+   "top": 480,
+   "bottom": 1447,
+   "soleRow": 1440,
+   "headTop": 480,
    "groundPoint": [
     512,
-    1433
+    1440
    ],
    "body": {
     "pelvis": [
@@ -731,85 +735,85 @@
    "canvas": {
     "pelvis": [
      512,
-     924.2
+     931.2
     ],
     "rightHip": [
      572.1,
-     954.3
+     961.3
     ],
     "rightKnee": [
      669.4,
-     1114.6
+     1121.6
     ],
     "rightAnkle": [
      572.1,
-     1372.4
+     1379.4
     ],
     "rightHeel": [
      535.4,
-     1426.3
+     1433.3
     ],
     "rightToe": [
      672.5,
-     1368.5
+     1375.5
     ],
     "rightStage": 4,
     "leftHip": [
      451.9,
-     894.1
+     901.1
     ],
     "leftKnee": [
      465.3,
-     1122.6
+     1129.6
     ],
     "leftAnkle": [
      451.9,
-     1364.5
+     1371.5
     ],
     "leftHeel": [
      417.5,
-     1420.1
+     1427.1
     ],
     "leftToe": [
      554.9,
-     1351.4
+     1358.4
     ],
     "leftStage": 2,
     "head": [
      512,
-     552.5
+     559.5
     ],
     "leftShoulder": [
      396.1,
-     587.8
+     594.8
     ],
     "leftElbow": [
      398.8,
-     759.3
+     766.3
     ],
     "leftWrist": [
      435.4,
-     893.9
+     900.9
     ],
     "leftHand": [
      444.3,
-     926.6
+     933.6
     ],
     "rightShoulder": [
      627.9,
-     703.8
+     710.8
     ],
     "rightElbow": [
      630.6,
-     875.2
+     882.2
     ],
     "rightWrist": [
      667.3,
-     1009.9
+     1016.9
     ],
     "rightHand": [
      676.2,
-     1042.5
+     1049.5
     ]
    }
   },
@@ -818,12 +822,13 @@
    "view": "back",
    "arm": "shoulder",
    "pose": 1,
-   "top": 472,
-   "bottom": 1440,
-   "headTop": 472,
+   "top": 483,
+   "bottom": 1451,
+   "soleRow": 1440,
+   "headTop": 483,
    "groundPoint": [
     512,
-    1432
+    1443
    ],
    "body": {
     "pelvis": [
@@ -932,85 +937,85 @@
    "canvas": {
     "pelvis": [
      512,
-     932.8
+     943.8
     ],
     "rightHip": [
      572.1,
-     962.9
+     973.9
     ],
     "rightKnee": [
      654.5,
-     1138.6
+     1149.6
     ],
     "rightAnkle": [
      667.7,
-     1367.2
+     1378.2
     ],
     "rightHeel": [
      643.4,
-     1426.4
+     1437.4
     ],
     "rightToe": [
      776.1,
-     1320.3
+     1331.3
     ],
     "rightStage": 1,
     "leftHip": [
      451.9,
-     902.7
+     913.7
     ],
     "leftKnee": [
      487.3,
-     1117.4
+     1128.4
     ],
     "leftAnkle": [
      364.2,
-     1370.3
+     1381.3
     ],
     "leftHeel": [
      320.2,
-     1415.3
+     1426.3
     ],
     "leftToe": [
      449.3,
-     1403.2
+     1414.2
     ],
     "leftStage": 3,
     "head": [
      512,
-     551.5
+     562.5
     ],
     "leftShoulder": [
      396.1,
-     586.8
+     597.8
     ],
     "leftElbow": [
      454,
-     718.1
+     729.1
     ],
     "leftWrist": [
      562.5,
-     765.7
+     776.7
     ],
     "leftHand": [
      588.8,
-     777.2
+     788.2
     ],
     "rightShoulder": [
      627.9,
-     702.8
+     713.8
     ],
     "rightElbow": [
      791.2,
-     786.5
+     797.5
     ],
     "rightWrist": [
      695.9,
-     636.1
+     647.1
     ],
     "rightHand": [
      726.7,
-     605.9
+     616.9
     ]
    }
   },
@@ -1019,12 +1024,13 @@
    "view": "back",
    "arm": "shoulder",
    "pose": 2,
-   "top": 419,
-   "bottom": 1440,
-   "headTop": 419,
+   "top": 428,
+   "bottom": 1449,
+   "soleRow": 1440,
+   "headTop": 428,
    "groundPoint": [
     512,
-    1379
+    1388
    ],
    "body": {
     "pelvis": [
@@ -1133,85 +1139,85 @@
    "canvas": {
     "pelvis": [
      512,
-     870.2
+     879.2
     ],
     "rightHip": [
      572.1,
-     900.3
+     909.3
     ],
     "rightKnee": [
      585.6,
-     1128.7
+     1137.7
     ],
     "rightAnkle": [
      572.1,
-     1370.7
+     1379.7
     ],
     "rightHeel": [
      537.8,
-     1426.2
+     1435.2
     ],
     "rightToe": [
      675.1,
-     1357.5
+     1366.5
     ],
     "rightStage": 2,
     "leftHip": [
      451.9,
-     840.1
+     849.1
     ],
     "leftKnee": [
      549.2,
-     1000.5
+     1009.5
     ],
     "leftAnkle": [
      451.9,
-     1258.2
+     1267.2
     ],
     "leftHeel": [
      415.2,
-     1312.2
+     1321.2
     ],
     "leftToe": [
      552.3,
-     1254.4
+     1263.4
     ],
     "leftStage": 4,
     "head": [
      512,
-     498.5
+     507.5
     ],
     "leftShoulder": [
      396.1,
-     533.8
+     542.8
     ],
     "leftElbow": [
      398.8,
-     705.3
+     714.3
     ],
     "leftWrist": [
      435.4,
-     839.9
+     848.9
     ],
     "leftHand": [
      444.3,
-     872.6
+     881.6
     ],
     "rightShoulder": [
      627.9,
-     649.8
+     658.8
     ],
     "rightElbow": [
      791.2,
-     733.5
+     742.5
     ],
     "rightWrist": [
      695.9,
-     583.1
+     592.1
     ],
     "rightHand": [
      726.7,
-     552.9
+     561.9
     ]
    }
   },
@@ -1220,12 +1226,13 @@
    "view": "back",
    "arm": "shoulder",
    "pose": 3,
-   "top": 423,
-   "bottom": 1440,
-   "headTop": 423,
+   "top": 425,
+   "bottom": 1442,
+   "soleRow": 1440,
+   "headTop": 425,
    "groundPoint": [
     512,
-    1383
+    1385
    ],
    "body": {
     "pelvis": [
@@ -1334,85 +1341,85 @@
    "canvas": {
     "pelvis": [
      512,
-     883.8
+     885.8
     ],
     "rightHip": [
      572.1,
-     913.9
+     915.9
     ],
     "rightKnee": [
      607.5,
-     1128.5
+     1130.5
     ],
     "rightAnkle": [
      484.5,
-     1381.4
+     1383.4
     ],
     "rightHeel": [
      440.4,
-     1426.4
+     1428.4
     ],
     "rightToe": [
      569.5,
-     1414.3
+     1416.3
     ],
     "rightStage": 3,
     "leftHip": [
      451.9,
-     853.7
+     855.7
     ],
     "leftKnee": [
      534.2,
-     1029.5
+     1031.5
     ],
     "leftAnkle": [
      547.4,
-     1258.1
+     1260.1
     ],
     "leftHeel": [
      523.2,
-     1317.3
+     1319.3
     ],
     "leftToe": [
      655.9,
-     1211.2
+     1213.2
     ],
     "leftStage": 1,
     "head": [
      512,
-     502.5
+     504.5
     ],
     "leftShoulder": [
      396.1,
-     537.8
+     539.8
     ],
     "leftElbow": [
      343.2,
-     726.7
+     728.7
     ],
     "leftWrist": [
      313.8,
-     896.3
+     898.3
     ],
     "leftHand": [
      306.6,
-     937.4
+     939.4
     ],
     "rightShoulder": [
      627.9,
-     653.8
+     655.8
     ],
     "rightElbow": [
      791.2,
-     737.5
+     739.5
     ],
     "rightWrist": [
      695.9,
-     587.1
+     589.1
     ],
     "rightHand": [
      726.7,
-     556.9
+     558.9
     ]
    }
   },
@@ -1421,12 +1428,13 @@
    "view": "back",
    "arm": "shoulder",
    "pose": 4,
-   "top": 473,
-   "bottom": 1440,
-   "headTop": 473,
+   "top": 480,
+   "bottom": 1447,
+   "soleRow": 1440,
+   "headTop": 480,
    "groundPoint": [
     512,
-    1433
+    1440
    ],
    "body": {
     "pelvis": [
@@ -1535,85 +1543,85 @@
    "canvas": {
     "pelvis": [
      512,
-     924.2
+     931.2
     ],
     "rightHip": [
      572.1,
-     954.3
+     961.3
     ],
     "rightKnee": [
      669.4,
-     1114.6
+     1121.6
     ],
     "rightAnkle": [
      572.1,
-     1372.4
+     1379.4
     ],
     "rightHeel": [
      535.4,
-     1426.3
+     1433.3
     ],
     "rightToe": [
      672.5,
-     1368.5
+     1375.5
     ],
     "rightStage": 4,
     "leftHip": [
      451.9,
-     894.1
+     901.1
     ],
     "leftKnee": [
      465.3,
-     1122.6
+     1129.6
     ],
     "leftAnkle": [
      451.9,
-     1364.5
+     1371.5
     ],
     "leftHeel": [
      417.5,
-     1420.1
+     1427.1
     ],
     "leftToe": [
      554.9,
-     1351.4
+     1358.4
     ],
     "leftStage": 2,
     "head": [
      512,
-     552.5
+     559.5
     ],
     "leftShoulder": [
      396.1,
-     587.8
+     594.8
     ],
     "leftElbow": [
      398.8,
-     759.3
+     766.3
     ],
     "leftWrist": [
      435.4,
-     893.9
+     900.9
     ],
     "leftHand": [
      444.3,
-     926.6
+     933.6
     ],
     "rightShoulder": [
      627.9,
-     703.8
+     710.8
     ],
     "rightElbow": [
      791.2,
-     787.5
+     794.5
     ],
     "rightWrist": [
      695.9,
-     637.1
+     644.1
     ],
     "rightHand": [
      726.7,
-     606.9
+     613.9
     ]
    }
   },
@@ -1622,12 +1630,13 @@
    "view": "back",
    "arm": "block",
    "pose": 1,
-   "top": 472,
-   "bottom": 1440,
-   "headTop": 472,
+   "top": 483,
+   "bottom": 1451,
+   "soleRow": 1440,
+   "headTop": 483,
    "groundPoint": [
     512,
-    1432
+    1443
    ],
    "body": {
     "pelvis": [
@@ -1736,85 +1745,85 @@
    "canvas": {
     "pelvis": [
      512,
-     932.8
+     943.8
     ],
     "rightHip": [
      572.1,
-     962.9
+     973.9
     ],
     "rightKnee": [
      654.5,
-     1138.6
+     1149.6
     ],
     "rightAnkle": [
      667.7,
-     1367.2
+     1378.2
     ],
     "rightHeel": [
      643.4,
-     1426.4
+     1437.4
     ],
     "rightToe": [
      776.1,
-     1320.3
+     1331.3
     ],
     "rightStage": 1,
     "leftHip": [
      451.9,
-     902.7
+     913.7
     ],
     "leftKnee": [
      487.3,
-     1117.4
+     1128.4
     ],
     "leftAnkle": [
      364.2,
-     1370.3
+     1381.3
     ],
     "leftHeel": [
      320.2,
-     1415.3
+     1426.3
     ],
     "leftToe": [
      449.3,
-     1403.2
+     1414.2
     ],
     "leftStage": 3,
     "head": [
      512,
-     551.5
+     562.5
     ],
     "rightShoulder": [
      627.9,
-     702.8
+     713.8
     ],
     "rightElbow": [
      759.2,
-     848.1
+     859.1
     ],
     "rightWrist": [
      757.6,
-     777.7
+     788.7
     ],
     "rightHand": [
      778.2,
-     789.6
+     800.6
     ],
     "leftShoulder": [
      396.1,
-     586.8
+     597.8
     ],
     "leftElbow": [
      380.5,
-     658.8
+     669.8
     ],
     "leftWrist": [
      577.6,
-     687.7
+     698.7
     ],
     "leftHand": [
      606.5,
-     703.7
+     714.7
     ]
    }
   },
@@ -1823,12 +1832,13 @@
    "view": "back",
    "arm": "block",
    "pose": 2,
-   "top": 419,
-   "bottom": 1440,
-   "headTop": 419,
+   "top": 428,
+   "bottom": 1449,
+   "soleRow": 1440,
+   "headTop": 428,
    "groundPoint": [
     512,
-    1379
+    1388
    ],
    "body": {
     "pelvis": [
@@ -1937,85 +1947,85 @@
    "canvas": {
     "pelvis": [
      512,
-     870.2
+     879.2
     ],
     "rightHip": [
      572.1,
-     900.3
+     909.3
     ],
     "rightKnee": [
      585.6,
-     1128.7
+     1137.7
     ],
     "rightAnkle": [
      572.1,
-     1370.7
+     1379.7
     ],
     "rightHeel": [
      537.8,
-     1426.2
+     1435.2
     ],
     "rightToe": [
      675.1,
-     1357.5
+     1366.5
     ],
     "rightStage": 2,
     "leftHip": [
      451.9,
-     840.1
+     849.1
     ],
     "leftKnee": [
      549.2,
-     1000.5
+     1009.5
     ],
     "leftAnkle": [
      451.9,
-     1258.2
+     1267.2
     ],
     "leftHeel": [
      415.2,
-     1312.2
+     1321.2
     ],
     "leftToe": [
      552.3,
-     1254.4
+     1263.4
     ],
     "leftStage": 4,
     "head": [
      512,
-     498.5
+     507.5
     ],
     "rightShoulder": [
      627.9,
-     649.8
+     658.8
     ],
     "rightElbow": [
      759.2,
-     795.1
+     804.1
     ],
     "rightWrist": [
      757.6,
-     724.7
+     733.7
     ],
     "rightHand": [
      778.2,
-     736.6
+     745.6
     ],
     "leftShoulder": [
      396.1,
-     533.8
+     542.8
     ],
     "leftElbow": [
      380.5,
-     605.8
+     614.8
     ],
     "leftWrist": [
      577.6,
-     634.7
+     643.7
     ],
     "leftHand": [
      606.5,
-     650.7
+     659.7
     ]
    }
   },
@@ -2024,12 +2034,13 @@
    "view": "back",
    "arm": "block",
    "pose": 3,
-   "top": 423,
-   "bottom": 1440,
-   "headTop": 423,
+   "top": 425,
+   "bottom": 1442,
+   "soleRow": 1440,
+   "headTop": 425,
    "groundPoint": [
     512,
-    1383
+    1385
    ],
    "body": {
     "pelvis": [
@@ -2138,85 +2149,85 @@
    "canvas": {
     "pelvis": [
      512,
-     883.8
+     885.8
     ],
     "rightHip": [
      572.1,
-     913.9
+     915.9
     ],
     "rightKnee": [
      607.5,
-     1128.5
+     1130.5
     ],
     "rightAnkle": [
      484.5,
-     1381.4
+     1383.4
     ],
     "rightHeel": [
      440.4,
-     1426.4
+     1428.4
     ],
     "rightToe": [
      569.5,
-     1414.3
+     1416.3
     ],
     "rightStage": 3,
     "leftHip": [
      451.9,
-     853.7
+     855.7
     ],
     "leftKnee": [
      534.2,
-     1029.5
+     1031.5
     ],
     "leftAnkle": [
      547.4,
-     1258.1
+     1260.1
     ],
     "leftHeel": [
      523.2,
-     1317.3
+     1319.3
     ],
     "leftToe": [
      655.9,
-     1211.2
+     1213.2
     ],
     "leftStage": 1,
     "head": [
      512,
-     502.5
+     504.5
     ],
     "rightShoulder": [
      627.9,
-     653.8
+     655.8
     ],
     "rightElbow": [
      759.2,
-     799.1
+     801.1
     ],
     "rightWrist": [
      757.6,
-     728.7
+     730.7
     ],
     "rightHand": [
      778.2,
-     740.6
+     742.6
     ],
     "leftShoulder": [
      396.1,
-     537.8
+     539.8
     ],
     "leftElbow": [
      380.5,
-     609.8
+     611.8
     ],
     "leftWrist": [
      577.6,
-     638.7
+     640.7
     ],
     "leftHand": [
      606.5,
-     654.7
+     656.7
     ]
    }
   },
@@ -2225,12 +2236,13 @@
    "view": "back",
    "arm": "block",
    "pose": 4,
-   "top": 473,
-   "bottom": 1440,
-   "headTop": 473,
+   "top": 480,
+   "bottom": 1447,
+   "soleRow": 1440,
+   "headTop": 480,
    "groundPoint": [
     512,
-    1433
+    1440
    ],
    "body": {
     "pelvis": [
@@ -2339,85 +2351,85 @@
    "canvas": {
     "pelvis": [
      512,
-     924.2
+     931.2
     ],
     "rightHip": [
      572.1,
-     954.3
+     961.3
     ],
     "rightKnee": [
      669.4,
-     1114.6
+     1121.6
     ],
     "rightAnkle": [
      572.1,
-     1372.4
+     1379.4
     ],
     "rightHeel": [
      535.4,
-     1426.3
+     1433.3
     ],
     "rightToe": [
      672.5,
-     1368.5
+     1375.5
     ],
     "rightStage": 4,
     "leftHip": [
      451.9,
-     894.1
+     901.1
     ],
     "leftKnee": [
      465.3,
-     1122.6
+     1129.6
     ],
     "leftAnkle": [
      451.9,
-     1364.5
+     1371.5
     ],
     "leftHeel": [
      417.5,
-     1420.1
+     1427.1
     ],
     "leftToe": [
      554.9,
-     1351.4
+     1358.4
     ],
     "leftStage": 2,
     "head": [
      512,
-     552.5
+     559.5
     ],
     "rightShoulder": [
      627.9,
-     703.8
+     710.8
     ],
     "rightElbow": [
      759.2,
-     849.1
+     856.1
     ],
     "rightWrist": [
      757.6,
-     778.7
+     785.7
     ],
     "rightHand": [
      778.2,
-     790.6
+     797.6
     ],
     "leftShoulder": [
      396.1,
-     587.8
+     594.8
     ],
     "leftElbow": [
      380.5,
-     659.8
+     666.8
     ],
     "leftWrist": [
      577.6,
-     688.7
+     695.7
     ],
     "leftHand": [
      606.5,
-     704.7
+     711.7
     ]
    }
   },
@@ -2426,12 +2438,13 @@
    "view": "back",
    "arm": "yoke",
    "pose": 1,
-   "top": 401,
-   "bottom": 1440,
-   "headTop": 472,
+   "top": 412,
+   "bottom": 1451,
+   "soleRow": 1440,
+   "headTop": 483,
    "groundPoint": [
     512,
-    1432
+    1443
    ],
    "body": {
     "pelvis": [
@@ -2540,85 +2553,85 @@
    "canvas": {
     "pelvis": [
      512,
-     932.8
+     943.8
     ],
     "rightHip": [
      572.1,
-     962.9
+     973.9
     ],
     "rightKnee": [
      654.5,
-     1138.6
+     1149.6
     ],
     "rightAnkle": [
      667.7,
-     1367.2
+     1378.2
     ],
     "rightHeel": [
      643.4,
-     1426.4
+     1437.4
     ],
     "rightToe": [
      776.1,
-     1320.3
+     1331.3
     ],
     "rightStage": 1,
     "leftHip": [
      451.9,
-     902.7
+     913.7
     ],
     "leftKnee": [
      487.3,
-     1117.4
+     1128.4
     ],
     "leftAnkle": [
      364.2,
-     1370.3
+     1381.3
     ],
     "leftHeel": [
      320.2,
-     1415.3
+     1426.3
     ],
     "leftToe": [
      449.3,
-     1403.2
+     1414.2
     ],
     "leftStage": 3,
     "head": [
      512,
-     551.5
+     562.5
     ],
     "rightShoulder": [
      627.9,
-     702.8
+     713.8
     ],
     "rightElbow": [
      741.9,
-     876.1
+     887.1
     ],
     "rightWrist": [
      750,
-     745.7
+     756.7
     ],
     "rightHand": [
      778.2,
-     755.7
+     766.7
     ],
     "leftShoulder": [
      396.1,
-     586.8
+     597.8
     ],
     "leftElbow": [
      279.1,
-     644.7
+     655.7
     ],
     "leftWrist": [
      232.2,
-     486.8
+     497.8
     ],
     "leftHand": [
      194.3,
-     463.7
+     474.7
     ]
    }
   },
@@ -2627,12 +2640,13 @@
    "view": "back",
    "arm": "yoke",
    "pose": 2,
-   "top": 348,
-   "bottom": 1440,
-   "headTop": 419,
+   "top": 357,
+   "bottom": 1449,
+   "soleRow": 1440,
+   "headTop": 428,
    "groundPoint": [
     512,
-    1379
+    1388
    ],
    "body": {
     "pelvis": [
@@ -2741,85 +2755,85 @@
    "canvas": {
     "pelvis": [
      512,
-     870.2
+     879.2
     ],
     "rightHip": [
      572.1,
-     900.3
+     909.3
     ],
     "rightKnee": [
      585.6,
-     1128.7
+     1137.7
     ],
     "rightAnkle": [
      572.1,
-     1370.7
+     1379.7
     ],
     "rightHeel": [
      537.8,
-     1426.2
+     1435.2
     ],
     "rightToe": [
      675.1,
-     1357.5
+     1366.5
     ],
     "rightStage": 2,
     "leftHip": [
      451.9,
-     840.1
+     849.1
     ],
     "leftKnee": [
      549.2,
-     1000.5
+     1009.5
     ],
     "leftAnkle": [
      451.9,
-     1258.2
+     1267.2
     ],
     "leftHeel": [
      415.2,
-     1312.2
+     1321.2
     ],
     "leftToe": [
      552.3,
-     1254.4
+     1263.4
     ],
     "leftStage": 4,
     "head": [
      512,
-     498.5
+     507.5
     ],
     "rightShoulder": [
      627.9,
-     649.8
+     658.8
     ],
     "rightElbow": [
      741.9,
-     823.1
+     832.1
     ],
     "rightWrist": [
      750,
-     692.7
+     701.7
     ],
     "rightHand": [
      778.2,
-     702.7
+     711.7
     ],
     "leftShoulder": [
      396.1,
-     533.8
+     542.8
     ],
     "leftElbow": [
      279.1,
-     591.7
+     600.7
     ],
     "leftWrist": [
      232.2,
-     433.8
+     442.8
     ],
     "leftHand": [
      194.3,
-     410.7
+     419.7
     ]
    }
   },
@@ -2828,12 +2842,13 @@
    "view": "back",
    "arm": "yoke",
    "pose": 3,
-   "top": 352,
-   "bottom": 1440,
-   "headTop": 423,
+   "top": 354,
+   "bottom": 1442,
+   "soleRow": 1440,
+   "headTop": 425,
    "groundPoint": [
     512,
-    1383
+    1385
    ],
    "body": {
     "pelvis": [
@@ -2942,85 +2957,85 @@
    "canvas": {
     "pelvis": [
      512,
-     883.8
+     885.8
     ],
     "rightHip": [
      572.1,
-     913.9
+     915.9
     ],
     "rightKnee": [
      607.5,
-     1128.5
+     1130.5
     ],
     "rightAnkle": [
      484.5,
-     1381.4
+     1383.4
     ],
     "rightHeel": [
      440.4,
-     1426.4
+     1428.4
     ],
     "rightToe": [
      569.5,
-     1414.3
+     1416.3
     ],
     "rightStage": 3,
     "leftHip": [
      451.9,
-     853.7
+     855.7
     ],
     "leftKnee": [
      534.2,
-     1029.5
+     1031.5
     ],
     "leftAnkle": [
      547.4,
-     1258.1
+     1260.1
     ],
     "leftHeel": [
      523.2,
-     1317.3
+     1319.3
     ],
     "leftToe": [
      655.9,
-     1211.2
+     1213.2
     ],
     "leftStage": 1,
     "head": [
      512,
-     502.5
+     504.5
     ],
     "rightShoulder": [
      627.9,
-     653.8
+     655.8
     ],
     "rightElbow": [
      741.9,
-     827.1
+     829.1
     ],
     "rightWrist": [
      750,
-     696.7
+     698.7
     ],
     "rightHand": [
      778.2,
-     706.7
+     708.7
     ],
     "leftShoulder": [
      396.1,
-     537.8
+     539.8
     ],
     "leftElbow": [
      279.1,
-     595.7
+     597.7
     ],
     "leftWrist": [
      232.2,
-     437.8
+     439.8
     ],
     "leftHand": [
      194.3,
-     414.7
+     416.7
     ]
    }
   },
@@ -3029,12 +3044,13 @@
    "view": "back",
    "arm": "yoke",
    "pose": 4,
-   "top": 402,
-   "bottom": 1440,
-   "headTop": 473,
+   "top": 409,
+   "bottom": 1447,
+   "soleRow": 1440,
+   "headTop": 480,
    "groundPoint": [
     512,
-    1433
+    1440
    ],
    "body": {
     "pelvis": [
@@ -3143,85 +3159,85 @@
    "canvas": {
     "pelvis": [
      512,
-     924.2
+     931.2
     ],
     "rightHip": [
      572.1,
-     954.3
+     961.3
     ],
     "rightKnee": [
      669.4,
-     1114.6
+     1121.6
     ],
     "rightAnkle": [
      572.1,
-     1372.4
+     1379.4
     ],
     "rightHeel": [
      535.4,
-     1426.3
+     1433.3
     ],
     "rightToe": [
      672.5,
-     1368.5
+     1375.5
     ],
     "rightStage": 4,
     "leftHip": [
      451.9,
-     894.1
+     901.1
     ],
     "leftKnee": [
      465.3,
-     1122.6
+     1129.6
     ],
     "leftAnkle": [
      451.9,
-     1364.5
+     1371.5
     ],
     "leftHeel": [
      417.5,
-     1420.1
+     1427.1
     ],
     "leftToe": [
      554.9,
-     1351.4
+     1358.4
     ],
     "leftStage": 2,
     "head": [
      512,
-     552.5
+     559.5
     ],
     "rightShoulder": [
      627.9,
-     703.8
+     710.8
     ],
     "rightElbow": [
      741.9,
-     877.1
+     884.1
     ],
     "rightWrist": [
      750,
-     746.7
+     753.7
     ],
     "rightHand": [
      778.2,
-     756.7
+     763.7
     ],
     "leftShoulder": [
      396.1,
-     587.8
+     594.8
     ],
     "leftElbow": [
      279.1,
-     645.7
+     652.7
     ],
     "leftWrist": [
      232.2,
-     487.8
+     494.8
     ],
     "leftHand": [
      194.3,
-     464.7
+     471.7
     ]
    }
   },
@@ -3232,6 +3248,7 @@
    "pose": 1,
    "top": 385,
    "bottom": 1440,
+   "soleRow": 1440,
    "headTop": 385,
    "groundPoint": [
     512,
@@ -3431,12 +3448,13 @@
    "view": "front",
    "arm": "swing",
    "pose": 2,
-   "top": 385,
-   "bottom": 1440,
-   "headTop": 385,
+   "top": 393,
+   "bottom": 1448,
+   "soleRow": 1440,
+   "headTop": 393,
    "groundPoint": [
     512,
-    1345
+    1353
    ],
    "body": {
     "pelvis": [
@@ -3545,85 +3563,85 @@
    "canvas": {
     "pelvis": [
      512,
-     836.2
+     844.2
     ],
     "rightHip": [
      451.9,
-     866.3
+     874.3
     ],
     "rightKnee": [
      465.3,
-     1108.2
+     1116.2
     ],
     "rightAnkle": [
      451.9,
-     1336.7
+     1344.7
     ],
     "rightHeel": [
      417.5,
-     1357.9
+     1365.9
     ],
     "rightToe": [
      554.9,
-     1426.6
+     1434.6
     ],
     "rightStage": 2,
     "leftHip": [
      572.1,
-     806.1
+     814.1
     ],
     "leftKnee": [
      669.4,
-     1063.9
+     1071.9
     ],
     "leftAnkle": [
      572.1,
-     1224.2
+     1232.2
     ],
     "leftHeel": [
      535.4,
-     1241.5
+     1249.5
     ],
     "leftToe": [
      672.5,
-     1320.8
+     1328.8
     ],
     "leftStage": 4,
     "head": [
      512,
-     464.5
+     472.5
     ],
     "leftShoulder": [
      627.9,
-     499.8
+     507.8
     ],
     "leftElbow": [
      630.6,
-     674
+     682
     ],
     "leftWrist": [
      667.3,
-     845.3
+     853.3
     ],
     "leftHand": [
      676.2,
-     886.8
+     894.8
     ],
     "rightShoulder": [
      396.1,
-     615.8
+     623.8
     ],
     "rightElbow": [
      398.8,
-     789.9
+     797.9
     ],
     "rightWrist": [
      435.4,
-     961.2
+     969.2
     ],
     "rightHand": [
      444.3,
-     1002.8
+     1010.8
     ]
    }
   },
@@ -3632,12 +3650,13 @@
    "view": "front",
    "arm": "swing",
    "pose": 3,
-   "top": 434,
-   "bottom": 1440,
-   "headTop": 434,
+   "top": 438,
+   "bottom": 1444,
+   "soleRow": 1440,
+   "headTop": 438,
    "groundPoint": [
     512,
-    1394
+    1398
    ],
    "body": {
     "pelvis": [
@@ -3746,85 +3765,85 @@
    "canvas": {
     "pelvis": [
      512,
-     894.8
+     898.8
     ],
     "rightHip": [
      451.9,
-     924.9
+     928.9
     ],
     "rightKnee": [
      487.3,
-     1174.9
+     1178.9
     ],
     "rightAnkle": [
      364.2,
-     1304.7
+     1308.7
     ],
     "rightHeel": [
      320.2,
-     1305.7
+     1309.7
     ],
     "rightToe": [
      449.3,
-     1422.8
+     1426.8
     ],
     "rightStage": 3,
     "leftHip": [
      572.1,
-     864.7
+     868.7
     ],
     "leftKnee": [
      654.5,
-     1122.9
+     1126.9
     ],
     "leftAnkle": [
      667.7,
-     1364.7
+     1368.7
     ],
     "leftHeel": [
      643.4,
-     1399.6
+     1403.6
     ],
     "leftToe": [
      776.1,
-     1426.2
+     1430.2
     ],
     "leftStage": 1,
     "head": [
      512,
-     513.5
+     517.5
     ],
     "leftShoulder": [
      627.9,
-     548.8
+     552.8
     ],
     "leftElbow": [
      575.1,
-     684.8
+     688.8
     ],
     "leftWrist": [
      545.6,
-     825
+     829
     ],
     "leftHand": [
      538.5,
-     859
+     863
     ],
     "rightShoulder": [
      396.1,
-     664.8
+     668.8
     ],
     "rightElbow": [
      454,
-     853.9
+     857.9
     ],
     "rightWrist": [
      562.5,
-     1010
+     1014
     ],
     "rightHand": [
      588.8,
-     1047.8
+     1051.8
     ]
    }
   },
@@ -3833,12 +3852,13 @@
    "view": "front",
    "arm": "swing",
    "pose": 4,
-   "top": 430,
-   "bottom": 1440,
-   "headTop": 430,
+   "top": 440,
+   "bottom": 1450,
+   "soleRow": 1440,
+   "headTop": 440,
    "groundPoint": [
     512,
-    1390
+    1400
    ],
    "body": {
     "pelvis": [
@@ -3947,85 +3967,85 @@
    "canvas": {
     "pelvis": [
      512,
-     881.2
+     891.2
     ],
     "rightHip": [
      451.9,
-     911.3
+     921.3
     ],
     "rightKnee": [
      549.2,
-     1169
+     1179
     ],
     "rightAnkle": [
      451.9,
-     1329.4
+     1339.4
     ],
     "rightHeel": [
      415.2,
-     1346.7
+     1356.7
     ],
     "rightToe": [
      552.3,
-     1425.9
+     1435.9
     ],
     "rightStage": 4,
     "leftHip": [
      572.1,
-     851.1
+     861.1
     ],
     "leftKnee": [
      585.6,
-     1093.1
+     1103.1
     ],
     "leftAnkle": [
      572.1,
-     1321.5
+     1331.5
     ],
     "leftHeel": [
      537.8,
-     1342.8
+     1352.8
     ],
     "leftToe": [
      675.1,
-     1411.5
+     1421.5
     ],
     "leftStage": 2,
     "head": [
      512,
-     509.5
+     519.5
     ],
     "leftShoulder": [
      627.9,
-     544.8
+     554.8
     ],
     "leftElbow": [
      630.6,
-     719
+     729
     ],
     "leftWrist": [
      667.3,
-     890.3
+     900.3
     ],
     "leftHand": [
      676.2,
-     931.8
+     941.8
     ],
     "rightShoulder": [
      396.1,
-     660.8
+     670.8
     ],
     "rightElbow": [
      398.8,
-     834.9
+     844.9
     ],
     "rightWrist": [
      435.4,
-     1006.2
+     1016.2
     ],
     "rightHand": [
      444.3,
-     1047.8
+     1057.8
     ]
    }
   },
@@ -4036,6 +4056,7 @@
    "pose": 1,
    "top": 385,
    "bottom": 1440,
+   "soleRow": 1440,
    "headTop": 385,
    "groundPoint": [
     512,
@@ -4235,12 +4256,13 @@
    "view": "front",
    "arm": "shoulder",
    "pose": 2,
-   "top": 385,
-   "bottom": 1440,
-   "headTop": 385,
+   "top": 393,
+   "bottom": 1448,
+   "soleRow": 1440,
+   "headTop": 393,
    "groundPoint": [
     512,
-    1345
+    1353
    ],
    "body": {
     "pelvis": [
@@ -4349,85 +4371,85 @@
    "canvas": {
     "pelvis": [
      512,
-     836.2
+     844.2
     ],
     "rightHip": [
      451.9,
-     866.3
+     874.3
     ],
     "rightKnee": [
      465.3,
-     1108.2
+     1116.2
     ],
     "rightAnkle": [
      451.9,
-     1336.7
+     1344.7
     ],
     "rightHeel": [
      417.5,
-     1357.9
+     1365.9
     ],
     "rightToe": [
      554.9,
-     1426.6
+     1434.6
     ],
     "rightStage": 2,
     "leftHip": [
      572.1,
-     806.1
+     814.1
     ],
     "leftKnee": [
      669.4,
-     1063.9
+     1071.9
     ],
     "leftAnkle": [
      572.1,
-     1224.2
+     1232.2
     ],
     "leftHeel": [
      535.4,
-     1241.5
+     1249.5
     ],
     "leftToe": [
      672.5,
-     1320.8
+     1328.8
     ],
     "leftStage": 4,
     "head": [
      512,
-     464.5
+     472.5
     ],
     "leftShoulder": [
      627.9,
-     499.8
+     507.8
     ],
     "leftElbow": [
      630.6,
-     674
+     682
     ],
     "leftWrist": [
      667.3,
-     845.3
+     853.3
     ],
     "leftHand": [
      676.2,
-     886.8
+     894.8
     ],
     "rightShoulder": [
      396.1,
-     615.8
+     623.8
     ],
     "rightElbow": [
      445,
-     805.6
+     813.6
     ],
     "rightWrist": [
      469.9,
-     620
+     628
     ],
     "rightHand": [
      503.4,
-     621.9
+     629.9
     ]
    }
   },
@@ -4436,12 +4458,13 @@
    "view": "front",
    "arm": "shoulder",
    "pose": 3,
-   "top": 434,
-   "bottom": 1440,
-   "headTop": 434,
+   "top": 438,
+   "bottom": 1444,
+   "soleRow": 1440,
+   "headTop": 438,
    "groundPoint": [
     512,
-    1394
+    1398
    ],
    "body": {
     "pelvis": [
@@ -4550,85 +4573,85 @@
    "canvas": {
     "pelvis": [
      512,
-     894.8
+     898.8
     ],
     "rightHip": [
      451.9,
-     924.9
+     928.9
     ],
     "rightKnee": [
      487.3,
-     1174.9
+     1178.9
     ],
     "rightAnkle": [
      364.2,
-     1304.7
+     1308.7
     ],
     "rightHeel": [
      320.2,
-     1305.7
+     1309.7
     ],
     "rightToe": [
      449.3,
-     1422.8
+     1426.8
     ],
     "rightStage": 3,
     "leftHip": [
      572.1,
-     864.7
+     868.7
     ],
     "leftKnee": [
      654.5,
-     1122.9
+     1126.9
     ],
     "leftAnkle": [
      667.7,
-     1364.7
+     1368.7
     ],
     "leftHeel": [
      643.4,
-     1399.6
+     1403.6
     ],
     "leftToe": [
      776.1,
-     1426.2
+     1430.2
     ],
     "leftStage": 1,
     "head": [
      512,
-     513.5
+     517.5
     ],
     "leftShoulder": [
      627.9,
-     548.8
+     552.8
     ],
     "leftElbow": [
      575.1,
-     684.8
+     688.8
     ],
     "leftWrist": [
      545.6,
-     825
+     829
     ],
     "leftHand": [
      538.5,
-     859
+     863
     ],
     "rightShoulder": [
      396.1,
-     664.8
+     668.8
     ],
     "rightElbow": [
      445,
-     854.6
+     858.6
     ],
     "rightWrist": [
      469.9,
-     669
+     673
     ],
     "rightHand": [
      503.4,
-     670.9
+     674.9
     ]
    }
   },
@@ -4637,12 +4660,13 @@
    "view": "front",
    "arm": "shoulder",
    "pose": 4,
-   "top": 430,
-   "bottom": 1440,
-   "headTop": 430,
+   "top": 440,
+   "bottom": 1450,
+   "soleRow": 1440,
+   "headTop": 440,
    "groundPoint": [
     512,
-    1390
+    1400
    ],
    "body": {
     "pelvis": [
@@ -4751,85 +4775,85 @@
    "canvas": {
     "pelvis": [
      512,
-     881.2
+     891.2
     ],
     "rightHip": [
      451.9,
-     911.3
+     921.3
     ],
     "rightKnee": [
      549.2,
-     1169
+     1179
     ],
     "rightAnkle": [
      451.9,
-     1329.4
+     1339.4
     ],
     "rightHeel": [
      415.2,
-     1346.7
+     1356.7
     ],
     "rightToe": [
      552.3,
-     1425.9
+     1435.9
     ],
     "rightStage": 4,
     "leftHip": [
      572.1,
-     851.1
+     861.1
     ],
     "leftKnee": [
      585.6,
-     1093.1
+     1103.1
     ],
     "leftAnkle": [
      572.1,
-     1321.5
+     1331.5
     ],
     "leftHeel": [
      537.8,
-     1342.8
+     1352.8
     ],
     "leftToe": [
      675.1,
-     1411.5
+     1421.5
     ],
     "leftStage": 2,
     "head": [
      512,
-     509.5
+     519.5
     ],
     "leftShoulder": [
      627.9,
-     544.8
+     554.8
     ],
     "leftElbow": [
      630.6,
-     719
+     729
     ],
     "leftWrist": [
      667.3,
-     890.3
+     900.3
     ],
     "leftHand": [
      676.2,
-     931.8
+     941.8
     ],
     "rightShoulder": [
      396.1,
-     660.8
+     670.8
     ],
     "rightElbow": [
      445,
-     850.6
+     860.6
     ],
     "rightWrist": [
      469.9,
-     665
+     675
     ],
     "rightHand": [
      503.4,
-     666.9
+     676.9
     ]
    }
   },
@@ -4840,6 +4864,7 @@
    "pose": 1,
    "top": 385,
    "bottom": 1440,
+   "soleRow": 1440,
    "headTop": 385,
    "groundPoint": [
     512,
@@ -5039,12 +5064,13 @@
    "view": "front",
    "arm": "block",
    "pose": 2,
-   "top": 385,
-   "bottom": 1440,
-   "headTop": 385,
+   "top": 393,
+   "bottom": 1448,
+   "soleRow": 1440,
+   "headTop": 393,
    "groundPoint": [
     512,
-    1345
+    1353
    ],
    "body": {
     "pelvis": [
@@ -5153,85 +5179,85 @@
    "canvas": {
     "pelvis": [
      512,
-     836.2
+     844.2
     ],
     "rightHip": [
      451.9,
-     866.3
+     874.3
     ],
     "rightKnee": [
      465.3,
-     1108.2
+     1116.2
     ],
     "rightAnkle": [
      451.9,
-     1336.7
+     1344.7
     ],
     "rightHeel": [
      417.5,
-     1357.9
+     1365.9
     ],
     "rightToe": [
      554.9,
-     1426.6
+     1434.6
     ],
     "rightStage": 2,
     "leftHip": [
      572.1,
-     806.1
+     814.1
     ],
     "leftKnee": [
      669.4,
-     1063.9
+     1071.9
     ],
     "leftAnkle": [
      572.1,
-     1224.2
+     1232.2
     ],
     "leftHeel": [
      535.4,
-     1241.5
+     1249.5
     ],
     "leftToe": [
      672.5,
-     1320.8
+     1328.8
     ],
     "leftStage": 4,
     "head": [
      512,
-     464.5
+     472.5
     ],
     "rightShoulder": [
      396.1,
-     615.8
+     623.8
     ],
     "rightElbow": [
      380.5,
-     819
+     827
     ],
     "rightWrist": [
      577.6,
-     846.3
+     854.3
     ],
     "rightHand": [
      606.5,
-     882.9
+     890.9
     ],
     "leftShoulder": [
      627.9,
-     499.8
+     507.8
     ],
     "leftElbow": [
      759.2,
-     629.6
+     637.6
     ],
     "leftWrist": [
      757.6,
-     756.3
+     764.3
     ],
     "leftHand": [
      778.2,
-     797
+     805
     ]
    }
   },
@@ -5240,12 +5266,13 @@
    "view": "front",
    "arm": "block",
    "pose": 3,
-   "top": 434,
-   "bottom": 1440,
-   "headTop": 434,
+   "top": 438,
+   "bottom": 1444,
+   "soleRow": 1440,
+   "headTop": 438,
    "groundPoint": [
     512,
-    1394
+    1398
    ],
    "body": {
     "pelvis": [
@@ -5354,85 +5381,85 @@
    "canvas": {
     "pelvis": [
      512,
-     894.8
+     898.8
     ],
     "rightHip": [
      451.9,
-     924.9
+     928.9
     ],
     "rightKnee": [
      487.3,
-     1174.9
+     1178.9
     ],
     "rightAnkle": [
      364.2,
-     1304.7
+     1308.7
     ],
     "rightHeel": [
      320.2,
-     1305.7
+     1309.7
     ],
     "rightToe": [
      449.3,
-     1422.8
+     1426.8
     ],
     "rightStage": 3,
     "leftHip": [
      572.1,
-     864.7
+     868.7
     ],
     "leftKnee": [
      654.5,
-     1122.9
+     1126.9
     ],
     "leftAnkle": [
      667.7,
-     1364.7
+     1368.7
     ],
     "leftHeel": [
      643.4,
-     1399.6
+     1403.6
     ],
     "leftToe": [
      776.1,
-     1426.2
+     1430.2
     ],
     "leftStage": 1,
     "head": [
      512,
-     513.5
+     517.5
     ],
     "rightShoulder": [
      396.1,
-     664.8
+     668.8
     ],
     "rightElbow": [
      380.5,
-     868
+     872
     ],
     "rightWrist": [
      577.6,
-     895.3
+     899.3
     ],
     "rightHand": [
      606.5,
-     931.9
+     935.9
     ],
     "leftShoulder": [
      627.9,
-     548.8
+     552.8
     ],
     "leftElbow": [
      759.2,
-     678.6
+     682.6
     ],
     "leftWrist": [
      757.6,
-     805.3
+     809.3
     ],
     "leftHand": [
      778.2,
-     846
+     850
     ]
    }
   },
@@ -5441,12 +5468,13 @@
    "view": "front",
    "arm": "block",
    "pose": 4,
-   "top": 430,
-   "bottom": 1440,
-   "headTop": 430,
+   "top": 440,
+   "bottom": 1450,
+   "soleRow": 1440,
+   "headTop": 440,
    "groundPoint": [
     512,
-    1390
+    1400
    ],
    "body": {
     "pelvis": [
@@ -5555,85 +5583,85 @@
    "canvas": {
     "pelvis": [
      512,
-     881.2
+     891.2
     ],
     "rightHip": [
      451.9,
-     911.3
+     921.3
     ],
     "rightKnee": [
      549.2,
-     1169
+     1179
     ],
     "rightAnkle": [
      451.9,
-     1329.4
+     1339.4
     ],
     "rightHeel": [
      415.2,
-     1346.7
+     1356.7
     ],
     "rightToe": [
      552.3,
-     1425.9
+     1435.9
     ],
     "rightStage": 4,
     "leftHip": [
      572.1,
-     851.1
+     861.1
     ],
     "leftKnee": [
      585.6,
-     1093.1
+     1103.1
     ],
     "leftAnkle": [
      572.1,
-     1321.5
+     1331.5
     ],
     "leftHeel": [
      537.8,
-     1342.8
+     1352.8
     ],
     "leftToe": [
      675.1,
-     1411.5
+     1421.5
     ],
     "leftStage": 2,
     "head": [
      512,
-     509.5
+     519.5
     ],
     "rightShoulder": [
      396.1,
-     660.8
+     670.8
     ],
     "rightElbow": [
      380.5,
-     864
+     874
     ],
     "rightWrist": [
      577.6,
-     891.3
+     901.3
     ],
     "rightHand": [
      606.5,
-     927.9
+     937.9
     ],
     "leftShoulder": [
      627.9,
-     544.8
+     554.8
     ],
     "leftElbow": [
      759.2,
-     674.6
+     684.6
     ],
     "leftWrist": [
      757.6,
-     801.3
+     811.3
     ],
     "leftHand": [
      778.2,
-     842
+     852
     ]
    }
   },
@@ -5644,6 +5672,7 @@
    "pose": 1,
    "top": 288,
    "bottom": 1440,
+   "soleRow": 1440,
    "headTop": 385,
    "groundPoint": [
     512,
@@ -5843,12 +5872,13 @@
    "view": "front",
    "arm": "yoke",
    "pose": 2,
-   "top": 288,
-   "bottom": 1440,
-   "headTop": 385,
+   "top": 296,
+   "bottom": 1448,
+   "soleRow": 1440,
+   "headTop": 393,
    "groundPoint": [
     512,
-    1345
+    1353
    ],
    "body": {
     "pelvis": [
@@ -5957,85 +5987,85 @@
    "canvas": {
     "pelvis": [
      512,
-     836.2
+     844.2
     ],
     "rightHip": [
      451.9,
-     866.3
+     874.3
     ],
     "rightKnee": [
      465.3,
-     1108.2
+     1116.2
     ],
     "rightAnkle": [
      451.9,
-     1336.7
+     1344.7
     ],
     "rightHeel": [
      417.5,
-     1357.9
+     1365.9
     ],
     "rightToe": [
      554.9,
-     1426.6
+     1434.6
     ],
     "rightStage": 2,
     "leftHip": [
      572.1,
-     806.1
+     814.1
     ],
     "leftKnee": [
      669.4,
-     1063.9
+     1071.9
     ],
     "leftAnkle": [
      572.1,
-     1224.2
+     1232.2
     ],
     "leftHeel": [
      535.4,
-     1241.5
+     1249.5
     ],
     "leftToe": [
      672.5,
-     1320.8
+     1328.8
     ],
     "leftStage": 4,
     "head": [
      512,
-     464.5
+     472.5
     ],
     "rightShoulder": [
      396.1,
-     615.8
+     623.8
     ],
     "rightElbow": [
      279.1,
-     787.6
+     795.6
     ],
     "rightWrist": [
      232.2,
-     637.8
+     645.8
     ],
     "rightHand": [
      194.3,
-     642.9
+     650.9
     ],
     "leftShoulder": [
      627.9,
-     499.8
+     507.8
     ],
     "leftElbow": [
      741.9,
-     556.2
+     564.2
     ],
     "leftWrist": [
      750,
-     378.9
+     386.9
     ],
     "leftHand": [
      778.2,
-     350.9
+     358.9
     ]
    }
   },
@@ -6044,12 +6074,13 @@
    "view": "front",
    "arm": "yoke",
    "pose": 3,
-   "top": 337,
-   "bottom": 1440,
-   "headTop": 434,
+   "top": 341,
+   "bottom": 1444,
+   "soleRow": 1440,
+   "headTop": 438,
    "groundPoint": [
     512,
-    1394
+    1398
    ],
    "body": {
     "pelvis": [
@@ -6158,85 +6189,85 @@
    "canvas": {
     "pelvis": [
      512,
-     894.8
+     898.8
     ],
     "rightHip": [
      451.9,
-     924.9
+     928.9
     ],
     "rightKnee": [
      487.3,
-     1174.9
+     1178.9
     ],
     "rightAnkle": [
      364.2,
-     1304.7
+     1308.7
     ],
     "rightHeel": [
      320.2,
-     1305.7
+     1309.7
     ],
     "rightToe": [
      449.3,
-     1422.8
+     1426.8
     ],
     "rightStage": 3,
     "leftHip": [
      572.1,
-     864.7
+     868.7
     ],
     "leftKnee": [
      654.5,
-     1122.9
+     1126.9
     ],
     "leftAnkle": [
      667.7,
-     1364.7
+     1368.7
     ],
     "leftHeel": [
      643.4,
-     1399.6
+     1403.6
     ],
     "leftToe": [
      776.1,
-     1426.2
+     1430.2
     ],
     "leftStage": 1,
     "head": [
      512,
-     513.5
+     517.5
     ],
     "rightShoulder": [
      396.1,
-     664.8
+     668.8
     ],
     "rightElbow": [
      279.1,
-     836.6
+     840.6
     ],
     "rightWrist": [
      232.2,
-     686.8
+     690.8
     ],
     "rightHand": [
      194.3,
-     691.9
+     695.9
     ],
     "leftShoulder": [
      627.9,
-     548.8
+     552.8
     ],
     "leftElbow": [
      741.9,
-     605.2
+     609.2
     ],
     "leftWrist": [
      750,
-     427.9
+     431.9
     ],
     "leftHand": [
      778.2,
-     399.9
+     403.9
     ]
    }
   },
@@ -6245,12 +6276,13 @@
    "view": "front",
    "arm": "yoke",
    "pose": 4,
-   "top": 333,
-   "bottom": 1440,
-   "headTop": 430,
+   "top": 343,
+   "bottom": 1450,
+   "soleRow": 1440,
+   "headTop": 440,
    "groundPoint": [
     512,
-    1390
+    1400
    ],
    "body": {
     "pelvis": [
@@ -6359,85 +6391,85 @@
    "canvas": {
     "pelvis": [
      512,
-     881.2
+     891.2
     ],
     "rightHip": [
      451.9,
-     911.3
+     921.3
     ],
     "rightKnee": [
      549.2,
-     1169
+     1179
     ],
     "rightAnkle": [
      451.9,
-     1329.4
+     1339.4
     ],
     "rightHeel": [
      415.2,
-     1346.7
+     1356.7
     ],
     "rightToe": [
      552.3,
-     1425.9
+     1435.9
     ],
     "rightStage": 4,
     "leftHip": [
      572.1,
-     851.1
+     861.1
     ],
     "leftKnee": [
      585.6,
-     1093.1
+     1103.1
     ],
     "leftAnkle": [
      572.1,
-     1321.5
+     1331.5
     ],
     "leftHeel": [
      537.8,
-     1342.8
+     1352.8
     ],
     "leftToe": [
      675.1,
-     1411.5
+     1421.5
     ],
     "leftStage": 2,
     "head": [
      512,
-     509.5
+     519.5
     ],
     "rightShoulder": [
      396.1,
-     660.8
+     670.8
     ],
     "rightElbow": [
      279.1,
-     832.6
+     842.6
     ],
     "rightWrist": [
      232.2,
-     682.8
+     692.8
     ],
     "rightHand": [
      194.3,
-     687.9
+     697.9
     ],
     "leftShoulder": [
      627.9,
-     544.8
+     554.8
     ],
     "leftElbow": [
      741.9,
-     601.2
+     611.2
     ],
     "leftWrist": [
      750,
-     423.9
+     433.9
     ],
     "leftHand": [
      778.2,
-     395.9
+     405.9
     ]
    }
   }
