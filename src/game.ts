@@ -1939,9 +1939,10 @@ export class Game implements UiHost {
         this.save(true);
       }
     }
-    // Poses the renderer interpolates from: once per loop tick, paused ticks included, so the
-    // interpolation spans every step this tick runs.
-    this.fleet.beginFrame();
+    // Poses the renderer interpolates from: once per loop tick that runs a step, paused ticks
+    // included, so the interpolation spans every step this tick runs. Below 1x the empty ticks
+    // between steps keep them, and `stepAlpha` spreads the step over its ticks.
+    if (this.clock.startsSpan()) this.fleet.beginFrame();
     this.clock.run((gdt) =>
       this.sim.run(gdt, {
         mode: this.mode,
@@ -2288,7 +2289,7 @@ export class Game implements UiHost {
     this.world.applyCamera(this.camera);
     this.layoutViews();
     this.updateCursor();
-    this.trainRenderer.update(this.fleet.trains, this.clock.speed === 0 ? 1 : alpha, dt);
+    this.trainRenderer.update(this.fleet.trains, this.clock.stepAlpha(alpha), dt);
     const night = this.settings.dayNight ? nightness(this.clock.dayFraction) : 0;
     const rainI = this.settings.weather && this.weather.kind === 'rain' ? this.weather.visible : 0;
     const fogI = this.settings.weather && this.weather.kind === 'fog' ? this.weather.visible : 0;

@@ -10,18 +10,16 @@ import { ttTerm, type Tooltip } from './tooltip';
 import { tipBuild } from './tooltipRender';
 import { resourceTip, type ResourceSnapshot } from './tooltipContent';
 import { RESOURCE_GROUPS, barGroups } from './resourceOrder';
+import { needsCompact } from './fit';
 
 /** What a store holds: these have a cap and open the market when clicked. */
 const STOCKPILED = new Set(RESOURCE_IDS);
-
-/** The cells overflow their box: tighten the spacing. */
-export const needsCompact = (scrollWidth: number, clientWidth: number) => scrollWidth > clientWidth;
 
 /**
  * Second row under the top bar: funds first, then the store it shows (a button that steps to the
  * next one) and what that store holds in its groups (`RESOURCE_GROUPS`), each cell a term whose
  * tooltip links the buildings that make and use it. A resource shows once its age has come or it is
- * in stock (`barGroups`); the famine warning and `right` (tickets, age) end it.
+ * in stock (`barGroups`); the famine warning and `right` (the tickets) end it.
  */
 export class ResourceBar {
   readonly root = el('div', { id: 'resbar', class: 'panel' });

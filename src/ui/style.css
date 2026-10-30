@@ -242,6 +242,55 @@ body {
   gap: 4px;
   padding: 0 10px;
 }
+/* day, clock and speed read as one group, the last cell of the bar */
+#topbar .datespeed {
+  gap: 8px;
+  padding-right: 0;
+  border-right: none;
+  box-shadow: none;
+}
+#topbar .datespeed .time {
+  padding: 0 10px 0 4px;
+}
+/* the era widget, just before the date: a term drawn as a cell, not as a link */
+#topbar .tt-term {
+  display: flex;
+  color: inherit;
+  border-bottom: none;
+}
+#topbar .era {
+  gap: 6px;
+}
+#topbar .era-icon {
+  display: flex;
+  color: var(--amber);
+}
+#topbar .era-icon svg {
+  width: 16px;
+  height: 16px;
+}
+#topbar .era-name {
+  font-family: var(--font-title);
+  font-size: 13px;
+  font-weight: bold;
+}
+#topbar .era-bar {
+  width: 44px;
+  height: 7px;
+  background: var(--stone-dark);
+  border: 1px solid var(--border-dark);
+  border-radius: 4px;
+  overflow: hidden;
+}
+#topbar .era-fill {
+  height: 100%;
+  background: var(--amber-dark);
+}
+#topbar .era-pct {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
 #topbar .time .btn {
   padding: 1px 7px;
   min-width: 30px;
@@ -269,6 +318,48 @@ body {
 }
 #topbar .actions .btn.cheat {
   color: var(--text-dim);
+}
+/* the screen buttons give way last, by clipping; the era widget and the date and speed never do */
+#topbar .actions {
+  min-width: 0;
+  overflow: hidden;
+}
+#topbar .datespeed,
+#topbar > .tt-term {
+  flex: none;
+}
+/* short of room (Hud.fit): tighter cells and buttons and no weather text; if still short, compact-2 */
+#topbar.compact .title {
+  padding: 0 6px;
+}
+#topbar.compact .stat {
+  gap: 4px;
+  padding: 0 5px;
+}
+#topbar.compact .btn.small,
+#topbar.compact .actions .btn {
+  padding: 1px 4px;
+}
+#topbar.compact .stat.weather,
+#topbar.compact-2 .era-name {
+  display: none;
+}
+#topbar.compact .datespeed {
+  gap: 5px;
+  padding-right: 0;
+}
+#topbar.compact .datespeed .time {
+  gap: 3px;
+  padding: 0 6px 0 2px;
+}
+#topbar.compact .time .btn {
+  min-width: 26px;
+  padding: 1px 4px;
+}
+#topbar.compact .time .btn.pause {
+  min-width: 32px;
+  padding: 2px 6px;
+  margin-right: 2px;
 }
 
 /* ---- minimap ---- */
@@ -400,6 +491,15 @@ body {
 .tt-bad,
 .tt-bad .tt-num {
   color: var(--text-bad);
+}
+/* the one that stands out, such as the current age: the amber of a title */
+.tt-accent,
+.tt-accent .tt-num {
+  color: var(--amber);
+}
+/* a row under the line it belongs to, such as the alternatives of a group */
+.tt-indent {
+  padding-left: 10px;
 }
 .tt-total {
   border-top: 1px solid var(--border-dark);
@@ -1842,7 +1942,7 @@ input[type='range'] {
   border-top: none;
   cursor: pointer;
 }
-/* the cells shrink and clip before they push tickets and age off the right edge */
+/* the cells shrink and clip before they push the tickets off the right edge */
 #resbar .res-cells {
   flex: 1 1 0;
   min-width: 0;
@@ -1911,26 +2011,6 @@ input[type='range'] {
   color: inherit;
   border-bottom: none;
   cursor: inherit;
-}
-#age-card {
-  position: fixed;
-  width: 280px;
-  z-index: 80;
-  pointer-events: none;
-  font-size: 11px;
-}
-#age-card .kv {
-  font-size: 11px;
-}
-#age-card .kv.amber .v {
-  color: var(--amber);
-}
-#age-card .bar-fill.good {
-  background: var(--cyan-dark);
-}
-#topbar .stat.age,
-.funds .stat.age {
-  cursor: help;
 }
 #topbar .stat.toggles .btn.active {
   color: var(--cyan);

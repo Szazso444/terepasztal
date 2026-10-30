@@ -31,7 +31,7 @@ export const STR = {
       'R rotates what you are placing, and Esc cancels it.',
       'WASD, the arrow keys or a middle-button drag move the camera, and the wheel zooms.',
       'Name a town when you place its station. You can rename it any time.',
-      'Hover Age in the top bar to see what the next age asks for.',
+      'Hover the age beside the date to see what the next age asks for.',
       'A train never starts a leg it could not finish and still reach fuel from.',
       'Single track is handed out in whole sections, so trains never meet head-on inside one.',
     ],
@@ -40,13 +40,19 @@ export const STR = {
     money: 'Funds',
     weather: (season: string, weather: string) => `${season} · ${weather}`,
     tickets: 'Tickets',
-    age: 'Age',
+    /** the era widget's progress toward the next age, a whole percent */
+    agePercent: (pct: number) => `${pct}%`,
     day: (d: number) => `Day ${d}`,
-    speed: ['❚❚', '1x', '2x', '3x'],
+    /** by `SPEEDS` index; the buttons show them in `SPEED_ORDER` */
+    speed: ['❚❚', '1x', '2x', '3x', '½x'],
+    /** a speed button's tooltip: its label and the keys that set it */
+    speedKey: (label: string, key: string) => `${label} speed (${key})`,
     pause: 'Pause (Space)',
     resume: 'Resume (Space)',
     weatherToggle: 'Weather',
     weatherToggleHint: 'Toggle rain, fog and seasons',
+    /** the same, in a narrow top bar: the season and weather it no longer shows come first */
+    weatherToggleHintNow: (now: string) => `${now}\nToggle rain, fog and seasons`,
     dayToggle: 'Day/night',
     dayToggleHint: 'Toggle the day and night cycle',
     ageUp: (t: number) =>

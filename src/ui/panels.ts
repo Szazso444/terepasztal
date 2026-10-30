@@ -315,7 +315,12 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
    */
   const season = (): Season => (d.settings.weather ? seasonOf(d.clock.day) : 'spring');
 
-  const hud = new Hud(d.clock, () => ageStatus(d.economy.tier, host.ageSnapshot()));
+  const hud = new Hud(
+    d.clock,
+    () => ageStatus(d.economy.tier, host.ageSnapshot()),
+    d.atlas,
+    d.tooltip,
+  );
   const depot = new DepotScreen(d.inventory, d.fleet, d.builder, toast, d.atlas);
   depot.onFocusTrain = (t) => host.focusTrain(t);
   depot.onFocusDepot = (dep, gate) => {
@@ -362,7 +367,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const resourceBar = new ResourceBar(d.atlas, d.tooltip, () => {
     if (host.mode === 'play' && !menuOpen()) d.screens.toggle(marketScreen);
   });
-  // the money is the bar's first cell; tickets and the age stay in the HUD's block at its end
+  // the money is the bar's first cell; the tickets stay in the HUD's block at its end
   resourceBar.right.append(hud.funds);
   resourceBar.passengers = () => {
     let n = 0;
@@ -891,6 +896,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     cycleType: (dir) => toolbar.cycleGroup(dir),
     selectPiece: (i) => toolbar.selectIndex(i),
     setSpeed: (s) => d.clock.setSpeed(s),
+    stepSpeed: (dir) => d.clock.stepSpeed(dir),
     togglePause: () => d.clock.togglePause(),
     toggleRecording: () => host.toggleRecording(),
     finishRecording: () => host.finishRecording(),

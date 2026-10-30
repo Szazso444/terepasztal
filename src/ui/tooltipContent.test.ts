@@ -26,10 +26,13 @@ import {
   type WorksStatus,
 } from './tooltipContent';
 import {
+  bad,
   blockText,
   fill,
+  good,
   plain,
   richText,
+  row,
   termsOf,
   type Block,
   type Inline,
@@ -107,6 +110,19 @@ describe('numbers in a sentence', () => {
 
   it('bolds the digits of a template around its slots, not the slots', () => {
     expect(fill('{who} has 3', { who: 'Mk2' })).toEqual(['Mk2', ' has ', { num: '3' }]);
+  });
+});
+
+describe('the looks of a line and a row', () => {
+  it('makes a good line green and a bad one red', () => {
+    expect(good('Met')).toEqual({ kind: 'text', parts: ['Met'], tone: 'good' });
+    expect(bad('No')).toEqual({ kind: 'text', parts: ['No'], tone: 'bad' });
+  });
+  it('gives a row an accent tone and an indent, which its text does not show', () => {
+    const r = row('Diesel Age', 'current', { tone: 'accent', indent: true });
+    expect(r).toMatchObject({ kind: 'row', tone: 'accent', indent: true });
+    expect(blockText(r)).toBe('Diesel Age: current');
+    expect(row('a', 'b')).not.toHaveProperty('indent');
   });
 });
 

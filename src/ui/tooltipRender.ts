@@ -47,6 +47,7 @@ function renderBlock(b: Block, atlas: AtlasRegistry): HTMLElement {
       return ttRow(renderParts(b.label, atlas), renderParts(b.value, atlas), {
         tone: b.tone,
         total: b.total,
+        indent: b.indent,
       });
   }
 }
