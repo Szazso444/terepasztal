@@ -783,6 +783,20 @@ export class Builder {
     if (laid) sfx('build.place');
     return true;
   }
+  /**
+   * A copy of this builder's world to judge a dragged run on piece by piece, as the Track tool
+   * lays it: `checkTrack` judges a piece with the ones before it down, and `lay` puts one down
+   * there with no price, no sound and nothing changed here.
+   */
+  runProbe() {
+    const p = this.probe();
+    return {
+      track: p.track,
+      checkTrack: (x: number, y: number, item: TrackItem, rot: number) =>
+        p.checkTrack(x, y, item, rot),
+      lay: (x: number, y: number, item: TrackItem, rot: number) => p.layTrack(x, y, item, rot),
+    };
+  }
   /** One piece of a line against this builder's world as it stands, without the stock. */
   private judge(p: LinePiece): LineStep {
     if (p.kind === 'track') {
