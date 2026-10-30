@@ -1,0 +1,20 @@
+{
+  "canvas": [1024, 1024],
+  "gameTile": [64, 32],
+  "sourceTile": [330, 165],
+  "centre": [512, 512],
+  "tileOffset": "screen = (512 + 165*(x-y), 512 + 82.5*(x+y))",
+  "guideCorners": [
+    [512, 430],
+    [677, 512],
+    [512, 594],
+    [347, 512]
+  ],
+  "tenthTilePebble": 33,
+  "twentiethTilePebble": 17,
+  "reviewWidth": 199,
+  "referenceCrop": {
+    "x": [0.25, 0.75],
+    "y": [0.3, 0.7]
+  }
+}
