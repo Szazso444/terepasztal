@@ -5,7 +5,6 @@ import { TRACK_CLASSES } from '../world/track';
 import { starsOf } from './labels';
 import {
   CLASS_ICON,
-  CLASS_STEP,
   ENGINES,
   LINE_ICON,
   classBadgeSvg,
@@ -28,13 +27,14 @@ describe('track line labels', () => {
       expect(svg).toContain(`width="${LINE_ICON.w}" height="${LINE_ICON.h}"`);
   });
 
-  it('gives a line as many sleepers as the pips of its class', () => {
+  it('gives a line as many sleepers as its class has driving wheels, one more each step', () => {
     const ties = (svg: string) => svg.match(/class="tie"/g)?.length ?? 0;
-    expect(ties(lineBadgeSvg('narrow'))).toBe(CLASS_STEP.corvette);
-    expect(ties(lineBadgeSvg('branch'))).toBe(CLASS_STEP.frigate);
-    expect(ties(lineBadgeSvg('main'))).toBe(CLASS_STEP.destroyer);
-    expect(ties(lineBadgeSvg('trunk'))).toBe(CLASS_STEP.cruiser);
+    const lines = ['narrow', 'branch', 'main', 'trunk'] as const;
+    const classes = ['corvette', 'frigate', 'destroyer', 'cruiser'] as const;
+    expect(lines.map((l) => ties(lineBadgeSvg(l)))).toEqual([2, 3, 4, 5]);
+    expect(classes.map((tc) => ENGINES[tc].drivers[2])).toEqual([2, 3, 4, 5]);
     expect(ties(lineBadgeSvg('maglev'))).toBe(0);
+    expect(ties(lineBadgeSvg('hyperloop'))).toBe(0);
   });
 
   it('has the colours of every line in the stylesheet', () => {
@@ -83,10 +83,8 @@ describe('train class icons', () => {
     }
   });
 
-  it('marks the Carrier with the atom', () => {
-    expect(classBadgeSvg('carrier').match(/rotate/g)).toHaveLength(3);
-    expect(classBadgeSvg('cruiser')).not.toContain('rotate');
-    expect(CLASS_STEP.carrier).toBe(CLASS_STEP.cruiser);
+  it('draws the Carrier as the Cruiser', () => {
+    expect(classBadgeSvg('carrier')).toBe(classBadgeSvg('cruiser'));
   });
 
   it('keeps the separate fast networks off the scale', () => {

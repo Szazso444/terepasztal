@@ -1,7 +1,7 @@
 /**
  * The labels of the track lines and the train classes (specs/track-classes.md). A line's label is
  * a piece of its track seen from above, standing upright in the line's colours, its bed wider for
- * a bigger line and with as many sleepers as the pips of the line's class. It marks the line's
+ * a bigger line and with as many sleepers as its class's engine has driving wheels. It marks the line's
  * track pieces, and a vehicle carries one for every line it runs on. A class's label is a separate
  * icon, the same size for every class: a steam engine in the middle that grows in equal steps, from
  * a small tank engine for the Corvette to a big express engine for the Cruiser, over four pips of
@@ -31,7 +31,7 @@ const TRACKS: Partial<Record<TrackClass, { bed: number; sleeper: number; gauge: 
 const LENGTH = LINE_ICON.h - 3;
 const TOP = 1.5;
 
-/** A piece of track standing upright in the middle of the icon, its sleepers the class's step. */
+/** A piece of track standing upright in the middle of the icon, a sleeper per driving wheel. */
 function trackSvg(line: TrackClass, bed: number, sleeper: number, gauge: number): string {
   const cx = LINE_ICON.w / 2;
   const left = cx - bed / 2;
@@ -40,32 +40,33 @@ function trackSvg(line: TrackClass, bed: number, sleeper: number, gauge: number)
   let out = `<rect x="${left}" y="${TOP}" width="${bed}" height="${LENGTH}" fill="var(--line-${line})"/>`;
   // the Trunk Line's two pale cable troughs
   if (line === 'trunk') out += strip(left + 0.3) + strip(left + bed - 1.3);
-  const ties = CLASS_STEP[lineClass(line) as TrainClass] as number;
+  const ties = ENGINES[lineClass(line) as keyof typeof ENGINES].drivers[2];
   for (let i = 0; i < ties; i++) {
-    const y = TOP + (LENGTH * (i + 0.5)) / ties - 0.9;
-    out += `<rect class="tie" x="${cx - sleeper / 2}" y="${y}" width="${sleeper}" height="1.8" fill="var(--line-${line}-sleeper)"/>`;
+    const y = TOP + (LENGTH * (i + 0.5)) / ties - 0.8;
+    out += `<rect class="tie" x="${cx - sleeper / 2}" y="${y}" width="${sleeper}" height="1.6" fill="var(--line-${line}-sleeper)"/>`;
   }
   for (const d of [-gauge / 2, gauge / 2])
     out += `<rect x="${cx + d - 0.5}" y="${TOP}" width="1" height="${LENGTH}" fill="var(--line-${line}-rail)"/>`;
   return out;
 }
 
-/** The fast lines' pictures: a guideway beam with its coils, a tube with its rings. */
+/** The fast lines seen end on: a car floating over its T beam, a pod inside its tube. */
 function fastLineSvg(line: TrackClass): string {
   const cx = LINE_ICON.w / 2;
-  const rect = (x: number, y: number, w: number, h: number, part: string, rx = 0) =>
-    `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="var(--line-${line}${part})"/>`;
+  const fill = (part: string) => `fill="var(--line-${line}${part})"`;
   if (line === 'hyperloop')
     return (
-      rect(cx - 5, TOP, 10, LENGTH, '', 2) +
-      rect(cx - 5, 5.5, 10, 1.2, '-sleeper') +
-      rect(cx - 5, 13.3, 10, 1.2, '-sleeper')
+      `<circle cx="${cx}" cy="10" r="5.9" fill="none" stroke="var(--line-hyperloop)" stroke-width="2"/>` +
+      `<rect x="${cx - 3}" y="7.8" width="6" height="4.4" rx="2" ${fill('-rail')}/>`
     );
+  const wave = (y: number) =>
+    `<path d="M${cx - 5} ${y}q1.7 -1.6 3.3 0t3.4 0t3.3 0" fill="none" stroke="var(--line-maglev-rail)" stroke-width="0.8"/>`;
   return (
-    rect(cx - 4, TOP, 8, LENGTH, '') +
-    rect(cx - 0.9, TOP, 1.8, LENGTH, '-rail') +
-    rect(cx - 4, TOP, 1.4, LENGTH, '-sleeper') +
-    rect(cx + 2.6, TOP, 1.4, LENGTH, '-sleeper')
+    `<path d="M${cx - 5.5} 8.2V6c0 -2 2.4 -3.4 5.5 -3.4s5.5 1.4 5.5 3.4v2.2z" ${fill('')}/>` +
+    wave(10) +
+    wave(12) +
+    `<rect x="${cx - 6}" y="13.4" width="12" height="1.6" ${fill('')}/>` +
+    `<rect x="${cx - 1.6}" y="15" width="3.2" height="3.6" ${fill('')}/>`
   );
 }
 
@@ -111,22 +112,22 @@ export const ENGINES: Record<'corvette' | 'frigate' | 'destroyer' | 'cruiser', E
     chimney: [15.4, 3],
     drivers: [9.9, 3, 3, 1.35],
   },
-  // a mixed-traffic 4-6-0 with a three-axle tender
+  // a mixed-traffic engine with four driving wheels and a three-axle tender
   destroyer: {
     tender: [0, 6.4, 6, 3],
     cab: [6.9, 10.5, 3.4],
     boiler: [10.5, 21.8, 5.4],
     chimney: [20.2, 2.6],
-    drivers: [12.2, 3.2, 3, 1.45],
-    pony: 20.6,
+    drivers: [11.7, 2.5, 4, 1.2],
+    pony: 21,
   },
-  // a big 4-8-4 express engine with a long tender
+  // a big express engine with five driving wheels and a long tender
   cruiser: {
     tender: [0, 8.8, 5.4, 4],
     cab: [9.3, 13.3, 2.8],
     boiler: [13.3, 28.4, 5],
     chimney: [26.8, 2.2],
-    drivers: [15.4, 2.9, 4, 1.35],
+    drivers: [15.2, 2.4, 5, 1.1],
     pony: 27,
     trailing: 12.9,
   },
@@ -209,27 +210,38 @@ function pips(step: number): string {
   return out;
 }
 
-/** A streamlined car for the classes of the separate fast networks, which have no steam. */
-function podSvg(tc: TrainClass): string {
-  const x = (CLASS_ICON.w - 28) / 2;
-  if (tc === 'submarine')
-    return `<rect x="${x}" y="7.7" width="28" height="6.6" rx="3.3" fill="var(--class-ink)"/>`;
+/** A long-nosed maglev train floating over its guideway, with a row of windows. */
+function hydrofoilSvg(): string {
+  const x = (CLASS_ICON.w - 30) / 2;
+  const hole = 'fill="var(--class-plate)"';
+  let windows = '';
+  for (let i = 0; i < 5; i++)
+    windows += `<rect x="${3 + i * 3.4}" y="7.4" width="2.2" height="1.9" rx="0.4" ${hole}/>`;
   return (
-    `<g fill="var(--class-ink)" transform="translate(${x} 2.8)">` +
-    `<path d="M0 10.8V6.4c0-1.2 1-2 2.4-2h15.6c3.4 0 6.6 1.6 8.6 4.2l0.8 2.2z"/>` +
-    `<rect y="11.4" width="28" height="1.1"/></g>`
+    `<g fill="var(--class-ink)" transform="translate(${x} 0)">` +
+    `<path d="M0 13.4V7.6c0-1.6 1.1-2.6 2.8-2.6H17c4.4 0 9 2.6 13 7.4l0 1z"/>` +
+    windows +
+    // the driver's window, slanted with the nose
+    `<path d="M20.2 7.4c1.8 0.4 3.5 1.2 5 2.3H20.2z" ${hole}/>` +
+    `<rect y="11" width="26" height="0.6" ${hole}/>` +
+    `<rect y="16" width="30" height="1.6" rx="0.4"/></g>`
   );
 }
 
-const atom = (cx: number, cy: number) =>
-  `<g fill="none" stroke="var(--class-pip)" stroke-width="0.7">` +
-  [0, 60, -60]
-    .map(
-      (a) =>
-        `<ellipse cx="${cx}" cy="${cy}" rx="2.8" ry="1.1" transform="rotate(${a} ${cx} ${cy})"/>`,
-    )
-    .join('') +
-  `</g><circle cx="${cx}" cy="${cy}" r="0.7" fill="var(--class-pip)"/>`;
+/** A hyperloop pod: a pointed rocket with tail fins and portholes. */
+function submarineSvg(): string {
+  const x = (CLASS_ICON.w - 30) / 2;
+  const hole = 'fill="var(--class-plate)"';
+  const portholes = [10, 14, 18].map((cx) => `<circle cx="${cx}" cy="11" r="1.2" ${hole}/>`);
+  return (
+    `<g fill="var(--class-ink)" transform="translate(${x} 0)">` +
+    `<path d="M4 7.4H19c4.2 0 8.2 1.4 11 3.6c-2.8 2.2-6.8 3.6-11 3.6H4z"/>` +
+    `<path d="M4 7.4L0.6 3.6H4.4L8.6 7.4z"/><path d="M4 14.6L0.6 18.4H4.4L8.6 14.6z"/>` +
+    `<rect x="1.6" y="9" width="2.4" height="4" rx="0.5"/>` +
+    portholes.join('') +
+    `<path d="M23 9.6c1.4 0.3 2.6 0.8 3.6 1.4c-1 0.6-2.2 1.1-3.6 1.4z" ${hole}/></g>`
+  );
+}
 
 /** A class's icon as SVG markup: the same size for every class, its picture in the middle. */
 export function classBadgeSvg(tc: TrainClass): string {
@@ -237,10 +249,10 @@ export function classBadgeSvg(tc: TrainClass): string {
   const engine = ENGINES[tc === 'carrier' ? 'cruiser' : (tc as keyof typeof ENGINES)];
   const body =
     step === undefined
-      ? podSvg(tc)
-      : placedEngine(engine, engineLength(step)) +
-        pips(step) +
-        (tc === 'carrier' ? atom(6.4, 3.6) : '');
+      ? tc === 'submarine'
+        ? submarineSvg()
+        : hydrofoilSvg()
+      : placedEngine(engine, engineLength(step)) + pips(step);
   return svg(
     CLASS_ICON.w,
     CLASS_ICON.h,
