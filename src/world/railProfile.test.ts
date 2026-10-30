@@ -74,9 +74,9 @@ describe('rail inclines', () => {
     expect(railGrade(new Map(), 10, 1, 0, Dir.W, Dir.E)).toBe(1);
   });
 
-  it('lets straights, crossings and class transitions climb, never curves or switches', () => {
+  it('lets straights and crossings climb, never curves or switches', () => {
     expect(climbAxes(pieceLinks('straight', 0))).toEqual(['y']);
-    expect(climbAxes(pieceLinks('transition', 0))).toEqual(['y']);
+    expect(climbAxes(pieceLinks('straight', 1))).toEqual(['x']);
     expect(climbAxes(pieceLinks('crossing', 0)).sort()).toEqual(['x', 'y']);
     for (let r = 0; r < 4; r++) {
       expect(climbAxes(pieceLinks('curve', r))).toEqual([]);
@@ -99,8 +99,8 @@ describe('rail inclines', () => {
     for (let y = 6; y < 18; y++) for (let x = 10; x < 20; x++) m.terrain[y * 24 + x] = Terrain.Hill;
     const track = new TrackGraph(24, 24);
     for (let x = 4; x < 16; x++)
-      track.place(x, 12, x === 10 ? 'crossing' : 'straight', 1, 'regular');
-    for (let y = 9; y < 16; y++) if (y !== 12) track.place(10, y, 'straight', 0, 'regular');
+      track.place(x, 12, x === 10 ? 'crossing' : 'straight', 1, 'branch');
+    for (let y = 9; y < 16; y++) if (y !== 12) track.place(10, y, 'straight', 0, 'branch');
     const beds = railProfile(m, track),
       crossing = beds.get(12 * 24 + 10)!;
     expect(crossing.cross).toBeDefined();
@@ -128,7 +128,7 @@ describe('rail inclines', () => {
       m.waterSurface[y * 16 + 8] = 1;
     }
     const track = new TrackGraph(16, 16);
-    for (let x = 4; x < 13; x++) track.place(x, 8, 'straight', 1, 'regular');
+    for (let x = 4; x < 13; x++) track.place(x, 8, 'straight', 1, 'branch');
     const beds = railProfile(m, track, (x, y) => x === 8 && y === 8);
     const deck = beds.get(8 * 16 + 8)!;
     expect(deck.bridge).toBe(true);

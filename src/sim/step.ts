@@ -8,7 +8,6 @@ import { pieceCost, type TrackKind } from '../world/track';
 import { tickBuildings } from './buildings';
 import type { AgeSnapshot } from './ages';
 import type { GameClock } from './time';
-import type { Stockpile } from './stockpile';
 import type { House, HouseRegistry } from './houses';
 import type { Builder } from './build';
 import type { Station } from './stations';
@@ -21,12 +20,16 @@ import type { Economy } from './economy';
 import type { Catenary } from './catenary';
 import type { Roads } from './roads';
 import { CrossingWatch } from './crossings';
+import type { ResourceStore } from './stores';
 import type { RegionState } from '../world/regions';
 
-/** Production multiplier of every station while the crews starve (`Stockpile.famine`). */
+/**
+ * Production multiplier of a station or works while the crews at its store starve (`Store.famine`,
+ * set by `StoreRegistry.tickUpkeep`).
+ */
 export const FAMINE_PRODUCTION_MUL = 0.5;
-/** Speed multiplier of every train while the crews starve, on top of the weather's. */
-export const FAMINE_SPEED_MUL = 0.7;
+/** Speed multiplier of a hungry train (`Train.hungry`), on top of the weather's. */
+export { FAMINE_SPEED_MUL } from './trains';
 /**
  * Reach of a passenger station in tiles, as Chebyshev distance from its anchor tile: the residents
  * of finished houses (`progress >= 1`) this close are its passengers.
@@ -54,14 +57,14 @@ export const START_CRAFT = { wood: 40, stone: 10, iron: 30 } as const;
 export const START_SUPPLIES = { water: 600, wheat: 300, food: 600, coal: 240 } as const;
 
 /**
- * Starting stockpile for a brand-new game, before `rules.startStock` scaling. Wood, stone and
+ * Starting goods for a brand-new game, before `rules.startStock` scaling. Wood, stone and
  * iron are what START_TRACK costs at the current track prices plus START_CRAFT, multiplied by
  * `rules.startingResourceScale` and rounded; START_SUPPLIES follow as they are.
  */
 export function startStock(): Record<string, number> {
   const sum = (k: keyof typeof START_CRAFT) => {
     let n = 0;
-    for (const [kind, count] of START_TRACK) n += (pieceCost(kind, 'regular')[k] ?? 0) * count;
+    for (const [kind, count] of START_TRACK) n += (pieceCost(kind, 'branch')[k] ?? 0) * count;
     return n + START_CRAFT[k];
   };
   const s = rules.startingResourceScale;
@@ -79,7 +82,6 @@ export function startStock(): Record<string, number> {
  */
 export interface StepDomains {
   readonly clock: GameClock;
-  readonly stock: Stockpile;
   readonly houses: HouseRegistry;
   /** what is built, the roads and their level crossings among it (`builder.roads`) */
   readonly builder: Builder;
@@ -97,7 +99,7 @@ export interface StepDomains {
 /** The domains the age goals are measured in. */
 export type AgeDomains = Pick<
   StepDomains,
-  'builder' | 'stock' | 'economy' | 'catenary' | 'regions'
+  'builder' | 'houses' | 'economy' | 'catenary' | 'regions'
 >;
 
 /** The live numbers the age goals are measured against. */
@@ -106,7 +108,7 @@ export function ageSnapshot(d: AgeDomains): AgeSnapshot {
   for (const e of d.catenary.entries()) if (d.catenary.isLive(e.x, e.y)) wires++;
   return {
     depots: d.builder.depotsOf('regular').length,
-    population: d.stock.population,
+    population: d.houses.residentsTotal(),
     earned: d.economy.earned,
     substations: d.catenary.substations.filter((s) => s.powered).length,
     wires,
@@ -120,8 +122,6 @@ export interface StepContext {
   readonly mode: 'play' | 'editor';
   /** the weather setting: off keeps the weather still and its speed factor at 1 */
   readonly weather: boolean;
-  /** storage cap of one resource now (`Game.stockCap`), for the trade desk */
-  readonly stockCap: (id: string) => number;
 }
 
 /** The game's side of a step: drawing, toasts and sounds. Each one is optional. */
@@ -132,6 +132,23 @@ export interface StepHooks {
   season?: () => void;
   /** a day ended with completed contracts and DAILY_TICKETS were granted for it */
   dailyTicket?: () => void;
+}
+
+/**
+ * Who eats at which store this step: the residents of every house at its town's store, the crews
+ * of stations, works and services at the store that supplies their tile. A house outside every
+ * town and a crew with no store in reach eat nothing (and never starve). Train crews are not
+ * counted here: they owe their food and pay it at the next store they fill up at (`Train.owed`).
+ */
+export function eaters(houses: HouseRegistry, builder: Builder): Map<ResourceStore, number> {
+  const out = new Map<ResourceStore, number>();
+  const eat = (at: ResourceStore | null, n: number) => {
+    if (at && n > 0) out.set(at, (out.get(at) ?? 0) + n);
+  };
+  const stores = builder.stores;
+  for (const h of houses.houses.values()) eat(stores.townStore(h.x, h.y), h.residents);
+  for (const c of builder.crewSites()) eat(stores.supplierFor(c.x, c.y), c.crew);
+  return out;
 }
 
 /** Residents of finished houses within PASSENGER_CATCHMENT of the station's anchor. */
@@ -204,16 +221,16 @@ export class SimStep {
 
   /** Run one step of `gdt` game seconds; the clock already stands at the step's end. */
   run(gdt: number, ctx: StepContext): void {
-    const { clock, stock, houses, builder, fleet, people, weather, contracts, trade, economy } =
-      this.d;
+    const { clock, houses, builder, fleet, people, weather, contracts, trade, economy } = this.d;
     const play = ctx.mode === 'play';
+    // the stores follow the rails and the supply mode, so every dock this step is the current one
+    builder.stores.follow();
     // upgrades follow game time: the works under way advance first, so the rest of the step sees
     // which buildings are closed and which have just opened at their new level
     builder.tickWorks(gdt);
     houses.tickWorks(gdt);
-    stock.population = houses.residentsTotal();
-    stock.workforce = builder.crewTotal() + fleet.crewTotal();
-    stock.tick(gdt);
+    const stores = builder.stores;
+    stores.tickUpkeep(gdt, eaters(houses, builder));
     houses.tick(gdt, clock.time, play);
     if (clock.time >= this.nextCityCheck) {
       this.nextCityCheck = clock.time + CITY_CHECK_SECONDS;
@@ -232,26 +249,19 @@ export class SimStep {
         crossings.size ? crossings : null,
       );
     }
-    const famineMul = stock.famine ? FAMINE_PRODUCTION_MUL : 1;
+    // a station makes less while the crews at the store that supplies it starve
     for (const s of builder.stations) {
       if (s.def.id === 'station') s.passengerPopulation = catchment(houses.houses.values(), s);
-      s.tick(gdt * famineMul);
+      s.tick(gdt * (stores.supplierFor(s.x, s.y)?.famine ? FAMINE_PRODUCTION_MUL : 1));
     }
-    tickBuildings(
-      builder.buildings.values(),
-      stock,
-      gdt,
-      stock.famine,
-      builder.plantCount(),
-      builder.depotCount(),
-    );
+    tickBuildings(builder.buildings.values(), (b) => stores.worksStore(b), gdt);
     if (ctx.weather) weather.tick(clock.time, clock.day, gdt);
     else weather.updateWind(clock.time, false);
     this.hooks.season?.();
-    const speed = (ctx.weather ? weather.speedFactor() : 1) * (stock.famine ? FAMINE_SPEED_MUL : 1);
+    const speed = ctx.weather ? weather.speedFactor() : 1;
     fleet.tick(gdt, clock.time, speed);
     contracts.tick(clock.time);
-    trade.tick(clock.time, stock, economy, ctx.stockCap);
+    trade.tick(clock.time, stores, economy);
     if (play && clock.time >= this.nextAgeCheck) {
       this.nextAgeCheck = clock.time + daySeconds() / AGE_CHECKS_PER_DAY;
       economy.advanceAge(ageSnapshot(this.d));

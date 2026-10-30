@@ -10,7 +10,7 @@ import trackData from '../data/track.json';
 import { forAll } from '../testing/property';
 import { BIOME_DEFS, type BiomeDef } from './biomes';
 import { Builder } from './build';
-import { Stockpile, scaleCost } from './stockpile';
+import { scaleCost } from './stores';
 import { Economy } from './economy';
 import { Fleet } from './fleet';
 import { Station, resetStationIds } from './stations';
@@ -19,6 +19,10 @@ import { lineSpeedCap } from './lineSpeed';
 import { setSupplyMode } from './supply';
 import { Inventory } from '../gacha/inventory';
 import { rules, DEFAULT_RULES } from './rules';
+import { storeWith } from '../testing/storeFixtures';
+
+/** An economy in the Electric Age: Main and Trunk Line are open. */
+const electricAge = () => Object.assign(new Economy(), { tier: 2 });
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
@@ -181,13 +185,13 @@ describe('the Mountain biome on grass', () => {
   it('charges the grass price × 1.5 for track', () => {
     const map = emptyMap(4242, 48, 48, Terrain.Grass),
       track = new TrackGraph(48, 48),
-      stock = new Stockpile();
+      { stores, depot: stock } = storeWith({}, { x: 20, y: 22 });
     const regions = new RegionState(map);
     for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-    const builder = new Builder(map, regions, track, new Economy(), stock);
+    const builder = new Builder(map, regions, track, electricAge(), stores);
     for (const k of ['wood', 'stone', 'iron']) stock.amounts.set(k, 1000);
     map.biome[24 * map.w + 20] = MOUNTAIN;
-    const item: TrackItem = { kind: 'straight', cls: 'regular' };
+    const item: TrackItem = { kind: 'straight', cls: 'branch' };
     const grass = builder.terrainMul(20, 20);
     expect(builder.terrainMul(20, 24)).toBe(grass * 1.5);
     const list = pieceCost(item.kind, item.cls);
@@ -204,11 +208,10 @@ describe('the Mountain biome on grass', () => {
     function freeSpeed(biome: number) {
       const map = emptyMap(4242, 96, 96, Terrain.Grass),
         track = new TrackGraph(96, 96),
-        stock = new Stockpile(),
-        economy = new Economy();
-      const builder = new Builder(map, new RegionState(map), track, economy, stock);
+        economy = electricAge();
+      const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
       builder.free = true;
-      const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+      const fleet = new Fleet(track, builder, map, new Inventory(), economy);
       for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
       const t = new Train([
         { uid: 1, level: 0, def: content.locomotives.find((d) => d.id === 'f7')! },
@@ -246,9 +249,7 @@ const LAND = [Terrain.Grass, Terrain.Sand, Terrain.Forest, Terrain.Hill];
 /** Any palette piece on land, or a bridge on water, at any rotation and build cost slider step. */
 function priceCase(rng: Rng): PriceCase {
   const bridge = rng.chance(0.15);
-  const item: TrackItem = bridge
-    ? { kind: 'bridge', cls: 'regular' }
-    : { ...rng.pick(TRACK_ITEMS) };
+  const item: TrackItem = bridge ? { kind: 'bridge', cls: 'branch' } : { ...rng.pick(TRACK_ITEMS) };
   return {
     terrain: bridge ? Terrain.Water : rng.pick(LAND),
     item,
@@ -263,8 +264,8 @@ function* shrinkPrice(c: PriceCase): Iterable<PriceCase> {
   if (c.rot !== 0) yield { ...c, rot: 0 };
   if (c.terrain !== Terrain.Grass && c.terrain !== Terrain.Water)
     yield { ...c, terrain: Terrain.Grass };
-  if (c.item.kind !== 'bridge' && (c.item.kind !== 'straight' || c.item.cls !== 'regular'))
-    yield { ...c, item: { kind: 'straight', cls: 'regular' }, rot: 0 };
+  if (c.item.kind !== 'bridge' && (c.item.kind !== 'straight' || c.item.cls !== 'branch'))
+    yield { ...c, item: { kind: 'straight', cls: 'branch' }, rot: 0 };
 }
 
 /** A multiplier in whole hundredths; any finer value would make the exact oracle below inexact. */
@@ -293,10 +294,10 @@ describe('every biome in the table', () => {
       (c) => {
         Object.assign(rules, DEFAULT_RULES, { buildCostMul: c.buildCost / 100 });
         const map = emptyMap(4242, 12, 12, c.terrain),
-          stock = new Stockpile(),
+          { stores, depot: stock } = storeWith({}, { x: 5, y: 5 }),
           regions = new RegionState(map);
         for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-        const builder = new Builder(map, regions, new TrackGraph(12, 12), new Economy(), stock);
+        const builder = new Builder(map, regions, new TrackGraph(12, 12), electricAge(), stores);
         const list = pieceCost(c.item.kind, c.item.cls, c.item.cls2);
         for (const k of Object.keys(list)) stock.amounts.set(k, 1e6);
         const name = TERRAIN_NAMES[c.terrain],
@@ -324,12 +325,11 @@ describe('every biome in the table', () => {
     function cruise(biome: number, seconds: number) {
       const map = emptyMap(4242, 96, 40, Terrain.Grass),
         track = new TrackGraph(96, 40),
-        stock = new Stockpile(),
-        economy = new Economy();
+        economy = electricAge();
       map.biome.fill(biome);
-      const builder = new Builder(map, new RegionState(map), track, economy, stock);
+      const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
       builder.free = true;
-      const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+      const fleet = new Fleet(track, builder, map, new Inventory(), economy);
       for (let x = 2; x < 94; x++) track.place(x, 20, 'straight', 1);
       const t = new Train([
         { uid: 1, level: 0, def: content.locomotives.find((d) => d.id === 'f7')! },
@@ -349,7 +349,7 @@ describe('every biome in the table', () => {
     const plains = cruise(0, 8);
     // the biome shows in the speed only while the line speed leaves the train its own top speed
     expect(plains.speed).toBeGreaterThan(0);
-    expect(plains.speed).toBeLessThan(lineSpeedCap('regular'));
+    expect(plains.speed).toBeLessThan(lineSpeedCap('branch'));
     expect(plains.speed).toBe(plains.freeSpeed);
     BIOME_DEFS.forEach((d, b) => {
       const there = cruise(b, 8);

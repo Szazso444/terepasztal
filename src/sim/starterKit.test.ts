@@ -7,8 +7,8 @@ import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import { Rng } from '../engine/rng';
 import { content, type LocoDef, type WagonDef } from '../data/content';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
+import { looseStore } from '../testing/storeFixtures';
 import { Fleet } from './fleet';
 import { Train, resetTrainIds } from './trains';
 import {
@@ -26,7 +26,7 @@ import {
   startDepotCentre,
   startDepotKind,
 } from './startDepot';
-import { gaugeOf, vehicleAccess } from './compat';
+import { gaugeLine, gaugeOf, vehicleAccess } from './compat';
 import { vehicleSpec } from './body';
 import { cargoDef } from './cargo';
 import type { TrackClass } from '../world/track';
@@ -39,6 +39,8 @@ import { CRAFT_TIERS, Crafting, craftPool, craftResources } from '../gacha/craft
 import { bannerPool } from '../gacha/gacha';
 import { itemDef, locoDef, wagonDef } from '../gacha/items';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
+import { Store, StoreRegistry } from './stores';
+import { TownRegistry } from './towns';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
@@ -65,31 +67,48 @@ function plenty(): Record<string, number> {
   return out;
 }
 
+/** A store holding `amounts`, with no cap: what a depot's store fills a train from. */
+function pileOf(amounts: Record<string, number>) {
+  const pile = new Store('pile', 'depot', { x: 0, y: 0 }, () => Infinity);
+  for (const [id, n] of Object.entries(amounts)) pile.add(id, n);
+  return pile;
+}
+
 /**
  * A world the way `Game` sets one up for a new game: an inventory seeded with the starters, the
- * recipes of what it holds, and `stock` in the stockpile (plenty of everything unless given).
+ * recipes of what it holds, and `stock` in a loose store (plenty of everything unless given),
+ * which crafting draws on; the first depot's store gets it too (`stocked`): the trains built
+ * there fill their tanks from it.
  */
 function newGame(stock: Record<string, number> = plenty()) {
   const map = emptyMap(4242, 64, 64, Terrain.Grass),
     track = new TrackGraph(64, 64),
-    stockpile = new Stockpile(),
+    store = looseStore(),
     economy = new Economy();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stockpile);
+  const stores = new StoreRegistry();
+  const builder = new Builder(map, regions, track, economy, stores);
+  stores.attach({ builder, towns: new TownRegistry(builder), track });
   builder.free = true;
   const inventory = new Inventory();
   inventory.seedStarter(0);
-  const fleet = new Fleet(track, builder, map, inventory, economy, stockpile);
-  const crafting = new Crafting(new Rng(1), inventory, economy, stockpile);
+  const fleet = new Fleet(track, builder, map, inventory, economy);
+  const crafting = new Crafting(new Rng(1), inventory, economy);
   crafting.grantFromInventory();
-  for (const [id, n] of Object.entries(stock)) stockpile.add(id, n);
-  return { map, track, stock: stockpile, builder, inventory, fleet, crafting };
+  for (const [id, n] of Object.entries(stock)) store.add(id, n);
+  return { map, track, stock: store, supplies: stock, builder, inventory, fleet, crafting };
+}
+/** The depot's store holds the world's stock, put in as given (past its cap); the depot back. */
+function stocked(w: ReturnType<typeof newGame>, depot: Station) {
+  const store = w.builder.stores.byKey(`st:${depot.id}`)!;
+  for (const [id, n] of Object.entries(w.supplies)) store.amounts.set(id, n);
+  return depot;
 }
 /** A narrow depot on a narrow line with two stops beside it. */
 function narrowLine(w: ReturnType<typeof newGame>) {
   const ew = [0, 1].find((r) => makePiece('straight', r, 'narrow').links[0].includes(Dir.E))!;
-  const depot = w.builder.placeStation(20, 20, 'narrow_depot', 0)!;
+  const depot = stocked(w, w.builder.placeStation(20, 20, 'narrow_depot', 0)!);
   for (let x = 19; x <= 50; x++) w.track.place(x, 20, 'straight', ew, 'narrow');
   const near = w.builder.placeStation(28, 21, 'quarry', 0)!;
   const far = w.builder.placeStation(46, 21, 'quarry', 0)!;
@@ -97,9 +116,9 @@ function narrowLine(w: ReturnType<typeof newGame>) {
 }
 /** A regular depot on a regular line with two stops beside it, as an older game built it. */
 function regularLine(w: ReturnType<typeof newGame>) {
-  const ew = [0, 1].find((r) => makePiece('straight', r, 'regular').links[0].includes(Dir.E))!;
-  const depot = w.builder.placeStation(20, 20, 'depot', 0)!;
-  for (let x = 22; x <= 50; x++) w.track.place(x, 20, 'straight', ew, 'regular');
+  const ew = [0, 1].find((r) => makePiece('straight', r, 'branch').links[0].includes(Dir.E))!;
+  const depot = stocked(w, w.builder.placeStation(20, 20, 'depot', 0)!);
+  for (let x = 22; x <= 50; x++) w.track.place(x, 20, 'straight', ew, 'branch');
   const near = w.builder.placeStation(28, 21, 'quarry', 0)!;
   const far = w.builder.placeStation(46, 21, 'quarry', 0)!;
   return { depot, near, far };
@@ -174,8 +193,7 @@ describe('the starter kit of a new game', () => {
         for (const held of stocks)
           for (const def of content.locomotives) {
             const stock = Object.fromEntries(held.map((id) => [id, 100]));
-            const pile = new Stockpile();
-            for (const id of held) pile.add(id, 100);
+            const pile = pileOf(Object.fromEntries(held.map((id) => [id, 100])));
             const train = new Train([{ uid: 1, def, level: 1 }]);
             train.refuel(pile, { fuel: true, water: true });
             const tanks = [
@@ -214,11 +232,11 @@ describe('the starter kit of a new game', () => {
   });
 
   it('knows the recipe of each model it owns and of no other, every one narrow gauge', () => {
-    const { inventory, crafting } = newGame();
+    const { inventory, crafting, stock } = newGame();
     expect([...crafting.recipes].sort()).toEqual(inventory.ownedDefs().sort());
     for (const id of crafting.recipes) {
       expect(gaugeOf(itemDef(id)), id).toBe('narrow');
-      expect(crafting.canCraft(id), id).toBe(true);
+      expect(crafting.canCraft(id, stock), id).toBe(true);
     }
   });
 
@@ -450,12 +468,12 @@ describe('the starter engines of a new game', () => {
   });
 
   it('are all in the recipe draws of the first age and craftable by a new game', () => {
-    const { crafting } = newGame();
+    const { crafting, stock } = newGame();
     const pool = craftPool('loco', 0);
     for (const l of STARTER_LOCOS) {
       expect(pool, l.id).toContain(l.id);
       expect(crafting.knows(l.id), l.id).toBe(true);
-      expect(crafting.canCraft(l.id), l.id).toBe(true);
+      expect(crafting.canCraft(l.id, stock), l.id).toBe(true);
     }
   });
 
@@ -476,14 +494,8 @@ describe('the starter engines of a new game', () => {
   });
 
   describe('as trains', () => {
-    /** A stockpile holding `amounts`. */
-    const pileOf = (amounts: Record<string, number>) => {
-      const pile = new Stockpile();
-      for (const [id, n] of Object.entries(amounts)) pile.add(id, n);
-      return pile;
-    };
     /** A train of this one engine, its tanks filled from `pile` the way a depot fills them. */
-    const filled = (def: LocoDef, pile: Stockpile, uid = 1) => {
+    const filled = (def: LocoDef, pile: Store, uid = 1) => {
       const train = new Train([{ uid, level: 1, def }]);
       train.refuel(pile, { fuel: true, water: true });
       return train;
@@ -616,16 +628,16 @@ describe('the starter engines of a new game', () => {
       const find = draw!.cards.find((id) => newcomers.some((l) => l.id === id) && !offered.has(id));
       if (find) offered.add(find);
       const kept = find ?? draw!.cards[0];
-      expect(w.crafting.choose(kept)?.defId, `draw ${n}`).toBe(kept);
+      expect(w.crafting.choose(kept, w.stock)?.defId, `draw ${n}`).toBe(kept);
     }
     expect([...offered].sort()).toEqual(newcomers.map((l) => l.id).sort());
-    for (const { id } of newcomers) expect(w.crafting.canCraft(id), id).toBe(true);
+    for (const { id } of newcomers) expect(w.crafting.canCraft(id, w.stock), id).toBe(true);
   });
 });
 
 /** Every gate of the depot carries a straight of the depot's gauge that runs into the shed. */
 function expectServed(w: ReturnType<typeof newGame>, depot: Station) {
-  const cls: TrackClass = depot.def.gauge ?? 'regular';
+  const cls = gaugeLine(depot.def.gauge ?? 'regular');
   for (const g of depot.gateTiles()) {
     const p = w.track.get(g.x, g.y);
     expect(p, `gate ${g.x},${g.y}`).toBeDefined();
@@ -646,7 +658,8 @@ describe('the depot a new game starts with', () => {
     const gates = stationGates(defId, 20, 20, rot);
     const depot = grantDepot(w.builder, defId, 20, 20, rot)!;
     expect(depot).not.toBeNull();
-    const cls: TrackClass = depot.def.gauge ?? 'regular';
+    stocked(w, depot);
+    const cls = gaugeLine(depot.def.gauge ?? 'regular');
     return { depot, gates, cls };
   }
 
@@ -751,7 +764,7 @@ describe('the depot a new game starts with', () => {
   it('is a regular depot with regular gate track when an older save gets one on load', () => {
     const w = newGame();
     const { depot, cls } = firstDepot(w, 'depot', 0);
-    expect(cls).toBe('regular');
+    expect(cls).toBe('branch');
     expect(w.fleet.modelDeployReason(locoDef('adler'), depot)).toBeNull();
     expect(w.fleet.modelDeployReason(locoDef('rocket'), depot)).toBe(
       STR.fleet.wrongDepot(depot.name),
@@ -759,7 +772,7 @@ describe('the depot a new game starts with', () => {
   });
 });
 
-/** Is track of class `cls` in the gauge of depot `defId`: narrow, or regular and high speed? */
+/** Is track of line `cls` in the gauge of depot `defId`: Narrow Gauge, or a standard line? */
 const inDepotGauge = (defId: string, cls: TrackClass) =>
   (cls === 'narrow') === (stationDef(defId).gauge === 'narrow');
 
@@ -839,8 +852,8 @@ describe('the site a game is granted its depot on', () => {
   });
 
   it.each([
-    ['narrow_depot', 'regular'],
-    ['narrow_depot', 'high_speed'],
+    ['narrow_depot', 'branch'],
+    ['narrow_depot', 'main'],
     ['depot', 'narrow'],
   ] as const)(
     '%s: a %s straight on a gate of the first site gets the site skipped, and stays as it was',
@@ -868,8 +881,8 @@ describe('the site a game is granted its depot on', () => {
 
   it.each([
     ['narrow_depot', 'narrow'],
-    ['depot', 'regular'],
-    ['depot', 'high_speed'],
+    ['depot', 'branch'],
+    ['depot', 'main'],
   ] as const)(
     '%s: a %s straight already on a gate is kept as it is, and the site is taken',
     (defId, own) => {
@@ -885,13 +898,13 @@ describe('the site a game is granted its depot on', () => {
       const d = ensureStartDepot(w.builder, defId)!;
       expect([d.x, d.y, d.rot]).toEqual([x, y, 0]);
       expect(w.track.get(gate.x, gate.y)).toBe(piece);
-      // every other gate was bare and took the gate straight, of the depot's gauge
-      const gauge = d.def.gauge ?? 'regular';
+      // every other gate was bare and took the gate straight, of the depot's line
+      const line = gaugeLine(d.def.gauge ?? 'regular');
       for (const g of d.gateTiles()) {
         if (g.x === gate.x && g.y === gate.y) continue;
         expect([w.track.get(g.x, g.y)!.kind, w.track.get(g.x, g.y)!.cls]).toEqual([
           'straight',
-          gauge,
+          line,
         ]);
       }
       expect(w.track.pieces.size).toBe(d.gateTiles().length);
@@ -901,7 +914,12 @@ describe('the site a game is granted its depot on', () => {
   it.each(['narrow_depot', 'depot'])(
     '%s: a crossing on a gate counts by the axis that runs into the shed, not by its other axis',
     (defId) => {
-      const mixed = TRACK_ITEMS.filter((i) => i.kind === 'crossing' && i.cls !== i.cls2);
+      // the mixed crossings of the build list, and one of two standard lines laid straight into the
+      // graph (no piece of the list carries Main Line yet)
+      const mixed = [
+        ...TRACK_ITEMS.filter((i) => i.kind === 'crossing' && i.cls !== i.cls2),
+        { kind: 'crossing', cls: 'branch', cls2: 'main' } as const,
+      ];
       // each class pair in both orders: which axis is which is the crossing's turn to settle
       const pairs = mixed.flatMap((i) => [
         [i.cls, i.cls2!],
@@ -950,7 +968,7 @@ describe('the site a game is granted its depot on', () => {
     },
   );
 
-  it.each(['regular', 'high_speed'] as const)(
+  it.each(['branch', 'main'] as const)(
     'narrow_depot: the unused tile of a %s curve on a gate is other-gauge track',
     (cls) => {
       let tried = 0;
@@ -995,7 +1013,7 @@ describe('the site a game is granted its depot on', () => {
   );
 
   it.each([
-    ['narrow_depot', 'regular'],
+    ['narrow_depot', 'branch'],
     ['depot', 'narrow'],
   ] as const)(
     '%s: finds no site when the only one in reach has a %s straight on a gate, and leaves nothing',
@@ -1100,7 +1118,7 @@ describe('a depot granted at any of the four turns', () => {
     /** track already laid: straights of any class, crossings with a class per axis */
     rails: Laid[];
   }
-  const CLASSES: TrackClass[] = ['narrow', 'regular', 'high_speed'];
+  const CLASSES: TrackClass[] = ['narrow', 'branch', 'main'];
   const CROSSINGS = TRACK_ITEMS.filter((i) => i.kind === 'crossing');
   function genSite(rng: Rng): Site {
     const near = (): Near => [rng.int(-2, 3), rng.int(-2, 3)];
@@ -1237,7 +1255,7 @@ describe('a depot granted at any of the four turns', () => {
           if (hadTrack(g)) continue;
           const p = a.track.get(g.x, g.y);
           expect(p?.kind, `gate ${g.x},${g.y}`).toBe('straight');
-          expect(p!.cls, `gate ${g.x},${g.y}`).toBe(da.def.gauge ?? 'regular');
+          expect(p!.cls, `gate ${g.x},${g.y}`).toBe(gaugeLine(da.def.gauge ?? 'regular'));
           const toShed =
             s.rot % 2 === 0 ? (g.x < da.x ? Dir.E : Dir.W) : g.y < da.y ? Dir.S : Dir.N;
           expect(p!.links.flat(), `gate ${g.x},${g.y} runs into the shed`).toContain(toShed);
@@ -1311,7 +1329,7 @@ describe('the engines the kit no longer hands out', () => {
       const find = draw!.cards.find((id) => finds.includes(id) && !offered.has(id));
       if (find) offered.add(find);
       const kept = find ?? draw!.cards[0];
-      expect(w.crafting.choose(kept)?.defId, `draw ${n}`).toBe(kept);
+      expect(w.crafting.choose(kept, w.stock)?.defId, `draw ${n}`).toBe(kept);
       expect(w.crafting.knows(kept), kept).toBe(true);
     }
     expect([...offered].sort()).toEqual([...finds].sort());
@@ -1319,7 +1337,7 @@ describe('the engines the kit no longer hands out', () => {
       const before = w.inventory.count(id);
       let built = 0;
       for (let n = 0; n < 20 && !built; n++) {
-        const r = w.crafting.craft(id, 0);
+        const r = w.crafting.craft(id, w.stock, 0);
         expect(r, id).not.toBeNull();
         if (r!.ok) built++;
       }

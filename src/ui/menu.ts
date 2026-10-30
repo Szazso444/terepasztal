@@ -1,3 +1,4 @@
+import { withAgeIcons } from './ageIcon';
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { LevelData } from '../world/level';
@@ -68,7 +69,7 @@ export function slotLines(meta: SlotMeta, now: number, cls = 'sub'): HTMLElement
 
 /** One `cls` line each of what `slotText` or `continueText` says, the date as the time line's title. */
 function textLines(t: SlotText, cls: string): HTMLElement[] {
-  const lines = [el('div', { class: cls, text: t.detail })];
+  const lines = [el('div', { class: cls }, ...withAgeIcons(t.detail))];
   if (t.saved) lines.push(el('div', { class: cls, text: t.saved, title: t.savedAt ?? '' }));
   if (t.format) lines.push(el('div', { class: cls, text: t.format }));
   return lines;
@@ -139,6 +140,7 @@ export interface MainMenuActions extends SlotActions, AudioActions {
   tuning(): void;
   content(): void;
   settings(): void;
+  credits(): void;
 }
 
 /** Title screen. Overlays the (paused) world. */
@@ -270,6 +272,7 @@ export class MainMenu {
         'menu-btn',
       ),
       btn(STR.topbar.settings, () => this.actions.settings(), 'menu-btn'),
+      btn(STR.menu.credits, () => this.actions.credits(), 'menu-btn'),
       audioRows(this.actions),
       el('div', { class: 'col-title', style: 'margin-top:8px', text: STR.menu.savedGames }),
       slotList(this.actions, this.prompt, () => this.render(save, levels, custom)),

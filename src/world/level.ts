@@ -1,5 +1,5 @@
 import type { GameMap } from './tiles';
-import type { TrackClass, TrackKind } from './track';
+import type { TrackTuple } from './track';
 import { DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import { decorateProps, placeOilFields, emptyMap } from './mapgen';
 
@@ -30,8 +30,8 @@ export interface LevelData {
   variant: string;
   /** base64 biome ids (missing: plains everywhere) */
   biome?: string;
-  track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
-  /** 2: regular curves and switches are 2×2 (missing: an older level with one-tile ones) */
+  track: TrackTuple[];
+  /** 2: wide curves and switches are 2×2 (missing: an older level with one-tile ones) */
   trackFormat?: 2;
   stations: LevelStation[];
   decor: [number, number, string, number][];
@@ -42,7 +42,7 @@ export interface LevelData {
     tickets: number;
     /** age the level starts in (0 steam, 1 diesel, 2 electric) */
     tier: number;
-    /** multiplier on the default starting stockpile (1 = normal) */
+    /** multiplier on the default starting goods (1 = normal) */
     stockMul?: number;
     /** production chain the level is played in (missing: simple) */
     supply?: SupplyMode;

@@ -128,7 +128,7 @@ export class StationPanel {
     b.append(row(STR.station.platforms, `${s.occupants.size} / ${s.platforms}`));
     b.append(row(STR.station.loadRate, STR.station.perSec(s.loadRate)));
     if (!s.def.depot)
-      b.append(row(STR.station.storage, `${Math.floor(s.totalStored())} / ${s.capacity}`));
+      b.append(row(STR.station.storage, `${Math.floor(s.shownStored())} / ${s.capacity}`));
     const bars = el('div', { class: 'bars' });
     for (const c of s.availableCargo()) {
       const v = s.stored(c);

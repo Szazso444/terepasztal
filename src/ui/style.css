@@ -24,6 +24,38 @@
   --text-bright: #fff1d0;
   --text-good: #9cc06a;
   --text-bad: #e0675b;
+  /* track line badges (src/ui/lineBadge.ts): each line's bed colour and the ink of its bars */
+  --line-narrow: #7f8c4d;
+  --line-narrow-sleeper: #4f3a22;
+  --line-narrow-rail: #d8d3c2;
+  --line-branch: #a98a61;
+  --line-branch-sleeper: #4a3320;
+  --line-branch-rail: #efe9da;
+  --line-main: #c9d1d5;
+  --line-main-sleeper: #98a2a8;
+  --line-main-rail: #4a555c;
+  --line-trunk: #32373b;
+  --line-trunk-sleeper: #737b80;
+  --line-trunk-rail: #f0f3f4;
+  --line-trunk-edge: #8f989e;
+  /* rarity: one colour each, for models and contracts alike */
+  --rarity-common: #a3a3a0;
+  --rarity-uncommon: #5ee04f;
+  --rarity-rare: #4f9fff;
+  --rarity-epic: #b96bf5;
+  --rarity-legendary: #ff8c1a;
+  /* a class's icon (src/ui/lineBadge.ts): one look for all, its own apart from the lines' colours */
+  --class-plate: #2b2a24;
+  --class-edge: #6d6a58;
+  --class-ink: #efe6c8;
+  --class-pip: #e0a94a;
+  --class-pip-off: #8a8670;
+  --line-maglev: #93b9c6;
+  --line-maglev-sleeper: #1b3540;
+  --line-maglev-rail: #eef6f8;
+  --line-hyperloop: #a99dc6;
+  --line-hyperloop-sleeper: #282042;
+  --line-hyperloop-rail: #efeaf8;
   --font-title: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif;
   --font-body: Verdana, Tahoma, 'DejaVu Sans', sans-serif;
   --font-mono: 'Lucida Console', Monaco, 'DejaVu Sans Mono', monospace;
@@ -210,6 +242,55 @@ body {
   gap: 4px;
   padding: 0 10px;
 }
+/* day, clock and speed read as one group, the last cell of the bar */
+#topbar .datespeed {
+  gap: 8px;
+  padding-right: 0;
+  border-right: none;
+  box-shadow: none;
+}
+#topbar .datespeed .time {
+  padding: 0 10px 0 4px;
+}
+/* the era widget, just before the date: a term drawn as a cell, not as a link */
+#topbar .tt-term {
+  display: flex;
+  color: inherit;
+  border-bottom: none;
+}
+#topbar .era {
+  gap: 6px;
+}
+#topbar .era-icon {
+  display: flex;
+  color: var(--amber);
+}
+#topbar .era-icon svg {
+  width: 16px;
+  height: 16px;
+}
+#topbar .era-name {
+  font-family: var(--font-title);
+  font-size: 13px;
+  font-weight: bold;
+}
+#topbar .era-bar {
+  width: 44px;
+  height: 7px;
+  background: var(--stone-dark);
+  border: 1px solid var(--border-dark);
+  border-radius: 4px;
+  overflow: hidden;
+}
+#topbar .era-fill {
+  height: 100%;
+  background: var(--amber-dark);
+}
+#topbar .era-pct {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
 #topbar .time .btn {
   padding: 1px 7px;
   min-width: 30px;
@@ -237,6 +318,48 @@ body {
 }
 #topbar .actions .btn.cheat {
   color: var(--text-dim);
+}
+/* the screen buttons give way last, by clipping; the era widget and the date and speed never do */
+#topbar .actions {
+  min-width: 0;
+  overflow: hidden;
+}
+#topbar .datespeed,
+#topbar > .tt-term {
+  flex: none;
+}
+/* short of room (Hud.fit): tighter cells and buttons and no weather text; if still short, compact-2 */
+#topbar.compact .title {
+  padding: 0 6px;
+}
+#topbar.compact .stat {
+  gap: 4px;
+  padding: 0 5px;
+}
+#topbar.compact .btn.small,
+#topbar.compact .actions .btn {
+  padding: 1px 4px;
+}
+#topbar.compact .stat.weather,
+#topbar.compact-2 .era-name {
+  display: none;
+}
+#topbar.compact .datespeed {
+  gap: 5px;
+  padding-right: 0;
+}
+#topbar.compact .datespeed .time {
+  gap: 3px;
+  padding: 0 6px 0 2px;
+}
+#topbar.compact .time .btn {
+  min-width: 26px;
+  padding: 1px 4px;
+}
+#topbar.compact .time .btn.pause {
+  min-width: 32px;
+  padding: 2px 6px;
+  margin-right: 2px;
 }
 
 /* ---- minimap ---- */
@@ -326,9 +449,10 @@ body {
   height: 0;
   pointer-events: none !important;
 }
+/* above the modal screens (70) and the hover cards (80): a label in a screen has its tooltip too */
 .tt {
   position: fixed;
-  z-index: 50;
+  z-index: 85;
   max-width: 300px;
   padding: 5px 9px 7px;
   font-family: var(--font-body);
@@ -367,6 +491,15 @@ body {
 .tt-bad,
 .tt-bad .tt-num {
   color: var(--text-bad);
+}
+/* the one that stands out, such as the current age: the amber of a title */
+.tt-accent,
+.tt-accent .tt-num {
+  color: var(--amber);
+}
+/* a row under the line it belongs to, such as the alternatives of a group */
+.tt-indent {
+  padding-left: 10px;
 }
 .tt-total {
   border-top: 1px solid var(--border-dark);
@@ -924,32 +1057,35 @@ body {
   white-space: nowrap;
 }
 .rarity-N {
-  color: var(--limestone);
+  color: var(--rarity-common);
 }
 .rarity-R {
-  color: #7cc0d8;
+  color: var(--rarity-uncommon);
 }
 .rarity-SR {
-  color: #c99ad8;
+  color: var(--rarity-rare);
 }
 .rarity-SSR {
-  color: var(--amber);
+  color: var(--rarity-epic);
+}
+.rarity-L {
+  color: var(--rarity-legendary);
 }
 /* contract rarities */
 .crarity-common {
-  color: var(--limestone);
+  color: var(--rarity-common);
 }
 .crarity-uncommon {
-  color: #a6c47a;
+  color: var(--rarity-uncommon);
 }
 .crarity-rare {
-  color: #7cc0d8;
+  color: var(--rarity-rare);
 }
 .crarity-epic {
-  color: #c99ad8;
+  color: var(--rarity-epic);
 }
 .crarity-legendary {
-  color: var(--amber);
+  color: var(--rarity-legendary);
   text-shadow: 0 0 6px rgba(255, 200, 80, 0.5);
 }
 input.text {
@@ -1235,11 +1371,17 @@ input.text {
 .gcard.flipped .gcard-front {
   transform: rotateY(0deg);
 }
+.gcard.flipped.rarity-R .gcard-front {
+  border-color: var(--rarity-uncommon);
+}
 .gcard.flipped.rarity-SR .gcard-front {
-  border-color: #c99ad8;
+  border-color: var(--rarity-rare);
+}
+.gcard.flipped.rarity-L .gcard-front {
+  border-color: var(--rarity-legendary);
 }
 .gcard.flipped.rarity-SSR .gcard-front {
-  border-color: var(--amber);
+  border-color: var(--rarity-epic);
   animation: ssr-pulse 1.2s ease-in-out 2;
 }
 @keyframes ssr-pulse {
@@ -1324,11 +1466,17 @@ input.text {
   border: 1px solid var(--border-dark);
   background: var(--stone);
 }
-.craft-recipe.rarity-SSR {
-  border-color: var(--amber-dark);
+.craft-recipe.rarity-R {
+  border-color: var(--rarity-uncommon);
 }
 .craft-recipe.rarity-SR {
-  border-color: #6d5680;
+  border-color: var(--rarity-rare);
+}
+.craft-recipe.rarity-SSR {
+  border-color: var(--rarity-epic);
+}
+.craft-recipe.rarity-L {
+  border-color: var(--rarity-legendary);
 }
 .craft-recipe .body {
   flex: 1;
@@ -1402,11 +1550,17 @@ input.text {
   flex-direction: column;
   gap: 3px;
 }
-.rcard.rarity-SSR {
-  border-color: var(--amber-dark);
+.rcard.rarity-R {
+  border-color: var(--rarity-uncommon);
 }
 .rcard.rarity-SR {
-  border-color: #6d5680;
+  border-color: var(--rarity-rare);
+}
+.rcard.rarity-SSR {
+  border-color: var(--rarity-epic);
+}
+.rcard.rarity-L {
+  border-color: var(--rarity-legendary);
 }
 .rcard-head {
   display: flex;
@@ -1416,7 +1570,6 @@ input.text {
 .rcard-head .name {
   flex: 1;
   font-weight: bold;
-  color: var(--text);
 }
 .rcard {
   color: var(--text);
@@ -1460,6 +1613,19 @@ input.text {
   flex: 0 0 72px;
   object-fit: contain;
   background: var(--border-dark);
+  border: 1px solid var(--border-dark);
+}
+/* the model image (public/assets/portraits): full card width, 3:2, era text below */
+.rcard-body-portrait {
+  flex-direction: column;
+  gap: 4px;
+}
+.rcard-portrait {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  background: #000;
   border: 1px solid var(--border-dark);
 }
 .gacha-featured {
@@ -1776,10 +1942,24 @@ input[type='range'] {
   border-top: none;
   cursor: pointer;
 }
-#resbar .spacer {
-  flex: 1;
+/* the cells shrink and clip before they push the tickets off the right edge */
+#resbar .res-cells {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+/* the store the bar shows; a click steps to the next */
+#resbar .res-store {
+  margin: 0 6px 0 4px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 #resbar .res-right {
+  flex: none;
   display: flex;
   align-items: stretch;
   margin-left: auto;
@@ -1808,35 +1988,29 @@ input[type='range'] {
   font-family: var(--font-mono);
   font-size: 12px;
 }
-#res-card {
-  position: fixed;
-  width: 260px;
-  z-index: 80;
-  pointer-events: none;
-  font-size: 11px;
+#resbar .res-group {
+  display: flex;
+  align-items: center;
 }
-#res-card .kv {
-  font-size: 11px;
+/* a gap between the groups: funds | materials | fuel and power | food | people */
+#resbar .res-sep {
+  width: 10px;
+  flex: none;
 }
-#age-card {
-  position: fixed;
-  width: 280px;
-  z-index: 80;
-  pointer-events: none;
-  font-size: 11px;
+/* each cell is a term (its tooltip links the buildings), drawn as the cell, not as a link */
+/* when the cells would overflow: tighter padding, icon close to its value, narrower separators */
+#resbar.compact .res {
+  gap: 2px;
+  padding: 0 4px;
 }
-#age-card .kv {
-  font-size: 11px;
+#resbar.compact .res-sep {
+  width: 4px;
 }
-#age-card .kv.amber .v {
-  color: var(--amber);
-}
-#age-card .bar-fill.good {
-  background: var(--cyan-dark);
-}
-#topbar .stat.age,
-.funds .stat.age {
-  cursor: help;
+#resbar .tt-term {
+  display: flex;
+  color: inherit;
+  border-bottom: none;
+  cursor: inherit;
 }
 #topbar .stat.toggles .btn.active {
   color: var(--cyan);
@@ -2236,4 +2410,151 @@ table.market td {
 }
 #train-side .panel-title .num {
   margin-left: auto;
+}
+
+/* a track line's badge beside a name (src/ui/lineBadge.ts) */
+.line-badge {
+  display: inline-flex;
+  vertical-align: -2px;
+  line-height: 0;
+  flex: 0 0 auto;
+}
+.tt-label {
+  cursor: help;
+}
+.tt-label > span {
+  display: inline-flex;
+}
+.track-badges {
+  display: inline-flex;
+  gap: 2px;
+}
+/* a vehicle's labels: class, lines, age, rarity */
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 3px 0;
+  flex-wrap: wrap;
+}
+.age-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  background: var(--class-plate);
+  border: 1px solid var(--class-edge);
+  box-sizing: border-box;
+  color: var(--amber);
+}
+.rarity-label {
+  display: inline-flex;
+}
+/* close together: five stars take little more room than a word */
+.rarity-star {
+  font-size: 11px;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+/* an age's icon in a line of text */
+.age-icon {
+  display: inline-flex;
+  vertical-align: -2px;
+  margin: 0 3px 0 1px;
+  color: var(--amber);
+}
+.btn.tb-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.tb-name .line-badge {
+  margin-right: 4px;
+  vertical-align: middle;
+}
+/* ---- credits (stáblista) ---- */
+.credits {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  padding: 8px;
+}
+.credits-roll {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--stone-dark);
+  border: 1px solid var(--border-dark);
+  text-align: center;
+  padding: 0 24px;
+  line-height: 1.5;
+}
+.credits-roll a {
+  color: var(--cyan);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.credits-roll a:hover {
+  text-decoration: underline;
+}
+.credits-spacer {
+  height: 220px;
+}
+.credits-game {
+  font-family: var(--font-title);
+  font-size: 34px;
+  color: var(--text-bright);
+}
+.credits-intro {
+  margin: 6px auto 0;
+  max-width: 560px;
+  color: var(--text-dim);
+}
+.credits-head {
+  font-family: var(--font-title);
+  font-size: 22px;
+  color: var(--amber);
+  margin-top: 64px;
+}
+.credits-note {
+  max-width: 560px;
+  margin: 2px auto 18px;
+  font-size: 11px;
+}
+.credit-entry,
+.credit-group {
+  margin: 0 auto 26px;
+  max-width: 620px;
+}
+.credit-kind {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.credit-title {
+  font-family: var(--font-title);
+  font-size: 18px;
+  color: var(--text-bright);
+}
+.credit-author {
+  color: var(--amber);
+}
+.credit-author-name {
+  font-family: var(--font-title);
+  font-size: 17px;
+  color: var(--amber);
+  margin-bottom: 2px;
+}
+.credit-line,
+.credit-links {
+  font-size: 12px;
+}
+.credits-licences {
+  margin-top: 40px;
+}
+.credits-kind-head {
+  margin: 34px auto 14px;
 }

@@ -7,7 +7,6 @@ import { DESCENT_SPEED } from '../world/railProfile';
 import { Rng } from '../engine/rng';
 import { content } from '../data/content';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { resetStationIds } from './stations';
 import {
@@ -54,6 +53,7 @@ import {
 } from './crossings';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
+import { depotWith, storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -549,7 +549,7 @@ function field(seed = 1) {
     new RegionState(map),
     new TrackGraph(21, 21),
     new Economy(),
-    new Stockpile(),
+    storeWith({}).stores,
   );
   builder.free = true;
   return { map, builder };
@@ -1203,8 +1203,7 @@ const HOUSES: readonly (readonly [number, number])[] = [
  */
 function crossingWorld(loco: string | null, seed: number): { w: SimWorld; train: Train | null } {
   const w = simWorld({ terrain: 'grass', size: SIDE, seed });
-  for (const [k, n] of Object.entries(startStock())) w.stock.add(k, n);
-  station(w, 'depot', 4, ROW);
+  depotWith(w, startStock(), { x: 4, y: ROW });
   line(w, 6, ROW, 60);
   const quarry = station(w, 'quarry', 10, ROW - 1);
   const warehouse = station(w, 'warehouse', 53, ROW - 1);
@@ -1247,17 +1246,16 @@ const waited = (p: Person, b: Person | undefined) =>
   p.x === b.x &&
   p.y === b.y;
 
-/** Play mode with the weather off and Game's storage cap. */
-const playContext = (w: SimWorld): StepContext => ({
+/** Play mode with the weather off. */
+const playContext = (): StepContext => ({
   mode: 'play',
   weather: false,
-  stockCap: (id) => w.stock.cap(id, w.builder.depotCount(), w.builder.plantCount()),
 });
 
 /** Ten game minutes of steps in play mode, the weather off, and what came of them. */
 function tenMinutes(w: SimWorld, train: Train | null) {
   const step = new SimStep(w);
-  const ctx = playContext(w);
+  const ctx = playContext();
   const steps = Math.round(600 / SIM_STEP);
   // how far ahead a run of the train is checked against what the watch allowed it
   const ahead = Math.floor(CROSSING_HORIZON / SIM_STEP);
@@ -1423,6 +1421,11 @@ interface Seen {
  */
 function fleetRun(seed: number, consists: readonly Consist[]) {
   const { w } = crossingWorld(null, seed);
+  // The depot shares the line with the warehouse, so in Simple mode its minerals are the
+  // warehouse's too: the hoppers would always find some to haul. They are meant to roam with
+  // nothing to haul; every step fills their tanks anyway.
+  for (const st of w.stores.all())
+    if (st.kind === 'depot') for (const id of ['stone', 'iron', 'coal']) st.amounts.set(id, 0);
   const stationOf = (id: string) => w.builder.stations.find((s) => s.def.id === id)!.id;
   const stop = (id: number): StopPlan => ({
     ...defaultStop(id),
@@ -1437,7 +1440,7 @@ function fleetRun(seed: number, consists: readonly Consist[]) {
     wagons: c.wagons.map((id) => w.inventory.add(id, 0).uid),
   }));
   const step = new SimStep(w);
-  const ctx = playContext(w);
+  const ctx = playContext();
   const crossings = [...w.builder.roads.crossingKeys()];
   const trains: Train[] = [];
   const seen: Seen[][] = [];
@@ -1552,9 +1555,9 @@ describe('real trains in the step, through every way they stand', () => {
       0,
     ],
     [
-      'an electric engine off the wire with a diesel of twice its pull on standby, running dry',
+      'an electric engine off the wire with a stronger diesel on standby, running dry',
       7,
-      [{ locos: ['kando_v40', 'dda40x'], wagons: ['wood_hopper'], standby: [1], dry: 0 }],
+      [{ locos: ['kando_v40', 'm62'], wagons: ['wood_hopper'], standby: [1], dry: 0 }],
       ['loading', 'moving', 'noPower'],
       0,
     ],
@@ -1644,7 +1647,7 @@ describe('the crossings the step watches', () => {
   it('are read again when a road is laid or taken up, or the track under one', () => {
     const { w, train } = crossingWorld('adler', 4242);
     const step = new SimStep(w);
-    const ctx = playContext(w);
+    const ctx = playContext();
     const once = () => w.clock.run((gdt) => step.run(gdt, ctx));
     // the train under way east from the quarry, a few tiles short of a tile with no road yet
     for (let i = 0; i < 4000 && !(train!.speed > 0.5 && train!.headTile!.x === 22); i++) once();
@@ -1678,7 +1681,7 @@ describe('the crossings the step watches', () => {
     ];
     for (const [why, there] of cases) {
       const { w, train } = crossingWorld('adler', 4242);
-      const ctx = playContext(w);
+      const ctx = playContext();
       const before = new SimStep(w);
       for (let i = 0; i < 4000 && !there(train!); i++) w.clock.run((gdt) => before.run(gdt, ctx));
       expect(there(train!), why).toBe(true);
@@ -1738,17 +1741,18 @@ describe('a train standing at the platform by a level crossing, ten game minutes
   // gap, and the only walker a car may meet there.
   // slow: 12 000 steps of a whole world with a train and some forty walkers
   // seeds where a walker is on the crossing as the train sets off over it: with walks from and to
-  // the doors (#406), adler 4242 and f7 7 have none
+  // the doors (#406), adler 4242 and f7 7 have none; since a house in no town takes nobody in (it
+  // has no town store to eat from, and these houses stand in none), adler 1 and f7 1 have none
   it.each([
-    ['adler', 1],
-    ['f7', 1],
+    ['adler', 7],
+    ['f7', 4],
     ['mav375', 99],
   ] as const)(
     '%s, seed %i: closes exactly as the rule says, walkers cross in front of the standing train, and a car meets only a walker on the crossing before the train had its way over it',
     (loco, seed) => {
       const { w, train } = platformWorld(loco, seed);
       const step = new SimStep(w);
-      const ctx = playContext(w);
+      const ctx = playContext();
       // the crossing as the walkers of the step found it
       const tick = w.people.tick.bind(w.people);
       let found: boolean | null = null;
@@ -1811,7 +1815,7 @@ describe('a train standing at the platform by a level crossing, ten game minutes
       }
       // not vacuous: walkers crossed in front of the train standing at the platform, it set off
       // over the crossing from there again and again, and walkers were on the crossing as it did
-      // (25 to 35 walkers in front, 3 or 4 departures and 1 to 9 walkers on it as it set off, over
+      // (19 to 21 walkers in front, 3 or 4 departures and 1 or 2 walkers on it as it set off, over
       // these three runs)
       expect(out.inFront).toBeGreaterThanOrEqual(15);
       expect(out.setOff).toBeGreaterThanOrEqual(3);
@@ -1851,7 +1855,7 @@ describe('a walker set down by a level crossing', () => {
     (seed) => {
       const { w } = doorWorld('adler', seed);
       const step = new SimStep(w);
-      const ctx = playContext(w);
+      const ctx = playContext();
       const crossings = [...w.builder.roads.crossingKeys()];
       let byDoor = 0;
       for (let i = 0; i < Math.round(600 / SIM_STEP); i++) {
@@ -2749,7 +2753,7 @@ describe('a crossing only trains out of fuel or power hold closed', () => {
 function roundRun(seed: number, head: number, dry: boolean, minutes: number) {
   const { w, train } = crossingWorld('adler', seed);
   const step = new SimStep(w);
-  const ctx = playContext(w);
+  const ctx = playContext();
   const t = train!;
   const tanks = () => {
     t.coal = dry ? 0 : t.coalCap;

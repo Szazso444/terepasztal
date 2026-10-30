@@ -9,7 +9,6 @@ import {
   isUnitKind,
   itemKey,
   rotationCount,
-  transitionRot,
   type TrackClass,
   type TrackItem,
   type TrackPiece,
@@ -21,12 +20,12 @@ import type { Cost } from '../data/content';
 import { Builder, type LinePiece } from './build';
 import { BUILDING_DEFS } from './buildings';
 import { bridgeCapacity } from './bridges';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { resetStationIds } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
 import { forAll, shrinkArray, type ForAllOptions } from '../testing/property';
 import { STR } from '../strings';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
@@ -43,11 +42,11 @@ const BRIDGES = BUILDING_DEFS.filter((d) => d.bridge).map((d) => d.id);
 function world(size = 24) {
   const map = emptyMap(4242, size, size, Terrain.Grass),
     track = new TrackGraph(size, size),
-    stock = new Stockpile(),
+    { stores, depot: stock } = storeWith({}, { x: size / 2, y: size / 2 }),
     economy = new Economy();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, stores);
   for (const k of RES) stock.amounts.set(k, 1000);
   const ground = (x: number, y: number, t: Terrain) => (map.terrain[y * size + x] = t);
   const held = () => RES.map((k) => stock.get(k));
@@ -55,9 +54,9 @@ function world(size = 24) {
 }
 type World = ReturnType<typeof world>;
 
-const STRAIGHT: TrackItem = { kind: 'straight', cls: 'regular' };
+const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
 /** A straight running east-west at (x, y). */
-const ew = (x: number, y: number, cls: TrackClass = 'regular'): LinePiece => ({
+const ew = (x: number, y: number, cls: TrackClass = 'branch'): LinePiece => ({
   kind: 'track',
   x,
   y,
@@ -202,10 +201,9 @@ describe('a line of track', () => {
   it('refuses a line over any other track and removes nothing', () => {
     const others: [TrackItem, number][] = [
       [STRAIGHT, 0],
-      [{ kind: 'straight', cls: 'high_speed' }, 0],
+      [{ kind: 'straight', cls: 'narrow' }, 0],
       [{ kind: 'curve', cls: 'narrow' }, 0],
-      [{ kind: 'crossing', cls: 'regular', cls2: 'regular' }, 0],
-      [{ kind: 'transition', cls: 'regular' }, transitionRot(Dir.E)],
+      [{ kind: 'crossing', cls: 'branch', cls2: 'branch' }, 0],
     ];
     for (const [item, rot] of others) {
       const w = world();
@@ -228,7 +226,7 @@ describe('a line of track', () => {
 
   it('refuses a line through a member of a wide piece', () => {
     const w = world();
-    expect(w.builder.placeTrack(7, 4, { kind: 'curve', cls: 'regular' }, 0)).toBe(true);
+    expect(w.builder.placeTrack(7, 4, { kind: 'curve', cls: 'branch' }, 0)).toBe(true);
     const line = run(4, 9, 5);
     const c = w.builder.checkLine(line);
     const hit = line.findIndex((p) => w.track.has(p.x, p.y));
@@ -248,7 +246,10 @@ describe('a line of track', () => {
       .join(', ');
     const before = snapshot(w);
     const c = w.builder.checkLine(line);
-    expect(c).toMatchObject({ ok: false, reason: STR.build.needResources(missing) });
+    expect(c).toMatchObject({
+      ok: false,
+      reason: STR.build.noStoreInReach(rules.buildReach, missing),
+    });
     expect(c.cost).toEqual(total);
     expect(c.at).toBeUndefined();
     expect(w.builder.placeLine(line)).toBe(false);
@@ -261,23 +262,18 @@ describe('a line of track', () => {
 
   it("judges each piece with the line's earlier pieces standing", () => {
     const w = world();
-    const fast = ew(4, 5, 'high_speed');
-    // alone, the wide straight beside the high-speed one's tile could go
+    const first = ew(4, 5, 'narrow');
+    // alone, the wide straight beside the narrow one's tile could go
     expect(w.builder.checkTrack(5, 5, STRAIGHT, 1).ok).toBe(true);
-    expect(w.builder.checkLine([fast, ew(5, 5)])).toMatchObject({
+    expect(w.builder.checkLine([first, ew(5, 5)])).toMatchObject({
       ok: false,
       at: 1,
-      reason: STR.build.needTransition,
+      reason: STR.build.gaugeBreak,
     });
-    const through: LinePiece = {
-      kind: 'track',
-      x: 5,
-      y: 5,
-      item: { kind: 'transition', cls: 'regular' },
-      rot: transitionRot(Dir.W),
-    };
-    expect(w.builder.checkLine([fast, through, ew(6, 5)]).ok).toBe(true);
-    expect(w.builder.placeLine([fast, through, ew(6, 5)])).toBe(true);
+    // laid in the narrow gauge the line goes down, joined through
+    const narrow = [first, ew(5, 5, 'narrow'), ew(6, 5, 'narrow')];
+    expect(w.builder.checkLine(narrow).ok).toBe(true);
+    expect(w.builder.placeLine(narrow)).toBe(true);
     expect(w.track.connected(4, 5, Dir.E) && w.track.connected(5, 5, Dir.E)).toBe(true);
   });
 
@@ -421,10 +417,10 @@ describe('a bridge line', () => {
       kind: 'track',
       x: 6,
       y: 6,
-      item: { kind: 'curve', cls: 'regular' },
+      item: { kind: 'curve', cls: 'branch' },
       rot: 0,
     };
-    const tiles = footprintOf(6, 6, 'curve', 0, 'regular'),
+    const tiles = footprintOf(6, 6, 'curve', 0, 'branch'),
       decks = tiles.map((t) => platform(t.x, t.y));
     const uneven = new Set(tiles.map((t) => `${t.x},${t.y}`));
     w.builder.groundCheck = (x, y, need) => need === 'straight' || !uneven.has(`${x},${y}`);
@@ -484,7 +480,7 @@ const GROUND = [
   Terrain.Hill,
   Terrain.Rock,
 ];
-const CLASSES: TrackClass[] = ['regular', 'high_speed', 'narrow'];
+const CLASSES: TrackClass[] = ['branch', 'narrow'];
 
 /** A world of W x W tiles, track and platforms already laid, and a line to lay over it. */
 interface Case {
@@ -952,7 +948,12 @@ describe.each(GENERATORS)('lines over seeded %s', (_name, gen, seeds) => {
             );
           if (step.ok) {
             expect(tracked, `${at}: passed over track`).toBe(false);
-            expect(tool, `${at}: the single tool's verdict`).toEqual({ ok: true, cost: step.cost });
+            // paid from the world's one depot, when anything is paid
+            expect(tool, `${at}: the single tool's verdict`).toEqual({
+              ok: true,
+              cost: step.cost,
+              payer: tool.payer && twin.stock.key,
+            });
             expect(single(twin, p), at).toBe(true);
             for (const [k, v] of Object.entries(step.cost)) total[k] = (total[k] ?? 0) + v;
             lays = true;
@@ -976,7 +977,7 @@ describe.each(GENERATORS)('lines over seeded %s', (_name, gen, seeds) => {
           const missing = Object.entries(w.stock.missing(total))
             .map(([k, v]) => `${v} ${k}`)
             .join(', ');
-          expect(check.reason).toBe(STR.build.needResources(missing));
+          expect(check.reason).toBe(STR.build.noStoreInReach(rules.buildReach, missing));
         }
 
         const held = w.held(),
@@ -1050,7 +1051,7 @@ describe.each(GENERATORS)('lines over seeded %s', (_name, gen, seeds) => {
           expect(c).toMatchObject({
             ok: false,
             cost: whole.cost,
-            reason: STR.build.needResources(`1 ${RES[i]}`),
+            reason: STR.build.noStoreInReach(rules.buildReach, `1 ${RES[i]}`),
           });
           expect(c.at).toBeUndefined();
           expect(w.builder.placeLine(s.line)).toBe(false);

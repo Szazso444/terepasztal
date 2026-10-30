@@ -41,6 +41,13 @@ export type LocoType = 'steam' | 'diesel' | 'electric';
 export type VehicleSize = 'tiny' | 'small' | 'medium' | 'large';
 /** Track gauge: narrow stock runs on narrow track only, regular stock never does. */
 export type Gauge = 'regular' | 'narrow';
+/**
+ * Train class: the smallest track line a vehicle runs on (specs/track-classes.md). Corvette on
+ * Narrow Gauge; Frigate, Destroyer and Cruiser on Branch, Main and Trunk Line and every bigger one
+ * of those; Carrier (nuclear trains) like a Cruiser; Hydrofoil on Maglev, Submarine in Hyperloop.
+ */
+export type TrainClass =
+  'corvette' | 'frigate' | 'destroyer' | 'cruiser' | 'carrier' | 'hydrofoil' | 'submarine';
 export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
 /**
  * Bogie sprites under a vehicle: one style for every bogie, or one per body part. A list goes over
@@ -103,12 +110,12 @@ export interface LocoDef {
   maxLateralPlay?: number;
   /** diesel and electric: units of the same control class work in multiple */
   controlClass?: string;
-  /** a high-speed type: needs HV catenary for its top speed */
-  highSpeed?: boolean;
   /** electric: which supply it can draw from */
   collector?: Collector;
-  /** fitted with in-cab signalling equipment (required on high-speed track) */
+  /** fitted with in-cab signalling equipment (runs at in-cab headway where the level has it) */
   inCab?: boolean;
+  /** train class: the smallest line it runs on (missing: Corvette on narrow gauge, else Frigate) */
+  class?: TrainClass;
   /** track gauge (default regular) */
   gauge?: Gauge;
 }
@@ -139,6 +146,8 @@ export interface WagonDef {
   service?: 'coal' | 'fuel' | 'battery';
   /** refuelling wagons: units of that fuel (or power) the cart adds to the consist's tanks */
   serviceCap?: number;
+  /** train class: the smallest line it runs on (missing: Corvette on narrow gauge, else Frigate) */
+  class?: TrainClass;
   /** track gauge (default regular) */
   gauge?: Gauge;
 }
@@ -205,7 +214,7 @@ export interface StationDef {
   needsWater?: boolean;
   /** local store: holds anything trains bring, per level */
   stockpile?: boolean;
-  /** deliveries here enter the player's stockpile (depots) */
+  /** deliveries here enter the depot's store */
   pool?: boolean;
   /** engine shed: trains are built here; limited by owned chunks; two gates on two sides */
   depot?: boolean;
@@ -415,7 +424,7 @@ export interface TrackConfig {
     /** consumption cut per matching refuelling cart, and the most the carts cut together */
     cartSaving: number;
     cartSavingCap: number;
-    /** power units a battery cart takes from the stockpile per tile on live track */
+    /** power units a battery cart takes from its store per tile on live track */
     batteryChargePerTile: number;
   };
 }
@@ -424,7 +433,7 @@ export type CraftRarity = Rarity | 'L';
 export type CraftKind = 'loco' | 'wagon';
 /**
  * Crafting: recipes are unlocked with money (three cards per draw, keep one), instances are built
- * from stockpile resources with a rarity-dependent failure chance.
+ * from stored resources with a rarity-dependent failure chance.
  */
 export interface CraftingConfig {
   /** money per age (0 steam, 1 diesel, 2 electric), per vehicle kind */

@@ -10,6 +10,7 @@ import type { Vec2 } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { forAll } from '../testing/property';
 import {
+  BUILDABLE_CLASSES,
   CLASS_N,
   TRACK_CLASSES,
   TRACK_ITEMS,
@@ -44,12 +45,12 @@ const LENGTHS: Record<string, number> = {
 /** Every class's step, and the step of a small icon of a 2x2 piece (scale 1/2). */
 const STEPS: Record<string, number> = {
   ...Object.fromEntries(TRACK_CLASSES.map((cls) => [`${cls} step`, sleeperStep(cls)])),
-  'icon of a 2x2 piece': sleeperStep('regular', 1 / 2),
+  'icon of a 2x2 piece': sleeperStep('branch', 1 / 2),
 };
 
 /**
  * The sleepers of one run of track: its class, its length and the distance of each sleeper along
- * it. A run is a rail line as a whole, so the transition's two drawn halves are one run.
+ * it. A run is a rail line as a whole, even when it is drawn in parts.
  */
 interface Run {
   name: string;
@@ -147,7 +148,7 @@ describe('sleeperLayout', () => {
 
   it('puts the narrow gauge straight on 9 sleepers a tile, not 8.7', () => {
     expect(sleeperLayout(1, sleeperStep('narrow')).count).toBe(9);
-    expect(sleeperLayout(1, sleeperStep('regular')).count).toBe(7);
+    expect(sleeperLayout(1, sleeperStep('branch')).count).toBe(7);
   });
 
   it('keeps a run shorter than half a step to one sleeper, and an empty run to none', () => {
@@ -313,7 +314,7 @@ describe('the sleepers of every track piece', () => {
 
   it('covers every piece, class and rotation', () => {
     expect(runs.length).toBeGreaterThanOrEqual(TRACK_ITEMS.length);
-    for (const cls of TRACK_CLASSES) expect(runs.some((r) => r.cls === cls)).toBe(true);
+    for (const cls of BUILDABLE_CLASSES) expect(runs.some((r) => r.cls === cls)).toBe(true);
   });
 
   it('are evenly spaced along each rail line, half a pitch in from both ends', () => {
@@ -325,45 +326,11 @@ describe('the sleepers of every track piece', () => {
       }
     }
   });
-
-  it('lay the transition as one run over both halves, with no tight pair in the middle', () => {
-    const it = TRACK_ITEMS.find((i) => i.kind === 'transition')!;
-    for (let rotation = 0; rotation < rotationCount('transition'); rotation++) {
-      const paths = tilePaths(it, rotation);
-      expect(paths.map((p) => p.cls)).toEqual(['regular', 'high_speed']);
-      const [run] = runsOf('transition', paths);
-      const whole = sleeperPositions(run.length, sleeperStep('regular'));
-      // every sleeper of the run is drawn once, on the half it falls on
-      expect(run.at).toHaveLength(whole.length);
-      run.at.forEach((d, i) => expect(d).toBeCloseTo(whole[i], 9));
-      const { pitch } = sleeperLayout(run.length, sleeperStep('regular'));
-      for (let i = 1; i < run.at.length; i++)
-        expect(run.at[i] - run.at[i - 1]).toBeGreaterThan(pitch * 0.95);
-      // each half holds the sleepers that lie on it, in its own distances
-      const half = polylineLength(paths[0].points);
-      const parts = paths.map((p) => railSleepers(p));
-      expect(parts[0].every((d) => d < half)).toBe(true);
-      expect(parts[1].every((d) => d >= 0 && d <= polylineLength(paths[1].points) + EPS)).toBe(
-        true,
-      );
-      expect(parts[0].length + parts[1].length).toBe(whole.length);
-      // across the seam the two halves leave exactly one pitch, as inside either of them
-      expect(half - parts[0][parts[0].length - 1] + parts[1][0]).toBeCloseTo(pitch, 9);
-    }
-  });
-
-  it('take the spacing of the run, not of the class a part of it is drawn in', () => {
-    const it = TRACK_ITEMS.find((i) => i.kind === 'transition')!;
-    const paths = tilePaths(it, 0);
-    const length = paths[0].run!.length;
-    for (const path of paths) expect(path.run?.length).toBe(length);
-    expect(paths[0].run?.cls).toBe(paths[1].run?.cls);
-  });
 });
 
 describe('the join of two track pieces', () => {
   const runs = everyRun();
-  /** Regular and high speed join through a transition; narrow joins only narrow. */
+  /** The standard lines join each other; narrow joins only narrow. */
   const gauge = (cls: TrackClass) => (cls === 'narrow' ? 'narrow' : 'wide');
 
   it('leaves one pitch between the sleepers either side, within 5%, for any two pieces of a gauge', () => {
@@ -387,7 +354,7 @@ describe('the join of two track pieces', () => {
   });
 
   it('keeps one pitch along a line of straights, whichever the class', () => {
-    for (const cls of TRACK_CLASSES) {
+    for (const cls of BUILDABLE_CLASSES) {
       const it = TRACK_ITEMS.find((i) => i.kind === 'straight' && i.cls === cls)!;
       const [run] = runsOf(cls, tilePaths(it, 0));
       const pitch = run.length / run.at.length;

@@ -25,14 +25,13 @@ export const STR = {
     /** the prompt that ends the loading: the click starts the fade, the reveal and the music */
     begin: 'Click to begin',
     tips: [
-      'Only cargo unloaded at a Depot reaches your stockpile.',
       'Crews eat wheat every day. Run out and production halves and trains slow.',
       'Space pauses the game, and 1, 2 and 3 set the speed.',
       'M switches between the field view and the overview map.',
       'R rotates what you are placing, and Esc cancels it.',
       'WASD, the arrow keys or a middle-button drag move the camera, and the wheel zooms.',
       'Name a town when you place its station. You can rename it any time.',
-      'Hover Age in the top bar to see what the next age asks for.',
+      'Hover the age beside the date to see what the next age asks for.',
       'A train never starts a leg it could not finish and still reach fuel from.',
       'Single track is handed out in whole sections, so trains never meet head-on inside one.',
     ],
@@ -41,13 +40,19 @@ export const STR = {
     money: 'Funds',
     weather: (season: string, weather: string) => `${season} · ${weather}`,
     tickets: 'Tickets',
-    age: 'Age',
+    /** the era widget's progress toward the next age, a whole percent */
+    agePercent: (pct: number) => `${pct}%`,
     day: (d: number) => `Day ${d}`,
-    speed: ['❚❚', '1x', '2x', '3x'],
+    /** by `SPEEDS` index; the buttons show them in `SPEED_ORDER` */
+    speed: ['❚❚', '1x', '2x', '3x', '½x'],
+    /** a speed button's tooltip: its label and the keys that set it */
+    speedKey: (label: string, key: string) => `${label} speed (${key})`,
     pause: 'Pause (Space)',
     resume: 'Resume (Space)',
     weatherToggle: 'Weather',
     weatherToggleHint: 'Toggle rain, fog and seasons',
+    /** the same, in a narrow top bar: the season and weather it no longer shows come first */
+    weatherToggleHintNow: (now: string) => `${now}\nToggle rain, fog and seasons`,
     dayToggle: 'Day/night',
     dayToggleHint: 'Toggle the day and night cycle',
     ageUp: (t: number) =>
@@ -328,18 +333,31 @@ export const STR = {
     needWaterside: 'Must stand next to water',
     needTerrain: (t: string) => `Must stand on ${t}`,
     sameSupply: 'Already electrified this way',
-    needTransition: 'Different track classes join through a transition piece',
-    gaugeBreak: 'Narrow and wide gauge do not join: cross them with a crossing piece',
+    gaugeBreak: 'Narrow Gauge does not join the standard lines: cross them with a crossing piece',
     narrowLocked: 'Narrow gauge is not unlocked yet',
+    /** a dragged run meets a curve or a switch: no crossing piece meets a line at an angle */
+    crossAngle: 'Lines cross only at right angles',
+    crossBridge: 'No crossing on a bridge: lines cross off the water',
+    /** a straight over the very crossing or straight it would lay */
+    standsAlready: 'Already laid here',
+    /** a dragged run meets a line of a class it has no crossing piece with */
+    crossApart: (run: string, line: string) =>
+      `${run} track cannot cross ${line} track: it needs a bridge or an underpass`,
+    /** crossings a dragged run lays by itself where it meets a line at right angles */
+    autoCrossings: (n: number) =>
+      `+${n} crossing${n === 1 ? '' : 's'}, laid automatically, turned to the run`,
     reclassCost: (what: string, cost: string) => `${what}: ${cost}`,
     reclassFree: (what: string) => `${what}: free`,
     reclassIdle: (what: string) => `${what}: click a piece or drag along the line`,
-    reclassBarred: (barred: number, total: number) =>
-      `${barred} of ${total} train${total === 1 ? ' has' : 's have'} no in-cab signalling and cannot run on high-speed track`,
+    reclassSize: (line: string, need: number, n: number) =>
+      `${line} curves and switches are ${need}×${need}, this one is ${n}×${n}: lay it again with Track`,
+    reclassLeft: (what: string, n: number) =>
+      `${what}: ${n === 1 ? 'one piece' : `${n} pieces`} left as ${n === 1 ? 'it was' : 'they were'} (red)`,
     reclass: {
-      narrow: 'Narrow track cannot be converted: its curves are a different size',
+      separate: 'Only Branch, Main and Trunk Line convert into each other',
+      size: 'This curve or switch is too small or too big for that line: lay it again',
+      noLine: 'No line to convert to that way',
       nothing: 'Nothing to convert here',
-      blocked: 'No straight beside this piece to carry the transition: lay one first',
     } as Record<string, string>,
     bridgeOnWater: 'Bridges only span water',
     occupied: 'Tile occupied',
@@ -390,12 +408,11 @@ export const STR = {
     roadOnBridge: 'A road on the bridge',
     /**
      * A road and track on one tile make a level crossing: the road crosses a plain straight of
-     * regular or narrow track at right angles (src/sim/roads.ts), whichever of the two is laid
+     * a line with level crossings at right angles (src/sim/roads.ts), whichever of the two is laid
      * second.
      */
-    crossingStraight:
-      'A road crosses only plain straight track: no curve, switch, crossing or transition',
-    crossingHighSpeed: 'No level crossings on high-speed track',
+    crossingStraight: 'A road crosses only plain straight track: no curve, switch or crossing',
+    crossingLine: 'No level crossings on this line',
     crossingAlong: 'A road crosses track at right angles, never along it',
     /** the road tool's drag (#328): how many tiles its release lays, and `cost` (`fmtCost`) */
     roadLine: (tiles: number, cost: string) =>
@@ -404,6 +421,11 @@ export const STR = {
     roadNotLaid: (tiles: number, reasons: readonly string[]) =>
       `${tiles} ${tiles === 1 ? 'tile' : 'tiles'} not laid: ${reasons.join(' · ')}`,
     needResources: (m: string) => `Need ${m}`,
+    /** building: no store within the reach holds the cost; `missing` is the nearest one's shortfall */
+    noStoreInReach: (range: number, missing: string) =>
+      `No store within ${range} tiles holds ${missing}`,
+    /** the build card: the store that pays for the work on the hovered tile (`Builder.payerAt`) */
+    paidFrom: (label: string) => `Paid from ${label}`,
     replace: (what: string, net: string) => `Replace ${what}: net ${net}`,
     levelOpens: (level: number, age: string) => `Level ${level} opens in the ${age}`,
     upgradingNow: 'Already being upgraded',
@@ -412,6 +434,11 @@ export const STR = {
     free: 'free',
     rotate: 'R: rotate',
     dragHint: 'drag to lay a line',
+    /** a dragged run's straights, its crossings and curves told apart */
+    runPieces: (n: number, kind: string) => `${n} x ${kind}`,
+    runCurves: (n: number) => `+${n} curve${n === 1 ? '' : 's'}`,
+    /** while a drag turns: R swaps which leg runs first */
+    dragTurn: 'R: turn at the other corner',
   },
   toolbar: {
     track: 'Track',
@@ -425,9 +452,9 @@ export const STR = {
     upgrade: 'Upgrade',
     downgrade: 'Downgrade',
     upgradeHint:
-      'Wide track to high speed: click a piece or drag along the line. Costs the difference. Trains need in-cab signalling to run on it. (U)',
+      'Raises track one line: Branch to Main, Main to Trunk. Click a piece or drag along the line. Costs the difference. (U)',
     downgradeHint:
-      'High-speed track back to wide: click a piece or drag along the line. Free. (Shift+U)',
+      'Lowers track one line: Trunk to Main, Main to Branch. Click a piece or drag along the line. Free. (Shift+U)',
     select: 'Select',
     /** the toolbar category of roads, and the road tool in it (#328) */
     roads: 'Roads',
@@ -435,7 +462,7 @@ export const STR = {
     roadDesc:
       'Walkers prefer roads and go faster along them. A street door near a road is joined to it for free. Drag to lay a run.',
     cycleHint: '1-9 or Tab: switch item · Esc: close',
-    typeHint: '1-5: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',
+    typeHint: '1-6: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',
     bridges: 'Bridges',
     bridgeDesc: (capacity: number, flavor: string) => `${capacity} t capacity. ${flavor}`,
     place: {
@@ -460,43 +487,56 @@ export const STR = {
         'On track or any free tile. Poles link within 2 tiles of each other and of a Power Plant; rails within 1 tile of a live pole are powered.',
       building: 'On a free grass, forest, sand or level hill tile.',
       works:
-        'On a free grass, forest, sand or level hill tile. Runs from the stockpile; no track needed.',
+        'On a free grass, forest, sand or level hill tile. Runs from the nearest store; no track needed.',
       deposit: (k: string) =>
-        `Only on a tile with a ${k} deposit (marked on the map). Runs from the stockpile; no track needed.`,
+        `Only on a tile with a ${k} deposit (marked on the map). Runs from the nearest store; no track needed.`,
       plant:
         'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
-      road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight wide or narrow track at right angles, as a level crossing; never high-speed track.',
+      road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight Narrow Gauge, Branch or Main Line track at right angles, as a level crossing; never Trunk Line.',
     },
     trackDesc: {
-      straight_regular: 'Plain rail. Drag to lay a run of straights.',
-      curve_regular:
+      straight_branch: 'Branch Line straight. Drag to lay a run of straights.',
+      curve_branch:
         'Two by two tiles, radius one and a half: room for long trains to turn. The inner corner tile is blocked. R rotates.',
-      switch_regular:
+      switch_branch:
         'Two by two tiles: one line splits into two. Lay a straight beside its far end and the branch bends into a parallel track. R rotates through both handings.',
-      crossing_regular_regular: 'Two wide lines cross without connecting.',
-      bridge_regular: 'Spans one tile of water. Only on water.',
-      transition_regular:
-        'Joins wide and high-speed track. Wide-track speed applies on the piece itself.',
-      straight_high_speed: 'High-speed straight: no speed limit. Drag to lay a run.',
-      curve_high_speed:
-        'Two by two tiles, radius one and a half, no speed limit. The inner corner tile is blocked. R rotates.',
-      switch_high_speed:
-        'Two by two tiles: a high-speed straight with a wide diverging arc that bends into a parallel track beside a straight. R rotates through both handings.',
-      crossing_regular_high_speed:
-        'A wide line crosses a high-speed line at grade. R swaps which line runs which way.',
-      crossing_high_speed_high_speed: 'Two high-speed lines cross at grade.',
-      bridge_high_speed: 'High-speed span over one tile of water.',
-      straight_narrow: 'Narrow-gauge straight. Only narrow trains run on it. Drag to lay a run.',
-      curve_narrow: 'Narrow-gauge quarter turn on one tile: for tight spaces. R rotates.',
-      switch_narrow: 'Narrow-gauge switch on one tile. R rotates through both handings.',
-      crossing_narrow_narrow: 'Two narrow lines cross at grade.',
-      crossing_narrow_regular:
-        'A narrow line crosses a wide line at grade. R swaps which line runs which way.',
+      crossing_branch_branch: 'Two Branch Lines cross without connecting.',
+      bridge_branch: 'Spans one tile of water. Only on water.',
+      straight_narrow: 'Narrow Gauge straight. Only narrow trains run on it. Drag to lay a run.',
+      curve_narrow: 'Narrow Gauge quarter turn on one tile: for tight spaces. R rotates.',
+      switch_narrow: 'Narrow Gauge switch on one tile. R rotates through both handings.',
+      crossing_narrow_narrow: 'Two Narrow Gauge lines cross at grade.',
+      crossing_narrow_branch:
+        'A Narrow Gauge line crosses a Branch Line at grade without joining it. R swaps which line runs which way.',
+      straight_main:
+        'Main Line straight: concrete sleepers on a wide bed, for Destroyers and smaller. Joins Branch and Trunk Line directly. Drag to lay a run.',
+      curve_main:
+        'Three by three tiles, radius two and a half: long trains take it faster. The inner tiles are blocked. R rotates.',
+      switch_main:
+        'Three by three tiles: a Main Line splits into two. Lay a straight beside its far end and the branch bends into a parallel track. R rotates through both handings.',
+      crossing_main_main: 'Two Main Lines cross without connecting.',
+      crossing_branch_main:
+        'A Branch Line crosses a Main Line without connecting. R swaps which line runs which way.',
+      straight_trunk:
+        'Trunk Line straight: heavy rail on wide concrete sleepers and dark basalt, for every class. Joins Branch and Main Line directly. Drag to lay a run.',
+      curve_trunk:
+        'Four by four tiles, radius three and a half: room for the longest trains. The inner tiles are blocked. R rotates.',
+      switch_trunk:
+        'Four by four tiles: a Trunk Line splits into two. Lay a straight beside its far end and the branch bends into a parallel track. R rotates through both handings.',
+      crossing_trunk_trunk: 'Two Trunk Lines cross without connecting.',
+      crossing_branch_trunk:
+        'A Branch Line crosses a Trunk Line without connecting. R swaps which line runs which way.',
+      crossing_main_trunk:
+        'A Main Line crosses a Trunk Line without connecting. R swaps which line runs which way.',
     } as Record<string, string>,
-    trackClass: { regular: 'Wide', high_speed: 'High-speed', narrow: 'Narrow' } as Record<
-      string,
-      string
-    >,
+    trackClass: {
+      narrow: 'Narrow Gauge',
+      branch: 'Branch Line',
+      main: 'Main Line',
+      trunk: 'Trunk Line',
+      maglev: 'Maglev Guideway',
+      hyperloop: 'Hyperloop Tube',
+    } as Record<string, string>,
     supply: {
       third_rail: 'Third rail',
       catenary: 'Catenary',
@@ -521,9 +561,9 @@ export const STR = {
     progress: 'Batch progress',
     crew: 'Crew',
     made: 'Produced so far',
-    inStock: (n: string) => `${n} in stockpile`,
+    inStock: (n: string) => `${n} in store`,
     running: 'Running',
-    full: 'Stopped: stockpile full',
+    full: 'Stopped: store full',
     starved: (n: string) => `Waiting for ${n}`,
     /**
      * The same status for the works tooltip, which shows the resource as an icon with its name
@@ -578,7 +618,8 @@ export const STR = {
     orphaned: (n: string) => `${n}: no platform track`,
     unwired: (n: string) => `${n}: no power line connected`,
     starved: (n: string, r: string) => `${n}: waiting for ${r}`,
-    full: (n: string) => `${n}: stockpile full, output stopped`,
+    noStore: (n: string, range: number) => `${n}: no store within ${range} tiles`,
+    full: (n: string) => `${n}: store full, output stopped`,
     contractFailed: (n: string) => `Contract failed: ${n}`,
     contractDone: (n: string) => `Contract completed: ${n}`,
     contractNoTrain: (n: string) => `No train can work "${n}": wrong wagons, no rails or no range`,
@@ -602,12 +643,12 @@ export const STR = {
         'Open the Depot (F), pick the locomotive and wagons and press Dispatch. The route is automatic.',
       idleStock: (n: number) =>
         `${n} locomotive(s) sit idle in the depot. Dispatch them to earn more.`,
-      lowWheat:
-        'Food is running low. Bring wheat from a farm to the depot and build a Windmill, or buy food on the Market (K).',
+      lowWheat: (store: string) =>
+        `Food is running low at ${store}. Bring wheat from a farm and build a Windmill, or buy food on the Market (K).`,
       famine:
         'The crews need food: production halved. Supply a Windmill or buy food on the Market (K).',
       outOfFuel: (n: string) =>
-        `${n} is out of fuel. Fill the stockpile (Market K, a kiln or a lumber yard for wood) or use Emergency refuel in the train details.`,
+        `${n} is out of fuel. Fill the store (Market K, a kiln or a lumber yard for wood) or use Emergency refuel in the train details.`,
       lowCoal:
         'Coal is short. Build a Charcoal Kiln (Works) to turn wood into coal, or buy coal on the Market.',
       noWater:
@@ -621,8 +662,8 @@ export const STR = {
       offers: (n: number) => `${n} contract offer(s) are waiting on the Contract Board (C).`,
       failed: (n: string) =>
         `Contract "${n}" failed. Accept only contracts your trains already pass through, and watch the deadline.`,
-      capFull: (r: string) =>
-        `The stockpile is full of ${r}. A second depot raises the cap; warehouses hold goods locally; or sell on the Market.`,
+      capFull: (r: string, store: string) =>
+        `${store} is full of ${r}. A Warehouse raises a town's cap and holds goods of its own; or sell on the Market.`,
       blocked: (n: string) =>
         `${n} is stuck behind another train. Add a passing loop with switches or a second track.`,
     },
@@ -687,7 +728,7 @@ export const STR = {
       contract:
         'Dynamic: works contracts. Waits on its platform until a contract it can carry is accepted, is chosen for it ahead of busier trains, runs it origin to destination and returns to waiting. Refuels on its own.',
       freight:
-        'Dynamic: heads for the producer or warehouse with the fullest, biggest pile within reach (a warehouse only once it holds the pickup pile set in Game tuning), then tops up at another producer while room is left. Takes producer goods to the nearest warehouse with room, or to a depot when that is clearly nearer, and goods taken from a warehouse to a depot (to another warehouse only when no depot is reachable). Takes nothing out of a warehouse it has just put goods into. Re-plans at every stop and refuels on its own.',
+        'Dynamic: heads for the producer with the fullest, biggest pile within reach, then tops up at another producer while room is left, and takes the goods to the nearest store with room: a depot, a warehouse or a Townhouse. Never takes goods out of a store, and a producer in a town puts its goods into the town store itself. Re-plans at every stop and refuels on its own.',
     } as Record<string, string>,
     dynamicTag: 'dynamic',
     routeAutoHint:
@@ -727,7 +768,6 @@ export const STR = {
     scheduleHint: 'Stops, loading and departure direction are edited in the train details.',
     scheduleLiveHint:
       'Changes apply at once. Each stop: what to load and unload, wait for full wagons, refuel, and which way to leave.',
-    stockpileTag: 'stockpile',
     fuelTag: 'refuel',
     waterTag: 'water',
     opt: {
@@ -880,7 +920,8 @@ export const STR = {
     failedNothing: (name: string) => `${name} failed on the bench; the materials are lost`,
     stats: (recipes: number, crafts: number, failures: number) =>
       `${recipes} recipes · ${crafts} built · ${failures} failed`,
-    resources: 'Stockpile',
+    /** the workshop's foot: the materials of the selected store, named */
+    resources: (label: string) => `Materials at ${label}`,
     filterLabel: 'Vehicle type',
     filter: {
       all: 'All railcraft',
@@ -920,7 +961,7 @@ export const STR = {
     hint: 'Rotating isometric preview · drag to turn',
   },
   roster: {
-    help: 'Everything you own. Filter and sort; a spare copy can level a model; locomotives without in-cab signalling can be fitted with it here, which high-speed track requires. Trains are put together in the Depot.',
+    help: 'Everything you own. Filter and sort; a spare copy can level a model; locomotives without in-cab signalling can be fitted with it here, for the in-cab signalling level. Trains are put together in the Depot.',
     sizeLabel: 'Size',
     sizes: { tiny: 'Tiny', small: 'Small', medium: 'Medium', large: 'Large' } as Record<
       string,
@@ -928,7 +969,7 @@ export const STR = {
     >,
     fitInCab: (cost: number) => `Fit in-cab signalling ($${cost.toLocaleString()})`,
     fitInCabHint:
-      'High-speed lines have no lineside signals: only equipped locomotives are given authority to run on them.',
+      'Where the line is worked by in-cab signalling, an equipped locomotive may follow closer behind the train ahead.',
     fitted: (n: string) => `${n} fitted with in-cab signalling`,
     hasInCab: 'in-cab signalling fitted',
     alreadyFitted: 'Already fitted with in-cab signalling',
@@ -1154,6 +1195,7 @@ export const STR = {
     newGame: 'New game',
     tuning: 'Game tuning',
     content: 'Content editor',
+    credits: 'Credits',
     modified: '(modified)',
     levels: 'Levels',
     noLevels: 'No saved levels yet. Create one below or import a level.',
@@ -1206,9 +1248,22 @@ export const STR = {
     supplyModes: { simple: 'Simple', full: 'Full' } as Record<string, string>,
     supplyHint: {
       simple:
-        'Kiln, grinder and refinery make coal, iron and oil from the stockpile; diesels burn oil; warehouses top up fuel from the stockpile.',
+        'Kiln, grinder and refinery make coal, iron and oil from stored goods; diesels burn oil; the stores on one rail network share their goods.',
       full: 'Collieries on coal seams, iron and copper mines, ironworks, oil derricks on seeps, a refinery making diesel, sand for grip and copper wire. Warehouses refuel only from what trains bring.',
     } as Record<string, string>,
+  },
+  credits: {
+    title: 'Credits',
+    intro: 'Terepasztal is built with the work of these creators. Thank you!',
+    required: 'Used under a licence that asks for credit',
+    requiredNote:
+      "Changes: each model was cleaned up, scaled, repainted where needed and rendered into the game's sprites.",
+    thanks: 'With thanks',
+    thanksNote: 'These licences ask for no credit; their creators are listed here with our thanks.',
+    by: (author: string) => `by ${author}`,
+    usedFor: (names: string) => `In the game: ${names}`,
+    source: 'Source',
+    licence: 'Licence',
   },
   prompt: {
     ok: 'OK',
@@ -1326,7 +1381,7 @@ export const STR = {
     water: 'Water',
     oil: 'Oil',
     power: 'Power',
-    stockPower: (n: number) => `${n} in the battery`,
+    stockPower: (n: number) => `${n} on the grid`,
     battery: 'Battery carts',
     effort: 'Tractive effort',
     mass: 'Mass',
@@ -1340,6 +1395,8 @@ export const STR = {
     tiles: 'tiles',
     prefer: 'Steam fuel:',
     routing: 'Routing',
+    /** the crew owes more than a day of food (`Train.hungry`) */
+    hungry: 'Crew hungry: runs slower until it reaches a store with food',
     clickHint: 'Click to select',
     /** the train tooltip's state and the station the train heads for */
     toward: '{state} → {station}',
@@ -1355,7 +1412,7 @@ export const STR = {
       transport: 'Dynamic: passengers between Stations.',
       contract: 'Dynamic: carries accepted contracts from origin to destination.',
       freight:
-        'Dynamic: fullest producer or warehouse first (a warehouse once it holds the pickup pile set in Game tuning), tops up at another producer while room is left. Producer goods go to the nearest warehouse with room or a depot, warehouse goods to a depot, and nothing is taken back out of a warehouse it just filled. Re-plans at every stop and refuels on its own.',
+        'Dynamic: fullest producer first, tops up at another producer while room is left. The goods go to the nearest store with room (depot, warehouse or Townhouse); nothing is taken out of a store. Re-plans at every stop and refuels on its own.',
     } as Record<string, string>,
     coal: 'Coal',
     wood: 'Wood',
@@ -1369,28 +1426,35 @@ export const STR = {
     delivered: 'Delivered',
     income: 'Income',
     emergency: 'Emergency refuel (2x cost)',
-    emergencyHint: 'Fills the tanks from the stockpile at double cost, wherever the train is.',
+    emergencyHint:
+      "Fills the tanks at double cost from the store in reach of the train: its town's, or the " +
+      'nearest one within building reach. Its crew pays what it owes there.',
     emergencyDone: (s: string) => `Delivered by road: ${s}`,
-    emergencyNone: 'Nothing in the stockpile to send',
+    emergencyNone: 'Nothing to send in the store in reach',
+    emergencyNoStore: 'No store in reach of the train to send from',
   },
   market: {
     title: 'Market',
     resource: 'Resource',
-    have: 'Stockpile',
+    have: 'In store',
     buyPrice: 'Buy',
     sellPrice: 'Sell',
     buy: 'Buy',
     sell: 'Sell',
-    full: 'Stockpile is full',
+    full: 'The store is full',
     nothingToBuy: 'Nothing to buy',
-    nothingToSell: 'None in the stockpile to sell',
+    nothingToSell: 'None in the store to sell',
+    /** the market's head: the store it buys into and sells from (the selected one) */
+    store: (label: string) => `Trading at ${label}. Pick another store on the top bar.`,
+    /** the store the standing deals settle with (`TradeDesk.storeKey`) */
+    dealsAt: (label: string) => `Deals settle at ${label}`,
     trend: 'Trend',
     driftPct: (p: number) => `${p >= 0 ? '+' : ''}${p}%`,
     driftHint: 'Fuel prices (oil, diesel, crude) wander up to ±40 % on a slow weekly walk.',
-    hint: 'Prices are per unit. Each depot raises the stockpile cap.',
+    hint: 'Prices are per unit. A store holds up to its cap of each good.',
     deals: 'Standing deals',
     dealsHint: (d: number) =>
-      `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the stockpile cap or when funds run out; selling takes what is on hand.`,
+      `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the store's cap or when funds run out; selling takes what is on hand.`,
     dealBuy: 'Buy / cycle',
     dealSell: 'Sell / cycle',
     perCycle: 'Money / cycle',
@@ -1404,16 +1468,26 @@ export const STR = {
     populationHint:
       'Residents live within the capacity of finished Houses. Residents and crews eat food each week; Windmills turn wheat into food.',
     people: 'People',
+    /** the population tooltip: food eaten, as "Eats: 12.0 food / week" */
     eats: 'Eats',
+    perWeek: '/ week',
+    /** the passengers tooltip: travellers waiting at the player's stations */
+    waiting: 'Waiting at stations',
     famine: 'NO WHEAT',
-    foodPerWeek: 'food/week',
     openMarket: 'Open the market',
-    have: 'Stockpile / cap',
+    have: 'In store / cap',
+    /** the top bar's card: the good in every store together */
+    allStores: (n: number) => `All stores: ${n}`,
+    /** the top bar's store button: what a click does */
+    nextStore: 'The store the bar shows. Click: the next store',
     producedDay: 'Received / last week',
     consumedDay: 'Spent / last week',
-    netDay: 'Net / last week',
-    historyNote: 'Last 7 days; history starts when this game is loaded.',
-    netTitle: (net: string) => `${net} net in the last 7 days`,
+    /** the resource tooltip's links: what makes it, what uses it, where trains take it */
+    madeBy: 'Made by',
+    usedBy: 'Used by',
+    takenAt: 'Trains take it at',
+    funds: 'Funds',
+    fundsHint: 'Earned by deliveries and contracts. Pays for engines and wagons.',
     info: {
       water: 'From Water Pumps. Steam engines drink it; the refinery and power plant use it.',
       wheat: 'From farms. A Windmill turns each wheat into at least 5 food.',
@@ -1433,25 +1507,43 @@ export const STR = {
       wire: 'From the wire mill. Electrification is strung from it.',
     } as Record<string, string>,
   },
+  /** train classes (specs/track-classes.md): the smallest track line a vehicle runs on */
+  trainClass: {
+    corvette: 'Corvette',
+    frigate: 'Frigate',
+    destroyer: 'Destroyer',
+    cruiser: 'Cruiser',
+    carrier: 'Carrier',
+    hydrofoil: 'Hydrofoil',
+    submarine: 'Submarine',
+  } as Record<string, string>,
+  /** tooltips of the line and class badges (src/ui/lineBadge.ts) */
+  badge: {
+    line: (cls: string) => `Built for ${cls} class trains.`,
+    cls: (cls: string) => `${cls} class`,
+    step: (step: number, of: number, line: string) =>
+      `Size ${step} of ${of}. Needs ${line} or bigger.`,
+    carrier: (step: number, of: number, line: string) =>
+      `Size ${step} of ${of}, reactor-powered. Needs ${line}.`,
+    ownNetwork: (line: string) => `Runs only on ${line}.`,
+    age: 'Available from this age.',
+    rarity: 'How rare the model is.',
+    contractRarity: 'How rare the contract is.',
+  },
   compat: {
-    wrongGauge: (narrowTrack: boolean) =>
-      narrowTrack
-        ? 'Wide gauge: cannot run on narrow track'
-        : 'Narrow gauge: runs on narrow track only',
-    runsOn: (classes: string[]) =>
-      classes.length ? `Runs on ${classes.join(' and ')} track` : 'Runs on no track',
-    needInCab: 'no in-cab signalling equipment on any locomotive',
-    inCabName: 'In-cab signalling',
+    wrongNetwork: (line: string) => `not built for ${line}`,
+    tooBig: (cls: string, line: string) => `a ${cls} is too big for ${line}`,
+    runsOn: (cls: string, lines: string[]) =>
+      lines.length ? `${cls} · runs on ${lines.join(', ')}` : `${cls} · runs on no track yet`,
     foreAft: (v: number, t: number) =>
       `bogies slide ${v.toFixed(2)} tiles along the body, limit ${t.toFixed(2)}`,
     gap: (v: number, t: number) =>
       `body sits ${v.toFixed(2)} tiles off the rail, limit ${t.toFixed(2)}`,
     lateral: (v: number, t: number) =>
       `centre bogie sits ${v.toFixed(2)} tiles off its socket, limit ${t.toFixed(2)}`,
-    cannotUse: (name: string, cls: string, why: string) =>
-      `${name} cannot use ${cls} track: ${why}`,
+    cannotUse: (name: string, cls: string, why: string) => `${name} cannot run on ${cls}: ${why}`,
     gateClass: (x: number, y: number, present: string, name: string, needs: string) =>
-      `Gate ${x},${y}: ${present} track; ${name} needs ${needs}`,
+      `Gate ${x},${y}: ${present}; ${name} needs ${needs}`,
     gateNoTrack: (x: number, y: number) => `Gate ${x},${y}: no track`,
     gateStub: (x: number, y: number) => `Gate ${x},${y}: the track ends right after the gate`,
     gateRoom: (x: number, y: number, run: number, need: number) =>
@@ -1460,15 +1552,15 @@ export const STR = {
     gateNoRoute: (x: number, y: number, s: string) =>
       `Gate ${x},${y}: no route to ${s} the consist may use`,
     blockedAt: (name: string, x: number, y: number, cls: string) =>
-      `${name} cannot pass ${cls} track at ${x},${y}`,
+      `${name} cannot pass ${cls} at ${x},${y}`,
     deployable: 'Can roll out here',
   },
   fleet: {
     noDepot: 'Build a depot first: trains roll out of one',
-    mixedGauge: 'A train cannot mix narrow and wide gauge.',
-    mixedGaugeTrain: 'narrow and wide gauge in one train: recall it and build it again',
+    mixedGauge: 'A train cannot mix Narrow Gauge and standard stock.',
+    mixedGaugeTrain: 'Narrow Gauge and standard stock in one train: recall it and build it again',
     wrongDepot: (name: string) => `${name} builds only trains of its own gauge.`,
-    noNarrowDepot: 'Build a narrow depot first: narrow trains roll out of one',
+    noNarrowDepot: 'Build a Narrow Depot first: Narrow Gauge trains roll out of one',
     depotBusy: (n: string) => `Every gate at ${n} has a train on it`,
     depotNoGate: (n: string) => `${n} has no track at its gates`,
     depotNoRoute: (d: string, s: string) =>
@@ -1496,6 +1588,15 @@ export const STR = {
     cheat: 'Cheat',
     cheated: '+$10,000 and every resource topped up',
   },
+  stores: {
+    grid: 'Power grid',
+    /** the eaters at a store went short for too long (`StoreRegistry.tickUpkeep`) */
+    famine: (name: string) => `${name}: the crews are out of food: production halved`,
+    /** a store in famine has food again, or nobody left to feed */
+    fed: (name: string) => `${name}: food is back; crews are fed again`,
+    /** a works with no store in reach (`StoreRegistry.worksStore`) */
+    noStoreNear: (range: number) => `No store within ${range} tiles`,
+  },
   town: {
     title: 'Towns',
     none: 'No towns yet. Place a Townhouse, then a House and a warehouse within 7 tiles of it.',
@@ -1504,6 +1605,8 @@ export const STR = {
       `${st} station${st === 1 ? '' : 's'}, ${works} works, ${houses} house${houses === 1 ? '' : 's'}`,
     needs: (house: boolean, wh: boolean) =>
       `Not founded yet: needs ${[house ? 'a House' : '', wh ? 'a warehouse' : ''].filter(Boolean).join(' and ')} within 7 tiles`,
+    /** the town store's fullest good against its cap per good */
+    store: (fullest: number, cap: number) => `Store: up to ${fullest} of a good, cap ${cap} each`,
     makes: 'Makes / week',
     uses: 'Uses / week',
     /** power among what a town makes or uses, lowercase like the cargo names beside it */

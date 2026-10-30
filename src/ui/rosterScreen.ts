@@ -14,10 +14,13 @@ import {
   locoDef,
 } from '../gacha/items';
 import { cargoDef } from '../sim/cargo';
+import { runsOn } from '../sim/compat';
+import { rarityStars, vehicleLabels } from './labels';
 import type { Fleet } from '../sim/fleet';
 import type { Commands } from '../sim/commands';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg, frameForItem } from './spritePreview';
+import { portraitImg } from './rosterPortraits';
 
 type KindFilter = 'all' | 'loco' | 'wagon';
 type SortKey = 'rarity' | 'name' | 'level' | 'newest';
@@ -56,22 +59,23 @@ export class RosterScreen implements Screen {
     b.innerHTML = '';
     const group = (
       label: string,
-      opts: { v: string; t: string }[],
+      opts: { v: string; t: string; star?: string }[],
       cur: string,
       set: (v: string) => void,
     ) => {
       const g = el('div', { class: 'tb-group' }, el('span', { class: 'tb-label', text: label }));
-      for (const o of opts)
-        g.append(
-          btn(
-            o.t,
-            () => {
-              set(o.v);
-              this.render();
-            },
-            `small ${cur === o.v ? 'active' : ''}`,
-          ),
+      for (const o of opts) {
+        const b = btn(
+          o.t,
+          () => {
+            set(o.v);
+            this.render();
+          },
+          `small ${cur === o.v ? 'active' : ''}`,
         );
+        if (o.star) b.prepend(rarityStars(o.star, `rarity-${o.star}`));
+        g.append(b);
+      }
       return g;
     };
     b.append(
@@ -87,7 +91,10 @@ export class RosterScreen implements Screen {
       ),
       group(
         STR.roster.rarity,
-        [{ v: 'all', t: STR.roster.all }, ...RARITIES.map((r) => ({ v: r, t: r }))],
+        [
+          { v: 'all', t: STR.roster.all },
+          ...RARITIES.map((r) => ({ v: r, t: STR.craft.quality[r] ?? r, star: r })),
+        ],
         this.rarity,
         (v) => (this.rarity = v),
       ),
@@ -171,6 +178,8 @@ export class RosterScreen implements Screen {
       );
       if (wd.service) stats.push(STR.roster.serviceLine(wd.service, wd.serviceCap ?? 0));
     }
+    // its train class and the lines it may run on
+    stats.push(runsOn(d as LocoDef | WagonDef));
     const train = it.assigned !== null ? this.fleet.byId(it.assigned) : null;
     const spares = this.inventory.spares(it).length;
     const lvl = el(
@@ -198,7 +207,7 @@ export class RosterScreen implements Screen {
       up.title = STR.roster.levelUpHint;
       lvl.append(up);
     }
-    // in-cab signalling: the one hard requirement of high-speed track, fitted for money
+    // in-cab signalling, fitted for money: with in-cab signals the train runs on the shorter headway
     if (it.kind === 'loco' && !it.inCab && !locoDef(it.defId).inCab) {
       const fit = btn(
         STR.roster.fitInCab(rules.inCabCost),
@@ -214,22 +223,31 @@ export class RosterScreen implements Screen {
       lvl.append(fit);
     } else if (it.kind === 'loco' && (it.inCab || locoDef(it.defId).inCab))
       lvl.append(el('span', { class: 'dim', text: STR.roster.hasInCab }));
+    // the model image where there is one, the atlas sprite otherwise
+    const portrait = portraitImg(it.defId, 'rcard-portrait');
     return el(
       'div',
       { class: `rcard rarity-${d.rarity}` },
       el(
         'div',
         { class: 'rcard-head' },
-        el('span', { class: `rarity-${d.rarity}`, text: d.rarity }),
-        el('span', { class: 'name', text: d.name }),
+        el('span', { class: `name rarity-${d.rarity}`, text: d.name }),
         el('span', { class: 'num', text: STR.roster.lv(it.level) }),
       ),
-      el(
-        'div',
-        { class: 'rcard-body' },
-        spriteImg(this.atlas, frameForItem(it.defId), 2, 'sprite-preview rcard-art'),
-        el('div', { class: 'gcard-era', text: d.era }),
-      ),
+      vehicleLabels(d),
+      portrait
+        ? el(
+            'div',
+            { class: 'rcard-body rcard-body-portrait' },
+            portrait,
+            el('div', { class: 'gcard-era', text: d.era }),
+          )
+        : el(
+            'div',
+            { class: 'rcard-body' },
+            spriteImg(this.atlas, frameForItem(it.defId), 2, 'sprite-preview rcard-art'),
+            el('div', { class: 'gcard-era', text: d.era }),
+          ),
       el('div', { class: 'sub' }, ...stats.map((s) => el('div', { text: s }))),
       lvl,
       el('div', {

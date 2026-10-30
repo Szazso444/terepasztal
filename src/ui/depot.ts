@@ -4,7 +4,7 @@ import type { Screen } from './modal';
 import type { Inventory } from '../gacha/inventory';
 import { Fleet, MAX_LOCOS, MAX_WAGONS } from '../sim/fleet';
 import type { Builder } from '../sim/build';
-import { locoDef, wagonDef, levelMul } from '../gacha/items';
+import { itemDef, locoDef, wagonDef, levelMul } from '../gacha/items';
 import {
   consistPhysics,
   defaultLocoMode,
@@ -16,6 +16,7 @@ import {
 } from '../sim/trains';
 import type { Station } from '../sim/stations';
 import { consistGauge } from '../sim/compat';
+import { trainLabels, vehicleLabels } from './labels';
 import { ScheduleEditor } from './scheduleEditor';
 import { cargoDef } from '../sim/cargo';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -125,6 +126,7 @@ export class DepotScreen implements Screen {
           'div',
           {},
           el('div', { class: 'name', text: t.name }),
+          trainLabels(t.trainClass),
           el('div', {
             class: 'sub',
             text: `${t.locos.map((l) => l.def.name).join(' + ')} + ${t.wagons.length} · ${t.mode !== 'schedule' ? STR.train.mode[t.mode] : routeNames}`,
@@ -327,6 +329,7 @@ export class DepotScreen implements Screen {
         'div',
         {},
         el('div', { class: `name rarity-${rarity}`, text: name }),
+        defId ? vehicleLabels(itemDef(defId)) : null,
         el('div', { class: 'sub', text: sub }),
         blocked ? el('div', { class: 'sub red', text: blocked }) : null,
         warn ? el('div', { class: 'sub red', text: warn }) : null,

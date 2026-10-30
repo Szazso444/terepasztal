@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { Input } from '../engine/input';
 import {
   KEYMAP,
   handlePlayKeys,
@@ -64,6 +65,7 @@ function fakeHost(context: KeyContext, over: Partial<State> = {}) {
     cycleType: log('cycleType'),
     selectPiece: log('selectPiece'),
     setSpeed: log('setSpeed'),
+    stepSpeed: log('stepSpeed'),
     togglePause: log('togglePause'),
     toggleRecording: log('toggleRecording'),
     finishRecording: log('finishRecording'),
@@ -92,6 +94,12 @@ const screenCases = (name: string): Case[] => [
   { state: { mode: 'editor' }, calls: [] },
 ];
 const digit = (b: KeyBinding) => Number(b.code.replace('Digit', ''));
+/** + steps the speed up and − down: the typed character, wherever the layout puts it (`Input`). */
+const STEP_KEYS: [string, 1 | -1][] = [
+  ['Char+', 1],
+  ['Char-', -1],
+];
+const stepDir = (b: KeyBinding) => STEP_KEYS.find(([code]) => code === b.code)![1];
 
 /** Every action, what it calls and what keeps it quiet. A new action without cases fails to compile. */
 const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
@@ -129,11 +137,11 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
   nextTool: () => [{ state: { categoryOpen: true }, calls: ['cycleTool(1)'] }, { calls: [] }],
   prevTool: () => [{ state: { categoryOpen: true }, calls: ['cycleTool(-1)'] }, { calls: [] }],
   upgradeTrack: () => [
-    { calls: ['toggleReclass(high_speed)'] },
+    { calls: ['toggleReclass(up)'] },
     { state: { screenOpen: true }, calls: [] },
   ],
   downgradeTrack: () => [
-    { calls: ['toggleReclass(regular)'] },
+    { calls: ['toggleReclass(down)'] },
     { state: { screenOpen: true }, calls: [] },
   ],
   prevType: () => [{ state: { categoryOpen: true }, calls: ['cycleType(-1)'] }, { calls: [] }],
@@ -144,6 +152,11 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
     { calls: digit(b) <= 3 ? [`setSpeed(${digit(b)})`] : [] },
   ],
   speed: (b) => [{ calls: [`setSpeed(${digit(b)})`] }],
+  speedStep: (b) => [
+    { calls: [`stepSpeed(${stepDir(b)})`] },
+    // the level editor's clock stays stopped
+    { state: { mode: 'editor' }, calls: [] },
+  ],
   record: () => [
     { calls: ['toggleRecording'] },
     { state: { recording: true }, calls: ['toggleRecording'] },
@@ -184,6 +197,11 @@ const REQUIRED: [KeyContext, string, boolean?][] = [
   ...DIGITS(3).map((k): [KeyContext, string] => ['overview', k]),
   ['overview', 'KeyR'],
   ['overview', 'Enter'],
+  // + and − step the speed in both views
+  ...STEP_KEYS.flatMap(([k]): [KeyContext, string][] => [
+    ['play', k],
+    ['overview', k],
+  ]),
 ];
 
 describe('the play keymap', () => {
@@ -340,5 +358,120 @@ describe('Escape and the tooltip stack, in every state the keys read', () => {
                 calls: closed.calls,
               });
           }
+  });
+});
+
+describe('+ and − as the browser types them', () => {
+  /** A real `Input` on stand-ins for the window, the document and the canvas. */
+  function browserInput() {
+    const handlers = new Map<string, ((e: unknown) => void)[]>();
+    vi.stubGlobal('window', {
+      addEventListener: (type: string, fn: (e: unknown) => void) =>
+        handlers.set(type, [...(handlers.get(type) ?? []), fn]),
+    });
+    vi.stubGlobal('document', { addEventListener: () => {} });
+    const input = new Input({ addEventListener: () => {} } as unknown as HTMLElement);
+    /** a key event with this `code` (where the key sits) and `key` (what it types) */
+    const fire = (
+      type: 'keydown' | 'keyup',
+      code: string,
+      key: string,
+      shiftKey = false,
+      mods: { ctrlKey?: boolean; metaKey?: boolean; altKey?: boolean } = {},
+    ) => {
+      for (const fn of handlers.get(type) ?? [])
+        fn({ code, key, shiftKey, ...mods, target: null, preventDefault() {} });
+    };
+    return { input, fire };
+  }
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** What one key press calls in `context`, with Shift held first when `shift`. */
+  function press(context: KeyContext, code: string, key: string, shift: boolean, state = {}) {
+    const { input, fire } = browserInput();
+    if (shift) fire('keydown', 'ShiftLeft', 'Shift', true);
+    fire('keydown', code, key, shift);
+    const { host, calls } = fakeHost(context, state);
+    handlePlayKeys(input, host);
+    return calls;
+  }
+
+  // [layout, code, key, Shift held, the step]
+  const TYPED: [string, string, string, boolean, 1 | -1][] = [
+    ['Hungarian +', 'Digit3', '+', true, 1],
+    ['Hungarian −', 'Slash', '-', false, -1],
+    ['US +', 'Equal', '+', true, 1],
+    ['US −', 'Minus', '-', false, -1],
+    ['numpad +', 'NumpadAdd', '+', false, 1],
+    ['numpad −', 'NumpadSubtract', '-', false, -1],
+  ];
+  it.each(TYPED)('%s (%s typing %s) steps the speed in both views', (_, code, key, shift, dir) => {
+    for (const context of ['play', 'overview'] as const)
+      for (const state of [{}, { categoryOpen: true }])
+        expect(
+          press(context, code, key, shift, state),
+          `${context} ${JSON.stringify(state)}`,
+        ).toEqual([`stepSpeed(${dir})`]);
+  });
+
+  it('a − typed by an unshifted digit (Digit6 on AZERTY) is that digit: piece 6, no step', () => {
+    expect(press('play', 'Digit6', '-', false, { categoryOpen: true })).toEqual(['selectPiece(5)']);
+    expect(press('play', 'Digit6', '-', false)).toEqual([]);
+    expect(press('overview', 'Digit6', '-', false)).toEqual([]);
+    // and Shift+Digit6 types '6' there: the same piece
+    expect(press('play', 'Digit6', '6', true, { categoryOpen: true })).toEqual(['selectPiece(5)']);
+  });
+
+  it.each(['ctrlKey', 'metaKey', 'altKey'] as const)(
+    'Ctrl, Meta or Alt (%s) with + or − zooms the browser, and is no speed step',
+    (mod) => {
+      for (const [, code, key, shift] of TYPED) {
+        const { input, fire } = browserInput();
+        fire('keydown', code, key, shift, { [mod]: true });
+        expect(input.wasPressed('Char+'), `${code} ${key}`).toBe(false);
+        expect(input.wasPressed('Char-'), `${code} ${key}`).toBe(false);
+        const { host, calls } = fakeHost('play');
+        handlePlayKeys(input, host);
+        expect(calls, `${mod} ${code} ${key}`).not.toContain('stepSpeed(1)');
+        expect(calls, `${mod} ${code} ${key}`).not.toContain('stepSpeed(-1)');
+      }
+    },
+  );
+
+  it('a + typed as Shift+3 is no digit 3: it picks no piece and sets no 3x', () => {
+    expect(press('play', 'Digit3', '+', true, { categoryOpen: true })).not.toContain(
+      'selectPiece(2)',
+    );
+    expect(press('play', 'Digit3', '+', true)).not.toContain('setSpeed(3)');
+    expect(press('overview', 'Digit3', '+', true)).not.toContain('setSpeed(3)');
+  });
+
+  it('the 3 key still picks piece 3 or 3x when it types a 3, after a + on it was let go', () => {
+    const { input, fire } = browserInput();
+    fire('keydown', 'Digit3', '+', true);
+    input.endFrame();
+    fire('keyup', 'Digit3', '+', true);
+    fire('keydown', 'Digit3', '3');
+    expect(input.isDown('Digit3')).toBe(true);
+    const plain = fakeHost('play');
+    handlePlayKeys(input, plain.host);
+    expect(plain.calls).toEqual(['setSpeed(3)']);
+    const piece = fakeHost('play', { categoryOpen: true });
+    handlePlayKeys(input, piece.host);
+    expect(piece.calls).toEqual(['selectPiece(2)']);
+  });
+
+  it('holds the key that typed + down by where it sits, until it is let go', () => {
+    const { input, fire } = browserInput();
+    fire('keydown', 'Digit3', '+', true);
+    expect(input.wasPressed('Char+')).toBe(true);
+    expect(input.wasPressed('Digit3')).toBe(false);
+    expect(input.isDown('Digit3')).toBe(true);
+    // a held key repeats: no second press
+    input.endFrame();
+    fire('keydown', 'Digit3', '+', true);
+    expect(input.wasPressed('Char+')).toBe(false);
+    fire('keyup', 'Digit3', '+', true);
+    expect(input.isDown('Digit3')).toBe(false);
   });
 });

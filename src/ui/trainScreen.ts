@@ -1,5 +1,6 @@
 import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
+import { vehicleLabels } from './labels';
 import type { Screen } from './modal';
 import {
   DYNAMIC_MODES,
@@ -11,7 +12,6 @@ import {
 import type { Fleet } from '../sim/fleet';
 import type { Commands, CommandResult } from '../sim/commands';
 import type { Builder } from '../sim/build';
-import type { Stockpile } from '../sim/stockpile';
 import { cargoDef, cargoName } from '../sim/cargo';
 import { levelMul } from '../gacha/items';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -38,7 +38,6 @@ export class TrainScreen implements Screen {
   constructor(
     private readonly fleet: Fleet,
     private readonly builder: Builder,
-    private readonly stock: Stockpile,
     private readonly commands: Commands,
     private readonly atlas: AtlasRegistry,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
@@ -141,6 +140,7 @@ export class TrainScreen implements Screen {
       ),
     );
     if (t.lastMessage) l.append(row(STR.train.note, t.lastMessage));
+    if (t.hungry) l.append(row(STR.train.note, STR.train.hungry, 'red'));
     const job = t.job ?? t.jobs[0];
     if (job) {
       const queued = t.jobs.length - (t.job ? 0 : 1);
@@ -185,6 +185,7 @@ export class TrainScreen implements Screen {
             class: `name rarity-${lo.def.rarity}`,
             text: STR.train.locoLevel(lo.def.name, lo.level),
           }),
+          vehicleLabels(lo.def),
           el('div', {
             class: 'sub',
             text: `${STR.roster.type[lo.def.type]} · ${Math.round(lo.def.power * levelMul(lo.level))} t · ${STR.roster.fuelLine(lo.def)}`,
@@ -227,13 +228,12 @@ export class TrainScreen implements Screen {
       l.append(
         this.bar(cargoName(t.oilKind), t.oil, t.oilCap, t.oil < t.oilRate * 5 ? 'over' : ''),
       );
-    if (t.hasElectric)
+    if (t.hasElectric) {
+      const grid = Math.floor(this.builder.stores.grid.get('power'));
       l.append(
-        row(
-          STR.train.power,
-          `${t.powerRate.toFixed(2)} / tile · ${STR.train.stockPower(Math.floor(this.stock.get('power')))}`,
-        ),
+        row(STR.train.power, `${t.powerRate.toFixed(2)} / tile · ${STR.train.stockPower(grid)}`),
       );
+    }
     if (t.batteryCap > 0)
       l.append(
         this.bar(
@@ -312,6 +312,7 @@ export class TrainScreen implements Screen {
             'div',
             { style: 'flex:1' },
             el('div', { class: `name rarity-${w.def.rarity}`, text: w.def.name }),
+            vehicleLabels(w.def),
             el('div', {
               class: 'sub',
               text: w.cargo
@@ -380,12 +381,16 @@ export class TrainScreen implements Screen {
     const eb = btn(
       STR.train.emergency,
       () => {
-        const taken = t.refuel(this.stock, { fuel: true, water: true }, 2);
+        const taken = this.fleet.emergencyRefuel(t);
         const got = Object.entries(taken)
           .map(([k, v]) => `${Math.round(v)} ${k}`)
           .join(', ');
         this.toast(
-          got ? STR.train.emergencyDone(got) : STR.train.emergencyNone,
+          got
+            ? STR.train.emergencyDone(got)
+            : this.fleet.supplierOf(t)
+              ? STR.train.emergencyNone
+              : STR.train.emergencyNoStore,
           got ? 'good' : 'warn',
         );
         this.render();

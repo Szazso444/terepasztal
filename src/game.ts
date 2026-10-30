@@ -1,7 +1,6 @@
 import { Application, Sprite, extensions, CullerPlugin } from 'pixi.js';
 import { AtlasRegistry } from './engine/atlas';
 import { browserAtlasCache } from './engine/atlasCache';
-import { content } from './data/content';
 import type { BootProgressHook } from './engine/boot';
 import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
@@ -64,7 +63,8 @@ import {
 } from './ui/tooltipContent';
 import { tileTip, type TileSnapshot } from './ui/tileTooltip';
 import { STR } from './strings';
-import { TrackGraph } from './world/track';
+import { content } from './data/content';
+import { TrackGraph, liftLegacyTrack } from './world/track';
 import { Builder } from './sim/build';
 import { Economy } from './sim/economy';
 import { BuildController } from './ui/buildController';
@@ -127,7 +127,7 @@ import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
 import { Gacha } from './gacha/gacha';
 import { Crafting } from './gacha/crafting';
-import { Stockpile, RESOURCE_IDS } from './sim/stockpile';
+import { StoreRegistry, RESOURCE_IDS, type ResourceStore } from './sim/stores';
 import { cityTiles } from './sim/city';
 import { bridgeSpan } from './sim/bridges';
 import {
@@ -146,14 +146,13 @@ import { Floaters } from './render/floaters';
 import { Halos } from './render/halo';
 import { WorkBars } from './render/workBars';
 import { hoursLeft, type Upgraded } from './sim/upgrade';
-import type { WideClass } from './world/reclass';
+import type { ReclassDir } from './world/reclass';
 import { PowerLines } from './render/powerLines';
 import { buildingDef as buildingDefOf } from './sim/buildings';
 import { Notices, type Notice } from './sim/notices';
 import type { Tip } from './ui/advisor';
 import { locoFrame, structureFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
-import { buildCompatTable } from './sim/compat';
 import { Catenary, type SupplyKind } from './sim/catenary';
 import { biomeDef, biomeAt } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
@@ -163,7 +162,7 @@ import { expandSave, ownsBorderChunk } from './sim/expand';
 import { generatorOf, groundOf } from './sim/ground';
 import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
-import { SimStep, startStock, ageSnapshot as ageSnapshotOf } from './sim/step';
+import { SimStep, startStock, eaters, ageSnapshot as ageSnapshotOf } from './sim/step';
 import { Commands } from './sim/commands';
 import { createPlayUi, confirmReplaceSave, type PlayUi, type UiHost } from './ui/panels';
 import { handlePlayKeys } from './ui/keymap';
@@ -227,7 +226,8 @@ export class Game implements UiHost {
   contractJobs!: ContractDispatcher;
   gacha!: Gacha;
   crafting!: Crafting;
-  stock = new Stockpile();
+  /** every town's, depot's and warehouse's goods; building pays from them */
+  stores = new StoreRegistry();
   power!: PowerGrid;
   houses!: HouseRegistry;
   /** overview: train picked with a click, and a route being recorded for it */
@@ -318,7 +318,7 @@ export class Game implements UiHost {
             : s.def.id === 'town'
               ? ('town' as const)
               : ('other' as const),
-        fill: s.def.stockpile ? s.totalStored() / Math.max(1, s.capacity) : undefined,
+        fill: s.def.stockpile ? s.fill() : undefined,
         color:
           s.def.id === 'town'
             ? TOWN_COLORS[(this.towns.byStation(s.id)?.color ?? 0) % TOWN_COLORS.length]
@@ -523,9 +523,6 @@ export class Game implements UiHost {
     this.applySeason(true);
     this.economy.money = start ? start.money : rules.startMoney;
     this.economy.tickets = start ? start.tickets : rules.startTickets;
-    const stockMul = start?.stockMul ?? 1;
-    for (const [id, n] of Object.entries(startStock()))
-      this.stock.add(id, Math.round(n * rules.startStock * stockMul));
     if (!start) {
       // the starter engines are narrow gauge, so the first depot is too (unless tuning bars it)
       const d = this.ensureDepot(startDepotKind());
@@ -534,6 +531,21 @@ export class Game implements UiHost {
         this.camera.centerOn(p.x, p.y);
       }
     }
+    // the start stock waits in the first store there is, whole, past its cap too: the start depot
+    // (a level's first depot), else the store of a level's first warehouse, else its first
+    // town's; a level with none of them gets the start depot a new game gets
+    const firstStore = () => {
+      const st = this.builder.depots()[0] ?? this.builder.stations.find((s) => s.def.stockpile);
+      const dock = st ? this.stores.dockOf(st) : null;
+      if (dock) return this.stores.byKey(dock.key);
+      return this.stores.all().find((s) => s.kind === 'town');
+    };
+    let store = firstStore();
+    if (!store && this.ensureDepot(startDepotKind())) store = firstStore();
+    const stockMul = start?.stockMul ?? 1;
+    if (store)
+      for (const [id, n] of Object.entries(startStock()))
+        store.amounts.set(id, store.get(id) + Math.round(n * rules.startStock * stockMul));
     if (start && start.tier > this.economy.tier) {
       this.economy.tier = Math.min(start.tier, LAST_AGE);
       // the land opens with the rail age, which stops at Electric
@@ -545,16 +557,18 @@ export class Game implements UiHost {
       }
       this.toolbar.refresh();
     }
-    this.stock.beginFlowHistory();
+    this.stores.beginFlowHistory();
     audio.setAge(ageDef(this.economy.tier).id);
   }
 
   /** Place a level's pre-built content into a fresh world (no economy). */
   placeLevelContent(level: LevelData) {
-    const track = level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track);
+    const track = liftLegacyTrack(
+      level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track),
+    );
     for (const [x, y, kind, rot, cls, cls2] of track) {
       if (!inBounds(this.map, x, y)) continue;
-      for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
+      for (const t of this.track.place(x, y, kind, rot, cls ?? 'branch', cls2))
         this.onTrackChanged(t.x, t.y);
     }
     for (const t of this.track.refreshSwitchForms()) this.onTrackChanged(t.x, t.y);
@@ -580,6 +594,8 @@ export class Game implements UiHost {
     }
     this.builder.refreshStationBoosts();
     this.builder.refreshHarvest();
+    // the stations went in past the builder: the stores are derived from them once
+    this.stores.refresh();
     for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
   }
   applyLevelStart(level: LevelData) {
@@ -886,7 +902,6 @@ export class Game implements UiHost {
       ATLAS_GROUPS,
       (settled, total) => void onProgress?.('pictures', settled / total),
     );
-    buildCompatTable();
     await onProgress?.('pictures', 1);
 
     if (this.spec.kind === 'level') this.map = mapFromLevel(this.spec.level, this.supply);
@@ -904,9 +919,10 @@ export class Game implements UiHost {
     this.camera.centerOn(c.x, c.y);
 
     this.track = new TrackGraph(this.map.w, this.map.h);
-    this.builder = new Builder(this.map, this.regions, this.track, this.economy, this.stock);
+    this.builder = new Builder(this.map, this.regions, this.track, this.economy, this.stores);
     this.towns = new TownRegistry(this.builder);
-    this.houses = new HouseRegistry(this.builder, this.towns, this.stock);
+    this.stores.attach({ builder: this.builder, towns: this.towns, track: this.track });
+    this.houses = new HouseRegistry(this.builder, this.towns);
     this.towns.residentsAt = (x, y) => this.houses.residentsAt(x, y);
     this.houses.onMessage = (m, k) => this.toasts.push(m, k);
     // a house is turned the way its decor piece was placed
@@ -923,7 +939,7 @@ export class Game implements UiHost {
     this.catenary = new Catenary(this.map);
     this.builder.catenary = this.catenary;
     this.builder.onSupplyChanged = (x, y) => this.onSupplyChanged(x, y);
-    this.stock.onMessage = (m, k) => this.toasts.push(m, k);
+    this.stores.onMessage = (m, k) => this.toasts.push(m, k);
     this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
     this.builder.groundCheck = (x, y, need) => this.world.groundAllows(x, y, need);
@@ -932,20 +948,13 @@ export class Game implements UiHost {
     this.builder.onStationOrphaned = (s, orphaned) => this.onStationOrphaned(s, orphaned);
     this.builder.onUpgraded = (e) => this.onUpgraded(e);
     this.houses.onUpgraded = (e) => this.onUpgraded(e);
-    this.builder.onReclassed = (tiles, target) => this.onReclassed(tiles, target);
+    this.builder.onReclassed = (tiles, dir) => this.onReclassed(tiles, dir);
     this.weather = new Weather(new Rng(this.seed ^ 0x77ea));
     validateBanners();
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
     this.economy.onAgeUp = (t) => this.onAgeUp(t);
     this.inventory.seedStarter(0);
-    this.fleet = new Fleet(
-      this.track,
-      this.builder,
-      this.map,
-      this.inventory,
-      this.economy,
-      this.stock,
-    );
+    this.fleet = new Fleet(this.track, this.builder, this.map, this.inventory, this.economy);
     this.fleet.powered = (x, y) => this.catenary.isLive(x, y);
     this.fleet.supplyAt = (x, y) => this.catenary.supplyAt(x, y);
     this.fleet.gridFactor = (x, y) => this.catenary.loadFactor(x, y);
@@ -953,7 +962,6 @@ export class Game implements UiHost {
     this.fleet.gridBegin = () => this.catenary.beginTick();
     this.fleet.signals.level = this.settings.signalling ?? 'auto';
     this.fleet.onArrive = (_t, s) => this.houses.arrival(s, this.clock.time);
-    this.fleet.stockCap = (id) => this.stockCap(id);
     this.fleet.junctions.onAlert = (a) =>
       this.notices.push(
         {
@@ -977,12 +985,7 @@ export class Game implements UiHost {
     this.people = new PeopleSim(this.map, this.builder);
     this.contracts = new ContractBoard(new Rng(this.seed ^ 0x5eed), this.builder, this.economy);
     this.gacha = new Gacha(new Rng(this.seed ^ 0x9ac4a), this.inventory);
-    this.crafting = new Crafting(
-      new Rng(this.seed ^ 0xc4af7),
-      this.inventory,
-      this.economy,
-      this.stock,
-    );
+    this.crafting = new Crafting(new Rng(this.seed ^ 0xc4af7), this.inventory, this.economy);
     this.crafting.grantFromInventory();
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
     this.contractJobs = new ContractDispatcher(
@@ -1105,7 +1108,6 @@ export class Game implements UiHost {
       fleet: this.fleet,
       builder: this.builder,
       economy: this.economy,
-      stock: this.stock,
       trade: this.trade,
       gacha: this.gacha,
       inventory: this.inventory,
@@ -1115,7 +1117,6 @@ export class Game implements UiHost {
     this.ui = createPlayUi(this, {
       clock: this.clock,
       economy: this.economy,
-      stock: this.stock,
       inventory: this.inventory,
       fleet: this.fleet,
       builder: this.builder,
@@ -1203,7 +1204,7 @@ export class Game implements UiHost {
         world: this.spec,
         supply: supplyMode(),
         rules: { ...rules },
-        stockpile: this.stock.toJSON(),
+        stores: this.stores.toJSON(),
         regions: this.regions.toJSON(),
         seasonOffset: getSeasonOffset(),
         towns: this.towns.toJSON(),
@@ -1268,6 +1269,8 @@ export class Game implements UiHost {
   applySave(j: SaveGame) {
     // content the game no longer defines goes first, before anything looks it up
     const pruned = pruneUnknownContent(j);
+    // nothing the game held before the load stays in its stores
+    this.stores.clear();
     this.restoringWorld = true;
     this.saveExtra = {};
     for (const [k, v] of Object.entries(j)) if (!KNOWN_SAVE_KEYS.has(k)) this.saveExtra[k] = v;
@@ -1289,7 +1292,7 @@ export class Game implements UiHost {
     this.minimap.rebuildBase();
     this.toolbar.refresh();
     for (const [x, y, kind, rot, cls, cls2] of j.track) {
-      for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
+      for (const t of this.track.place(x, y, kind, rot, cls ?? 'branch', cls2))
         this.onTrackChanged(t.x, t.y);
     }
     // switch forms follow the track around them: chosen again once every piece is down
@@ -1333,10 +1336,13 @@ export class Game implements UiHost {
       this.builder.buildings.set(b.y * this.map.w + b.x, b);
       this.onBuildingChanged(b, false);
     }
-    if (j.stockpile) this.stock.load(j.stockpile as ReturnType<Stockpile['toJSON']>);
     this.towns.load(j.towns);
-    this.refreshCity();
+    // every game has a depot; goods saved with no place of their own wait in it
     this.ensureDepot();
+    // the stations and towns went in past the builder: the stores are derived from them, then
+    // filled with what the save holds
+    this.stores.load(j.stores ?? []);
+    this.refreshCity();
     this.builder.refreshStationBoosts();
     this.builder.refreshHarvest();
     if (j.weather) this.weather.load(j.weather as ReturnType<Weather['toJSON']>);
@@ -1351,7 +1357,7 @@ export class Game implements UiHost {
     this.camera.zoomIndex = j.camera.zoomIndex;
     this.camera.zoom = ZOOM_STEPS[j.camera.zoomIndex];
     this.camera.centerOn(j.camera.x, j.camera.y);
-    this.stock.beginFlowHistory();
+    this.stores.beginFlowHistory();
     this.restoringWorld = false;
     this.refreshBridges();
     audio.setAge(ageDef(this.economy.tier).id);
@@ -1631,10 +1637,6 @@ export class Game implements UiHost {
     this.overview.rebuildPower(this.power);
     this.powerLines.rebuild(this.power);
   }
-  /** Storage cap for one resource at the current warehouse and plant count. */
-  stockCap(id: string) {
-    return this.stock.cap(id, this.builder.depotCount(), this.builder.plantCount());
-  }
   /** Arm positions of every semaphore, stepped towards the aspect they should show. */
   private semaphoreArms = new Map<number, { m: number; d: number; frame: string }>();
   private semaphoreClock = 0;
@@ -1659,10 +1661,12 @@ export class Game implements UiHost {
     const step = this.semaphoreClock >= 0.07;
     if (step) this.semaphoreClock = 0;
     const top = SEMAPHORE_STEPS - 1;
+    // the simulation keeps each post's aspect, looking again only where a train came or went
+    const aspects = this.fleet.postAspects();
     for (const d of this.builder.decor.values()) {
       if (d.id !== 'signal') continue;
       const key = d.y * this.map.w + d.x;
-      const aspect = this.signalAspectAt(d);
+      const aspect = aspects.get(key) ?? this.signalAspectAt(d);
       this.signalAspect.set(key, aspect);
       const want =
         aspect === 'red'
@@ -1828,11 +1832,11 @@ export class Game implements UiHost {
       });
   }
   /**
-   * Track relaid as high speed shimmers piece by piece (`startPieceHalos`); going back to regular
-   * track does not. Each halo covers its whole piece, not only the anchor tile.
+   * Track raised to a bigger line shimmers piece by piece (`startPieceHalos`); track lowered does
+   * not. Each halo covers its whole piece, not only the anchor tile.
    */
-  private onReclassed(anchors: { x: number; y: number }[], target: WideClass) {
-    if (target === 'regular') return;
+  private onReclassed(anchors: { x: number; y: number }[], dir: ReclassDir) {
+    if (dir === 'down') return;
     for (const a of anchors) {
       const tiles = this.track.unitTiles(a.x, a.y);
       if (!tiles.length) continue;
@@ -1935,23 +1939,24 @@ export class Game implements UiHost {
         this.save(true);
       }
     }
-    // Poses the renderer interpolates from: once per loop tick, paused ticks included, so the
-    // interpolation spans every step this tick runs.
-    this.fleet.beginFrame();
+    // Poses the renderer interpolates from: once per loop tick that runs a step, paused ticks
+    // included, so the interpolation spans every step this tick runs. Below 1x the empty ticks
+    // between steps keep them, and `stepAlpha` spreads the step over its ticks.
+    if (this.clock.startsSpan()) this.fleet.beginFrame();
     this.clock.run((gdt) =>
       this.sim.run(gdt, {
         mode: this.mode,
         weather: this.settings.weather,
-        stockCap: (id) => this.stockCap(id),
       }),
     );
   }
 
-  /** Debug aid requested for testing: money plus a full stockpile. */
+  /** Debug aid requested for testing: money, and the selected store and the grid filled. */
   cheat() {
     this.economy.money += 10000;
     this.economy.tickets += 10;
-    for (const id of RESOURCE_IDS) this.stock.add(id, 1e9, this.stockCap(id));
+    const store = this.stores.selected;
+    if (store) for (const id of RESOURCE_IDS) this.stores.withGrid(store).add(id, 1e9);
     this.toasts.push(STR.topbar.cheated, 'info');
   }
 
@@ -2061,9 +2066,22 @@ export class Game implements UiHost {
     }
     if (this.lastFailedContract)
       tips.push({ key: 'failed', kind: 'warn', text: T.failed(this.lastFailedContract) });
-    if (this.stock.famine) tips.push({ key: 'famine', kind: 'bad', text: T.famine });
-    else if (this.stock.foodPerWeek() > 0 && this.stock.get('food') < this.stock.foodPerWeek() * 2)
-      tips.push({ key: 'wheat', kind: 'warn', text: T.lowWheat });
+    // a famine at any store; else the first store (a network as one) whose food lasts its residents
+    // and crews less than two weeks; a train's crew pays at its next store, so it is left out
+    if (this.stores.all().some((s) => s.famine))
+      tips.push({ key: 'famine', kind: 'bad', text: T.famine });
+    else {
+      const eating = new Map<ResourceStore, number>();
+      for (const [pool, n] of eaters(this.houses, b)) {
+        const at = this.stores.networkPool(pool);
+        eating.set(at, (eating.get(at) ?? 0) + n);
+      }
+      for (const [pool, n] of eating)
+        if (pool.get('food') < n * rules.wheatPerCrew * 2) {
+          tips.push({ key: 'wheat', kind: 'warn', text: T.lowWheat(this.stores.label(pool)) });
+          break;
+        }
+    }
     if (b.stations.length === 0) tips.push({ key: 'nostations', kind: 'info', text: T.noStations });
     else if (b.stations.length === 1)
       tips.push({ key: 'onestation', kind: 'info', text: T.oneStation });
@@ -2079,13 +2097,17 @@ export class Game implements UiHost {
       !b.decorHas('water_tower')
     )
       tips.push({ key: 'water', kind: 'warn', text: T.noWater });
-    if (steam && this.stock.get('coal') < 10 && !b.buildingHas('kiln'))
+    if (steam && (this.stores.totals().get('coal') ?? 0) < 10 && !b.buildingHas('kiln'))
       tips.push({ key: 'coal', kind: 'warn', text: T.lowCoal });
-    for (const id of RESOURCE_IDS)
-      if (this.stock.get(id) >= this.stockCap(id) - 1e-6 && id !== 'power') {
-        tips.push({ key: `cap:${id}`, kind: 'info', text: T.capFull(id) });
-        break;
-      }
+    // the store the player looks at is full of a good
+    const shown = this.stores.selected;
+    if (shown)
+      for (const id of RESOURCE_IDS)
+        if (id !== 'power' && shown.cap(id) > 0 && shown.get(id) >= shown.cap(id) - 1e-6) {
+          const text = T.capFull(id, this.stores.label(shown));
+          tips.push({ key: `cap:${id}`, kind: 'info', text });
+          break;
+        }
     const offers = this.contracts.offers.length;
     if (offers > 0 && !this.contracts.active.length)
       tips.push({ key: 'offers', kind: 'info', text: T.offers(offers) });
@@ -2267,7 +2289,7 @@ export class Game implements UiHost {
     this.world.applyCamera(this.camera);
     this.layoutViews();
     this.updateCursor();
-    this.trainRenderer.update(this.fleet.trains, this.clock.speed === 0 ? 1 : alpha, dt);
+    this.trainRenderer.update(this.fleet.trains, this.clock.stepAlpha(alpha), dt);
     const night = this.settings.dayNight ? nightness(this.clock.dayFraction) : 0;
     const rainI = this.settings.weather && this.weather.kind === 'rain' ? this.weather.visible : 0;
     const fogI = this.settings.weather && this.weather.kind === 'fog' ? this.weather.visible : 0;
@@ -2324,11 +2346,20 @@ export class Game implements UiHost {
     this.cursor.tint = this.world.harvest.outline;
     this.updateRtsTooltip();
     this.hud.update(this.economy);
-    this.resourceBar.update(this.stock, (id) => this.stockCap(id));
+    // the selected store, with the grid's power beside it; none but the grid in an empty world
+    const shown = this.stores.selected ?? this.stores.grid;
+    this.resourceBar.update(
+      this.stores.withGrid(shown),
+      this.stores.label(shown),
+      this.stores.totals(),
+      this.economy.money,
+      this.economy.tier,
+    );
     this.hud.setFps(this.settings.showFps ? this.loop.fps : null);
     this.panelRefresh += dt;
     if (this.panelRefresh > 0.5) {
       this.panelRefresh = 0;
+      this.resourceBar.refreshFlows();
       if (this.stationPanel.station) this.stationPanel.render();
       if (this.buildingPanel.building) this.buildingPanel.render();
       if (this.decorPanel.decor) this.decorPanel.render();
@@ -2342,7 +2373,6 @@ export class Game implements UiHost {
       this.notices.refresh({
         trains: this.fleet.trains,
         builder: this.builder,
-        stock: this.stock,
         power: this.power,
         stuck: this.traffic.stuckTrains(this.clock.time),
       });
@@ -2475,7 +2505,7 @@ export class Game implements UiHost {
       name: st.name,
       level: st.level,
       work: st.work ? { to: st.work.to, hoursLeft: hoursLeft(st.work) } : null,
-      stored: st.totalStored(),
+      stored: st.shownStored(),
       capacity: st.capacity,
       biome: biomeAt(this.map, st.x, st.y),
       weeklyAtLevel1: weeklyOutput(1, 1),
@@ -2488,7 +2518,7 @@ export class Game implements UiHost {
       // the recipe it runs at its level
       recipe: buildingRecipe(b),
       altIn: def.altIn,
-      status: BuildingPanel.statusKind(b, this.stock),
+      status: BuildingPanel.statusKind(b, this.stores.worksStore(b)),
       work: b.work ? { to: b.work.to, hoursLeft: hoursLeft(b.work) } : null,
       rate: b.rate,
     };
@@ -2505,6 +2535,14 @@ export class Game implements UiHost {
       power: t.power,
     };
   }
+  /** The piece on a tile with its line, as the toolbar names it: "Curve (Main Line)". */
+  private trackName(x: number, y: number): string | null {
+    const p = this.track.get(x, y);
+    if (!p) return null;
+    const L = STR.toolbar.trackClass;
+    const line = p.cls2 && p.cls2 !== p.cls ? `${L[p.cls]} × ${L[p.cls2]}` : L[p.cls];
+    return `${content.track.pieces[p.kind]?.name ?? p.kind} (${line})`;
+  }
   private tileSnap(x: number, y: number): TileSnapshot {
     const dec = this.builder.decorAt(x, y);
     return {
@@ -2512,7 +2550,7 @@ export class Game implements UiHost {
       x,
       y,
       charted: this.regions.isTileUnlocked(x, y),
-      track: this.track.get(x, y)?.kind ?? null,
+      track: this.trackName(x, y),
       decor: dec
         ? {
             name: decorDefOf(dec.id).name,
@@ -2534,7 +2572,7 @@ export class Game implements UiHost {
           kind: 'station',
           name: s.name,
           level: s.level,
-          stored: s.totalStored(),
+          stored: s.shownStored(),
           capacity: s.capacity,
         };
     } else {

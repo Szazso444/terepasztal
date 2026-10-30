@@ -1,10 +1,10 @@
 import type { Train } from './trains';
 import type { Builder } from './build';
-import type { Stockpile } from './stockpile';
 import type { PowerGrid } from './power';
 import { buildingDef, missingInput } from './buildings';
 import { cargoName } from './cargo';
 import { STR } from '../strings';
+import { rules } from './rules';
 
 export type NoticeKind = 'info' | 'warn' | 'bad';
 export type NoticeTarget =
@@ -43,7 +43,6 @@ export class Notices {
   refresh(src: {
     trains: Train[];
     builder: Builder;
-    stock: Stockpile;
     power: PowerGrid;
     stuck?: { id: number; since: number }[];
   }) {
@@ -104,11 +103,14 @@ export class Notices {
           target,
         });
       else if (b.reason === 'inputs') {
-        const m = missingInput(def, src.stock);
+        const store = src.builder.stores.worksStore(b);
+        const m = missingInput(def, store);
         out.push({
           key: `b${b.x},${b.y}:in`,
           kind: 'warn',
-          text: STR.notice.starved(def.name, m ? cargoName(m) : '?'),
+          text: store
+            ? STR.notice.starved(def.name, m ? cargoName(m) : '?')
+            : STR.notice.noStore(def.name, rules.buildReach),
           target,
         });
       } else if (b.reason === 'full')

@@ -6,7 +6,6 @@ import { TrackGraph, rotationCount, type TrackPiece } from '../world/track';
 import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
 import {
@@ -26,13 +25,12 @@ import { Inventory } from '../gacha/inventory';
 import { locoDef, wagonDef } from '../gacha/items';
 import { STR } from '../strings';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
-  // a warehouse is worth collecting from with what a level 1 store holds
-  rules.collectMin = 30;
   setSupplyMode(DEFAULT_SUPPLY);
   resetTrainIds();
   resetStationIds();
@@ -114,17 +112,16 @@ function* shrinkLayout(c: Layout): Iterable<Layout> {
 function world(island: boolean) {
   const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass),
     track = new TrackGraph(SIZE, SIZE),
-    stock = new Stockpile(),
     economy = new Economy(),
     inventory = new Inventory();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, inventory, economy, stock);
+  const fleet = new Fleet(track, builder, map, inventory, economy);
   for (let x = 2; x < SIZE - 2; x++) track.place(x, ROW, 'straight', 1);
   if (island) for (let x = 10; x < 30; x++) track.place(x, ISLAND_ROW, 'straight', 1);
-  return { map, track, stock, economy, inventory, builder, fleet };
+  return { map, track, economy, inventory, builder, fleet };
 }
 
 type Scene = ReturnType<typeof scene>;
@@ -334,7 +331,7 @@ const RECIPES: Record<string, (sc: Scene) => (() => void) | void> = {
     return () => {
       sc.w.fleet.powered = () => true;
       sc.w.fleet.supplyAt = () => 'catenary';
-      sc.w.stock.add('power', 1e9);
+      sc.w.builder.stores.grid.amounts.set('power', 1e9);
     };
   },
   overweight(sc) {
@@ -447,7 +444,7 @@ function switchFrom(
   c: Layout,
   given: (sc: Scene) => void = () => {},
 ) {
-  const sc = scene(c, recipe === 'noPower' ? 'taurus' : 'f7');
+  const sc = scene(c, recipe === 'noPower' ? 're460' : 'f7');
   const { t, w } = sc;
   const release = RECIPES[recipe](sc);
   given(sc);
@@ -583,7 +580,7 @@ interface Piece {
   y: number;
   kind: 'straight' | 'curve' | 'switch' | 'crossing';
   rot: number;
-  cls: 'regular' | 'narrow';
+  cls: 'branch' | 'narrow';
   len: number;
   arms: number[];
 }
@@ -603,7 +600,7 @@ function tangle(rng: Rng): Tangle {
         y: rng.int(4, 24),
         kind,
         rot: rng.int(0, rotationCount(kind) - 1),
-        cls: rng.chance(0.75) ? 'regular' : 'narrow',
+        cls: rng.chance(0.75) ? 'branch' : 'narrow',
         len: kind === 'straight' ? rng.int(1, 10) : 1,
         arms: kind === 'straight' ? [] : Array.from({ length: rng.int(1, 4) }, () => rng.int(0, 6)),
       };
@@ -720,9 +717,14 @@ describe('Fleet sidings', () => {
         const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass);
         const track = new TrackGraph(SIZE, SIZE);
         const economy = new Economy();
-        const stock = new Stockpile();
-        const builder = new Builder(map, new RegionState(map), track, economy, stock);
-        const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+        const builder = new Builder(
+          map,
+          new RegionState(map),
+          track,
+          economy,
+          storeWith({}).stores,
+        );
+        const fleet = new Fleet(track, builder, map, new Inventory(), economy);
         const runs = layTangle(track, c);
         for (const s of c.stations) {
           if (!runs.length) break;

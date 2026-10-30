@@ -17,6 +17,11 @@ export interface ResPart {
   readonly res: string;
   readonly name: string;
 }
+/** A resource's icon alone, as a title shows it before the name. */
+export interface IconPart {
+  /** the resource id (`money` and `population` too), which names the icon `icons/<id>` */
+  readonly icon: string;
+}
 /** A word that opens a nested tooltip with `tip`'s document. */
 export interface TermPart {
   readonly term: string;
@@ -26,28 +31,31 @@ export interface TermPart {
 export interface DimPart {
   readonly dim: string;
 }
-/** A piece of a line: plain text, or one of the four above. */
-export type Inline = string | NumPart | ResPart | TermPart | DimPart;
+/** A piece of a line: plain text, or one of the five above. */
+export type Inline = string | NumPart | ResPart | IconPart | TermPart | DimPart;
 export type Parts = readonly Inline[];
 
-export type Tone = 'good' | 'bad';
+/** green (good), red (bad) or amber (accent: the one that stands out, such as the current age) */
+export type Tone = 'good' | 'bad' | 'accent';
 
 export type Block =
   | { readonly kind: 'title'; readonly parts: Parts }
   | {
       readonly kind: 'text' | 'dim' | 'hint';
       readonly parts: Parts;
-      /** a line of text green (good) or red (bad) */
+      /** a line of text green (good), red (bad) or amber (accent) */
       readonly tone?: Tone;
     }
   | {
       readonly kind: 'row';
       readonly label: Parts;
       readonly value: Parts;
-      /** the whole row green (good) or red (bad) */
+      /** the whole row green (good), red (bad) or amber (accent) */
       readonly tone?: Tone;
       /** a total: a rule above it */
       readonly total?: boolean;
+      /** set in from the left, under the line it belongs to */
+      readonly indent?: boolean;
     };
 /** A tooltip: its title first, then its lines and rows. */
 export type TipDoc = readonly Block[];
@@ -61,6 +69,10 @@ export function num(token: string | number): NumPart {
 /** A resource by cargo id, named as the game names it. */
 export function res(cargo: string): ResPart {
   return { res: cargo, name: cargoName(cargo) };
+}
+/** The icon `icons/<id>` with no name; plain text reads it as nothing. */
+export function icon(id: string): IconPart {
+  return { icon: id };
 }
 export function term(label: string, tip: () => TipDoc): TermPart {
   return { term: label, tip };
@@ -84,6 +96,10 @@ export function text(...parts: Inline[]): Block {
 export function bad(...parts: Inline[]): Block {
   return { kind: 'text', parts, tone: 'bad' };
 }
+/** A line of text in green: what is met or done. */
+export function good(...parts: Inline[]): Block {
+  return { kind: 'text', parts, tone: 'good' };
+}
 export function dim(...parts: Inline[]): Block {
   return { kind: 'dim', parts };
 }
@@ -93,7 +109,7 @@ export function hint(...parts: Inline[]): Block {
 export function row(
   label: Inline | Parts,
   value: Inline | Parts,
-  look: { tone?: Tone; total?: boolean } = {},
+  look: { tone?: Tone; total?: boolean; indent?: boolean } = {},
 ): Block {
   return { kind: 'row', label: asParts(label), value: asParts(value), ...look };
 }
@@ -144,7 +160,10 @@ export function fill(template: string, slots: Record<string, Inline | Parts>): I
 
 // ---------------------------------------------------------------- reading a document
 
-/** What the parts read as, without formatting: numbers as their tokens, a resource as its name. */
+/**
+ * What the parts read as, without formatting: numbers as their tokens, a resource as its name, an
+ * icon as nothing.
+ */
 export function plain(parts: Parts): string {
   return parts
     .map((p) =>
@@ -154,9 +173,11 @@ export function plain(parts: Parts): string {
           ? p.num
           : 'res' in p
             ? p.name.toLowerCase()
-            : 'dim' in p
-              ? p.dim
-              : p.term,
+            : 'icon' in p
+              ? ''
+              : 'dim' in p
+                ? p.dim
+                : p.term,
     )
     .join('');
 }

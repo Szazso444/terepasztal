@@ -4,6 +4,7 @@ import { content } from '../data/content';
 import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
 import { STR } from '../strings';
 import { Terrain } from '../world/tiles';
+import { depotWith } from '../testing/storeFixtures';
 import { simWorld, type SimWorld } from '../testing/simWorld';
 import { buildingDef, buildingFootprint, buildingSpan, buildingToJSON } from './buildings';
 import { doorsOf, placeSpan, spanProblems } from './doors';
@@ -171,7 +172,7 @@ for (const c of CASES) {
               void w.builder.placeTrack(
                 t.x,
                 t.y,
-                { kind: 'straight', cls: 'regular', cls2: 'regular' },
+                { kind: 'straight', cls: 'branch', cls2: 'branch' },
                 1,
               ),
           ],
@@ -242,24 +243,26 @@ for (const c of CASES) {
         const cover = buildingFootprint(c.id, X, Y, rot);
         for (const t of cover) {
           const w = world(c);
+          // the store the refund goes to
+          const stock = depotWith(w, {}, { x: X - 12, y: Y });
           const b = w.builder.placeBuilding(X, Y, c.id, rot)!;
           // pay and refund as in a game: not the editor
           w.builder.free = false;
           expect(b.id).toBe(c.id);
           const cost = buildingDef(c.id).cost;
-          const before = Object.fromEntries(Object.keys(cost).map((k) => [k, w.stock.get(k)]));
+          const before = Object.fromEntries(Object.keys(cost).map((k) => [k, stock.get(k)]));
           expect(w.builder.removeBuilding(t.x, t.y), `r${rot} from ${key(t)}`).toBe(true);
           for (const [k, v] of Object.entries(cost))
-            expect(w.stock.get(k) - before[k], `${k} refunded once`).toBe(
+            expect(stock.get(k) - before[k], `${k} refunded once`).toBe(
               Math.floor(v * rules.refundRate),
             );
           for (const f of cover)
             expect(w.builder.buildingAt(f.x, f.y), `r${rot} ${key(f)} freed`).toBeUndefined();
           expect(w.builder.buildings.size).toBe(0);
           // nothing is left to take off, and a second try pays nothing
-          const after = Object.fromEntries(Object.keys(cost).map((k) => [k, w.stock.get(k)]));
+          const after = Object.fromEntries(Object.keys(cost).map((k) => [k, stock.get(k)]));
           expect(w.builder.removeBuilding(t.x, t.y)).toBe(false);
-          expect(Object.fromEntries(Object.keys(cost).map((k) => [k, w.stock.get(k)]))).toEqual(
+          expect(Object.fromEntries(Object.keys(cost).map((k) => [k, stock.get(k)]))).toEqual(
             after,
           );
           // the room is free to build in again

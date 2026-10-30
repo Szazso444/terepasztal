@@ -9,7 +9,6 @@ import { STR } from '../strings';
 import { content, type BuildingDef, type DecorDef, type StationDef } from '../data/content';
 import { Builder, buildingPlace, decorDef, decorPlace, stationPlace, type Decor } from './build';
 import type { Building } from './buildings';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds, stationFootprint } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
@@ -19,6 +18,7 @@ import { doorsOf, hasDoors, type Door, type PlaceAt, type PlaceDef } from './doo
 import { PeopleSim, OFF_ROAD_STEP, doorstep, findWalk, roadStep } from './people';
 import { ensureStartDepot } from './startDepot';
 import { forAll, shrinkArray } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -37,7 +37,7 @@ const ROTATIONS = Array.from({ length: BUILDING_ROTATIONS }, (_, r) => r);
 /** A straight's turn: 0 runs north to south, 1 east to west. */
 const NS = 0;
 const EW = 1;
-const STRAIGHT: TrackItem = { kind: 'straight', cls: 'regular' };
+const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
 
 type Tile = { x: number; y: number };
 const same = (a: Tile, b: Tile) => a.x === b.x && a.y === b.y;
@@ -45,15 +45,16 @@ const at = (t: Tile) => `${t.x},${t.y}`;
 
 /**
  * A grass map of 64 by 64 tiles, four chunks of which the player owns the north-west one (x and y
- * below 32), and a builder that pays: nothing in stock until a test puts it there.
+ * below 32), and a builder that pays from a depot there: nothing in it until a test puts it there.
  */
 function world() {
   const map = emptyMap(7, W, W, Terrain.Grass);
   const regions = new RegionState(map);
   regions.load([true, false, false, false]);
   const track = new TrackGraph(W, W);
-  const stock = new Stockpile();
-  const builder = new Builder(map, regions, track, new Economy(), stock);
+  // the depot the builder pays from, in reach of the whole owned chunk
+  const { stores, depot: stock } = storeWith({}, { x: 16, y: 16 });
+  const builder = new Builder(map, regions, track, new Economy(), stores);
   return { map, regions, track, stock, builder, roads: builder.roads };
 }
 type World = ReturnType<typeof world>;
@@ -322,7 +323,7 @@ const FRONT: Dir[] = [Dir.S, Dir.W, Dir.N, Dir.E];
 function platformFor(w: World, rot: number, corner: Tile = CORNER) {
   const d = FRONT[wrapRotation(rot)];
   const t = { x: corner.x + DIR_DX[d], y: corner.y + DIR_DY[d] };
-  if (!w.track.has(t.x, t.y)) w.track.place(t.x, t.y, 'straight', d % 2 === 0 ? EW : NS, 'regular');
+  if (!w.track.has(t.x, t.y)) w.track.place(t.x, t.y, 'straight', d % 2 === 0 ? EW : NS, 'branch');
 }
 /** What placing `e` turned to `rot` at CORNER would cost and whether the rules let it. */
 function check(w: World, e: Entry, rot: number) {
@@ -426,7 +427,8 @@ describe('placing a place near a road', () => {
         const price = check(w, e, rot).cost;
         for (const [k, v] of Object.entries(price)) w.stock.add(k, v);
         w.stock.add('stone', 7);
-        expect(check(w, e, rot), what).toEqual({ ok: true, cost: price });
+        const payer = Object.keys(price).length ? w.stock.key : undefined;
+        expect(check(w, e, rot), what).toEqual({ ok: true, cost: price, payer });
         // what it stands on decides the shortest spur: worked out on a twin with no spur
         const twin = world();
         roadRow(twin);
@@ -444,7 +446,7 @@ describe('placing a place near a road', () => {
         expect(spur.length, what).toBe(fewest);
         expect(spur.length, what).toBeGreaterThan(1);
         // the price was taken and nothing more: the seven stone are left
-        expect(w.stock.toJSON().amounts, what).toEqual({
+        expect(Object.fromEntries(w.stock.amounts), what).toEqual({
           ...Object.fromEntries(Object.keys(price).map((k) => [k, 0])),
           stone: 7,
         });
@@ -558,7 +560,7 @@ describe('placing a place near a road', () => {
   });
 
   it('crosses a plain straight at right angles, and goes round what no road may cross', () => {
-    for (const cls of ['regular', 'narrow', 'high_speed'] as const) {
+    for (const cls of ['branch', 'narrow', 'trunk'] as const) {
       const w = world();
       w.builder.free = true;
       // a line east to west along row 13, and a road beyond it, south of a house's door
@@ -569,7 +571,7 @@ describe('placing a place near a road', () => {
       pave(w, [{ x: 10, y: 15 }]);
       expect(w.builder.placeDecor(10, 10, 'townhouse', 0)).not.toBeNull();
       const spur = roadsOf(w).slice(1);
-      if (cls === 'high_speed') {
+      if (cls === 'trunk') {
         // the way round either end of the line is longer than SPUR_REACH: no road
         expect(spur).toEqual([]);
         continue;
@@ -612,7 +614,7 @@ describe('placing a place near a road', () => {
     expect(w.builder.roadServes(buildingPlace(w.builder.buildingAt(20, 10)!))).toBe(false);
     expect(w.builder.roadServes(buildingPlace(w.builder.buildingAt(20, 11)!))).toBe(true);
     // a signal and a power pole have no door
-    w.track.place(5, 20, 'straight', EW, 'regular');
+    w.track.place(5, 20, 'straight', EW, 'branch');
     expect(w.builder.placeDecor(5, 20, 'signal', 0)).not.toBeNull();
     expect(w.builder.placeDecor(7, 7, 'power_line', 0)).not.toBeNull();
     expect(roadsOf(w)).toHaveLength(roads);
@@ -627,14 +629,14 @@ describe('placing a place away from every road', () => {
       w.builder.canPlaceDecor(t.x, t.y, 'townhouse'),
       w.builder.checkBuilding(t.x, t.y, 'windmill', rot).reason,
       w.builder.checkStation(t.x, t.y, 'depot', rot).reason,
-      w.builder.checkTrack(t.x, t.y, { kind: 'curve', cls: 'regular' }, rot).reason,
-      w.builder.checkTrack(t.x, t.y, { kind: 'straight', cls: 'high_speed' }, rot).reason,
+      w.builder.checkTrack(t.x, t.y, { kind: 'curve', cls: 'branch' }, rot).reason,
+      w.builder.checkTrack(t.x, t.y, { kind: 'straight', cls: 'trunk' }, rot).reason,
     ];
     const road: (string | null)[] = [
       STR.build.roadInWay,
       STR.build.roadOnBuilding,
       STR.build.crossingStraight,
-      STR.build.crossingHighSpeed,
+      STR.build.crossingLine,
       STR.build.crossingAlong,
     ];
     return refusals.find((r) => r && road.includes(r)) ?? '';
@@ -685,7 +687,7 @@ describe('a road the player lays', () => {
     const [door] = streetOf(house);
     w.stock.add('stone', 10);
     w.stock.add('wood', 10);
-    expect(w.builder.checkRoad(10, 16)).toEqual({ ok: true, cost: roadCost() });
+    expect(w.builder.checkRoad(10, 16)).toEqual({ ok: true, cost: roadCost(), payer: w.stock.key });
     expect(w.builder.placeRoad(10, 16)).toBe(true);
     expect(w.stock.get('stone')).toBe(10 - roadCost().stone);
     expect(w.stock.get('wood')).toBe(10);
@@ -753,7 +755,7 @@ function genSite(rng: Rng) {
         ...p,
         n: rng.int(2, 12),
         across: rng.chance(0.5),
-        cls: rng.pick(['regular', 'regular', 'narrow', 'high_speed'] as const),
+        cls: rng.pick(['branch', 'branch', 'narrow', 'trunk'] as const),
       };
     if (r < 0.55)
       return {
@@ -783,7 +785,7 @@ function broken(w: World): string {
     if (d && !decorDef(d.id).onTrack) return `${where} on a ${d.id}`;
     const p = track.get(x, y);
     if (!p) continue;
-    if (p.kind !== 'straight' || p.unit || p.cls === 'high_speed')
+    if (p.kind !== 'straight' || p.unit || (p.cls !== 'branch' && p.cls !== 'narrow'))
       return `${where} on a ${p.kind} ${p.cls}`;
     for (const s of p.links[0])
       if (roads.has(x + DIR_DX[s], y + DIR_DY[s])) return `${where} along its track`;
@@ -803,7 +805,7 @@ describe('every spur', () => {
         // the player's way, region lock and all, with the stock to pay for whatever is built
         const w = world();
         const b = w.builder;
-        for (const id of ['wood', 'stone', 'iron']) w.stock.add(id, 1e6);
+        for (const id of ['wood', 'stone', 'iron']) w.stock.amounts.set(id, 1e6);
         for (const g of c.ground)
           w.map.terrain[g.y * W + g.x] = [Terrain.Water, Terrain.Rock, Terrain.Mountain][g.n];
         /** what a spur keeps off: every station's platform and every depot's gates */
@@ -850,8 +852,7 @@ describe('every spur', () => {
                 count(extra);
               }
             }
-          else if (o.op === 'piece')
-            b.placeTrack(o.x, o.y, { kind: o.kind, cls: 'regular' }, o.rot);
+          else if (o.op === 'piece') b.placeTrack(o.x, o.y, { kind: o.kind, cls: 'branch' }, o.rot);
           else if (o.old) {
             // where the rules would let it stand: then stood there as a save holds it, no road
             const e = PLACES.find((q) => q.def.id === o.id)!;
@@ -948,9 +949,9 @@ function keptOffByHand(w: World): Set<number> {
     for (const g of s.gateTiles()) if (s.def.depot || w.track.has(g.x, g.y)) out.add(keyOf(g));
   return out;
 }
-/** A plain one-tile straight of regular or narrow track: the one piece a road may cross. */
+/** A plain one-tile straight of Narrow Gauge, Branch or Main Line: the one piece a road may cross. */
 const plainStraight = (p: TrackPiece | undefined): p is TrackPiece =>
-  !!p && p.kind === 'straight' && !p.unit && p.cls !== 'high_speed';
+  !!p && p.kind === 'straight' && !p.unit && (p.cls === 'branch' || p.cls === 'narrow');
 
 /**
  * Whether a road may stand on `t` with the roads `roads` laid, the rules of #318 and #408 written
@@ -1092,7 +1093,7 @@ function genBox(rng: Rng) {
     return {
       ...inBox(),
       kind,
-      cls: rng.pick(['regular', 'regular', 'narrow', 'high_speed'] as const),
+      cls: rng.pick(['branch', 'branch', 'narrow', 'trunk'] as const),
       rot: kind === 'straight' ? rng.int(0, 1) : rng.int(0, 7),
     };
   });
@@ -1188,7 +1189,7 @@ function stockUp(w: World) {
   const ids = [content.stations.defs, content.buildings, content.decor].flatMap((defs) =>
     defs.flatMap((d) => Object.keys(d.cost)),
   );
-  for (const id of new Set([...ids, ...Object.keys(roadCost())])) w.stock.add(id, 1e6);
+  for (const id of new Set([...ids, ...Object.keys(roadCost())])) w.stock.amounts.set(id, 1e6);
 }
 
 describe('every spur, against an exhaustive search', () => {
@@ -1209,7 +1210,7 @@ describe('every spur, against an exhaustive search', () => {
         c.ops.forEach((o, i) => {
           const step = `op ${i} ${JSON.stringify(o)}`;
           const before = roadsOf(w);
-          const stock = w.stock.toJSON().amounts;
+          const stock = Object.fromEntries(w.stock.amounts);
           const roads = new Set(before.map(keyOf));
           /** the doors that may get a spur */
           let doors: Door[];
@@ -1223,7 +1224,7 @@ describe('every spur, against an exhaustive search', () => {
             laid = roadsOf(w).slice(before.length);
             if (!p) {
               expect(laid, step).toEqual([]);
-              expect(w.stock.toJSON().amounts, step).toEqual(stock);
+              expect(Object.fromEntries(w.stock.amounts), step).toEqual(stock);
               return;
             }
             price = check.cost as Record<string, number>;
@@ -1235,7 +1236,7 @@ describe('every spur, against an exhaustive search', () => {
             const added = roadsOf(w).slice(before.length);
             if (!done) {
               expect(added, step).toEqual([]);
-              expect(w.stock.toJSON().amounts, step).toEqual(stock);
+              expect(Object.fromEntries(w.stock.amounts), step).toEqual(stock);
               return;
             }
             expect(check.cost, step).toEqual(c.free ? {} : roadCost());
@@ -1255,7 +1256,7 @@ describe('every spur, against an exhaustive search', () => {
           const paid = Object.fromEntries(
             Object.entries(stock).map(([id, n]) => [id, n - (price[id] ?? 0)]),
           );
-          expect(w.stock.toJSON().amounts, `${step}: the stock`).toEqual(paid);
+          expect(Object.fromEntries(w.stock.amounts), `${step}: the stock`).toEqual(paid);
           // door by door, in the builder's order, each spur judged on the roads before it
           const off = keptOffByHand(w);
           const reaches = new Set(doorsByHand(w).map((d) => keyOf(d.reach)));
@@ -1413,7 +1414,7 @@ function genPair(rng: Rng) {
       ...near(8),
       n: rng.int(3, 10),
       across: rng.chance(0.5),
-      cls: rng.pick(['regular', 'regular', 'narrow', 'high_speed'] as const),
+      cls: rng.pick(['branch', 'branch', 'narrow', 'trunk'] as const),
     })),
     free: rng.chance(0.3),
   };
@@ -1589,7 +1590,7 @@ describe('a place and a road, with no stub between them (#455)', () => {
         expect(after.slice(0, before.length), what).toEqual(before);
         const spur = after.slice(before.length);
         expect(
-          Object.values(w.stock.toJSON().amounts).every((n) => n === 0),
+          Object.values(Object.fromEntries(w.stock.amounts)).every((n) => n === 0),
           what,
         ).toBe(true);
         expect(w.builder.roadServes(place), what).toBe(near);
@@ -1678,7 +1679,7 @@ describe('a walker from a house to a station', () => {
     w.builder.free = true;
     // a line east to west along row 11, a passenger station on it at (20, 10): its street door
     // faces north, to (20, 9)
-    for (let x = 16; x <= 26; x++) w.track.place(x, 11, 'straight', EW, 'regular');
+    for (let x = 16; x <= 26; x++) w.track.place(x, 11, 'straight', EW, 'branch');
     const st = w.builder.placeStation(20, 10, 'station', 0)!;
     expect(st).not.toBeNull();
     // a road the player lays from beside the station's door west, then down to row 11
@@ -1723,7 +1724,7 @@ describe('a walker from a door with no road outside it (#455)', () => {
     const w = world();
     w.builder.free = true;
     // a line east to west along row 11, a passenger station on it at (20, 10), a house at (10, 10)
-    for (let x = 16; x <= 26; x++) w.track.place(x, 11, 'straight', EW, 'regular');
+    for (let x = 16; x <= 26; x++) w.track.place(x, 11, 'straight', EW, 'branch');
     const st = w.builder.placeStation(20, 10, 'station', 0)!;
     expect(st).not.toBeNull();
     expect(w.builder.placeDecor(10, 10, 'townhouse', 0)).not.toBeNull();
@@ -1769,7 +1770,7 @@ describe('roads to doors and the save', () => {
         const y = 12 + 7 * Math.floor(i / 4);
         if (wantsTrack(e)) {
           const d = FRONT[rot];
-          w.track.place(x + DIR_DX[d], y + DIR_DY[d], 'straight', d % 2 === 0 ? EW : NS, 'regular');
+          w.track.place(x + DIR_DX[d], y + DIR_DY[d], 'straight', d % 2 === 0 ? EW : NS, 'branch');
         }
         if (e.kind === 'station') return stationPlace(w.builder.placeStation(x, y, e.def.id, rot)!);
         if (e.kind === 'works') return buildingPlace(w.builder.placeBuilding(x, y, e.def.id, rot)!);

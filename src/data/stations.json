@@ -183,7 +183,7 @@
     {
       "id": "warehouse",
       "name": "Warehouse",
-      "flavor": "Local store: holds 1000 units per level of anything trains bring. Trains take goods out again; only a Depot feeds the stockpile.",
+      "flavor": "Pools its goods with the town's store; outside a town it is a store of its own.",
       "cost": {
         "wood": 60,
         "stone": 30

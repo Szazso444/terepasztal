@@ -35,7 +35,15 @@ import { generateIllustratedTrackAtlas, sleeperStep } from './trackIllustrated';
  * The nominal sleeper spacing per class, in tiles: the issue keeps it as it was before the fix
  * (the pitch is derived from it per run). Retuning a class on purpose is a one-line change here.
  */
-const NOMINAL_STEP: Record<TrackClass, number> = { regular: 0.14, high_speed: 0.14, narrow: 0.115 };
+const NOMINAL_STEP: Record<TrackClass, number> = {
+  narrow: 0.115,
+  branch: 0.14,
+  // the lines with no pieces yet are drawn as Branch Line
+  main: 0.14,
+  trunk: 0.14,
+  maglev: 0.14,
+  hyperloop: 0.14,
+};
 /** A drawn icon of a piece shrinks the step with its scale, but never below this share of it. */
 const ICON_STEP_FLOOR = 0.75;
 /** Distance in tiles within which a drawn sleeper counts as the one expected there. */
@@ -53,7 +61,6 @@ interface FrameSpec {
   lines: Line[];
   /** one-tile pieces: each rail line's two ends, where it meets the tile edge */
   ends?: { dir: Dir; cls: TrackClass }[];
-  transition?: boolean;
 }
 /** A frame as drawn: where each sleeper was painted (tile coordinates) and in which colour. */
 interface Drawn {
@@ -141,10 +148,8 @@ function frameSpecs(): FrameSpec[] {
       }));
       specs.push({
         key,
-        // a transition is one run of sleepers over both halves, laid at the regular spacing
         lines,
         ends: links.flatMap((link, i) => link.map((dir) => ({ dir, cls: lines[i].cls }))),
-        transition: it.kind === 'transition',
       });
     }
   return specs;
@@ -334,31 +339,6 @@ describe('the frames the generator paints', () => {
         joins++;
       }
     expect(joins).toBeGreaterThan(100);
-  });
-
-  it('change colour once on a transition, at its middle, and paint no sleeper twice', () => {
-    const transitions = specs.filter((s) => s.transition);
-    expect(transitions).toHaveLength(rotationCount('transition'));
-    for (const spec of transitions) {
-      const frame = drawn[specs.indexOf(spec)];
-      const [line] = spec.lines;
-      const expected = ruleSleepers(line);
-      const { index, extra } = pair(expected, frame.sleepers);
-      expect(index, `${spec.key}: a sleeper is missing`).not.toContain(-1);
-      expect(extra, `${spec.key}: a sleeper is painted twice or off the line`).toEqual([]);
-      const colors = index.map((k) => frame.colors[k]);
-      const total = length(line.points);
-      const pitch = total / expected.length;
-      expect(new Set(colors).size, spec.key).toBe(2);
-      colors.forEach((color, i) => {
-        // the sleeper sitting on the middle may be in either half; every other one is in its own
-        const at = (i + 0.5) * pitch;
-        if (at < total / 2 - TOLERANCE) expect(color, `${spec.key} sleeper ${i}`).toBe(colors[0]);
-        if (at > total / 2 + TOLERANCE)
-          expect(color, `${spec.key} sleeper ${i}`).toBe(colors.at(-1));
-      });
-      expect(colors.filter((c, i) => i > 0 && c !== colors[i - 1])).toHaveLength(1);
-    }
   });
 });
 

@@ -16,26 +16,25 @@ import { unitDef } from '../world/trackGeom';
 import { Dir, DIRS, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
-import { Train, defaultStop, resetTrainIds, type RouteMode } from './trains';
+import { Train, aheadRun, defaultStop, resetTrainIds, type RouteMode } from './trains';
 import { Fleet, MAX_LOCOS, MAX_WAGONS } from './fleet';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { gaugeOf } from './compat';
-import { Polyline, vehicleFronts, vehicleSpec, type BodyFields } from './body';
+import { Polyline, consistLength, vehicleFronts, vehicleSpec, type BodyFields } from './body';
 import { walkBack, type PathSegment } from '../world/pathfinding';
 import { content, type Gauge } from '../data/content';
 import { Inventory } from '../gacha/inventory';
+import { buildTrafficScenario, SCENARIO_GDT, SCENARIO_TICK_RATE } from '../testing/trafficScenario';
 import { locoDef, wagonDef } from '../gacha/items';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
-  // a warehouse is worth collecting from with what a level 1 store holds
-  rules.collectMin = 30;
   setSupplyMode(DEFAULT_SUPPLY);
   resetTrainIds();
   resetStationIds();
@@ -110,14 +109,13 @@ function* shrinkClosing(c: Closing): Iterable<Closing> {
 function world() {
   const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass),
     track = new TrackGraph(SIZE, SIZE),
-    stock = new Stockpile(),
     economy = new Economy(),
     inventory = new Inventory();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, inventory, economy, stock);
+  const fleet = new Fleet(track, builder, map, inventory, economy);
   for (let x = 2; x < 90; x++) track.place(x, ROW, 'straight', 1);
   return { map, track, builder, fleet };
 }
@@ -1421,7 +1419,7 @@ describe('a train placed on the track (spawnAt)', () => {
   it('rolls out of a depot as it did: the head on the gate, the cars in line behind it', () => {
     const y = 60;
     const depots = [
-      { depotId: 'depot', cls: 'regular', train: ['f7', 'wood_hopper'] },
+      { depotId: 'depot', cls: 'branch', train: ['f7', 'wood_hopper'] },
       { depotId: 'narrow_depot', cls: 'narrow', train: ['mk48', 'mine_tub'] },
     ] as const;
     for (const { depotId, cls, train } of depots)
@@ -1483,5 +1481,193 @@ describe('a train placed on the track (spawnAt)', () => {
             });
           }
         }
+  });
+});
+
+describe('the path ahead', () => {
+  /** The scan `pathAhead` replaced: every path point from half a tile behind the head, by tile. */
+  function scanned(t: Train) {
+    const { path, pathPts, pathCum, pathPos } = t as unknown as {
+      path: PathSegment[] | null;
+      pathPts: { seg: PathSegment }[];
+      pathCum: number[];
+      pathPos: number;
+    };
+    const out: { x: number; y: number; in: Dir; out: Dir; arc: number }[] = [];
+    if (!path) return out;
+    let last: PathSegment | null = null;
+    for (let i = 0; i < pathPts.length; i++) {
+      if (pathCum[i] < pathPos - 0.5) continue;
+      const seg = pathPts[i].seg;
+      if (seg === last) continue;
+      last = seg;
+      out.push({ x: seg.x, y: seg.y, in: seg.in, out: seg.out, arc: pathCum[i] });
+    }
+    return out;
+  }
+
+  // Slow: steps the three-train traffic scenario 2400 times (about 1 s alone), so 20 s.
+  it('is the scan from half a tile behind the head, at every tick of the traffic scenario, and its keys line up', () => {
+    const s = buildTrafficScenario(3);
+    const w = s.fleet.track.w;
+    let checked = 0;
+    for (let tick = 0; tick < 2400; tick++) {
+      s.step(SCENARIO_GDT, tick / SCENARIO_TICK_RATE);
+      for (const t of s.fleet.trains) {
+        const list = t.pathAhead();
+        expect(list, `tick ${tick}, train ${t.id}`).toEqual(scanned(t));
+        expect(t.pathAhead(12)).toEqual(list.slice(0, 12));
+        // asked again at the same point, the same list
+        expect(t.pathAhead()).toBe(list);
+        const run = aheadRun(list, w);
+        if (list.length) {
+          expect(run).not.toBeNull();
+          list.forEach((p, i) => expect(run!.keys[run!.from + i]).toBe(p.y * w + p.x));
+          expect(run!.keys.length - run!.from).toBe(list.length);
+          checked++;
+        }
+      }
+    }
+    // the trains ran their paths for most of the run
+    expect(checked).toBeGreaterThan(1000);
+  }, 20_000);
+});
+
+describe('car poses kept between ticks', () => {
+  // Slow: steps the three-train traffic scenario 2400 times (about 1 s alone), so 20 s.
+  it('are the poses worked out afresh from the trail, at every tick of the traffic scenario', () => {
+    const s = buildTrafficScenario(3);
+    // trains that stood still through a whole tick: the trail as it was before the step
+    let standing = 0;
+    const was = new Map<
+      number,
+      { last: unknown; n: number; reversed: boolean; vehicles: unknown }
+    >();
+    for (let tick = 0; tick < 2400; tick++) {
+      s.step(SCENARIO_GDT, tick / SCENARIO_TICK_RATE);
+      for (const t of s.fleet.trains) {
+        const trail = (t as unknown as { trail: unknown[] }).trail;
+        const prior = was.get(t.id);
+        if (
+          prior &&
+          prior.last === trail[trail.length - 1] &&
+          prior.n === trail.length &&
+          prior.reversed === t.reversed
+        ) {
+          // it stood through the step: the poses it had are kept, not worked out again
+          expect(t.vehiclePoses, `tick ${tick}, train ${t.id} stood`).toBe(prior.vehicles);
+          standing++;
+        }
+        const kept = { poses: t.poses, vehicles: t.vehiclePoses };
+        // forget what was kept (the lengths along the trail too) and work them out again
+        const inner = t as unknown as { posedFor: unknown; trailLenOf: unknown };
+        inner.posedFor = null;
+        inner.trailLenOf = null;
+        t.updatePoses();
+        expect(kept.vehicles, `tick ${tick}, train ${t.id}`).toEqual(t.vehiclePoses);
+        expect(kept.poses).toEqual(t.poses);
+        was.set(t.id, {
+          last: trail[trail.length - 1],
+          n: trail.length,
+          reversed: t.reversed,
+          vehicles: t.vehiclePoses,
+        });
+      }
+    }
+    // 778 of the 7,200 train-ticks stand through the step
+    expect(standing).toBeGreaterThan(500);
+  }, 20_000);
+});
+
+describe('car poses from a saved trail', () => {
+  // Slow: steps the three-train traffic scenario 1200 times (about 0.5 s alone), so 20 s.
+  it('are the poses the train had, and the ones worked out afresh, after its trail is restored', () => {
+    const s = buildTrafficScenario(3);
+    for (let tick = 0; tick < 1200; tick++) {
+      s.step(SCENARIO_GDT, tick / SCENARIO_TICK_RATE);
+      if (tick % 100 !== 99) continue;
+      for (const t of s.fleet.trains) {
+        const had = t.vehiclePoses;
+        const saved = (t.toJSON() as unknown as { trail: number[][] }).trail;
+        t.restoreTrail(saved, t.reversed);
+        expect(t.vehiclePoses, `tick ${tick}, train ${t.id}`).toEqual(had);
+        const restored = t.vehiclePoses;
+        const inner = t as unknown as { posedFor: unknown; trailLenOf: unknown };
+        inner.posedFor = null;
+        inner.trailLenOf = null;
+        t.updatePoses();
+        expect(restored).toEqual(t.vehiclePoses);
+      }
+    }
+  }, 20_000);
+});
+
+describe('the bodies a consist is made of, kept between calls', () => {
+  const locos = ['f7', 'mav375'];
+  const wagons = ['wood_hopper', 'wooden_coach'];
+  const fresh = (t: Train) => {
+    const specs = [
+      ...t.locos.map((l) => vehicleSpec(l.def)),
+      ...t.wagons.map((w) => vehicleSpec(w.def)),
+    ];
+    return { specs, length: consistLength(specs.map((s) => s.L)) };
+  };
+  it('follow the consist as wagons are coupled, uncoupled and swapped and locos change', () => {
+    forAll(
+      (rng: Rng) =>
+        Array.from({ length: rng.int(1, 12) }, () => ({
+          op: rng.pick(['add', 'drop', 'swap', 'loco', 'replace'] as const),
+          id: rng.pick(wagons),
+          loco: rng.pick(locos),
+        })),
+      (ops) => {
+        const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+        let uid = 2;
+        const slot = (id: string) => ({
+          uid: uid++,
+          def: wagonDef(id),
+          level: 1,
+          cargo: null,
+          amount: 0,
+          origin: null,
+        });
+        for (const o of ops) {
+          if (o.op === 'add') t.wagons.push(slot(o.id));
+          else if (o.op === 'drop') t.wagons.pop();
+          else if (o.op === 'swap' && t.wagons.length) t.wagons[0] = slot(o.id);
+          else if (o.op === 'loco') (t.locos[0] as { def: unknown }).def = locoDef(o.loco);
+          else t.wagons = t.wagons.map((w) => slot(w.def.id));
+          const want = fresh(t);
+          expect(t.vehicleSpecs).toEqual(want.specs);
+          expect(t.length).toBe(want.length);
+          expect(t.carLengths).toEqual(want.specs.map((s) => s.L));
+        }
+      },
+    );
+  });
+});
+
+describe('the fullest a tank can be', () => {
+  it('is the least full tank, as the list of tanks gave it, for any caps and contents', () => {
+    const odd = [0, 1, -1, 0.5, 120, Infinity, -Infinity, NaN];
+    forAll(
+      (rng: Rng) =>
+        Array.from({ length: 6 }, () => (rng.chance(0.4) ? rng.pick(odd) : rng.range(0, 200))),
+      ([coalCap, coal, waterCap, water, oilCap, oil]) => {
+        const f: number[] = [];
+        if (coalCap > 0) f.push(coal / coalCap);
+        if (waterCap > 0) f.push(water / waterCap);
+        if (oilCap > 0) f.push(oil / oilCap);
+        const want = f.length ? Math.min(...f) : 1;
+        const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+        Object.defineProperties(t, {
+          coalCap: { value: coalCap },
+          waterCap: { value: waterCap },
+          oilCap: { value: oilCap },
+        });
+        Object.assign(t, { coal, water, oil });
+        expect(t.tankFraction).toBe(want);
+      },
+    );
   });
 });

@@ -6,6 +6,8 @@ import {
   pieceCost,
   footprintOf,
   isUnitKind,
+  itemAge,
+  memberClear,
   makePiece,
   portClass,
   classesJoin,
@@ -29,7 +31,7 @@ import {
 import { ageOfLevel, levelCap } from './levels';
 import { ageDef, LAST_AGE } from './ages';
 import type { Economy } from './economy';
-import { Stockpile, scaleCost } from './stockpile';
+import { scaleCost, type ResourceStore, type StoreRegistry } from './stores';
 import {
   buildingDef,
   buildingLevel,
@@ -49,7 +51,7 @@ import { STR } from '../strings';
 import { bridgeCapacity } from './bridges';
 import { climbAxes, supportedDeck } from '../world/railProfile';
 import { sfx } from '../engine/audio';
-import { planReclass, type PieceChange, type WideClass } from '../world/reclass';
+import { planReclass, type PieceChange, type ReclassDir } from '../world/reclass';
 import { continuesLine, onRails, stone } from './mountainTrack';
 import {
   Roads,
@@ -97,6 +99,8 @@ export interface PlacementCheck {
   ok: boolean;
   cost: Cost;
   reason?: string;
+  /** the key of the store that pays `cost` (`Builder.payerAt`); absent when nothing is paid */
+  payer?: string;
 }
 
 /**
@@ -194,16 +198,17 @@ export class Builder {
   onUpgraded: ((e: Upgraded) => void) | null = null;
   /**
    * fired once by `reclassTrack` after a stroke relaid track, with the anchor of every piece it
-   * relaid (neighbours turned into transitions included) and the class it converted to
+   * relaid and which way it moved them
    */
-  onReclassed: ((tiles: { x: number; y: number }[], target: WideClass) => void) | null = null;
+  onReclassed: ((tiles: { x: number; y: number }[], dir: ReclassDir) => void) | null = null;
 
   constructor(
     readonly map: GameMap,
     readonly regions: RegionState,
     readonly track: TrackGraph,
     readonly economy: Economy,
-    readonly stock: Stockpile,
+    /** where the goods are kept: building pays from the nearest store and refunds to one */
+    readonly stores: StoreRegistry,
     /** the roads on the map (src/sim/roads.ts); a line's probe shares its builder's */
     readonly roads: Roads = new Roads(track),
   ) {
@@ -269,28 +274,50 @@ export class Builder {
   kindMul(defId: string) {
     return 1 + rules.repeatCostStep * this.kindCount(defId);
   }
-  private affordable(cost: Cost): PlacementCheck {
-    if (!this.free && !this.stock.canAfford(cost)) {
-      const miss = this.stock.missing(cost);
-      return {
-        ok: false,
-        cost,
-        reason: STR.build.needResources(
-          Object.entries(miss)
-            .map(([k, v]) => `${v} ${k}`)
-            .join(', '),
-        ),
-      };
-    }
-    return { ok: true, cost };
+  /** The store that pays `cost` for work at (x, y): the nearest in reach that holds all of it. */
+  payerAt(cost: Cost, x: number, y: number): ResourceStore | null {
+    return this.stores.payerFor(cost, x, y);
   }
-  private pay(cost: Cost) {
-    if (this.free) return true;
-    return this.stock.spend(cost);
+  /**
+   * Whether the cost of work at (x, y) can be paid, and by which store (`payer`). Free mode and a
+   * cost of nothing need no store. Refused, the reason names the nearest store's shortfall (or
+   * the whole cost with no store in reach): stores are never added up.
+   */
+  affordable(cost: Cost, x: number, y: number): PlacementCheck {
+    if (this.free || !hasPrice(cost)) return { ok: true, cost };
+    const payer = this.payerAt(cost, x, y);
+    if (payer) return { ok: true, cost, payer: payer.key };
+    const miss = this.stores.nearest(x, y)[0]?.missing(cost) ?? cost;
+    const what = Object.entries(miss)
+      .filter(([, v]) => v > 0)
+      .map(([k, v]) => `${v} ${k}`)
+      .join(', ');
+    return { ok: false, cost, reason: STR.build.noStoreInReach(rules.buildReach, what) };
   }
-  private refund(cost: Cost) {
+  /** Pay what a check approved for work at (x, y), from the store it named (`payer`). */
+  pay(c: PlacementCheck, x: number, y: number) {
+    if (this.free || !hasPrice(c.cost)) return true;
+    const payer = this.stores.nearest(x, y).find((s) => s.key === c.payer);
+    return !!payer && payer.spend(c.cost);
+  }
+  /** Give back the refund share of `cost` to the store that supplies (x, y), else the nearest. */
+  private refund(cost: Cost, x: number, y: number) {
     if (this.free) return;
-    this.stock.refund(cost, rules.refundRate);
+    const to = this.stores.supplierFor(x, y) ?? this.stores.nearest(x, y, Infinity)[0];
+    to?.refund(cost, rules.refundRate);
+  }
+  /**
+   * A station was placed, removed or changed (a level, an upgrade begun): it is told, then the
+   * stores are derived again, as they follow the stations (`StoreRegistry.refresh`).
+   */
+  private stationChanged(s: Station, removed: boolean) {
+    this.onStationChanged?.(s, removed);
+    this.stores.refresh();
+  }
+  /** A works or a platform changed: it is told; a power plant also changes the grid's cap. */
+  private buildingChanged(b: Building, removed: boolean) {
+    this.onBuildingChanged?.(b, removed);
+    if (buildingDef(b.id).power) this.stores.refresh();
   }
   private unlocked(x: number, y: number) {
     return this.free || this.regions.isTileUnlocked(x, y);
@@ -319,7 +346,6 @@ export class Builder {
   isOrphaned(s: Station) {
     return this.platformTiles(s).length === 0;
   }
-  /** Crew of everything built (trains add their own). */
   decorHas(id: string) {
     for (const d of this.decor.values()) if (d.id === id) return true;
     return false;
@@ -328,12 +354,25 @@ export class Builder {
     for (const b of this.buildings.values()) if (b.id === id) return true;
     return false;
   }
+  /**
+   * Where the crews of everything built work, and how many there are: stations, works and the
+   * services beside the track, each at its anchor tile, those with no crew left out. A works being
+   * upgraded has no crew to feed (a closed station's crew is 0 already). Trains have their own.
+   */
+  crewSites(): { x: number; y: number; crew: number }[] {
+    const out: { x: number; y: number; crew: number }[] = [];
+    const add = (x: number, y: number, crew: number) => {
+      if (crew > 0) out.push({ x, y, crew });
+    };
+    for (const s of this.stations) add(s.x, s.y, s.crew);
+    for (const d of this.decor.values()) add(d.x, d.y, decorDef(d.id).crew);
+    for (const b of this.buildings.values()) if (!b.work) add(b.x, b.y, buildingDef(b.id).crew);
+    return out;
+  }
+  /** Crew of everything built, `crewSites` added up (trains add their own). */
   crewTotal() {
     let n = 0;
-    for (const s of this.stations) n += s.crew;
-    for (const d of this.decor.values()) n += decorDef(d.id).crew;
-    // a works being upgraded has no crew to feed (a closed station's crew is 0 already)
-    for (const b of this.buildings.values()) if (!b.work) n += buildingDef(b.id).crew;
+    for (const c of this.crewSites()) n += c.crew;
     return n;
   }
   warehouseLevels() {
@@ -365,7 +404,7 @@ export class Builder {
       ? null
       : levelLocked(def.tier ?? 0, buildingLevel(b) + 1, this.economy.tier);
     if (locked) return { ok: false, cost, reason: locked };
-    return this.affordable(cost);
+    return this.affordable(cost, b.x, b.y);
   }
   /**
    * Pay for the next level and start the work: the building closes until its time is up
@@ -375,7 +414,7 @@ export class Builder {
   upgradeBuilding(b: Building) {
     if (this.buildingAt(b.x, b.y) !== b) return false;
     const c = this.canUpgradeBuilding(b);
-    if (!c.ok || !this.pay(c.cost)) return false;
+    if (!c.ok || !this.pay(c, b.x, b.y)) return false;
     sfx('station.upgrade');
     const work = this.free ? null : startWork(buildingLevel(b) + 1);
     if (!work) {
@@ -383,7 +422,7 @@ export class Builder {
       return true;
     }
     b.work = work;
-    this.onBuildingChanged?.(b, false);
+    this.buildingChanged(b, false);
     return true;
   }
   /** The building's level rises by one: it opens again, and the change is reported. */
@@ -395,7 +434,7 @@ export class Builder {
       this.refreshBridgeCapacity(b.x, b.y);
       this.track.version++;
     }
-    this.onBuildingChanged?.(b, false);
+    this.buildingChanged(b, false);
     this.onUpgraded?.({
       kind: 'works',
       x: b.x,
@@ -478,6 +517,7 @@ export class Builder {
     kind: TrackKind,
     anchor: boolean,
     replace: boolean,
+    clear = false,
   ): string | null {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
@@ -486,13 +526,17 @@ export class Builder {
       return STR.build.needBridge;
     if (t !== Terrain.Water && kind === 'bridge') return STR.build.bridgeOnWater;
     const st = this.stationAt(x, y);
-    // a depot is a through-station: plain pieces may run through the shed
-    if ((st && !(st.def.depot && anchor)) || (this.buildingAt(x, y) && !this.bridgeAt(x, y)))
+    // a depot is a through-station: plain pieces may run through the shed. A clear member of a
+    // curve or switch (no rail on it) may go over whatever stands there.
+    if (
+      !clear &&
+      ((st && !(st.def.depot && anchor)) || (this.buildingAt(x, y) && !this.bridgeAt(x, y)))
+    )
       return STR.build.occupied;
     // a platform carries rail or a road, never both: no level crossing on a bridge (#493)
     if (this.bridgeAt(x, y) && this.roads.has(x, y)) return STR.build.bridgeCarriesRoad;
     const dec = this.decorAt(x, y);
-    if (dec && !decorDef(dec.id).onTrack) return STR.build.occupied;
+    if (dec && !clear && !decorDef(dec.id).onTrack) return STR.build.occupied;
     const existing = this.track.get(x, y);
     // a wide piece needs its whole footprint free of track; a one-tile piece may replace another
     // one-tile piece (outside a line) but never a member of a wide one
@@ -502,11 +546,11 @@ export class Builder {
   /**
    * Can a piece with its anchor at (x,y) be laid? Checks every footprint tile, that a piece on rock
    * or a mountain continues a line, the ground under it, then that each open edge meeting existing
-   * track joins a compatible class (a transition piece joins any).
+   * track joins a line of the same network.
    */
   checkTrack(x: number, y: number, item: TrackItem, rot = 0): PlacementCheck {
     const c = this.trackRules(x, y, item, rot, true);
-    return c.ok ? this.affordable(c.cost) : c;
+    return c.ok ? this.affordable(c.cost, x, y) : c;
   }
   /**
    * `checkTrack`'s rules and price, without asking whether the stock can pay. `replace` lets a
@@ -522,10 +566,13 @@ export class Builder {
     const kind = item.kind;
     if ((item.cls === 'narrow' || item.cls2 === 'narrow') && !rules.narrowUnlocked)
       return { ok: false, cost: {}, reason: STR.build.narrowLocked };
+    if (this.lineLocked(itemAge(item)))
+      return { ok: false, cost: {}, reason: STR.build.tierLocked(itemAge(item)) };
     const wide = isUnitKind(kind, item.cls);
     const tiles = footprintOf(x, y, kind, rot, item.cls);
-    for (const t of tiles) {
-      const why = this.checkTrackTile(t.x, t.y, kind, !wide, replace);
+    for (const [i, t] of tiles.entries()) {
+      const clear = wide && memberClear(kind, item.cls, rot, i);
+      const why = this.checkTrackTile(t.x, t.y, kind, !wide, replace, clear);
       if (why) return { ok: false, cost: {}, reason: why };
     }
     // class compatibility with the neighbours the new piece would open onto
@@ -548,8 +595,7 @@ export class Builder {
       !continuesLine(this.track, probe, tiles)
     )
       return { ok: false, cost: {}, reason: STR.build.mountainLine };
-    // Straights, crossings and class transitions may climb. Curves and switches (regular and
-    // high speed) need smooth ground on every tile, or a bridge platform under every tile: then
+    // Straights and crossings may climb. Curves and switches need smooth ground on every tile, or a bridge platform under every tile: then
     // they sit at the deck, the level of the rails they meet off the bridge.
     const members = tiles.map((t) => ({ ...t, links: probe.get(t.x, t.y)?.links ?? [] })),
       // Members of a wide piece are parts of a curve or switch, whatever their links look like.
@@ -574,12 +620,9 @@ export class Builder {
           if (!q || !this.track.opensTo(nx, ny, opposite(d))) continue;
           const mine = portClass(p, d),
             theirs = portClass(q, opposite(d));
-          if (!classesJoin(mine, theirs)) {
-            // no piece joins the two gauges; only regular and high speed meet at a transition
-            const gauges = mine === 'narrow' || theirs === 'narrow';
-            const reason = gauges ? STR.build.gaugeBreak : STR.build.needTransition;
-            return { ok: false, cost: {}, reason };
-          }
+          // the standard lines join each other; a separate network joins only itself
+          if (!classesJoin(mine, theirs))
+            return { ok: false, cost: {}, reason: STR.build.gaugeBreak };
         }
     }
     let mul = 0;
@@ -603,8 +646,8 @@ export class Builder {
       (existing.cls2 ?? existing.cls) === (item.cls2 ?? item.cls)
     )
       return false;
-    if (!this.pay(c.cost)) return false;
-    if (existing) this.refund(pieceCost(existing.kind, existing.cls, existing.cls2));
+    if (!this.pay(c, x, y)) return false;
+    if (existing) this.refund(pieceCost(existing.kind, existing.cls, existing.cls2), x, y);
     this.layTrack(x, y, item, rot);
     sfx('build.place');
     return true;
@@ -640,27 +683,44 @@ export class Builder {
   }
 
   /**
-   * What converting the pieces on `tiles` to `target` would change and cost. An upgrade to high
-   * speed charges, piece by piece, what the new piece costs above the old one; a downgrade is free
-   * and returns nothing. `from` is the tile a stroke came from (it picks a crossing's line).
+   * What moving the pieces on `tiles` one line up or down would change and cost. An upgrade
+   * charges, piece by piece, what the new piece costs above the old one; a downgrade is free and
+   * returns nothing. `from` is the tile a stroke came from (it picks a crossing's line). `left`
+   * holds the anchors of the pieces that stay as they are although the move would change them: a
+   * curve or switch of the wrong size, or anything the check refuses.
    */
   checkReclass(
     tiles: { x: number; y: number }[],
-    target: WideClass,
+    dir: ReclassDir,
     from?: { x: number; y: number },
-  ): PlacementCheck & { changes: PieceChange[] } {
-    const plan = planReclass(this.track, tiles, target, from);
-    if (!plan.changes.length)
+  ): PlacementCheck & { changes: PieceChange[]; left: { x: number; y: number }[] } {
+    const plan = planReclass(this.track, tiles, dir, from);
+    const sized = plan.left.map(({ x, y }) => ({ x, y }));
+    if (!plan.changes.length) {
+      const first = plan.left[0];
       return {
         ok: false,
         cost: {},
         changes: [],
-        reason: STR.build.reclass[plan.reason ?? 'nothing'],
+        left: sized,
+        reason: first
+          ? STR.build.reclassSize(STR.toolbar.trackClass[first.to], first.need, first.n)
+          : STR.build.reclass[plan.reason ?? 'nothing'],
       };
+    }
+    const refused = (reason: string) => ({
+      ok: false,
+      cost: {},
+      changes: plan.changes,
+      left: [...sized, ...plan.changes.map(({ x, y }) => ({ x, y }))],
+      reason,
+    });
+    const locked = plan.changes.map(itemAge).find((age) => this.lineLocked(age));
+    if (locked !== undefined) return refused(STR.build.tierLocked(locked));
     const crossing = this.reclassCrossing(plan.changes);
-    if (crossing) return { ok: false, cost: {}, changes: plan.changes, reason: crossing };
+    if (crossing) return refused(crossing);
     const cost: Cost = {};
-    if (target === 'high_speed')
+    if (dir === 'up')
       for (const c of plan.changes) {
         const old = this.track.get(c.x, c.y)!;
         let mul = 0;
@@ -672,11 +732,15 @@ export class Builder {
         for (const [k, v] of Object.entries(this.priced(pieceCost(c.kind, c.cls, c.cls2), mul)))
           if (v > (was[k] ?? 0)) cost[k] = (cost[k] ?? 0) + v - (was[k] ?? 0);
       }
-    return { ...this.affordable(cost), changes: plan.changes };
+    // a stroke pays from its first tile
+    const at = tiles[0] ?? { x: 0, y: 0 };
+    const paid = this.affordable(cost, at.x, at.y);
+    if (!paid.ok) return { ...refused(paid.reason ?? ''), cost };
+    return { ...paid, changes: plan.changes, left: sized };
   }
   /**
-   * Why converting would leave a level crossing on a piece no road may cross (high-speed track, a
-   * transition), or null when it would not: a road keeps its tile, so the piece laid there in the
+   * Why converting would leave a level crossing on a piece no road may cross (a line without
+   * level crossings), or null when it would not: a road keeps its tile, so the piece laid there in the
    * place of the old one has to take it (`crossingRefusal`).
    */
   private reclassCrossing(changes: readonly PieceChange[]): string | null {
@@ -690,14 +754,19 @@ export class Builder {
       }
     return null;
   }
-  /** Convert the pieces on `tiles` between wide and high-speed track, keeping the line joined. */
+  /** Is a line of age `age` still closed? Main Line opens in the Diesel Age, Trunk Line in the Electric. */
+  private lineLocked(age: number) {
+    return !this.free && !!rules.lineAgeLocks && age > this.economy.tier;
+  }
+  /** Move the pieces on `tiles` one standard line up or down. */
   reclassTrack(
     tiles: { x: number; y: number }[],
-    target: WideClass,
+    dir: ReclassDir,
     from?: { x: number; y: number },
   ): boolean {
-    const c = this.checkReclass(tiles, target, from);
-    if (!c.ok || !this.pay(c.cost)) return false;
+    const c = this.checkReclass(tiles, dir, from);
+    const at = tiles[0] ?? { x: 0, y: 0 };
+    if (!c.ok || !this.pay(c, at.x, at.y)) return false;
     const laid: { x: number; y: number }[] = [];
     for (const p of c.changes)
       laid.push(...this.track.place(p.x, p.y, p.kind, p.rot, p.cls, p.cls2, p.form ?? 'turn'));
@@ -705,19 +774,18 @@ export class Builder {
       this.refreshBridgeCapacity(t.x, t.y);
       this.onTrackChanged?.(t.x, t.y);
     }
-    // switches keep the form they had: re-choosing it here could swing a branch over to a stub
-    // that only now matches its class, and part the lane it carried
+    // switches keep the form they had: the track around them did not change
     for (const t of laid) this.checkOrphans(t.x, t.y);
     sfx('build.place');
     this.onReclassed?.(
       c.changes.map((p) => ({ x: p.x, y: p.y })),
-      target,
+      dir,
     );
     return true;
   }
-  /** Compatibility: lay a regular piece by kind. */
+  /** Compatibility: lay a Branch Line piece by kind. */
   placeTrackKind(x: number, y: number, kind: TrackKind, rot: number) {
-    return this.placeTrack(x, y, { kind, cls: 'regular', cls2: 'regular' }, rot);
+    return this.placeTrack(x, y, { kind, cls: 'branch', cls2: 'branch' }, rot);
   }
   removeTrack(x: number, y: number): boolean {
     const p = this.track.get(x, y);
@@ -730,7 +798,7 @@ export class Builder {
     }
     for (const t of tiles) if (this.catenary?.supplyAt(t.x, t.y)) this.removeSupply(t.x, t.y);
     this.track.removeAt(x, y);
-    this.refund(pieceCost(p.kind, p.cls, p.cls2));
+    this.refund(pieceCost(p.kind, p.cls, p.cls2), x, y);
     for (const t of tiles) this.onTrackChanged?.(t.x, t.y);
     for (const t of this.track.refreshSwitchForms(tiles)) this.onTrackChanged?.(t.x, t.y);
     for (const t of tiles) this.checkOrphans(t.x, t.y);
@@ -768,12 +836,15 @@ export class Builder {
       probe.lay(p);
     }
     if (at !== undefined) return { ok: false, cost, reason: steps[at].reason, at, steps };
-    return { ...this.affordable(cost), steps };
+    // a line pays from its first tile
+    const first = pieces[0] ?? { x: 0, y: 0 };
+    return { ...this.affordable(cost, first.x, first.y), steps };
   }
   /** Lay every piece of a line and pay its total, or, when `checkLine` refuses it, nothing. */
   placeLine(pieces: readonly LinePiece[]): boolean {
     const c = this.checkLine(pieces);
-    if (!c.ok || !this.pay(c.cost)) return false;
+    const first = pieces[0] ?? { x: 0, y: 0 };
+    if (!c.ok || !this.pay(c, first.x, first.y)) return false;
     let laid = false;
     pieces.forEach((p, i) => {
       if (c.steps[i].skip) return;
@@ -782,6 +853,20 @@ export class Builder {
     });
     if (laid) sfx('build.place');
     return true;
+  }
+  /**
+   * A copy of this builder's world to judge a dragged run on piece by piece, as the Track tool
+   * lays it: `checkTrack` judges a piece with the ones before it down, and `lay` puts one down
+   * there with no price, no sound and nothing changed here.
+   */
+  runProbe() {
+    const p = this.probe();
+    return {
+      track: p.track,
+      checkTrack: (x: number, y: number, item: TrackItem, rot: number) =>
+        p.checkTrack(x, y, item, rot),
+      lay: (x: number, y: number, item: TrackItem, rot: number) => p.layTrack(x, y, item, rot),
+    };
   }
   /** One piece of a line against this builder's world as it stands, without the stock. */
   private judge(p: LinePiece): LineStep {
@@ -806,7 +891,7 @@ export class Builder {
   private probe(): Builder {
     const track = new TrackGraph(this.track.w, this.track.h);
     for (const [k, p] of this.track.pieces) track.pieces.set(k, p);
-    const b = new Builder(this.map, this.regions, track, this.economy, this.stock, this.roads);
+    const b = new Builder(this.map, this.regions, track, this.economy, this.stores, this.roads);
     b.free = this.free;
     b.groundCheck = this.groundCheck;
     b.stations.push(...this.stations);
@@ -828,7 +913,7 @@ export class Builder {
       const bad = unbuildable(terrainAt(this.map, tx, ty));
       if (bad) return { ok: false, cost: {}, reason: bad };
       if (
-        this.track.has(tx, ty) ||
+        this.track.railOn(tx, ty) ||
         this.stationAt(tx, ty) ||
         this.decorAt(tx, ty) ||
         this.buildingAt(tx, ty)
@@ -864,6 +949,8 @@ export class Builder {
         def.cost,
         Math.max(1, this.terrainMul(x, y)) * (def.depot ? 1 : this.kindMul(defId)),
       ),
+      x,
+      y,
     );
   }
   /**
@@ -909,7 +996,7 @@ export class Builder {
   placeStation(x: number, y: number, defId: string, rot = 0): Station | null {
     const turn = wrapRotation(rot);
     const c = this.checkStation(x, y, defId, turn);
-    if (!c.ok || !this.pay(c.cost)) return null;
+    if (!c.ok || !this.pay(c, x, y)) return null;
     const count = this.stations.filter((s) => s.def.id === defId).length;
     const s = new Station(
       defId,
@@ -921,7 +1008,7 @@ export class Builder {
     s.terrainFactor = terrainFactorAt(this.map, x, y, defId);
     this.stations.push(s);
     this.refreshStationBoosts();
-    this.onStationChanged?.(s, false);
+    this.stationChanged(s, false);
     if (s.def.produces.length) this.onIndustryPlaced?.(x, y);
     this.connectPlace(stationPlace(s));
     sfx('build.place');
@@ -933,8 +1020,8 @@ export class Builder {
     this.stations.splice(i, 1);
     // removed during its upgrade, it is gone for good: no level rises later
     s.work = null;
-    this.refund(s.def.cost);
-    this.onStationChanged?.(s, true);
+    this.refund(s.def.cost, s.x, s.y);
+    this.stationChanged(s, true);
     return true;
   }
   /**
@@ -947,14 +1034,14 @@ export class Builder {
     if (this.free) return { ok: true, cost: {} };
     const locked = levelLocked(s.firstAge, s.level + 1, this.economy.tier);
     if (locked) return { ok: false, cost: s.upgradeCost(), reason: locked };
-    return this.affordable(s.upgradeCost());
+    return this.affordable(s.upgradeCost(), s.x, s.y);
   }
   /** Editor only: lower a station's level (an upgrade under way is dropped with it). */
   downgradeStation(s: Station): boolean {
     if (!this.free || s.level <= 1) return false;
     s.level--;
     s.work = null;
-    this.onStationChanged?.(s, false);
+    this.stationChanged(s, false);
     return true;
   }
   /**
@@ -965,7 +1052,7 @@ export class Builder {
   upgradeStation(s: Station): boolean {
     if (!this.stations.includes(s)) return false;
     const c = this.canUpgrade(s);
-    if (!c.ok || !this.pay(c.cost)) return false;
+    if (!c.ok || !this.pay(c, s.x, s.y)) return false;
     sfx('station.upgrade');
     const work = s.def.depot || this.free ? null : startWork(s.level + 1);
     if (!work) {
@@ -973,14 +1060,14 @@ export class Builder {
       return true;
     }
     s.work = work;
-    this.onStationChanged?.(s, false);
+    this.stationChanged(s, false);
     return true;
   }
   /** The station's level rises by one: it opens again, and the change is reported. */
   private finishStation(s: Station) {
     s.level = Math.min(MAX_LEVEL, s.level + 1);
     s.work = null;
-    this.onStationChanged?.(s, false);
+    this.stationChanged(s, false);
     this.onUpgraded?.({
       kind: 'station',
       x: s.x,
@@ -1000,12 +1087,12 @@ export class Builder {
     if (!this.unlocked(x, y)) return STR.build.locked;
     if (this.decorAt(x, y) || this.buildingAt(x, y)) return STR.build.occupied;
     if (onRails(defId)) {
-      if (!this.track.has(x, y)) return STR.build.needTrackHere;
+      if (!this.track.railOn(x, y)) return STR.build.needTrackHere;
     } else {
       const bad = unbuildable(terrainAt(this.map, x, y));
       if (bad) return bad;
       if (this.stationAt(x, y)) return STR.build.occupied;
-      if (!def.anyTile && this.track.has(x, y)) return STR.build.occupied;
+      if (!def.anyTile && this.track.railOn(x, y)) return STR.build.occupied;
       // a road keeps its tile from what stands off the rails; a pole goes beside it
       if (!def.anyTile && this.roads.has(x, y)) return STR.build.roadInWay;
       if (!def.anyTile && this.groundCheck && !this.groundCheck(x, y, 'level'))
@@ -1016,7 +1103,7 @@ export class Builder {
   checkDecor(x: number, y: number, defId: string): PlacementCheck {
     const reason = this.canPlaceDecor(x, y, defId);
     if (reason) return { ok: false, cost: {}, reason };
-    return this.affordable(this.priced(decorDef(defId).cost, this.kindMul(defId)));
+    return this.affordable(this.priced(decorDef(defId).cost, this.kindMul(defId)), x, y);
   }
   /**
    * Place decor turned to `rot`, and pay for it. A house or a service stop gets its spur to the
@@ -1024,7 +1111,7 @@ export class Builder {
    */
   placeDecor(x: number, y: number, defId: string, rot: number): Decor | null {
     const c = this.checkDecor(x, y, defId);
-    if (!c.ok || !this.pay(c.cost)) return null;
+    if (!c.ok || !this.pay(c, x, y)) return null;
     const d = this.addDecor(x, y, defId, rot);
     this.connectPlace(decorPlace(d));
     return d;
@@ -1052,7 +1139,7 @@ export class Builder {
     const d = this.decorAt(x, y);
     if (!d) return false;
     this.decor.delete(this.key(x, y));
-    this.refund(decorDef(d.id).cost);
+    this.refund(decorDef(d.id).cost, x, y);
     this.onDecorChanged?.(d, true);
     this.refreshStationBoosts();
     sfx('build.remove');
@@ -1091,7 +1178,7 @@ export class Builder {
    */
   checkBuilding(x: number, y: number, defId: string, rot = 0): PlacementCheck {
     const c = this.buildingRules(x, y, defId, rot);
-    return c.ok ? this.affordable(c.cost) : c;
+    return c.ok ? this.affordable(c.cost, x, y) : c;
   }
   /** `checkBuilding`'s rules and price, without asking whether the stock can pay. */
   private buildingRules(x: number, y: number, defId: string, rot = 0): PlacementCheck {
@@ -1113,7 +1200,7 @@ export class Builder {
       if (!def.bridge && this.groundCheck && !this.groundCheck(tx, ty, 'level'))
         return { ok: false, cost: {}, reason: STR.build.notLevel };
       if (
-        this.track.has(tx, ty) ||
+        (def.bridge ? this.track.has(tx, ty) : this.track.railOn(tx, ty)) ||
         this.stationAt(tx, ty) ||
         this.decorAt(tx, ty) ||
         this.buildingAt(tx, ty)
@@ -1146,14 +1233,14 @@ export class Builder {
     if (!this.track.has(x, y)) return { ok: false, cost: {}, reason: STR.build.needTrackHere };
     if (this.catenary?.supplyAt(x, y) === kind)
       return { ok: false, cost: {}, reason: STR.build.sameSupply };
-    return this.affordable(this.priced(SUPPLY_DEFS[kind].cost, 1));
+    return this.affordable(this.priced(SUPPLY_DEFS[kind].cost, 1), x, y);
   }
   placeSupply(x: number, y: number, kind: SupplyKind): boolean {
     if (!this.catenary) return false;
     const c = this.checkSupply(x, y, kind);
-    if (!c.ok || !this.pay(c.cost)) return false;
+    if (!c.ok || !this.pay(c, x, y)) return false;
     const old = this.catenary.supplyAt(x, y);
-    if (old) this.refund(SUPPLY_DEFS[old].cost);
+    if (old) this.refund(SUPPLY_DEFS[old].cost, x, y);
     this.catenary.set(x, y, kind);
     this.onSupplyChanged?.(x, y);
     sfx('build.place');
@@ -1163,7 +1250,7 @@ export class Builder {
     const old = this.catenary?.supplyAt(x, y);
     if (!old || !this.catenary) return false;
     this.catenary.remove(x, y);
-    this.refund(SUPPLY_DEFS[old].cost);
+    this.refund(SUPPLY_DEFS[old].cost, x, y);
     this.onSupplyChanged?.(x, y);
     sfx('build.remove');
     return true;
@@ -1175,7 +1262,7 @@ export class Builder {
   placeBuilding(x: number, y: number, defId: string, rot = 0): Building | null {
     const turn = wrapRotation(rot);
     const c = this.checkBuilding(x, y, defId, turn);
-    if (!c.ok || !this.pay(c.cost)) return null;
+    if (!c.ok || !this.pay(c, x, y)) return null;
     const b = this.layBuilding(x, y, defId, turn);
     this.connectPlace(buildingPlace(b));
     sfx('build.place');
@@ -1185,7 +1272,7 @@ export class Builder {
   private layBuilding(x: number, y: number, defId: string, rot: number): Building {
     const b: Building = { id: defId, x, y, acc: 0, rot, active: false, rate: 0 };
     this.buildings.set(this.key(x, y), b);
-    this.onBuildingChanged?.(b, false);
+    this.buildingChanged(b, false);
     this.onIndustryPlaced?.(x, y);
     return b;
   }
@@ -1203,8 +1290,8 @@ export class Builder {
     this.buildings.delete(this.key(b.x, b.y));
     // removed during its upgrade, it is gone for good: no level rises later
     delete b.work;
-    this.refund(buildingDef(b.id).cost);
-    this.onBuildingChanged?.(b, true);
+    this.refund(buildingDef(b.id).cost, b.x, b.y);
+    this.buildingChanged(b, true);
     sfx('build.remove');
     return true;
   }
@@ -1215,7 +1302,7 @@ export class Builder {
    * or a mountain) with no road on it yet, off every station's footprint and works and off the
    * tile of decor that stands off the rails (a house, a tower), as a road meets a building only at
    * a street door, from the tile outside it (#408); a signal or a pole may share its tile. On track
-   * it is a level crossing, which only a plain straight of regular or narrow track takes, the road
+   * it is a level crossing, which only a plain straight of a line with level crossings takes, the road
    * across it (`Roads.trackRefusal`). A bridge platform carries a road where it carries no rail,
    * on water as on land: one tile holds rail or road, never both, so a platform with rail on it
    * refuses the road (#493). Each tile costs `roadCost`, scaled by the build cost tuning, whatever
@@ -1224,7 +1311,7 @@ export class Builder {
   checkRoad(x: number, y: number): PlacementCheck {
     const reason = this.roadRules(x, y);
     if (reason) return { ok: false, cost: {}, reason };
-    return this.affordable(this.priced(roadCost(), 1));
+    return this.affordable(this.priced(roadCost(), 1), x, y);
   }
   /** `checkRoad`'s rules without the price, against `roads`: this builder's, or a copy. */
   private roadRules(x: number, y: number, roads = this.roads): string | null {
@@ -1250,13 +1337,33 @@ export class Builder {
    * street door near it with no road gets its spur, free (`connectNear`).
    */
   placeRoad(x: number, y: number): boolean {
-    const c = this.checkRoad(x, y);
-    if (!c.ok || !this.pay(c.cost)) return false;
-    this.roads.add(x, y);
-    this.onRoadChanged?.(x, y);
-    this.connectNear(x, y);
-    sfx('build.place');
-    return true;
+    return this.placeRoads([{ x, y }], { x, y }).length === 1;
+  }
+  /**
+   * Lay a stroke of road (#328), its tiles in order, the whole stroke paid by one store: the one
+   * that pays it from `from`, the stroke's first tile (`affordable`). Each tile is judged by
+   * `checkRoad`'s rules with the tiles before it laid, and laid while that store still pays for
+   * the stroke so far with it; a tile refused is left out and costs nothing. Each tile laid gets
+   * the spurs it brings (`connectNear`). Returns the tiles laid.
+   */
+  placeRoads(tiles: readonly { x: number; y: number }[], from: { x: number; y: number }) {
+    const laid: { x: number; y: number }[] = [];
+    let cost: Cost = {};
+    for (const t of tiles) {
+      if (this.roadRules(t.x, t.y)) continue;
+      const more: Cost = { ...cost };
+      for (const [k, v] of Object.entries(this.priced(roadCost(), 1))) more[k] = (more[k] ?? 0) + v;
+      if (!this.affordable(more, from.x, from.y).ok) continue;
+      cost = more;
+      this.roads.add(t.x, t.y);
+      this.onRoadChanged?.(t.x, t.y);
+      this.connectNear(t.x, t.y);
+      sfx('build.place');
+      laid.push(t);
+    }
+    // nothing was paid while laying, so the store that took the last tile pays the whole
+    if (laid.length) this.pay(this.affordable(cost, from.x, from.y), from.x, from.y);
+    return laid;
   }
   /** What `removeRoad` gives back: the refund share of a road's cost, each part rounded down. */
   roadRefund(): Cost {
@@ -1271,7 +1378,7 @@ export class Builder {
    */
   removeRoad(x: number, y: number): boolean {
     if (!this.roads.remove(x, y)) return false;
-    this.refund(roadCost());
+    this.refund(roadCost(), x, y);
     this.onRoadChanged?.(x, y);
     sfx('build.remove');
     return true;
@@ -1426,6 +1533,10 @@ export class Builder {
   }
 }
 
+/** A cost asks for something: any good above zero. */
+function hasPrice(cost: Cost) {
+  return Object.values(cost).some((v) => v > 0);
+}
 /** A station where it stands, as a place with doors (src/sim/doors.ts). */
 export function stationPlace(s: Station): PlaceAt {
   return { def: s.def, x: s.x, y: s.y, rot: s.rot };

@@ -6,7 +6,6 @@ import { TrackGraph, makePiece, type TrackClass } from '../world/track';
 import { Dir } from '../engine/iso';
 import { Rng } from '../engine/rng';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
 import { Train, resetTrainIds } from './trains';
@@ -14,11 +13,12 @@ import { Fleet } from './fleet';
 import { rules, DEFAULT_RULES } from './rules';
 import { SAVE_VERSION, SAVE_MIN_VERSION, migrate, parseSave, type SaveGame } from './save';
 import { pruneUnknownContent } from './saveContent';
-import { gaugeOf } from './compat';
+import { gaugeLine, gaugeOf } from './compat';
 import { Inventory } from '../gacha/inventory';
 import { Gacha } from '../gacha/gacha';
 import { Crafting } from '../gacha/crafting';
 import { LOCOS, WAGONS, locoDef, wagonDef, type Item } from '../gacha/items';
+import { looseStore, storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
@@ -34,14 +34,14 @@ const LINES = [30, 40];
 function world() {
   const map = emptyMap(4242, 96, 96, Terrain.Grass),
     track = new TrackGraph(96, 96),
-    stock = new Stockpile(),
+    stock = looseStore(),
     economy = new Economy(),
     inventory = new Inventory();
-  const builder = new Builder(map, new RegionState(map), track, economy, stock);
+  const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, inventory, economy, stock);
+  const fleet = new Fleet(track, builder, map, inventory, economy);
   const gacha = new Gacha(new Rng(1), inventory);
-  const crafting = new Crafting(new Rng(2), inventory, economy, stock);
+  const crafting = new Crafting(new Rng(2), inventory, economy);
   return { map, track, stock, economy, builder, fleet, inventory, gacha, crafting };
 }
 function item(uid: number, defId: string, kind: Item['kind'], assigned: number | null): Item {
@@ -55,7 +55,7 @@ interface Pair {
   wagon: string;
 }
 /** Adler and John Bull are regular-gauge engines; wood_hopper is a regular wagon to match. */
-const RETIRED_PAIR: Pair = { engines: RETIRED, cls: 'regular', wagon: 'wood_hopper' };
+const RETIRED_PAIR: Pair = { engines: RETIRED, cls: 'branch', wagon: 'wood_hopper' };
 /** BM-50 and Muki are narrow-gauge diesels; the mine tub is a narrow wagon to match. */
 const KEPT_PAIR: Pair = { engines: KEPT, cls: 'narrow', wagon: 'mine_tub' };
 
@@ -136,7 +136,7 @@ function load(text: string) {
   const pruned = pruneUnknownContent(j);
   const w = world();
   for (const [x, y, kind, rot, cls, cls2] of j.track)
-    w.track.place(x, y, kind, rot, cls ?? 'regular', cls2);
+    w.track.place(x, y, kind, rot, cls ?? 'branch', cls2);
   w.track.refreshSwitchForms();
   resetStationIds(1);
   for (const sj of j.stations) w.builder.stations.push(Station.fromJSON(sj));
@@ -173,7 +173,7 @@ describe.each([
     expect(w.fleet.trains.map((t) => t.locoDef.id)).toEqual(pair.engines);
     for (const [i, id] of pair.engines.entries()) {
       // each stays an engine of the gauge it was saved on
-      expect(gaugeOf(locoDef(id)), id).toBe(pair.cls);
+      expect(gaugeLine(gaugeOf(locoDef(id))), id).toBe(pair.cls);
       expect(w.inventory.count(id), id).toBe(2);
       expect(w.inventory.byUid(10 + i)?.assigned, id).toBe(w.fleet.trains[i].id);
       // the spare is still offered to the depot for a new train
@@ -223,8 +223,8 @@ describe.each([
       const retired = FLAGGED.includes(id);
       expect(w.crafting.knows(id), id).toBe(!retired);
       for (const k of Object.keys(w.crafting.instanceCost(id))) w.stock.add(k, 1e6);
-      expect(w.crafting.canCraft(id), id).toBe(!retired);
-      const built = w.crafting.craft(id, 0);
+      expect(w.crafting.canCraft(id, w.stock), id).toBe(!retired);
+      const built = w.crafting.craft(id, w.stock, 0);
       expect(built === null, id).toBe(retired);
       expect(w.inventory.count(id), id).toBe(built?.ok ? 3 : 2);
     }

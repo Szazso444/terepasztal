@@ -12,6 +12,7 @@ import type { MapGenerator } from '../world/chunks';
 import { RegionState } from '../world/regions';
 import {
   CLASS_N,
+  BUILDABLE_CLASSES,
   TRACK_CLASSES,
   TrackGraph,
   footprintOf,
@@ -25,11 +26,11 @@ import { buildingDef, buildingToJSON } from '../sim/buildings';
 import { Builder, DECOR_DEFS, unbuildable } from '../sim/build';
 import { Roads } from '../sim/roads';
 import { Economy } from '../sim/economy';
-import { Stockpile } from '../sim/stockpile';
 import { STR } from '../strings';
 import { generatorOf, groundOf, type GeneratedWorld } from '../sim/ground';
 import type { SaveGame } from '../sim/save';
 import { forAll, shrinkArray } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 // the builder plays a sound when it lays something; the context that plays it is a browser's
 vi.mock('./audio', () => ({ sfx: vi.fn() }));
@@ -72,8 +73,8 @@ const straight = (x: number, y: number, kind: Track[2] = 'straight'): Track => [
   y,
   kind,
   0,
-  'regular',
-  'regular',
+  'branch',
+  'branch',
 ];
 const station = (defId: string, x: number, y: number, rot = 0) =>
   ({ defId, x, y, rot }) as unknown as SaveGame['stations'][number];
@@ -148,8 +149,8 @@ describe('a bridge platform', () => {
     // the finding (#322): on a 12 x 12 map, (-1, 9) has the index of the tile (11, 8), which a
     // curve covers; the repair took the platform to stand there, giving the mountain under the
     // rails grass and leaving water under them
-    const curve: Track = [11, 7, 'curve', 1, 'regular', 'regular'];
-    expect(footprintOf(11, 7, 'curve', 1, 'regular')).toContainEqual({ x: 11, y: 8 });
+    const curve: Track = [11, 7, 'curve', 1, 'branch', 'branch'];
+    expect(footprintOf(11, 7, 'curve', 1, 'branch')).toContainEqual({ x: 11, y: 8 });
     const finding = (t: Terrain) => {
       const m = flat(Terrain.Grass, 12, 12);
       set(m, 11, 8, t);
@@ -228,10 +229,10 @@ describe('the ground under everything else a load repairs', () => {
   it('gives track, and a signal on it, grass on water and keeps every other ground under them', () => {
     const track: Track[] = [
       straight(0, 0),
-      [2, 0, 'crossing', 0, 'regular', 'regular'],
-      [4, 0, 'transition', 1, 'regular', 'high_speed'],
-      [0, 3, 'curve', 0, 'regular', 'regular'],
-      [3, 3, 'switch', 1, 'high_speed', 'high_speed'],
+      [2, 0, 'crossing', 0, 'branch', 'branch'],
+      [4, 0, 'straight', 1, 'branch', 'branch'],
+      [0, 3, 'curve', 0, 'branch', 'branch'],
+      [3, 3, 'switch', 1, 'branch', 'branch'],
       [6, 3, 'curve', 2, 'narrow', 'narrow'],
     ];
     const tiles = track.flatMap(([x, y, kind, rot, cls]) => footprintOf(x, y, kind, rot, cls));
@@ -303,8 +304,8 @@ describe('the ground under everything else a load repairs', () => {
 
   it('covers every tile of a wide piece', () => {
     const m = flat(Terrain.Grass);
-    const piece: Track = [3, 3, 'curve', 0, 'regular', 'regular'];
-    const tiles = footprintOf(3, 3, 'curve', 0, 'regular');
+    const piece: Track = [3, 3, 'curve', 0, 'branch', 'branch'];
+    const tiles = footprintOf(3, 3, 'curve', 0, 'branch');
     expect(tiles).toContainEqual({ x: 3, y: 3 });
     expect(tiles).toContainEqual({ x: 4, y: 4 });
     // water under the anchor and the far corner, rock and a mountain under the other two
@@ -322,7 +323,7 @@ describe('the ground under everything else a load repairs', () => {
     );
   });
 
-  // AGENTS.md: curve and switch footprint is n x n, with n 2 for regular and high speed, 1 for narrow
+  // AGENTS.md: curve and switch footprint is n x n, with n 2 for Branch Line, 1 for Narrow Gauge
   it.each(TRACK_CLASSES)(
     'covers the n x n footprint of a %s curve and switch in every turn, and no tile more',
     (cls) => {
@@ -431,8 +432,8 @@ function genCase(rng: Rng): Case {
   const built: BuiltObjects = {
     track: list(() => {
       const [x, y] = at2();
-      const kind = rng.pick(['straight', 'curve', 'switch', 'crossing', 'transition'] as const);
-      return [x, y, kind, rng.int(0, 3), 'regular', 'regular'] as Track;
+      const kind = rng.pick(['straight', 'curve', 'switch', 'crossing'] as const);
+      return [x, y, kind, rng.int(0, 3), 'branch', 'branch'] as Track;
     }),
     stations: list(() => {
       const [x, y] = at2();
@@ -458,7 +459,7 @@ function decorOf(
     let [x, y] = at2();
     if (track.length && rng.chance(0.7)) {
       const [ax, ay, kind, rot, cls] = rng.pick(track);
-      ({ x, y } = rng.pick(footprintOf(ax, ay, kind, rot, cls ?? 'regular')));
+      ({ x, y } = rng.pick(footprintOf(ax, ay, kind, rot, cls ?? 'branch')));
     }
     const id = rng.pick(['signal', 'signal', 'signal', 'power_line', 'townhouse']);
     return [x, y, id, 0] as [number, number, string, number];
@@ -486,7 +487,7 @@ function aliasedPlatforms(built: BuiltObjects, w: number): Set<number> {
 function addOffMapPlatformOverRails(rng: Rng, built: BuiltObjects, w: number) {
   const tiles = built.track
     .filter(([, , kind]) => kind !== 'bridge')
-    .flatMap(([x, y, kind, rot, cls]) => footprintOf(x, y, kind, rot, cls ?? 'regular'))
+    .flatMap(([x, y, kind, rot, cls]) => footprintOf(x, y, kind, rot, cls ?? 'branch'))
     .filter((f) => f.x >= 0 && f.y >= 0 && f.x < w && f.y < w);
   if (!tiles.length || !rng.chance(0.3)) return;
   const { x, y } = rng.pick(tiles);
@@ -538,7 +539,7 @@ function stood(built: BuiltObjects, w: number) {
   for (const [x, y, id] of built.buildings ?? [])
     if (id.startsWith('bridge')) mark(platforms, x, y);
   for (const [x, y, kind, rot, cls] of built.track)
-    for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
+    for (const f of footprintOf(x, y, kind, rot, cls ?? 'branch'))
       if (!platforms.has(f.y * w + f.x)) mark(rails, f.x, f.y);
   for (const s of built.stations)
     for (const f of stationFootprint(s.defId, s.x, s.y, s.rot ?? 0)) mark(land, f.x, f.y);
@@ -685,7 +686,7 @@ function sequential(m: GameMap, built: BuiltObjects, decide: Decisions) {
     return to === t && STONE.includes(t);
   };
   for (const [x, y, kind, rot, cls] of built.track)
-    for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular')) {
+    for (const f of footprintOf(x, y, kind, rot, cls ?? 'branch')) {
       const i = f.y * m.w + f.x;
       const standing = kind === 'bridge' ? 'water' : platforms.has(i) ? 'platform' : 'rails';
       if (standing === 'rails' && inBounds(m, f.x, f.y)) rails.add(i);
@@ -807,7 +808,7 @@ describe('the repair against the sequential repair', () => {
         const aliased = aliasedPlatforms(c.built, WIDE);
         for (const [x, y, kind, rot, cls] of c.built.track)
           if (kind !== 'bridge')
-            for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
+            for (const f of footprintOf(x, y, kind, rot, cls ?? 'branch'))
               if (inBounds(want, f.x, f.y) && aliased.has(f.y * WIDE + f.x))
                 if (NO_LAND.includes(initial[f.y * WIDE + f.x])) reached.railsUnderOffMapPlatform++;
         const m = mapOfWide(c);
@@ -852,7 +853,7 @@ describe('the repair against the sequential repair', () => {
         const terrain = [...c.terrain];
         for (const [x, y, kind, rot, cls] of c.built.track)
           if (kind !== 'bridge')
-            for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
+            for (const f of footprintOf(x, y, kind, rot, cls ?? 'branch'))
               if (f.x >= 0 && f.y >= 0 && f.x < WIDE && f.y < WIDE)
                 if (STONE.includes(terrain[f.y * WIDE + f.x]))
                   terrain[f.y * WIDE + f.x] = Terrain.Grass;
@@ -894,7 +895,7 @@ describe('the repair against the sequential repair', () => {
           aliasedRails = new Set<number>();
         for (const [x, y, kind, rot, cls] of c.built.track)
           if (kind !== 'bridge')
-            for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
+            for (const f of footprintOf(x, y, kind, rot, cls ?? 'branch'))
               if (f.x >= 0 && f.y >= 0 && f.x < WIDE && f.y < WIDE) {
                 const i = f.y * WIDE + f.x;
                 if (STONE.includes(c.terrain[i])) stoneRails.add(i);
@@ -924,7 +925,7 @@ function builderOn(t: Terrain, size = 9) {
     regions,
     new TrackGraph(size, size),
     new Economy(),
-    new Stockpile(),
+    storeWith({}).stores,
   );
   builder.free = true;
   return { map, builder };
@@ -976,7 +977,7 @@ describe('the repair and the builder', () => {
       // track: water is in its way until a platform carries it. A lone straight on rock or a
       // mountain is refused for how it is drawn, which is not the ground's: continuing a line, it
       // is taken there (#322)
-      const along = { kind: 'straight', cls: 'regular' } as const;
+      const along = { kind: 'straight', cls: 'branch' } as const;
       const lone = builder.checkTrack(4, 4, along, 1).reason;
       expect(lone, `a lone straight on ${name(t)}`).toBe(
         t === Terrain.Water
@@ -1028,7 +1029,7 @@ describe('the repair and the builder', () => {
     moves: Move[];
   }
   const SPAN = 12;
-  const TRACK_KINDS = ['straight', 'curve', 'switch', 'crossing', 'transition'] as const;
+  const TRACK_KINDS = ['straight', 'curve', 'switch', 'crossing'] as const;
   function genScene(rng: Rng): Scene {
     const terrain = Array.from({ length: SPAN * SPAN }, () => rng.pick(ALL));
     const moves = Array.from({ length: rng.int(10, 60) }, (): Move => {
@@ -1054,7 +1055,7 @@ describe('the repair and the builder', () => {
         case 'track': {
           const kind = rng.pick(TRACK_KINDS);
           const rot = rng.int(0, rotationCount(kind) - 1);
-          return { do: 'track', x, y, kind, rot, cls: rng.pick(TRACK_CLASSES) };
+          return { do: 'track', x, y, kind, rot, cls: rng.pick(BUILDABLE_CLASSES) };
         }
         case 'works':
           return { do: 'works', x, y, id: rng.pick(['windmill', 'bridge_wood', 'bridge_stone']) };
@@ -1084,7 +1085,7 @@ describe('the repair and the builder', () => {
             rot: rng.pick([0, 1] as const),
             step: rng.pick([1, -1] as const),
             length: rng.int(2, 8),
-            cls: rng.pick(TRACK_CLASSES),
+            cls: rng.pick(BUILDABLE_CLASSES),
           };
         case 'signal':
           return { do: 'signal', pick: rng.int(0, 1000), rot: rng.int(0, 3) };
@@ -1135,7 +1136,7 @@ describe('the repair and the builder', () => {
       }
       // a bridge: the platform, then the rail on it
       else if (builder.placeBuilding(m.x, m.y, m.id))
-        builder.placeTrack(m.x, m.y, { kind: 'straight', cls: 'regular' }, 1);
+        builder.placeTrack(m.x, m.y, { kind: 'straight', cls: 'branch' }, 1);
     }
     return { map, builder };
   }
@@ -1349,7 +1350,7 @@ describe('a road on ground that cannot hold one', () => {
       const { map, builder } = builderOn(t);
       set(map, 3, 4, Terrain.Grass);
       set(map, 5, 4, Terrain.Grass);
-      const along = { kind: 'straight', cls: 'regular' } as const;
+      const along = { kind: 'straight', cls: 'branch' } as const;
       for (const x of [3, 4, 5])
         expect(builder.placeTrack(x, 4, along, 1), `${name(t)} ${x}`).toBe(true);
       expect(builder.checkRoad(4, 4).ok, name(t)).toBe(false);
@@ -1358,7 +1359,7 @@ describe('a road on ground that cannot hold one', () => {
 
   it('keeps a level crossing on land, as the builder lays one there', () => {
     const { map, builder } = builderOn(Terrain.Grass);
-    const along = { kind: 'straight', cls: 'regular' } as const;
+    const along = { kind: 'straight', cls: 'branch' } as const;
     for (const x of [3, 4, 5]) expect(builder.placeTrack(x, 4, along, 1)).toBe(true);
     expect(builder.placeRoad(4, 4)).toBe(true);
     expect(builder.roads.crossingKeys().size).toBe(1);
@@ -1427,7 +1428,7 @@ describe('a road on ground that cannot hold one', () => {
       (rng) => {
         const c = genCase(rng);
         const tiles = c.built.track.flatMap(([x, y, kind, rot, cls]) =>
-          footprintOf(x, y, kind, rot, cls ?? 'regular'),
+          footprintOf(x, y, kind, rot, cls ?? 'branch'),
         );
         const decks = (c.built.buildings ?? [])
           .filter(([, , id]) => buildingDef(id).bridge)
@@ -1471,7 +1472,7 @@ describe('a road on ground that cannot hold one', () => {
         const on = (list: readonly { x: number; y: number }[], x: number, y: number) =>
           list.some((t) => t.x === x && t.y === y);
         const rails = c.built.track.flatMap(([x, y, kind, rot, cls]) =>
-          footprintOf(x, y, kind, rot, cls ?? 'regular'),
+          footprintOf(x, y, kind, rot, cls ?? 'branch'),
         );
         const decks = (c.built.buildings ?? [])
           .filter(([, , id]) => buildingDef(id).bridge)

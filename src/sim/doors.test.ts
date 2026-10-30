@@ -16,7 +16,6 @@ import {
 } from '../data/content';
 import { Builder, decorDef } from './build';
 import { buildingDef } from './buildings';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station, resetStationIds, stationDef, stationGates, stationSpan } from './stations';
 import { rules, DEFAULT_RULES } from './rules';
@@ -42,6 +41,7 @@ import {
   type PlaceDef,
 } from './doors';
 import { forAll, shrinkArray } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -75,7 +75,7 @@ function bare(side: number, seed = 7) {
     new RegionState(map),
     new TrackGraph(side, side),
     new Economy(),
-    new Stockpile(),
+    storeWith({}).stores,
   );
   return { map, builder };
 }
@@ -904,7 +904,7 @@ const STOP = { x: 26, y: 21 };
 /** A walker at `p` stands on tile `t`: inside its edge. */
 const onTile = (p: { x: number; y: number }, t: { x: number; y: number }) =>
   Math.max(Math.abs(p.x - t.x), Math.abs(p.y - t.y)) < 0.5;
-const STRAIGHT: TrackItem = { kind: 'straight', cls: 'regular' };
+const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
 
 /**
  * A townhouse at HOUSE turned to `rot`, a straight of regular track on the tile outside its street

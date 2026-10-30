@@ -151,8 +151,9 @@ async function endLoading(screen: LoadingScreen, plan: BootPlan, begin: () => vo
 /**
  * Continue on the title the boot opened: the game under it begins as every way into play does,
  * behind the loading screen until the ground in view is painted, with the music as that finishes,
- * then "Click to begin" and the reveal. The stages before the ground were loaded with the title,
- * and the clock runs from the Continue on (`Game.resumeGame`).
+ * then "Click to begin" and the reveal. The stages before the ground were loaded with the title.
+ * The clock stands still behind the screen (the title stopped it at the boot's loading screen,
+ * and `Game.resumeGame` brings that back) and runs at 1x from the reveal on, as every game starts.
  */
 async function continueFromTitle(game: Game) {
   const plan = bootPlan(null, { continueFromTitle: true });
@@ -162,7 +163,7 @@ async function continueFromTitle(game: Game) {
   for (const stage of BOOT_STAGES)
     if (stage !== 'ground') screen.setProgress(progress.report(stage, 1));
   await groundInView(game, (f) => screen.setProgress(progress.report('ground', f)));
-  await endLoading(screen, plan, () => {});
+  await endLoading(screen, plan, () => game.clock.setSpeed(1));
 }
 
 async function boot() {
@@ -264,11 +265,14 @@ async function boot() {
   else if (save) game.applySave(save);
   else if (level) game.applyLevelStart(level);
   else game.startFresh();
-  // the game always starts paused; Space or the pause button starts the clock. A dev reload
+  // a game starts at 1x, whatever speed its save was at; the editor stays stopped. A dev reload
   // keeps the speed the snapshot was taken at instead, so a running game stays running, and so
   // does growing the world, from the reveal on: the clock stands still behind the loading screen.
+  // Under the title it stays stopped, even with no loading screen (an intent the boot could not
+  // carry out), so its Continue does not run the clock behind its own loading screen: that one
+  // starts 1x at its reveal (`continueFromTitle`).
   if (start !== 'editor' && !resumed && !(intent?.action === 'continue' && intent.keepSpeed))
-    game.clock.setSpeed(0);
+    game.clock.setSpeed(start === 'menu' ? 0 : 1);
   const speed = game.clock.speedIndex;
   if (screen) game.clock.setSpeed(0);
   if (start === 'menu') {

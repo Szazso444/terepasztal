@@ -19,7 +19,7 @@ import { Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { Builder } from './build';
 import { Economy } from './economy';
-import { Stockpile } from './stockpile';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -121,7 +121,13 @@ const SIDE = 12;
 function deckWorld() {
   const map = emptyMap(5, SIDE, SIDE, Terrain.Water);
   const track = new TrackGraph(SIDE, SIDE);
-  const builder = new Builder(map, new RegionState(map), track, new Economy(), new Stockpile());
+  const builder = new Builder(
+    map,
+    new RegionState(map),
+    track,
+    new Economy(),
+    storeWith({}).stores,
+  );
   builder.free = true;
   return { map, track, builder };
 }
@@ -277,7 +283,7 @@ interface RailCase {
 /** Runs of platforms, most with a straight along the run, of one material or two; roads anywhere. */
 function drawRails(rng: Rng): RailCase {
   const IDS = ['bridge_wood', 'bridge_stone'];
-  const CLASSES: TrackClass[] = ['regular', 'regular', 'narrow', 'high_speed'];
+  const CLASSES: TrackClass[] = ['branch', 'branch', 'narrow', 'branch'];
   const decks = Array.from({ length: rng.int(1, 7) }, () => {
     const x = rng.int(0, SIDE - 1),
       y = rng.int(0, SIDE - 1),
@@ -290,7 +296,7 @@ function drawRails(rng: Rng): RailCase {
         r < 0.7
           ? { kind: 'straight', rot, cls: rng.pick(CLASSES) }
           : r < 0.8
-            ? { kind: 'straight', rot: 1 - rot, cls: 'regular' }
+            ? { kind: 'straight', rot: 1 - rot, cls: 'branch' }
             : r < 0.88
               ? { kind: rng.pick(['curve', 'switch'] as const), rot: rng.int(0, 7), cls: 'narrow' }
               : null;

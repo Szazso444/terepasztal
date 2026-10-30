@@ -5,7 +5,6 @@ import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { Train, resetTrainIds, type CarPose } from './trains';
 import { Weather, setSeasonOffset } from './weather';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Station } from './stations';
 import { Fleet } from './fleet';
@@ -25,6 +24,7 @@ import {
   type TrafficScenario,
 } from '../testing/trafficScenario';
 import { forAll, shrinkArray, shrinkInt, SEEDS } from '../testing/property';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -51,11 +51,10 @@ const loopTicks = (seconds: number, speed: number) => Math.round(seconds / SIM_S
 function line() {
   const map = emptyMap(4242, 96, 96, Terrain.Grass),
     track = new TrackGraph(96, 96),
-    stock = new Stockpile(),
     economy = new Economy();
-  const builder = new Builder(map, new RegionState(map), track, economy, stock);
+  const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
-  const fleet = new Fleet(track, builder, map, new Inventory(), economy, stock);
+  const fleet = new Fleet(track, builder, map, new Inventory(), economy);
   for (let x = 2; x < 90; x++) track.place(x, 30, 'straight', 1);
   return { map, track, builder, fleet };
 }
@@ -102,6 +101,125 @@ describe('GameClock.run', () => {
   );
 });
 
+describe('½× speed', () => {
+  it('runs one SIM_STEP every second loop tick', () => {
+    const clock = new GameClock();
+    clock.setSpeed(4);
+    expect(clock.speed).toBe(0.5);
+    const gdts: number[] = [];
+    const ran = [0, 0, 0, 0].map(() => clock.run((gdt) => gdts.push(gdt)));
+    expect(ran).toEqual([0, SIM_STEP, 0, SIM_STEP]);
+    // every step is the 1x step: ½× runs fewer of them, never shorter ones
+    expect(gdts).toEqual([SIM_STEP, SIM_STEP]);
+    expect(ran.reduce((a, b) => a + b, 0)).toBeCloseTo(2 * SIM_STEP, 12);
+  });
+  it('says before each loop tick how many steps it will run', () => {
+    for (const index of SPEEDS.keys()) {
+      const clock = new GameClock();
+      clock.setSpeed(index);
+      for (let n = 0; n < 6; n++) {
+        const due = clock.dueSteps();
+        let ran = 0;
+        clock.run(() => ran++);
+        expect(ran, `speed ${SPEEDS[index]}, loop tick ${n}`).toBe(due);
+      }
+    }
+  });
+  it('gives the same time at ½× over twice the ticks as 1×', () => {
+    const a = new GameClock();
+    const b = new GameClock();
+    a.setSpeed(4);
+    b.setSpeed(1);
+    for (let i = 0; i < 40; i++) a.run(() => {});
+    for (let i = 0; i < 20; i++) b.run(() => {});
+    expect(a.time).toBeCloseTo(b.time, 12);
+  });
+});
+describe('GameClock.stepAlpha', () => {
+  it('is the loop alpha at a whole speed, and 1 while paused, as before ½×', () => {
+    const clock = new GameClock();
+    for (const index of [1, 2, 3, 0])
+      for (let n = 0; n < 3; n++) {
+        clock.setSpeed(index);
+        clock.run(() => {});
+        for (const alpha of [0, 0.25, 0.5, 0.99])
+          expect(clock.stepAlpha(alpha), `speed ${index}`).toBe(index === 0 ? 1 : alpha);
+      }
+  });
+  it('at ½× spans each step over two loop ticks: 0 to ½ after the step, ½ to 1 on the empty tick', () => {
+    const clock = new GameClock();
+    clock.setSpeed(4);
+    clock.run(() => {}); // empty
+    clock.run(() => {}); // the step
+    expect(clock.stepAlpha(0)).toBe(0);
+    expect(clock.stepAlpha(0.5)).toBe(0.25);
+    expect(clock.stepAlpha(1)).toBe(0.5);
+    clock.run(() => {}); // empty
+    expect(clock.stepAlpha(0)).toBe(0.5);
+    expect(clock.stepAlpha(1)).toBe(1);
+  });
+  it('starts a span for the renderer on every tick that runs a step, and on every paused tick', () => {
+    for (const index of SPEEDS.keys()) {
+      const clock = new GameClock();
+      clock.setSpeed(index);
+      for (let n = 0; n < 6; n++) {
+        expect(clock.startsSpan(), `speed ${SPEEDS[index]}, loop tick ${n}`).toBe(
+          index === 0 || clock.dueSteps() > 0,
+        );
+        clock.run(() => {});
+      }
+    }
+  });
+});
+describe('stepSpeed', () => {
+  it('steps ½×, 1×, 2×, 3× and stops at the ends', () => {
+    const c = new GameClock(); // index 1, 1×
+    c.stepSpeed(-1);
+    expect(c.speed).toBe(0.5);
+    c.stepSpeed(-1);
+    expect(c.speed).toBe(0.5);
+    c.stepSpeed(1);
+    c.stepSpeed(1);
+    c.stepSpeed(1);
+    expect(c.speed).toBe(3);
+    c.stepSpeed(1);
+    expect(c.speed).toBe(3);
+  });
+  it('from pause, resumes one step from the speed it had', () => {
+    const c = new GameClock();
+    c.setSpeed(2);
+    c.togglePause();
+    expect(c.speed).toBe(0);
+    c.stepSpeed(1);
+    expect(c.speed).toBe(3);
+  });
+  it('choosing the speed the clock already has keeps its place between steps', () => {
+    // at ½× a step is due every second tick: the tick after the empty one runs it
+    const dueAfter = (choose: (c: GameClock) => void) => {
+      const c = new GameClock();
+      c.setSpeed(4);
+      expect(c.run(() => {})).toBe(0);
+      choose(c);
+      return c.dueSteps();
+    };
+    expect(dueAfter(() => {})).toBe(1);
+    // − at ½× clamps, and picks ½× again
+    expect(dueAfter((c) => c.stepSpeed(-1))).toBe(1);
+    // so does a click on the active ½× button
+    expect(dueAfter((c) => c.setSpeed(4))).toBe(1);
+  });
+  it('pausing and resuming starts the count again', () => {
+    const c = new GameClock();
+    c.setSpeed(4);
+    c.run(() => {});
+    expect(c.dueSteps()).toBe(1);
+    c.togglePause();
+    c.togglePause();
+    expect(c.speed).toBe(0.5);
+    expect(c.dueSteps()).toBe(0);
+  });
+});
+
 describe('the same game time gives the same outcome at every game speed', () => {
   /** The refuge scenario driven `ticks` loop ticks at `speed`, as the game loop will drive it. */
   function driveScenario(count: number, pinned: boolean, speed: number, ticks: number) {
@@ -141,7 +259,7 @@ describe('the same game time gives the same outcome at every game speed', () => 
     90_000,
   );
 
-  it('a single f7 on a straight line arrives at the same game time at 1x and 3x', () => {
+  it('a single f7 on a straight line arrives at the same game time at 1x, 3x and ½×', () => {
     const arrive = (speed: number) => {
       resetModules();
       const { fleet, t } = f7Run();
@@ -156,6 +274,8 @@ describe('the same game time gives the same outcome at every game speed', () => 
     // One scaled 0.15 s step per loop tick, as `advance` gives at 3x, arrives 0.2 s early here
     // (audit A03: 39.15 s against 39.35 s).
     expect(arrive(3)).toEqual(slow);
+    // ½× runs the same steps over twice the loop ticks
+    expect(arrive(0.5)).toEqual(slow);
     expect(slow.arrivedAt).not.toBeNull();
     expect(slow.arrivedAt!).toBeLessThan(180);
   }, 30_000);
@@ -213,6 +333,32 @@ describe('Fleet.beginFrame', () => {
     expect(t.prevPoses).not.toBe(t.poses);
     expect(t.prevVehiclePoses).toBe(t.vehiclePoses);
   });
+
+  it.each([0.5, 1, 2, 3])(
+    'at %fx, as Game.update drives it, a running train moves on every loop tick without a jump',
+    (speed) => {
+      const { fleet, t } = underWay();
+      const clock = clockAt(speed);
+      clock.time = 100;
+      /** where the renderer draws the lead car this frame, at the loop's alpha */
+      const drawn = (alpha: number) => {
+        const a = clock.stepAlpha(alpha);
+        return t.prevPoses[0].x + (t.poses[0].x - t.prevPoses[0].x) * a;
+      };
+      const spans: [number, number][] = [];
+      for (let n = 0; n < 12; n++) {
+        if (clock.startsSpan()) fleet.beginFrame();
+        clock.run((gdt) => fleet.tick(gdt, clock.time));
+        spans.push([drawn(0), drawn(1)]);
+      }
+      // the first ticks still show the steps from before the speed was set
+      for (let n = 2; n < spans.length; n++) {
+        const at = `loop tick ${n}: ${JSON.stringify(spans.slice(n - 1, n + 1))}`;
+        expect(spans[n][0], at).toBeCloseTo(spans[n - 1][1], 9);
+        expect(spans[n][1], at).toBeGreaterThan(spans[n][0]);
+      }
+    },
+  );
 
   it('without it, each tick captures the poses it starts from, as before', () => {
     const { t, tick } = underWay();

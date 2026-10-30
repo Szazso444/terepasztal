@@ -7,7 +7,6 @@ import { content } from '../data/content';
 import { Builder, DECOR_DEFS } from './build';
 import { BUILDING_DEFS } from './buildings';
 import { Economy } from './economy';
-import { Stockpile } from './stockpile';
 import {
   HARVEST_CEIL,
   HARVEST_FLOOR,
@@ -20,6 +19,7 @@ import { DEFAULT_RULES, rules } from './rules';
 import { LAST_AGE } from './ages';
 import { setSupplyMode } from './supply';
 import { STR } from '../strings';
+import { storeWith } from '../testing/storeFixtures';
 
 // the build rules play a sound when a piece goes down
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -37,14 +37,14 @@ function world(fill: Terrain, game = false) {
   const map = emptyMap(7, SIZE, SIZE, fill);
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const stock = new Stockpile();
+  const { stores, depot: stock } = storeWith({}, { x: X, y: Y });
   const economy = new Economy();
-  const builder = new Builder(map, regions, new TrackGraph(SIZE, SIZE), economy, stock);
+  const builder = new Builder(map, regions, new TrackGraph(SIZE, SIZE), economy, stores);
   builder.groundCheck = () => true;
   builder.free = !game;
   if (game) {
     economy.tier = LAST_AGE;
-    for (const c of content.cargo) stock.add(c.id, 1e6);
+    for (const c of content.cargo) stock.amounts.set(c.id, 1e6);
   }
   return { map, builder };
 }
@@ -59,7 +59,7 @@ function meetOtherRules(
 ) {
   if (kind === 'station') {
     const def = STATION_DEFS.find((d) => d.id === id)!;
-    if (!def.depot) builder.track.place(X - 1, Y, 'straight', 1, 'regular');
+    if (!def.depot) builder.track.place(X - 1, Y, 'straight', 1, 'branch');
     // water on the side away from the track, for a station that asks for it
     if (def.needsWater) map.terrain[Y * map.w + X + 1] = Terrain.Water;
   } else if (kind === 'works') {
@@ -70,7 +70,7 @@ function meetOtherRules(
   } else {
     const def = DECOR_DEFS.find((d) => d.id === id)!;
     // a signal stands on the rails, which may be laid on forest
-    if (def.onTrack && !def.anyTile) builder.track.place(X, Y, 'straight', 1, 'regular');
+    if (def.onTrack && !def.anyTile) builder.track.place(X, Y, 'straight', 1, 'branch');
   }
 }
 
@@ -123,7 +123,7 @@ describe('building on forest', () => {
         map.terrain[y * map.w + x] = Terrain.Forest;
         map.props.set(y * map.w + x, [{ kind: 'tree', variant: 0, ox: 0, oy: 0 }]);
       }
-    builder.track.place(X - 1, Y, 'straight', 1, 'regular');
+    builder.track.place(X - 1, Y, 'straight', 1, 'branch');
     const yard = builder.placeStation(X, Y, 'lumber')!;
     expect(yard).not.toBeNull();
     const factor = yard.terrainFactor;
@@ -134,7 +134,7 @@ describe('building on forest', () => {
 
     // a farm, a works and a decor on forest tiles within its radius, the trees cleared under them
     // as the game clears them
-    builder.track.place(X + 2, Y - 3, 'straight', 1, 'regular');
+    builder.track.place(X + 2, Y - 3, 'straight', 1, 'branch');
     const built = [
       builder.placeStation(X + 3, Y - 3, 'farm'),
       builder.placeBuilding(X + 2, Y + 2, 'windmill'),

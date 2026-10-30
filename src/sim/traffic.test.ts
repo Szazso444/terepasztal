@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { TrackGraph } from '../world/track';
-import { Traffic } from './traffic';
+import { ClaimMap, Traffic } from './traffic';
 import type { Builder } from './build';
 import type { Train } from './trains';
 import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
@@ -23,7 +23,7 @@ function line(
   y: number,
   x0: number,
   x1: number,
-  cls: 'regular' | 'narrow' = 'regular',
+  cls: 'branch' | 'narrow' = 'branch',
 ) {
   for (let x = x0; x <= x1; x++) g.place(x, y, 'straight', 1, cls);
 }
@@ -96,13 +96,13 @@ describe('sections', () => {
 
   it('gives every member of a multi-tile switch its own node id', () => {
     const g = new TrackGraph(16, 16);
-    const tiles = g.place(6, 6, 'switch', 0, 'regular');
+    const tiles = g.place(6, 6, 'switch', 0, 'branch');
     const t = trafficOn(g);
     for (const tile of tiles) expect(t.sectionOf(tile.x, tile.y)).toBeLessThan(0);
   });
 
-  it('chains a 2×2 curve into the single line it sits on', () => {
-    for (const cls of ['regular', 'high_speed'] as const) {
+  it('chains a curve of n×n tiles into the single line it sits on', () => {
+    for (const cls of ['branch', 'main', 'trunk'] as const) {
       const g = new TrackGraph(24, 24);
       const tiles = g.place(10, 10, 'curve', 0, cls);
       const inUnit = (x: number, y: number) => tiles.some((m) => m.x === x && m.y === y);
@@ -499,5 +499,56 @@ describe('interlocking and recovery ownership', () => {
     traffic.assign([first, intruder], 1);
     expect(first.claimBlocker).toBe(3);
     expect(first.claimLimit).toBeLessThan(Infinity);
+  });
+});
+
+describe('ClaimMap', () => {
+  type Op =
+    | { op: 'set'; key: number; owner: number }
+    | { op: 'delete'; key: number }
+    | { op: 'clear' }
+    | { op: 'sweep'; kept: number[] };
+  const draw = (rng: Rng): Op[] =>
+    Array.from({ length: rng.int(1, 60) }, (): Op => {
+      const r = rng.next();
+      // mostly small tile keys, now and then a key outside the dense range
+      const key = () => (rng.next() < 0.1 ? rng.pick([-3, 2 ** 27, 1.5]) : rng.int(0, 40));
+      if (r < 0.5) return { op: 'set', key: key(), owner: rng.int(0, 4) };
+      if (r < 0.75) return { op: 'delete', key: key() };
+      if (r < 0.8) return { op: 'clear' };
+      return { op: 'sweep', kept: Array.from({ length: rng.int(0, 10) }, key) };
+    });
+
+  it('reads, writes and iterates exactly as a Map does', () => {
+    forAll(
+      draw,
+      (ops) => {
+        const claims = new ClaimMap();
+        const oracle = new Map<number, number>();
+        for (const o of ops) {
+          if (o.op === 'set') {
+            claims.set(o.key, o.owner);
+            oracle.set(o.key, o.owner);
+          } else if (o.op === 'delete') {
+            expect(claims.delete(o.key)).toBe(oracle.delete(o.key));
+          } else if (o.op === 'clear') {
+            claims.clear();
+            oracle.clear();
+          } else {
+            // a keep pass drops every claim it did not mark, as filtering a Map would
+            claims.beginKeep();
+            for (const k of o.kept) if (claims.has(k)) claims.keep(k);
+            claims.dropUnkept();
+            for (const k of [...oracle.keys()]) if (!o.kept.includes(k)) oracle.delete(k);
+          }
+          expect([...claims]).toEqual([...oracle]);
+          for (const k of [-3, 1.5, 2 ** 27, ...Array.from({ length: 41 }, (_, i) => i)]) {
+            expect(claims.get(k)).toBe(oracle.get(k));
+            expect(claims.has(k)).toBe(oracle.has(k));
+          }
+        }
+      },
+      { shrink: (ops) => shrinkArray(ops) },
+    );
   });
 });

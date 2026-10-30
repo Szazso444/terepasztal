@@ -64,13 +64,13 @@ describe('prototype frames', () => {
 describe('track frames', () => {
   it('names the members of a parallel switch apart from a turning one', () => {
     const g = new TrackGraph(20, 20);
-    g.place(4, 4, 'switch', 1, 'regular', undefined, 'parallel');
-    expect(pieceFrame(g.get(4, 4)!)).toBe('track/switch_regular_1p_m0');
-    g.place(10, 4, 'switch', 1, 'regular');
-    expect(pieceFrame(g.get(10, 4)!)).toBe('track/switch_regular_1_m0');
+    g.place(4, 4, 'switch', 1, 'branch', undefined, 'parallel');
+    expect(pieceFrame(g.get(4, 4)!)).toBe('track/switch_branch_1p_m0');
+    g.place(10, 4, 'switch', 1, 'branch');
+    expect(pieceFrame(g.get(10, 4)!)).toBe('track/switch_branch_1_m0');
     expect(pieceFrame(makePiece('curve', 2, 'narrow'))).toBe('track/curve_narrow_2');
-    expect(pieceFrame(makePiece('crossing', 1, 'narrow', 'regular'))).toBe(
-      'track/crossing_narrow_regular_1',
+    expect(pieceFrame(makePiece('crossing', 1, 'narrow', 'branch'))).toBe(
+      'track/crossing_narrow_branch_1',
     );
   });
 });

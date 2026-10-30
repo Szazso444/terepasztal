@@ -4,7 +4,7 @@ import { Builder } from '../sim/build';
 import { Economy } from '../sim/economy';
 import { roadCost } from '../sim/roads';
 import { DEFAULT_RULES, rules } from '../sim/rules';
-import { Stockpile, fmtCost } from '../sim/stockpile';
+import { fmtCost } from '../sim/stores';
 import { STR } from '../strings';
 import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
@@ -12,6 +12,7 @@ import { Terrain } from '../world/tiles';
 import { TrackGraph } from '../world/track';
 import { Station, resetStationIds } from '../sim/stations';
 import { BuildController } from './buildController';
+import { storeWith } from '../testing/storeFixtures';
 
 type Tile = { x: number; y: number };
 const W = 64;
@@ -21,16 +22,16 @@ afterEach(() => Object.assign(rules, DEFAULT_RULES));
 
 /**
  * The build controller over a real builder on a grass map whose north-west quarter is owned, with
- * `stone` in stock. The renderer is faked down to the overlay sprites, each kept with its frame and
+ * `stone` in its depot. The renderer is faked down to the overlay sprites, each kept with its frame and
  * placed at its tile (`surfacePoint` gives the tile itself); the input is driven frame by frame.
  */
 function harness(stone = 100) {
   const map = emptyMap(7, W, W, Terrain.Grass);
   const regions = new RegionState(map);
   regions.load([true, false, false, false]);
-  const stock = new Stockpile();
-  stock.add('stone', stone);
-  const builder = new Builder(map, regions, new TrackGraph(W, W), new Economy(), stock);
+  // the depot the builder pays from, in reach of the whole owned quarter
+  const { stores, depot: stock } = storeWith({ stone }, { x: 16, y: 16 });
+  const builder = new Builder(map, regions, new TrackGraph(W, W), new Economy(), stores);
   const input = {
     wasPressed: () => false,
     clicks: [] as { button: number }[],
@@ -322,7 +323,7 @@ describe('removing a road', () => {
   it('takes a level crossing apart road first, the track staying', () => {
     const h = harness();
     h.builder.free = true;
-    expect(h.builder.placeTrack(8, 8, { kind: 'straight', cls: 'regular' }, 1)).toBe(true);
+    expect(h.builder.placeTrack(8, 8, { kind: 'straight', cls: 'branch' }, 1)).toBe(true);
     expect(h.builder.placeRoad(8, 8)).toBe(true);
     h.builder.free = false;
     h.b.setTool({ kind: 'remove' });
@@ -344,7 +345,7 @@ describe('a road on a bridge platform', () => {
     h.builder.free = false;
     return h;
   }
-  const STRAIGHT = { kind: 'straight', cls: 'regular' } as const;
+  const STRAIGHT = { kind: 'straight', cls: 'branch' } as const;
 
   it('shows the ghost, the price and a line for the bridge on a platform with no rail', () => {
     const h = bridge();

@@ -19,7 +19,6 @@ import { LAST_AGE } from './ages';
 import { Builder, unbuildable } from './build';
 import { BIOME_DEFS } from './biomes';
 import { Economy } from './economy';
-import { Stockpile } from './stockpile';
 import {
   HARVEST_FLOOR,
   STATION_DEFS,
@@ -33,6 +32,7 @@ import { pruneUnknownContent } from './saveContent';
 import { DEFAULT_RULES, rules, weekSeconds } from './rules';
 import { mapParams } from '../testing/simWorld';
 import { STR } from '../strings';
+import { storeWith } from '../testing/storeFixtures';
 
 // the build rules play a sound when a piece goes down
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -44,7 +44,7 @@ const Y = 10;
 /** the refusals the approved demo gives, word for word */
 const GROUND = 'A water pump goes only on grass or forest.';
 const WATER = 'A water pump needs water right beside it.';
-const STRAIGHT: TrackItem = { kind: 'straight', cls: 'regular', cls2: 'regular' };
+const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch', cls2: 'branch' };
 
 /** A builder in editor mode (no cost, no age or chunk lock) on level grass, every chunk owned. */
 function grassWorld() {
@@ -56,7 +56,7 @@ function grassWorld() {
     regions,
     new TrackGraph(SIZE, SIZE),
     new Economy(),
-    new Stockpile(),
+    storeWith({}).stores,
   );
   builder.free = true;
   return { map, builder };
@@ -153,7 +153,7 @@ describe('where a water pump stands', () => {
     slope.builder.groundCheck = (x, y, need) => need !== 'level' || x !== X || y !== Y;
     expect(slope.builder.checkStation(X, Y, 'pump').reason).toBe(STR.build.notLevel);
     const taken = site(Terrain.Sand, null);
-    taken.builder.track.place(X, Y, 'straight', 0, 'regular');
+    taken.builder.track.place(X, Y, 'straight', 0, 'branch');
     expect(taken.builder.checkStation(X, Y, 'pump').reason).toBe(STR.build.occupied);
     // where nothing can be built, that says so, water beside it or not
     for (const ground of [Terrain.Rock, Terrain.Mountain, Terrain.Water]) {
@@ -181,7 +181,7 @@ describe('where a water pump stands', () => {
     builder.free = false;
     const c = builder.checkStation(X, Y, 'pump');
     expect(c.ok).toBe(false);
-    expect(c.reason?.startsWith(STR.build.needResources(''))).toBe(true);
+    expect(c.reason?.startsWith(STR.build.noStoreInReach(rules.buildReach, ''))).toBe(true);
   });
 
   it('places as checked, with the ground factor its harvest gives it', () => {
@@ -220,7 +220,7 @@ interface PumpCase {
   game: boolean;
   /** the one chunk is owned */
   owned: boolean;
-  /** the stock can pay for anything */
+  /** the depot can pay for anything */
   stocked: boolean;
   x: number;
   y: number;
@@ -320,13 +320,14 @@ function pumpCaseWorld(c: PumpCase) {
   const regions = new RegionState(map);
   regions.unlocked[0] = c.owned;
   const economy = new Economy();
-  const stock = new Stockpile();
-  const builder = new Builder(map, regions, new TrackGraph(c.w, c.h), economy, stock);
+  // a depot in reach of the whole case
+  const { stores, depot } = storeWith({});
+  const builder = new Builder(map, regions, new TrackGraph(c.w, c.h), economy, stores);
   builder.free = !c.game;
   builder.groundCheck = (x, y) => c.level[y * c.w + x];
   economy.tier = LAST_AGE;
-  if (c.stocked) for (const k of content.cargo) stock.add(k.id, 1e6);
-  for (const [x, y, rot] of c.track) builder.track.place(x, y, 'straight', rot, 'regular');
+  if (c.stocked) for (const k of content.cargo) depot.amounts.set(k.id, 1e6);
+  for (const [x, y, rot] of c.track) builder.track.place(x, y, 'straight', rot, 'branch');
   for (const [x, y] of c.taken) builder.decor.set(y * c.w + x, { id: 'townhouse', x, y, rot: 0 });
   return { map, builder };
 }
@@ -352,7 +353,8 @@ describe("the water pump's check, against a plain station's and the ground aroun
   it('is refused first for what refuses a plain station, then ground, then water, then price', () => {
     expect(plain, 'a plain one-tile station to hold the pump against').toBeDefined();
     const seen = { general: 0, ground: 0, water: 0, ok: 0, price: 0 };
-    const priced = (r: string | undefined) => !!r?.startsWith(STR.build.needResources(''));
+    const priced = (r: string | undefined) =>
+      !!r?.startsWith(STR.build.noStoreInReach(rules.buildReach, ''));
     forAll(
       genPumpCase,
       (c) => {
@@ -431,10 +433,10 @@ describe("the water pump's check, against a plain station's and the ground aroun
             regions,
             new TrackGraph(6, 6),
             new Economy(),
-            new Stockpile(),
+            storeWith({}).stores,
           );
           builder.free = true;
-          builder.track.place(1, 2, 'straight', 1, 'regular');
+          builder.track.place(1, 2, 'straight', 1, 'branch');
           // the footprint is (2, 2) to (3, 3); the ring is the eight tiles beside it, outside it
           const foot = [
             [2, 2],
@@ -526,7 +528,7 @@ describe('a pump a save holds where it may no longer be placed', () => {
       seed: 12345,
       clock: { time: 0, speedIndex: 1 },
       economy: { money: 1000, tickets: 0, tier: 0, granted: [] },
-      track: [[X - 1, Y, 'straight', 1, 'regular', 'regular']],
+      track: [[X - 1, Y, 'straight', 1, 'branch', 'branch']],
       stations: [
         { id: 1, defId: 'pump', name: 'Water Pump', x: X, y: Y, level: 2, storage: { water: 5 } },
       ],
@@ -565,7 +567,7 @@ describe('a pump a save holds where it may no longer be placed', () => {
       pump.tick(weekSeconds());
       expect(pump.stored('water')).toBeGreaterThan(before);
       // a new pump is refused there, the one standing is not touched
-      builder.track.place(X + 2, Y, 'straight', 1, 'regular');
+      builder.track.place(X + 2, Y, 'straight', 1, 'branch');
       expect(builder.checkStation(X + 3, Y, 'pump').reason).toBe(GROUND);
       expect(builder.stations).toEqual([pump]);
     }
@@ -584,7 +586,7 @@ function startChunkPumpTile(map: GameMap): { x: number; y: number } | null {
     regions,
     new TrackGraph(map.w, map.h),
     new Economy(),
-    new Stockpile(),
+    storeWith({}).stores,
   );
   // the editor's leave: no cost, so only the ground decides; the chunk is kept to by hand
   builder.free = true;
@@ -606,7 +608,7 @@ function startChunkPumpTile(map: GameMap): { x: number; y: number } | null {
         if (!inChunk(tx, ty)) continue;
         const rot = DIR_DX[d] ? 1 : 0;
         if (!builder.checkTrack(tx, ty, STRAIGHT, rot).ok) continue;
-        builder.track.place(tx, ty, 'straight', rot, 'regular');
+        builder.track.place(tx, ty, 'straight', rot, 'branch');
         const ok = builder.checkStation(x, y, 'pump').ok;
         builder.track.removeAt(tx, ty);
         if (ok) return { x, y };

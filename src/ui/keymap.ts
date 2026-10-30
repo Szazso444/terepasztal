@@ -1,5 +1,5 @@
 import type { Input } from '../engine/input';
-import type { WideClass } from '../world/reclass';
+import type { ReclassDir } from '../world/reclass';
 
 /**
  * The play keymap: every hotkey of the game in one table, and the handler that runs it each
@@ -45,13 +45,15 @@ export interface KeyHost {
   toggleOverview(): void;
   /** the next (1) or the previous (-1) tool of the open category */
   cycleTool(dir: 1 | -1): void;
-  /** take up or put down the tool that turns wide track into `target` */
-  toggleReclass(target: WideClass): void;
+  /** take up or put down the tool that moves track one standard line up or down */
+  toggleReclass(dir: ReclassDir): void;
   /** the next (1) or the previous (-1) type of the open category (track by gauge) */
   cycleType(dir: 1 | -1): void;
   /** the piece in slot `index` (0-based) of the open category */
   selectPiece(index: number): void;
   setSpeed(speed: number): void;
+  /** one speed up (1) or down (-1), from pause one step from the speed it had */
+  stepSpeed(dir: 1 | -1): void;
   togglePause(): void;
   /** start recording stops for the picked train, or finish the recording */
   toggleRecording(): void;
@@ -84,11 +86,15 @@ export type KeyAction =
   | 'pause'
   | 'pieceOrSpeed'
   | 'speed'
+  | 'speedStep'
   | 'record'
   | 'finishRoute';
 
 export interface KeyBinding {
-  /** `KeyboardEvent.code` */
+  /**
+   * `KeyboardEvent.code`, or `Char+` / `Char-` for the keys bound by the character they type
+   * (`Input`)
+   */
   readonly code: string;
   /** true: only with Shift held; false: only without; absent: either */
   readonly shift?: boolean;
@@ -98,6 +104,17 @@ export interface KeyBinding {
 
 /** The slot or the speed a digit key stands for: 1 for Digit1. */
 const digitOf = (code: string) => Number(code.slice('Digit'.length));
+
+/**
+ * + steps the speed up and − down. They are bound by the character they type (`Input` names them
+ * `Char+` and `Char-`), as layouts move them: Shift+3 and the Slash key on a Hungarian keyboard,
+ * Shift+Equal and Minus on a US one, the numpad's keys on every one.
+ */
+const SPEED_STEP = new Map<string, 1 | -1>([
+  ['Char+', 1],
+  ['Char-', -1],
+]);
+const SPEED_STEP_KEYS = [...SPEED_STEP.keys()];
 
 /**
  * Each action returns true when the rest of the frame's input is left alone: Escape opened or
@@ -157,11 +174,11 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
     return false;
   },
   upgradeTrack: (h) => {
-    if (!h.screenOpen) h.toggleReclass('high_speed');
+    if (!h.screenOpen) h.toggleReclass('up');
     return false;
   },
   downgradeTrack: (h) => {
-    if (!h.screenOpen) h.toggleReclass('regular');
+    if (!h.screenOpen) h.toggleReclass('down');
     return false;
   },
   prevType: (h) => {
@@ -185,6 +202,11 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
   },
   speed: (h, b) => {
     h.setSpeed(digitOf(b.code));
+    return false;
+  },
+  // the level editor's clock stays stopped
+  speedStep: (h, b) => {
+    if (h.mode === 'play') h.stepSpeed(SPEED_STEP.get(b.code)!);
     return false;
   },
   record: (h) => {
@@ -229,6 +251,11 @@ export const KEYMAP: readonly KeyBinding[] = [
   { code: 'KeyE', context: 'play', action: 'nextType' },
   { code: 'Space', context: 'play', action: 'pause' },
   ...digits(9).map((code) => ({ code, context: 'play' as const, action: 'pieceOrSpeed' as const })),
+  ...SPEED_STEP_KEYS.map((code) => ({
+    code,
+    context: 'play' as const,
+    action: 'speedStep' as const,
+  })),
 
   { code: 'Backquote', context: 'overview', action: 'debug' },
   ...SCREEN_KEYS.map(([code, action]) => ({ code, context: 'overview' as const, action })),
@@ -236,6 +263,11 @@ export const KEYMAP: readonly KeyBinding[] = [
   { code: 'KeyM', context: 'overview', action: 'overview' },
   { code: 'Space', context: 'overview', action: 'pause' },
   ...digits(3).map((code) => ({ code, context: 'overview' as const, action: 'speed' as const })),
+  ...SPEED_STEP_KEYS.map((code) => ({
+    code,
+    context: 'overview' as const,
+    action: 'speedStep' as const,
+  })),
   { code: 'KeyR', context: 'overview', action: 'record' },
   { code: 'Enter', context: 'overview', action: 'finishRoute' },
 ];

@@ -15,11 +15,11 @@ import {
 import { isCurveLink, linkLength, unitDef, type SwitchForm } from './trackGeom';
 
 // Properties of findPath on small seeded layouts, checked against an exhaustive search over
-// (tile, entry) states. Every layout keeps to one class and has no transition pieces, so opensTo
+// (tile, entry) states. Every layout keeps to one class, so opensTo
 // and connected() agree on it: nothing here says whether a path may cross a class or gauge break.
 
-/** Narrow: every piece 1×1. Regular: straights and crossings 1×1, curves and switches 2×2. */
-type Family = 'narrow' | 'regular';
+/** Narrow: every piece 1×1. Branch: straights and crossings 1×1, curves and switches 2×2. */
+type Family = 'narrow' | 'branch';
 type Kind = 'straight' | 'curve' | 'switch' | 'crossing';
 
 interface Tile {
@@ -61,19 +61,19 @@ interface Case {
 }
 
 const EDGE = 'NESW';
-/** The side of a regular curve's or switch's block. */
-const N = CLASS_N.regular;
+/** The side of a Branch Line curve's or switch's block. */
+const N = CLASS_N.branch;
 const KINDS: readonly Kind[] = ['straight', 'curve', 'switch'];
 
 // ---------------------------------------------------------------------------------- layouts
 
 function isUnit(family: Family, kind: Kind) {
-  return family === 'regular' && (kind === 'curve' || kind === 'switch');
+  return family === 'branch' && (kind === 'curve' || kind === 'switch');
 }
 
 /** Narrow pieces and regular 1×1 pieces go down with set(), regular 2×2 pieces with place(). */
 function layOn(g: TrackGraph, family: Family, l: Lay) {
-  if (isUnit(family, l.kind)) g.place(l.x, l.y, l.kind, l.rot, 'regular', undefined, l.form);
+  if (isUnit(family, l.kind)) g.place(l.x, l.y, l.kind, l.rot, 'branch', undefined, l.form);
   else g.set(l.x, l.y, makePiece(l.kind, l.rot, family));
 }
 
@@ -190,7 +190,7 @@ function loopRect(rng: Rng, family: Family, w: number, h: number, others: Rect[]
   const span = family === 'narrow' ? 1 : 2 * N - 1;
   if (w <= span || h <= span) return null;
   let r: Rect;
-  if (family === 'regular' && rng.chance(0.8)) {
+  if (family === 'branch' && rng.chance(0.8)) {
     const [cw, ch] = [w >> 1, h >> 1];
     const [i0, j0] = [rng.int(0, cw - 2), rng.int(0, ch - 2)];
     const [i1, j1] = [rng.int(i0 + 1, cw - 1), rng.int(j0 + 1, ch - 1)];
@@ -357,7 +357,7 @@ function regularChord(rng: Rng, r: Rect): Lay[] {
  * block. Null when the track holds `l` already or no piece holds both.
  */
 function mergeLay(g: TrackGraph, l: Lay): Lay | null {
-  if (!isUnit('regular', l.kind)) {
+  if (!isUnit('branch', l.kind)) {
     const have = g.get(l.x, l.y);
     if (!have) return l;
     const along = pieceLinks(l.kind, l.rot);
@@ -880,7 +880,7 @@ function expectComplete(c: Case, g: TrackGraph, p: PathSegment[] | null) {
   expect(p === null, `findPath ${found}, oracle ${best}`).toBe(best === null);
 }
 
-describe.each(['narrow', 'regular'] as const)('findPath on seeded %s layouts', (family) => {
+describe.each(['narrow', 'branch'] as const)('findPath on seeded %s layouts', (family) => {
   it('returns a legal path: start state, edge to edge, along the pieces, to a target', () => {
     forAllCases(family, false, (c, g) => {
       const p = run(c, g);
@@ -969,7 +969,7 @@ describe.each(['narrow', 'regular'] as const)('findPath on seeded %s layouts', (
     expect(share(n.cases - n.paths), 'cases with no path').toBeGreaterThanOrEqual(0.05);
     expect(share(n.switchCurves), 'paths across a switch curve link').toBeGreaterThanOrEqual(0.2);
     expect(n.penaltyDecides, 'paths the switch penalty decides').toBeGreaterThan(0);
-    if (family === 'regular') {
+    if (family === 'branch') {
       expect(share(n.members), 'paths across a 2x2 piece').toBeGreaterThanOrEqual(0.5);
       expect(share(n.lengthsDecide), 'paths the member lengths decide').toBeGreaterThanOrEqual(
         0.05,

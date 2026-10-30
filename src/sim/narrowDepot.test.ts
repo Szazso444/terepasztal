@@ -5,7 +5,6 @@ import { RegionState } from '../world/regions';
 import { TrackGraph, makePiece } from '../world/track';
 import { Dir } from '../engine/iso';
 import { Builder } from './build';
-import { Stockpile } from './stockpile';
 import { Economy } from './economy';
 import { Fleet } from './fleet';
 import { Inventory } from '../gacha/inventory';
@@ -13,20 +12,20 @@ import { Station, stationFootprint } from './stations';
 import { locoDef } from '../gacha/items';
 import { rules, DEFAULT_RULES } from './rules';
 import { STR } from '../strings';
+import { storeWith } from '../testing/storeFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 function world() {
   const map = emptyMap(4242, 64, 64, Terrain.Grass),
     track = new TrackGraph(64, 64),
-    stock = new Stockpile(),
     economy = new Economy();
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, economy, stock);
+  const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   const inventory = new Inventory();
-  const fleet = new Fleet(track, builder, map, inventory, economy, stock);
+  const fleet = new Fleet(track, builder, map, inventory, economy);
   return { map, track, builder, fleet, inventory };
 }
 
@@ -141,10 +140,10 @@ describe('the narrow unlock hook', () => {
     const narrow = { kind: 'straight', cls: 'narrow' } as const;
     expect(builder.checkTrack(5, 5, narrow, 0).reason).toBe(STR.build.narrowLocked);
     expect(
-      builder.checkTrack(5, 5, { kind: 'crossing', cls: 'narrow', cls2: 'regular' }, 0).reason,
+      builder.checkTrack(5, 5, { kind: 'crossing', cls: 'narrow', cls2: 'branch' }, 0).reason,
     ).toBe(STR.build.narrowLocked);
     expect(builder.checkStation(20, 20, 'narrow_depot', 0).reason).toBe(STR.build.narrowLocked);
-    expect(builder.checkTrack(5, 5, { kind: 'straight', cls: 'regular' }, 0).ok).toBe(true);
+    expect(builder.checkTrack(5, 5, { kind: 'straight', cls: 'branch' }, 0).ok).toBe(true);
     rules.narrowUnlocked = 1;
     expect(builder.checkTrack(5, 5, narrow, 0).ok).toBe(true);
     expect(builder.checkStation(20, 20, 'narrow_depot', 0).ok).toBe(true);
@@ -152,30 +151,30 @@ describe('the narrow unlock hook', () => {
 });
 
 describe('laying narrow track against regular track', () => {
-  it('says the gauges do not join instead of pointing at a transition', () => {
+  it('says the gauges do not join', () => {
     const { builder, track } = world();
-    track.place(10, 10, 'straight', 1, 'regular');
+    track.place(10, 10, 'straight', 1, 'branch');
     const r = builder.checkTrack(11, 10, { kind: 'straight', cls: 'narrow' }, 1);
     expect(r.ok).toBe(false);
     expect(r.reason).toBe(STR.build.gaugeBreak);
-    // regular against high speed still asks for the transition
-    const h = builder.checkTrack(11, 10, { kind: 'straight', cls: 'high_speed' }, 1);
-    expect(h.reason).toBe(STR.build.needTransition);
+    // Branch against Main Line joins directly: one network
+    const m = builder.checkTrack(11, 10, { kind: 'straight', cls: 'main' }, 1);
+    expect(m.ok, m.reason).toBe(true);
   });
 });
 
 describe('a narrow line crossing a regular one', () => {
   it('serves only the stops on its own rails', () => {
     const { builder, fleet, track } = world();
-    const ew = (cls: 'narrow' | 'regular') =>
+    const ew = (cls: 'narrow' | 'branch') =>
       [0, 1].find((r) => makePiece('straight', r, cls).links[0].includes(Dir.E))!;
     const nar = builder.placeStation(20, 20, 'narrow_depot', 0)!;
     for (let x = 19; x <= 30; x++)
       if (x !== 26) track.place(x, 20, 'straight', ew('narrow'), 'narrow');
     // rotation 1: the narrow line runs east-west through the crossing, the regular one north-south
-    track.place(26, 20, 'crossing', 1, 'narrow', 'regular');
+    track.place(26, 20, 'crossing', 1, 'narrow', 'branch');
     for (let y = 15; y <= 25; y++)
-      if (y !== 20) track.place(26, y, 'straight', 1 - ew('regular'), 'regular');
+      if (y !== 20) track.place(26, y, 'straight', 1 - ew('branch'), 'branch');
     expect(track.connected(26, 20, Dir.E)).toBe(true);
     expect(track.connected(26, 20, Dir.N)).toBe(true);
     const quarry = builder.placeStation(29, 21, 'quarry', 0)!;

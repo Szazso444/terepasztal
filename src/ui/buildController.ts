@@ -1,16 +1,18 @@
-import type { WideClass } from '../world/reclass';
+import type { ReclassDir } from '../world/reclass';
 import { ReclassStroke } from './reclassStroke';
+import { layRun, planRun, type RunPlan, type RunStep } from './autoCrossing';
+import { lineTiles, setOffAxis, turnPath } from './dragPath';
 import type { Sprite } from 'pixi.js';
 import type { Input } from '../engine/input';
 import { itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
 import type { SupplyKind } from '../sim/catenary';
 import { inBounds } from '../world/tiles';
-import type { Builder } from '../sim/build';
+import type { Builder, PlacementCheck } from '../sim/build';
 import type { WorldRenderer } from '../render/worldRenderer';
 import type { Station } from '../sim/stations';
 import type { Tool } from './toolbar';
 import { STR } from '../strings';
-import { fmtCost, scaleCost } from '../sim/stockpile';
+import { fmtCost, scaleCost } from '../sim/stores';
 import { buildingDef, type Building } from '../sim/buildings';
 import { stationSpan, stationDef } from '../sim/stations';
 import type { Decor } from '../sim/build';
@@ -62,6 +64,15 @@ export interface PlacingOut<C = unknown> {
   season(): Season;
 }
 
+/**
+ * The builder's verdict on the work under the pointer, as the status line shows it, and the tile
+ * that work is paid at (`Builder.affordable`): the build card names its payer from it.
+ */
+export interface Placement {
+  check: PlacementCheck;
+  at: Tile;
+}
+
 /** Interactive placement: ghost previews, rotation, drag-laying, removal, selection. */
 export class BuildController {
   tool: Tool = { kind: 'none' };
@@ -80,6 +91,8 @@ export class BuildController {
   /** reach (Chebyshev tiles) highlighted around the cursor while placing; 0 = none */
   reach = 0;
   private dragStart: { x: number; y: number } | null = null;
+  /** a straight drag: the axis it set off along, its first leg (R swaps it) */
+  private dragAxis: 'x' | 'y' | null = null;
   private selectSprite: Sprite;
   selected: Station | null = null;
   onSelect: ((s: Station | null) => void) | null = null;
@@ -87,8 +100,10 @@ export class BuildController {
   onToolChanged: ((t: Tool) => void) | null = null;
   /** Upgrade / Downgrade: the stroke under way while the button is held */
   private stroke = new ReclassStroke();
-  /** how many trains may not run on high-speed track, for the Upgrade tool's status line */
-  barredTrains: (() => { barred: number; total: number }) | null = null;
+  /** the anchors of the pieces the last Upgrade / Downgrade stroke left as they were, shown red */
+  private reclassLeft = new Map<number, { x: number; y: number }>();
+  /** the button was down for the Upgrade / Downgrade tool in the last frame */
+  private reclassDown = false;
   hoverStation: Station | null = null;
   hoverBuilding: Building | null = null;
   selectedBuilding: Building | null = null;
@@ -104,6 +119,11 @@ export class BuildController {
   private escapeSpent = false;
   /** the placing tooltip and the yield label's way out, set by createPlayUi */
   placing: PlacingOut | null = null;
+  /**
+   * This frame's verdict on the work under the pointer, priced and paid as placing it would be;
+   * null over a panel, off the map, during a drag of single pieces, or with no tool that builds.
+   */
+  placement: Placement | null = null;
   /** the tile the placing root stands for, as of the last frame it was not locked */
   private placingRoot: (Tile & { key: string }) | null = null;
   /** the tile of a locked placing root: its label and lit tiles stay there */
@@ -130,6 +150,7 @@ export class BuildController {
     this.tool = t;
     if (!sameShape) this.rot = 0;
     this.stroke.stop();
+    this.reclassLeft.clear();
     this.dragStart = null;
     this.clearGhost();
     this.dropPlacing();
@@ -176,6 +197,7 @@ export class BuildController {
 
   /** Called every frame while the RTS view is active and the pointer is not over UI. */
   update(active: boolean) {
+    this.placement = null;
     const inp = this.input;
     const t = this.tileUnderMouse();
     const inMap = inBounds(this.builder.map, t.x, t.y);
@@ -188,12 +210,21 @@ export class BuildController {
       else this.select(null);
     }
     // track, decor, stations and works turn; anything else keeps its rotation
-    if (inp.wasPressed('KeyR') && this.turns()) this.rot = nextToolRotation(this.tool, this.rot);
+    // (once a held track drag has set off, R turns the run instead: `updateTrackTool`)
+    const turningDrag =
+      this.tool.kind === 'track' && this.dragStart && this.dragAxis && inp.buttons.has(0);
+    if (inp.wasPressed('KeyR') && this.turns() && !turningDrag)
+      this.rot = nextToolRotation(this.tool, this.rot);
     if (inp.wasPressed('Delete') && inMap && active) this.removeAt(t.x, t.y);
     this.updatePlacing(active, t, inMap);
     if (!active) {
-      // over a panel or outside the field: a stroke does not carry on to where the cursor returns
+      // over a panel or outside the field: a stroke does not carry on to where the cursor returns,
+      // and a drag let go there is dropped
       this.stroke.stop();
+      if (this.dragStart && !inp.buttons.has(0)) {
+        this.dragStart = null;
+        this.dragAxis = null;
+      }
       this.clearGhostVisibility(false);
       return;
     }
@@ -296,24 +327,31 @@ export class BuildController {
     const inp = this.input;
     // drag-laying straights
     if (item.kind === 'straight' || item.kind === 'bridge') {
-      if (inp.buttonPressed.has(0) && inMap) this.dragStart = { x: t.x, y: t.y };
+      if (inp.buttonPressed.has(0) && inMap) {
+        this.dragStart = { x: t.x, y: t.y };
+        this.dragAxis = null;
+      }
       if (this.dragStart && inp.buttons.has(0)) {
-        const line = this.lineTiles(this.dragStart, t);
-        this.showLineGhosts(line, item);
+        const a = this.dragStart;
+        // before the drag sets off, R turned the tool (`update`); after, it swaps the legs
+        const setOff = this.dragAxis;
+        this.dragAxis ??= setOffAxis(a, t);
+        if (inp.wasPressed('KeyR') && setOff) this.dragAxis = setOff === 'x' ? 'y' : 'x';
+        const line = this.runTiles(a, t, item);
+        const plan = planRun(this.builder, line, item);
+        this.showRunGhosts(plan);
         this.status(
-          line.length > 1
-            ? `${line.length} x ${item.kind}: ${fmtCost(this.lineCost(line, item))}`
-            : this.pieceStatus(t, item),
+          line.length > 1 ? this.runStatus(plan, item) : this.pieceStatus(t, item, plan.steps[0]),
         );
         return;
       }
       if (this.dragStart && inp.buttonReleased.has(0)) {
-        const line = this.lineTiles(this.dragStart, t);
+        const line = this.runTiles(this.dragStart, t, item);
         this.dragStart = null;
+        this.dragAxis = null;
         for (const g of this.lineGhosts) g.destroy();
         this.lineGhosts = [];
-        if (line.length === 1) this.builder.placeTrack(t.x, t.y, item, this.rot);
-        else for (const l of line) this.builder.placeTrack(l.x, l.y, item, l.rot);
+        layRun(this.builder, planRun(this.builder, line, item));
         return;
       }
     } else {
@@ -326,8 +364,16 @@ export class BuildController {
       for (const g of this.lineGhosts) g.visible = false;
       return;
     }
-    const check = this.builder.checkTrack(t.x, t.y, item, this.rot);
-    const key = itemKey(item);
+    // a straight over a line across it previews the crossing it would lay there
+    const step =
+      item.kind === 'straight'
+        ? planRun(this.builder, [{ ...t, rot: this.rot }], item).steps[0]
+        : null;
+    const shown = step?.crossing ? step.item : item,
+      rot = step?.crossing ? step.rot : this.rot;
+    const check = step ?? this.builder.checkTrack(t.x, t.y, item, this.rot);
+    this.placement = { check, at: t };
+    const key = itemKey(shown);
     if (isUnitKind(item.kind, item.cls)) {
       // one ghost per footprint tile
       if (this.ghost) this.ghost.visible = false;
@@ -338,10 +384,10 @@ export class BuildController {
       );
     } else {
       for (const g of this.lineGhosts) g.visible = false;
-      const g = this.ensureGhost(`track/${key}_${this.rot}`);
+      const g = this.ensureGhost(`track/${key}_${rot}`);
       this.placeGhostAt(g, t.x, t.y, check.ok);
       const existing = this.builder.track.get(t.x, t.y);
-      if (check.ok && existing) g.tint = REPLACE_TINT;
+      if (check.ok && existing && !step?.stands) g.tint = REPLACE_TINT;
     }
     this.world.setSpriteFrame(
       this.ghostDiamond,
@@ -349,19 +395,23 @@ export class BuildController {
     );
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
-    this.status(this.pieceStatus(t, item));
+    this.status(this.pieceStatus(t, item, step ?? undefined));
   }
 
-  private pieceStatus(t: { x: number; y: number }, item: TrackItem) {
-    const check = this.builder.checkTrack(t.x, t.y, item, this.rot);
+  /** The status line for one piece; `step` is a straight's tile as a run would lay it. */
+  private pieceStatus(t: { x: number; y: number }, item: TrackItem, step?: RunStep) {
+    const check = step ?? this.builder.checkTrack(t.x, t.y, item, this.rot);
     const existing = this.builder.track.get(t.x, t.y);
-    const replacing = !!existing && check.ok;
+    const replacing = !!existing && check.ok && !step?.crossing;
     const parts = [
-      check.ok
-        ? replacing
-          ? STR.build.replace(existing!.kind, fmtCost(check.cost))
-          : STR.build.cost(fmtCost(check.cost))
-        : (check.reason ?? ''),
+      step?.stands
+        ? STR.build.standsAlready
+        : check.ok
+          ? replacing
+            ? STR.build.replace(existing!.kind, fmtCost(check.cost))
+            : STR.build.cost(fmtCost(check.cost))
+          : (check.reason ?? ''),
+      step?.crossing && check.ok && !step.stands ? STR.build.autoCrossings(1) : '',
       STR.build.rotate,
     ];
     if (item.kind === 'straight' || item.kind === 'bridge') parts.push(STR.build.dragHint);
@@ -369,7 +419,10 @@ export class BuildController {
   }
 
   /** Ghost sprites for several tiles at once (wide pieces, drag lines). */
-  private showGhosts(list: { x: number; y: number; frame: string; ok?: boolean }[], ok: boolean) {
+  private showGhosts(
+    list: { x: number; y: number; frame: string; ok?: boolean; tint?: number }[],
+    ok: boolean,
+  ) {
     this.ghostDiamond.visible = false;
     while (this.lineGhosts.length < list.length) {
       const g = this.world.makeOverlaySprite(list[0].frame);
@@ -385,42 +438,57 @@ export class BuildController {
       const l = list[i];
       this.world.setSpriteFrame(g, l.frame);
       this.placeGhostAt(g, l.x, l.y, l.ok ?? ok);
+      if (l.tint !== undefined && (l.ok ?? ok)) g.tint = l.tint;
     }
   }
 
   private lineTiles(a: { x: number; y: number }, b: { x: number; y: number }) {
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const out: { x: number; y: number; rot: number }[] = [];
-    if (Math.abs(dx) >= Math.abs(dy)) {
-      const s = Math.sign(dx) || 1;
-      for (let i = 0; i <= Math.abs(dx); i++) out.push({ x: a.x + i * s, y: a.y, rot: 1 });
-    } else {
-      const s = Math.sign(dy) || 1;
-      for (let i = 0; i <= Math.abs(dy); i++) out.push({ x: a.x, y: a.y + i * s, rot: 0 });
-    }
-    return out;
+    return lineTiles(a, b);
   }
 
-  private lineCost(line: { x: number; y: number; rot: number }[], item: TrackItem) {
-    const c: Record<string, number> = {};
-    for (const l of line) {
-      const ch = this.builder.checkTrack(l.x, l.y, item, l.rot);
-      if (ch.ok) for (const [k, v] of Object.entries(ch.cost)) c[k] = (c[k] ?? 0) + v;
-    }
-    return c;
+  /**
+   * The tiles a drag lays from `a` to `b`: a straight run turns through a curve once the cursor
+   * leaves its first leg; a press released where it started is one piece at the tool's turn.
+   */
+  private runTiles(a: { x: number; y: number }, b: { x: number; y: number }, item: TrackItem) {
+    const line =
+      item.kind === 'straight' && this.dragAxis
+        ? turnPath(a, b, this.dragAxis, item.cls)
+        : lineTiles(a, b);
+    return line.length === 1 ? [{ x: b.x, y: b.y, rot: this.rot }] : line;
   }
 
-  private showLineGhosts(line: { x: number; y: number; rot: number }[], item: TrackItem) {
+  /** A run's status: its pieces and price, the crossings it lays by itself, and where it stops. */
+  private runStatus(plan: RunPlan, item: TrackItem) {
+    const parts = [
+      `${STR.build.runPieces(plan.straights, item.kind)}${plan.curves ? ` ${STR.build.runCurves(plan.curves)}` : ''}: ${fmtCost(plan.cost)}`,
+    ];
+    if (plan.crossings) parts.push(STR.build.autoCrossings(plan.crossings));
+    if (plan.reason) parts.push(plan.reason);
+    if (plan.steps.some((s) => s.item.kind === 'curve')) parts.push(STR.build.dragTurn);
+    return parts.join('   ');
+  }
+
+  /**
+   * A run's ghosts, one per tile (a curve shows its whole footprint): red where a piece is refused
+   * and from where the run stops, amber on its crossings; none over a curve the run joins.
+   */
+  private showRunGhosts(plan: RunPlan) {
     if (this.ghost) this.ghost.visible = false;
-    const key = itemKey(item);
     this.showGhosts(
-      line.map((l) => ({
-        x: l.x,
-        y: l.y,
-        frame: `track/${key}_${l.rot}`,
-        ok: this.builder.checkTrack(l.x, l.y, item, l.rot).ok,
-      })),
+      plan.steps.flatMap((s, i) => {
+        if (s.joins) return [];
+        const ok = s.ok && i < plan.end,
+          tint = s.crossing && !s.stands ? REPLACE_TINT : undefined,
+          frame = `track/${itemKey(s.item)}_${s.rot}`;
+        if (!isUnitKind(s.item.kind, s.item.cls)) return [{ x: s.x, y: s.y, frame, ok, tint }];
+        return footprintOf(s.x, s.y, s.item.kind, s.rot, s.item.cls).map((f, m) => ({
+          x: f.x,
+          y: f.y,
+          frame: `${frame}_m${m}`,
+          ok,
+        }));
+      }),
       true,
     );
   }
@@ -433,6 +501,7 @@ export class BuildController {
       return;
     }
     const check = this.builder.checkStation(t.x, t.y, tool.defId, this.rot);
+    this.placement = { check, at: t };
     const def = stationDef(tool.defId);
     const g = this.ensureGhost(stationGhostFrame(this.world.atlas, def, this.rot));
     // a sprite of more than one tile is anchored at its footprint centre
@@ -509,6 +578,7 @@ export class BuildController {
       return;
     }
     const check = this.builder.checkSupply(t.x, t.y, tool.supply);
+    this.placement = { check, at: t };
     const g = this.ensureGhost(frameOf(t.x, t.y));
     this.placeGhostAt(g, t.x, t.y, check.ok);
     this.world.setSpriteFrame(
@@ -535,6 +605,7 @@ export class BuildController {
     const def = decorDef(tool.defId);
     this.showReach(t, def.power ? 2 : (def.radius ?? 0));
     const check = this.builder.checkDecor(t.x, t.y, tool.defId);
+    this.placement = { check, at: t };
     const g = this.ensureGhost(structureFrame(this.world.atlas, `structures/${def.id}`, this.rot));
     this.placeGhostAt(g, t.x, t.y, check.ok);
     const off = decorOffset({ id: def.id, rot: this.rot });
@@ -566,6 +637,7 @@ export class BuildController {
     // a bridge platform does not turn: it stays at rotation 0
     const rot = this.turns() ? this.rot : 0;
     const check = this.builder.checkBuilding(t.x, t.y, tool.defId, rot);
+    this.placement = { check, at: t };
     const g = this.ensureGhost(structureFrame(this.world.atlas, `structures/${def.id}`, rot));
     this.placeGhostAt(g, t.x, t.y, check.ok);
     this.world.setSpriteFrame(
@@ -624,10 +696,11 @@ export class BuildController {
   }
 
   /**
-   * Roads (#328): press and drag a straight run, let go to lay it, tile by tile (`placeRoad`). The
-   * drag shows the build preview's diamond on each tile, red where the release would not lay a
-   * road, with the total cost and every reason a tile is refused in the status line. Before the
-   * press the one tile under the cursor shows, priced or refused.
+   * Roads (#328): press and drag a straight run, let go to lay it, tile by tile, the whole run paid
+   * from its first tile (`placeRoads`). The drag shows the build preview's diamond on each tile,
+   * red where the release would not lay a road, with the total cost and every reason a tile is
+   * refused in the status line. Before the press the one tile under the cursor shows, priced or
+   * refused.
    */
   private updateRoadTool(t: Tile, inMap: boolean) {
     const inp = this.input;
@@ -639,6 +712,7 @@ export class BuildController {
     if (this.dragStart && inp.buttons.has(0)) {
       const stroke = this.roadStroke(this.dragStart, t);
       this.showRoadMarks(stroke.steps);
+      this.roadPlacement(stroke, this.dragStart);
       this.status(strokeStatus(stroke));
       return;
     }
@@ -646,7 +720,7 @@ export class BuildController {
       const tiles = strokeTiles(this.dragStart, this.roadEnd(t));
       this.dragStart = null;
       for (const g of this.lineGhosts) g.visible = false;
-      for (const r of tiles) this.builder.placeRoad(r.x, r.y);
+      this.builder.placeRoads(tiles, tiles[0]);
       return;
     }
     // the button is up: a stroke whose release fell over a panel lays nothing, and is over
@@ -658,7 +732,13 @@ export class BuildController {
     }
     const one = this.roadStroke(t, t);
     this.showRoadMarks(one.steps);
+    this.roadPlacement(one, t);
     this.status(hoverStatus(one.steps[0], !!this.builder.bridgeAt(t.x, t.y)));
+  }
+  /** What the release of a road stroke from `start` would pay, and from where (`placeRoads`). */
+  private roadPlacement(stroke: RoadStrokeCheck, start: Tile) {
+    if (!stroke.laid) return;
+    this.placement = { check: this.builder.affordable(stroke.cost, start.x, start.y), at: start };
   }
 
   /**
@@ -701,7 +781,7 @@ export class BuildController {
 
   /** The road stroke from `start` to the cursor on `t`, judged as its release would lay it. */
   private roadStroke(start: Tile, t: Tile): RoadStrokeCheck {
-    return judgeStroke(strokeTiles(start, this.roadEnd(t)), builderJudge(this.builder));
+    return judgeStroke(strokeTiles(start, this.roadEnd(t)), builderJudge(this.builder, start));
   }
 
   /** The build preview's tile diamond on each tile of a road stroke: red where it is refused. */
@@ -721,54 +801,86 @@ export class BuildController {
   /**
    * Upgrade / Downgrade: convert the piece under the cursor on a press, and every tile the cursor
    * enters while the button stays down. Each step knows the tile it came from, so a crossing
-   * converts the line the stroke runs along.
+   * converts the line the stroke runs along. The piece under the cursor is outlined whole, and
+   * every piece the stroke had to leave as it was (a curve of the wrong size, a line not open yet)
+   * stays red until the next stroke.
    */
   private updateReclassTool(t: { x: number; y: number }, inMap: boolean) {
-    const tool = this.tool as { kind: 'reclass'; target: WideClass };
+    const tool = this.tool as { kind: 'reclass'; dir: ReclassDir };
     const inp = this.input;
     const track = this.builder.track;
     if (this.ghost) this.ghost.visible = false;
     const isCrossing = (p: { x: number; y: number }) => track.get(p.x, p.y)?.kind === 'crossing';
+    const key = (p: { x: number; y: number }) => p.y * track.w + p.x;
     const convert = (
       steps: { tile: { x: number; y: number }; from?: { x: number; y: number } }[],
     ) => {
-      for (const s of steps) this.builder.reclassTrack([s.tile], tool.target, s.from);
+      for (const s of steps) {
+        const check = this.builder.checkReclass([s.tile], tool.dir, s.from);
+        for (const a of check.left) this.reclassLeft.set(key(a), a);
+        if (check.ok && this.builder.reclassTrack([s.tile], tool.dir, s.from))
+          for (const c of check.changes) this.reclassLeft.delete(key(c));
+      }
     };
     const down = inp.buttons.has(0);
+    // a new stroke starts with a clean slate
+    if (down && !this.reclassDown) this.reclassLeft.clear();
+    this.reclassDown = down;
     if (!down) convert(this.stroke.release());
+    this.ghostDiamond.visible = false;
     if (!inMap) {
       this.stroke.stop();
-      this.ghostDiamond.visible = false;
+      for (const g of this.lineGhosts) g.visible = false;
       return;
     }
     if (down) convert(this.stroke.move(t, isCrossing));
-    const upgrade = tool.target === 'high_speed';
-    const what = upgrade ? STR.toolbar.upgrade : STR.toolbar.downgrade;
-    // an upgrade bars every train without in-cab signalling from the line: say so before it is done
-    const trains = upgrade ? this.barredTrains?.() : null;
-    const warning = trains?.barred
-      ? ` · ${STR.build.reclassBarred(trains.barred, trains.total)}`
-      : '';
+    const what = tool.dir === 'up' ? STR.toolbar.upgrade : STR.toolbar.downgrade;
     const piece = track.get(t.x, t.y);
-    if (!piece) {
-      this.ghostDiamond.visible = false;
-      this.status(STR.build.reclassIdle(what) + warning);
+    const marks: { x: number; y: number; frame: string }[] = [];
+    const outline = (a: { x: number; y: number }, frame: string) => {
+      for (const u of track.unitTiles(a.x, a.y)) marks.push({ ...u, frame });
+    };
+    const hovered = piece ? track.anchorOf(t.x, t.y) : null;
+    for (const [k, a] of this.reclassLeft) {
+      // a piece removed or relaid since is no longer the one that was left
+      const p = track.get(a.x, a.y);
+      const at = p && track.anchorOf(a.x, a.y);
+      if (!at || at.x !== a.x || at.y !== a.y) this.reclassLeft.delete(k);
+      else if (!hovered || key(hovered) !== k) outline(a, 'terrain/ghost_bad');
+    }
+    if (!piece || !hovered) {
+      this.showReclassMarks(marks);
+      this.status(
+        this.reclassLeft.size
+          ? STR.build.reclassLeft(what, this.reclassLeft.size)
+          : STR.build.reclassIdle(what),
+      );
       return;
     }
     const from = down ? this.stroke.entry(t, piece.kind === 'crossing') : undefined;
-    const check = this.builder.checkReclass([t], tool.target, from);
+    const check = this.builder.checkReclass([t], tool.dir, from);
+    this.placement = { check, at: t };
     // red only where something stops the conversion; track already converted is fine
     const fine = check.ok || check.reason === STR.build.reclass.nothing;
-    this.world.setSpriteFrame(this.ghostDiamond, fine ? 'terrain/ghost_ok' : 'terrain/ghost_bad');
-    this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
-    this.ghostDiamond.tint = 0xffffff;
+    outline(hovered, fine ? 'terrain/ghost_ok' : 'terrain/ghost_bad');
+    this.showReclassMarks(marks);
     this.status(
-      (check.changes.length
+      check.changes.length
         ? Object.keys(check.cost).length
           ? `${STR.build.reclassCost(what, fmtCost(check.cost))}${check.ok ? '' : ` (${check.reason})`}`
           : STR.build.reclassFree(what)
-        : (check.reason ?? '')) + warning,
+        : (check.reason ?? ''),
     );
+  }
+
+  /** The Upgrade / Downgrade tool's diamonds: the frame carries the colour. */
+  private showReclassMarks(marks: { x: number; y: number; frame: string }[]) {
+    if (!marks.length) {
+      for (const g of this.lineGhosts) g.visible = false;
+      return;
+    }
+    this.showGhosts(marks, true);
+    for (let i = 0; i < marks.length; i++) this.lineGhosts[i].tint = 0xffffff;
   }
 
   private updateTerrainTool(t: { x: number; y: number }, inMap: boolean) {

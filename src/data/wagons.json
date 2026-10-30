@@ -1,6 +1,7 @@
 [
   {
     "id": "water_cart",
+    "class": "frigate",
     "name": "Wooden Water Cart",
     "rarity": "N",
     "era": "Barrel on a frame. Leaks, but it rolls.",
@@ -14,6 +15,7 @@
   },
   {
     "id": "wood_hopper",
+    "class": "frigate",
     "name": "Wooden Hopper",
     "rarity": "N",
     "era": "Open hopper with a drop bottom. Stone, coal, whatever.",
@@ -27,6 +29,7 @@
   },
   {
     "id": "flatbed",
+    "class": "frigate",
     "name": "Flatbed",
     "rarity": "N",
     "era": "Stake-sided flat. Logs by day, hay by night.",
@@ -40,6 +43,7 @@
   },
   {
     "id": "riveted_tank",
+    "class": "frigate",
     "name": "Riveted Tank",
     "rarity": "R",
     "era": "Two-dome tank car. Do not smoke near it.",
@@ -53,6 +57,7 @@
   },
   {
     "id": "steel_hopper",
+    "class": "frigate",
     "name": "Steel Hopper",
     "rarity": "R",
     "era": "Pressed-steel hopper, twin bays.",
@@ -66,6 +71,7 @@
   },
   {
     "id": "bolster_flat",
+    "class": "destroyer",
     "name": "Bolster Flat",
     "rarity": "R",
     "era": "Twin-bolster flat for long loads.",
@@ -79,6 +85,7 @@
   },
   {
     "id": "welded_tank",
+    "class": "frigate",
     "name": "Welded Tank",
     "rarity": "SR",
     "era": "Single welded barrel, twice the liquid.",
@@ -92,6 +99,7 @@
   },
   {
     "id": "bathtub",
+    "class": "frigate",
     "name": "Bathtub Gondola",
     "rarity": "SR",
     "era": "Rotary-dump gondola for unit coal trains.",
@@ -105,6 +113,7 @@
   },
   {
     "id": "bulkhead_flat",
+    "class": "destroyer",
     "name": "Bulkhead Flat",
     "rarity": "SR",
     "era": "End walls keep the stack where it belongs.",
@@ -118,6 +127,7 @@
   },
   {
     "id": "pressure_tank",
+    "class": "destroyer",
     "name": "Pressure Tank",
     "rarity": "SSR",
     "era": "Insulated pressure vessel on six axles.",
@@ -131,6 +141,7 @@
   },
   {
     "id": "dump_hopper",
+    "class": "frigate",
     "name": "Bottom-Dump Hopper",
     "rarity": "SSR",
     "era": "Air-operated doors, empties in seconds.",
@@ -144,6 +155,7 @@
   },
   {
     "id": "heavy_flat",
+    "class": "cruiser",
     "name": "Heavy Flat",
     "rarity": "SSR",
     "era": "Depressed-centre flat for the loads nobody else takes.",
@@ -157,6 +169,7 @@
   },
   {
     "id": "wooden_coach",
+    "class": "frigate",
     "name": "Wooden Coach",
     "rarity": "N",
     "era": "Bench seats and a stove. Draughty, but it gets people to town.",
@@ -170,6 +183,7 @@
   },
   {
     "id": "steel_coach",
+    "class": "destroyer",
     "name": "Steel Coach",
     "rarity": "R",
     "era": "Riveted steel body with proper windows.",
@@ -184,6 +198,7 @@
   },
   {
     "id": "pullman",
+    "class": "destroyer",
     "name": "Pullman Car",
     "rarity": "SR",
     "era": "Velvet, brass and a dining saloon.",
@@ -200,6 +215,7 @@
   },
   {
     "id": "brake_van",
+    "class": "frigate",
     "name": "Brake Van",
     "rarity": "N",
     "era": "Guard's van at the tail. A veranda, a stove, a handbrake.",
@@ -213,6 +229,7 @@
   },
   {
     "id": "boxcar",
+    "class": "frigate",
     "name": "Plank Boxcar",
     "rarity": "R",
     "era": "Covered goods wagon. Keeps the grain dry and the timber straight.",
@@ -226,6 +243,7 @@
   },
   {
     "id": "coal_cart",
+    "class": "frigate",
     "name": "Coal Cart",
     "rarity": "N",
     "era": "Extra bunker for a steam engine. Dead weight behind anything else.",
@@ -241,6 +259,7 @@
   },
   {
     "id": "fuel_cart",
+    "class": "frigate",
     "name": "Fuel Cart",
     "rarity": "R",
     "era": "Tank of fuel plumbed to a diesel. Dead weight behind anything else.",
@@ -256,6 +275,7 @@
   },
   {
     "id": "battery_cart",
+    "class": "frigate",
     "name": "Battery Cart",
     "rarity": "SR",
     "era": "Cells that let an electric run past the end of the wire. Dead weight behind anything else.",
@@ -271,6 +291,7 @@
   },
   {
     "id": "mine_tub",
+    "class": "corvette",
     "name": "Mine Tub",
     "rarity": "N",
     "era": "A steel tub on four small wheels, tipped by hand.",
@@ -286,6 +307,7 @@
   },
   {
     "id": "narrow_tank",
+    "class": "corvette",
     "name": "Narrow Tank Wagon",
     "rarity": "N",
     "era": "A short barrel tank for the narrow gauge.",
@@ -301,6 +323,7 @@
   },
   {
     "id": "narrow_box",
+    "class": "corvette",
     "name": "Narrow Box Wagon",
     "rarity": "N",
     "era": "A covered wagon for grain and goods on the narrow gauge.",
@@ -316,6 +339,7 @@
   },
   {
     "id": "narrow_coach",
+    "class": "corvette",
     "name": "Narrow Coach",
     "rarity": "N",
     "era": "Open-platform coach with wooden benches.",

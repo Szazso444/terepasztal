@@ -43,15 +43,6 @@
         "iron": 2
       },
       "rotations": 2
-    },
-    "transition": {
-      "name": "Transition",
-      "cost": {
-        "wood": 2,
-        "stone": 2,
-        "iron": 2
-      },
-      "rotations": 4
     }
   },
   "terrainCost": {

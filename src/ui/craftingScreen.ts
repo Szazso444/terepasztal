@@ -1,7 +1,9 @@
 import { showVehiclePreview } from './vehiclePreview';
 import { vehicleProperties } from './vehicleProperties';
+import { ageIcon } from './ageIcon';
 import { el, btn, fmtMoney } from './dom';
-import { STR } from '../strings';
+import { rarityStars } from './labels';
+import { AGE_ORDER, STR } from '../strings';
 import type { Screen } from './modal';
 import {
   CRAFT_CONFIG,
@@ -14,7 +16,7 @@ import {
 } from '../gacha/crafting';
 import { RARITIES, itemDef, itemKind, type LocoDef, type WagonDef } from '../gacha/items';
 import type { Economy } from '../sim/economy';
-import { fmtCost, type Stockpile } from '../sim/stockpile';
+import { fmtCost, type ResourceStore, type StoreRegistry } from '../sim/stores';
 import type { Inventory } from '../gacha/inventory';
 import { cargoDef } from '../sim/cargo';
 import { sfx } from '../engine/audio';
@@ -34,7 +36,7 @@ const RECIPE_FILTERS = [
 ] as const;
 
 /**
- * Two-step workshop: pay money to draw recipe cards and keep one, then spend stockpile
+ * Two-step workshop: pay money to draw recipe cards and keep one, then spend stored
  * resources to build instances of known recipes.
  */
 export class CraftingScreen implements Screen {
@@ -56,7 +58,8 @@ export class CraftingScreen implements Screen {
   constructor(
     private readonly crafting: Crafting,
     private readonly economy: Economy,
-    private readonly stock: Stockpile,
+    /** the selected store is the one the workshop builds from and refunds into */
+    private readonly stores: StoreRegistry,
     private readonly inventory: Inventory,
     private readonly now: () => number,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
@@ -89,9 +92,14 @@ export class CraftingScreen implements Screen {
   refresh() {
     if (this.stateKey() !== this.shownKey) this.render();
   }
+  /** The store the workshop works from: the selected one, else the grid, which holds none. */
+  private get stock(): ResourceStore {
+    return this.stores.selected ?? this.stores.grid;
+  }
   private stateKey() {
     return [
       this.economy.money,
+      this.stock.key,
       ...craftResources().map((k) => Math.floor(this.stock.get(k))),
       this.crafting.recipes.size,
       this.inventory.items.length,
@@ -111,7 +119,7 @@ export class CraftingScreen implements Screen {
     c.innerHTML = '';
     const group = (
       label: string,
-      opts: { v: string; t: string }[],
+      opts: { v: string; t: string; age?: string }[],
       cur: string,
       set: (v: string) => void,
     ) => {
@@ -120,17 +128,18 @@ export class CraftingScreen implements Screen {
         { class: 'craft-choice' },
         el('span', { class: 'tb-label', text: label }),
       );
-      for (const o of opts)
-        g.append(
-          btn(
-            o.t,
-            () => {
-              set(o.v);
-              this.render();
-            },
-            `small ${cur === o.v ? 'active' : ''}`,
-          ),
+      for (const o of opts) {
+        const b = btn(
+          o.t,
+          () => {
+            set(o.v);
+            this.render();
+          },
+          `small ${cur === o.v ? 'active' : ''}`,
         );
+        if (o.age) b.prepend(ageIcon(o.age));
+        g.append(b);
+      }
       return g;
     };
     c.append(
@@ -145,7 +154,11 @@ export class CraftingScreen implements Screen {
       ),
       group(
         STR.craft.age,
-        CRAFT_TIERS.map((t) => ({ v: String(t), t: STR.craft.ages[t] ?? String(t) })),
+        CRAFT_TIERS.map((t) => ({
+          v: String(t),
+          t: STR.craft.ages[t] ?? String(t),
+          age: AGE_ORDER[t],
+        })),
         String(this.tier),
         (v) => (this.tier = Number(v)),
       ),
@@ -164,7 +177,12 @@ export class CraftingScreen implements Screen {
     for (const r of [...RARITIES].reverse()) {
       const ids = pool.filter((id) => craftRarity(id) === r);
       if (!ids.length) continue;
-      const line = el('div', { class: `sub rarity-${r}` }, `${STR.craft.quality[r] ?? r}: `);
+      const line = el(
+        'div',
+        { class: `sub rarity-${r}` },
+        rarityStars(r, `rarity-${r}`),
+        `${STR.craft.quality[r] ?? r}: `,
+      );
       ids.forEach((id, i) => {
         line.append(
           el('span', {
@@ -253,7 +271,12 @@ export class CraftingScreen implements Screen {
         el(
           'div',
           { class: 'gcard-top' },
-          el('div', { class: `gcard-rarity rarity-${r}`, text: STR.craft.quality[r] ?? r }),
+          el(
+            'div',
+            { class: `gcard-rarity rarity-${r}` },
+            rarityStars(r, `rarity-${r}`),
+            STR.craft.quality[r] ?? r,
+          ),
           spriteImg(this.atlas, frameForItem(id), 2, 'sprite-preview gcard-art'),
         ),
         el('div', { class: 'gcard-name', text: d.name }),
@@ -280,7 +303,7 @@ export class CraftingScreen implements Screen {
     return card;
   }
   private doChoose(id: string) {
-    const res = this.crafting.choose(id);
+    const res = this.crafting.choose(id, this.stock);
     this.hidePick();
     if (!res) {
       this.render();
@@ -352,10 +375,12 @@ export class CraftingScreen implements Screen {
         el(
           'div',
           {},
-          el('span', {
-            class: `rarity-${d.rarity}`,
-            text: STR.craft.quality[d.rarity] ?? d.rarity,
-          }),
+          el(
+            'span',
+            { class: `rarity-${d.rarity}` },
+            rarityStars(d.rarity, `rarity-${d.rarity}`),
+            STR.craft.quality[d.rarity] ?? d.rarity,
+          ),
           ' ',
           el('span', { class: 'name', text: d.name }),
           el('span', {
@@ -392,7 +417,7 @@ export class CraftingScreen implements Screen {
     return row;
   }
   private doCraft(id: string) {
-    const res = this.crafting.craft(id, this.now());
+    const res = this.crafting.craft(id, this.stock, this.now());
     const name = itemDef(id).name;
     if (!res) {
       this.toast(
@@ -422,7 +447,10 @@ export class CraftingScreen implements Screen {
       .map((k) => `${Math.floor(this.stock.get(k))} ${k}`)
       .join(' · ');
     f.append(
-      el('span', { class: 'num', text: `${STR.craft.resources}: ${res}` }),
+      el('span', {
+        class: 'num',
+        text: `${STR.craft.resources(this.stores.label(this.stock))}: ${res}`,
+      }),
       el('span', { style: 'flex:1' }),
       el('span', {
         class: 'dim',

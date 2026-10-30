@@ -35,7 +35,6 @@ import {
 } from './ground';
 import { Builder } from './build';
 import { Economy } from './economy';
-import { Stockpile } from './stockpile';
 import { DEFAULT_RULES, rules, rulesFrom } from './rules';
 import { DEFAULT_SUPPLY, setSupplyMode, supplyMode, type SupplyMode } from './supply';
 import {
@@ -59,6 +58,7 @@ import { hash2, type Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { buildRelief, groundAllows } from '../render/terrainRelief';
 import { STR } from '../strings';
+import { storeWith } from '../testing/storeFixtures';
 
 // the build rules play a sound when a piece goes down
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -143,7 +143,7 @@ function partsOf(world: SaveParts['world'], supply: SupplyMode = 'simple'): Save
     seed: world.seed,
     clock: { time: 900, speedIndex: 1 },
     economy: { money: 5000, tickets: 2, tier: 1, granted: [0], earned: 100 },
-    track: [[3, 4, 'straight', 1, 'regular', 'regular']],
+    track: [[3, 4, 'straight', 1, 'branch', 'branch']],
     stations: [],
     trains: [],
     contracts: { contracts: [] },
@@ -156,7 +156,7 @@ function partsOf(world: SaveParts['world'], supply: SupplyMode = 'simple'): Save
     weather: {},
     world,
     rules: {},
-    stockpile: { amounts: {} },
+    stores: [],
     buildings: [],
     regions: [true],
     seasonOffset: 0,
@@ -746,9 +746,11 @@ describe('a world that grows', () => {
       const regions = new RegionState(map);
       regions.load(new Array<boolean>(regions.unlocked.length).fill(true));
       const track = new TrackGraph(map.w, map.h);
-      const stock = new Stockpile();
-      for (const [k, v] of Object.entries(pieceCost('straight'))) stock.add(k, v * 1000);
-      const builder = new Builder(map, regions, track, new Economy(), stock);
+      // one store, in reach of the whole map
+      rules.buildReach = Math.max(map.w, map.h);
+      const { stores, depot } = storeWith({});
+      for (const [k, v] of Object.entries(pieceCost('straight'))) depot.amounts.set(k, v * 1000);
+      const builder = new Builder(map, regions, track, new Economy(), stores);
       const relief = buildRelief(map, new Set());
       builder.groundCheck = (x, y, need) => groundAllows(map, relief, x, y, need);
 
@@ -774,11 +776,9 @@ describe('a world that grows', () => {
         const tiles = across(row!).map(at);
         for (const t of tiles) {
           const rot = axis === 'x' ? 1 : 0;
-          const check = builder.checkTrack(t.x, t.y, { kind: 'straight', cls: 'regular' }, rot);
+          const check = builder.checkTrack(t.x, t.y, { kind: 'straight', cls: 'branch' }, rot);
           expect(check.reason, `seed ${seed}: (${t.x}, ${t.y})`).toBeUndefined();
-          expect(builder.placeTrack(t.x, t.y, { kind: 'straight', cls: 'regular' }, rot)).toBe(
-            true,
-          );
+          expect(builder.placeTrack(t.x, t.y, { kind: 'straight', cls: 'branch' }, rot)).toBe(true);
           laid++;
         }
         // a train finds its way from the new ground onto the stored ground
@@ -962,7 +962,7 @@ describe('a world grown again and again, under another generator at every load',
 describe('the seams of a world grown under a changed generator', () => {
   // four worlds of 160 tiles a side, each seam row checked against the build rules: about 1 s alone
   it('take track on every row of ordinary ground across each of the four seams', () => {
-    const straight = { kind: 'straight', cls: 'regular' } as const;
+    const straight = { kind: 'straight', cls: 'branch' } as const;
     for (const seed of [1, 7412, 31337, 20260912]) {
       const world = worldOf(seed, { w: 96, h: 96 });
       groundOf(world, generatorOf('simple'));
@@ -972,9 +972,11 @@ describe('the seams of a world grown under a changed generator', () => {
       const regions = new RegionState(map);
       regions.load(new Array<boolean>(regions.unlocked.length).fill(true));
       const track = new TrackGraph(map.w, map.h);
-      const stock = new Stockpile();
-      for (const [k, v] of Object.entries(pieceCost('straight'))) stock.add(k, v * 1000);
-      const builder = new Builder(map, regions, track, new Economy(), stock);
+      // one store, in reach of the whole map
+      rules.buildReach = Math.max(map.w, map.h);
+      const { stores, depot } = storeWith({});
+      for (const [k, v] of Object.entries(pieceCost('straight'))) depot.amounts.set(k, v * 1000);
+      const builder = new Builder(map, regions, track, new Economy(), stores);
       const relief = buildRelief(map, new Set());
       builder.groundCheck = (x, y, need) => groundAllows(map, relief, x, y, need);
       const ordinary = (t: { x: number; y: number }) => {

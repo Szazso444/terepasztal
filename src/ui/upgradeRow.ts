@@ -1,3 +1,4 @@
+import { withAgeIcons } from './ageIcon';
 import { el, btn } from './dom';
 import type { UpgradeView } from './upgradeView';
 
@@ -16,6 +17,7 @@ export function upgradeRow(v: UpgradeView, onUpgrade: () => void, cls = 'accent'
     );
   if (v.kind === 'top') return el('span', { class: 'dim', text: v.label });
   const b = btn(v.label, onUpgrade, cls);
+  b.replaceChildren(...withAgeIcons(v.label));
   b.disabled = !v.enabled;
   b.title = v.title;
   return b;

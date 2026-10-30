@@ -21,12 +21,16 @@ export interface Rules {
   runningCostMul: number;
   spotPriceMul: number;
   trainSpeedMul: number;
-  /** top speed on regular track, locomotive speed units (high speed has no cap) */
-  lineSpeedRegular: number;
-  /** top speed on narrow track, locomotive speed units */
+  /** top speed on Branch Line, locomotive speed units (Main and Trunk Line have no cap) */
+  lineSpeedBranch: number;
+  /** top speed on Narrow Gauge, locomotive speed units */
   lineSpeedNarrow: number;
+  /** extra route cost per line size a train runs above its own class's line (0.25 = +25 %) */
+  smallOnBigLine: number;
   /** 1: narrow track and the narrow depot can be built; the hook for a later unlock rule */
   narrowUnlocked: number;
+  /** 1: each line is built only from its age on (Main Diesel, Trunk Electric, ...); 0: every line at once */
+  lineAgeLocks: number;
   loadRateMul: number;
   productionMul: number;
   capacityMul: number;
@@ -50,26 +54,27 @@ export interface Rules {
   rockLevel: number;
   forestDensity: number;
   wheatPerCrew: number;
-  stockpileCap: number;
+  /** units of each good a town's store holds before any warehouse */
+  townStoreCap: number;
+  /** tiles round a store within which building draws on it (Chebyshev) */
+  buildReach: number;
+  /**
+   * tiles round a store within which a coaling stage, a water tower or a supplied station outside
+   * every town fills trains from it (Chebyshev; `StoreRegistry.fuelSupplierFor`)
+   */
+  fuelReach: number;
   /** units a warehouse holds per level (any goods, in total) */
   warehouseCap: number;
-  /** stockpile cap added per depot */
+  /** units of each good a depot holds */
   depotCap: number;
   /** each further station / service / works of the same kind costs this much more (fraction of base) */
   repeatCostStep: number;
   /** multiplies the whole track cost matrix */
   trackCostScale: number;
-  /** money per tile a train runs on high-speed track */
-  hsAccessCharge: number;
   /** price of fitting in-cab signalling equipment to one locomotive */
   inCabCost: number;
   /** multiplies the starting wood, stone and iron */
   startingResourceScale: number;
-  /**
-   * the pile a warehouse needs before an empty freight train picks it as a stop: it holds this
-   * much of a resource the train can carry. Nothing else uses it.
-   */
-  collectMin: number;
   powerCap: number;
   /** price of the first ring of chunks around the start; each ring further multiplies it */
   chunkCost: number;
@@ -98,9 +103,11 @@ export const DEFAULT_RULES: Rules = {
   runningCostMul: 1,
   spotPriceMul: 1,
   trainSpeedMul: 1,
-  lineSpeedRegular: 2,
+  lineSpeedBranch: 2,
   lineSpeedNarrow: 1.2,
+  smallOnBigLine: 0.25,
   narrowUnlocked: 1,
+  lineAgeLocks: 1,
   loadRateMul: 1,
   productionMul: 1,
   capacityMul: 1,
@@ -121,15 +128,15 @@ export const DEFAULT_RULES: Rules = {
   rockLevel: 0.76,
   forestDensity: 0.56,
   wheatPerCrew: 1,
-  stockpileCap: 1000,
+  townStoreCap: 300,
+  buildReach: 24,
+  fuelReach: 8,
   warehouseCap: 1000,
   depotCap: 3000,
   repeatCostStep: 0.2,
   trackCostScale: 1,
-  hsAccessCharge: 2,
   inCabCost: 6000,
   startingResourceScale: 3,
-  collectMin: 100,
   powerCap: 100,
   chunkCost: 12000,
   chunkCostMul: 1.6,
@@ -183,7 +190,32 @@ export const RULE_META: RuleMeta[] = [
     max: 5,
     step: 0.1,
   },
-  { key: 'stockpileCap', label: 'Stockpile cap', group: 'Economy', min: 50, max: 5000, step: 50 },
+  {
+    key: 'townStoreCap',
+    label: 'Town store (Townhouse)',
+    group: 'Economy',
+    min: 0,
+    max: 5000,
+    step: 50,
+  },
+  {
+    key: 'buildReach',
+    label: 'Building draws from stores within',
+    group: 'Economy',
+    min: 0,
+    max: 100,
+    step: 1,
+    hint: 'tiles from a store',
+  },
+  {
+    key: 'fuelReach',
+    label: 'Trackside fuel draws from stores within',
+    group: 'Economy',
+    min: 0,
+    max: 50,
+    step: 1,
+    hint: 'tiles from a store, outside towns',
+  },
   {
     key: 'warehouseCap',
     label: 'Warehouse store per level',
@@ -194,7 +226,7 @@ export const RULE_META: RuleMeta[] = [
   },
   {
     key: 'depotCap',
-    label: 'Stockpile cap per depot',
+    label: 'Depot store cap',
     group: 'Economy',
     min: 0,
     max: 20000,
@@ -217,14 +249,6 @@ export const RULE_META: RuleMeta[] = [
     step: 500,
   },
   {
-    key: 'hsAccessCharge',
-    label: 'High-speed access charge per tile',
-    group: 'Economy',
-    min: 0,
-    max: 20,
-    step: 0.5,
-  },
-  {
     key: 'trackCostScale',
     label: 'Track cost scale',
     group: 'Economy',
@@ -239,14 +263,6 @@ export const RULE_META: RuleMeta[] = [
     min: 0.25,
     max: 4,
     step: 0.25,
-  },
-  {
-    key: 'collectMin',
-    label: 'Freight: warehouse pile before pickup',
-    group: 'Economy',
-    min: 0,
-    max: 1000,
-    step: 10,
   },
   {
     key: 'chunkCost',
@@ -267,7 +283,7 @@ export const RULE_META: RuleMeta[] = [
   { key: 'powerCap', label: 'Power battery', group: 'Economy', min: 0, max: 2000, step: 50 },
   {
     key: 'startStock',
-    label: 'Starting stockpile x',
+    label: 'Starting goods x',
     group: 'Start',
     min: 0,
     max: 10,
@@ -329,8 +345,8 @@ export const RULE_META: RuleMeta[] = [
     step: 0.1,
   },
   {
-    key: 'lineSpeedRegular',
-    label: 'Wide line speed',
+    key: 'lineSpeedBranch',
+    label: 'Branch Line speed',
     group: 'Trains & stations',
     min: 0.5,
     max: 5,
@@ -345,12 +361,30 @@ export const RULE_META: RuleMeta[] = [
     step: 0.1,
   },
   {
+    key: 'smallOnBigLine',
+    label: 'Small train on big line',
+    group: 'Trains & stations',
+    min: 0,
+    max: 2,
+    step: 0.05,
+    hint: "extra route cost per line size above the train class's own; 0.25 = +25 %",
+  },
+  {
     key: 'narrowUnlocked',
     label: 'Narrow gauge available (0 or 1)',
     group: 'Trains & stations',
     min: 0,
     max: 1,
     step: 1,
+  },
+  {
+    key: 'lineAgeLocks',
+    label: 'Lines open by age (0 or 1)',
+    group: 'Trains & stations',
+    min: 0,
+    max: 1,
+    step: 1,
+    hint: 'Main Line from the Diesel Age, Trunk Line from the Electric Age; 0 opens every line at once',
   },
   {
     key: 'loadRateMul',
