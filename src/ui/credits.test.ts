@@ -3,7 +3,7 @@ import {
   CREDITS,
   creditProblems,
   requiredCredits,
-  thanksByAuthor,
+  thanksByKind,
   vehicleNames,
   type CreditsData,
 } from './credits';
@@ -31,10 +31,27 @@ describe('credits', () => {
     expect(requiredCredits(sample).map((c) => c.title)).toEqual(['Yak']);
   });
 
-  it('the thanks list groups by author, sorted, keeping the file order inside a group', () => {
-    const g = thanksByAuthor(sample);
-    expect(g.map((x) => x.author)).toEqual(['bob', 'Bob']);
-    expect(g[0].credits.map((c) => c.title)).toEqual(['Zed', 'Wu']);
+  it('the thanks list goes by kind in file order, then by author, keeping the file order', () => {
+    const data: CreditsData = {
+      ...sample,
+      credits: [
+        ...sample.credits,
+        { kind: 'n', title: 'Tune', author: 'Abe', url: 'https://x/5', licence: 'gml' },
+      ],
+    };
+    const k = thanksByKind(data);
+    expect(k.map((x) => x.kind)).toEqual(['m', 'n']);
+    expect(k[0].authors.map((x) => x.author)).toEqual(['bob', 'Bob']);
+    expect(k[0].authors[0].credits.map((c) => c.title)).toEqual(['Zed', 'Wu']);
+  });
+
+  it('only a model has to name its game vehicles', () => {
+    const noVehicles = (kind: string): CreditsData => ({
+      ...sample,
+      credits: [{ kind, title: 'Tune', author: 'Abe', url: 'https://x/5', licence: 'gml' }],
+    });
+    expect(creditProblems(noVehicles('Music'))).toEqual([]);
+    expect(creditProblems(noVehicles('3D model'))).toHaveLength(1);
   });
 
   it('a credit with an unknown licence is reported and counted as required', () => {

@@ -6,7 +6,7 @@ import {
   CREDITS,
   licenceOf,
   requiredCredits,
-  thanksByAuthor,
+  thanksByKind,
   vehicleNames,
   type Credit,
   type CreditsData,
@@ -101,11 +101,13 @@ export class CreditsScreen implements Screen {
   private render() {
     const data = this.data;
     const required = requiredCredits(data);
-    const thanks = thanksByAuthor(data);
+    const thanks = thanksByKind(data);
     // the licences the thanks list is under, once each, in the order they first come
     const thanksLicences = [
       ...new Map(
-        thanks.flatMap((g) => g.credits).map((c) => [c.licence, licenceOf(data, c)]),
+        thanks
+          .flatMap((k) => k.authors.flatMap((g) => g.credits))
+          .map((c) => [c.licence, licenceOf(data, c)]),
       ).values(),
     ];
     const r = this.roll;
@@ -125,7 +127,10 @@ export class CreditsScreen implements Screen {
       r.append(
         el('div', { class: 'credits-head', text: STR.credits.thanks }),
         el('div', { class: 'credits-note dim', text: STR.credits.thanksNote }),
-        ...thanks.map((g) => authorBlock(g.author, g.credits)),
+        ...thanks.flatMap((k) => [
+          el('div', { class: 'credit-kind credits-kind-head dim', text: k.kind }),
+          ...k.authors.map((g) => authorBlock(g.author, g.credits)),
+        ]),
         el(
           'div',
           { class: 'credit-links credits-licences' },

@@ -14,6 +14,11 @@
       "name": "CC0 1.0",
       "url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "required": false
+    },
+    "suno": {
+      "name": "Made with Suno",
+      "url": "https://suno.com",
+      "required": false
     }
   },
   "credits": [
@@ -808,6 +813,34 @@
       "author": "32kda",
       "url": "https://opengameart.org/content/locomotive-1",
       "licence": "cc0"
+    },
+    {
+      "kind": "Music",
+      "title": "Pastoral Pulse",
+      "author": "Suno",
+      "url": "https://suno.com",
+      "licence": "suno"
+    },
+    {
+      "kind": "Music",
+      "title": "Pastoral Pulse (Genshin style)",
+      "author": "Suno",
+      "url": "https://suno.com",
+      "licence": "suno"
+    },
+    {
+      "kind": "Music",
+      "title": "Pastoral Pulse (chillstep)",
+      "author": "Suno",
+      "url": "https://suno.com",
+      "licence": "suno"
+    },
+    {
+      "kind": "Music",
+      "title": "Pastoral Pulse (liquid drum and bass)",
+      "author": "Suno",
+      "url": "https://suno.com",
+      "licence": "suno"
     }
   ]
 }
