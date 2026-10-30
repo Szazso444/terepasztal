@@ -93,6 +93,11 @@ export function ttRes(atlas: AtlasRegistry, cargo: string, name: string): HTMLEl
   );
 }
 
+/** A resource's atlas icon `icons/<id>` alone, at the size `ttRes` draws it. */
+export function ttIcon(atlas: AtlasRegistry, id: string): HTMLElement {
+  return spriteImg(atlas, `icons/${id}`, 2, 'tt-icon');
+}
+
 /**
  * A term: a word that opens a nested tooltip with `build`'s content once its tooltip is locked
  * and the pointer rests on it. In a panel, `Tooltip.bindTerms` makes it open a level-0 tooltip.

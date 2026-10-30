@@ -2,6 +2,7 @@ import type { AtlasRegistry } from '../engine/atlas';
 import {
   ttDim,
   ttHint,
+  ttIcon,
   ttQuiet,
   ttNum,
   ttRes,
@@ -56,6 +57,7 @@ function renderInline(p: Inline, atlas: AtlasRegistry): Node | string {
   if (typeof p === 'string') return p;
   if ('num' in p) return ttNum(p.num);
   if ('res' in p) return ttRes(atlas, p.res, p.name);
+  if ('icon' in p) return ttIcon(atlas, p.icon);
   if ('dim' in p) return ttQuiet(p.dim);
   return ttTerm(p.term, () => renderTip(p.tip(), atlas));
 }

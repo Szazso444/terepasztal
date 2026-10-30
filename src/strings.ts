@@ -1449,9 +1449,12 @@ export const STR = {
     populationHint:
       'Residents live within the capacity of finished Houses. Residents and crews eat food each week; Windmills turn wheat into food.',
     people: 'People',
+    /** the population tooltip: food eaten, as "Eats: 12.0 food / week" */
     eats: 'Eats',
+    perWeek: '/ week',
+    /** the passengers tooltip: travellers waiting at the player's stations */
+    waiting: 'Waiting at stations',
     famine: 'NO WHEAT',
-    foodPerWeek: 'food/week',
     openMarket: 'Open the market',
     have: 'In store / cap',
     /** the top bar's card: the good in every store together */
@@ -1460,9 +1463,12 @@ export const STR = {
     nextStore: 'The store the bar shows. Click: the next store',
     producedDay: 'Received / last week',
     consumedDay: 'Spent / last week',
-    netDay: 'Net / last week',
-    historyNote: 'Last 7 days; history starts when this game is loaded.',
-    netTitle: (net: string) => `${net} net in the last 7 days`,
+    /** the resource tooltip's links: what makes it, what uses it, where trains take it */
+    madeBy: 'Made by',
+    usedBy: 'Used by',
+    takenAt: 'Trains take it at',
+    funds: 'Funds',
+    fundsHint: 'Earned by deliveries and contracts. Pays for engines and wagons.',
     info: {
       water: 'From Water Pumps. Steam engines drink it; the refinery and power plant use it.',
       wheat: 'From farms. A Windmill turns each wheat into at least 5 food.',

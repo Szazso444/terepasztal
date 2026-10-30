@@ -1,159 +1,216 @@
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import { RESOURCE_IDS, type ResourceStore } from '../sim/stores';
-import { CARGO, cargoName } from '../sim/cargo';
-import { inSupplyMode } from '../sim/supply';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
 import { ShownFlows } from '../sim/stats';
+import { supplyMode, type SupplyMode } from '../sim/supply';
+import { fmtMoney } from './numberFormat';
+import { ttTerm, type Tooltip } from './tooltip';
+import { tipBuild } from './tooltipRender';
+import { resourceTip, type ResourceSnapshot } from './tooltipContent';
+import { RESOURCE_GROUPS, barGroups } from './resourceOrder';
+
+/** What a store holds: these have a cap and open the market when clicked. */
+const STOCKPILED = new Set(RESOURCE_IDS);
+
+/** The cells overflow their box: tighten the spacing. */
+export const needsCompact = (scrollWidth: number, clientWidth: number) => scrollWidth > clientWidth;
 
 /**
- * Second row under the top bar: the store it shows (a button that steps to the next one), every
- * resource held there with a hover card, population, and the funds block.
+ * Second row under the top bar: funds first, then the store it shows (a button that steps to the
+ * next one) and what that store holds in its groups (`RESOURCE_GROUPS`), each cell a term whose
+ * tooltip links the buildings that make and use it. A resource shows once its age has come or it is
+ * in stock (`barGroups`); the famine warning and `right` (tickets, age) end it.
  */
 export class ResourceBar {
   readonly root = el('div', { id: 'resbar', class: 'panel' });
   readonly right = el('div', { class: 'res-right' });
+  /** the groups and the famine warning: it shrinks and clips so `right` stays on screen */
+  private cellsBox = el('div', { class: 'res-cells' });
   /** the name of the store shown; a click asks for the next one (`onNextStore`) */
   private storeBtn = btn('', () => this.onNextStore?.(), 'small res-store');
+  /** each resource's value, and the term around its cell that is hidden or shown */
+  private values = new Map<string, HTMLElement>();
   private cells = new Map<string, HTMLElement>();
-  private cellRoots = new Map<string, HTMLElement>();
-  private cellDefs = new Map<string, (typeof CARGO)[number]>();
-  private pop = el('span', { class: 'value' });
+  /** each group's wrapper, with the separator before it (none before the first) */
+  private groups: { root: HTMLElement; sep: HTMLElement | null }[] = [];
   private famine = el('span', { class: 'value red', text: STR.res.famine });
-  private card = el('div', { id: 'res-card', class: 'panel' });
-  private hovered: string | null = null;
   /** the rolling weekly flows of the store shown, worked out on `refreshFlows` */
   private flows = new ShownFlows(RESOURCE_IDS);
   /** Supplied by the game: residents, and the food they and the crews eat a week. */
   people: (() => { residents: number; foodPerWeek: number }) | null = null;
+  /** Supplied by the game: the passengers waiting at the player's stations. */
+  passengers: (() => number) | null = null;
   /** the store button was clicked: show the next store */
   onNextStore: (() => void) | null = null;
   private store: ResourceStore | null = null;
   private totals = new Map<string, number>();
+  private money = 0;
+  private tier = 0;
+  /**
+   * What the shown cells were worked out from: the age, the production chain (a load can switch
+   * it) and the resources that were in stock.
+   */
+  private laidTier = -1;
+  private laidSupply: SupplyMode | null = null;
+  private inStock = new Set<string>();
 
-  constructor(atlas: AtlasRegistry, onClick: () => void) {
+  constructor(atlas: AtlasRegistry, tooltip: Tooltip, onClick: () => void) {
     this.storeBtn.title = STR.res.nextStore;
-    this.root.append(this.storeBtn);
-    for (const c of [...CARGO.filter((x) => x.class !== 'people').map((x) => x.id), 'power']) {
-      const v = el('span', { class: 'value' });
-      const cell = el(
-        'div',
-        { class: 'res' },
-        spriteImg(atlas, `icons/${c}`, 1, 'sprite-preview res-icon'),
-        v,
-      );
-      // cargo of the other production-chain mode stays off the bar
-      const def = CARGO.find((x) => x.id === c);
-      if (def && !inSupplyMode(def)) cell.style.display = 'none';
-      if (def) this.cellDefs.set(c, def);
-      cell.addEventListener('mouseenter', () => this.showCard(c, cell));
-      cell.addEventListener('mouseleave', () => this.hideCard());
-      cell.addEventListener('click', onClick);
-      this.cells.set(c, v);
-      this.cellRoots.set(c, cell);
-      this.root.append(cell);
-    }
-    const popCell = el(
-      'div',
-      { class: 'res' },
-      spriteImg(atlas, 'icons/population', 1, 'sprite-preview res-icon'),
-      this.pop,
-    );
-    popCell.addEventListener('mouseenter', () => this.showCard('population', popCell));
-    popCell.addEventListener('mouseleave', () => this.hideCard());
-    this.root.append(popCell, this.famine, el('div', { class: 'spacer' }), this.right);
+    RESOURCE_GROUPS.forEach((ids, i) => {
+      const group = el('div', { class: 'res-group' });
+      for (const id of ids) {
+        const v = el('span', { class: 'value' });
+        // a span: the term around it is one
+        const cell = el(
+          'span',
+          { class: 'res' },
+          spriteImg(atlas, `icons/${id}`, 1, 'sprite-preview res-icon'),
+          v,
+        );
+        const term = ttTerm(
+          cell,
+          tipBuild(atlas, () => resourceTip(this.snapshot(id))),
+        );
+        if (STOCKPILED.has(id)) term.addEventListener('click', onClick);
+        this.values.set(id, v);
+        this.cells.set(id, term);
+        group.append(term);
+      }
+      const sep = i ? el('div', { class: 'res-sep' }) : null;
+      if (sep) this.cellsBox.append(sep);
+      this.cellsBox.append(group);
+      // the funds are everyone's, what follows the store's
+      if (!i) this.cellsBox.append(this.storeBtn);
+      this.groups.push({ root: group, sep });
+    });
+    this.cellsBox.append(this.famine);
+    this.root.append(this.cellsBox, this.right);
     this.famine.style.display = 'none';
-    this.card.style.display = 'none';
-    document.body.append(this.card);
+    tooltip.bindTerms(this.root);
+    // a window resize changes the room
+    if (typeof ResizeObserver !== 'undefined')
+      new ResizeObserver(() => this.fit()).observe(this.root);
   }
 
-  private showCard(id: string, cell: HTMLElement) {
-    this.hovered = id;
-    const r = cell.getBoundingClientRect();
-    this.card.style.left = `${Math.max(4, Math.min(window.innerWidth - 270, r.left))}px`;
-    this.card.style.top = `${r.bottom + 4}px`;
-    this.card.style.display = '';
-    this.renderCard();
+  /**
+   * Normal spacing when the cells fit, the `compact` spacing when they would not. Measured with
+   * compact off, so the answer does not depend on the last one. Called only after a relayout, when
+   * a value gets longer, and on resize: never every frame.
+   */
+  private fit() {
+    const box = this.cellsBox;
+    // a hidden bar measures 0: keep the last answer
+    if (!box.clientWidth) return;
+    this.root.classList.remove('compact');
+    if (needsCompact(box.scrollWidth, box.clientWidth)) this.root.classList.add('compact');
   }
-  private hideCard() {
-    this.hovered = null;
-    this.card.style.display = 'none';
-  }
-  private renderCard() {
-    const id = this.hovered;
+
+  /** What a cell's tooltip shows, read when it opens. */
+  private snapshot(id: string): ResourceSnapshot {
+    const tier = this.tier;
     const st = this.store;
-    if (!id || !st) return;
-    const c = this.card;
-    c.innerHTML = '';
-    const row = (k: string, v: string) =>
-      el(
-        'div',
-        { class: 'kv' },
-        el('span', { class: 'k', text: k }),
-        el('span', { class: 'v', text: v }),
-      );
+    // nothing counts money, births or passengers in and out: those tooltips show no flows
+    if (id === 'money') return { id, have: this.money, cap: Infinity, tier };
     if (id === 'population') {
       const p = this.people?.() ?? { residents: 0, foodPerWeek: 0 };
-      c.append(
-        el('div', { class: 'panel-title', text: STR.res.population }),
-        el(
-          'div',
-          { class: 'panel-body' },
-          el('div', { class: 'bi-desc', text: STR.res.populationHint }),
-          row(STR.res.people, String(p.residents)),
-          row(STR.res.eats, `${p.foodPerWeek.toFixed(1)} ${STR.res.foodPerWeek}`),
-        ),
-      );
-      return;
+      return { id, have: p.residents, cap: Infinity, eats: p.foodPerWeek, tier };
     }
-    const info = STR.res.info[id];
-    const stats = this.flows.of(st)[id];
-    const body = el('div', { class: 'panel-body' });
-    if (info) body.append(el('div', { class: 'bi-desc', text: info }));
-    body.append(row(STR.res.have, `${Math.floor(st.get(id))} / ${st.cap(id)}`));
-    body.append(
-      el('div', { class: 'dim', text: STR.res.allStores(Math.floor(this.totals.get(id) ?? 0)) }),
-    );
-    if (stats) {
-      body.append(el('div', { class: 'dim', text: STR.res.historyNote }));
-      body.append(row(STR.res.producedDay, stats.produced.toFixed(1)));
-      body.append(row(STR.res.consumedDay, stats.consumed.toFixed(1)));
-      const net = stats.produced - stats.consumed;
-      body.append(row(STR.res.netDay, `${net >= 0 ? '+' : ''}${net.toFixed(1)}`));
+    if (id === 'passengers') return { id, have: this.passengers?.() ?? 0, cap: Infinity, tier };
+    const flow = st ? this.flows.of(st)[id] : undefined;
+    return {
+      id,
+      have: st?.get(id) ?? 0,
+      cap: STOCKPILED.has(id) ? (st?.cap(id) ?? Infinity) : Infinity,
+      total: this.totals.get(id) ?? 0,
+      produced: flow?.produced ?? 0,
+      consumed: flow?.consumed ?? 0,
+      tier,
+    };
+  }
+
+  /** Show the cells and groups `barGroups` lists, and hide the rest. */
+  private layout(store: ResourceStore) {
+    const shown = new Set(barGroups(this.tier, (id) => store.get(id)).flat());
+    for (const [id, cell] of this.cells) {
+      const on = shown.has(id);
+      if ((cell.style.display === 'none') === on) cell.style.display = on ? '' : 'none';
     }
-    c.append(el('div', { class: 'panel-title', text: cargoName(id) }), body);
+    let before = false;
+    RESOURCE_GROUPS.forEach((ids, i) => {
+      const { root, sep } = this.groups[i];
+      const on = ids.some((id) => shown.has(id));
+      root.style.display = on ? '' : 'none';
+      if (sep) sep.style.display = on && before ? '' : 'none';
+      before ||= on;
+    });
   }
 
   /**
    * Show `store` (with the grid's power beside it), named `label` on the store button; `totals` is
-   * what every store holds together, for the hover card.
+   * what every store holds together, for the tooltips.
    */
-  update(store: ResourceStore, label: string, totals: Map<string, number>) {
+  update(
+    store: ResourceStore,
+    label: string,
+    totals: Map<string, number>,
+    money: number,
+    tier: number,
+  ) {
     this.store = store;
     this.totals = totals;
-    if (this.storeBtn.textContent !== label) this.storeBtn.textContent = label;
+    this.money = money;
+    this.tier = tier;
+    const renamed = this.storeBtn.textContent !== label;
+    if (renamed) this.storeBtn.textContent = label;
+    // the shown cells change only with the age or the chain, or when a stock crosses zero
+    let relayout = tier !== this.laidTier || supplyMode() !== this.laidSupply;
+    for (const id of this.cells.keys()) {
+      const has = store.get(id) > 0;
+      if (has === this.inStock.has(id)) continue;
+      if (has) this.inStock.add(id);
+      else this.inStock.delete(id);
+      relayout = true;
+    }
+    if (relayout) {
+      this.laidTier = tier;
+      this.laidSupply = supplyMode();
+      this.layout(store);
+    }
+    // a longer value or store name can push the bar over too: a new digit, not every frame
+    let longer = relayout || renamed;
     const stats = this.flows.of(store);
-    for (const [id, v] of this.cells) {
-      const def = this.cellDefs.get(id);
-      const shown = !def || inSupplyMode(def);
-      const root = this.cellRoots.get(id)!;
-      if ((root.style.display === 'none') === shown) root.style.display = shown ? '' : 'none';
-      if (!shown) continue;
+    for (const [id, v] of this.values) {
+      if (this.cells.get(id)!.style.display === 'none') continue;
+      if (!STOCKPILED.has(id)) {
+        const text =
+          id === 'money'
+            ? fmtMoney(money)
+            : `${Math.floor(id === 'population' ? (this.people?.().residents ?? 0) : (this.passengers?.() ?? 0))}`;
+        if (v.textContent !== text) {
+          longer ||= text.length !== v.textContent?.length;
+          v.textContent = text;
+        }
+        continue;
+      }
       const have = Math.floor(store.get(id));
-      const c = store.cap(id);
       const text = `${have}`;
-      if (v.textContent !== text) v.textContent = text;
+      if (v.textContent !== text) {
+        longer ||= text.length !== v.textContent?.length;
+        v.textContent = text;
+      }
       const net = (stats[id]?.produced ?? 0) - (stats[id]?.consumed ?? 0);
       v.classList.toggle('red', net < -0.01);
       v.classList.toggle('good', net > 0.01);
-      v.classList.toggle('amber', Math.abs(net) <= 0.01 && have >= c);
-      root.title = STR.res.netTitle(`${net >= 0 ? '+' : ''}${net.toFixed(1)}`);
+      v.classList.toggle('amber', Math.abs(net) <= 0.01 && have >= store.cap(id));
     }
-    const p = `${this.people?.().residents ?? 0}`;
-    if (this.pop.textContent !== p) this.pop.textContent = p;
-    this.famine.style.display = store.famine ? '' : 'none';
-    if (this.hovered) this.renderCard();
+    const famine = store.famine ? '' : 'none';
+    if (this.famine.style.display !== famine) {
+      this.famine.style.display = famine;
+      longer = true;
+    }
+    if (longer) this.fit();
   }
   /** The weekly flows are worked out again at the next `update` (the panels' refresh). */
   refreshFlows() {

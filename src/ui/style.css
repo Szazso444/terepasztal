@@ -1789,8 +1789,13 @@ input[type='range'] {
   border-top: none;
   cursor: pointer;
 }
-#resbar .spacer {
-  flex: 1;
+/* the cells shrink and clip before they push tickets and age off the right edge */
+#resbar .res-cells {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
 }
 /* the store the bar shows; a click steps to the next */
 #resbar .res-store {
@@ -1801,6 +1806,7 @@ input[type='range'] {
   white-space: nowrap;
 }
 #resbar .res-right {
+  flex: none;
   display: flex;
   align-items: stretch;
   margin-left: auto;
@@ -1829,15 +1835,29 @@ input[type='range'] {
   font-family: var(--font-mono);
   font-size: 12px;
 }
-#res-card {
-  position: fixed;
-  width: 260px;
-  z-index: 80;
-  pointer-events: none;
-  font-size: 11px;
+#resbar .res-group {
+  display: flex;
+  align-items: center;
 }
-#res-card .kv {
-  font-size: 11px;
+/* a gap between the groups: funds | materials | fuel and power | food | people */
+#resbar .res-sep {
+  width: 10px;
+  flex: none;
+}
+/* each cell is a term (its tooltip links the buildings), drawn as the cell, not as a link */
+/* when the cells would overflow: tighter padding, icon close to its value, narrower separators */
+#resbar.compact .res {
+  gap: 2px;
+  padding: 0 4px;
+}
+#resbar.compact .res-sep {
+  width: 4px;
+}
+#resbar .tt-term {
+  display: flex;
+  color: inherit;
+  border-bottom: none;
+  cursor: inherit;
 }
 #age-card {
   position: fixed;

@@ -360,10 +360,16 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       ),
       'info',
     );
-  const resourceBar = new ResourceBar(d.atlas, () => {
+  const resourceBar = new ResourceBar(d.atlas, d.tooltip, () => {
     if (host.mode === 'play' && !menuOpen()) d.screens.toggle(marketScreen);
   });
+  // the money is the bar's first cell; tickets and the age stay in the HUD's block at its end
   resourceBar.right.append(hud.funds);
+  resourceBar.passengers = () => {
+    let n = 0;
+    for (const s of d.builder.stations) n += s.stored('passengers');
+    return n;
+  };
   resourceBar.people = () => {
     const residents = d.houses.residentsTotal();
     const crews = d.builder.crewTotal() + d.fleet.crewTotal();

@@ -2351,6 +2351,8 @@ export class Game implements UiHost {
       this.stores.withGrid(shown),
       this.stores.label(shown),
       this.stores.totals(),
+      this.economy.money,
+      this.economy.tier,
     );
     this.hud.setFps(this.settings.showFps ? this.loop.fps : null);
     this.panelRefresh += dt;

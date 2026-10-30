@@ -4,7 +4,6 @@ import type { GameClock } from '../sim/time';
 import type { AgeStatus, GoalKind, GoalStatus } from '../sim/ages';
 
 export interface HudModel {
-  money: number;
   tickets: number;
   /** current age index (0 steam, 1 diesel, 2 electric) */
   tier: number;
@@ -31,12 +30,12 @@ function goalRows(goals: GoalStatus[]): GoalStatus[][] {
 
 /**
  * Top bar: title, menu and screen buttons on the left; weather/day toggles, season, clock and
- * speed on the right. Funds, tickets and the current age live in `funds`, which the game places
- * at the right end of the resource row; hovering the age shows the goals of every age.
+ * speed on the right. Tickets and the current age live in `funds`, which the game places at the
+ * right end of the resource row (the money itself is the resource bar's first cell); hovering the
+ * age shows the goals of every age.
  */
 export class Hud {
   readonly root: HTMLElement;
-  private money = el('span', { class: 'value' });
   private tickets = el('span', { class: 'value' });
   private age = el('span', { class: 'value' });
   private ageCard = el('div', { id: 'age-card', class: 'panel' });
@@ -46,7 +45,7 @@ export class Hud {
   private speedBtns: HTMLButtonElement[] = [];
   readonly actions = el('div', { class: 'stat actions', style: 'gap:4px' });
   readonly menuBtn = btn(STR.menu.menuButton, () => this.onMenu?.(), 'small');
-  /** funds / tickets / age block for the resource row */
+  /** tickets / age block for the resource row */
   readonly funds: HTMLElement;
   /** slot for the advisor button and other top-right controls */
   readonly rightActions = el('div', { class: 'stat', style: 'gap:4px' });
@@ -93,13 +92,7 @@ export class Hud {
     });
     this.ageCard.style.display = 'none';
     document.body.append(this.ageCard);
-    this.funds = el(
-      'div',
-      { class: 'funds' },
-      stat(STR.hud.money, this.money),
-      stat(STR.hud.tickets, this.tickets),
-      ageStat,
-    );
+    this.funds = el('div', { class: 'funds' }, stat(STR.hud.tickets, this.tickets), ageStat);
     this.root = el(
       'div',
       { id: 'topbar', class: 'panel' },
@@ -198,7 +191,6 @@ export class Hud {
   }
 
   update(m: HudModel) {
-    this.money.textContent = fmtMoney(m.money);
     this.tickets.textContent = fmtInt(m.tickets);
     const ages = this.ages();
     const cur = ages[Math.min(m.tier, ages.length - 1)];
