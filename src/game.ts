@@ -1659,10 +1659,12 @@ export class Game implements UiHost {
     const step = this.semaphoreClock >= 0.07;
     if (step) this.semaphoreClock = 0;
     const top = SEMAPHORE_STEPS - 1;
+    // the simulation keeps each post's aspect, looking again only where a train came or went
+    const aspects = this.fleet.postAspects();
     for (const d of this.builder.decor.values()) {
       if (d.id !== 'signal') continue;
       const key = d.y * this.map.w + d.x;
-      const aspect = this.signalAspectAt(d);
+      const aspect = aspects.get(key) ?? this.signalAspectAt(d);
       this.signalAspect.set(key, aspect);
       const want =
         aspect === 'red'
