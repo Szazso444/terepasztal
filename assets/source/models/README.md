@@ -3,11 +3,10 @@
 Codex's paintings of the buildings' 3D models at the game camera (2026-10-28: painted over the
 bare model, the textured model as the start picture, the original art for the style), one
 picture per building, packed into `public/assets/structures.*` by `tools/illustrated-sprites.mjs`
-(`MODELS`). They replaced the plain renders of the same models (2026-10-27) on 2026-10-29, but
-for four buildings whose painted walls run at other angles than the tiles' lines (the author
-noticed the depot): the depot, the ironworks, the station and the substation keep their
-render until Codex repaints them (the farm and the quarry are off too, less, but their renders
-show no door the game finds, so they stay painted until then).
+(`MODELS`). They replaced the plain renders of the same models (2026-10-27) on 2026-10-29. On
+2026-10-30 Codex repainted the 49 views whose walls ran at other angles than the tiles' lines
+(the author noticed the depot); the walls now turn off the model's 2:1 edges by 1% of the width
+at most, and the quarry's picture shows no door the game finds.
 
 Sizes: each building at its real size measured against the walker (9 px = 1.75 m, so a tile is
 about 7.6 m), except the power plant (fitted to 3 x 2), the ironworks and the substation (today's
@@ -29,6 +28,6 @@ overhangs them by 10% at most.
   author chose.
 
 Made outside the repository by
-`renders/building-models/tools/game_frames.py <out> --painted --fit --render depot,ironworks,station,substation`
+`renders/building-models/tools/game_frames.py <out> --painted --fit`
 from the painted views `views/<building>/game/<building>-r<k>.png` (placed on the game canvas by
 `tools/bm_views.py place`) and `logs/final_sizes.json`.

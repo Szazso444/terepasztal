@@ -1,7 +1,7 @@
 {
  "farm": {
   "file": "farm.png",
-  "ax": 128.42,
+  "ax": 126.42,
   "ay": 188.39,
   "frames": [
    "structures/farm_1",
@@ -91,7 +91,7 @@
  },
  "station": {
   "file": "station.png",
-  "ax": 117.88,
+  "ax": 116.88,
   "ay": 168.25,
   "frames": [
    "structures/station_1",
@@ -110,7 +110,7 @@
  "depot-r0": {
   "file": "depot-r0.png",
   "ax": 238.78,
-  "ay": 314.26,
+  "ay": 313.26,
   "frames": [
    "structures/depot_r0",
    "structures/depot_r0_lv2",
@@ -128,8 +128,8 @@
  },
  "depot-r1": {
   "file": "depot-r1.png",
-  "ax": 220.69,
-  "ay": 283.73,
+  "ax": 219.69,
+  "ay": 284.73,
   "frames": [
    "structures/depot_r1",
    "structures/depot_r1_lv2",
@@ -146,8 +146,8 @@
  },
  "depot-r2": {
   "file": "depot-r2.png",
-  "ax": 239.74,
-  "ay": 292.68,
+  "ax": 238.74,
+  "ay": 291.68,
   "frames": [
    "structures/depot_r0_r2",
    "structures/depot_r0_lv2_r2",
@@ -164,8 +164,8 @@
  },
  "depot-r3": {
   "file": "depot-r3.png",
-  "ax": 257.84,
-  "ay": 301.21,
+  "ax": 258.84,
+  "ay": 299.21,
   "frames": [
    "structures/depot_r1_r3",
    "structures/depot_r1_lv2_r3",
@@ -216,8 +216,8 @@
  },
  "refinery": {
   "file": "refinery.png",
-  "ax": 230.56,
-  "ay": 310.1,
+  "ax": 225.56,
+  "ay": 316.1,
   "frames": [
    "structures/refinery",
    "structures/refinery_lv2",
@@ -251,7 +251,7 @@
  "substation": {
   "file": "substation.png",
   "ax": 71.64,
-  "ay": 151.79,
+  "ay": 150.79,
   "frames": [
    "structures/substation",
    "structures/substation_lv2",
@@ -267,8 +267,8 @@
  },
  "ironworks": {
   "file": "ironworks.png",
-  "ax": 116.05,
-  "ay": 134.27,
+  "ax": 115.05,
+  "ay": 135.27,
   "frames": [
    "structures/ironworks",
    "structures/ironworks_lv2",

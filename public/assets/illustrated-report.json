@@ -1479,14 +1479,14 @@
     "structures": {
       "frames": 113,
       "uniqueImages": 36,
-      "width": 4032,
-      "height": 1085,
+      "width": 4026,
+      "height": 1093,
       "capped": {
-        "texels": 6086227,
-        "haze": 162863,
-        "solid": 5913591,
-        "white": 43213,
-        "amber": 36280,
+        "texels": 8618177,
+        "haze": 160976,
+        "solid": 8449546,
+        "white": 59352,
+        "amber": 49186,
         "compressed": 0
       }
     },
