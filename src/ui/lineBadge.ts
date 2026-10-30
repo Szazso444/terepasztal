@@ -1,12 +1,13 @@
 /**
  * The labels of the track lines and the train classes (specs/track-classes.md). A line's label is
- * a plate in the line's colour with its letter: N Narrow Gauge, B Branch, M Main, T Trunk Line,
- * Mg Maglev Guideway, H Hyperloop Tube. It marks the line's track pieces, and a vehicle carries one
- * for every line it runs on. A class's label is a separate icon, the same size for every class: a
- * steam engine in the middle that grows in equal steps, from a small tank engine for the Corvette
- * to a big express engine for the Cruiser, over four pips of which the class's step is filled. The
- * line colours echo each line's bed (warm stone, pale granite, dark basalt) and live in style.css
- * as `--line-<line>` and `--line-<line>-ink`, the icon's as `--class-*`.
+ * a piece of its track seen from above, standing upright in the line's colours, its bed wider for
+ * a bigger line and with as many sleepers as the pips of the line's class. It marks the line's
+ * track pieces, and a vehicle carries one for every line it runs on. A class's label is a separate
+ * icon, the same size for every class: a steam engine in the middle that grows in equal steps, from
+ * a small tank engine for the Corvette to a big express engine for the Cruiser, over four pips of
+ * which the class's step is filled. The line colours echo each line's bed (warm stone, pale
+ * granite, dark basalt) and live in style.css as `--line-<line>`, `--line-<line>-sleeper` and
+ * `--line-<line>-rail`, the icon's as `--class-*`.
  */
 import type { TrainClass } from '../data/content';
 import { CLASS_LINE, classRunsOn } from '../sim/compat';
@@ -15,31 +16,68 @@ import { TRACK_CLASSES, type TrackClass } from '../world/track';
 import { el } from './dom';
 import { ttDim, ttLabel, ttTitle } from './tooltip';
 
-export const LINE_LETTER: Record<TrackClass, string> = {
-  narrow: 'N',
-  branch: 'B',
-  main: 'M',
-  trunk: 'T',
-  maglev: 'Mg',
-  hyperloop: 'H',
-};
-
-const H = 14;
-const plateWidth = (line: TrackClass) => (LINE_LETTER[line].length > 1 ? 18 : 14);
 const svg = (w: number, h: number, body: string) =>
   `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">${body}</svg>`;
 
-/** A line's label as SVG markup, 14 px tall; DOM-free so it runs under Node. */
+/** Every line's icon has this size. */
+export const LINE_ICON = { w: 16, h: 20 };
+/** A standard line or Narrow Gauge seen from above, in px across: bed, sleepers, rail to rail. */
+const TRACKS: Partial<Record<TrackClass, { bed: number; sleeper: number; gauge: number }>> = {
+  narrow: { bed: 7, sleeper: 5.2, gauge: 2.6 },
+  branch: { bed: 9, sleeper: 7, gauge: 4 },
+  main: { bed: 11, sleeper: 8, gauge: 4 },
+  trunk: { bed: 13, sleeper: 8, gauge: 4 },
+};
+const LENGTH = LINE_ICON.h - 3;
+const TOP = 1.5;
+
+/** A piece of track standing upright in the middle of the icon, its sleepers the class's step. */
+function trackSvg(line: TrackClass, bed: number, sleeper: number, gauge: number): string {
+  const cx = LINE_ICON.w / 2;
+  const left = cx - bed / 2;
+  const strip = (x: number) =>
+    `<rect x="${x}" y="${TOP}" width="1" height="${LENGTH}" fill="var(--line-trunk-edge)"/>`;
+  let out = `<rect x="${left}" y="${TOP}" width="${bed}" height="${LENGTH}" fill="var(--line-${line})"/>`;
+  // the Trunk Line's two pale cable troughs
+  if (line === 'trunk') out += strip(left + 0.3) + strip(left + bed - 1.3);
+  const ties = CLASS_STEP[lineClass(line) as TrainClass] as number;
+  for (let i = 0; i < ties; i++) {
+    const y = TOP + (LENGTH * (i + 0.5)) / ties - 0.9;
+    out += `<rect class="tie" x="${cx - sleeper / 2}" y="${y}" width="${sleeper}" height="1.8" fill="var(--line-${line}-sleeper)"/>`;
+  }
+  for (const d of [-gauge / 2, gauge / 2])
+    out += `<rect x="${cx + d - 0.5}" y="${TOP}" width="1" height="${LENGTH}" fill="var(--line-${line}-rail)"/>`;
+  return out;
+}
+
+/** The fast lines' pictures: a guideway beam with its coils, a tube with its rings. */
+function fastLineSvg(line: TrackClass): string {
+  const cx = LINE_ICON.w / 2;
+  const rect = (x: number, y: number, w: number, h: number, part: string, rx = 0) =>
+    `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="var(--line-${line}${part})"/>`;
+  if (line === 'hyperloop')
+    return (
+      rect(cx - 5, TOP, 10, LENGTH, '', 2) +
+      rect(cx - 5, 5.5, 10, 1.2, '-sleeper') +
+      rect(cx - 5, 13.3, 10, 1.2, '-sleeper')
+    );
+  return (
+    rect(cx - 4, TOP, 8, LENGTH, '') +
+    rect(cx - 0.9, TOP, 1.8, LENGTH, '-rail') +
+    rect(cx - 4, TOP, 1.4, LENGTH, '-sleeper') +
+    rect(cx + 2.6, TOP, 1.4, LENGTH, '-sleeper')
+  );
+}
+
+/** A line's icon as SVG markup: the same size for every line; DOM-free so it runs under Node. */
 export function lineBadgeSvg(line: TrackClass): string {
-  const w = plateWidth(line);
-  const t = LINE_LETTER[line];
+  const t = TRACKS[line];
   return svg(
-    w,
-    H,
-    `<rect x="0.5" y="0.5" width="${w - 1}" height="${H - 1}" rx="3" fill="var(--line-${line})" ` +
-      `stroke="var(--line-${line}-edge, var(--border-dark))"/>` +
-      `<text x="${w / 2}" y="10.6" text-anchor="middle" font-family="Verdana, sans-serif" ` +
-      `font-weight="bold" font-size="${t.length > 1 ? 8 : 10.5}" fill="var(--line-${line}-ink)">${t}</text>`,
+    LINE_ICON.w,
+    LINE_ICON.h,
+    `<rect x="0.5" y="0.5" width="${LINE_ICON.w - 1}" height="${LINE_ICON.h - 1}" rx="3" ` +
+      `fill="var(--class-plate)" stroke="var(--class-edge)"/>` +
+      (t ? trackSvg(line, t.bed, t.sleeper, t.gauge) : fastLineSvg(line)),
   );
 }
 

@@ -26,13 +26,17 @@
   --text-bad: #e0675b;
   /* track line badges (src/ui/lineBadge.ts): each line's bed colour and the ink of its bars */
   --line-narrow: #7f8c4d;
-  --line-narrow-ink: #222c17;
+  --line-narrow-sleeper: #4f3a22;
+  --line-narrow-rail: #d8d3c2;
   --line-branch: #a98a61;
-  --line-branch-ink: #2a2015;
+  --line-branch-sleeper: #4a3320;
+  --line-branch-rail: #efe9da;
   --line-main: #c9d1d5;
-  --line-main-ink: #2c373d;
+  --line-main-sleeper: #98a2a8;
+  --line-main-rail: #4a555c;
   --line-trunk: #32373b;
-  --line-trunk-ink: #dfe5e8;
+  --line-trunk-sleeper: #737b80;
+  --line-trunk-rail: #f0f3f4;
   --line-trunk-edge: #8f989e;
   /* rarity: one colour each, for models and contracts alike */
   --rarity-common: #a3a3a0;
@@ -47,9 +51,11 @@
   --class-pip: #e0a94a;
   --class-pip-off: #8a8670;
   --line-maglev: #93b9c6;
-  --line-maglev-ink: #1b3540;
+  --line-maglev-sleeper: #1b3540;
+  --line-maglev-rail: #eef6f8;
   --line-hyperloop: #a99dc6;
-  --line-hyperloop-ink: #282042;
+  --line-hyperloop-sleeper: #282042;
+  --line-hyperloop-rail: #efeaf8;
   --font-title: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif;
   --font-body: Verdana, Tahoma, 'DejaVu Sans', sans-serif;
   --font-mono: 'Lucida Console', Monaco, 'DejaVu Sans Mono', monospace;
@@ -2347,4 +2353,5 @@ table.market td {
 }
 .tb-name .line-badge {
   margin-right: 4px;
+  vertical-align: middle;
 }

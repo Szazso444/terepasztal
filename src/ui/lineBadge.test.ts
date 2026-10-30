@@ -7,7 +7,7 @@ import {
   CLASS_ICON,
   CLASS_STEP,
   ENGINES,
-  LINE_LETTER,
+  LINE_ICON,
   classBadgeSvg,
   classBadgeTip,
   engineLength,
@@ -17,25 +17,32 @@ import {
   linesOf,
 } from './lineBadge';
 
-const letterOf = (svg: string) => svg.match(/<text[^>]*>([^<]*)<\/text>/)?.[1];
 const filledPips = (svg: string) => svg.match(/class="pip on"/g)?.length ?? 0;
 const allPips = (svg: string) => svg.match(/class="pip/g)?.length ?? 0;
 
 describe('track line labels', () => {
-  it('marks every line with its own letter', () => {
-    const letters = TRACK_CLASSES.map((l) => LINE_LETTER[l]);
-    expect(new Set(letters).size).toBe(letters.length);
-    expect(letterOf(lineBadgeSvg('narrow'))).toBe('N');
-    expect(letterOf(lineBadgeSvg('branch'))).toBe('B');
-    expect(letterOf(lineBadgeSvg('main'))).toBe('M');
-    expect(letterOf(lineBadgeSvg('trunk'))).toBe('T');
+  it('draws every line differently, at one size', () => {
+    const icons = TRACK_CLASSES.map(lineBadgeSvg);
+    expect(new Set(icons).size).toBe(icons.length);
+    for (const svg of icons)
+      expect(svg).toContain(`width="${LINE_ICON.w}" height="${LINE_ICON.h}"`);
   });
 
-  it('has a colour and an ink for every line in the stylesheet', () => {
+  it('gives a line as many sleepers as the pips of its class', () => {
+    const ties = (svg: string) => svg.match(/class="tie"/g)?.length ?? 0;
+    expect(ties(lineBadgeSvg('narrow'))).toBe(CLASS_STEP.corvette);
+    expect(ties(lineBadgeSvg('branch'))).toBe(CLASS_STEP.frigate);
+    expect(ties(lineBadgeSvg('main'))).toBe(CLASS_STEP.destroyer);
+    expect(ties(lineBadgeSvg('trunk'))).toBe(CLASS_STEP.cruiser);
+    expect(ties(lineBadgeSvg('maglev'))).toBe(0);
+  });
+
+  it('has the colours of every line in the stylesheet', () => {
     const css = fs.readFileSync('src/ui/style.css', 'utf8');
     for (const line of TRACK_CLASSES) {
       expect(css, line).toContain(`--line-${line}:`);
-      expect(css, line).toContain(`--line-${line}-ink:`);
+      expect(css, line).toContain(`--line-${line}-sleeper:`);
+      expect(css, line).toContain(`--line-${line}-rail:`);
     }
   });
 
