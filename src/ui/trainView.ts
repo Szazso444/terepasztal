@@ -105,12 +105,12 @@ export function lastStopId(t: Pick<TrainFacts, 'route' | 'routeIndex'>): number 
   return n < 2 ? null : t.route[(t.routeIndex + n - 1) % n];
 }
 
-/** What it carries, a line per good, in the order of its wagons. */
+/** What it carries, a line per good, in the order of its wagons; a crumb that would read 0 is none. */
 export function cargoOf(t: Pick<TrainFacts, 'wagons'>): { res: string; amount: number }[] {
   const by = new Map<string, number>();
   for (const w of t.wagons)
     if (w.cargo && w.amount > 0) by.set(w.cargo, (by.get(w.cargo) ?? 0) + w.amount);
-  return [...by].map(([res, amount]) => ({ res, amount }));
+  return [...by].filter(([, amount]) => amount >= 0.5).map(([res, amount]) => ({ res, amount }));
 }
 
 /** What its wagons can hold in all. */

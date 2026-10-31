@@ -287,7 +287,7 @@ export class Outliner {
     }
     const view = this.scope === 'view' ? this.h.view() : null;
     const list = this.listed(view);
-    const key = JSON.stringify([this.tab, this.scope, list]);
+    const key = JSON.stringify([this.tab, this.scope, this.h.contracts.offers.length, list]);
     if (key === this.key) return;
     this.key = key;
     this.draw(list);

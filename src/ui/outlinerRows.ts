@@ -141,9 +141,7 @@ function trainRow(t: TrainRowFacts, c: TrainContext): TrainRow {
     name: t.name,
     hex: TRAIN_COLOURS[t.colour],
     chip: trainChip(t, c.stuck(t.id)),
-    cargo: cargoOf(t)
-      .map((g) => ({ res: g.res, amount: Math.round(g.amount) }))
-      .filter((g) => g.amount > 0),
+    cargo: cargoOf(t).map((g) => ({ res: g.res, amount: Math.round(g.amount) })),
     from: last === null || last === next ? null : c.stationName(last),
     to,
     selected: c.selected === t.id,
