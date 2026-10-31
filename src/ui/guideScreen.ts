@@ -126,18 +126,16 @@ export class GuideScreen implements Screen {
     title: STR.guide.searchLabel,
     onInput: (text) => {
       this.query = text;
-      this.drawList();
+      // the page a search leaves out gives way to the first one it keeps
+      const shown = matchingPages(this.pages, text);
+      if (shown.length && !shown.some((p) => p.id === this.pageId)) this.pick(shown[0].id);
+      else this.drawList();
     },
   });
 
   constructor(private readonly atlas: AtlasRegistry) {
     this.split.list.head.append(this.search.root);
     this.search.input.setAttribute('aria-label', STR.guide.searchLabel);
-  }
-
-  /** Get ready to open on a page: a part of the game that sends the player here says which. */
-  show(pageId: string) {
-    this.pageId = pageId;
   }
 
   onOpen() {
