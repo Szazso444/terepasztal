@@ -66,6 +66,7 @@ import { SettingsScreen } from './settingsScreen';
 import { AudioScreen } from './audioScreen';
 import { SavedGamesScreen, type SavedTab } from './savedGamesScreen';
 import { CreditsScreen } from './creditsScreen';
+import { GuideScreen } from './guideScreen';
 import { CraftingScreen } from './craftingScreen';
 import { RosterScreen } from './rosterScreen';
 import { InspectScreen } from './inspectScreen';
@@ -311,6 +312,8 @@ export interface PlayUi {
   closeMenus(): void;
   /** open the Audio screen, or close it when it is on top: the title, both menus and the top bar */
   toggleAudio(): void;
+  /** open the Guide, or close it when it is up */
+  openGuide(): void;
   /** what `handlePlayKeys` reads and calls */
   readonly keys: KeyHost;
 }
@@ -434,6 +437,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   }, d.namePrompt);
   contentScreen.redraw = () => d.screens.redraw();
   const creditsScreen = new CreditsScreen();
+  const guideScreen = new GuideScreen(d.atlas);
   const settingsScreen = new SettingsScreen(
     d.settings,
     () => host.applySettings(),
@@ -546,8 +550,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     },
     advisor: () => advisor.toggle(),
     notifications: () => notificationsScreen.openFrom(null),
-    // the entry stands hidden (`GUIDE_READY`) until the guide PR gives it its screen
-    guide: () => undefined,
+    guide: openGuide,
   };
   hud.menuBar.depots = () =>
     d.builder.depots().map((s) => {
@@ -880,6 +883,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
           danger: true,
         })
         .then((ok) => ok && host.reloadToMenu());
+  }
+  function openGuide() {
+    d.screens.toggle(guideScreen);
   }
   function closeMenus() {
     pauseMenu.hide();
@@ -1246,6 +1252,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     openPauseMenu,
     closeMenus,
     toggleAudio,
+    openGuide,
     keys,
   };
 }

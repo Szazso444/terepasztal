@@ -115,8 +115,7 @@ export class NowPlaying {
 
   /** A button is only an icon: its title and its name for a screen reader say what it does. */
   private name(b: HTMLButtonElement, text: string) {
-    if (b.title === text) return;
-    b.title = text;
+    if (b.getAttribute('aria-label') === text) return;
     b.setAttribute('aria-label', text);
   }
 

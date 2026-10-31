@@ -67,15 +67,8 @@ export interface MenuEntry {
   readonly tip?: string;
   readonly playOnly?: boolean;
   /** it has no place on the bar yet */
-  readonly hidden?: boolean;
   readonly items: readonly MenuItem[];
 }
-
-/**
- * The Guide entry waits for its screen: the guide PR turns this on and gives the `guide` action
- * something to open.
- */
-export const GUIDE_READY = false as boolean;
 
 /** The bar, left to right, each menu top to bottom. */
 export const MENU_BAR: readonly MenuEntry[] = [
@@ -180,15 +173,13 @@ export const MENU_BAR: readonly MenuEntry[] = [
     label: STR.topbar.guide,
     icon: 'book',
     run: 'guide',
-    hidden: !GUIDE_READY,
     items: [],
   },
 ];
 
 /** The bar in a mode: an entry left with nothing to open or do has no place in it. */
 export function entriesFor(mode: MenuMode): MenuEntry[] {
-  const inMode = (x: { playOnly?: boolean; hidden?: boolean }) =>
-    !x.hidden && (mode === 'play' || !x.playOnly);
+  const inMode = (x: { playOnly?: boolean }) => mode === 'play' || !x.playOnly;
   return MENU_BAR.filter(inMode)
     .map((e) => ({ ...e, items: e.items.filter(inMode) }))
     .filter((e) => e.run || e.items.length);

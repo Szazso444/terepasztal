@@ -63,7 +63,18 @@ export type Block =
       readonly indent?: boolean;
     }
   /** a vehicle's picture and labels, as a Roster card has them; it reads as no text */
-  | { readonly kind: 'vehicle'; readonly defId: string; readonly parts: Parts };
+  | { readonly kind: 'vehicle'; readonly defId: string; readonly parts: Parts }
+  /**
+   * An age's picture. It opens a card beside it that holds what follows, up to the next picture or
+   * hint; the cards stand side by side.
+   */
+  | {
+      readonly kind: 'picture';
+      /** the age, whose icon stands in when there is no picture */
+      readonly age: string;
+      /** the picture's URL; null for none */
+      readonly src: string | null;
+    };
 /** A tooltip: its title first, then its lines and rows. */
 export type TipDoc = readonly Block[];
 
@@ -119,6 +130,11 @@ export function hint(...parts: Inline[]): Block {
 }
 export function vehicle(defId: string): Block {
   return { kind: 'vehicle', defId, parts: [] };
+}
+
+/** An age's picture, which opens a card (`Block`). */
+export function picture(age: string, src: string | null): Block {
+  return { kind: 'picture', age, src };
 }
 export function row(
   label: Inline | Parts,
@@ -197,13 +213,18 @@ export function plain(parts: Parts): string {
     .join('');
 }
 
+/** The parts of a block, in reading order; a picture has none. */
+export function partsOf(b: Block): Parts {
+  if (b.kind === 'picture') return [];
+  return b.kind === 'row' ? [...b.label, ...b.value] : b.parts;
+}
+
 /** A block as one line of plain text: a row is its label, a colon and its value. */
 export function blockText(b: Block): string {
-  return b.kind === 'row' ? `${plain(b.label)}: ${plain(b.value)}` : plain(b.parts);
+  return b.kind === 'row' ? `${plain(b.label)}: ${plain(b.value)}` : plain(partsOf(b));
 }
 
 /** Every term of a document's parts, in order. */
 export function termsOf(doc: TipDoc): TermPart[] {
-  const parts = doc.flatMap((b) => (b.kind === 'row' ? [...b.label, ...b.value] : b.parts));
-  return parts.filter((p): p is TermPart => typeof p !== 'string' && 'term' in p);
+  return doc.flatMap(partsOf).filter((p): p is TermPart => typeof p !== 'string' && 'term' in p);
 }

@@ -4,7 +4,6 @@ import { STR } from '../strings';
 import { KEYMAP, type KeyAction } from './keymap';
 import {
   FOLD_ORDER,
-  GUIDE_READY,
   MENU_BAR,
   MenuBarState,
   PICK_GRACE_MS,
@@ -114,13 +113,6 @@ describe('the menu bar in a game', () => {
     ]);
   });
 
-  it('keeps the Guide entry out until its screen is there', () => {
-    expect(GUIDE_READY).toBe(false);
-    expect(MENU_BAR[MENU_BAR.length - 1].id).toBe('guide');
-    expect(ids('play')).not.toContain('guide');
-    expect(new MenuBarState().click('guide')).toBeNull();
-  });
-
   it('keeps every button the top bar had', () => {
     const old: MenuAction[] = [
       // the screen buttons
@@ -145,7 +137,7 @@ describe('the menu bar in a game', () => {
   });
 
   it('reaches every action exactly once', () => {
-    const everyAction = Object.keys(EVERY_ACTION).filter((a) => GUIDE_READY || a !== 'guide');
+    const everyAction = Object.keys(EVERY_ACTION);
     expect(reachable('play').sort()).toEqual(everyAction.sort());
   });
 
@@ -423,11 +415,6 @@ describe('the labels that fold', () => {
     expect(foldedEntries('play', 0)).toEqual([]);
     expect(foldedEntries('play', 3)).toEqual(['notifications', 'savedGames', 'settings']);
     expect(foldedEntries('editor', 2)).toEqual(['menu', 'view']);
-  });
-
-  it('skips the entry that stands hidden', () => {
-    expect(foldedEntries('play', Infinity)).not.toContain('guide');
-    expect(foldedEntries('play', Infinity)).toHaveLength(ids('play').length);
   });
 });
 
