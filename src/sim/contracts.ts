@@ -232,6 +232,15 @@ export class ContractBoard {
     c.status = 'expired';
   }
 
+  /**
+   * The station a contract lapsed for is back (an undo): it stands as it did, its deadline as it
+   * was, in the list again if the list has pruned it.
+   */
+  revive(c: Contract, status: 'offer' | 'active') {
+    c.status = status;
+    if (!this.contracts.includes(c)) this.contracts.push(c);
+  }
+
   /** Fine for cancelling an active contract. */
   cancelFine(c: Contract) {
     return Math.round(c.payout * contractData.cancelFine);

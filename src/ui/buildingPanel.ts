@@ -2,6 +2,7 @@ import { bridgeCapacity, BRIDGE_SLOW_SHARE } from '../sim/bridges';
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Builder } from '../sim/build';
+import type { Commands } from '../sim/commands';
 import {
   buildingDef,
   buildingRecipe,
@@ -27,6 +28,7 @@ export class BuildingPanel {
   constructor(
     private readonly builder: Builder,
     private readonly onClose: () => void,
+    private readonly commands: Commands,
   ) {
     this.root = el(
       'div',
@@ -155,7 +157,7 @@ export class BuildingPanel {
     });
     body.append(
       upgradeRow(view, () => {
-        this.builder.upgradeBuilding(b);
+        this.commands.act(() => this.builder.upgradeBuilding(b));
         this.render();
       }),
     );
@@ -167,7 +169,7 @@ export class BuildingPanel {
           STR.station.demolish,
           () => {
             const { x, y } = b;
-            this.builder.removeBuilding(x, y);
+            this.commands.act(() => this.builder.removeBuilding(x, y));
             this.close();
           },
           'small',

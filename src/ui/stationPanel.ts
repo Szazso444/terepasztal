@@ -222,7 +222,7 @@ export class StationPanel {
         instant: !!s.def.depot,
       });
       const up = upgradeRow(view, () => {
-        if (this.builder.upgradeStation(s)) this.render();
+        if (this.commands.act(() => this.builder.upgradeStation(s))) this.render();
       });
       // the work's bar takes the panel's width; the button sits in the row with what it unlocks
       if (view.kind === 'work') b.append(up);
@@ -258,7 +258,7 @@ export class StationPanel {
         btn(
           STR.station.demolish,
           () => {
-            this.builder.removeStation(s);
+            this.commands.act(() => this.builder.removeStation(s));
             this.close();
           },
           'small',

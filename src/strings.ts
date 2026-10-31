@@ -59,6 +59,40 @@ export const STR = {
       `The ${ageLabel(t)} begins. New works, stations and rolling stock unlocked.`,
     signalGuide: 'Signals?',
   },
+  history: {
+    undo: 'Undo',
+    redo: 'Redo',
+    /** the buttons' tooltips: the way, what it takes back, and the key */
+    tip: (way: string, what: string, key: string) => `${way}: ${what} · ${key}`,
+    idleTip: (what: string, key: string) => `${what} · ${key}`,
+    undone: (what: string) => `Undone: ${what}`,
+    redone: (what: string) => `Redone: ${what}`,
+    nothingToUndo: 'Nothing to undo',
+    nothingToRedo: 'Nothing to redo',
+    /** what a step did, in the words its tooltip and toasts use */
+    built: (what: string) => `Built ${what}`,
+    demolished: (what: string) => `Demolished ${what}`,
+    builtTiles: (n: number, what: string) => `Built ${n} ${n === 1 ? 'tile' : 'tiles'} of ${what}`,
+    demolishedTiles: (n: number, what: string) =>
+      `Demolished ${n} ${n === 1 ? 'tile' : 'tiles'} of ${what}`,
+    upgradedTiles: (n: number, line: string) =>
+      `Upgraded ${n} ${n === 1 ? 'tile' : 'tiles'} to ${line}`,
+    downgradedTiles: (n: number, line: string) =>
+      `Downgraded ${n} ${n === 1 ? 'tile' : 'tiles'} to ${line}`,
+    upgradedTrack: 'Upgraded track',
+    downgradedTrack: 'Downgraded track',
+    track: 'track',
+    road: 'road',
+    upgradedTo: (name: string, level: number) => `Upgraded ${name} to level ${level}`,
+    downgradedTo: (name: string, level: number) => `Downgraded ${name} to level ${level}`,
+    renamed: (was: string, now: string) => `Renamed ${was} to ${now}`,
+    /** why an undo or a redo cannot be done */
+    builtOver: 'Something else has been built there since.',
+    trainOn: (train: string) => `${train} stands on the track.`,
+    routedTo: (train: string, station: string) => `${train} is routed to ${station}.`,
+    contractNoTrain: (contract: string) => `No train can take up ${contract} again.`,
+    short: (store: string, what: string) => `${store} is short of ${what}.`,
+  },
   ages: {
     title: 'Ages',
     name: AGE_NAMES,
@@ -1220,7 +1254,7 @@ export const STR = {
       },
     ],
     controlsText:
-      'WASD / arrows / middle-drag pan · wheel zoom · M overview · 1-5 build category, then 1-9 item · Tab next item · Q / E type · Shift+Q / E category · R rotate · U upgrade track, Shift+U downgrade · X demolish · Right-click / Delete remove · Esc cancel · Space pause · + / − speed · F depot · C contracts · G craft · V roster · K market · ` debug',
+      'WASD / arrows / middle-drag pan · wheel zoom · M overview · 1-5 build category, then 1-9 item · Tab next item · Q / E type · Shift+Q / E category · R rotate · U upgrade track, Shift+U downgrade · X demolish · Right-click / Delete remove · Ctrl+Z undo · Ctrl+Y redo · Esc cancel · Space pause · + / − speed · F depot · C contracts · G craft · V roster · K market · ` debug',
     contractPolicy: 'Contract offers by rarity',
     contractPolicyHint:
       'Auto-accept takes the offer at once while your land has room for another active contract, and otherwise leaves it on the board; Ask leaves it on the board; Auto-deny drops it (free).',

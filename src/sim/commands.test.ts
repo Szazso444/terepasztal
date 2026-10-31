@@ -11,6 +11,12 @@ import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
 import { Train, defaultStop, resetTrainIds, type RouteMode } from './trains';
 import { Fleet } from './fleet';
+import { ContractBoard } from './contracts';
+import { ContractDispatcher } from './contractDispatch';
+import { HouseRegistry } from './houses';
+import { Notices } from './notices';
+import { GameClock } from './time';
+import { TownRegistry } from './towns';
 import { TradeDesk, BUY_MUL, SELL_MUL, DRIFTING } from './trade';
 import { CARGO, cargoDef } from './cargo';
 import { setSupplyMode, inSupplyMode, DEFAULT_SUPPLY } from './supply';
@@ -51,7 +57,23 @@ function world() {
   const fleet = new Fleet(track, builder, map, inventory, economy);
   const gacha = new Gacha(new Rng(7), inventory);
   for (let x = 2; x < 90; x++) track.place(x, ROW, 'straight', 1);
-  const commands = new Commands({ fleet, builder, economy, trade, gacha, inventory });
+  const towns = new TownRegistry(builder);
+  const houses = new HouseRegistry(builder, towns);
+  const contracts = new ContractBoard(new Rng(9), builder, economy);
+  const contractJobs = new ContractDispatcher(fleet, contracts, builder, track, new Notices());
+  const commands = new Commands({
+    fleet,
+    builder,
+    economy,
+    trade,
+    gacha,
+    inventory,
+    towns,
+    houses,
+    contracts,
+    contractJobs,
+    clock: new GameClock(),
+  });
   const w = { map, track, economy, inventory, trade, builder, fleet, gacha, commands, cap: 1000 };
   const stock = new Store('st:0', 'depot', { x: 0, y: 0 }, () => w.cap);
   return Object.assign(w, { stock });
