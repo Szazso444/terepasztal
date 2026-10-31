@@ -124,6 +124,8 @@ export class BuildController {
    * null over a panel, off the map, during a drag of single pieces, or with no tool that builds.
    */
   placement: Placement | null = null;
+  /** the run of more than one tile being dragged, as its release would lay it (the build card's) */
+  run: RunPlan | null = null;
   /** the tile the placing root stands for, as of the last frame it was not locked */
   private placingRoot: (Tile & { key: string }) | null = null;
   /** the tile of a locked placing root: its label and lit tiles stay there */
@@ -198,6 +200,7 @@ export class BuildController {
   /** Called every frame while the RTS view is active and the pointer is not over UI. */
   update(active: boolean) {
     this.placement = null;
+    this.run = null;
     const inp = this.input;
     const t = this.tileUnderMouse();
     const inMap = inBounds(this.builder.map, t.x, t.y);
@@ -340,6 +343,7 @@ export class BuildController {
         const line = this.runTiles(a, t, item);
         const plan = planRun(this.builder, line, item);
         this.showRunGhosts(plan);
+        this.run = line.length > 1 ? plan : null;
         this.status(
           line.length > 1 ? this.runStatus(plan, item) : this.pieceStatus(t, item, plan.steps[0]),
         );

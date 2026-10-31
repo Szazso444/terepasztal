@@ -49,9 +49,16 @@ export interface KeyHost {
   toggleReclass(dir: ReclassDir): void;
   /** the next (1) or the previous (-1) type of the open category (track by gauge) */
   cycleType(dir: 1 | -1): void;
-  /** the piece in slot `index` (0-based) of the open category */
+  /** the item at place `index` (0-based) of the open list; a locked one does nothing */
   selectPiece(index: number): void;
-  setSpeed(speed: number): void;
+  /** the category at place `index` (0-based) of the category row */
+  openCategory(index: number): void;
+  /** close the category that is open with no tool in hand */
+  closeCategory(): void;
+  /** the next (1) or the previous (-1) category of the row, while one is open */
+  cycleCategory(dir: 1 | -1): void;
+  /** take up or put down Demolish */
+  toggleDemolish(): void;
   /** one speed up (1) or down (-1), from pause one step from the speed it had */
   stepSpeed(dir: 1 | -1): void;
   togglePause(): void;
@@ -83,9 +90,11 @@ export type KeyAction =
   | 'downgradeTrack'
   | 'prevType'
   | 'nextType'
+  | 'prevCategory'
+  | 'nextCategory'
+  | 'demolish'
   | 'pause'
-  | 'pieceOrSpeed'
-  | 'speed'
+  | 'pieceOrCategory'
   | 'speedStep'
   | 'record'
   | 'finishRoute';
@@ -102,8 +111,10 @@ export interface KeyBinding {
   readonly action: KeyAction;
 }
 
-/** The slot or the speed a digit key stands for: 1 for Digit1. */
+/** What a digit key stands for: 1 for Digit1. */
 const digitOf = (code: string) => Number(code.slice('Digit'.length));
+/** The digits that open a category: the row never has more than five on show. */
+const CATEGORY_KEYS = 5;
 
 /**
  * + steps the speed up and − down. They are bound by the character they type (`Input` names them
@@ -133,12 +144,14 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
     else if (h.pauseMenuOpen) h.closeMenus();
     return true;
   },
-  // the field view: a screen closes; with nothing in hand the pause menu opens
+  // the field view: a screen closes; with nothing in hand a category closes, else the pause menu
+  // opens. A category whose items are all locked holds no tool for the build controller to drop
   pauseOrClose: (h) => {
     if (h.tooltipsOpen) h.closeTooltips();
     else if (h.screenOpen) h.closeScreen();
-    else if (!h.building) h.openPauseMenu();
-    else return false;
+    else if (h.building) return false;
+    else if (h.categoryOpen) h.closeCategory();
+    else h.openPauseMenu();
     return true;
   },
   // the overview: a screen closes; else a recording stops, the picked train goes, the view leaves
@@ -189,19 +202,28 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
     if (h.categoryOpen) h.cycleType(1);
     return false;
   },
+  prevCategory: (h) => {
+    if (h.categoryOpen && !h.screenOpen) h.cycleCategory(-1);
+    return false;
+  },
+  nextCategory: (h) => {
+    if (h.categoryOpen && !h.screenOpen) h.cycleCategory(1);
+    return false;
+  },
+  demolish: (h) => {
+    if (!h.screenOpen) h.toggleDemolish();
+    return false;
+  },
   pause: (h) => {
     h.togglePause();
     return false;
   },
-  // a piece of the open category, else game speed 1 to 3
-  pieceOrSpeed: (h, b) => {
+  // an item of the open list, else a category of the row
+  pieceOrCategory: (h, b) => {
+    if (h.screenOpen) return false;
     const n = digitOf(b.code);
     if (h.categoryOpen) h.selectPiece(n - 1);
-    else if (n <= 3) h.setSpeed(n);
-    return false;
-  },
-  speed: (h, b) => {
-    h.setSpeed(digitOf(b.code));
+    else if (n <= CATEGORY_KEYS) h.openCategory(n - 1);
     return false;
   },
   // the level editor's clock stays stopped
@@ -247,10 +269,18 @@ export const KEYMAP: readonly KeyBinding[] = [
   { code: 'Tab', shift: true, context: 'play', action: 'prevTool' },
   { code: 'KeyU', shift: false, context: 'play', action: 'upgradeTrack' },
   { code: 'KeyU', shift: true, context: 'play', action: 'downgradeTrack' },
-  { code: 'KeyQ', context: 'play', action: 'prevType' },
-  { code: 'KeyE', context: 'play', action: 'nextType' },
+  { code: 'KeyQ', shift: false, context: 'play', action: 'prevType' },
+  { code: 'KeyE', shift: false, context: 'play', action: 'nextType' },
+  // Shift+digit cannot step categories: on a Hungarian keyboard Shift+3 types the speed key +
+  { code: 'KeyQ', shift: true, context: 'play', action: 'prevCategory' },
+  { code: 'KeyE', shift: true, context: 'play', action: 'nextCategory' },
+  { code: 'KeyX', context: 'play', action: 'demolish' },
   { code: 'Space', context: 'play', action: 'pause' },
-  ...digits(9).map((code) => ({ code, context: 'play' as const, action: 'pieceOrSpeed' as const })),
+  ...digits(9).map((code) => ({
+    code,
+    context: 'play' as const,
+    action: 'pieceOrCategory' as const,
+  })),
   ...SPEED_STEP_KEYS.map((code) => ({
     code,
     context: 'play' as const,
@@ -262,7 +292,6 @@ export const KEYMAP: readonly KeyBinding[] = [
   { code: 'Escape', context: 'overview', action: 'overviewBack' },
   { code: 'KeyM', context: 'overview', action: 'overview' },
   { code: 'Space', context: 'overview', action: 'pause' },
-  ...digits(3).map((code) => ({ code, context: 'overview' as const, action: 'speed' as const })),
   ...SPEED_STEP_KEYS.map((code) => ({
     code,
     context: 'overview' as const,
