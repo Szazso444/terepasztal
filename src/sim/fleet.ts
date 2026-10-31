@@ -411,6 +411,25 @@ export class Fleet {
     if (!depot) return own === 'narrow' ? STR.fleet.noNarrowDepot : STR.fleet.noDepot;
     return depot;
   }
+  /**
+   * The depot a train belongs to: the one it rolled out of. A train of an older save, or one whose
+   * depot was pulled down, belongs to the first depot of its gauge on its rails, else to the first
+   * of its gauge, else to the first there is.
+   */
+  homeDepot(t: Train): Station | null {
+    const own = t.depotId !== null ? this.builder.stationById(t.depotId) : undefined;
+    if (own?.def.depot) return own;
+    const gauge = t.locos[0] ? gaugeOf(t.locos[0].def) : 'regular';
+    const depots = this.builder.depotsOf(gauge);
+    const head = t.headTile;
+    const key = head ? head.y * this.map.w + head.x : -1;
+    return (
+      depots.find((d) => this.reachableFrom(d).has(key)) ??
+      depots[0] ??
+      this.builder.depots()[0] ??
+      null
+    );
+  }
   /** A stand-in engine of a gauge for previews: one the player owns, else a starter. */
   probeLoco(gauge: Gauge): LocoSlotInit {
     const owned = this.inventory.items.find(
@@ -559,6 +578,7 @@ export class Fleet {
         t.dispatch(this.track, this.builder, this.map);
       }
     }
+    t.depotId = depot.id;
     t.trip = newTrip(this.clockTime);
     for (const l of locoItems) l!.assigned = t.id;
     for (const w of wagons) w!.assigned = t.id;
