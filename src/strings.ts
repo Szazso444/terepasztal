@@ -26,7 +26,7 @@ export const STR = {
     begin: 'Click to begin',
     tips: [
       'Crews eat wheat every day. Run out and production halves and trains slow.',
-      'Space pauses the game, and 1, 2 and 3 set the speed.',
+      'Space pauses the game, and + and − change the speed.',
       'M switches between the field view and the overview map.',
       'R rotates what you are placing, and Esc cancels it.',
       'WASD, the arrow keys or a middle-button drag move the camera, and the wheel zooms.',
@@ -79,6 +79,9 @@ export const STR = {
     /** the same heading once one of its goals is met */
     anyOfMet: 'One of these: met',
     hint: 'An age begins once every goal listed for it is met; under "One of these", one goal is enough. Goals are checked every hour.',
+    /** a locked item of the build bar: the age that opens it, and the one to reach before that */
+    unlocksIn: (age: string) => `Locked. Unlocks in the ${age}`,
+    reachFirst: (age: string) => `Reach the ${age} first.`,
   },
   overview: {
     locked: 'UNCHARTED',
@@ -235,7 +238,7 @@ export const STR = {
     guideButton: 'Semaphore guide',
     guideTitle: 'Semaphores and track blocks',
     guidePlace:
-      'Place semaphores on the rails from Utility. Press R before placement, or use Rotate direction after selecting a post. The direction shown in the selection panel is the direction of travel it governs.',
+      'Place semaphores on the rails from Tools. Press R before placement, or use Rotate direction after selecting a post. The direction shown in the selection panel is the direction of travel it governs.',
     guideDiagram:
       '→ A  ═════ protected block ═════  → B  ═════ next block ═════  → C\n       one train at a time                  another train may follow',
     guideAspects:
@@ -441,28 +444,77 @@ export const STR = {
     dragTurn: 'R: turn at the other corner',
   },
   toolbar: {
+    /** the categories of the build bar */
     track: 'Track',
+    buildings: 'Buildings',
+    tools: 'Tools',
+    works: 'Works',
+    /** the types of Buildings */
     stations: 'Stations',
-    remove: 'Remove',
-    decor: 'Decor',
-    buildings: 'Works',
+    town: 'Town',
     services: 'Services',
-    utility: 'Utility',
-    removeHint: 'Right-click / Delete removes',
+    /** the types of Tools */
+    trackTools: 'Track',
+    electrification: 'Electrification',
+    /** the types of Works */
+    rawMaterials: 'Raw materials',
+    processing: 'Processing',
+    power: 'Power',
+    demolish: 'Demolish',
+    /**
+     * What comes back is `rules.refundRate` of the listed cost (`Builder.refund`), so neither what a
+     * level, a dear tile or a repeat added nor anything in the level editor, where `percent` is null.
+     */
+    demolishTip: (percent: number | null) =>
+      percent === null
+        ? 'Click what you built to take it down.'
+        : `Click what you built to take it down. ${percent}% of its listed cost comes back.`,
+    /** the line over the bar while Demolish is on */
+    demolishOn: (percent: number | null) =>
+      percent === null
+        ? 'Demolish: click what you built · X or Esc: stop'
+        : `Demolish: click what you built · ${percent}% of its listed cost comes back · X or Esc: stop`,
+    demolishKeys: 'X · Right-click or Delete removes with any tool',
     upgrade: 'Upgrade',
     downgrade: 'Downgrade',
-    upgradeHint:
-      'Raises track one line: Branch to Main, Main to Trunk. Click a piece or drag along the line. Costs the difference. (U)',
-    downgradeHint:
-      'Lowers track one line: Trunk to Main, Main to Branch. Click a piece or drag along the line. Free. (Shift+U)',
+    upgradeHint: 'Raises track one line: Branch to Main, Main to Trunk. Costs the difference.',
+    downgradeHint: 'Lowers track one line: Trunk to Main, Main to Branch. Free.',
+    /** Upgrade's cost line: the price depends on the piece */
+    upgradeCost: 'the difference',
     select: 'Select',
     /** the toolbar category of roads, and the road tool in it (#328) */
     roads: 'Roads',
     road: 'Road',
     roadDesc:
       'Walkers prefer roads and go faster along them. A street door near a road is joined to it for free. Drag to lay a run.',
-    cycleHint: '1-9 or Tab: switch item · Esc: close',
-    typeHint: '1-6: piece · Q / E: type · R: turn · Tab: next piece · Esc: close',
+    cycleHint: '1–9 item · Shift+Q / E category · Tab next · R turn · Esc close',
+    typeHint: '1–9 piece · Q / E type · Shift+Q / E category · Tab next · R turn · Esc close',
+    /** the last line of a tooltip of the bar */
+    keyHint: (key: string) => `Key ${key}`,
+    typeKeys: 'Q / E',
+    prevType: 'Previous type',
+    nextType: 'Next type',
+    typeStep: 'Steps through the types of this category; locked ones are skipped.',
+    /** the headings of the build card */
+    secCost: 'Cost',
+    secMakes: 'Makes',
+    secWhere: 'Where it goes',
+    secRun: 'The run you are laying',
+    /** `BuildingDef.perWeek` counts runs of the recipe, not units of its output */
+    batches: (n: number) => `${n} batches a week`,
+    runSize: (tiles: number, curves: number) =>
+      `${tiles} tile${tiles === 1 ? '' : 's'} · ${curves} curve${curves === 1 ? '' : 's'}`,
+    /** the foot of the build card */
+    foot: {
+      run: 'Drag: lay a run, with a curve where it turns',
+      drag: 'Drag: lay a run',
+      /** Upgrade and Downgrade lay nothing: they work on track that stands */
+      reclass: 'Click: one piece · Drag: along the line',
+      click: 'Click: place',
+      paint: 'Drag: paint',
+      turn: 'R: turn',
+      cancel: 'Right-click: remove or cancel',
+    },
     bridges: 'Bridges',
     bridgeDesc: (capacity: number, flavor: string) => `${capacity} t capacity. ${flavor}`,
     place: {
@@ -492,6 +544,8 @@ export const STR = {
         `Only on a tile with a ${k} deposit (marked on the map). Runs from the nearest store; no track needed.`,
       plant:
         'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
+      reclass:
+        'Click a piece or drag along the line. A piece that does not fit stays as it was, shown in red.',
       road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight Narrow Gauge, Branch or Main Line track at right angles, as a level crossing; never Trunk Line.',
     },
     trackDesc: {
@@ -702,7 +756,7 @@ export const STR = {
       noWater:
         'No water source. Build a Water Pump station or a Water Tower so steam engines can refill.',
       unwired: (n: string) =>
-        `${n} is not connected. Chain Power Line poles from it to the rails (Utility).`,
+        `${n} is not connected. Chain Power Line poles from it to the rails (Tools).`,
       noPower: (n: string) =>
         `${n} needs powered rails: build a Power Plant and Power Line poles along its route.`,
       chunk: (v: string) =>
@@ -1105,7 +1159,7 @@ export const STR = {
     off: 'Off',
     controls: 'Controls',
     controlsText:
-      'WASD / arrows / middle-drag pan · wheel zoom · M overview · Tab next item · R rotate · Track: 1-5 piece, Q / E type · U upgrade track, Shift+U downgrade · Right-click / Delete remove · Esc cancel · Space pause · 1 2 3 speed · F depot · C contracts · G craft · V roster · K market · ` debug',
+      'WASD / arrows / middle-drag pan · wheel zoom · M overview · 1-5 build category, then 1-9 item · Tab next item · Q / E type · Shift+Q / E category · R rotate · U upgrade track, Shift+U downgrade · X demolish · Right-click / Delete remove · Esc cancel · Space pause · + / − speed · F depot · C contracts · G craft · V roster · K market · ` debug',
     contractPolicy: 'Contract offers by rarity',
     contractPolicyHint:
       'Auto-accept takes the offer at once while your land has room for another active contract, and otherwise leaves it on the board; Ask leaves it on the board; Auto-deny drops it (free).',

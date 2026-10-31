@@ -76,3 +76,61 @@ describe('Escape between the tooltips and the build controller', () => {
     );
   });
 });
+
+describe('the run being dragged', () => {
+  /** A straight tool over an empty field, with the left button held on the tile `at` says. */
+  function dragging() {
+    const at = { x: 1, y: 1 };
+    const buttons = new Set<number>();
+    const buttonPressed = new Set<number>();
+    const buttonReleased = new Set<number>();
+    const input = { wasPressed: () => false, buttons, buttonPressed, buttonReleased, clicks: [] };
+    const builder = {
+      map: { w: 16, h: 16 },
+      stationAt: () => undefined,
+      buildingAt: () => undefined,
+      track: { get: () => undefined },
+      checkTrack: () => ({ ok: true, cost: { wood: 2 } }),
+      placeTrack: () => true,
+    };
+    const world = {
+      makeOverlaySprite: () => new Sprite(),
+      surfacePoint: () => ({ x: 0, y: 0 }),
+      setSpriteFrame: () => {},
+    };
+    const b = new BuildController(input as never, builder as never, world as never, () => at);
+    b.setTool({ kind: 'track', item: { kind: 'straight', cls: 'branch' } });
+    return { b, at, buttons, buttonPressed, buttonReleased };
+  }
+
+  it('is there while a drag covers more than a tile, and gone when it is let go', () => {
+    const { b, at, buttons, buttonPressed, buttonReleased } = dragging();
+    expect(b.run).toBeNull();
+    buttons.add(0);
+    buttonPressed.add(0);
+    b.update(true);
+    expect(b.run).toBeNull();
+    buttonPressed.clear();
+    at.x = 5;
+    b.update(true);
+    expect(b.run?.straights).toBe(5);
+    expect(b.run?.cost).toEqual({ wood: 10 });
+    buttons.clear();
+    buttonReleased.add(0);
+    b.update(true);
+    expect(b.run).toBeNull();
+  });
+
+  it('stops with the pointer over a panel', () => {
+    const { b, at, buttons, buttonPressed } = dragging();
+    buttons.add(0);
+    buttonPressed.add(0);
+    b.update(true);
+    buttonPressed.clear();
+    at.x = 5;
+    b.update(true);
+    expect(b.run).not.toBeNull();
+    b.update(false);
+    expect(b.run).toBeNull();
+  });
+});

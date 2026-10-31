@@ -6,7 +6,8 @@ import { setSupplyMode } from '../sim/supply';
 import { stationDef } from '../sim/stations';
 import { Terrain } from '../world/tiles';
 import { STR } from '../strings';
-import { paymentOf } from './buildInfo';
+import type { RunPlan, RunStep } from './autoCrossing';
+import { paymentOf, recipeBatches, runView } from './buildInfo';
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -69,5 +70,49 @@ describe("the build card's payment", () => {
     const free = w.builder.checkStation(at.x, at.y, 'lumber');
     expect(paymentOf(w.builder, { check: free, at })).toBeNull();
     expect(paymentOf(w.builder, null)).toBeNull();
+  });
+});
+
+describe('the run on the build card', () => {
+  const step = (x: number, over: Partial<RunStep> = {}): RunStep => ({
+    x,
+    y: 0,
+    item: { kind: 'straight', cls: 'branch' },
+    rot: 1,
+    ok: true,
+    cost: { wood: 1 },
+    ...over,
+  });
+  const plan = (steps: RunStep[], over: Partial<RunPlan> = {}): RunPlan => ({
+    steps,
+    end: steps.length,
+    cost: { wood: steps.length },
+    crossings: 0,
+    curves: 0,
+    straights: steps.length,
+    ...over,
+  });
+
+  it('counts the tiles the run lays and hands on its cost', () => {
+    const view = runView(plan([step(1), step(2), step(3)]));
+    expect(view).toEqual({ tiles: 3, curves: 0, cost: { wood: 3 } });
+  });
+  it('leaves out what stands already, what is refused and what lies past where it stops', () => {
+    const steps = [step(1), step(2, { stands: true }), step(3, { ok: false }), step(4), step(5)];
+    expect(runView(plan(steps, { end: 4 })).tiles).toBe(2);
+  });
+  it('counts a curve by its footprint, and as a curve', () => {
+    const curve = step(5, { item: { kind: 'curve', cls: 'branch' } });
+    const view = runView(plan([step(1), curve], { curves: 1, straights: 1 }));
+    expect(view.curves).toBe(1);
+    expect(view.tiles).toBeGreaterThan(2);
+  });
+});
+
+describe('the rate on the build card', () => {
+  it('is the batches a week as the tuning runs them', () => {
+    expect(recipeBatches(60)).toBe(60);
+    rules.productionMul = 1.5;
+    expect(recipeBatches(60)).toBe(90);
   });
 });

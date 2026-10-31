@@ -730,92 +730,246 @@ body {
   }
 }
 
-/* ---- toolbar ---- */
-#toolbar {
+/* ---- build bar ---- */
+/* the build card over the bar; the pointer passes through what the two leave free */
+#build-dock {
   position: absolute;
   left: 8px;
-  right: 464px;
   bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 720px;
+  /* the survey map stands bottom right, 448 px wide */
+  max-width: calc(100vw - 472px);
+  /* under the two top bars */
+  max-height: calc(100vh - 70px);
+  pointer-events: none;
 }
-.tb-cats {
-  gap: 4px;
+#build-dock > * {
+  pointer-events: auto;
 }
-.btn.tb-cat {
-  font-family: var(--font-title);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+#toolbar {
+  flex: none;
+  width: 100%;
+}
+/* a tooltip's term drawn as a button, not as a link */
+#toolbar .tt-term {
+  display: flex;
+  min-width: 0;
+  color: inherit;
+  border-bottom: none;
+  cursor: inherit;
+}
+.build-icon {
+  display: inline-flex;
+  flex: none;
+}
+.tb-kbd {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+/* a refusal is read whole: it wraps, and the bar grows up from its bottom edge */
+.tb-status {
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--border-dark);
   font-size: 11px;
-  padding: 3px 12px;
+  color: var(--text-dim);
+}
+.tb-status.warn {
+  color: var(--text-bad);
 }
 .tb-types {
-  border-top: 1px solid var(--border-dark);
-  box-shadow: 0 1px 0 var(--border-light) inset;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 4px;
+  min-height: 30px;
+  padding: 4px 6px 0;
 }
-.tb-types .tb-key {
-  width: auto;
-  padding: 0 2px;
+.tb-types .tt-term {
+  flex: none;
 }
 .btn.tb-type {
-  font-size: 11px;
-  padding: 2px 10px;
-}
-.tb-items {
-  border-top: 1px solid var(--border-dark);
-  box-shadow: 0 1px 0 var(--border-light) inset;
-  gap: 4px;
-}
-.btn.tb-item {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 2px 8px 2px 4px;
-  text-align: left;
+  gap: 4px;
+  height: 22px;
+  padding: 0 9px;
+  font-family: var(--font-title);
+  font-size: 12px;
+  white-space: nowrap;
 }
-.tb-key {
-  font-family: var(--font-mono);
+.btn.tb-qe {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 22px;
+  padding: 0 4px;
   color: var(--amber);
-  font-size: 10px;
-  width: 8px;
+}
+.btn.tb-qe .tb-kbd {
+  padding: 0 2px;
+  color: var(--text);
+}
+/* the hint takes what the row leaves; short of room it goes to a line of its own */
+.tb-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-left: 8px;
+  text-align: right;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tb-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 5px 6px 6px;
+}
+.tb-items .tt-term {
+  flex: 0 0 108px;
+  max-width: 108px;
+}
+.btn.tb-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  height: 71px;
+  padding: 5px 4px 4px;
+  font-size: 11.5px;
+  /* two lines of 13 px under the icon: `.btn`'s 16 px does not fit the tile */
+  line-height: 13px;
+  overflow: hidden;
+}
+.tb-item .tb-kbd {
+  position: absolute;
+  left: 5px;
+  top: 3px;
+}
+.tb-badges {
+  position: absolute;
+  right: 3px;
+  top: 2px;
+  display: flex;
 }
 .tb-icon {
+  flex: none;
   width: 40px;
   height: 30px;
   object-fit: contain;
-  flex: 0 0 40px;
-  background: var(--border-dark);
-  border: 1px solid var(--border-dark);
 }
-.tb-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
+.build-icon.tb-icon {
+  align-items: center;
+  justify-content: center;
+}
+.btn.tb-item.active .build-icon {
+  color: var(--amber);
 }
 .tb-name {
-  font-size: 12px;
+  flex: none;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .tb-cost {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-dim);
-}
-.btn.tb-item.active .tb-cost,
-.btn.tb-item:hover .tb-cost {
-  color: var(--text);
-}
-.tb-row {
+  flex: none;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 6px;
-  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
 }
-.tb-statusrow {
+.tb-res {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--text);
+}
+.tb-cost .res-icon {
+  width: 12px;
+  height: 12px;
+}
+.tb-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  margin-right: 3px;
+}
+.tb-lock .age-icon {
+  margin: 0;
+}
+.tb-cats {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  height: 40px;
+  padding: 4px;
+}
+#toolbar.open .tb-cats {
   border-top: 1px solid var(--border-dark);
-  box-shadow: 0 1px 0 var(--border-light) inset;
-  min-height: 20px;
-  padding: 2px 8px;
-  font-size: 11px;
+}
+.tb-cats .tt-term {
+  flex: 0 1 136px;
+  max-width: 150px;
+}
+.btn.tb-cat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 6px;
+  font-family: var(--font-title);
+  font-size: 12.5px;
+}
+.tb-cat-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.tb-spacer {
+  flex: 1 1 0;
+  min-width: 8px;
+}
+.btn.tb-cat.active,
+.btn.tb-type.active,
+.btn.tb-item.active {
+  border-color: var(--amber);
+  box-shadow: inset 0 0 0 1px var(--amber);
+}
+.btn.tb-dem.active {
+  border-color: var(--text-bad);
+  box-shadow: inset 0 0 0 1px var(--text-bad);
+  color: var(--text-bad);
+}
+.btn.lock,
+.btn.lock:hover,
+.btn.lock:active {
+  background: var(--iron);
+  color: var(--text);
+  box-shadow:
+    inset 1px 1px 0 var(--border-light),
+    inset -1px -1px 0 var(--border-dark);
+  opacity: 0.42;
+  filter: grayscale(0.8);
+  cursor: default;
 }
 .tb-group {
   display: flex;
@@ -837,8 +991,9 @@ body {
   font-size: 10px;
   margin-right: 4px;
 }
+/* over the closed bar, its status line included; an open bar covers it */
 #hint {
-  bottom: 150px;
+  bottom: 78px;
 }
 
 /* ---- station panel ---- */
@@ -920,6 +1075,7 @@ body {
 #toasts {
   position: absolute;
   left: 50%;
+  /* the least: createPlayUi keeps them over the build dock (`toastBottom`) */
   bottom: 110px;
   transform: translateX(-50%);
   display: flex;
@@ -1408,11 +1564,117 @@ input.text {
   max-width: 60%;
 }
 #build-info {
-  width: 240px;
-  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  width: 340px;
+  max-width: 100%;
+  min-height: 0;
 }
 #build-info .panel-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+}
+.bi-train {
   padding: 6px 8px;
+  overflow-y: auto;
+}
+.bi-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--stone-dark);
+  border-bottom: 1px solid var(--border-dark);
+  font-family: var(--font-title);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--amber);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.bi-ic {
+  flex: none;
+  width: 26px;
+  height: 22px;
+  object-fit: contain;
+}
+.build-icon.bi-ic {
+  align-items: center;
+  justify-content: center;
+}
+.bi-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bi-type {
+  flex: none;
+  padding: 0 5px;
+  border: 1px solid var(--border-light);
+  border-radius: 2px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+.btn.bi-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+}
+.bi-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 6px;
+}
+.bi-sec {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 4px;
+  font-family: var(--font-title);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.bi-sec em {
+  margin-left: auto;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.bi-p {
+  margin: 0;
+  padding: 2px 10px 6px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.bi-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 3px 10px 6px;
+}
+.bi-foot {
+  flex: none;
+  padding: 6px 10px;
+  border-top: 1px solid var(--border-dark);
+  font-size: 11px;
+  color: var(--text-dim);
 }
 .bi-top {
   display: flex;
@@ -1432,11 +1694,6 @@ input.text {
   color: var(--amber);
   font-size: 14px;
   margin-bottom: 4px;
-}
-.bi-cost {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
 }
 .bi-res {
   display: inline-flex;
@@ -2737,15 +2994,6 @@ table.market td {
   vertical-align: -2px;
   margin: 0 3px 0 1px;
   color: var(--amber);
-}
-.btn.tb-type {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.tb-name .line-badge {
-  margin-right: 4px;
-  vertical-align: middle;
 }
 /* ---- credits (stáblista) ---- */
 .credits {
