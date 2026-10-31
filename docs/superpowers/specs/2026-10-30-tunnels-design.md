@@ -20,13 +20,13 @@ Step 1 delivers:
   while it is on.
 - Portals that make themselves where a dug line leaves a slope.
 - The highest ground level goes from 4 to 16.
+- Mountains that generate up to that top, not just reach it by raising. See section 3a.
 
 **Non-goals, each with a spec of its own later.**
 
 - Stacked floors and ramps between them. Step 1 digs at rail level 0 only, and stores the floor on
   each dug tile so that step 2 starts from saved data. The review page shows how step 2 could look.
 - Ore veins, mines and works inside a mountain.
-- Mountains that generate taller. See section 3.
 - Wear in tunnels. It is settled when this spec and the track wear spec both exist.
 - Prices. The figures here are placeholders; the author prices them later.
 
@@ -47,8 +47,8 @@ player tool changes it. `levelTarget` in `src/world/elevation.ts` is the single 
 **New plane.** The map gains a stored plane of ground levels, `groundLevel`, with 255 for "as
 generated". `levelTarget` returns the stored value where one is set; `tileLevels` and `levelAt`
 keep their clamp, so neighbours still differ by at most one level. The plane travels in the save
-and needs a `SAVE_VERSION` step that fills in nothing (absent means as generated). Map generation
-does not write it, so the golden hashes do not move (proved with a floor plane: relief and paint
+and needs a `SAVE_VERSION` step that fills in nothing (absent means as generated). It holds the
+player's changes only; generated levels are section 3a (proved with a floor plane: relief and paint
 workers need no change).
 
 **Raise and Lower.** Two arrows in the build menu, Utility group. A click or a drag acts tile by
@@ -70,20 +70,44 @@ A refusal covers the whole action: nothing moves if any tile it would move refus
 lowered mountain is flat ground that can be built on (the author accepted this).
 
 **The top goes to 16.** `MAX_LEVEL` in `src/world/elevation.ts` becomes 16, `Mountain` targets it,
-and three things that lean on it stay as they are or follow it:
+and four things that lean on it stay as they are or follow it:
 
 - Water stays at 0 to 4: `MAX_DROP` in `src/world/waterfalls.ts` and the chunk codec's limit of 4
   on a water side get their own constant, or map generation moves.
 - `RELIEF_MAX` in `src/render/terrainRelief.ts` goes from 90 to 200, which adds about 8% to a chunk
   canvas.
-- `snowLevel` in `src/data/biomes.json` is multiplied by 3 (plains 12): at the old line a tall
-  mountain is white from its fourth step up. Low mountains lose their snow; the author reviews it.
+- `snowLevel` in `src/data/biomes.json` goes to 14 (plains and most climates), 16 where it was 5
+  and 12 where it was 3: snow is for the last levels under the top. Low mountains lose their snow.
+- `heightLight` keeps its 6% a level up to level 4 and adds 0.9% a level above, in the painter
+  and for the peak pictures. At the old rate a tall mountain paints nearly twice as bright.
 
-**What 16 changes on today's maps: nothing visible.** One level needs one tile of width, so a
-peak of 16 needs a field about 32 tiles across. Measured on three seeds at top 16, generated
-mountain tiles stand at levels 1 to 3, since mountains are 74 tiles or so in all. The player reaches
-16 by raising. Mountains that generate taller mean a change to map generation, which invalidates
-every seed, and that is left out of this step on purpose.
+## 3a. Generated mountains
+
+Status: the shape is the author's pick from the review page, section "Hegyek". What follows holds for every
+option.
+
+**The limit goes.** Today a level comes from terrain and the one-level rule, and rock fields are too
+small to rise: generated mountain tiles stand at levels 1 to 3. So generation decides levels itself
+and stores them, with a new chunk plane, `generatedLevel`. `levelTarget` reads `groundLevel` first,
+then this plane. Every seed makes a new map and the golden hashes move once; saved games keep the
+chunks they hold.
+
+**Steeper than one level.** Generated neighbours may differ by up to 4. `tileLevels` and `levelAt`
+stop clamping generated ground; Raise and Lower keep their one level a tile. Rail still takes one
+level a tile, so a piece refuses an edge with a bigger step and the line finds a way round or goes
+through.
+
+**Softer slopes.** Above level 3 a bank runs the whole tile, not half of it, so a tall slope is a
+slope and not a staircase. Level 2 and under keep the approved terraces. `terraceHeight` picks the
+width per cell, and cells still meet exactly.
+
+**What stands on it.** Trees low down, grass, then rock, with a cliff rock at any height. Forest
+ground is painted for the flat and breaks on a slope, so a raised forest tile is grass with the
+forest's trees. Peak pictures stand only on true tops.
+
+**What it leaves alone.** Water, the map border, and what is built: a mountain falls away toward
+them. Rivers that start in mountains are this work's open design point; the trial sculpts over a
+finished map, so it did not touch them.
 
 ## 4. The Drill
 
@@ -125,7 +149,9 @@ A portal makes itself when a dug line breaks out onto a slope, and goes when the
   higher. Lower ground refuses, in red, until raised. A portal is free of the tile count and costs
   `$2,000`, a placeholder.
 - **Cutting.** From the portal out to the foot of the bank the rail runs in a cutting: a flat bed
-  without `bridge`. The relief carves the ground under it with no new code (proved).
+  without `bridge`. The relief carves the ground under it with no new code (proved). `railProfile`
+  reads a cut or dug tile at its bed level, so the line does not start climbing on the first tile
+  past the foot of the bank, which draws as a kink (proved).
 - **Which faces.** The four sides. Faces on +x and +y look at the camera and are drawn. Faces on
   -x and -y look away: no art, the train drops behind the hill.
 - **The opening.** Half width 0.46 tile, crown 34 px over the rail, at level 3.5.
@@ -136,7 +162,8 @@ front of the plane hides it where it should and the end of the cutting is the on
 
 **Going in.** Three parts, each proved:
 
-- The back picture draws under the train.
+- The back picture draws under the train: its depth is on the `depthKey` scale, and a car near a
+  portal never sorts below it, so the picture never covers a car.
 - Each car is masked to the outside of the near jamb, with a soft edge.
 - A dark copy of the car, masked to the opening, shows the part inside.
 
@@ -177,8 +204,9 @@ Masks apply only to cars within about four tiles of a portal, so batching is bro
 
 Deterministic tests, on invariants:
 
-- Stored levels: `tileLevels` and `levelAt` agree, and neighbours never differ by more than one.
-- Golden hashes do not move, and no generated water stands above 4.
+- Stored levels: `tileLevels` and `levelAt` agree; generated neighbours differ by at most 4, and
+  the player's tools never step more than one.
+- Golden hashes move once, for the new generation, and no generated water stands above 4.
 - A raise or a lower that would break any rule moves nothing and charges nothing.
 - Ground over a dug tile never drops under rail + 3, whatever order the tools run in.
 - A piece lays inside only on a whole dug footprint; no dug tile touches water.
@@ -189,12 +217,13 @@ Each visual ships through a review page of in-game renders before it is locked.
 
 ## 9. Build order
 
-1. Stored levels and `MAX_LEVEL` 16, with the snow line. Review a real map.
-2. Raise and Lower.
-3. `Underground`, the Drill and glass.
-4. Track inside and rail beds.
-5. Portals, cuttings and masks, with placeholder art.
-6. Codex paints the final art.
+1. Stored levels and `MAX_LEVEL` 16, with the snow line and the light.
+2. Generated mountains. Review real maps.
+3. Raise and Lower.
+4. `Underground`, the Drill and glass.
+5. Track inside and rail beds.
+6. Portals, cuttings and masks, with placeholder art.
+7. Codex paints the final art.
 
 ## 10. Decisions so far
 
@@ -209,5 +238,7 @@ Each visual ships through a review page of in-game renders before it is locked.
 - Top level about 16. (author)
 - Tiles touching water cannot be dug. (author)
 - Prices later. (author)
-- Generated mountains stay as they are in this step; see section 3. (Claude, to review)
-- The snow line moves up threefold. (Claude, to review)
+- Generated mountains lose their limit and may be steep, with variety. (author, 2026-10-31)
+- The snow line sits near the top. (author, 2026-10-31)
+- Floors and ores as shown are approved for step 2. (author, 2026-10-31)
+- Which mountain shape generation uses. (open, the author picks from the review page)
