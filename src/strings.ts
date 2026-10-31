@@ -86,6 +86,7 @@ export const STR = {
     upgradedTo: (name: string, level: number) => `Upgraded ${name} to level ${level}`,
     downgradedTo: (name: string, level: number) => `Downgraded ${name} to level ${level}`,
     renamed: (was: string, now: string) => `Renamed ${was} to ${now}`,
+    recoloured: (train: string, colour: string) => `Marked ${train} ${colour}`,
     /** why an undo or a redo cannot be done */
     builtOver: 'Something else has been built there since.',
     trainOn: (train: string) => `${train} stands on the track.`,
@@ -1507,6 +1508,10 @@ export const STR = {
     consist: 'Consist and tanks',
     tripStats: 'Loop statistics',
     gone: 'This train is no longer in service.',
+    nameEmpty: 'A train needs a name.',
+    noColour: 'That is not one of the colour codes.',
+    /** the colour codes, in the order of `TRAIN_COLOURS` */
+    colour: ['grey', 'red', 'amber', 'green', 'blue', 'violet'],
     state: 'State',
     note: 'Note',
     speed: 'Top speed',
