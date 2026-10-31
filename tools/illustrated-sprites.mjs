@@ -2,7 +2,8 @@
  * node tools/illustrated-sprites.mjs [output directory]
  * Every frame goes through the atlas cap pass (tools/atlas-cap.mjs) after resampling, before it
  * is packed; the report says per group what the pass changed. Run tools/finish-fields.mjs after
- * it, which lays the wheat frames back into props.png.
+ * it, which lays the wheat frames back into props.png, and tools/resource-icons.mjs, which lays
+ * the painted resource icons back into icons.png.
  * Uses pngjs (existing dev dependency); no model call or runtime dependency.
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
