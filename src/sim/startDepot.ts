@@ -127,7 +127,7 @@ export function depotSiteBlocked(
  * Grant a depot at a site `depotSiteBlocked` passes: the shed, then the gate straight on every gate
  * without track. Track already on a gate is of the depot's gauge, as the site check requires, and
  * is kept as it is: not replaced and not laid again. A regular depot is named
- * `STR.station.depotName`; a narrow one keeps its kind's name, as one the player builds does.
+ * `ENGLISH.station.depotName`; a narrow one keeps its kind's name, as one the player builds does.
  * Announced again once named and served. Null, with nothing left behind, when the site cannot take
  * it.
  */
