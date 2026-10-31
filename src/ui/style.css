@@ -2244,7 +2244,9 @@ html[lang='hu'] .btn.tp-tab {
   align-items: center;
 }
 .sp-board > b {
-  flex: 0 0 66px;
+  flex: none;
+  min-width: 66px;
+  white-space: nowrap;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
@@ -2729,7 +2731,7 @@ input[type='range'] {
   /* left of the outliner */
   right: 316px;
   width: 320px;
-  max-height: 120px;
+  max-height: 200px;
   display: flex;
   flex-direction: column;
   z-index: 20;
