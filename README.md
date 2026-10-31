@@ -114,14 +114,14 @@ the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
 
 ## Controls
 
-| Action   | Keys                                                                                                                                                                       |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pan      | WASD / arrows / middle-drag / edge scroll                                                                                                                                  |
-| Zoom     | mouse wheel (0.5x-2x); zoom out past 0.5x opens the overview                                                                                                               |
-| Overview | Tab (Esc, scroll in or click a station/train to return)                                                                                                                    |
-| Build    | `1`-`5` category, `1`-`9` item, `Q` `E` type, `Shift+Q` `E` category, `Tab` next, `X` demolish, `R` rotate, drag to lay straights, right-click / Delete remove, Esc cancel |
-| Time     | Space pause, `+` `-` speed                                                                                                                                                 |
-| Screens  | `F` depot, `C` contracts, `G` craft, `V` roster, `M` market, `` ` `` debug                                                                                                 |
+| Action   | Keys                                                                                                            |
+| -------- | --------------------------------------------------------------------------------------------------------------- |
+| Pan      | WASD / arrows / middle-drag / edge scroll                                                                       |
+| Zoom     | mouse wheel (0.5x-2x); zoom out past 0.5x opens the overview                                                    |
+| Overview | Tab (Esc, scroll in or click a station/train to return)                                                         |
+| Build    | toolbar buttons, `R` rotate (track and signals), drag to lay straights, right-click / Delete remove, Esc cancel |
+| Time     | Space pause, `1` `2` `3` speed                                                                                  |
+| Screens  | `F` depot, `C` contracts, `G` craft, `V` roster, `M` market, `` ` `` debug                                      |
 
 ## Layout
 
