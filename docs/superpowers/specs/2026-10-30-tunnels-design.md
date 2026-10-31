@@ -69,7 +69,7 @@ A refusal covers the whole action: nothing moves if any tile it would move refus
 **Terrain.** Raising keeps the tile's terrain. Lowering stone to level 0 turns it to Grass, so a
 lowered mountain is flat ground that can be built on (the author accepted this).
 
-**The top goes to 16.** `MAX_LEVEL` in `src/world/elevation.ts` becomes 16, `Mountain` targets it,
+**The top goes to 16.** `MAX_LEVEL` in `src/world/elevation.ts` becomes 16. A Mountain tile with no stored level keeps its old target of 4, so old saves, levels and the editor stay as they are,
 and four things that lean on it stay as they are or follow it:
 
 - Water stays at 0 to 4: `MAX_DROP` in `src/world/waterfalls.ts` and the chunk codec's limit of 4
