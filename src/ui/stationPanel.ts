@@ -715,7 +715,7 @@ export class StationPanel {
         { class: 'tp-line' },
         el('span', { text: P.inUse }),
         el('b', { text: P.stored(String(v.used), String(v.platforms)) }),
-        this.meter(v.share, fillTone(v.share)),
+        this.meter(v.share, v.queued ? 'bad' : ''),
       ),
     );
     if (v.queued)
