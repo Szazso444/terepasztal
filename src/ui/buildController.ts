@@ -1,13 +1,13 @@
 import type { ReclassDir } from '../world/reclass';
 import { ReclassStroke } from './reclassStroke';
 import { layRun, planRun, type RunPlan, type RunStep } from './autoCrossing';
-import { lineTiles, setOffAxis, turnPath } from './dragPath';
+import { lineTiles, setOffAxis, turnPath, type RunTile } from './dragPath';
 import type { Sprite } from 'pixi.js';
 import type { Input } from '../engine/input';
 import { itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
 import type { SupplyKind } from '../sim/catenary';
 import { inBounds } from '../world/tiles';
-import type { Builder, PlacementCheck } from '../sim/build';
+import type { Builder, LinePiece, PlacementCheck } from '../sim/build';
 import type { WorldRenderer } from '../render/worldRenderer';
 import type { Station } from '../sim/stations';
 import type { Tool } from './toolbar';
@@ -648,6 +648,7 @@ export class BuildController {
       return;
     }
     const def = buildingDef(tool.defId);
+    if (def.bridge) return this.updateBridgeTool(t, tool.defId);
     this.showReach(t, def.power ? 2 : 0);
     // a bridge platform does not turn: it stays at rotation 0
     const rot = this.turns() ? this.rot : 0;
@@ -666,6 +667,87 @@ export class BuildController {
     this.status(parts.join('   '));
     for (const c of this.input.clicks)
       if (c.button === 0) this.act(() => this.builder.placeBuilding(t.x, t.y, tool.defId, rot));
+  }
+
+  /**
+   * The Bridge tool: a drag lays the platforms and the rail on them in one stroke, a click on a
+   * bridge raises its span one height, and a click on a free tile stands a bare platform.
+   */
+  private updateBridgeTool(t: { x: number; y: number }, defId: string) {
+    const inp = this.input;
+    if (this.ghost) this.ghost.visible = false;
+    this.showReach(t, 0);
+    if (inp.buttonPressed.has(0)) this.dragStart = { x: t.x, y: t.y };
+    const line = this.dragStart && lineTiles(this.dragStart, t);
+    if (line && inp.buttonReleased.has(0)) {
+      this.dragStart = null;
+      for (const g of this.lineGhosts) g.visible = false;
+      if (line.length > 1) this.act(() => this.builder.placeLine(this.bridgeLine(line, defId)));
+      else if (this.builder.platformAt(t.x, t.y)) this.act(() => this.builder.raiseSpan(t.x, t.y));
+      else this.act(() => this.builder.placeBuilding(t.x, t.y, defId, 0));
+      return;
+    }
+    if (line && line.length > 1) {
+      const check = this.builder.checkLine(this.bridgeLine(line, defId)),
+        frame = structureFrame(this.world.atlas, `structures/${defId}`, 0);
+      this.placement = { check, at: t };
+      this.showGhosts(
+        line.map((l, i) => ({
+          ...l,
+          frame,
+          ok: check.steps[2 * i].ok && check.steps[2 * i + 1].ok,
+        })),
+        check.ok,
+      );
+      this.status(check.ok ? STR.build.cost(fmtCost(check.cost)) : (check.reason ?? ''));
+      return;
+    }
+    for (const g of this.lineGhosts) g.visible = false;
+    const raising = this.builder.platformAt(t.x, t.y),
+      check = raising
+        ? this.builder.checkRaise(t.x, t.y)
+        : this.builder.checkBuilding(t.x, t.y, defId),
+      cost = fmtCost(check.cost);
+    this.placement = { check, at: t };
+    if (!raising)
+      this.placeGhostAt(
+        this.ensureGhost(structureFrame(this.world.atlas, `structures/${defId}`, 0)),
+        t.x,
+        t.y,
+        check.ok,
+      );
+    this.world.setSpriteFrame(
+      this.ghostDiamond,
+      check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad',
+    );
+    this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
+    this.ghostDiamond.tint = 0xffffff;
+    this.status(
+      !check.ok
+        ? (check.reason ?? '')
+        : raising
+          ? cost
+            ? STR.build.raiseHint(cost)
+            : STR.build.raiseFree
+          : `${STR.build.cost(cost)}   ${STR.build.bridgeDragHint}`,
+    );
+  }
+
+  /**
+   * A dragged bridge as a line: each tile's platform before the rail on it. The rail takes the
+   * line of the track it meets at either end, else Branch.
+   */
+  private bridgeLine(line: readonly RunTile[], defId: string): LinePiece[] {
+    const [a, b] = [line[0], line[line.length - 1]],
+      step = line[0].rot === 1 ? { x: 1, y: 0 } : { x: 0, y: 1 },
+      way = Math.sign(b.x - a.x + b.y - a.y),
+      before = this.builder.track.get(a.x - step.x * way, a.y - step.y * way),
+      after = this.builder.track.get(b.x + step.x * way, b.y + step.y * way),
+      item: TrackItem = { kind: 'straight', cls: before?.cls ?? after?.cls ?? 'branch' };
+    return line.flatMap((l): LinePiece[] => [
+      { kind: 'platform', x: l.x, y: l.y, defId },
+      { kind: 'track', x: l.x, y: l.y, item, rot: l.rot },
+    ]);
   }
 
   /** Whether R turns the tool in hand. */
