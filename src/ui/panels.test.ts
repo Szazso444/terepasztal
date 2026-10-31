@@ -123,6 +123,20 @@ describe('the toasts and the build dock', () => {
   });
 });
 
+describe('what closes the menu bar', () => {
+  const source = readFileSync(new URL('./panels.ts', import.meta.url), 'utf8');
+
+  it('closes the open menu when a screen opens or closes', () => {
+    expect(source).toMatch(/d\.screens\.onChange = \(sc\) => \{\s*hud\.menuBar\.close\(\);/);
+  });
+
+  it('spends the Escape that closes it, as the build controller reads it later in the frame', () => {
+    expect(source).toMatch(
+      /closeBarMenu: \(\) => \{[^}]*hud\.menuBar\.close\(\);[^}]*takeEscape\(\)/,
+    );
+  });
+});
+
 // ------------------------------------------------------------------ what each action is wired to
 //
 // The wiring in `createPlayUi` needs a DOM, so it is checked in the source: every call that
