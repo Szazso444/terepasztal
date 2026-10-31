@@ -18,7 +18,14 @@ import {
 } from '../world/track';
 import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
-import { content, type DecorDef, type Cost, type Gauge, type StationDef } from '../data/content';
+import {
+  content,
+  dataName,
+  type DecorDef,
+  type Cost,
+  type Gauge,
+  type StationDef,
+} from '../data/content';
 import { rules } from './rules';
 import {
   Station,
@@ -48,6 +55,7 @@ import { biomeDef, biomeAt } from './biomes';
 import { inSupplyMode } from './supply';
 import { wrapRotation } from './rotation';
 import { STR } from '../strings';
+import { cargoWord } from './cargo';
 import { bridgeCapacity } from './bridges';
 import { climbAxes, supportedDeck } from '../world/railProfile';
 import { sfx } from '../engine/audio';
@@ -296,7 +304,7 @@ export class Builder {
     const miss = this.stores.nearest(x, y)[0]?.missing(cost) ?? cost;
     const what = Object.entries(miss)
       .filter(([, v]) => v > 0)
-      .map(([k, v]) => `${v} ${k}`)
+      .map(([k, v]) => `${v} ${cargoWord(k)}`)
       .join(', ');
     return { ok: false, cost, reason: STR.build.noStoreInReach(rules.buildReach, what) };
   }
@@ -1019,7 +1027,7 @@ export class Builder {
       defId,
       x,
       y,
-      count ? `${stationDef(defId).name} ${count + 1}` : undefined,
+      count ? `${dataName(stationDef(defId))} ${count + 1}` : undefined,
     );
     s.rot = turn;
     s.terrainFactor = terrainFactorAt(this.map, x, y, defId);

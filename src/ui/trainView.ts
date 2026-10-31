@@ -4,11 +4,13 @@
  * here; nothing is made up.
  */
 import { levelMul } from '../gacha/items';
+import { contractTitle } from '../sim/contracts';
 import { daySeconds } from '../sim/rules';
 import type { TrainState, TripStats } from '../sim/trains';
 import { STR } from '../strings';
 import { CLIMB_SPEED } from '../world/railProfile';
 import type { BuildIcon } from './buildIcons';
+import { noteText } from './noteText';
 import { fmtDuration, fmtMoney } from './numberFormat';
 
 /** A status's weight, drawn in the alert bar's `sev-` colours and the good green. */
@@ -215,29 +217,30 @@ const hoursIn = (sec: number) => Math.floor((sec / daySeconds()) * 24);
 export function problemOf(t: TrainFacts, stuck: number | null): Problem | null {
   const P = STR.trainPanel.problem;
   const title = STR.depot.state[t.state];
+  const note = noteText(t.lastMessage);
   switch (t.state) {
     case 'noFuel':
       return {
         sev: 'critical',
         title,
-        text: t.lastMessage || P.noFuel,
+        text: note || P.noFuel,
         actions: ['refuel', 'stops'],
       };
     case 'noPower':
-      return { sev: 'critical', title, text: t.lastMessage || P.noPower, actions: ['stops'] };
+      return { sev: 'critical', title, text: note || P.noPower, actions: ['stops'] };
     case 'stranded':
       return { sev: 'critical', title, text: P.stranded, actions: [] };
     case 'noRoute':
-      return { sev: 'problem', title, text: t.lastMessage || P.noRoute, actions: ['stops'] };
+      return { sev: 'problem', title, text: note || P.noRoute, actions: ['stops'] };
     case 'overweight':
-      return { sev: 'problem', title, text: t.lastMessage || P.overweight, actions: ['depot'] };
+      return { sev: 'problem', title, text: note || P.overweight, actions: ['depot'] };
     default:
   }
   if (stuck !== null)
     return {
       sev: 'critical',
       title: P.stuckFor(hoursIn(stuck)),
-      text: t.lastMessage || P.stuck,
+      text: note || P.stuck,
       actions: ['stops'],
     };
   if (t.hungry) return { sev: 'attention', title: P.hungry, text: STR.train.hungry, actions: [] };
@@ -260,7 +263,7 @@ export function jobLine(
   const job = t.job ?? t.jobs[0];
   if (!job) return null;
   const queued = t.jobs.length - (t.job ? 0 : 1);
-  const line = STR.trainSide.onContract(job.name, stationName(job.destId) ?? '?');
+  const line = STR.trainSide.onContract(contractTitle(job.name), stationName(job.destId) ?? '?');
   return queued > 0 ? `${line} · ${STR.trainSide.queuedContracts(queued)}` : line;
 }
 

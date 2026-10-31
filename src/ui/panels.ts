@@ -1,5 +1,5 @@
 import { el, fmtMoney } from './dom';
-import { STR } from '../strings';
+import { LANGUAGE, STR, type Language } from '../strings';
 import { sfx } from '../engine/audio';
 import type { AtlasRegistry } from '../engine/atlas';
 import type { Camera } from '../engine/camera';
@@ -13,7 +13,7 @@ import type { Economy } from '../sim/economy';
 import { RESOURCE_IDS, scaleCost } from '../sim/stores';
 import type { Fleet } from '../sim/fleet';
 import type { Builder, Decor } from '../sim/build';
-import type { ContractBoard } from '../sim/contracts';
+import { contractTitle, type ContractBoard } from '../sim/contracts';
 import type { TradeDesk } from '../sim/trade';
 import type { Town, TownRegistry } from '../sim/towns';
 import type { HouseRegistry } from '../sim/houses';
@@ -33,6 +33,7 @@ import {
   hasSlot,
   listSlots,
   readSave,
+  readSettings,
   readSlot,
   uniformContractPolicy,
   type SaveRefusal,
@@ -90,6 +91,7 @@ import { AlertPopup } from './alertPopup';
 import { NotificationsScreen } from './notificationsScreen';
 import { Advisor } from './advisor';
 import { BuildInfo } from './buildInfo';
+import { noteStationsFrom } from './noteText';
 import { Outliner } from './outliner';
 import type { ViewRect } from './outlinerRows';
 import { TrainPanel } from './trainPanel';
@@ -269,6 +271,8 @@ export interface UiHost {
   backToEditor(): void;
   /** reload to the title screen */
   reloadToMenu(): void;
+  /** reload in the language just stored: `playing` when a game was just stored for it */
+  reloadInLanguage(playing: boolean): void;
   /** reload on a new map from a seed text */
   regenerate(seed: string): void;
 }
@@ -559,6 +563,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   };
   // the game applied its settings before this UI existed
   hud.setToggles(d.settings.weather, d.settings.dayNight);
+  hud.onLanguage = (language) => void switchLanguage(language);
+  noteStationsFrom(() => d.builder.stations);
+  settingsScreen.onLanguage = (language) => void switchLanguage(language);
 
   const minimap = new Minimap(d.map, d.regions, d.camera, (wx, wy) => host.centerCamera(wx, wy));
   const debug = new DebugPanel(host.seed, {
@@ -571,7 +578,10 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     },
     spawnContract: () => {
       const c = d.contracts.generate(d.clock.time, true);
-      d.toasts.push(c ? STR.debug.offer(c.name) : STR.contracts.needStations, c ? 'info' : 'warn');
+      d.toasts.push(
+        c ? STR.debug.offer(contractTitle(c.name)) : STR.contracts.needStations,
+        c ? 'info' : 'warn',
+      );
     },
     toggleDepth: () => host.toggleDepth(),
     regenerate: () => host.regenerate(debug.seedValue),
@@ -866,6 +876,39 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     mainMenu.hide();
     titleOverGame = false;
     host.resumeGame();
+  }
+  /**
+   * Change the language, which takes a page load (`LANGUAGE`). At the title nothing is asked and
+   * there is nothing to keep. A game in play is stored first, as the autosave stores it, and a
+   * refused save leaves the game and the language as they are. The level editor keeps nothing of
+   * its own here, so it asks before its unsaved changes go. Either way the controls go back.
+   */
+  async function switchLanguage(language: Language) {
+    const goBack = () => {
+      hud.showLanguage();
+      settingsScreen.render();
+    };
+    if (language === LANGUAGE) return;
+    if (host.editor?.dirty) {
+      const leave = await d.namePrompt.confirm(STR.editor.unsavedTitle, STR.editor.unsaved, {
+        yes: STR.prompt.leave,
+        danger: true,
+      });
+      if (!leave) return goBack();
+    }
+    const playing = canSaveHere(savingSituation());
+    if (playing && !host.save(true)) {
+      d.toasts.push(STR.settings.languageHeld, 'warn');
+      return goBack();
+    }
+    d.settings.language = language;
+    host.saveSettings();
+    if (readSettings().language !== language) {
+      d.settings.language = LANGUAGE;
+      d.toasts.push(STR.settings.languageHeld, 'warn');
+      return goBack();
+    }
+    host.reloadInLanguage(playing);
   }
   /** Where the player stands for saving: no storage is read, so it may be asked at every refresh. */
   function savingSituation(): ReplaceSituation {

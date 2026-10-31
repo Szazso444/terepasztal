@@ -1,4 +1,4 @@
-import type { Contract, ContractBoard, ContractEvent } from './contracts';
+import { contractTitle, type Contract, type ContractBoard, type ContractEvent } from './contracts';
 import { Fleet } from './fleet';
 import type { Train } from './trains';
 import type { Station } from './stations';
@@ -87,7 +87,7 @@ export class ContractDispatcher {
           key: `contract:${c.id}:train`,
           kind: 'warn',
           type: 'contract',
-          text: STR.notice.contractNoTrain(c.name),
+          text: STR.notice.contractNoTrain(contractTitle(c.name)),
           target: { kind: 'tile', x: dest.x, y: dest.y },
         },
         60,

@@ -13,6 +13,8 @@ import type { RoadJSON } from './roads';
 import type { StoreJSON } from './stores';
 import type { BuildingJSON } from './buildings';
 import type { ChunkStore, MapGenerator } from '../world/chunks';
+import { HU_MIGRATIONS } from '../data/names.hu';
+import { LANGUAGE, SETTINGS_KEY, languageOf, type Language } from '../strings';
 import { CHUNK_TILES } from './expand';
 import { generatorOf, groundOf, lacksGround, worldWithinBound } from './ground';
 import { wrapRotation } from './rotation';
@@ -49,7 +51,7 @@ export function convertOneTileRegular(track: SaveGame['track']): SaveGame['track
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
-export const SETTINGS_KEY = 'terepasztal.settings';
+export { SETTINGS_KEY };
 
 /**
  * Everything a save holds besides its version and time stamp: what `buildSave` writes. Every
@@ -177,6 +179,8 @@ export interface Settings {
   smoke: boolean;
   showFps: boolean;
   weather: boolean;
+  /** the language of the text, read as the page loads (`LANGUAGE`) */
+  language?: Language;
   /** v6: helper tips shown */
   advisor?: boolean;
   /** v8 (retired in v9): accept contract offers as they come; migrated into `contractPolicy` */
@@ -253,6 +257,7 @@ export const DEFAULT_SETTINGS: Settings = {
   smoke: true,
   showFps: false,
   weather: true,
+  language: 'en',
   advisor: true,
   contractPolicy: uniformContractPolicy(DEFAULT_CONTRACT_POLICY),
   contractPolicyVersion: CONTRACT_POLICY_VERSION,
@@ -956,7 +961,8 @@ export function migrate(j: SaveGame): SaveGame {
       continue;
     }
     step.run(j);
-    notes.push(`v${step.from}→v${step.from + 1}: ${step.note}`);
+    const note = LANGUAGE === 'hu' ? (HU_MIGRATIONS[step.from] ?? step.note) : step.note;
+    notes.push(`v${step.from}→v${step.from + 1}: ${note}`);
     j.version = step.from + 1;
   }
   if (from !== SAVE_VERSION) {
@@ -992,6 +998,7 @@ function settingsFrom(stored: Partial<Settings>): Settings {
   const s = { ...DEFAULT_SETTINGS, ...stored };
   if (s.contractPolicy) s.contractPolicy = { ...s.contractPolicy };
   s.alerts = alertSettingsFrom(stored.alerts);
+  s.language = languageOf(stored.language);
   return s;
 }
 export function readSettings(): Settings {

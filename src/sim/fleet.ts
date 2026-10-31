@@ -43,7 +43,7 @@ import { previewOf, type ResourceStore } from './stores';
 import { cargoDef } from './cargo';
 import type { Station } from './stations';
 import { sfx } from '../engine/audio';
-import { STR } from '../strings';
+import { ENGLISH, STR } from '../strings';
 import { biomeDef, biomeAt } from './biomes';
 import { daySeconds } from './rules';
 import { Traffic } from './traffic';
@@ -1017,7 +1017,7 @@ export class Fleet {
         if (!t.dispatch(this.track, this.builder, this.map, avoid)) continue;
         if (was.atStation) was.atStation.occupants.delete(t.id);
         if (wasReversed !== t.reversed) t.updatePoses();
-        t.lastMessage = 'moving out of the way';
+        t.lastMessage = ENGLISH.trainNote.movingAway;
         t.onPathReady(ctx);
         return true;
       }
@@ -1139,7 +1139,7 @@ export class Fleet {
           if (t.state !== 'moving' && t.state !== 'yielding') continue;
           if (!t.blocked && t.claimBlocker === null) continue;
           this.jams.set(t.id, { x: head.x, y: head.y, state: t.state, was: t.lastMessage });
-          t.lastMessage = STR.traffic.jammed;
+          t.lastMessage = ENGLISH.traffic.jammed;
         }
       }
     }
@@ -1170,10 +1170,10 @@ export class Fleet {
         !t.holding &&
         t.state === jam.state &&
         Math.hypot(head.x - jam.x, head.y - jam.y) <= JAM_MOVED;
-      if (held) t.lastMessage = STR.traffic.jammed;
+      if (held) t.lastMessage = ENGLISH.traffic.jammed;
       else {
         this.jams.delete(id);
-        if (t.lastMessage === STR.traffic.jammed)
+        if (t.lastMessage === ENGLISH.traffic.jammed)
           t.lastMessage = t.state === jam.state ? jam.was : '';
       }
     }
@@ -1196,7 +1196,11 @@ export class Fleet {
     const idle = this.trains.filter((t) => t.state === 'idle' && !t.holding);
     if (!idle.length) return;
     const w = this.map.w;
-    const notes: string[] = [STR.traffic.waitAside, STR.traffic.noWayAside, STR.traffic.replan];
+    const notes: string[] = [
+      ENGLISH.traffic.waitAside,
+      ENGLISH.traffic.noWayAside,
+      ENGLISH.traffic.replan,
+    ];
     const routes = new Map(this.trains.map((t) => [t.id, t.pathTileKeys(w)]));
     let sidings: Set<number> | null = null;
     for (const t of idle) {
@@ -1248,7 +1252,7 @@ export class Fleet {
       const wanted = t.planAside(ctx, ids, { theirs: lines, bound, sidings }, true);
       t.wantAside(wanted?.path ?? null);
       routes.set(t.id, t.pathTileKeys(w));
-      t.lastMessage = wanted ? STR.traffic.waitAside : STR.traffic.noWayAside;
+      t.lastMessage = wanted ? ENGLISH.traffic.waitAside : ENGLISH.traffic.noWayAside;
     }
   }
   /**

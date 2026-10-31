@@ -38,7 +38,7 @@ function fullEntry(data: CreditsData, c: Credit) {
   return el(
     'div',
     { class: 'credit-entry' },
-    el('div', { class: 'credit-kind dim', text: c.kind }),
+    el('div', { class: 'credit-kind dim', text: STR.credits.kind[c.kind] ?? c.kind }),
     el('div', { class: 'credit-title', text: c.title }),
     el('div', { class: 'credit-author', text: STR.credits.by(c.author) }),
     names.length ? el('div', { class: 'dim', text: STR.credits.usedFor(names.join(', ')) }) : null,
@@ -131,7 +131,10 @@ export class CreditsScreen implements Screen {
         el('div', { class: 'credits-head', text: STR.credits.thanks }),
         el('div', { class: 'credits-note dim', text: STR.credits.thanksNote }),
         ...thanks.flatMap((k) => [
-          el('div', { class: 'credit-kind credits-kind-head dim', text: k.kind }),
+          el('div', {
+            class: 'credit-kind credits-kind-head dim',
+            text: STR.credits.kind[k.kind] ?? k.kind,
+          }),
           ...k.authors.map((g) => authorBlock(g.author, g.credits)),
         ]),
         el(

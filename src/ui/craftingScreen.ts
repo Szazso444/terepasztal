@@ -29,6 +29,7 @@ import {
 } from '../gacha/crafting';
 import { itemDef, itemKind, type LocoDef, type WagonDef } from '../gacha/items';
 import type { Economy } from '../sim/economy';
+import { cargoWord } from '../sim/cargo';
 import { fmtCost, type ResourceStore, type StoreRegistry } from '../sim/stores';
 import type { Cost } from '../data/content';
 import type { Inventory } from '../gacha/inventory';
@@ -484,7 +485,7 @@ export class CraftingScreen implements Screen {
       if (v <= 0) continue;
       const need = el(
         'span',
-        { class: 'ec-c', title: k },
+        { class: 'ec-c', title: cargoWord(k) },
         resIcon(this.atlas, k),
         el('b', { text: String(Math.ceil(v)) }),
       );

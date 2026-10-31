@@ -34,7 +34,7 @@ import {
   type Row,
 } from './contentForm';
 import {
-  content,
+  sourceContent,
   validateContent,
   changedTables,
   writeContentOverrides,
@@ -65,7 +65,7 @@ export class ContentScreen implements Screen {
   readonly root = page();
   /** the footer is drawn again now: a field changed what Apply may do */
   redraw: () => void = () => undefined;
-  private draft: ContentBundle = clone(content);
+  private draft: ContentBundle = clone(sourceContent);
   private tab: ContentTab = 'locomotives';
   /** what the draft is refused for, read when it changes: the footer reads this, not the draft */
   private problems: string[] = [];
@@ -83,7 +83,7 @@ export class ContentScreen implements Screen {
     private readonly prompt: Confirm,
   ) {}
   onOpen() {
-    this.draft = clone(content);
+    this.draft = clone(sourceContent);
     this.box.value = '';
     this.validate();
     this.render();

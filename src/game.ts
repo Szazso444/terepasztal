@@ -63,7 +63,7 @@ import {
 } from './ui/tooltipContent';
 import { tileTip, type TileSnapshot } from './ui/tileTooltip';
 import { STR } from './strings';
-import { content } from './data/content';
+import { content, sourceContent } from './data/content';
 import { TrackGraph, liftLegacyTrack } from './world/track';
 import { Builder } from './sim/build';
 import { Economy } from './sim/economy';
@@ -76,7 +76,7 @@ import { FollowCamera } from './ui/followCamera';
 import { ScreenManager } from './ui/modal';
 import type { Train } from './sim/trains';
 import { defaultStop as defaultStopFor } from './sim/trains';
-import { ContractBoard } from './sim/contracts';
+import { ContractBoard, contractTitle } from './sim/contracts';
 import { Rng } from './engine/rng';
 import { DayNight, Glows, Smoke, GroundLights, Rain, Fog, nightness } from './render/fx';
 import {
@@ -194,7 +194,7 @@ const LIVE_TIPS: ReadonlySet<TipTarget['kind']> = new Set(['station', 'works', '
 export class Game implements UiHost {
   app!: Application;
   /** generated groups come from the cache this build and content bundle drew them into last boot */
-  atlas = new AtlasRegistry(undefined, undefined, browserAtlasCache(content));
+  atlas = new AtlasRegistry(undefined, undefined, browserAtlasCache(sourceContent));
   /** The sound bus, reachable from `window.game` for the debug panel and the art/audio scripts. */
   readonly audio = audio;
   input!: Input;
@@ -783,6 +783,20 @@ export class Game implements UiHost {
     setIntentAndReload({ action: 'menu' });
   }
   /**
+   * The page again in the language just stored: a game just stored comes back as Continue brings
+   * it, the level editor on its level, the title as the title.
+   */
+  reloadInLanguage(playing: boolean) {
+    const level = this.editor?.level.id;
+    if (level) setIntentAndReload({ action: 'edit', levelId: level });
+    else if (playing) this.reloadIntoStoredSave();
+    else {
+      // the world under the title is no game: the way out does not store it as one
+      this.keepStoredSave = true;
+      this.reloadToMenu();
+    }
+  }
+  /**
    * The debug panel's Regenerate: a new game on its seed text (a number, other text hashed, empty
    * a random seed) in the running game's production chain. The new game replaces the stored one,
    * so the running game is not written back on its way out, as in `reloadIntoStoredSave`.
@@ -1039,15 +1053,18 @@ export class Game implements UiHost {
           key: `contract:${e.contract.id}:done`,
           kind: 'info',
           type: 'done',
-          text: STR.notice.contractDone(e.contract.name),
-          toast: STR.contracts.completed(e.contract.name, fmtMoney(e.contract.payout)),
+          text: STR.notice.contractDone(contractTitle(e.contract.name)),
+          toast: STR.contracts.completed(
+            contractTitle(e.contract.name),
+            fmtMoney(e.contract.payout),
+          ),
           target: dest ? { kind: 'tile', x: dest.x, y: dest.y } : null,
         });
         sfx('contract.done');
       } else if (e.kind === 'cancelled') {
         this.toasts.push(
           STR.contracts.cancelledMsg(
-            e.contract.name,
+            contractTitle(e.contract.name),
             fmtMoney(this.contracts.cancelFine(e.contract)),
           ),
           'warn',
@@ -1058,16 +1075,16 @@ export class Game implements UiHost {
             key: `contract:${e.contract.id}`,
             kind: 'bad',
             type: 'ctfail',
-            text: STR.notice.contractFailed(e.contract.name),
+            text: STR.notice.contractFailed(contractTitle(e.contract.name)),
             toast: STR.contracts.failedMsg(
-              e.contract.name,
+              contractTitle(e.contract.name),
               fmtMoney(this.contracts.failFine(e.contract)),
             ),
             target: dest ? { kind: 'tile', x: dest.x, y: dest.y } : null,
           },
           60,
         );
-        this.lastFailedContract = e.contract.name;
+        this.lastFailedContract = contractTitle(e.contract.name);
         sfx('contract.fail');
       } else if (e.kind === 'accepted') sfx('contract.accept');
     };

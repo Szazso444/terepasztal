@@ -6,7 +6,7 @@ import { buildingDef, buildingFootprint, buildingLevel, type Building } from './
 import type { SupplyKind } from './catenary';
 import type { CommandResult } from './commands';
 import type { ContractDispatcher } from './contractDispatch';
-import type { Contract, ContractBoard } from './contracts';
+import { contractTitle, type Contract, type ContractBoard } from './contracts';
 import type { Fleet } from './fleet';
 import type { HistoryStep } from './history';
 import type { House, HouseRegistry } from './houses';
@@ -115,7 +115,7 @@ export type BuildOp =
   | { op: 'road'; x: number; y: number; laid: boolean; spur: boolean }
   | { op: 'stationLevel'; station: Station; was: StationLevel; now: StationLevel }
   | { op: 'worksLevel'; building: Building; was: WorksLevel; now: WorksLevel }
-  | { op: 'name'; station: Station; was: string; now: string };
+  | { op: 'name'; station: Station; was: string; now: string; shown: string };
 
 /** Residents a house gained or lost in an action (`HouseRegistry.industryPlaced`). */
 interface PeopleMove {
@@ -257,9 +257,9 @@ export class BuildLog {
   }
   /** Before a station takes the name `now`. */
   name(s: Station, now: string) {
-    if (s.name === now) return;
+    if (s.storedName === now) return;
     this.touch(s.footprint());
-    this.ops.push({ op: 'name', station: s, was: s.name, now });
+    this.ops.push({ op: 'name', station: s, was: s.storedName, now, shown: s.name });
   }
 
   /** The action is over: the step it makes, or null when it did nothing. */
@@ -432,7 +432,7 @@ export class BuildStep implements HistoryStep {
     for (const { held, origin, dest } of this.lapsed(forward)) {
       const c = held.contract;
       if (held.status === 'active' && c.trainId !== null && !contractJobs.canWork(c, origin, dest))
-        return STR.history.contractNoTrain(c.name);
+        return STR.history.contractNoTrain(contractTitle(c.name));
     }
     return null;
   }
@@ -569,7 +569,7 @@ export function stepLabel(ops: readonly BuildOp[]): string {
         buildingLevel({ ...first.building, level: first.was.level }) + 1,
       );
     case 'name':
-      return H.renamed(first.was, first.now);
+      return H.renamed(first.shown, first.now);
     default:
       return H.built(H.track);
   }

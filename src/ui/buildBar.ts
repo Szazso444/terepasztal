@@ -13,7 +13,7 @@ import { roadCost } from '../sim/roads';
 import { rules } from '../sim/rules';
 import { STATION_DEFS } from '../sim/stations';
 import { inSupplyMode } from '../sim/supply';
-import { STR } from '../strings';
+import { LANGUAGE, STR } from '../strings';
 import { nextLine, type ReclassDir } from '../world/reclass';
 import { Terrain, TERRAIN_NAMES } from '../world/tiles';
 import {
@@ -340,7 +340,7 @@ export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
   ].map((t) => ({
     key: `terrain:${t}`,
     tool: { kind: 'terrain', terrain: t },
-    name: TERRAIN_NAMES[t],
+    name: LANGUAGE === 'en' ? TERRAIN_NAMES[t] : STR.tile.terrain[TERRAIN_NAMES[t]],
     cost: {},
     frame:
       t === Terrain.Water ? 'terrain/water_0_f0' : `terrain/${TERRAIN_NAMES[t].toLowerCase()}_0`,

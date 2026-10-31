@@ -143,6 +143,10 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* the head wraps where a long Hungarian name asks for it, as the build card's do */
+html[lang='hu'] .panel-name {
+  white-space: normal;
+}
 /* the close of a HUD panel: a mark on the frame, not a button */
 .btn.panel-x {
   flex: none;
@@ -513,6 +517,11 @@ body {
 }
 .btn.mb-item.mb-cheat {
   color: var(--text-dim);
+}
+/* EN | HU, right of undo and redo: it stays whole however short the bar is */
+#topbar .lang {
+  flex: none;
+  padding: 0 6px;
 }
 #topbar .datespeed,
 #topbar > .tt-term {
@@ -1087,6 +1096,17 @@ body {
   gap: 2px;
   color: var(--text);
 }
+/* Hungarian runs longer: a tile's name takes two lines and the tile grows to hold them */
+html[lang='hu'] .btn.tb-item {
+  height: 84px;
+}
+html[lang='hu'] .tb-name {
+  white-space: normal;
+  text-align: center;
+}
+html[lang='hu'] .tb-cost {
+  margin-top: auto;
+}
 .tb-cost .res-icon {
   width: 12px;
   height: 12px;
@@ -1113,6 +1133,12 @@ body {
 .tb-cats .tt-term {
   flex: 0 1 136px;
   max-width: 150px;
+}
+/* so do the categories: a long word takes its room, and none is cut while the bar has any */
+html[lang='hu'] .tb-cats .tt-term {
+  flex: 0 1 auto;
+  min-width: 118px;
+  max-width: none;
 }
 .btn.tb-cat {
   display: flex;
@@ -1853,6 +1879,10 @@ input.text {
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
+}
+/* Hungarian's tabs differ in length: each takes what its word needs, then a share of the rest */
+html[lang='hu'] .btn.tp-tab {
+  flex: 1 1 auto;
 }
 .btn.tp-tab:hover {
   background: none;
@@ -4119,6 +4149,10 @@ table.market td {
 /* a vehicle or a train as a row: the lines clip with an ellipsis, a title carries the whole text */
 .dp-li .k-li-m > small {
   white-space: nowrap;
+}
+/* a train's third line runs longer in Hungarian: it wraps rather than lose its end */
+html[lang='hu'] .dp-li .k-li-m > small:has(> .dp-aboard) {
+  white-space: normal;
 }
 .dp-li .k-li-m > small .k-bad {
   white-space: normal;

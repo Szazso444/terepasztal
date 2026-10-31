@@ -1,5 +1,6 @@
 import { el, fmtMoney } from './dom';
 import { STR } from '../strings';
+import { noteText } from './noteText';
 import { rarityLabel } from './labels';
 import type { FrameTabs, Screen } from './modal';
 import {
@@ -12,7 +13,7 @@ import {
 import type { Fleet } from '../sim/fleet';
 import type { Commands, CommandResult } from '../sim/commands';
 import type { Builder } from '../sim/build';
-import { cargoDef, cargoName } from '../sim/cargo';
+import { cargoDef, cargoName, cargoWord } from '../sim/cargo';
 import { levelMul } from '../gacha/items';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
@@ -63,7 +64,7 @@ export function emergencyRefuel(
 ) {
   const taken = fleet.emergencyRefuel(t);
   const got = Object.entries(taken)
-    .map(([k, v]) => `${Math.round(v)} ${k}`)
+    .map(([k, v]) => `${Math.round(v)} ${cargoWord(k)}`)
     .join(', ');
   toast(
     got
@@ -306,7 +307,7 @@ export class TrainScreen implements Screen {
         () => (stateTone(t.state, t.blocked) === 'bad' ? 'bad' : ''),
       ),
     ];
-    if (t.lastMessage) status.push(this.kv(STR.train.note, () => t.lastMessage));
+    if (t.lastMessage) status.push(this.kv(STR.train.note, () => noteText(t.lastMessage)));
     if (t.hungry)
       status.push(
         this.kv(

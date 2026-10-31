@@ -26,7 +26,9 @@ import houseJson from './houses.json';
 import cargoFullJson from './cargo_full.json';
 import stationFullJson from './stations_full.json';
 import buildingFullJson from './buildings_full.json';
+import { HU_NAMES } from './names.hu';
 import { PAST_SHIPPED } from './pastShipped';
+import { LANGUAGE } from '../strings';
 import type { SupplyMode } from '../sim/supply';
 import { OWN_LENGTH, type PartKind } from '../sim/body';
 import { MAX_LEVEL } from '../sim/levels';
@@ -1158,10 +1160,76 @@ function finalize(b: ContentBundle): ContentBundle {
   return b;
 }
 
+/** The name each translated entry has in the data; every other entry's name is its own. */
+const DATA_NAME = new WeakMap<object, string>();
+/**
+ * The name the data gives an entry, in English whatever the language on screen. What the world
+ * keeps is made from this one (a station's default name, a contract's), and what depends on an
+ * order does not move with the language (`Crafting.known`).
+ */
+export function dataName(def: { name: string }): string {
+  return DATA_NAME.get(def) ?? def.name;
+}
+/** Lay a text over an entry, field by field: `keep` says which of the fields stay as they are. */
+function translate(
+  entry: object,
+  text: Partial<Record<string, string>> | undefined,
+  keep: (field: string) => boolean,
+) {
+  const row = entry as Record<string, unknown>;
+  for (const [field, value] of Object.entries(text ?? {})) {
+    if (value === undefined || keep(field)) continue;
+    if (field === 'name') DATA_NAME.set(row, row.name as string);
+    row[field] = value;
+  }
+}
+type Texts = Partial<Record<string, Partial<Record<string, string>>>>;
+/** A table outside the bundle, in the language on screen, by id (the biomes). */
+export function translateRows(rows: { id: string }[], texts: Texts) {
+  if (LANGUAGE !== 'hu') return;
+  for (const r of rows) translate(r, texts[r.id], () => false);
+}
+/**
+ * Put the bundle in the language on screen, once, as the overrides were: every consumer sees one
+ * consistent bundle for the session. A text an override changed stays the player's own, and an
+ * entry the data does not know has no text here.
+ */
+function translated(b: ContentBundle): ContentBundle {
+  if (LANGUAGE !== 'hu') return b;
+  const over = <T extends { id: string }>(rows: T[], shipped: T[], texts: Texts) => {
+    const was = new Map(shipped.map((r) => [r.id, r as unknown as Record<string, unknown>]));
+    for (const r of rows) {
+      const old = was.get(r.id);
+      if (!old) continue;
+      const row = r as unknown as Record<string, unknown>;
+      translate(r, texts[r.id], (field) => row[field] !== old[field]);
+    }
+  };
+  const d = DEFAULT_CONTENT;
+  over(b.locomotives, d.locomotives, HU_NAMES.locomotives);
+  over(b.wagons, d.wagons, HU_NAMES.wagons);
+  over(b.cargo, d.cargo, HU_NAMES.cargo);
+  over(b.stations.defs, d.stations.defs, HU_NAMES.stations);
+  over(b.buildings, d.buildings, HU_NAMES.buildings);
+  over(b.decor, d.decor, HU_NAMES.decor);
+  over(b.gacha.banners, d.gacha.banners, HU_NAMES.banners);
+  over(b.contracts.templates, d.contracts.templates, HU_NAMES.contractTemplates);
+  over(b.contracts.rarities, d.contracts.rarities, HU_NAMES.contractRarities);
+  const pieces: Texts = HU_NAMES.trackPieces;
+  for (const [id, piece] of Object.entries(b.track.pieces)) {
+    const old = d.track.pieces[id];
+    if (old) translate(piece, pieces[id], () => piece.name !== old.name);
+  }
+  return b;
+}
+
 const loaded = buildContent();
-/** The live bundle every module reads from. */
-export const content: ContentBundle = finalize(loaded.bundle);
+const bundle = finalize(loaded.bundle);
 finalize(DEFAULT_CONTENT);
+/** The bundle as the data has it, in English: what the content editor edits and stores. */
+export const sourceContent: ContentBundle = LANGUAGE === 'en' ? bundle : clone(bundle);
+/** The live bundle every module reads from, in the language on screen. */
+export const content: ContentBundle = translated(bundle);
 
 /** What became of the stored overrides at load: which tables apply, which were set aside and why. */
 export function contentOverrideReport(): ContentOverrideReport {
