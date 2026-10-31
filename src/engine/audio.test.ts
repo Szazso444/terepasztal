@@ -1,9 +1,9 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // imported for real, with no vi.mock: loading the audio modules must not need a browser
 import { audio, MUSIC_FADE_MS, sfx, SOUND_EVENTS } from './audio';
 import { Ambience } from './ambience';
 import { Synth } from './synth';
-import { AGE_MUSIC, MUSIC_TRACKS, musicForAge } from './musicPlaylist';
+import { AGE_MUSIC, MUSIC_TRACKS, musicForAge, trackTitle } from './musicPlaylist';
 import { Rng } from './rng';
 import { forAll, shrinkArray } from '../testing/property';
 
@@ -21,7 +21,10 @@ function target() {
 
 /** Just enough of an AudioContext for the synth's master bus and the ambience beds. */
 function fakeContext() {
-  const gains: { gain: { setTargetAtTime: ReturnType<typeof vi.fn> } }[] = [];
+  const gains: {
+    gain: { setTargetAtTime: ReturnType<typeof vi.fn> };
+    connect: ReturnType<typeof vi.fn>;
+  }[] = [];
   const param = () => ({
     value: 0,
     setTargetAtTime: vi.fn(),
@@ -95,11 +98,23 @@ class FakeAudio {
   }
 }
 
+/** A tab's `sessionStorage`. Node has one too, which would carry one test's track to the next. */
+function fakeSession() {
+  const items = new Map<string, string>();
+  return {
+    items,
+    getItem: (k: string) => items.get(k) ?? null,
+    setItem: (k: string, v: string) => void items.set(k, v),
+  };
+}
+
 /** Fire the listeners a fake element registered for an event. */
 function fire(el: FakeAudio, type: string) {
   for (const [t, fn] of el.addEventListener.mock.calls as [string, Listener][])
     if (t === type) fn();
 }
+
+beforeEach(() => vi.stubGlobal('sessionStorage', fakeSession()));
 
 afterEach(() => {
   vi.useRealTimers();
@@ -137,16 +152,33 @@ describe('audio outside a browser', () => {
   it('runs the ambience beds against a context with no document', () => {
     const { ctx, gains } = fakeContext();
     const ambience = new Ambience();
-    expect(() => ambience.update(ctx, 0.5, 0, 0)).not.toThrow();
-    // the master bed rises to the volume: nothing counts as hidden without a document
-    expect(gains[0].gain.setTargetAtTime).toHaveBeenLastCalledWith(0.5, 1, 0.2);
+    expect(() => ambience.update(ctx, 0.5, 0.25, 0, 0)).not.toThrow();
+    // the beds rise to their volumes: nothing counts as hidden without a document
+    expect(gains[0].gain.setTargetAtTime).toHaveBeenLastCalledWith(1, 1, 0.2);
+    expect(gains[1].gain.setTargetAtTime).toHaveBeenLastCalledWith(0.5, 1, 0.2);
+    expect(gains[2].gain.setTargetAtTime).toHaveBeenLastCalledWith(0.25, 1, 0.2);
   });
 
   it('adds no hiss for the rain: the wind is the only noise bed', () => {
     const { ctx } = fakeContext();
     const sources = vi.spyOn(ctx, 'createBufferSource');
-    new Ambience().update(ctx, 0.5, 1, 0);
+    new Ambience().update(ctx, 0.5, 0.5, 1, 0);
     expect(sources).toHaveBeenCalledOnce();
+  });
+
+  it('sends the wind through Weather and the calls through Environment, each alone', () => {
+    const { ctx, gains } = fakeContext();
+    const calls = vi.spyOn(ctx, 'createOscillator');
+    const ambience = new Ambience();
+    ambience.update(ctx, 0.5, 0, 0, 0);
+    expect(calls).not.toHaveBeenCalled(); // Environment off: no call is made, the wind goes on
+    const [out, weather, environment, wind] = gains;
+    expect(weather.connect).toHaveBeenCalledWith(out);
+    expect(environment.connect).toHaveBeenCalledWith(out);
+    expect(wind.connect).toHaveBeenCalledWith(weather);
+    ambience.update(ctx, 0, 0.5, 0, 0);
+    expect(calls).toHaveBeenCalled();
+    expect(weather.gain.setTargetAtTime).toHaveBeenLastCalledWith(0, 1, 0.2);
   });
 
   it('plays nothing inside `silently`, and plays again after it', async () => {
@@ -452,13 +484,14 @@ describe('audio in a browser', () => {
       const { bus, srcs, win } = await musicBus({ steam, diesel });
       bus.applyMusic();
       win.fire('pointerdown');
-      // the default set: all four files fail, so there is no music element left
-      for (let i = 0; i < 4; i++) fire(FakeAudio.made[FakeAudio.made.length - 1], 'error');
-      expect(srcs()).toHaveLength(4);
+      // the default set: every file fails, so there is no music element left
+      const tracks = MUSIC_TRACKS.length;
+      for (let i = 0; i < tracks; i++) fire(FakeAudio.made[FakeAudio.made.length - 1], 'error');
+      expect(srcs()).toHaveLength(tracks);
       bus.setAge('diesel');
-      expect(srcs()).toHaveLength(5);
-      expect(srcs()[4]).toBe(diesel[0]);
-      expect(FakeAudio.made[4].play).toHaveBeenCalled();
+      expect(srcs()).toHaveLength(tracks + 1);
+      expect(srcs()[tracks]).toBe(diesel[0]);
+      expect(FakeAudio.made[tracks].play).toHaveBeenCalled();
     });
   });
 
@@ -490,9 +523,12 @@ describe('audio in a browser', () => {
       vi.advanceTimersByTime(MUSIC_FADE_MS);
       fire(old, 'ended');
       expect(srcs()).toEqual([steam[0], electric[0]]);
-      // every electric file fails: the default set takes over at its first track
+      // every electric file fails: the default set takes over, Pastoral Pulse having opened already
       fire(FakeAudio.made[1], 'error');
-      expect(srcs()).toEqual([steam[0], electric[0], playlist.MUSIC_TRACKS[0]]);
+      expect(srcs().slice(0, 2)).toEqual([steam[0], electric[0]]);
+      expect(srcs()).toHaveLength(3);
+      expect(playlist.MUSIC_TRACKS).toContain(srcs()[2]);
+      expect(srcs()[2]).not.toBe(playlist.MUSIC_TRACKS[0]);
       expect(FakeAudio.overlaps).toBe(0);
     });
   });
@@ -800,6 +836,257 @@ describe('audio in a browser', () => {
     );
   });
 
+  describe('Pastoral Pulse once a tab', () => {
+    const first = MUSIC_TRACKS[0];
+    /** A page load on the tab the test stubbed: the title holds the music and fetches it ahead. */
+    async function pageLoad() {
+      FakeAudio.made = [];
+      const rig = await musicBus({});
+      rig.bus.hold();
+      rig.bus.preload();
+      return rig;
+    }
+    /** What plays once the player clicks and the title lets the music go. */
+    const played = async (rig: Awaited<ReturnType<typeof pageLoad>>) => {
+      rig.win.fire('pointerdown');
+      rig.bus.startMusic();
+      await vi.advanceTimersByTimeAsync(0);
+      return rig.playing().map((el) => el.src);
+    };
+
+    it('opens on it, and not on any reload after', async () => {
+      expect(await played(await pageLoad())).toEqual([first]);
+      for (let load = 0; load < 8; load++) {
+        const [src] = await played(await pageLoad());
+        expect(MUSIC_TRACKS).toContain(src);
+        expect(src, `reload ${load}`).not.toBe(first);
+      }
+    });
+
+    it('never opens a later load on what played last', async () => {
+      let last = (await played(await pageLoad()))[0];
+      for (let load = 0; load < 12; load++) {
+        const [src] = await played(await pageLoad());
+        expect(src).not.toBe(last);
+        last = src;
+      }
+    });
+
+    it('is not used up by a title that held the music: its New game still opens on it', async () => {
+      const title = await pageLoad();
+      title.win.fire('pointerdown'); // clicks on the title, the music held, then New game reloads
+      await vi.advanceTimersByTimeAsync(0);
+      expect(await played(await pageLoad())).toEqual([first]);
+    });
+
+    it('is not used up by a play the browser refused', async () => {
+      const { bus, music } = await pageLoad();
+      music()[0].play.mockImplementationOnce(() =>
+        Promise.reject(new DOMException('no gesture', 'NotAllowedError')),
+      );
+      bus.startMusic();
+      bus.tryUnlock();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(await played(await pageLoad())).toEqual([first]);
+    });
+
+    it('opens on it on every load where the storage is refused, and nothing throws', async () => {
+      const refused = () => {
+        throw new DOMException('refused', 'SecurityError');
+      };
+      vi.stubGlobal('sessionStorage', { getItem: refused, setItem: refused });
+      expect(await played(await pageLoad())).toEqual([first]);
+      expect(await played(await pageLoad())).toEqual([first]);
+    });
+
+    it('opens on it with no storage at all', async () => {
+      vi.stubGlobal('sessionStorage', undefined);
+      expect(await played(await pageLoad())).toEqual([first]);
+    });
+  });
+
+  describe('the now-playing controls', () => {
+    /** A bus playing its first track, the music started by a click. */
+    async function playingBus() {
+      const rig = await musicBus({});
+      rig.bus.applyMusic();
+      rig.win.fire('pointerdown');
+      await vi.advanceTimersByTimeAsync(0);
+      return { ...rig, first: rig.music()[0] };
+    }
+
+    it('pauses the music alone: no volume moves, and the same track plays on from there', async () => {
+      const { bus, first, music, playing } = await playingBus();
+      const volumes = [bus.master, bus.sfx, bus.music, { ...bus.groups }];
+      bus.togglePause();
+      expect(playing()).toEqual([]);
+      expect(bus.view.paused).toBe(true);
+      expect(first.volume).toBe(bus.master * bus.music);
+      expect([bus.master, bus.sfx, bus.music, { ...bus.groups }]).toEqual(volumes);
+      bus.togglePause();
+      expect(playing()).toEqual([first]);
+      expect(music()).toEqual([first]);
+      expect(bus.view.paused).toBe(false);
+    });
+
+    it('stays paused whatever a slider, a gesture or a loaded file does', async () => {
+      const { bus, win, first, playing } = await playingBus();
+      bus.togglePause();
+      bus.music = 0.9;
+      bus.applyMusic();
+      win.fire('pointerdown');
+      fire(first, 'canplay');
+      expect(playing()).toEqual([]);
+      // the slider's level is the one it comes back at
+      bus.togglePause();
+      expect(first.volume).toBeCloseTo(bus.master * 0.9, 12);
+      expect(playing()).toEqual([first]);
+    });
+
+    it('keeps sound effects playing while the music is paused', async () => {
+      const { bus, sfx, ctx } = await playingBus();
+      bus.togglePause();
+      const voices = vi.spyOn(ctx, 'createOscillator');
+      sfx('ui.click');
+      expect(voices).toHaveBeenCalled();
+    });
+
+    it('pauses the synth loop too, when it is all that is left', async () => {
+      const { bus, music } = await playingBus();
+      const setVolume = vi.spyOn(bus.synth, 'setMusicVolume');
+      for (let i = 0; i < MUSIC_TRACKS.length; i++) fire(music()[music().length - 1], 'error');
+      expect(bus.view).toMatchObject({ title: null, canGoBack: false, canGoForward: false });
+      expect(setVolume).toHaveBeenLastCalledWith(bus.master * bus.music);
+      bus.togglePause();
+      expect(setVolume).toHaveBeenLastCalledWith(0);
+      bus.togglePause();
+      expect(setVolume).toHaveBeenLastCalledWith(bus.master * bus.music);
+    });
+
+    it('moves forward at once, with one track playing, and back to what played before', async () => {
+      const { bus, first, music, playing } = await playingBus();
+      expect(bus.view.canGoBack).toBe(false);
+      expect(bus.view.title).toBe('Pastoral Pulse');
+      bus.forward();
+      const second = music()[1];
+      expect(first.playing).toBe(false);
+      expect(playing()).toEqual([second]);
+      expect(bus.view.title).toBe(trackTitle(second.src));
+      expect(bus.view.canGoBack).toBe(true);
+      bus.back();
+      expect(music()[2].src).toBe(first.src);
+      expect(playing()).toEqual([music()[2]]);
+      expect(bus.view.canGoBack).toBe(false);
+      bus.forward();
+      expect(music()[3].src).toBe(second.src);
+      expect(FakeAudio.overlaps).toBe(0);
+    });
+
+    it('changes nothing on Back with nothing to go back to', async () => {
+      const { bus, first, music, playing } = await playingBus();
+      bus.back();
+      expect(music()).toEqual([first]);
+      expect(playing()).toEqual([first]);
+    });
+
+    it('stays paused across a change of track, and plays the new one when let go', async () => {
+      const { bus, music, playing } = await playingBus();
+      bus.togglePause();
+      bus.forward();
+      expect(playing()).toEqual([]);
+      expect(bus.view.paused).toBe(true);
+      bus.togglePause();
+      expect(playing()).toEqual([music()[1]]);
+    });
+
+    it('stays out of an age change fading out', async () => {
+      const { bus, old, srcs, playing } = await steamPlaying();
+      bus.setAge('diesel');
+      bus.forward();
+      bus.back();
+      expect(srcs()).toEqual([steam[0]]);
+      vi.advanceTimersByTime(MUSIC_FADE_MS);
+      expect(old.playing).toBe(false);
+      expect(srcs()).toEqual([steam[0], diesel[0]]);
+      expect(playing()).toEqual([FakeAudio.made[1]]);
+    });
+
+    it('opens the new set paused when an age changes during the pause', async () => {
+      const { bus, srcs, playing } = await steamPlaying();
+      bus.togglePause();
+      bus.setAge('diesel');
+      expect(srcs()).toEqual([steam[0], diesel[0]]);
+      expect(playing()).toEqual([]);
+      bus.togglePause();
+      expect(playing()).toEqual([FakeAudio.made[1]]);
+    });
+
+    it('does not count a track the bus let go of as the one played last', async () => {
+      const { bus } = await playingBus();
+      const session = fakeSession();
+      vi.stubGlobal('sessionStorage', session);
+      bus.forward();
+      bus.forward();
+      await vi.advanceTimersByTimeAsync(0);
+      expect([...session.items.values()]).toEqual([FakeAudio.made[FakeAudio.made.length - 1].src]);
+    });
+
+    it('says the music is held, for a widget under a title that holds it', async () => {
+      const { bus } = await musicBus({});
+      bus.hold();
+      expect(bus.view.held).toBe(true);
+      bus.startMusic();
+      expect(bus.view.held).toBe(false);
+    });
+
+    it('tries no unlock while paused', async () => {
+      const { bus, music } = await musicBus({});
+      bus.preload();
+      bus.togglePause();
+      bus.tryUnlock();
+      expect(music()[0].play).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('the volume groups', () => {
+    it('plays an event at master × effects × its group', async () => {
+      const { bus } = await musicBus({});
+      const play = vi.spyOn(bus.synth, 'play').mockImplementation(() => {});
+      bus.master = 0.5;
+      bus.sfx = 0.5;
+      bus.groups.trains = 0.5;
+      bus.play('train.whistle');
+      expect(play).toHaveBeenLastCalledWith('train.whistle', 0.125);
+      bus.play('ui.click');
+      expect(play).toHaveBeenLastCalledWith('ui.click', 0.25);
+    });
+
+    it('plays nothing of a group at 0, and the other groups as ever', async () => {
+      const { bus } = await musicBus({});
+      const play = vi.spyOn(bus.synth, 'play').mockImplementation(() => {});
+      bus.groups.building = 0;
+      bus.play('build.place');
+      expect(play).not.toHaveBeenCalled();
+      bus.play('contract.done');
+      expect(play).toHaveBeenCalledOnce();
+    });
+
+    it('gives the ambience its two volumes, under Effects', async () => {
+      const { bus, win } = await musicBus({});
+      bus.applyMusic();
+      win.fire('pointerdown');
+      // `musicBus` imported the bus afresh, with a copy of the class of its own
+      const ambience = (bus as unknown as { ambience: Ambience }).ambience;
+      const update = vi.spyOn(ambience, 'update').mockImplementation(() => {});
+      bus.master = 0.5;
+      bus.sfx = 0.5;
+      bus.groups.weather = 0.5;
+      bus.groups.environment = 1;
+      bus.updateAmbience(0.2, 0.7);
+      expect(update).toHaveBeenCalledWith(expect.anything(), 0.125, 0.25, 0.2, 0.7);
+    });
+  });
+
   describe('under any order of calls', () => {
     // forAll runs a synchronous property, and the module exports no way to make a second bus, so
     // each case builds its own from the singleton's constructor
@@ -880,6 +1167,7 @@ describe('audio in a browser', () => {
         },
       });
       vi.stubGlobal('Audio', FakeAudio);
+      vi.stubGlobal('sessionStorage', fakeSession());
       vi.useFakeTimers();
       const shuffle = new Rng(c.shuffle);
       vi.spyOn(Math, 'random').mockImplementation(() => shuffle.next());
@@ -1093,6 +1381,7 @@ describe('audio in a browser', () => {
             },
           });
           vi.stubGlobal('Audio', FakeAudio);
+          vi.stubGlobal('sessionStorage', fakeSession());
           const stream = new Rng(shuffle);
           vi.spyOn(Math, 'random').mockImplementation(() => stream.next());
           try {
@@ -1141,16 +1430,16 @@ describe('audio in a browser', () => {
     const { ctx, gains } = fakeContext();
     const ambience = new Ambience();
     expect(doc.addEventListener).not.toHaveBeenCalled();
-    ambience.update(ctx, 0.5, 0, 0);
-    ambience.update(ctx, 0.5, 0, 0);
+    ambience.update(ctx, 0.5, 0.5, 0, 0);
+    ambience.update(ctx, 0.5, 0.5, 0, 0);
     expect(doc.types()).toEqual(['visibilitychange']);
-    const master = gains[0].gain.setTargetAtTime;
+    const all = gains[0].gain.setTargetAtTime;
     doc.hidden = true;
     doc.fire('visibilitychange');
-    expect(master).toHaveBeenLastCalledWith(0, 1, 0.15);
+    expect(all).toHaveBeenLastCalledWith(0, 1, 0.15);
     doc.hidden = false;
     doc.fire('visibilitychange');
-    expect(master).toHaveBeenLastCalledWith(0.5, 1, 0.15);
+    expect(all).toHaveBeenLastCalledWith(1, 1, 0.15);
   });
 });
 

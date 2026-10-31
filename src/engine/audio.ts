@@ -1,20 +1,25 @@
 import { Synth } from './synth';
 import { Ambience } from './ambience';
-import { MusicSelection, type MusicPlaylist } from './musicPlaylist';
+import { DEFAULT_VOLUMES, EVENT_GROUP, groupGain, musicGain, type SoundGroup } from './audioGroups';
+import { MusicSelection, rememberPlayed, trackTitle, type MusicPlaylist } from './musicPlaylist';
 
 /**
  * Sound bus. Every game event calls `sfx(name)`. If `/assets/audio/<name>.ogg` exists it is
  * played; otherwise the procedural synthesizer renders the event. Music plays the current age's
- * set (`setAge`, `musicForAge`): its first track, then shuffled rounds of all its tracks. When an
- * age change switches the set, the track playing fades out first and the new set's first track
- * starts only once it has stopped, so two music files never play together. If every file of the
- * age's set fails, the default Pastoral Pulse set plays; if those fail too, the synthesized loop
- * takes over. Volumes come from settings. The Web Audio context and the music element are both
- * unlocked on the first user gesture.
+ * set (`setAge`, `musicForAge`), every age the eight tracks of the default set for now: Pastoral
+ * Pulse once on opening the game, then shuffled rounds. When an age change switches the set, the
+ * track playing fades out first and the new set's first track starts only once it has stopped, so
+ * two music files never play together. If every file of the age's set fails, the default set
+ * plays; if those fail too, the synthesized loop takes over. Volumes come from settings
+ * (`audioGroups.ts`). The Web Audio context and the music element are both unlocked on the first
+ * user gesture.
  *
  * Music can be held back: `hold()` keeps a gesture from starting it (sound effects still unlock),
  * `preload()` fetches the first track ahead so it can start at once, and `startMusic()` lets the
  * hold go. The title screen holds it, so nothing plays there until the player starts.
+ *
+ * The now-playing widget reads `view` and works `togglePause`, `back` and `forward`. Its pause is
+ * the music's alone: it changes no volume and no setting, and ends with the page.
  */
 export const SOUND_EVENTS = [
   'ui.click',
@@ -47,17 +52,33 @@ type FileState = { el: HTMLAudioElement; status: 'probing' | 'ready' | 'missing'
  */
 export const MUSIC_FADE_MS = 1500;
 
+/** What the now-playing widget shows. */
+export interface MusicView {
+  /** the title of the track; null when no file is left and the synthesized loop plays */
+  title: string | null;
+  /** the player paused the music */
+  paused: boolean;
+  /** `hold()` is in force: nothing has started, and nothing can be heard */
+  held: boolean;
+  /** there is a track to go back to */
+  canGoBack: boolean;
+  /** there is a track to go on to */
+  canGoForward: boolean;
+}
+
 class AudioBus {
-  master = 0.8;
-  sfx = 0.8;
-  music = 0.5;
-  ambient = 0.35;
+  master = DEFAULT_VOLUMES.master;
+  sfx = DEFAULT_VOLUMES.sfx;
+  music = DEFAULT_VOLUMES.music;
+  groups: Record<SoundGroup, number> = { ...DEFAULT_VOLUMES.soundGroups };
   private ambience = new Ambience();
   updateAmbience(rain: number, night: number) {
     this.listen();
     if (!this.unlocked) return;
     const ctx = this.synth.ensure();
-    if (ctx) this.ambience.update(ctx, this.master * this.ambient, rain, night);
+    if (!ctx) return;
+    const weather = groupGain(this, 'weather');
+    this.ambience.update(ctx, weather, groupGain(this, 'environment'), rain, night);
   }
   debugLog = false;
   /** `silently` is running: no sound effect plays. */
@@ -73,6 +94,8 @@ class AudioBus {
   private handingOver = false;
   /** `hold()` is in force: no music starts, whatever gesture unlocks the bus. */
   private held = false;
+  /** The player paused the music: it stands still, and every volume stays as it is. */
+  private paused = false;
   /** Which set plays and which file; a null track means none is left and the synth loop plays. */
   private readonly musicSets = new MusicSelection();
   /** The playlist of the set playing now. */
@@ -111,7 +134,7 @@ class AudioBus {
     const el = new Audio(src);
     el.loop = false;
     el.preload = 'auto';
-    el.volume = Math.min(1, this.master * this.music);
+    el.volume = this.musicLevel;
     el.addEventListener('canplay', () => {
       if (this.musicEl !== el) return;
       // a synth loop may have been covering while the file loaded
@@ -129,12 +152,51 @@ class AudioBus {
     return el;
   }
 
-  private advanceMusic(failed = false) {
+  /** The element's level: an element refuses anything over 1. */
+  private get musicLevel() {
+    return Math.min(1, musicGain(this));
+  }
+
+  /** The file selected has changed: the old one stops, and the new one plays as the rest allows. */
+  private changeTrack() {
     this.musicEl?.pause();
     this.musicEl = null;
-    this.musicSets.next(failed);
     this.applyMusic();
     this.preload(); // a bus that cannot play yet still fetches the file that comes next
+  }
+
+  private advanceMusic(failed = false) {
+    this.musicSets.next(failed);
+    this.changeTrack();
+  }
+
+  /** On to the next track, as if this one had ended. An age change fading out comes first. */
+  forward() {
+    if (this.handingOver || this.musicSets.track === null) return;
+    this.advanceMusic();
+  }
+
+  /** Back to the track played before this one; with none, nothing changes. */
+  back() {
+    if (this.handingOver || this.musicSets.back() === null) return;
+    this.changeTrack();
+  }
+
+  /** Pause the music, or let it play on from where it stood. No volume or setting changes. */
+  togglePause() {
+    this.paused = !this.paused;
+    this.applyMusic();
+  }
+
+  /** What the now-playing widget shows. */
+  get view(): MusicView {
+    return {
+      title: trackTitle(this.musicSets.track),
+      paused: this.paused,
+      held: this.held,
+      canGoBack: this.musicSets.canGoBack,
+      canGoForward: this.musicSets.track !== null,
+    };
   }
 
   /**
@@ -182,17 +244,26 @@ class AudioBus {
    */
   tryUnlock() {
     this.listen();
-    if (this.unlocked || this.held || this.handingOver || typeof Audio === 'undefined') return;
-    const v = Math.min(1, this.master * this.music);
+    if (this.unlocked || this.held || this.paused) return;
+    if (this.handingOver || typeof Audio === 'undefined') return;
+    const v = this.musicLevel;
     const src = this.musicSets.track;
     if (src === null || v <= 0) return;
     const el = this.musicTrack(src);
     el.volume = v;
     // refused (no click to carry over), or the file failed: its own error event moves it on
     void el.play().then(
-      () => this.unlock(),
+      () => {
+        this.started(el, src);
+        this.unlock();
+      },
       () => {},
     );
+  }
+
+  /** A file is playing: this tab now remembers it, unless the bus has already let go of it. */
+  private started(el: HTMLAudioElement, src: string) {
+    if (this.musicEl === el) rememberPlayed(src);
   }
 
   /**
@@ -226,7 +297,7 @@ class AudioBus {
    * (no music volume) stops it and calls `done` at once.
    */
   private fadeOut(el: HTMLAudioElement, done: () => void) {
-    const from = this.master * this.music > 0 ? el.volume : 0;
+    const from = this.musicLevel > 0 ? el.volume : 0;
     const start = performance.now();
     const step = () => {
       const left = 1 - (performance.now() - start) / MUSIC_FADE_MS;
@@ -242,35 +313,38 @@ class AudioBus {
   }
 
   /**
-   * Start, stop or re-level the music for the current master and music volumes. It does nothing
-   * before the first gesture, while the music is held, or while an age change waits for the old
-   * track to fade out: the handover ends with its own call.
+   * Start, stop or re-level the music for the current master and music volumes and the pause. It
+   * does nothing before the first gesture, while the music is held, or while an age change waits
+   * for the old track to fade out: the handover ends with its own call.
    */
   applyMusic() {
     this.listen();
     if (!this.unlocked || this.held || this.handingOver) return;
-    const v = Math.min(1, this.master * this.music);
+    const v = this.musicLevel;
     const src = this.musicSets.track;
     if (src !== null) {
       const el = this.musicTrack(src);
       el.volume = v;
-      if (v > 0) {
+      if (v > 0 && !this.paused) {
         // autoplay is allowed here: applyMusic only runs after a gesture unlocked the bus
-        void el.play().catch((error: DOMException) => {
-          // playback refused (no gesture yet, or an undecodable file): keep the synth loop
-          if (
-            this.musicEl !== el ||
-            error.name === 'NotAllowedError' ||
-            error.name === 'AbortError'
-          )
-            return;
-          this.advanceMusic(true);
-        });
+        void el.play().then(
+          () => this.started(el, src),
+          (error: DOMException) => {
+            // playback refused (no gesture yet, or an undecodable file): keep the synth loop
+            if (
+              this.musicEl !== el ||
+              error.name === 'NotAllowedError' ||
+              error.name === 'AbortError'
+            )
+              return;
+            this.advanceMusic(true);
+          },
+        );
       } else el.pause();
       this.synth.setMusicVolume(0);
       return;
     }
-    if (v > 0) {
+    if (v > 0 && !this.paused) {
       this.synth.startMusic();
       this.synth.setMusicVolume(v);
     } else this.synth.setMusicVolume(0);
@@ -294,7 +368,7 @@ class AudioBus {
     this.listen();
     if (this.debugLog) console.debug(`[sfx] ${name}`);
     if (this.silent) return;
-    const vol = this.master * this.sfx;
+    const vol = groupGain(this, EVENT_GROUP[name]);
     if (vol <= 0) return;
     const now = performance.now();
     const last = this.lastPlayed.get(name) ?? -1000;

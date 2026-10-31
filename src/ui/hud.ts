@@ -12,6 +12,7 @@ import { compactLevel, topbarCompact, type CompactLevel } from './fit';
 import { historyIconSvg, historyTip, type HistoryWay } from './historyControls';
 import { segmented } from './kit';
 import { MenuBar } from './menuBar';
+import { NowPlaying, type MusicDeck } from './nowPlaying';
 import type { History } from '../sim/history';
 
 export interface HudModel {
@@ -24,8 +25,9 @@ export type HistoryView = Pick<History, 'canUndo' | 'canRedo' | 'undoLabel' | 'r
 
 /**
  * Top bar: title, the menu bar (`menuBar.ts`) and undo and redo on the left; on the right the
- * season, the era widget (the current age's icon and name, and a bar toward the next age; resting
- * on it lists every age with its goals), then day, clock and speed as the last block.
+ * music (`nowPlaying.ts`), the season, the era widget (the current age's icon and name, and a bar
+ * toward the next age; resting on it lists every age with its goals), then day, clock and speed as
+ * the last block.
  *
  * When the bar is short of room (`fit`) it goes `compact` in two steps: first tighter spacing and
  * the weather words in the Weather row's tooltip; only if that is still not enough, the era widget
@@ -60,6 +62,7 @@ export class Hud {
   onLanguage: ((language: Language) => void) | null = null;
   private locked = false;
   private fps = el('span', { class: 'value dim' });
+  private nowPlaying: NowPlaying;
   private weather = el('span', { class: 'value' });
   /** the spacing the bar has now (`fit`), and a fit waiting for the next frame */
   private compact: CompactLevel = 0;
@@ -71,6 +74,7 @@ export class Hud {
     private readonly ages: () => AgeStatus[],
     atlas: AtlasRegistry,
     tooltip: Tooltip,
+    music: MusicDeck,
   ) {
     const time = el('div', { class: 'time' });
     // the buttons read in SPEED_ORDER; speedBtns stays by real index, as clock.speedIndex is
@@ -86,6 +90,7 @@ export class Hud {
       time.append(b);
     }
     this.menuBar = new MenuBar((text) => tipBuild(atlas, () => [title(text)]));
+    this.nowPlaying = new NowPlaying(music, (text) => tipBuild(atlas, () => [title(text())]));
     // the whole widget is the term: resting on it opens the ages tooltip
     const era = ttTerm(
       el('div', { class: 'panel stat era' }, this.eraIcon, this.eraName, this.eraBar, this.eraPct),
@@ -105,6 +110,7 @@ export class Hud {
       this.languageCell,
       el('div', { class: 'spacer' }),
       el('div', { class: 'stat' }, this.fps),
+      this.nowPlaying.root,
       el('div', { class: 'stat weather' }, this.weather),
       era,
       // one block at the right end, the era widget just before it
@@ -246,6 +252,7 @@ export class Hud {
   }
 
   update(m: HudModel) {
+    this.nowPlaying.update();
     this.updateEra(m.tier);
     this.day.textContent = STR.hud.day(this.clock.day);
     this.clockEl.textContent = this.clock.formatClock();

@@ -236,6 +236,11 @@ const ICONS = {
   copy: '<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="1.2"/><path d="M15.5 8.5V4H4v11.5h4.5"/>',
   mountain: '<path d="M2 20l7-12 4 6.5 3-4 6 9.5z"/>',
   keys: '<rect x="3" y="7.5" width="18" height="9" rx="2"/><path d="M8 12h8"/>',
+  speaker:
+    '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/>',
+  pause: '<path d="M8.5 5v14M15.5 5v14"/>',
+  trackback: '<path d="M18.5 5l-9 7 9 7z"/><path d="M5.5 5v14"/>',
+  trackforward: '<path d="M5.5 5l9 7-9 7z"/><path d="M18.5 5v14"/>',
 };
 export type IconName = keyof typeof ICONS;
 

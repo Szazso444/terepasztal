@@ -4966,3 +4966,106 @@ body.title-up
 .btn.pri .age-icon {
   color: inherit;
 }
+
+/* ---- the music in the top bar, left of the weather (nowPlaying.ts) ---- */
+/* over the title's and the pause menu's scrims: the music plays on under them, and is worked here */
+#topbar .now-playing {
+  flex: none;
+  position: relative;
+  z-index: 61;
+  gap: 2px;
+  width: 190px;
+  height: 26px;
+  padding: 0 6px;
+}
+body.title-up #topbar .now-playing:not(.held) {
+  visibility: visible;
+}
+#topbar .now-playing .tt-term {
+  flex: none;
+}
+#topbar .now-playing .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 18px;
+  padding: 0;
+}
+#topbar .now-playing .btn .k-ic {
+  margin: 0;
+  font-size: 12px;
+}
+#topbar .now-playing .btn:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+#topbar .now-playing .tt-term:last-child {
+  flex: 1;
+  min-width: 0;
+  margin-left: 4px;
+}
+.np-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-body);
+  font-size: 11px;
+}
+.np-title.paused {
+  color: var(--text-dim);
+}
+.np-text {
+  display: inline-block;
+}
+.np-title.roll {
+  mask-image: linear-gradient(90deg, #000 calc(100% - 8px), transparent);
+}
+.np-title.roll .np-text {
+  animation: np-roll var(--np-time) ease-in-out infinite alternate;
+}
+.np-title.roll.paused .np-text {
+  animation-play-state: paused;
+}
+/* it stands at each end for the part of a roll `nowPlaying.ts` does not count as moving */
+@keyframes np-roll {
+  0%,
+  20% {
+    transform: translateX(0);
+  }
+  80%,
+  100% {
+    transform: translateX(var(--np-shift));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .np-title.roll .np-text {
+    animation: none;
+  }
+}
+/* below the width the bar is laid out for, the buttons stay and the title goes */
+@media (max-width: 1279px) {
+  #topbar .now-playing {
+    width: auto;
+  }
+  #topbar .now-playing .tt-term:last-child {
+    display: none;
+  }
+}
+
+/* ---- the Audio screen: rows stand in under the row they answer to ---- */
+.au-ctl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.au-depth1 {
+  padding-left: 30px;
+}
+.au-depth2 {
+  padding-left: 50px;
+}
+.au-silenced .k-lab,
+.au-silenced .k-sl {
+  opacity: 0.45;
+}

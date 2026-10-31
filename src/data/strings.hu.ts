@@ -84,6 +84,14 @@ export const HU: Strings = {
     ageUp: (t: number) =>
       `Elkezdődött: ${ageLabel(t)}. Új üzemek, állomások és járművek érhetők el.`,
   },
+  nowPlaying: {
+    pause: 'Zene szüneteltetése',
+    play: 'Zene lejátszása',
+    back: 'Előző szám',
+    noBack: 'Ez előtt még nem szólt más szám',
+    forward: 'Következő szám',
+    noTrack: 'A játék saját dallama',
+  },
   history: {
     undo: 'Visszavonás',
     redo: 'Újra',
@@ -1305,9 +1313,16 @@ export const HU: Strings = {
     master: 'Fő hangerő',
     sfx: 'Effektek',
     music: 'Zene',
-    ambient: 'Természet és időjárás',
+    soundGroups: {
+      weather: { label: 'Időjárás', covers: 'A szél' },
+      environment: { label: 'Környezet', covers: 'Madarak és tücskök' },
+      ui: { label: 'Kezelőfelület', covers: 'Gombok és képernyők' },
+      building: { label: 'Építés', covers: 'Lerakás és bontás' },
+      trains: { label: 'Vonatok', covers: 'Indulás, füttyszó, érkezés' },
+      events: { label: 'Események', covers: 'Szerződések, korok, fejlesztések, gyártás' },
+    },
     audioNote:
-      'Minden játékot a Pastoral Pulse nyit, utána a négy hangszerelése szól, véletlen sorrendben. A természet hangjai az időjárást és a napszakot követik.',
+      'A játékot a Pastoral Pulse nyitja, utána mind a nyolc szám véletlen sorrendben szól, körönként. A kikapcsolt sor megtartja a szintjét.',
     gameplay: 'Játékmenet',
     language: 'Nyelv',
     languageNote: 'A nyelvváltás újratölti az oldalt; a folyamatban lévő játékot előbb menti.',
