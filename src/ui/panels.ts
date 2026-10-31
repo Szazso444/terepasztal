@@ -626,6 +626,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const historyStep = (way: HistoryWay) => {
     if (menuOpen() || host.recordingRoute) return;
     if (!stepHistory(way, d.commands.history, toast)) return;
+    // a tooltip open now tells of the world before the step
+    d.tooltip.stack.closeAll();
     d.build.dropGone();
     stationPanel.render();
     buildingPanel.render();

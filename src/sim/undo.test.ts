@@ -266,6 +266,7 @@ describe('building, one action one step', () => {
         { x: 15, y: ROW - 5 },
       ),
     );
+    expect(g.history.undoLabel).toBe(`Built ${g.builder.roads.size - roads} tiles of road`);
     g.history.undo();
     expect(g.builder.roads.size).toBe(roads);
   });

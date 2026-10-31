@@ -553,7 +553,8 @@ export function stepLabel(ops: readonly BuildOp[]): string {
       return first.now ? H.builtTiles(n, kind) : H.demolishedTiles(n, kind);
     }
     case 'road': {
-      const n = main.filter((op) => op.op === 'road').length;
+      // the spurs a stroke brought are tiles of road it built
+      const n = ops.filter((op) => op.op === 'road').length;
       return first.laid ? H.builtTiles(n, H.road) : H.demolishedTiles(n, H.road);
     }
     case 'stationLevel': {
