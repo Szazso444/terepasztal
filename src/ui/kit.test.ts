@@ -6,6 +6,7 @@ import {
   DialogFlow,
   clampToRange,
   footerLayout,
+  isShown,
   meterPercent,
   nextIndex,
   parseNumber,
@@ -37,7 +38,25 @@ describe('a slider and a number field keep to their range', () => {
   });
 
   it('keeps the top reachable when the steps do not land on it', () => {
+    const OFF = { min: 0, max: 10, step: 3 };
     expect(clampToRange(5, { min: 0, max: 5, step: 2 })).toBe(5);
+    // a third of a step past the last one, which rounds down to it
+    expect(clampToRange(10, OFF)).toBe(10);
+    expect(clampToRange(99, OFF)).toBe(10);
+    // the top is a stop like the others: the nearer one wins
+    expect(clampToRange(9.9, OFF)).toBe(10);
+    expect(clampToRange(9.4, OFF)).toBe(9);
+    expect(stepNumber(9, 1, OFF)).toBe(10);
+  });
+
+  it('steps down from a top off the steps to the last step, jumping none', () => {
+    expect(stepNumber(10, -1, { min: 0, max: 10, step: 3 })).toBe(9);
+  });
+
+  it('steps from a value between two steps to the next stop that way', () => {
+    expect(stepNumber(50, 1, STOP_TIME)).toBe(60);
+    expect(stepNumber(50, -1, STOP_TIME)).toBe(45);
+    expect(stepNumber(105, 1, DEAL, true)).toBe(200);
   });
 
   it('leaves no float noise on a fractional step', () => {
@@ -119,6 +138,13 @@ describe('Tab goes round the controls of a frame', () => {
     expect(nextIndex(4, 3, false)).toBe(0);
     expect(nextIndex(4, 0, true)).toBe(3);
     expect(nextIndex(4, 1, false)).toBe(2);
+  });
+});
+
+describe('what Tab counts as a control that shows', () => {
+  it('skips what is not drawn: it has no boxes', () => {
+    expect(isShown({ getClientRects: () => [{}] })).toBe(true);
+    expect(isShown({ getClientRects: () => [] })).toBe(false);
   });
 });
 
@@ -284,12 +310,21 @@ describe('the game asks in its own dialog', () => {
     });
   }
 
-  /** The calls of the browser's own `confirm` and `alert` in `text`. */
+  /**
+   * The two `prompt()` of the level editor (Save as, Regenerate), which PR 12d takes out of
+   * `game.ts`. Only they pass, and this goes with them.
+   */
+  const LEFT_TO_12D = /\/src\/game\.ts: prompt\(STR\.(editor\.newName|settings\.seedPlaceholder)\b/;
+
+  /** The calls of the browser's own `confirm`, `alert` and `prompt` in `text`. */
   function nativeDialogs(file: string, text: string): string[] {
     const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
     const found: string[] = [];
     const visit = (n: ts.Node) => {
-      if (ts.isCallExpression(n) && /^(window\.)?(confirm|alert)$/.test(n.expression.getText(sf)))
+      if (
+        ts.isCallExpression(n) &&
+        /^(window\.)?(confirm|alert|prompt)$/.test(n.expression.getText(sf))
+      )
         found.push(`${file}: ${n.getText(sf)}`);
       ts.forEachChild(n, visit);
     };
@@ -297,16 +332,37 @@ describe('the game asks in its own dialog', () => {
     return found;
   }
 
-  it('has no native confirm() or alert() left in src', () => {
+  it('has no native confirm(), alert() or prompt() left in src', () => {
     const found = sources(new URL('../', import.meta.url)).flatMap((f) =>
       nativeDialogs(f.pathname, readFileSync(f, 'utf8')),
     );
-    expect(found).toEqual([]);
+    expect(found.filter((f) => !LEFT_TO_12D.test(f))).toEqual([]);
   }, 30_000);
 
   it('sees one, and not a method of the same name', () => {
     expect(
-      nativeDialogs('sample.ts', `confirm('a'); window.alert('b'); this.prompt.confirm('c', 'd');`),
-    ).toHaveLength(2);
+      nativeDialogs(
+        'sample.ts',
+        `confirm('a'); window.alert('b'); prompt('c'); this.prompt.confirm('d', 'e');`,
+      ),
+    ).toHaveLength(3);
+  });
+
+  it('lets through only the two left to PR 12d', () => {
+    const passes = (line: string) => LEFT_TO_12D.test(line);
+    expect(passes('/x/src/game.ts: prompt(STR.editor.newName, editor.level.name)')).toBe(true);
+    expect(passes('/x/src/game.ts: prompt(STR.settings.seedPlaceholder, s)')).toBe(true);
+    expect(passes('/x/src/game.ts: prompt(STR.station.rename, s.name)')).toBe(false);
+    expect(passes('/x/src/ui/stationPanel.ts: prompt(STR.editor.newName, n)')).toBe(false);
+  });
+});
+
+describe('the kit section of the stylesheet', () => {
+  const css = readFileSync(new URL('./style.css', import.meta.url), 'utf8');
+  const kit = css.slice(css.indexOf('/* ---- the screen frame and the kit'));
+
+  it('changes no disabled button of a screen not redone: its rule stays inside the kit', () => {
+    expect(kit).toContain('.k-page .btn:disabled');
+    expect(kit).not.toMatch(/^\.btn:disabled/m);
   });
 });

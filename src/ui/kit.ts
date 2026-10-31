@@ -22,7 +22,10 @@ export interface NumberRange {
   whole?: boolean;
 }
 
-/** `v` inside the range and on its steps; the ends are always reachable, not a number is `min`. */
+/**
+ * `v` inside the range and on its nearest stop: the steps, and the top, which is a stop of its own
+ * when they do not land on it. Not a number is `min`.
+ */
 export function clampToRange(v: number, r: NumberRange): number {
   if (Number.isNaN(v)) return r.min;
   const inside = Math.min(r.max, Math.max(r.min, v));
@@ -30,13 +33,21 @@ export function clampToRange(v: number, r: NumberRange): number {
   if (!r.step) return inside;
   const stepped = r.min + Math.round((inside - r.min) / r.step) * r.step;
   // 0.1 + 0.2 stays 0.3: no value here has six decimals
-  return Math.min(r.max, Math.round(stepped * 1e6) / 1e6);
+  const stop = Math.min(r.max, Math.round(stepped * 1e6) / 1e6);
+  return r.max - inside < Math.abs(inside - stop) ? r.max : stop;
 }
 
-/** One press of − (-1) or + (1); `big` is Shift held. */
+/**
+ * One press of − (-1) or + (1); `big` is Shift held. From a value between two steps, such as a top
+ * they do not land on, it counts from the step next to it that way, so no stop is jumped.
+ */
 export function stepNumber(v: number, dir: 1 | -1, r: NumberRange, big = false): number {
   const by = (big ? r.bigStep : undefined) ?? r.step ?? 1;
-  return clampToRange(v + dir * by, r);
+  if (!r.step) return clampToRange(v + dir * by, r);
+  const steps = (v - r.min) / r.step;
+  const between = Math.abs(steps - Math.round(steps)) > 1e-6;
+  const edge = dir > 0 ? Math.floor(steps) : Math.ceil(steps);
+  return clampToRange((between ? r.min + edge * r.step : v) + dir * by, r);
 }
 
 /** What was typed in a number field; text that is no number leaves `current`. */
@@ -65,6 +76,11 @@ export function pickOption(options: readonly { id: string }[], id: string, curre
 export function nextIndex(count: number, at: number, back: boolean): number {
   if (at < 0) return back ? count - 1 : 0;
   return (at + (back ? count - 1 : 1)) % count;
+}
+
+/** Is the control drawn? A folded list's buttons are in the page, and take no focus. */
+export function isShown(e: { getClientRects(): { length: number } }): boolean {
+  return e.getClientRects().length > 0;
 }
 
 /** One action of a screen's footer. */
@@ -456,6 +472,8 @@ function fieldKeys(
   escape?: () => void,
 ) {
   (f as HTMLElement).addEventListener('keydown', (e) => {
+    // Tab goes on to the frame, which keeps the focus inside it
+    if (e.key === 'Tab') return;
     e.stopPropagation();
     if (e.key === 'Escape') {
       escape?.();

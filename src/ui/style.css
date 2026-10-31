@@ -256,7 +256,7 @@ body {
 #topbar .datespeed .time {
   padding: 0 10px 0 4px;
 }
-/* undo and redo beside the title: a disabled button lets the pointer through to its tooltip */
+/* undo and redo right of the menus: a disabled button lets the pointer through to its tooltip */
 #topbar .history {
   gap: 2px;
   padding: 0 6px;
@@ -333,13 +333,67 @@ body {
     box-shadow: 0 0 8px 1px rgba(224, 160, 64, 0.45);
   }
 }
-#topbar .actions .btn.cheat {
-  color: var(--text-dim);
-}
-/* the screen buttons give way last, by clipping; the era widget and the date and speed never do */
-#topbar .actions {
+/* the menu bar gives way last, by clipping; the era widget and the date and speed never do */
+#topbar .menus {
+  gap: 3px;
+  padding: 0 6px;
   min-width: 0;
   overflow: hidden;
+}
+.mb-entry {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mb-entry .badge {
+  margin-left: 0;
+}
+.mb-menu::after {
+  content: '▾';
+  font-size: 9px;
+  opacity: 0.6;
+}
+.mb-icon {
+  display: flex;
+}
+/* the open menu: over the whole HUD, under the tooltips, the menus and the modal screens */
+#menu-pane {
+  position: absolute;
+  top: 30px;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  padding: 3px;
+  z-index: 30;
+}
+.btn.mb-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 5px 9px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  text-align: left;
+  white-space: nowrap;
+}
+.btn.mb-item:hover {
+  background: var(--stone-light);
+}
+.btn.mb-item kbd {
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 11px;
+}
+.btn.mb-item.on {
+  color: var(--cyan);
+}
+.btn.mb-item.on::after {
+  content: '✓';
+}
+.btn.mb-item.mb-cheat {
+  color: var(--text-dim);
 }
 #topbar .datespeed,
 #topbar > .tt-term {
@@ -353,8 +407,7 @@ body {
   gap: 4px;
   padding: 0 5px;
 }
-#topbar.compact .btn.small,
-#topbar.compact .actions .btn {
+#topbar.compact .btn.small {
   padding: 1px 4px;
 }
 #topbar.compact .stat.weather,
@@ -1369,9 +1422,6 @@ input.text {
 .state-stranded {
   color: #e0715f;
 }
-#topbar .actions .btn {
-  padding: 1px 8px;
-}
 
 /* ---- contracts side list ---- */
 #right-col {
@@ -2171,10 +2221,6 @@ input[type='range'] {
   border-bottom: none;
   cursor: inherit;
 }
-#topbar .stat.toggles .btn.active {
-  color: var(--cyan);
-  border-color: var(--cyan-dark);
-}
 #train-side .panel-title .num {
   margin-left: auto;
 }
@@ -2938,8 +2984,10 @@ select.text.small {
   background: #c4463b;
   color: #fff4ec;
 }
-.btn:disabled,
-.btn:disabled:hover {
+.k-page .btn:disabled,
+.k-page .btn:disabled:hover,
+.k-foot .btn:disabled,
+.k-foot .btn:disabled:hover {
   background: var(--iron);
   opacity: 0.45;
   color: var(--text);
@@ -3421,6 +3469,10 @@ select.text.small {
 }
 .k-field:focus-within {
   border-color: var(--amber);
+}
+.k-field > input:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 .k-field > .k-ic {
   color: var(--text-dim);

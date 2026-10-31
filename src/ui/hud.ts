@@ -5,10 +5,12 @@ import type { AgeStatus } from '../sim/ages';
 import type { AtlasRegistry } from '../engine/atlas';
 import { ttTerm, type Tooltip } from './tooltip';
 import { tipBuild } from './tooltipRender';
+import { title } from './tooltipDoc';
 import { ageTip, eraView } from './ageTooltip';
 import { ageIconSvg } from './ageIcon';
 import { compactLevel, topbarCompact, type CompactLevel } from './fit';
 import { historyIconSvg, historyTip, type HistoryWay } from './historyControls';
+import { MenuBar } from './menuBar';
 import type { History } from '../sim/history';
 
 export interface HudModel {
@@ -21,16 +23,16 @@ export interface HudModel {
 export type HistoryView = Pick<History, 'canUndo' | 'canRedo' | 'undoLabel' | 'redoLabel'>;
 
 /**
- * Top bar: title, undo and redo, menu and screen buttons on the left; on the right the weather/day
- * toggles, the season, the era widget (the current age's icon and name, and a bar toward the next
- * age; resting on it lists every age with its goals), then day, clock and speed as the last block.
- * Tickets live in `funds`, which the game places at the right end of the resource row (the money
- * itself is the resource bar's first cell).
+ * Top bar: title, the menu bar (`menuBar.ts`) and undo and redo on the left; on the right the
+ * season, the era widget (the current age's icon and name, and a bar toward the next age; resting
+ * on it lists every age with its goals), then day, clock and speed as the last block. Tickets live
+ * in `funds`, which the game places at the right end of the resource row (the money itself is the
+ * resource bar's first cell).
  *
  * When the bar is short of room (`fit`) it goes `compact` in two steps: first tighter spacing and
- * the weather words in the Weather toggle's tooltip; only if that is still not enough, the era
- * widget without the age's name as well (`compact-2`; its tooltip has the name). The era widget
- * and the date and speed never give way; past that, the screen buttons are cut.
+ * the weather words in the Weather row's tooltip; only if that is still not enough, the era widget
+ * without the age's name as well (`compact-2`; its tooltip has the name). The era widget and the
+ * date and speed never give way; past that, the menu bar is cut.
  */
 export class Hud {
   readonly root: HTMLElement;
@@ -46,24 +48,17 @@ export class Hud {
   private day = el('span', { class: 'value' });
   private clockEl = el('span', { class: 'value' });
   private speedBtns: HTMLButtonElement[] = [];
-  readonly actions = el('div', { class: 'stat actions', style: 'gap:4px' });
-  readonly menuBtn = btn(STR.menu.menuButton, () => this.onMenu?.(), 'small');
+  /** the menus: `createPlayUi` wires them and puts their pane in `#ui-root` */
+  readonly menuBar: MenuBar;
   private undoBtn = this.historyBtn('undo');
   private redoBtn = this.historyBtn('redo');
-  /** undo and redo beside the title; the level editor records nothing and hides them */
+  /** undo and redo right of the menus; the level editor records nothing and hides them */
   private historyCell = el('div', { class: 'stat history' });
   /** what the history can do now; its tooltips read it when they open */
   private history: HistoryView | null = null;
   /** the tickets block for the resource row */
   readonly funds: HTMLElement;
-  /** slot for the advisor button and other top-right controls */
-  readonly rightActions = el('div', { class: 'stat', style: 'gap:4px' });
-  readonly weatherBtn = btn(STR.hud.weatherToggle, () => this.onToggleWeather?.(), 'small');
-  readonly dayBtn = btn(STR.hud.dayToggle, () => this.onToggleDay?.(), 'small');
-  onMenu: (() => void) | null = null;
   onHistory: ((way: HistoryWay) => void) | null = null;
-  onToggleWeather: (() => void) | null = null;
-  onToggleDay: (() => void) | null = null;
   private locked = false;
   private fps = el('span', { class: 'value dim' });
   private weather = el('span', { class: 'value' });
@@ -93,8 +88,7 @@ export class Hud {
       this.speedBtns[i] = b;
       time.append(b);
     }
-    this.weatherBtn.title = STR.hud.weatherToggleHint;
-    this.dayBtn.title = STR.hud.dayToggleHint;
+    this.menuBar = new MenuBar((text) => tipBuild(atlas, () => [title(text)]));
     this.funds = el('div', { class: 'funds' }, stat(STR.hud.tickets, this.tickets));
     // the whole widget is the term: resting on it opens the ages tooltip
     const era = ttTerm(
@@ -109,13 +103,10 @@ export class Hud {
       'div',
       { id: 'topbar', class: 'panel' },
       el('div', { class: 'title', text: STR.title }),
+      this.menuBar.root,
       this.historyCell,
-      el('div', { class: 'stat' }, this.menuBtn),
-      this.actions,
       el('div', { class: 'spacer' }),
       el('div', { class: 'stat' }, this.fps),
-      this.rightActions,
-      el('div', { class: 'stat toggles' }, this.weatherBtn, this.dayBtn),
       el('div', { class: 'stat weather' }, this.weather),
       era,
       // one block at the right end, the era widget just before it
@@ -123,7 +114,7 @@ export class Hud {
     );
     tooltip.bindTerms(this.root);
     // a window resize, or a cell that grows or shrinks (an age, the weather, the advisor's badge, the
-    // editor hiding the screen buttons), changes the room; the observer fires on a change only
+    // editor hiding entries of the menu bar), changes the room; the observer fires on a change only
     if (typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver(() => this.queueFit());
       ro.observe(this.root);
@@ -160,18 +151,19 @@ export class Hud {
 
   /**
    * The loosest spacing at which everything fits (`compactLevel`): normal, then `compact`, then
-   * `compact-2`, each laid out on its own and measured for overflow or a cut in the screen buttons
-   * or the weather text (`topbarCompact`). So the answer does not depend on the last one, and the
-   * classes and the tooltip are written only when it changed.
+   * `compact-2`, each laid out on its own and measured for overflow or a cut in the menu bar or the
+   * weather text (`topbarCompact`). So the answer does not depend on the last one, and the classes
+   * and the tooltip are written only when it changed. An open menu follows its entry.
    */
   private fit() {
     const bar = this.root;
     const level =
       compactLevel((at) => {
         this.setLevelClasses(at);
-        return topbarCompact(bar, [this.actions, this.weather]);
+        return topbarCompact(bar, [this.menuBar.root, this.weather]);
       }) ?? this.compact; // a hidden bar has no answer: keep the last one
     this.setLevelClasses(level);
+    this.menuBar.place();
     if (level === this.compact) return;
     this.compact = level;
     this.titleWeather();
@@ -182,21 +174,23 @@ export class Hud {
     this.root.classList.toggle('compact-2', level >= 2);
   }
 
-  /** The Weather toggle's tooltip: in compact, the weather words the bar no longer shows. */
+  /** The Weather row's tooltip: in compact, the weather words the bar no longer shows. */
   private titleWeather() {
     const now = this.weather.textContent ?? '';
-    this.weatherBtn.title =
-      this.compact >= 1 && now ? STR.hud.weatherToggleHintNow(now) : STR.hud.weatherToggleHint;
+    this.menuBar.setHint(
+      'weather',
+      this.compact >= 1 && now ? STR.hud.weatherToggleHintNow(now) : STR.hud.weatherToggleHint,
+    );
   }
 
   setToggles(weather: boolean, day: boolean) {
-    this.weatherBtn.classList.toggle('active', weather);
-    this.dayBtn.classList.toggle('active', day);
+    this.menuBar.setOn('weather', weather);
+    this.menuBar.setOn('dayNight', day);
   }
 
   /** Editor: hide the game screens and freeze the clock controls. */
   setEditor(on: boolean) {
-    this.actions.style.display = on ? 'none' : '';
+    this.menuBar.setMode(on ? 'editor' : 'play');
     this.historyCell.style.display = on ? 'none' : '';
     this.locked = on;
     for (const b of this.speedBtns) b.disabled = on;

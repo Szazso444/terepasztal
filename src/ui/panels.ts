@@ -1,4 +1,4 @@
-import { el, btn, fmtMoney } from './dom';
+import { el, fmtMoney } from './dom';
 import { STR } from '../strings';
 import { sfx } from '../engine/audio';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -339,6 +339,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   d.screens.pausedUnder = () =>
     host.mode === 'play' && (pauseMenu.visible || (mainMenu.visible && titleOverGame));
   d.screens.onChange = (sc) => {
+    hud.menuBar.close();
     pauseMenu.setCovered(!!sc);
     if (sc && !sc.keepsTool) d.build.setTool({ kind: 'none' });
     if (!sc) {
@@ -508,15 +509,33 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   };
   const contractsSide = new ContractsSide(d.contracts, d.builder, d.clock);
   contractsSide.onOpenBoard = () => d.screens.toggle(contractsScreen);
-  hud.actions.append(
-    btn(STR.topbar.depot, () => d.screens.toggle(depot), 'small'),
-    btn(STR.topbar.contracts, () => d.screens.toggle(contractsScreen), 'small'),
-    btn(STR.topbar.craft, () => d.screens.toggle(craftingScreen), 'small'),
-    btn(STR.topbar.roster, () => d.screens.toggle(rosterScreen), 'small'),
-    btn(STR.topbar.market, () => d.screens.toggle(marketScreen), 'small'),
-    btn(STR.topbar.cheat, () => host.cheat(), 'small cheat'),
-    btn(STR.topbar.settings, () => d.screens.toggle(settingsScreen), 'small'),
-  );
+  hud.menuBar.actions = {
+    pause: () => (menuOpen() ? closeMenus() : openPauseMenu()),
+    save: () => void host.save(),
+    savedGames: () => openPauseMenu(true),
+    settings: () => d.screens.toggle(settingsScreen),
+    quit: quitToTitle,
+    depot: () => d.screens.toggle(depot),
+    roster: () => d.screens.toggle(rosterScreen),
+    signals: showSignalGuide,
+    contracts: () => d.screens.toggle(contractsScreen),
+    market: () => d.screens.toggle(marketScreen),
+    crafting: () => d.screens.toggle(craftingScreen),
+    cheat: () => host.cheat(),
+    overview: () => host.toggleOverview(),
+    weather: () => {
+      d.settings.weather = !d.settings.weather;
+      host.applySettings();
+    },
+    dayNight: () => {
+      d.settings.dayNight = !d.settings.dayNight;
+      host.applySettings();
+    },
+    advisor: () => advisor.toggle(),
+    notifications: () => notificationsScreen.openFrom(null),
+  };
+  // the game applied its settings before this UI existed
+  hud.setToggles(d.settings.weather, d.settings.dayNight);
 
   const minimap = new Minimap(d.map, d.regions, d.camera, (wx, wy) => host.centerCamera(wx, wy));
   const debug = new DebugPanel(host.seed, {
@@ -595,15 +614,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.settings.advisor = !v;
     host.saveSettings();
   };
-  hud.rightActions.append(advisor.button, btn(STR.hud.signalGuide, showSignalGuide, 'small'));
-  hud.onToggleWeather = () => {
-    d.settings.weather = !d.settings.weather;
-    host.applySettings();
-  };
-  hud.onToggleDay = () => {
-    d.settings.dayNight = !d.settings.dayNight;
-    host.applySettings();
-  };
+  advisor.onCount = (count, urgent) => hud.menuBar.setBadge('advisor', count, urgent);
   trainSide.onRefuel = (trains) => {
     const ok = d.fleet.refuelAll(trains);
     d.toasts.push(ok ? STR.trainSide.refuelled : STR.trainSide.refuelShort, ok ? 'good' : 'warn');
@@ -637,6 +648,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       render: (doc) => renderTip(doc, d.atlas),
       bindTerms: (scope) => d.tooltip.bindTerms(scope),
     },
+    d.namePrompt,
   );
   const townPanel = new TownPanel(d.towns, d.houses, stores);
   townPanel.onGo = (t) => {
@@ -748,11 +760,24 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   function openMainMenu() {
     showMainMenu(false);
   }
-  function openPauseMenu() {
+  /** `slotsOpen` shows the named saves unfolded, for the menu bar's Saved games. */
+  function openPauseMenu(slotsOpen = false) {
     if (mainMenu.visible) return;
     host.pauseGame();
     d.screens.close();
-    pauseMenu.show({ testing: !!testingLevel(), editor: host.mode === 'editor' });
+    pauseMenu.show({ testing: !!testingLevel(), editor: host.mode === 'editor' }, slotsOpen);
+  }
+  /** Leave for the title screen: from the editor by a reload, asking over unsaved changes. */
+  function quitToTitle() {
+    if (host.mode !== 'editor') showMainMenu(true);
+    else if (!host.editor?.dirty) host.reloadToMenu();
+    else
+      void d.namePrompt
+        .confirm(STR.editor.unsavedTitle, STR.editor.unsaved, {
+          yes: STR.prompt.leave,
+          danger: true,
+        })
+        .then((ok) => ok && host.reloadToMenu());
   }
   function closeMenus() {
     pauseMenu.hide();
@@ -898,21 +923,10 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       tuning: () => d.screens.open(tuningScreen),
       content: () => d.screens.open(contentScreen),
       backToEditor: () => host.backToEditor(),
-      mainMenu: () => {
-        if (host.mode !== 'editor') showMainMenu(true);
-        else if (!host.editor?.dirty) host.reloadToMenu();
-        else
-          void d.namePrompt
-            .confirm(STR.editor.unsavedTitle, STR.editor.unsaved, {
-              yes: STR.prompt.leave,
-              danger: true,
-            })
-            .then((ok) => ok && host.reloadToMenu());
-      },
+      mainMenu: quitToTitle,
     },
     d.namePrompt,
   );
-  hud.onMenu = () => (menuOpen() ? closeMenus() : openPauseMenu());
 
   d.uiRoot.append(
     mainMenu.root,
@@ -923,6 +937,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     el('div', { class: 'vignette' }),
     yieldLabel.root,
     hud.root,
+    hud.menuBar.pane,
     resourceBar.root,
     alertBar.root,
     minimap.root,
@@ -988,10 +1003,18 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     get tooltipsOpen() {
       return d.tooltip.stack.open;
     },
+    get barMenuOpen() {
+      return hud.menuBar.isOpen;
+    },
     toggleDebug: () => debug.toggle(),
     closeTooltips: () => {
       // the build controller reads Escape later in the same frame: this one is spent
       if (d.tooltip.stack.escape()) d.build.takeEscape();
+    },
+    closeBarMenu: () => {
+      // an Escape that closed it is spent as well: the tool in hand stays
+      hud.menuBar.close();
+      d.build.takeEscape();
     },
     closeScreen: () => d.screens.back(),
     closeMenus,

@@ -3,6 +3,7 @@ import { STR } from '../strings';
 import {
   actionButton,
   footerLayout,
+  isShown,
   keyBadge,
   lineIcon,
   nextIndex,
@@ -42,8 +43,8 @@ export interface Screen {
   /** a line icon before the title */
   readonly icon?: IconName;
   /**
-   * The keys that work controls stay in the frame, as the game takes Tab and Space for itself: Tab
-   * goes round its controls, Space and Enter press the one that has the focus.
+   * The keys that work controls stay in the frame: Tab goes round the controls that show, and Enter
+   * presses the one that has the focus. Space stays the game's pause key and presses nothing.
    */
   readonly formKeys?: boolean;
   /** the tab strip under the header, read again at every refresh; none without it */
@@ -163,6 +164,8 @@ export class ScreenFrame {
   private drawnFoot: string | null = null;
   private tabs: FrameTabs | null = null;
   private layout: FootLayout | null = null;
+  private leftButtons: HTMLButtonElement[] = [];
+  private rightButtons: HTMLButtonElement[] = [];
 
   /** @param leave what ×, Back and Done do */
   constructor(private readonly leave: () => void) {
@@ -181,6 +184,7 @@ export class ScreenFrame {
       this.foot,
     );
     this.root.addEventListener('keydown', (e) => this.onKey(e));
+    this.root.addEventListener('keyup', (e) => this.onKeyUp(e));
   }
 
   show(s: Screen, state: FrameState) {
@@ -229,11 +233,17 @@ export class ScreenFrame {
 
   /** The rightmost button of the footer, which a dialog puts the focus on. */
   get primaryButton(): HTMLElement | null {
-    return this.foot.querySelector('.k-fr .btn:last-child');
+    return this.rightButtons[this.rightButtons.length - 1] ?? null;
+  }
+  /** The leftmost button of the footer: where a dialog that destroys something puts the focus. */
+  get cancelButton(): HTMLElement | null {
+    return this.leftButtons[0] ?? null;
   }
 
   private drawFoot() {
     const l = this.layout;
+    this.leftButtons = [];
+    this.rightButtons = [];
     if (!l) {
       this.foot.replaceChildren();
       return;
@@ -246,29 +256,40 @@ export class ScreenFrame {
         title: a.title,
         disabled: a.disabled,
       });
+    this.leftButtons = l.left.map(button('left'));
+    this.rightButtons = l.right.map(button('right'));
     this.foot.replaceChildren(
       el(
         'div',
         { class: 'k-fl' },
-        ...l.left.map(button('left')),
+        ...this.leftButtons,
         l.note ? el('span', { class: 'k-note', text: l.note }) : null,
       ),
-      el('div', { class: 'k-fr' }, ...l.right.map(button('right'))),
+      el('div', { class: 'k-fr' }, ...this.rightButtons),
     );
   }
 
   private onKey(e: KeyboardEvent) {
     if (!this.screen?.formKeys) return;
-    if (e.code !== 'Tab' && e.code !== 'Space' && e.code !== 'Enter') return;
+    // it goes on to the game: time keys work under a plain screen. Only the press stops here
+    if (e.code === 'Space') e.preventDefault();
+    if (e.code !== 'Tab' && e.code !== 'Enter') return;
     e.stopPropagation();
     if (e.code !== 'Tab') return;
     e.preventDefault();
     const all = [
-      ...this.root.querySelectorAll<HTMLElement>('button:not(:disabled), input, textarea'),
-    ];
+      ...this.root.querySelectorAll<HTMLElement>(
+        'button:not(:disabled), input:not(:disabled), textarea',
+      ),
+    ].filter(isShown);
     if (!all.length) return;
     const at = all.indexOf(document.activeElement as HTMLElement);
     all[nextIndex(all.length, at, e.shiftKey)].focus();
+  }
+
+  /** A browser may press a button as Space comes up, whatever became of its going down. */
+  private onKeyUp(e: KeyboardEvent) {
+    if (this.screen?.formKeys && e.code === 'Space') e.preventDefault();
   }
 }
 
@@ -282,7 +303,11 @@ export class ScreenManager {
   private frame = new ScreenFrame(() => this.back());
   private stack = new ScreenStack<Screen>({
     show: (s) => this.show(s),
-    changed: (s) => this.onChange?.(s),
+    changed: (s) => {
+      // what `onOpen` has just worked out, such as a tab's count, shows at once
+      if (s) this.frame.sync();
+      this.onChange?.(s);
+    },
   });
   onChange: ((s: Screen | null) => void) | null = null;
   /** a menu stands under the screens, which go back to it */
