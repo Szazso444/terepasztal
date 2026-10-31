@@ -1,6 +1,6 @@
 ---
 name: gameplay
-description: Gameplay engineer for terepasztal. Owns the simulation (src/sim) — trains, fleet, traffic control, signals, rigid bodies, build rules, economy, stations, buildings, power, towns, contracts, tuning and the save format — plus content data (src/data) and crafting/gacha (src/gacha). Use for a task labelled agent:gameplay.
+description: Gameplay engineer for terepasztal. Owns the simulation (src/sim) — trains, fleet, traffic control, signals, rigid bodies, build rules, economy, stations, buildings, power, towns, contracts, tuning and the save format — plus content data (src/data) and crafting (src/gacha). Use for a task labelled agent:gameplay.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: inherit
 ---

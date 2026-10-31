@@ -74,7 +74,7 @@ builds. `docs/live-loop.md` describes the loop it belongs to.
 - `src/world` map generation, tiles, regions, track graph and geometry, pathfinding, levels
 - `src/sim` the simulation: clock, economy, stations, buildings, power, trains, fleet, traffic
   control, towns, contracts, build rules, save format
-- `src/gacha` crafting and banners
+- `src/gacha` crafting, the inventory and the vehicle items
 - `src/render` world, overview, trains, effects
 - `src/ui` DOM overlay screens and panels; `src/editor` the level editor
 - `src/strings.ts` every player-facing string
@@ -133,13 +133,14 @@ the generator instead of replacing it, and `resolution` (1 to 8) is texels per w
 (`src/engine/atlas.ts`). `tools/pack-atlas.mjs` writes it; `docs/mcp-setup.md` section 6 has the
 camera, facing and anchor rules for producing the frames in Blender.
 
-**User-facing text lives in `src/strings.ts`.** The game is in English only, for now. Strings are
-kept flat so a translation table can mirror them later. Do not hardcode a string in a panel or in
-the simulation. The one exception is tuning: each rule's English label, group and hint live in
+**User-facing text lives in `src/strings.ts`.** The game is in English and Hungarian:
+`src/data/strings.hu.ts` mirrors that table key for key, `src/data/names.hu.ts` holds the Hungarian
+names of content by id, and the language never reaches the world or a save. Do not hardcode a
+string in a panel or in the simulation. The one exception is tuning: each rule's English label, group and hint live in
 `RULE_META` in `src/sim/rules.ts`, next to its range.
 
-**Content is data.** Locomotives, wagons, cargo, stations, contracts, decor, buildings, crafting
-and gacha are JSON in `src/data`, and the in-client content editor can override any table from
+**Content is data.** Locomotives, wagons, cargo, stations, contracts, decor, buildings and
+crafting are JSON in `src/data`, and the in-client content editor can override any table from
 localStorage. `content.ts` applies overrides once at module load, so content changes take effect on
 the next page load. Entries marked `supply: "full"` and the `*_full.json` files belong to the Full
 production chain, picked when a game starts.
