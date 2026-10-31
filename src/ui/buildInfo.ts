@@ -145,7 +145,7 @@ export class BuildInfo {
         'div',
         { class: 'panel-title' },
         itemPicture(this.atlas, item, 'bi-ic', 18),
-        el('span', { class: 'panel-name', text: item.name }),
+        el('span', { class: 'panel-name', text: item.name, title: item.name }),
         item.typeLabel ? el('span', { class: 'bi-type', text: item.typeLabel }) : '',
         close,
       ),

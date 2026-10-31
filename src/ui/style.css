@@ -415,17 +415,21 @@ body {
   line-height: 1;
   color: var(--text-dim);
 }
-#topbar .time .btn.active {
+#topbar .time .btn.pause {
+  min-width: 21px;
+  margin-right: 3px;
+  color: var(--text);
+}
+#topbar .time .btn:hover:enabled {
+  color: #f4ead2;
+}
+#topbar .time .btn.active,
+#topbar .time .btn.active:hover {
   background: var(--amber);
   box-shadow:
     inset 1px 1px 0 var(--amber-hi),
     inset -1px -1px 0 var(--amber-lo);
   color: var(--stone-dark);
-}
-#topbar .time .btn.pause {
-  min-width: 21px;
-  margin-right: 3px;
-  color: var(--text);
 }
 #topbar .time .btn.pause.paused {
   animation: pausePulse 1.6s ease-in-out infinite;
@@ -576,13 +580,15 @@ body {
 /* ---- debug ---- */
 #debug {
   position: absolute;
-  top: 40px;
-  right: 600px;
-  width: 260px;
+  left: 416px;
+  top: 110px;
+  width: 220px;
+  max-height: calc(100% - 126px - var(--dock-height, 0px));
   display: none;
+  flex-direction: column;
 }
 #debug.open {
-  display: block;
+  display: flex;
 }
 
 /* ---- tooltip ---- */
@@ -1167,26 +1173,6 @@ body {
   opacity: 0.42;
   filter: grayscale(0.8);
   cursor: default;
-}
-.tb-group {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  padding-right: 8px;
-  border-right: 1px solid var(--border-dark);
-  box-shadow: 1px 0 0 var(--border-light);
-}
-.tb-group:last-child {
-  border-right: none;
-  box-shadow: none;
-}
-.tb-label {
-  font-family: var(--font-title);
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-size: 10px;
-  margin-right: 4px;
 }
 /* over the closed bar, its status line included; an open bar covers it */
 #hint {
@@ -2422,15 +2408,6 @@ input.text {
   image-rendering: crisp-edges;
   display: block;
 }
-.item-art {
-  width: 36px;
-  height: 32px;
-  object-fit: contain;
-  flex: 0 0 36px;
-  margin-right: 4px;
-  background: var(--border-dark);
-  border: 1px solid var(--border-dark);
-}
 .gcard-top {
   display: flex;
   justify-content: space-between;
@@ -2493,7 +2470,7 @@ select.text {
 #editor-panel {
   position: absolute;
   right: 8px;
-  top: 40px;
+  top: 62px;
   width: 300px;
   /* never down to the survey map */
   max-height: calc(100% - 330px);
@@ -2522,23 +2499,6 @@ body.editor #train-panel {
   margin-left: 6px;
 }
 
-/* ---- content editor ---- */
-.content-entry {
-  border: 1px solid var(--border-dark);
-  background: var(--stone-dark);
-  padding: 4px 8px 6px;
-}
-.content-head {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  margin-bottom: 4px;
-}
-.content-head .name {
-  flex: 1;
-  font-weight: bold;
-  color: var(--amber);
-}
 input[type='range'] {
   accent-color: var(--amber);
 }
@@ -2700,8 +2660,8 @@ input[type='range'] {
 }
 #alert-bar .al-face b {
   position: absolute;
-  right: -21px;
-  top: 1px;
+  left: calc(50% + 2px);
+  top: -13px;
   min-width: 17px;
   height: 17px;
   padding: 0 4px;
@@ -2738,6 +2698,12 @@ input[type='range'] {
   flex-direction: column;
   z-index: 20;
 }
+/* the words on the overview are about 240 px: narrower than their box, they clear the advisor */
+@media (max-width: 1791px) {
+  #overview-banner {
+    width: 360px;
+  }
+}
 /* the alert bar stands in the middle: a narrower window puts the advisor under it, and the words on
    the overview between the advisor and the Town list */
 @media (max-width: 1639px) {
@@ -2746,7 +2712,6 @@ input[type='range'] {
   }
   #overview-banner {
     left: calc(50% - 184px);
-    width: 360px;
   }
 }
 .badge {
@@ -2789,10 +2754,6 @@ input[type='range'] {
   width: 14px;
   height: 14px;
 }
-#editor-panel,
-#debug {
-  top: 62px;
-}
 select.text.small {
   font-size: 10px;
   padding: 1px 2px;
@@ -2814,10 +2775,6 @@ table.market th {
 table.market td {
   padding: 3px 6px;
   border-bottom: 1px dotted var(--stone-light);
-}
-
-.kv-bar {
-  margin: 2px 0;
 }
 
 /* ---- towns ---- */
@@ -2877,24 +2834,6 @@ table.market td {
   background: rgba(4, 4, 6, 0.35);
 }
 
-.vehicle-preview-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #14201ab8;
-}
-.vehicle-preview-panel {
-  width: min(720px, 95vw);
-  max-height: 90vh;
-  overflow: auto;
-}
-.vehicle-preview-panel .panel-title {
-  display: flex;
-  justify-content: space-between;
-}
 .gcard-art {
   object-fit: contain;
   max-width: 100%;
@@ -5207,6 +5146,10 @@ body.title-up
 }
 #debug .k-kv {
   padding: 2px 10px;
+}
+/* a narrow panel: the label keeps its width, and the value wraps */
+#debug .k-kv > span {
+  flex: none;
 }
 #debug .k-kv > b {
   font-family: var(--font-mono);
