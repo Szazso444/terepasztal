@@ -1247,15 +1247,12 @@ export class Game implements UiHost {
   /** fields of the loaded save this build does not understand: written back untouched */
   private saveExtra: Record<string, unknown> = {};
   snapshot(): SaveGame {
-    const track: SaveGame['track'] = [];
-    for (const t of this.track.anchors())
-      track.push([t.x, t.y, t.piece.kind, t.piece.rot, t.piece.cls, t.piece.cls2]);
     return buildSave(
       {
         seed: this.seed,
         clock: { time: this.clock.time, speedIndex: this.clock.speedIndex },
         economy: this.economy.toJSON(),
-        track,
+        track: this.track.tuples(),
         stations: this.builder.stations.map((st) => st.toJSON()),
         trains: this.fleet.trains.map((t) => t.toJSON()),
         contracts: this.contracts.toJSON(),
@@ -1279,6 +1276,7 @@ export class Game implements UiHost {
         houses: this.houses.toJSON(),
         people: this.people.toJSON(),
         roads: this.builder.roads.toJSON(),
+        wear: this.builder.wear.toJSON(),
       },
       this.saveExtra,
     );
@@ -1361,12 +1359,12 @@ export class Game implements UiHost {
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
     this.toolbar.refresh();
-    for (const [x, y, kind, rot, cls, cls2] of j.track) {
-      for (const t of this.track.place(x, y, kind, rot, cls ?? 'branch', cls2))
-        this.onTrackChanged(t.x, t.y);
+    for (const tuple of j.track) {
+      for (const t of this.track.placeTuple(tuple)) this.onTrackChanged(t.x, t.y);
     }
     // switch forms follow the track around them: chosen again once every piece is down
     for (const t of this.track.refreshSwitchForms()) this.onTrackChanged(t.x, t.y);
+    this.builder.wear.fromJSON(j.wear);
     if (j.wires) {
       for (const [x, y, kind] of j.wires) {
         if (!this.track.has(x, y)) continue;

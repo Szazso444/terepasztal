@@ -441,6 +441,49 @@ export const HU_RULES: Record<string, { label: string; hint?: string }> = {
   hillLevel: { label: 'Dombszint' },
   rockLevel: { label: 'Sziklaszint' },
   forestDensity: { label: 'Erdőküszöb', hint: 'alacsonyabb = több erdő' },
+  trackWearMul: {
+    label: 'Sínkopás x',
+    hint: 'a vonatok és az idő okozta kopás szorzója; 0 = nincs kopás',
+  },
+  trackHpNarrow: { label: 'Keskeny vonal elemének élete' },
+  trackHpBranch: { label: 'Mellékvonal elemének élete' },
+  trackHpMain: { label: 'Fővonal elemének élete' },
+  trackHpTrunk: { label: 'Törzsvonal elemének élete' },
+  trackWearNarrow: { label: 'Keskeny vonal kopása x' },
+  trackWearBranch: { label: 'Mellékvonal kopása x' },
+  trackWearMain: { label: 'Fővonal kopása x' },
+  trackWearTrunk: { label: 'Törzsvonal kopása x' },
+  trackWearPerTonne: {
+    label: 'Kopás a vonat tonnánként',
+    hint: 'ennyi életet visz el egy vonat a tömege minden tonnája után, a vonal szorzója előtt',
+  },
+  trackTimeWear: {
+    label: 'Kopás naponta (az elem életének része)',
+    hint: 'minden elem naponta ennyit veszít, vonattal vagy anélkül',
+  },
+  trackDegradedAt: { label: 'Leromlott ez alatt (az élet része)' },
+  trackCloseAt: {
+    label: 'Leromlás közelében ez alatt (az élet része)',
+    hint: 'a karbantartó vonatok innentől gondoznak egy elemet',
+  },
+  trackDegradedSpeed: { label: 'Leromlott sín sebessége x' },
+  trackDegradedWear: { label: 'Leromlott sín kopása x' },
+  trackCrawlSpeed: {
+    label: 'Kúszás sebessége használhatatlan sínen',
+    hint: 'csempe másodpercenként',
+  },
+  trackRepairPrice: {
+    label: 'Vonatos javítás ára (az építési költség része)',
+    hint: 'az elem teljes életének javításáért',
+  },
+  trackRepairSeconds: {
+    label: 'Vonatos javítás ideje (játékmásodperc)',
+    hint: 'az elem teljes életének javításáért',
+  },
+  trackHandRepairMul: {
+    label: 'Kézi javítás ára x',
+    hint: 'a vonatos javítás árának többszöröse',
+  },
 };
 /** The tuning groups, by the English name `RULE_META` keeps them under. */
 export const HU_RULE_GROUPS: Record<string, string> = {
@@ -450,6 +493,7 @@ export const HU_RULE_GROUPS: Record<string, string> = {
   'Trains & stations': 'Vonatok és állomások',
   'Time & weather': 'Idő és időjárás',
   Map: 'Térkép',
+  'Track wear': 'Sínkopás',
 };
 
 /** What each save upgrade filled in, by the format version it upgrades from (`MIGRATIONS`). */
@@ -476,4 +520,5 @@ export const HU_MIGRATIONS: Record<number, string> = {
   20: 'a közös készlet a kezdő fűtőházba került; minden raktár megtartja a saját áruját',
   21: 'a hat vonaltípus váltotta fel a sínosztályokat: a széles és a nagysebességű sín Mellékvonal lett, az átmenetek Mellékvonal-egyenesek',
   22: 'a vonatok színkódot kaptak: a régebbi mentések minden vonata az első színt kapja',
+  23: 'a sínek élettel indulnak: minden elem teljes épségű, a kopásról szóló figyelmeztetések még nem jelentek meg',
 };

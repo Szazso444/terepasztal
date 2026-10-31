@@ -60,7 +60,7 @@ import { locoDef, wagonDef } from '../gacha/items';
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap } from '../world/mapgen';
 import { levelFromMap, mapFromLevel } from '../world/level';
 import { RegionState } from '../world/regions';
-import { TrackGraph, type TrackTuple } from '../world/track';
+import { TrackGraph, liftLegacyTrack, type TrackTuple } from '../world/track';
 import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
 import { hash2, type Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
@@ -132,6 +132,7 @@ function fullParts(): SaveParts {
       [4, 7],
       [4, 8],
     ],
+    wear: { degraded: true, unusable: false },
   };
 }
 
@@ -205,6 +206,7 @@ describe('the migration registry', () => {
       [9, 'crafting', block],
       [19, 'roads', list],
       [20, 'stores', list],
+      [23, 'wear', block],
     ];
     for (let version = SAVE_MIN_VERSION; version < SAVE_VERSION; version++) {
       const j = migrate({ ...oldestSave(), version });
@@ -274,6 +276,7 @@ const DECLARED: Record<keyof Declared<SaveGame>, true> = {
   supply: true,
   people: true,
   roads: true,
+  wear: true,
   loadedFrom: true,
   migrationNotes: true,
 };
@@ -4599,5 +4602,66 @@ describe('v22 to v23', () => {
     const [train] = migrate(file as SaveGame).trains as { colour: number }[];
     expect(train.colour).toBe(0);
     expect(isTrainColour(train.colour)).toBe(true);
+  });
+});
+
+describe('v23 to v24', () => {
+  /** A save of v23: track without health, and no wear block. */
+  const v23 = (): SaveGame => ({
+    ...oldestSave(),
+    version: 23,
+    track: [
+      [4, 8, 'straight', 1, 'branch'],
+      [12, 8, 'crossing', 0, 'narrow', 'branch'],
+    ],
+  });
+
+  it('loads a v23 save with full track and clear flags', () => {
+    const j = migrate(v23());
+    expect(j.version).toBe(SAVE_VERSION);
+    expect(j.wear).toEqual({ degraded: false, unusable: false });
+    // no piece has a health to keep: all come back full
+    const g = new TrackGraph(32, 32);
+    for (const t of j.track) g.placeTuple(t);
+    for (const t of g.tiles()) expect(t.piece.wear.health).toBe(1);
+  });
+
+  it('records its note', () => {
+    expect(MIGRATIONS.find((m) => m.from === 23)!.note).toMatch(/full health/);
+  });
+
+  it('keeps a wear block a v24 file already has', () => {
+    const j = migrate({ ...v23(), version: 24, wear: { degraded: true, unusable: true } });
+    expect(j.wear).toEqual({ degraded: true, unusable: true });
+  });
+
+  it('keeps health and the flags through a round trip', () => {
+    const g = new TrackGraph(32, 32);
+    g.place(4, 8, 'straight', 1, 'branch');
+    g.place(8, 8, 'curve', 0, 'main');
+    // a crossing whose second line is its first: its 7th element must stay in place
+    g.place(12, 8, 'crossing', 0, 'branch');
+    g.get(8, 8)!.wear.health = 0.5;
+    g.get(12, 8)!.wear.health = 0.125;
+    const parts = { ...fullParts(), track: g.tuples(), wear: { degraded: true, unusable: false } };
+    const read = readSaveText(JSON.stringify(buildSave(parts)));
+    if (!('save' in read)) throw new Error(read.error);
+    expect(read.save.wear).toEqual({ degraded: true, unusable: false });
+    const back = new TrackGraph(32, 32);
+    for (const t of read.save.track) back.placeTuple(t);
+    expect(back.get(4, 8)!.wear.health).toBe(1);
+    expect(back.get(8, 8)!.wear.health).toBe(0.5);
+    expect(back.get(12, 8)!.wear.health).toBe(0.125);
+    expect(back.get(12, 8)!.cls2).toBe('branch');
+  });
+
+  it('keeps the health of a stored piece through the steps that rewrite track', () => {
+    const worn: TrackTuple[] = [
+      [2, 2, 'straight', 1, 'branch', null, 0.3],
+      [5, 5, 'crossing', 0, 'regular' as never, 'regular' as never, 0.6],
+      [7, 7, 'curve', 0, 'regular' as never, null, 0.9],
+    ];
+    expect(convertOneTileRegular(worn).map((t) => t[6])).toEqual([0.3, 0.6, 0.9]);
+    expect(liftLegacyTrack(worn).map((t) => t[6])).toEqual([0.3, 0.6, 0.9]);
   });
 });

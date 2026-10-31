@@ -18,6 +18,7 @@ import {
 } from '../world/track';
 import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
+import { TrackWear } from './wear';
 import {
   content,
   dataName,
@@ -201,6 +202,8 @@ export class Builder {
   onRoadChanged: ((x: number, y: number) => void) | null = null;
   /** electrification overlay (set by the game) */
   catenary: Catenary | null = null;
+  /** the wear of the track (src/sim/wear.ts) */
+  readonly wear: TrackWear;
   /** fired once when a producing station or a works building is newly placed (not on load or upgrade) */
   onIndustryPlaced: ((x: number, y: number) => void) | null = null;
   /** fired when a station loses (true) or regains (false) its last platform tile */
@@ -227,6 +230,7 @@ export class Builder {
     readonly roads: Roads = new Roads(track),
   ) {
     this.buildings = new BuildingMap(map.w, map.h);
+    this.wear = new TrackWear(track, this);
   }
 
   // ------------------------------------------------------------------ helpers
