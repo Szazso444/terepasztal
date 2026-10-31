@@ -313,11 +313,11 @@ it('fill refuses a tile with track', () => {});
 - Create: `src/art/tunnelArt.ts`, `src/art/tunnelArt.test.ts`
 
 **Interfaces:**
-- Produces: frames `tunnel/portal_E`, `tunnel/portal_S`, `tunnel/floor_0` to `3`, `tunnel/wall_N_0` to `2`, `tunnel/wall_W_0` to `2`, `tunnel/shade_N`, `tunnel/shade_W`, `tunnel/rim_S`, `tunnel/rim_E`. `portal_*` holds the throat and ring only, on the plane of `trial:frontArt`.
+- Produces: frames `tunnel/portal_E`, `tunnel/portal_S`, `tunnel/floor_0` to `3`, `tunnel/wall_N_0` to `2`, `tunnel/wall_W_0` to `2`, `tunnel/shade_N`, `tunnel/shade_W`, `tunnel/rim_S`, `tunnel/rim_E`. `tunnel/brick_0` to `3` and `tunnel/coping`. `portal_*` holds the throat and ring only, on the plane of `trial:frontArt`.
 
 - [ ] **Step 1: Write the failing test.** `every frame exists with its anchor at the tile centre`.
 - [ ] **Step 2: Run it.** Expected: FAIL.
-- [ ] **Step 3: Implement,** porting `trial:digArt` and the arch of `trial:frontArt`. Rock colours from `src/art/palette.ts`. Re-run `scratchpad/art-sheets.mjs`.
+- [ ] **Step 3: Implement,** porting `trial:digArt`, `trial:bricks` and the arch of `trial:frontArt`. Rock colours from `src/art/palette.ts`. Re-run `scratchpad/art-sheets.mjs`.
 - [ ] **Step 4: Run** `npm test`. Expected: PASS, frame counts of other sheets unmoved.
 - [ ] **Step 5: Commit.** `git commit -m "Art: placeholder tunnel frames"`
 
@@ -347,9 +347,9 @@ it('fill refuses a tile with track', () => {});
 - Consumes: `Portal`, `tunnel/portal_*`, `WorldRenderer.groundAt`.
 - Produces: `TunnelPortals.refresh(): void`; `TunnelPortals.dress(s: Sprite, x: number, y: number): void`, called from `TrainRenderer.pose` after `hideAt`.
 
-- [ ] **Step 1: Write the failing tests.** `the portal back sorts on the depthKey scale`; `a car within reach of a portal never sorts below its back` (the fault the author reported); `only cars within 4.5 tiles of a portal carry a mask`; `a rear face has no back picture`; `a car on a dug tile with no portal near is hidden`; `a car takes no mask in the glass`.
+- [ ] **Step 1: Write the failing tests.** `the portal back sorts on the depthKey scale`; `a car within reach of a portal never sorts below its back` (the fault the author reported); `a car going in sorts under the dark`; `the throat holds a copy of each track sprite on the three tiles behind the portal`; `the opening's outline never crosses itself`; `only cars within 4.5 tiles of a portal carry a mask`; `a rear face has no back picture`; `a car on a dug tile with no portal near is hidden`; `a car takes no mask in the glass`.
 - [ ] **Step 2: Run them.** Expected: FAIL.
-- [ ] **Step 3: Implement,** porting `trial:frontArt` (the face cut to the ground, opening half width 0.46 tile, crown 34 px, level 3.5), `frontMask`, `rearMask`, `dress`, `setGhost`, `syncTrack`. Masks set `renderable = false`, `includeInBuild = false`, `measurable = false`, or they draw white. Rebuild a portal when the ground around it changes, after the relief has settled.
+- [ ] **Step 3: Implement,** porting `trial:frontArt` (the face cut to the ground, opening half width 0.46 tile, crown 34 px, level 3.5, the brick face and the wall along the cutting), `opening`, `frontDark`, `throatRail`, `frontMask`, `rearMask`, `dress`, `syncTrack`. No ghost copy: `setGhost` is dead in the trial and is not ported. Masks set `renderable = false`, `includeInBuild = false`, `measurable = false`, or they draw white. Rebuild a portal when the ground around it changes, after the relief has settled.
 - [ ] **Step 4: Run** `npm test`, then record runs on all four faces. Expected: PASS, the train is partly seen and swallowed at the jamb.
 - [ ] **Step 5: Commit.** `git commit -m "Rendering: portals, trains going in and out"`
 

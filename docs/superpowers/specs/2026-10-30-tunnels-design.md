@@ -169,12 +169,19 @@ A portal makes itself when a dug line breaks out onto a slope, and goes when the
 front of the plane hides it where it should and the end of the cutting is the only face seen
 (proved; this is what stopped it looking stuck on). `frontArt` in the trial is the reference.
 
-**Going in.** Three parts, each proved:
+**Brick.** The portal face and the far wall of the cutting are brick with a stone coping, the wall
+following the ground down to the foot of the bank. The floor between wall and ballast is gravel.
+(author, 2026-10-31; proved)
+
+**Going in.** Each part proved:
 
 - The back picture draws under the train: its depth is on the `depthKey` scale, and a car near a
   portal never sorts below it, so the picture never covers a car.
-- Each car is masked to the outside of the near jamb, with a soft edge.
-- A dark copy of the car, masked to the opening, shows the part inside.
+- The rail in the throat is the real track of the tiles behind it, seen through the opening, so it
+  matches the rail outside.
+- A car keeps its own colours and has one hard mask: the opening, standing on the ground in front of
+  it, plus everything in front of the portal plane.
+- The dark of the tunnel lies over rail and train alike, deepening toward the far jamb.
 
 A car inside with no part at a portal is hidden, as `hideAt` hides trains in a depot. Rails inside
 are hidden too. On a rear face the mask is the line of the hill top, which also cuts the track
