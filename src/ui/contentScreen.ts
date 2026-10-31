@@ -1,6 +1,7 @@
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Screen } from './modal';
+import type { Confirm } from './menu';
 import { problemSummary, setAsideLines } from './contentReport';
 import {
   TAB_FORMS,
@@ -54,7 +55,11 @@ export class ContentScreen implements Screen {
   /** what became of the stored tables at load; fixed for the session */
   private readonly report = contentOverrideReport();
 
-  constructor(private readonly onReload: () => void) {
+  constructor(
+    private readonly onReload: () => void,
+    /** the game's dialog, for the question before custom content goes */
+    private readonly prompt: Confirm,
+  ) {
     this.root.append(this.tabs, this.aside, el('div', { class: 'col' }, this.body, this.foot));
   }
   onOpen() {
@@ -267,10 +272,16 @@ export class ContentScreen implements Screen {
       btn(
         STR.content.reset,
         () => {
-          if (confirm(STR.content.confirmReset)) {
-            clearContentOverrides();
-            this.onReload();
-          }
+          void this.prompt
+            .confirm(STR.content.resetTitle, STR.content.confirmReset, {
+              yes: STR.prompt.discard,
+              danger: true,
+            })
+            .then((ok) => {
+              if (!ok) return;
+              clearContentOverrides();
+              this.onReload();
+            });
         },
         'small',
       ),

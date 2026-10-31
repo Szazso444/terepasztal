@@ -1,6 +1,7 @@
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Screen } from './modal';
+import type { Confirm } from './menu';
 import {
   rules,
   setRules,
@@ -32,6 +33,8 @@ export class TuningScreen implements Screen {
   constructor(
     private readonly onChange: () => void,
     private readonly onClosed: () => void,
+    /** the game's dialog, for the questions about presets */
+    private readonly prompt: Confirm,
   ) {
     this.root.append(el('div', { class: 'col' }, this.body, this.foot));
   }
@@ -60,12 +63,16 @@ export class TuningScreen implements Screen {
     nameInput.addEventListener('keydown', (e) => e.stopPropagation());
     const save = btn(
       STR.tuning.savePreset,
-      () => {
+      async () => {
         const n = nameInput.value.trim();
         if (!n) return;
         if (
           listRulePresets().some((p) => p.name === n) &&
-          !confirm(STR.tuning.confirmOverwritePreset(n))
+          !(await this.prompt.confirm(
+            STR.tuning.overwritePresetTitle,
+            STR.tuning.confirmOverwritePreset(n),
+            { yes: STR.prompt.replace, danger: true },
+          ))
         )
           return;
         if (!saveRulePreset(n)) {
@@ -97,9 +104,16 @@ export class TuningScreen implements Screen {
             { class: 'row', style: 'margin:0' },
             btn(
               STR.tuning.loadPreset,
-              () => {
+              async () => {
                 // it replaces the whole live tuning, for the game in play only
-                if (!confirm(STR.tuning.confirmLoadPreset(p.name))) return;
+                if (
+                  !(await this.prompt.confirm(
+                    STR.tuning.loadPresetTitle,
+                    STR.tuning.confirmLoadPreset(p.name),
+                    { yes: STR.prompt.load },
+                  ))
+                )
+                  return;
                 const loaded = applyRulePreset(p.name);
                 // the sliders show the new values; a preset gone since the list was drawn drops out
                 this.render();
@@ -111,8 +125,15 @@ export class TuningScreen implements Screen {
             ),
             btn(
               STR.tuning.deletePreset,
-              () => {
-                if (!confirm(STR.tuning.confirmDeletePreset(p.name))) return;
+              async () => {
+                if (
+                  !(await this.prompt.confirm(
+                    STR.tuning.deletePresetTitle,
+                    STR.tuning.confirmDeletePreset(p.name),
+                    { yes: STR.prompt.delete, danger: true },
+                  ))
+                )
+                  return;
                 const deleted = deleteRulePreset(p.name);
                 this.render();
                 if (deleted) this.setStatus(STR.tuning.presetDeleted(p.name));

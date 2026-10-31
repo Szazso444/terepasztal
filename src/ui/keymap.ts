@@ -298,6 +298,12 @@ const UNDO_KEYS: [string, 'undo' | 'redo'][] = [
   ['Ctrl+Shift+Z', 'redo'],
 ];
 
+/** The letter that opens the screen `id`, for its header; null for a screen without one. */
+export function screenKey(id: string): string | null {
+  const bound = SCREEN_KEYS.find(([, screen]) => screen === id);
+  return bound ? bound[0].slice('Key'.length) : null;
+}
+
 /** Every hotkey, in the order a frame runs them. */
 export const KEYMAP: readonly KeyBinding[] = [
   { code: 'Backquote', context: 'menu', action: 'debug' },

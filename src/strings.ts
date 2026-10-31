@@ -721,8 +721,6 @@ export const STR = {
     matrix: 'Alerts and notices',
     defaults: 'Defaults',
     defaultsHint: 'Back to the starting channels and switches',
-    done: 'Done',
-    back: 'Back',
     close: 'Close',
     goTo: 'Go to',
     criticalPause: 'Always pause on a critical alert',
@@ -795,7 +793,7 @@ export const STR = {
         `${n} needs powered rails: build a Power Plant and Power Line poles along its route.`,
       chunk: (v: string) =>
         `You can afford a new chunk (${v}). Press M and click an Uncharted chunk to expand.`,
-      offers: (n: number) => `${n} contract offer(s) are waiting on the Contract Board (C).`,
+      offers: (n: number) => `${n} contract offer(s) are waiting in Contracts (C).`,
       failed: (n: string) =>
         `Contract "${n}" failed. Accept only contracts your trains already pass through, and watch the deadline.`,
       capFull: (r: string, store: string) =>
@@ -1088,7 +1086,7 @@ export const STR = {
     hint: 'Multiple: same control class as the leader, full effort. Double-headed: 82% of the summed effort. Standby: dead weight until the pulling units lose fuel or the wire.',
   } as Record<string, string>,
   contracts: {
-    title: 'Contract Board',
+    title: 'Contracts',
     offers: 'Offers',
     active: 'Active',
     history: 'Recent',
@@ -1121,7 +1119,10 @@ export const STR = {
     cancelFine: (fine: string) => `Cancel (fine ${fine})`,
     cancelled: 'Cancelled',
     cancelledMsg: (n: string, fine: string) => `${n} cancelled: fined ${fine}`,
+    cancelTitle: 'Cancel contract',
     confirmCancel: (n: string, fine: string) => `Cancel "${n}"? The fine is ${fine}.`,
+    /** The no of that question: the contract stays. */
+    keepContract: 'Keep',
     train: 'Train',
     noTrain: 'No train can work this',
     rarity: {
@@ -1157,7 +1158,7 @@ export const STR = {
     featuredBadge: 'featured',
   },
   craft: {
-    title: 'Rolling Stock Works',
+    title: 'Crafting',
     recipes: 'Recipes',
     unlock: 'Unlock a recipe',
     kind: 'Kind',
@@ -1308,11 +1309,21 @@ export const STR = {
       ctc: 'CTC',
       in_cab: 'In-cab',
     } as Record<string, string>,
-    signallingHint:
-      'Automatic keeps trains apart as before. Token: one train per plain section, whichever way it runs. Absolute block: semaphores hold trains out of an occupied block and trains keep 10 tiles apart; CTC 6; In-cab 3 (equipped stock only). Semaphores work under every level above Token.',
+    signalHint: {
+      auto: 'Keeps trains apart as before.',
+      token: 'One train per plain section, whichever way it runs.',
+      absolute_block:
+        'Semaphores hold trains out of an occupied block; trains keep 10 tiles apart.',
+      ctc: 'Trains keep 6 tiles apart.',
+      in_cab: 'Trains keep 3 tiles apart; equipped stock only.',
+    } as Record<string, string>,
+    signallingNote: 'Semaphores work under every level above Token.',
     title: 'Settings',
-    options: 'Options',
     saves: 'Saves',
+    /** The tab of the contract offers; the well in it says the rest. */
+    contractsTab: 'Contracts',
+    appliesAtOnce: 'Settings apply at once.',
+    thisGame: 'This game',
     audio: 'Audio',
     master: 'Master volume',
     sfx: 'Effects',
@@ -1327,9 +1338,66 @@ export const STR = {
     smoke: 'Locomotive smoke',
     weather: 'Weather and seasons',
     showFps: 'Show FPS',
-    on: 'On',
-    off: 'Off',
     controls: 'Controls',
+    /**
+     * The key table of the Controls tab, by group. `short` rows take half a line. Every key of the
+     * keymap has its place here (`settingsKeys.test.ts`).
+     */
+    keyGroups: [
+      {
+        title: 'Camera',
+        rows: [
+          { keys: ['W A S D'], text: 'Pan the map; the arrow keys too' },
+          { keys: ['Middle-drag'], text: 'Pan the map' },
+          { keys: ['Wheel'], text: 'Zoom in and out' },
+          { keys: ['M'], text: 'Overview map, and back' },
+          { keys: ['R', 'Enter'], text: 'Overview: record stops for the picked train, finish' },
+        ],
+      },
+      {
+        title: 'Time',
+        rows: [
+          { keys: ['Space'], text: 'Pause and resume' },
+          { keys: ['+', '−'], text: 'Faster, slower' },
+        ],
+      },
+      {
+        title: 'Screens',
+        short: [
+          { keys: ['F'], text: 'Depot' },
+          { keys: ['C'], text: 'Contracts' },
+          { keys: ['G'], text: 'Crafting' },
+          { keys: ['V'], text: 'Roster' },
+          { keys: ['K'], text: 'Market' },
+          { keys: ['`'], text: 'Debug panel' },
+        ],
+        rows: [
+          { keys: ['Esc'], text: 'Close the top screen or panel; with nothing open, the Menu' },
+        ],
+      },
+      {
+        title: 'Building',
+        rows: [
+          { keys: ['1–5'], text: 'Open a build category' },
+          { keys: ['1–9'], text: 'Pick an item of the open category' },
+          { keys: ['Tab'], text: 'Next item; Shift+Tab the previous' },
+          { keys: ['Q', 'E'], text: 'Previous and next type' },
+          { keys: ['Shift+Q', 'Shift+E'], text: 'Previous and next category' },
+          { keys: ['R'], text: 'Turn the piece' },
+          { keys: ['U', 'Shift+U'], text: 'Upgrade and downgrade track' },
+          { keys: ['X'], text: 'Demolish' },
+          { keys: ['Right-click', 'Delete'], text: 'Remove' },
+          { keys: ['Esc'], text: 'Close the tool' },
+        ],
+      },
+      {
+        title: 'Undo',
+        rows: [
+          { keys: ['Ctrl+Z'], text: 'Undo the last step' },
+          { keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], text: 'Redo it' },
+        ],
+      },
+    ],
     controlsText:
       'WASD / arrows / middle-drag pan · wheel zoom · M overview · 1-5 build category, then 1-9 item · Tab next item · Q / E type · Shift+Q / E category · R rotate · U upgrade track, Shift+U downgrade · X demolish · Right-click / Delete remove · Ctrl+Z undo · Ctrl+Y redo · Esc cancel · Space pause · + / − speed · F depot · C contracts · G craft · V roster · K market · ` debug',
     contractPolicy: 'Contract offers by rarity',
@@ -1345,6 +1413,8 @@ export const STR = {
     slotSaved: (n: string) => `Saved as "${n}"`,
     saveAsTitle: 'Save game as',
     saveAsHint: 'Name for this save. An existing save with the same name is replaced.',
+    /** Why Save now and Save as are off at the title screen with no game under it. */
+    saveOff: 'No game is being played yet: Continue or start a new game, then save.',
     diagnostics: 'Copy diagnostics',
     diagnosticsHint:
       'Diagnostics = this save plus the traffic log (stuck episodes, blocked time, junctions). Paste it into a bug report.',
@@ -1360,6 +1430,8 @@ export const STR = {
     confirmNew: 'Start a new game? The current save will be replaced on the next autosave.',
     supply: 'Production chain',
     transfer: 'Transfer',
+    transferHint:
+      'Export, Import and Copy diagnostics share this box: paste a save here to import it.',
     exportSave: 'Export to text',
     formatNote:
       'Every save carries a format version. Older saves are upgraded step by step on load; newer ones load as they are. Fields this build does not know are kept and written back.',
@@ -1415,11 +1487,7 @@ export const STR = {
     inProgress: (ago: string | null) =>
       ago ? `in progress · last autosave ${ago}` : 'in progress',
     autosaveStatus: (on: boolean, ago: string | null) =>
-      !on
-        ? 'Autosave off'
-        : ago
-          ? `Autosave on · last saved ${ago}`
-          : 'Autosave on · not saved yet',
+      !on ? 'off' : ago ? `on · last saved ${ago}` : 'on · not saved yet',
     confirmOverwrite: (n: string) => `A save named "${n}" already exists. Replace it?`,
     /** Titles of the in-game dialog that asks before a save is replaced, deleted or loaded. */
     overwriteTitle: 'Replace save',
@@ -1477,7 +1545,12 @@ export const STR = {
     play: 'Play',
     edit: 'Edit',
     delete: 'Delete',
+    deleteLevelTitle: 'Delete level',
     confirmDelete: (n: string) => `Delete level "${n}"?`,
+    playLevelTitle: 'Play level',
+    editLevelTitle: 'Edit level',
+    /** The editor's play test: its question replaces the stored game. */
+    playTestTitle: 'Play test',
     newLevel: 'New level',
     blank: 'Blank',
     generated: 'Generated',
@@ -1510,6 +1583,7 @@ export const STR = {
     confirmLeaveGame:
       'This leaves the game in progress. Progress that is not saved or autosaved is lost. Continue?',
     menuButton: 'Menu',
+    menuKeyHint: 'Esc opens and closes the menu when no tool is in hand',
     supply: 'Production chain',
     /** The New game block's choice of the rules the game starts with, shown once a tuning is saved. */
     newGameTuning: 'Tuning',
@@ -1544,6 +1618,29 @@ export const STR = {
     keep: 'Keep',
     yes: 'Yes',
     no: 'No',
+    /** The answers of the dialog name what they do. */
+    delete: 'Delete',
+    load: 'Load',
+    replace: 'Replace',
+    import: 'Import',
+    start: 'Start',
+    play: 'Play',
+    edit: 'Edit',
+    leave: 'Leave',
+    discard: 'Discard',
+    buy: 'Buy',
+  },
+  kit: {
+    esc: 'Esc',
+    back: 'Back',
+    done: 'Done',
+    backHint: 'Back · Esc',
+    /** The × of a screen, with the hotkey that closes it too. */
+    closeHint: (key: string | null) =>
+      key && key !== 'Esc' ? `Close · Esc or ${key}` : 'Close · Esc',
+    hotkey: (key: string) => `Hotkey: ${key}`,
+    pausedHint: 'The clock stands still while a menu is open.',
+    clear: 'Clear',
   },
   editor: {
     terrainDesc: 'Paint this terrain. Anything built on the tile is cleared.',
@@ -1567,6 +1664,7 @@ export const STR = {
     saveFailed: 'Could not save the level (storage full?)',
     badLevel: 'That is not a level file',
     unsaved: 'Unsaved changes will be lost. Continue?',
+    unsavedTitle: 'Unsaved changes',
     hint: 'Editor: free building, all regions open, clock stopped. Esc for the menu.',
     terrain: 'Terrain',
     levelDown: 'Level -',
@@ -1586,10 +1684,13 @@ export const STR = {
     loadPreset: 'Load',
     deletePreset: 'Delete',
     noPresets: 'No presets yet. Save the current rules under a name to keep them.',
+    overwritePresetTitle: 'Replace preset',
     confirmOverwritePreset: (n: string) => `A preset named "${n}" already exists. Replace it?`,
+    deletePresetTitle: 'Delete preset',
     confirmDeletePreset: (n: string) => `Delete the preset "${n}"?`,
     presetSaved: (n: string) => `Preset "${n}" saved`,
     presetSaveFailed: (n: string) => `Could not save the preset "${n}" (storage full or blocked)`,
+    loadPresetTitle: 'Load preset',
     confirmLoadPreset: (n: string) =>
       `Load the preset "${n}"? It replaces the tuning of the game in play and changes nothing for new games.`,
     presetLoaded: (n: string) => `Preset "${n}" loaded`,
@@ -1636,6 +1737,7 @@ export const STR = {
     jsonHint: 'bundle JSON',
     badJson: 'Invalid JSON',
     reset: 'Reset to shipped data',
+    resetTitle: 'Discard custom content',
     confirmReset: 'Discard all custom content and reload?',
     apply: 'Apply and reload',
     applyNote: 'Applying reloads the page; the current game is saved first.',
@@ -1954,6 +2056,8 @@ export const STR = {
     maxed: 'Max level',
     demolish: 'Demolish',
     rename: 'Rename',
+    renameTitle: 'Rename station',
+    renameHint: 'The new name of this station.',
     nameEmpty: 'A station needs a name',
     noPlatform: 'No adjacent track!',
     orphaned: (n: string) => `${n} lost its platform track`,
