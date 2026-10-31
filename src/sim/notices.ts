@@ -7,7 +7,7 @@ import { cargoName } from './cargo';
 import { STR } from '../strings';
 import { rules } from './rules';
 import { RESOURCE_IDS } from './stores';
-import { contractAtRisk, type AlertType } from './alerts';
+import { contractAtRisk, storeStaysFull, type AlertType } from './alerts';
 
 export type NoticeKind = 'info' | 'warn' | 'bad';
 export type NoticeTarget =
@@ -36,6 +36,8 @@ export interface Notice {
 export class Notices {
   list: Notice[] = [];
   private transient: Notice[] = [];
+  /** `store|good` of each good that counts as full (`storeStaysFull`) */
+  private fullGoods = new Set<string>();
   onChange: (() => void) | null = null;
 
   push(n: Omit<Notice, 'expires'>, ttl = 30) {
@@ -132,6 +134,8 @@ export class Notices {
       if (e.a.plant) plantsWired.add(`${e.a.x},${e.a.y}`);
       if (e.b.plant) plantsWired.add(`${e.b.x},${e.b.y}`);
     }
+    // the places whose works already say they are full
+    const worksFull = new Set<string>();
     for (const b of src.builder.buildings.values()) {
       // closed for its upgrade: off the grid and idle on purpose, nothing to report
       if (b.work) continue;
@@ -157,7 +161,9 @@ export class Notices {
             : STR.notice.noStore(def.name, rules.buildReach),
           target,
         });
-      } else if (b.reason === 'full')
+      } else if (b.reason === 'full') {
+        const store = src.builder.stores.worksStore(b);
+        if (store) worksFull.add(src.builder.stores.networkPool(store).key);
         out.push({
           key: `b${b.x},${b.y}:full`,
           kind: 'info',
@@ -165,14 +171,21 @@ export class Notices {
           text: STR.notice.full(def.name),
           target,
         });
+      }
     }
-    // a place that keeps goods, full of one or more of them; in Simple mode a whole rail network
+    // a place that keeps goods, full of one or more of them; in Simple mode a whole rail network.
+    // A works saying so has already told of that place
     const stores = src.builder.stores;
+    const fullGoods = new Set<string>();
     for (const pool of stores.choices()) {
-      const full = RESOURCE_IDS.filter(
-        (id) => id !== 'power' && pool.cap(id) > 0 && pool.get(id) >= pool.cap(id) - 1e-6,
-      );
-      if (full.length)
+      const full = RESOURCE_IDS.filter((id) => {
+        if (id === 'power' || pool.cap(id) <= 0) return false;
+        const good = `${pool.key}|${id}`;
+        if (!storeStaysFull(this.fullGoods.has(good), pool.get(id), pool.cap(id))) return false;
+        fullGoods.add(good);
+        return true;
+      });
+      if (full.length && !worksFull.has(pool.key))
         out.push({
           key: `store:${pool.key}:full`,
           kind: 'warn',
@@ -181,6 +194,7 @@ export class Notices {
           target: { kind: 'tile', x: pool.anchor.x, y: pool.anchor.y },
         });
     }
+    this.fullGoods = fullGoods;
     if (src.contracts) {
       const { board, now } = src.contracts;
       const destOf = (destId: number): NoticeTarget => {

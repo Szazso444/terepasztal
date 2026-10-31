@@ -37,25 +37,32 @@ export type AlertType = (typeof ALERT_TYPES)[number];
 
 const MARKED: readonly AlertChannel[] = ['icon', 'pin'];
 
-/** Each row's severity and the channels it starts on. */
+/**
+ * Each row's severity and the channels it starts on. An `event` tells of something that happened;
+ * the other rows tell of a state, which the simulation finds again after a load.
+ */
 export const ALERT_DEFS: Record<
   AlertType,
-  { readonly severity: AlertSeverity; readonly start: readonly AlertChannel[] }
+  {
+    readonly severity: AlertSeverity;
+    readonly start: readonly AlertChannel[];
+    readonly event?: true;
+  }
 > = {
   nofuel: { severity: 'critical', start: MARKED },
   stuck: { severity: 'critical', start: MARKED },
-  ctfail: { severity: 'critical', start: ['icon', 'pin', 'toast'] },
+  ctfail: { severity: 'critical', start: ['icon', 'pin', 'toast'], event: true },
   noroute: { severity: 'problem', start: MARKED },
   full: { severity: 'problem', start: MARKED },
   starved: { severity: 'attention', start: MARKED },
   contract: { severity: 'attention', start: MARKED },
   jam: { severity: 'attention', start: MARKED },
   slow: { severity: 'info', start: ['icon'] },
-  note: { severity: 'info', start: ['icon'] },
-  done: { severity: 'info', start: ['toast'] },
-  offer: { severity: 'info', start: ['icon', 'toast'] },
-  goal: { severity: 'info', start: ['popup', 'pause', 'toast'] },
-  arrived: { severity: 'info', start: [] },
+  note: { severity: 'info', start: ['icon', 'toast'], event: true },
+  done: { severity: 'info', start: ['toast'], event: true },
+  offer: { severity: 'info', start: ['toast'], event: true },
+  goal: { severity: 'info', start: ['popup', 'pause', 'toast'], event: true },
+  arrived: { severity: 'info', start: [], event: true },
 };
 
 export type AlertRow = Record<AlertChannel, boolean>;
@@ -107,22 +114,39 @@ export interface AlertFire {
   toast: boolean;
 }
 
+/** Game seconds an instance stays gone before its key can fire again: a flicker is no news. */
+export const ALERT_REARM_SECONDS = 60;
 /**
- * Says what each new instance sets off. A channel fires once for a key while the instance lasts,
- * and again only after it went away and came back, so a resume does not pause for the same one
- * twice. What already stands at the first look (a game just opened) is not news; what was pushed by
- * then is, as it tells of something that happened.
+ * Game seconds after the first look in which a state is not news. A save does not hold what the
+ * simulation works out as it runs (a stuck train takes it 30 s to see again, a works' reason one
+ * step), so what it finds in this time was there before the load.
+ */
+export const ALERT_LOAD_QUIET_SECONDS = 60;
+
+/**
+ * Says what each new instance sets off, `now` being the game time. A channel fires once for a key
+ * while the instance lasts, and again only once it has been gone for `ALERT_REARM_SECONDS`, so
+ * neither a resume nor a flicker pauses for the same one twice. A game just opened has nothing new
+ * to tell of itself: what stands at the first look fires nothing, nor does a state found in the
+ * `ALERT_LOAD_QUIET_SECONDS` after it. An event still does, a warning the load pushed among them.
  */
 export class AlertTracker {
-  private seen = new Set<string>();
-  private first = true;
+  /** each key's last sighting, in game seconds, until it has been gone long enough to fire again */
+  private seen = new Map<string, number>();
+  /** the game time of the first look */
+  private start: number | null = null;
 
-  update(list: readonly Notice[], s: AlertSettings): AlertFire[] {
+  update(list: readonly Notice[], s: AlertSettings, now: number): AlertFire[] {
+    const first = this.start === null;
+    this.start ??= now;
+    const quiet = now - this.start < ALERT_LOAD_QUIET_SECONDS;
     const fires: AlertFire[] = [];
-    const now = new Set<string>();
     for (const n of list) {
-      now.add(n.key);
-      if (this.seen.has(n.key) || (this.first && n.expires === undefined)) continue;
+      const last = this.seen.get(n.key);
+      this.seen.set(n.key, now);
+      if (last !== undefined && now - last < ALERT_REARM_SECONDS) continue;
+      if (first && n.expires === undefined) continue;
+      if (quiet && !ALERT_DEFS[n.type].event) continue;
       const row = s.channels[n.type];
       const critical = s.criticalPause && ALERT_DEFS[n.type].severity === 'critical';
       const fire = {
@@ -133,10 +157,17 @@ export class AlertTracker {
       };
       if (fire.popup || fire.pause || fire.toast) fires.push(fire);
     }
-    this.seen = now;
-    this.first = false;
+    for (const [key, last] of this.seen)
+      if (now - last >= ALERT_REARM_SECONDS) this.seen.delete(key);
     return fires;
   }
+}
+
+/** A good in a store counts as full from its cap until it falls below this share of it. */
+export const STORE_FULL_CLEARS_BELOW = 0.95;
+/** Whether a good is full now, `was` saying it was: at a cap it would flap with every unit. */
+export function storeStaysFull(was: boolean, have: number, cap: number): boolean {
+  return have >= (was ? cap * STORE_FULL_CLEARS_BELOW : cap - 1e-6);
 }
 
 /** With less than this share of its term left, a contract is at risk. */

@@ -45,7 +45,8 @@ function refreshed(pieces: {
     buildings: new Map((pieces.buildings ?? []).map((b, i) => [i, b])),
     stores: {
       choices: () => [],
-      worksStore: () => ({ get: () => 0, cap: () => 0 }),
+      worksStore: () => ({ key: 'st:1', get: () => 0, cap: () => 0 }),
+      networkPool: (r: unknown) => r,
       label: () => '',
     },
     stationById: () => station,
@@ -117,6 +118,13 @@ describe('the derived notices that are new', () => {
     const store = depotWith(w, goods, { x: 40, y: 24 });
     return { w, store };
   }
+  function placed(w: ReturnType<typeof simWorld>, id: string, x: number, y: number) {
+    w.builder.free = true;
+    const b = w.builder.placeBuilding(x, y, id);
+    w.builder.free = false;
+    if (!b) throw new Error(`no ${id} at ${x},${y}`);
+    return b;
+  }
   const refresh = (w: ReturnType<typeof simWorld>, contracts?: Partial<Contract>[], now = 0) => {
     w.notices.refresh({
       trains: [],
@@ -138,14 +146,14 @@ describe('the derived notices that are new', () => {
     return w.notices.list;
   };
 
-  it('a store at its cap is a notice on it, and one below it is none', () => {
+  it('a store at its cap is a notice on it, and one that never reached it is none', () => {
     const { w, store } = depotWorld({ coal: rules.depotCap });
     const [n] = refresh(w).filter((m) => m.type === 'full');
     expect(n.key).toBe(`store:${store.key}:full`);
     expect(n.text).toBe(STR.notice.storeFull(w.stores.label(store), 'Coal'));
     expect(n.target).toEqual({ kind: 'tile', x: store.anchor.x, y: store.anchor.y });
-    store.take('coal', 1);
-    expect(refresh(w).filter((m) => m.type === 'full')).toEqual([]);
+    const below = depotWorld({ coal: rules.depotCap - 1 });
+    expect(refresh(below.w).filter((m) => m.type === 'full')).toEqual([]);
   });
 
   it('is one notice for a store however many goods fill it', () => {
@@ -153,6 +161,69 @@ describe('the derived notices that are new', () => {
     const full = refresh(w).filter((m) => m.type === 'full');
     expect(full).toHaveLength(1);
     expect(full[0].text).toContain('Wood, Coal');
+  });
+
+  it('stays until the store falls below 95 percent, so it does not flap at the cap', () => {
+    const { w, store } = depotWorld({ coal: rules.depotCap });
+    const full = () => refresh(w).filter((m) => m.type === 'full');
+    expect(full()).toHaveLength(1);
+    store.amounts.set('coal', rules.depotCap - 1);
+    expect(full()).toHaveLength(1);
+    store.amounts.set('coal', rules.depotCap * 0.95);
+    expect(full()).toHaveLength(1);
+    store.amounts.set('coal', rules.depotCap * 0.95 - 1);
+    expect(full()).toEqual([]);
+    // cleared, it takes the cap to come back
+    store.amounts.set('coal', rules.depotCap * 0.98);
+    expect(full()).toEqual([]);
+    store.amounts.set('coal', rules.depotCap);
+    expect(full()).toHaveLength(1);
+  });
+
+  it('keeps one good in the text while another falls away', () => {
+    const { w, store } = depotWorld({ coal: rules.depotCap, wood: rules.depotCap });
+    refresh(w);
+    store.amounts.set('wood', 1);
+    const [n] = refresh(w).filter((m) => m.type === 'full');
+    expect(n.text).toContain('Coal');
+    expect(n.text).not.toContain('Wood');
+  });
+
+  it('does not say again what a works there already says', () => {
+    const { w, store } = depotWorld({ wood: rules.depotCap });
+    const kiln = placed(w, 'kiln', 44, 20);
+    expect(w.stores.worksStore(kiln)?.key).toBe(store.key);
+    kiln.reason = 'full';
+    expect(
+      refresh(w)
+        .filter((m) => m.type === 'full')
+        .map((n) => n.key),
+    ).toEqual([`b${kiln.x},${kiln.y}:full`]);
+  });
+
+  it('takes over when that works stops saying so, the store being as full as it was', () => {
+    const { w, store } = depotWorld({ wood: rules.depotCap });
+    const kiln = placed(w, 'kiln', 44, 20);
+    kiln.reason = 'full';
+    refresh(w);
+    kiln.reason = '';
+    store.amounts.set('wood', rules.depotCap - 1);
+    expect(
+      refresh(w)
+        .filter((m) => m.type === 'full')
+        .map((n) => n.key),
+    ).toEqual([`store:${store.key}:full`]);
+  });
+
+  it('a works at another place does not hide it', () => {
+    const { w, store } = depotWorld({ wood: rules.depotCap });
+    const far = placed(w, 'kiln', 80, 80);
+    expect(w.stores.worksStore(far)).toBeNull();
+    far.reason = 'full';
+    const keys = refresh(w)
+      .filter((m) => m.type === 'full')
+      .map((n) => n.key);
+    expect(keys).toContain(`store:${store.key}:full`);
   });
 
   it('a contract with under a quarter of its term left is at risk, on its destination', () => {
