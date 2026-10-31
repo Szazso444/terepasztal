@@ -184,6 +184,12 @@ const ICONS = {
   slider: '<path d="M3 12h18"/><circle cx="14" cy="12" r="3" fill="currentColor"/>',
   list: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.5M3.5 12h.5M3.5 18h.5"/>',
   undo: '<path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  train:
+    '<rect x="6" y="3" width="12" height="14" rx="2"/><path d="M6 10h12M8 17l-2 4M16 17l2 4M4 21h16"/><circle cx="9.5" cy="13.5" r="1" fill="currentColor"/><circle cx="14.5" cy="13.5" r="1" fill="currentColor"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+  up: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+  fuel: '<path d="M4.5 20V4.5h9V20M3 20h12M13.5 9H16a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9.5L18.5 7"/><path d="M7 8h4"/>',
   home: '<path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 9.5V20h13V9.5M10 20v-5.5h4V20"/>',
   chevl: '<path d="M15 5l-7 7 7 7"/>',
   search: '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/>',
@@ -257,6 +263,32 @@ export function page(...children: Content[]): HTMLElement {
 /** Wells side by side, in equal columns, each as tall as its content. */
 export function columns(...cols: HTMLElement[][]): HTMLElement {
   return el('div', { class: 'k-cols' }, ...cols.map((c) => el('div', { class: 'k-col' }, ...c)));
+}
+
+/** One side of a list and detail: a head that stays put over a body that scrolls. */
+export interface Pane {
+  head: HTMLElement;
+  body: HTMLElement;
+}
+
+/**
+ * List and detail: a list of a fixed width on the left, the picked item's detail on the right.
+ * Each side scrolls on its own and keeps its head above the scroll. The caller fills the panes.
+ */
+export function listDetail(listWidth = 360): { root: HTMLElement; list: Pane; detail: Pane } {
+  const pane = (): Pane => ({
+    head: el('div', { class: 'k-pane-h' }),
+    body: el('div', { class: 'k-pane-b' }),
+  });
+  const list = pane();
+  const detail = pane();
+  const root = el(
+    'div',
+    { class: 'k-split', style: `--k-lw:${listWidth}px` },
+    el('div', { class: 'k-pane' }, list.head, list.body),
+    el('div', { class: 'k-pane' }, detail.head, detail.body),
+  );
+  return { root, list, detail };
 }
 
 /** A section's title, with something small at the far end: a count, a legend. */

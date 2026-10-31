@@ -1339,23 +1339,6 @@ input.text {
 .meter.over > div {
   background: var(--red);
 }
-.route-step {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 6px;
-  margin: 2px 0;
-  background: var(--stone);
-  border: 1px solid var(--border-dark);
-}
-.route-step .idx {
-  font-family: var(--font-mono);
-  color: var(--amber);
-  width: 18px;
-}
-.route-step .grow {
-  flex: 1;
-}
 .state-moving {
   color: #a6c47a;
 }
@@ -1590,13 +1573,6 @@ input.text {
   font-style: italic;
   font-family: var(--font-title);
   font-size: 12px;
-}
-.route-step.current {
-  border-color: var(--amber-dark);
-}
-.schedule-editor .item.disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 #contracts-side .panel-body {
   overflow-y: auto;
@@ -2602,23 +2578,9 @@ input[type='range'] {
 #overview-banner {
   top: 106px;
 }
-.route-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.route-opts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  margin-top: 3px;
-}
 select.text.small {
   font-size: 10px;
   padding: 1px 2px;
-}
-.kv-bar {
-  margin: 2px 0;
 }
 table.market {
   width: 100%;
@@ -2693,28 +2655,8 @@ table.market td {
   z-index: 75;
 }
 
-.num-opt {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-}
-.num-opt input {
-  width: 52px;
-}
-
 #modal-root.peek {
   background: rgba(4, 4, 6, 0.35);
-}
-.rollout {
-  border: 1px solid var(--border-dark);
-  background: var(--stone);
-  padding: 4px 6px;
-  margin: 4px 0;
-  font-size: 11px;
-}
-.rollout .good {
-  color: var(--cyan);
 }
 
 .vehicle-preview-overlay {
@@ -4012,4 +3954,392 @@ table.market td {
 /* a save's lines in a list row */
 .k-sub {
   display: block;
+}
+
+/* ---- the Depot and the Train screen (depot.ts, trainScreen.ts) ---- */
+/* kit: list and detail. A list of a fixed width and the detail of the item picked, each scrolling on
+   its own under a head that stays put. The last well of a pane fills what is left of it */
+.k-split {
+  display: grid;
+  grid-template-columns: var(--k-lw, 360px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 6px;
+  padding: 2px 6px 6px;
+}
+.k-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.k-pane-h {
+  flex: none;
+  margin-bottom: 6px;
+}
+.k-pane-h:empty {
+  display: none;
+}
+.k-pane-h > .k-tabs + .k-well {
+  margin-top: 6px;
+}
+.k-pane-b {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+.k-pane-b > .k-well:last-child {
+  flex: 1 0 auto;
+}
+/* the Train screen: one tab's page stands in the frame's body */
+.dp-tab > * {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.k-bad {
+  color: var(--text-bad);
+}
+.k-li.off {
+  opacity: 0.55;
+}
+.k-kv.warn > b {
+  color: var(--amber);
+}
+.k-sw.sm {
+  width: 32px;
+  height: 17px;
+}
+.k-sw.sm::after {
+  width: 13px;
+  height: 11px;
+}
+.k-sw.sm.on::after {
+  left: 15px;
+}
+/* a vehicle or a train as a row: the lines clip with an ellipsis, a title carries the whole text */
+.dp-li .k-li-m > small {
+  white-space: nowrap;
+}
+.dp-li .k-li-m > small .k-bad {
+  white-space: normal;
+}
+.dp-pick {
+  cursor: pointer;
+}
+.dp-pick:hover:not(.on) {
+  background: rgba(255, 255, 255, 0.03);
+}
+.k-spr > .dp-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.dp-lv {
+  flex: none;
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--border-light);
+  color: var(--text);
+  font:
+    600 10px/14px var(--font-body),
+    sans-serif;
+  font-style: normal;
+  letter-spacing: 0;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+.dp-barred > .k-spr {
+  opacity: 0.5;
+  filter: grayscale(0.6);
+}
+.dp-st.good {
+  color: #a6c47a;
+}
+.dp-st.info {
+  color: var(--cyan);
+}
+.dp-st.warn {
+  color: var(--amber);
+}
+.dp-st.bad {
+  color: var(--text-bad);
+}
+.dp-mode {
+  color: var(--text);
+}
+/* the Depot's heads: New train over the list, the summary over the detail */
+.btn.dp-new {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-left: 12px;
+  font-family: var(--font-title);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.btn.dp-new .k-ic {
+  color: var(--amber);
+  font-size: 15px;
+}
+.btn.dp-new.open {
+  box-shadow: inset 0 0 0 1px var(--amber);
+  color: var(--amber);
+}
+.dp-sum {
+  padding-bottom: 4px;
+}
+.dp-sum > .k-sec > em {
+  font-family: var(--font-body);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.dp-phys {
+  margin: 0 10px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.dp-modes {
+  flex-wrap: wrap;
+}
+.dp-modes > small {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+.dp-modes > small:not(:first-child) {
+  margin-left: 8px;
+}
+/* the roll-out block under a new train: the depot choice, the gate line, the train's name */
+.dp-dock {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: var(--stone);
+  box-shadow:
+    inset 1px 1px 0 var(--border-light),
+    inset -1px -1px 0 var(--border-dark);
+}
+.dp-dock[hidden] {
+  display: none;
+}
+.dp-rl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 11px;
+}
+.dp-rl > .k-note {
+  flex: none;
+}
+.dp-gate {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.dp-gate.ok {
+  color: var(--cyan);
+}
+.dp-gate.bad {
+  color: var(--text-bad);
+}
+/* the stop editor: one block per stop (number, station, up, remove; load, unload, depart;
+   switches and dwell times) */
+.dp-stops {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 4px 10px 6px;
+}
+.dp-stop {
+  padding: 4px 6px 6px;
+  border: 1px solid var(--border-dark);
+  background: var(--stone-dark);
+}
+.dp-stop.ro {
+  padding: 3px 6px;
+}
+.dp-stop.on {
+  border-color: color-mix(in srgb, var(--amber) 55%, var(--border-dark));
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+.dp-sh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+}
+.dp-si {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 18px;
+  border: 1px solid var(--border-light);
+  background: var(--stone);
+  font:
+    600 11px/1 var(--font-body),
+    sans-serif;
+}
+.dp-stop.on .dp-si {
+  border-color: var(--amber);
+  background: var(--amber);
+  color: var(--stone-dark);
+}
+.dp-sn {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dp-stop.ro .dp-sn {
+  flex: none;
+  max-width: 40%;
+}
+.dp-ss {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dp-cur {
+  margin-left: 8px;
+  color: var(--amber);
+  font:
+    600 10px/1 var(--font-body),
+    sans-serif;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.dp-so {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 14px;
+  margin-top: 5px;
+  padding-left: 26px;
+}
+.dp-o {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.dp-o > small {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+.dp-o > .k-sw + small {
+  cursor: pointer;
+}
+.btn.dp-ico {
+  min-width: 24px;
+  padding: 1px 4px;
+}
+.btn.dp-ico .k-ic {
+  margin: 0;
+}
+.dp-add .k-li {
+  min-height: 32px;
+  padding: 3px 10px;
+}
+/* the Train screen: the consist as a strip of vehicles, the cargo aboard, a picked vehicle */
+.dp-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 10px 2px;
+}
+.dp-veh {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+.dp-veh:hover {
+  border-color: var(--amber);
+}
+.dp-veh > .dp-img {
+  width: 64px;
+  height: 40px;
+  object-fit: contain;
+  background: var(--stone-dark);
+  border: 1px solid var(--border-dark);
+}
+.dp-veh > small {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--text-dim);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+.dp-cargo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 10px;
+}
+.dp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid var(--border-dark);
+  background: var(--stone-dark);
+  font-size: 12px;
+}
+.dp-big {
+  display: grid;
+  place-items: center;
+  height: 96px;
+  margin: 4px 10px 6px;
+  background: var(--stone-dark);
+  border: 1px solid var(--border-dark);
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+.dp-big > .dp-img {
+  max-width: 140px;
+  max-height: 84px;
+  object-fit: contain;
+}
+.dp-modectl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.k-meter > span > .res-icon {
+  display: inline-block;
+  margin-right: 5px;
+  vertical-align: -2px;
+}
+.dp-total {
+  text-transform: none;
 }
