@@ -1507,7 +1507,9 @@ html[lang='hu'] .tb-cats .tt-term {
   color: var(--rarity-legendary);
   text-shadow: 0 0 6px rgba(255, 200, 80, 0.5);
 }
-input.text {
+input.text,
+textarea.text,
+select.text {
   font-family: var(--font-body);
   font-size: 12px;
   color: var(--text);
