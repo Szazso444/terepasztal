@@ -315,12 +315,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
    */
   const season = (): Season => (d.settings.weather ? seasonOf(d.clock.day) : 'spring');
 
-  const hud = new Hud(
-    d.clock,
-    () => ageStatus(d.economy.tier, host.ageSnapshot()),
-    d.atlas,
-    d.tooltip,
-  );
+  /** progress towards every age: the era widget's, and what the build bar's locks wait for */
+  const ages = () => ageStatus(d.economy.tier, host.ageSnapshot());
+  const hud = new Hud(d.clock, ages, d.atlas, d.tooltip);
   const depot = new DepotScreen(d.inventory, d.fleet, d.builder, toast, d.atlas);
   depot.onFocusTrain = (t) => host.focusTrain(t);
   depot.onFocusDepot = (dep, gate) => {
@@ -508,6 +505,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     (t: Tool) => d.build.setTool(t),
     () => (host.mode === 'editor' ? 99 : d.economy.tier),
     d.atlas,
+    d.tooltip,
+    ages,
   );
   toolbar.onHover = (it) => buildInfo.show(it ?? toolbar.item(toolbar.active));
   // the next one of a kind costs more: show the live price on the cards
@@ -891,10 +890,10 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     openPauseMenu,
     toggleScreen: (s) => d.screens.toggle(keyScreens[s]),
     toggleOverview: () => host.toggleOverview(),
-    cycleTool: (dir) => toolbar.cycle(dir),
-    toggleReclass: (target) => toolbar.toggleReclass(target),
-    cycleType: (dir) => toolbar.cycleGroup(dir),
-    selectPiece: (i) => toolbar.selectIndex(i),
+    cycleTool: (dir) => toolbar.bar.cycle(dir),
+    toggleReclass: (target) => toolbar.bar.toggleReclass(target),
+    cycleType: (dir) => toolbar.bar.cycleGroup(dir),
+    selectPiece: (i) => toolbar.bar.selectIndex(i),
     setSpeed: (s) => d.clock.setSpeed(s),
     stepSpeed: (dir) => d.clock.stepSpeed(dir),
     togglePause: () => d.clock.togglePause(),
