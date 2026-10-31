@@ -82,6 +82,7 @@ import { TrainSide } from './trainSide';
 import { AlertBar } from './alertBar';
 import { AlertDesk } from './alertDesk';
 import { AlertPopup } from './alertPopup';
+import { NotificationsScreen } from './notificationsScreen';
 import { Advisor } from './advisor';
 import { BuildInfo } from './buildInfo';
 import { StationPanel } from './stationPanel';
@@ -535,6 +536,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const trainSide = new TrainSide(d.builder, d.atlas, d.commands, toast);
   const alertBar = new AlertBar(d.atlas, d.tooltip, d.toasts);
   alertBar.onLook = (n) => host.focusNotice(n);
+  const notificationsScreen = new NotificationsScreen(d.settings, d.screens, () =>
+    host.saveSettings(),
+  );
+  alertBar.onSettings = () => notificationsScreen.openFrom(null);
+  settingsScreen.onNotifications = () => notificationsScreen.openFrom(settingsScreen);
   const alerts = new AlertDesk({
     settings: d.settings,
     clock: d.clock,
