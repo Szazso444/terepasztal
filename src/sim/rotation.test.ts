@@ -234,8 +234,8 @@ describe('a save from before rotations', () => {
     expect(j.version).toBe(SAVE_VERSION);
     expect(j.migrationNotes?.[0]).toBe(`v${BEFORE}→v${BEFORE + 1}: ${step.note}`);
     expect(j.buildings).toEqual([
-      [7, 7, 'windmill', 0.5, 2, null, 0],
-      [9, 7, 'kiln', 0, 1, work, 0],
+      [7, 7, 'windmill', 0.5, 2, null, 0, null],
+      [9, 7, 'kiln', 0, 1, work, 0, null],
     ]);
     for (const b of j.buildings!) expect(buildingFromJSON(b).rot).toBe(0);
     // and the work under way survives the step
@@ -248,10 +248,10 @@ describe('a save from before rotations', () => {
       previous([[1, 1, 'kiln', 0], [2, 1, 'kiln', 0, 3], [3, 1, 'kiln', 0, 2, work, 3], ...odd]),
     );
     expect(j.buildings).toEqual([
-      [1, 1, 'kiln', 0, 1, null, 0],
-      [2, 1, 'kiln', 0, 3, null, 0],
+      [1, 1, 'kiln', 0, 1, null, 0, null],
+      [2, 1, 'kiln', 0, 3, null, 0, null],
       // a rotation already there is kept
-      [3, 1, 'kiln', 0, 2, work, 3],
+      [3, 1, 'kiln', 0, 2, work, 3, null],
       ...odd,
     ]);
     // the stations keep the turn they had
@@ -274,7 +274,7 @@ describe('a save from before rotations', () => {
       JSON.stringify(previous([[7, 7, 'windmill', 0.5, 2, null, undefined]])),
     );
     if (!('save' in read)) throw new Error(`refused as ${read.error}`);
-    expect(read.save.buildings).toEqual([[7, 7, 'windmill', 0.5, 2, null, 0]]);
+    expect(read.save.buildings).toEqual([[7, 7, 'windmill', 0.5, 2, null, 0, null]]);
   });
 });
 

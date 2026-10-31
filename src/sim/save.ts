@@ -35,7 +35,7 @@ export type WorldSpec =
     }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 24;
+export const SAVE_VERSION = 25;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -694,6 +694,21 @@ export const MIGRATIONS: Migration[] = [
       const world: unknown = j.world;
       if (isRecord(world) && isRecord(world.level) && isRecord(world.level.start))
         delete world.level.start.tickets;
+    },
+  },
+  {
+    from: 24,
+    note: 'bridge platforms took a deck height: the bridges of an older save stay automatic',
+    quiet: true,
+    run: (j) => {
+      for (const b of j.buildings ?? []) {
+        if (!Array.isArray(b) || b.length < 4) continue;
+        // the deck is the eighth place of the tuple, after what an older save may have left out
+        if (b.length < 5) b.push(1);
+        if (b.length < 6) b.push(null);
+        if (b.length < 7) b.push(0);
+        b[7] = b[7] ?? null;
+      }
     },
   },
 ];

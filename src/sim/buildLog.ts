@@ -115,6 +115,7 @@ export type BuildOp =
   | { op: 'road'; x: number; y: number; laid: boolean; spur: boolean }
   | { op: 'stationLevel'; station: Station; was: StationLevel; now: StationLevel }
   | { op: 'worksLevel'; building: Building; was: WorksLevel; now: WorksLevel }
+  | { op: 'deck'; building: Building; was: number | undefined; now: number | undefined }
   | { op: 'name'; station: Station; was: string; now: string; shown: string };
 
 /** Residents a house gained or lost in an action (`HouseRegistry.industryPlaced`). */
@@ -250,6 +251,9 @@ export class BuildLog {
     this.ops.push({ op: 'stationLevel', station: s, was, now: was });
   }
   /** Before a works' level or upgrade changes. */
+  deck(b: Building) {
+    this.ops.push({ op: 'deck', building: b, was: b.deck, now: b.deck });
+  }
   worksLevel(b: Building) {
     this.touch(buildingFootprint(b.id, b.x, b.y, b.rot ?? 0));
     const was = worksLevelOf(b);
@@ -272,6 +276,7 @@ export class BuildLog {
     for (const op of this.ops) {
       if (op.op === 'stationLevel') op.now = stationLevelOf(op.station);
       else if (op.op === 'worksLevel') op.now = worksLevelOf(op.building);
+      else if (op.op === 'deck') op.now = op.building.deck;
     }
     const people: PeopleMove[] = [];
     for (const [h, was] of this.people)
@@ -493,6 +498,9 @@ export class BuildStep implements HistoryStep {
         b.setWorksLevel(op.building, to.level, to.work);
         break;
       }
+      case 'deck':
+        b.setDeck(op.building, forward ? op.now : op.was);
+        break;
       case 'name':
         op.station.name = forward ? op.now : op.was;
         break;
@@ -568,6 +576,8 @@ export function stepLabel(ops: readonly BuildOp[]): string {
         buildingDef(first.building.id).name,
         buildingLevel({ ...first.building, level: first.was.level }) + 1,
       );
+    case 'deck':
+      return H.raised(buildingDef(first.building.id).name);
     case 'name':
       return H.renamed(first.shown, first.now);
     default:

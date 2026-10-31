@@ -122,6 +122,7 @@ const EN = {
     downgradedTrack: 'Downgraded track',
     track: 'track',
     road: 'road',
+    raised: (name: string) => `Raised ${name}`,
     upgradedTo: (name: string, level: number) => `Upgraded ${name} to level ${level}`,
     downgradedTo: (name: string, level: number) => `Downgraded ${name} to level ${level}`,
     renamed: (was: string, now: string) => `Renamed ${was} to ${now}`,
@@ -455,6 +456,17 @@ const EN = {
       nothing: 'Nothing to convert here',
     } as Record<string, string>,
     bridgeOnWater: 'Bridges only span water',
+    /** a level piece laid where a ramp to a raised bridge climbs */
+    onRamp: 'Curves, switches and crossings stay level: a ramp to a raised bridge climbs here',
+    /** why a bridge stays at its height (`Builder.checkRaise`) */
+    raise: {
+      none: 'No bridge here',
+      highest: 'This bridge stands at the greatest height',
+      road: 'A road stays at the height of its banks: this bridge cannot rise',
+      station: 'A station stands on this bridge: it cannot rise',
+      ramp: 'A curve, switch or crossing in the way must stay level: no ramp can reach this height',
+      train: 'A train is on this bridge or its ramps',
+    },
     occupied: 'Tile occupied',
     funds: 'Not enough funds',
     tierLocked: (t: number) => `Requires the ${ageLabel(t)}`,

@@ -824,7 +824,7 @@ describe('v11 to v12', () => {
     expect(j.track[0]).toEqual([4, 8, 'straight', 1, 'branch']);
     // the step to v15 then says the bridge is not being strengthened, and the step to v16 that it
     // stands at rotation 0
-    expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1, null, 0]);
+    expect(j.buildings).toContainEqual([4, 8, 'bridge_wood', 0, 1, null, 0, null]);
     // the step to v21 then moves the stockpile into the town: it has no depot and no warehouse
     expect(j.stockpile).toBeUndefined();
     expect(j.stores).toContainEqual({
@@ -1030,7 +1030,7 @@ describe('works buildings in a save', () => {
       active: true,
       rate: 2,
     };
-    expect(buildingToJSON(b)).toEqual([4, 9, 'sawmill', 0.25, 3, null, 2]);
+    expect(buildingToJSON(b)).toEqual([4, 9, 'sawmill', 0.25, 3, null, 2, null]);
     expect(buildingFromJSON(buildingToJSON(b))).toEqual({
       ...b,
       active: false,
@@ -1057,6 +1057,7 @@ describe('works buildings in a save', () => {
       1,
       null,
       0,
+      null,
     ]);
   });
 
@@ -1127,8 +1128,8 @@ describe('v14 to v15', () => {
     // a works saved without its level gets the 1 it always meant, so the work has its place (the
     // step to v16 then turns each to rotation 0)
     expect(j.buildings).toEqual([
-      [7, 7, 'windmill', 0.5, 2, null, 0],
-      [9, 7, 'kiln', 0, 1, null, 0],
+      [7, 7, 'windmill', 0.5, 2, null, 0, null],
+      [9, 7, 'kiln', 0, 1, null, 0, null],
     ]);
     expect(j.houses?.list[0]).toEqual({
       x: 3,
@@ -1431,7 +1432,10 @@ describe('v15 to v16', () => {
         if (!('save' in read)) throw new Error(`the file was refused as ${read.error}`);
         const works = (read.save.buildings ?? []) as unknown[];
         if ((file.version as number) >= 16) {
-          expect(works, `a file of v${String(file.version)}`).toEqual(file.buildings);
+          // what a file held comes through; the step from v24 only adds the deck's place after it
+          const held = file.buildings as unknown[][],
+            kept = works.map((b, i) => (Array.isArray(b) ? b.slice(0, held[i].length) : b));
+          expect(kept, `a file of v${String(file.version)}`).toEqual(held);
           return;
         }
         works.forEach((b, i) => {
@@ -3391,7 +3395,7 @@ describe('a file with one field every version has taken out or retyped', () => {
           tier: from < 9 ? Math.min(2, economy.tier) : economy.tier,
         });
         // what the file held of tickets is gone, whatever the version it came from
-        if (from < SAVE_VERSION) expect(save.economy).not.toHaveProperty('tickets');
+        if (from < 24) expect(save.economy).not.toHaveProperty('tickets');
         for (const key of ['track', 'stations', 'trains'] as const)
           expect(save[key], key).toHaveLength((file[key] as unknown[]).length);
 
