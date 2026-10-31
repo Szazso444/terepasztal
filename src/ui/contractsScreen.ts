@@ -182,7 +182,8 @@ export class ContractsScreen implements Screen {
     this.scroll.around(() => {
       this.root.replaceChildren(...this.draw(list));
     });
-    if (this.scrollToFocus && this.focusEl) {
+    // asked for before the screen is open, it is brought into view as it opens
+    if (this.scrollToFocus && this.focusEl && this.root.isConnected) {
       this.scrollToFocus = false;
       (this.focusEl as HTMLElement).scrollIntoView?.({ block: 'nearest' });
     }
