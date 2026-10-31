@@ -1143,6 +1143,7 @@ export class Fleet {
         }
       }
     }
+    this.builder.wear.flush();
   }
 
   /**

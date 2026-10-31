@@ -2,7 +2,9 @@
  * Track wear (docs/superpowers/specs/2026-10-30-track-wear-design.md). Every piece carries one
  * health share (`TrackPiece.wear`); a crossing and a multi-tile curve or switch are one piece with
  * one share. This file holds what a piece's health means: its maximum HP, its state, and the
- * once-per-game warnings kept in the save. Neither Maglev Guideway nor Hyperloop Tube wears.
+ * once-per-game warnings kept in the save. Neither Maglev Guideway nor Hyperloop Tube wears. A
+ * piece at zero closes to traffic: `Train.canUse` reads its health, and `TrackWear.flush` tells the
+ * trains.
  */
 import type { Dir } from '../engine/iso';
 import type { TrackGraph, TrackClass, TrackPiece } from '../world/track';
@@ -75,6 +77,13 @@ export class TrackWear {
   degradedShown = false;
   /** the first unusable piece has been announced */
   unusableShown = false;
+  /** told the tiles of a piece whose state changed */
+  onChange: ((tiles: { x: number; y: number }[]) => void) | null = null;
+  /** what `unusable` hands out, and the track version it was built for */
+  private failed = new Set<number>();
+  private failedFor = -1;
+  /** a piece entered or left the unusable state since the last `flush` */
+  private closures = false;
   /** keys (y * w + x) of every depot gate tile, rebuilt when the track or the stations change */
   private gates = new Set<number>();
   private gatesFor = '';
@@ -106,20 +115,58 @@ export class TrackWear {
         lineWearMul(pieceClassFor(p, entry)) *
         rules.trackWearMul) /
       maxHp(p);
-    this.lose(p, share);
+    this.lose(x, y, p, share);
   }
   /** One game day passes: every piece loses its time wear, standing or not. */
   daily(): void {
     for (const { x, y, piece } of this.track.anchors())
-      if (!this.exempt(x, y)) this.lose(piece, rules.trackTimeWear * rules.trackWearMul);
+      if (!this.exempt(x, y)) this.lose(x, y, piece, rules.trackTimeWear * rules.trackWearMul);
+  }
+  /**
+   * Keys (y * w + x) of every tile of an unusable piece. Rebuilt after a track edit or a load,
+   * which bring and take pieces with their health; between those `settle` keeps it.
+   */
+  get unusable(): Set<number> {
+    if (this.track.version !== this.failedFor) {
+      this.failedFor = this.track.version;
+      this.failed.clear();
+      for (const [key, p] of this.track.pieces) if (p.wear.health <= 0) this.failed.add(key);
+    }
+    return this.failed;
+  }
+  /**
+   * Tell the trains what closed or opened since the last call: one rise of `track.version`, however
+   * many pieces, so a batch of failures costs one round of path checks.
+   */
+  flush(): void {
+    if (!this.closures) return;
+    this.closures = false;
+    this.track.version++;
   }
   /**
    * The one place a piece's health changes: it loses `share` of its maximum HP, twice that once
    * degraded, and never goes below zero.
    */
-  private lose(p: TrackPiece, share: number): void {
-    const worn = stateOf(p) === 'healthy' ? share : share * rules.trackDegradedWear;
+  private lose(x: number, y: number, p: TrackPiece, share: number): void {
+    const was = stateOf(p);
+    const worn = was === 'healthy' ? share : share * rules.trackDegradedWear;
     p.wear.health = Math.max(0, p.wear.health - Math.max(0, worn));
+    this.settle(x, y, p, was);
+  }
+  /** After a health change: what follows from the piece at (x, y) no longer being in state `was`. */
+  private settle(x: number, y: number, p: TrackPiece, was: WearState): void {
+    const now = stateOf(p);
+    if (now === was) return;
+    const tiles = this.track.unitTiles(x, y);
+    if (now === 'unusable' || was === 'unusable') {
+      this.closures = true;
+      for (const t of tiles) {
+        const key = this.track.key(t.x, t.y);
+        if (now === 'unusable') this.failed.add(key);
+        else this.failed.delete(key);
+      }
+    }
+    this.onChange?.(tiles);
   }
   toJSON(): WearJSON {
     return { degraded: this.degradedShown, unusable: this.unusableShown };
