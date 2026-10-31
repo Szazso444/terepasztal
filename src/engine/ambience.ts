@@ -1,12 +1,14 @@
 /** The tab is hidden. Outside a browser (tests) there is no document and nothing is hidden. */
 const tabHidden = () => typeof document !== 'undefined' && document.hidden;
 
-/** Quiet continuous weather beds, sparse birds by day and crickets after dusk. */
+/**
+ * A quiet wind bed, sparse birds by day and crickets after dusk. Rain only silences the calls: a
+ * filtered noise bed for it read as a loud hiss of steam, so it waits for a real recording.
+ */
 export class Ambience {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private wind: GainNode | null = null;
-  private rain: GainNode | null = null;
   private nextCall = 0;
   private volume = 0;
   private init(ctx: AudioContext) {
@@ -45,7 +47,6 @@ export class Ambience {
       return gain;
     };
     this.wind = bed('lowpass', 430);
-    this.rain = bed('bandpass', 2400);
   }
   update(ctx: AudioContext, volume: number, rain: number, night: number) {
     if (!this.ctx) this.init(ctx);
@@ -53,7 +54,6 @@ export class Ambience {
     const now = ctx.currentTime;
     this.master!.gain.setTargetAtTime(tabHidden() ? 0 : volume, now, 0.2);
     this.wind!.gain.setTargetAtTime(0.035 + 0.012 * Math.sin(now * 0.14), now, 1.2);
-    this.rain!.gain.setTargetAtTime(rain * 0.24, now, 1.5);
     if (tabHidden() || volume <= 0 || now < this.nextCall || rain > 0.35) return;
     this.nextCall = now + (night > 0.5 ? 5 : 9) + Math.random() * 12;
     for (let i = 0; i < (night > 0.5 ? 3 : 2); i++) {
