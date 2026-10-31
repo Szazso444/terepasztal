@@ -47,7 +47,7 @@ import {
   type BuildingJSON,
 } from './buildings';
 import { MAX_LEVEL } from './levels';
-import { isTrainColour } from './trainColours';
+import { isTrainColour, shownTrainColour } from './trainColours';
 import type { Work } from './upgrade';
 import type { HousesJSON } from './houses';
 import { simWorld } from '../testing/simWorld';
@@ -4581,14 +4581,17 @@ describe('v22 to v23', () => {
     expect(runStep(22, file).trains).toEqual([{ id: 3, colour: 4 }]);
   });
 
-  it('a train keeps its colour through a save, and a colour no code names is the first', () => {
+  it("a train keeps its colour through a save, a later build's too; what is none is the first", () => {
     const track = new TrackGraph(8, 8);
     const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
     t.colour = 3;
     const json = JSON.parse(JSON.stringify(t.toJSON()));
-    expect(Train.fromJSON(json, track).colour).toBe(3);
-    expect(Train.fromJSON({ ...json, colour: 99 }, track).colour).toBe(0);
-    expect(Train.fromJSON({ ...json, colour: undefined }, track).colour).toBe(0);
+    const load = (colour: unknown) =>
+      Train.fromJSON({ ...json, colour: colour as number }, track).colour;
+    expect(load(3)).toBe(3);
+    expect(load(99)).toBe(99);
+    expect(shownTrainColour(load(99))).toBe(0);
+    for (const none of [undefined, null, -1, 1.5, 'red']) expect(load(none), String(none)).toBe(0);
   });
 
   it('reaches a train of the oldest save, through the whole chain', () => {

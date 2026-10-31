@@ -4,6 +4,7 @@ import type { Builder } from '../sim/build';
 import type { Commands } from '../sim/commands';
 import { defaultStop, type StopPlan, type Train } from '../sim/trains';
 import { cargoDef } from '../sim/cargo';
+import { guardNumberField } from './fieldKeys';
 
 /**
  * Editable stop list shared by the train screen (live trains) and the depot (optional custom
@@ -68,6 +69,8 @@ export class ScheduleEditor {
       s.addEventListener('change', () => {
         on(s.value);
         this.onChange();
+        // the choice is made: the keys are the game's again
+        s.blur();
       });
       return s;
     };
@@ -85,7 +88,7 @@ export class ScheduleEditor {
         set(Math.max(0, Math.min(600, Number(inp.value) || 0)));
         this.onChange();
       });
-      inp.addEventListener('keydown', (e) => e.stopPropagation());
+      guardNumberField(inp);
       wrap.append(el('span', { class: 'dim', text: label }), inp);
       return wrap;
     };

@@ -181,6 +181,7 @@ describe('the arrival', () => {
   it('a train that stands or makes way has none', () => {
     expect(arrivalOf(trainFacts({ ...running, state: 'loading' }))).toBeNull();
     expect(arrivalOf(trainFacts({ ...running, holding: true }))).toBeNull();
+    expect(arrivalOf(trainFacts({ ...running, blocked: true }))).toBeNull();
     expect(arrivalOf(trainFacts({ state: 'moving' }))).toBeNull();
   });
 });

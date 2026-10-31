@@ -83,6 +83,7 @@ const context = (more: Partial<TrainContext> = {}): TrainContext => ({
   selected: null,
   following: null,
   expanded: null,
+  heldColours: null,
   ...more,
 });
 
@@ -106,7 +107,7 @@ describe('the Trains tab', () => {
     expect(list.rows[0].rows[0].hex).toBe(TRAIN_COLOURS[2]);
   });
 
-  it('In view goes by the head of the train, and counts what it left out', () => {
+  it('In view counts what it left out', () => {
     const list = trainGroups(
       [train(1, 0, 300, 150), train(2, 0, 500, 250), train(3, 0, 501, 250)],
       VIEW,
@@ -117,13 +118,54 @@ describe('the Trains tab', () => {
     expect(list.total).toBe(3);
   });
 
+  it('a train is in view with any car on screen, its head off it', () => {
+    const poses = [
+      { x: 503, y: 150 },
+      { x: 490, y: 150 },
+      { x: 480, y: 150 },
+    ];
+    expect(trainGroups([train(1, 0, 0, 0, { poses })], VIEW, context()).shown).toBe(1);
+    const away = poses.map((p) => ({ ...p, x: p.x + 40 }));
+    expect(trainGroups([train(1, 0, 0, 0, { poses: away })], VIEW, context()).shown).toBe(0);
+  });
+
+  it('a stripe worked keeps the row in its group, in its new colour, until the hold ends', () => {
+    const list = [train(1, 0), train(2, 2), train(3, 0)];
+    list[0].colour = 4;
+    const held = context({
+      heldColours: new Map([
+        [1, 0],
+        [2, 2],
+        [3, 0],
+      ]),
+    });
+    const kept = trainGroups(list, null, held);
+    expect(kept.rows.map((g) => g.colour)).toEqual([2, 0]);
+    expect(kept.rows[1].rows.map((r) => r.id)).toEqual([1, 3]);
+    expect(kept.rows[1].rows[0].hex).toBe(TRAIN_COLOURS[4]);
+    const after = trainGroups(list, null, context());
+    expect(after.rows.map((g) => g.colour)).toEqual([2, 4, 0]);
+  });
+
+  it('a train that came after the hold goes by its own colour', () => {
+    const list = [train(1, 0), train(2, 3)];
+    const kept = trainGroups(list, null, context({ heldColours: new Map([[1, 0]]) }));
+    expect(kept.rows.map((g) => g.colour)).toEqual([3, 0]);
+  });
+
+  it('a colour a later build saved draws as the first', () => {
+    const list = trainGroups([train(1, 99)], null, context());
+    expect(list.rows[0].title).toBe(STR.outliner.ungrouped);
+    expect(list.rows[0].rows[0].hex).toBe(TRAIN_COLOURS[0]);
+  });
+
   it('a train not on the map is in All and in no view', () => {
     const lost = train(1, 0, 0, 0, { poses: [] });
     expect(trainGroups([lost], VIEW, context()).shown).toBe(0);
     expect(trainGroups([lost], null, context()).shown).toBe(1);
   });
 
-  it('goes by where the head is drawn: a hill lifts it into the view or out', () => {
+  it('goes by where the train is drawn: a hill lifts it into the view or out', () => {
     const lift: Partial<TrainContext> = { tilePoint: (x, y) => ({ x, y: y - 20 }) };
     expect(trainGroups([train(1, 0, 300, 265)], VIEW, context(lift)).shown).toBe(1);
     expect(trainGroups([train(1, 0, 300, 60)], VIEW, context(lift)).shown).toBe(0);
@@ -208,7 +250,7 @@ const station = (id: number, more: Partial<StationFacts> = {}): StationFacts => 
   closed: false,
   goods: [],
   fill: 0.5,
-  at: { x: 300, y: 150 },
+  at: [{ x: 300, y: 150 }],
   ...more,
 });
 
@@ -243,14 +285,22 @@ describe('the Stations tab', () => {
   it('In view goes by where it stands, its edge included', () => {
     const list = stationRows(
       [
-        station(1, { at: { x: 500, y: 250 } }),
-        station(2, { at: { x: 500.5, y: 250 } }),
-        station(3, { at: { x: 100, y: 50 } }),
+        station(1, { at: [{ x: 500, y: 250 }] }),
+        station(2, { at: [{ x: 500.5, y: 250 }] }),
+        station(3, { at: [{ x: 100, y: 50 }] }),
       ],
       VIEW,
     );
     expect(list.rows.map((r) => r.id)).toEqual([1, 3]);
     expect(list.total).toBe(3);
+  });
+
+  it('one corner on screen is enough', () => {
+    const at = [
+      { x: 490, y: 150 },
+      { x: 520, y: 150 },
+    ];
+    expect(stationRows([station(1, { at })], VIEW).shown).toBe(1);
   });
 });
 
@@ -325,7 +375,7 @@ const works = (key: number, more: Partial<WorksFacts> = {}): WorksFacts => ({
   perWeek: 42.4,
   status: { kind: 'running' },
   store: 'Alder',
-  at: { x: 300, y: 150 },
+  at: [{ x: 300, y: 150 }],
   ...more,
 });
 
@@ -351,10 +401,22 @@ describe('the Works tab', () => {
   });
 
   it('In view goes by where it stands', () => {
-    const list = worksRows([works(1), works(2, { at: { x: 99, y: 150 } })], VIEW);
-    expect(list.rows.map((r) => r.key)).toEqual([1]);
-    expect(list.shown).toBe(1);
-    expect(list.total).toBe(2);
+    const list = worksRows(
+      [
+        works(1),
+        works(2, { at: [{ x: 99, y: 150 }] }),
+        works(3, {
+          at: [
+            { x: 99, y: 150 },
+            { x: 101, y: 150 },
+          ],
+        }),
+      ],
+      VIEW,
+    );
+    expect(list.rows.map((r) => r.key)).toEqual([1, 3]);
+    expect(list.shown).toBe(2);
+    expect(list.total).toBe(3);
   });
 });
 

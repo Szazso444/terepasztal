@@ -997,6 +997,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     get categoryOpen() {
       return toolbar.open !== null;
     },
+    get trainOpen() {
+      return host.selectedTrain !== null;
+    },
     get recording() {
       return host.recordingRoute;
     },
@@ -1012,6 +1015,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       if (d.tooltip.stack.escape()) d.build.takeEscape();
     },
     closeScreen: () => d.screens.close(),
+    closeTrain: () => host.selectFieldTrain(null),
     closeMenus,
     openPauseMenu,
     toggleScreen: (s) => d.screens.toggle(keyScreens[s]),

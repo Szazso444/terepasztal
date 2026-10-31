@@ -21,6 +21,7 @@ type StateKey =
   | 'screenOpen'
   | 'building'
   | 'categoryOpen'
+  | 'trainOpen'
   | 'recording'
   | 'overviewTrain'
   | 'tooltipsOpen';
@@ -46,6 +47,7 @@ function fakeHost(context: KeyContext, over: Partial<State> = {}) {
     screenOpen: false,
     building: false,
     categoryOpen: false,
+    trainOpen: false,
     recording: false,
     overviewTrain: false,
     tooltipsOpen: false,
@@ -56,6 +58,7 @@ function fakeHost(context: KeyContext, over: Partial<State> = {}) {
     toggleDebug: log('toggleDebug'),
     closeTooltips: log('closeTooltips'),
     closeScreen: log('closeScreen'),
+    closeTrain: log('closeTrain'),
     closeMenus: log('closeMenus'),
     openPauseMenu: log('openPauseMenu'),
     toggleScreen: log('toggleScreen'),
@@ -135,6 +138,12 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
     // a category with no tool in hand, all its items locked: it closes, no pause menu
     { state: { categoryOpen: true }, calls: ['closeCategory'] },
     { state: { categoryOpen: true, screenOpen: true }, calls: ['closeScreen'] },
+    // the train panel closes before the pause menu, and after what stands over it
+    { state: { trainOpen: true }, calls: ['closeTrain'] },
+    { state: { trainOpen: true, screenOpen: true }, calls: ['closeScreen'] },
+    { state: { trainOpen: true, categoryOpen: true }, calls: ['closeCategory'] },
+    { state: { trainOpen: true, building: true }, calls: [] },
+    { state: { trainOpen: true, tooltipsOpen: true }, calls: ['closeTooltips'] },
     // ...unless a tooltip is open: it closes, and nothing else
     { state: { tooltipsOpen: true, building: true }, calls: ['closeTooltips'] },
     { state: { tooltipsOpen: true, screenOpen: true }, calls: ['closeTooltips'] },

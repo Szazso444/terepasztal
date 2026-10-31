@@ -5,7 +5,7 @@
 import { contractAtRisk } from '../sim/alerts';
 import { cargoName } from '../sim/cargo';
 import type { ContractRarity } from '../sim/contracts';
-import { TRAIN_COLOURS } from '../sim/trainColours';
+import { TRAIN_COLOURS, shownTrainColour } from '../sim/trainColours';
 import { STR } from '../strings';
 import { fmtDuration, fmtInt, fmtMoney } from './numberFormat';
 import type { WorksStatus } from './tooltipContent';
@@ -119,6 +119,12 @@ export interface TrainContext {
   selected: number | null;
   following: number | null;
   expanded: number | null;
+  /**
+   * The colour each train is grouped by while the player works the stripes (a train's own colour
+   * when it has none here): the row stays under the pointer until it leaves the list. Null with
+   * nothing held.
+   */
+  heldColours: ReadonlyMap<number, number> | null;
 }
 
 export type TrainRowFacts = TrainFacts & {
@@ -139,7 +145,7 @@ function trainRow(t: TrainRowFacts, c: TrainContext): TrainRow {
   return {
     id: t.id,
     name: t.name,
-    hex: TRAIN_COLOURS[t.colour],
+    hex: TRAIN_COLOURS[shownTrainColour(t.colour)],
     chip: trainChip(t, c.stuck(t.id)),
     cargo: cargoOf(t).map((g) => ({ res: g.res, amount: Math.round(g.amount) })),
     from: last === null || last === next ? null : c.stationName(last),
@@ -173,25 +179,27 @@ export function groupTitle(colour: number): string {
   return colour === 0 ? STR.outliner.ungrouped : STR.outliner.colourGroup(STR.train.colour[colour]);
 }
 
-/** The trains in `view`, grouped by colour; in the fleet's order inside a group. */
+/**
+ * The trains in `view`, a car of them on screen being enough, grouped by colour; in the fleet's
+ * order inside a group.
+ */
 export function trainGroups(
   trains: readonly TrainRowFacts[],
   view: ViewRect | null,
   c: TrainContext,
 ): Listed<TrainGroup> {
-  const head = (t: TrainRowFacts) => {
-    const p = t.poses[0];
-    return p ? c.tilePoint(p.x, p.y) : null;
-  };
-  const list = trains.filter((t) => inView(view, head(t)));
-  const colours = [...new Set(list.map((t) => t.colour))];
+  const seen = (t: TrainRowFacts) =>
+    !view || t.poses.some((p) => inView(view, c.tilePoint(p.x, p.y)));
+  const groupOf = (t: TrainRowFacts) => shownTrainColour(c.heldColours?.get(t.id) ?? t.colour);
+  const list = trains.filter(seen);
+  const colours = [...new Set(list.map(groupOf))];
   colours.sort((a, b) => groupOrder(a) - groupOrder(b));
   return {
     rows: colours.map((colour) => ({
       colour,
       hex: TRAIN_COLOURS[colour],
       title: groupTitle(colour),
-      rows: list.filter((t) => t.colour === colour).map((t) => trainRow(t, c)),
+      rows: list.filter((t) => groupOf(t) === colour).map((t) => trainRow(t, c)),
     })),
     shown: list.length,
     total: trains.length,
@@ -210,7 +218,8 @@ export interface StationFacts {
   goods: readonly Amount[];
   /** how full the fullest measure of its storage is, 0 to 1 */
   fill: number;
-  at: Point;
+  /** its corners as drawn: it is in view when one of them is */
+  at: readonly Point[];
 }
 
 export interface StationRow {
@@ -236,7 +245,7 @@ export function stationRows(
   stations: readonly StationFacts[],
   view: ViewRect | null,
 ): Listed<StationRow> {
-  const list = stations.filter((s) => inView(view, s.at));
+  const list = stations.filter((s) => s.at.some((p) => inView(view, p)));
   return {
     rows: list.map((s) => ({
       id: s.id,
@@ -325,7 +334,8 @@ export interface WorksFacts {
   status: WorksStatus;
   /** the store it runs from; null with none in reach */
   store: string | null;
-  at: Point;
+  /** its corners as drawn: it is in view when one of them is */
+  at: readonly Point[];
 }
 
 export interface WorksRow {
@@ -354,7 +364,7 @@ function worksChip(s: WorksStatus): Chip | null {
 }
 
 export function worksRows(works: readonly WorksFacts[], view: ViewRect | null): Listed<WorksRow> {
-  const list = works.filter((b) => inView(view, b.at));
+  const list = works.filter((b) => b.at.some((p) => inView(view, p)));
   return {
     rows: list.map((b) => ({
       key: b.key,

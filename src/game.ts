@@ -259,6 +259,8 @@ export class Game implements UiHost {
   private fieldSelected: Train | null = null;
   /** the train the camera stays on */
   readonly follow = new FollowCamera();
+  /** the seconds each stuck train has stood, as the last look at the notices found them */
+  private stuckNow = new Map<number, number>();
   private spawnMarkTimer = 0;
   private pathHighlight: { x: number; y: number }[][] = [];
   private pathTimer = 0;
@@ -2271,7 +2273,7 @@ export class Game implements UiHost {
     return { x: w.x, y: w.y + this.world.elevationOf(Math.floor(x + 0.5), Math.floor(y + 0.5)) };
   }
   stuckFor(id: number) {
-    return this.traffic.stuckTrains(this.clock.time).find((s) => s.id === id)?.since ?? null;
+    return this.stuckNow.get(id) ?? null;
   }
   /** Keep the camera on the train followed; a train gone ends the following. */
   private followTrain(dt: number) {
@@ -2447,11 +2449,13 @@ export class Game implements UiHost {
     this.noticeTimer += dt;
     if (this.noticeTimer > 0.5) {
       this.noticeTimer = 0;
+      const stuck = this.traffic.stuckTrains(this.clock.time);
+      this.stuckNow = new Map(stuck.map((s) => [s.id, s.since]));
       this.notices.refresh({
         trains: this.fleet.trains,
         builder: this.builder,
         power: this.power,
-        stuck: this.traffic.stuckTrains(this.clock.time),
+        stuck,
         contracts: { board: this.contracts, now: this.clock.time },
       });
       this.alerts.update(this.notices.list);

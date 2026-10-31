@@ -134,8 +134,8 @@ export class Commands {
   }
   /**
    * Set something the player named or marked on a train: a step of its own in the history, named
-   * `label`, unless it changes nothing. The level editor records nothing, as `act` has it. Of a
-   * train recalled since nothing is left to see: its step passes, and the ones under it stay in reach.
+   * `label`, unless it changes nothing. The level editor records nothing, as `act` has it. A train
+   * recalled since is gone for good, and its steps with it (`HistoryStep.gone`).
    */
   private editTrain<T>(
     t: Train,
@@ -151,7 +151,12 @@ export class Commands {
       set(v);
       return done();
     };
-    this.history.push({ label, undo: () => apply(was), redo: () => apply(now) });
+    this.history.push({
+      label,
+      undo: () => apply(was),
+      redo: () => apply(now),
+      gone: () => !this.fleet.byId(t.id),
+    });
     return done();
   }
 
