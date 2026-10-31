@@ -1,9 +1,7 @@
-import { SIGNAL_LEVELS } from '../sim/signals';
 import { el } from './dom';
 import {
   actionButton,
   buttonRow,
-  choiceRows,
   columns,
   formRow,
   keyBadge,
@@ -17,19 +15,11 @@ import {
   well,
   type FootSpec,
 } from './kit';
-import { contractRarityLabel } from './labels';
 import { LANGUAGE, LANGUAGES, LANGUAGE_NAME, STR, type Language } from '../strings';
 import type { FrameTabs, Screen } from './modal';
 import { slotRows, type Confirm } from './saveRows';
 import { autosaveText } from './saveSlots';
-import {
-  CONTRACT_RARITIES,
-  contractPolicyFor,
-  uniformContractPolicy,
-  type ContractPolicy,
-  type Settings,
-  type SlotMeta,
-} from '../sim/save';
+import type { Settings, SlotMeta } from '../sim/save';
 
 export interface SettingsActions {
   save(): void;
@@ -46,13 +36,11 @@ export interface SettingsActions {
   slots(): SlotMeta[];
 }
 
-export type SettingsTab = 'audio' | 'gameplay' | 'contracts' | 'signalling' | 'controls' | 'saves';
+export type SettingsTab = 'audio' | 'gameplay' | 'controls' | 'saves';
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'audio', label: STR.settings.audio },
   { id: 'gameplay', label: STR.settings.gameplay },
-  { id: 'contracts', label: STR.settings.contractsTab },
-  { id: 'signalling', label: STR.settings.signalling },
   { id: 'controls', label: STR.settings.controls },
   { id: 'saves', label: STR.settings.saves },
 ];
@@ -134,10 +122,6 @@ export class SettingsScreen implements Screen {
   onOpen() {
     this.render();
   }
-  /** Stand on a tab when it opens: a screen that sends the player here says which. */
-  showTab(id: string) {
-    if (TABS.some((t) => t.id === id)) this.tab = id as SettingsTab;
-  }
   refresh() {
     if (this.tab === 'saves') this.showAutosave();
   }
@@ -190,28 +174,6 @@ export class SettingsScreen implements Screen {
           this.settings[key] = v;
           this.onChange();
         },
-      ),
-    );
-  }
-
-  /** One row per contract rarity: what happens to a new offer of that rarity. */
-  private contractPolicyRows(): HTMLElement[] {
-    const POLICIES: ContractPolicy[] = ['accept', 'prompt', 'deny'];
-    return CONTRACT_RARITIES.map((r) =>
-      formRow(
-        el('span', { class: `crarity-${r}` }, contractRarityLabel(r), STR.contracts.rarity[r] ?? r),
-        segmented({
-          options: POLICIES.map((p) => ({ id: p, label: STR.settings.policy[p] })),
-          value: contractPolicyFor(this.settings, r),
-          onChange: (id) => {
-            if (!this.settings.contractPolicy)
-              this.settings.contractPolicy = uniformContractPolicy(
-                contractPolicyFor(this.settings, r),
-              );
-            this.settings.contractPolicy[r] = id as ContractPolicy;
-            this.onChange();
-          },
-        }),
       ),
     );
   }
@@ -359,33 +321,6 @@ export class SettingsScreen implements Screen {
               STR.alerts.title,
               actionButton(STR.alerts.open, () => this.onNotifications?.(), { cls: 'small' }),
             ),
-          ),
-        ];
-      case 'contracts':
-        return [
-          well(
-            STR.settings.contractPolicy,
-            ...this.contractPolicyRows(),
-            note(STR.settings.contractPolicyHint),
-          ),
-        ];
-      case 'signalling':
-        return [
-          well(
-            STR.settings.signalling,
-            choiceRows({
-              options: SIGNAL_LEVELS.map((lv) => ({
-                id: lv,
-                label: STR.settings.signalLevel[lv],
-                hint: STR.settings.signalHint[lv],
-              })),
-              value: this.settings.signalling ?? 'auto',
-              onChange: (id) => {
-                this.settings.signalling = id as (typeof SIGNAL_LEVELS)[number];
-                this.onChange();
-              },
-            }),
-            note(STR.settings.signallingNote),
           ),
         ];
       case 'controls': {

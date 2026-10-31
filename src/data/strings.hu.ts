@@ -261,13 +261,13 @@ export const HU: Strings = {
     guideDiagram:
       '→ A  ═════ védett szakasz ═════  → B  ═════ következő szakasz ═════  → C\n       egyszerre egy vonat                  egy másik vonat követheti',
     guideAspects:
-      'Piros / vízszintes kar: megállás a védett szakasz előtt. Sárga: ez a szakasz szabad, de a következő foglalt. Zöld / felemelt kar: mindkettő szabad. A szakasz a következő, azonos irányba néző jelzőnél ér véget.',
+      'Mindkét kar vízszintes: a védett szakasz foglalt, a vonat a jelzőnél megáll, mielőtt behaladna. Piros kar felemelve, sárga kar vízszintes: ez a szakasz szabad, de a következő foglalt, ezért a vonat a jelzőnél lépésre lassít, majd továbbhalad. Piros kar felemelve, sárga kar leengedve: mindkettő szabad. A szakasz a következő, azonos irányba néző jelzőnél ér véget; ha nincs ilyen, a sín végéig tart.',
     guideFence:
-      'Egy pályaszakaszt úgy kerítesz el, hogy jelzőt teszel a bejáratához és a kijáratához. A jelzők között hagyj legalább a leghosszabb vonatodnyi helyet, plusz egy csempét. Jelölj ki egy jelzőt, és látod a védett szakaszát. A jelzők lerakás után azonnal működnek Automatikus módban; a jelző nélküli sínen a forgalmi foglalás marad.',
+      'Egy pályaszakaszt úgy kerítesz el, hogy jelzőt teszel a bejáratához és a kijáratához. A jelzők között hagyj legalább a leghosszabb vonatodnyi helyet, plusz egy csempét. Jelölj ki egy jelzőt, és látod a védett szakaszát. A jelzők lerakás után azonnal működnek, a Token kivételével minden jelzési szinten; minden sínen, jelzővel vagy anélkül, megmarad a forgalmi foglalás.',
     guideJunction:
-      'Csomópont elé tedd a bejárati jelzőt a ráfutó ágra, a kijárati jelzőket pedig mindegyik ág mögé, egy teljes vonatnak elég hellyel. A csomópontfoglaláshoz akkor is szabad kijárat kell, így a zöld jelző sem kényszerít vonatot foglalt keresztezésbe.',
+      'Csomópont elé tedd a bejárati jelzőt a ráfutó ágra, a kijárati jelzőket pedig mindegyik ág mögé, egy teljes vonatnak elég hellyel. A vonat a jelzőt a saját útvonalán olvassa; a karok és a kiemelés a váltón az egyenes irányt követik. A csomópontfoglaláshoz akkor is szabad kijárat kell az egész vonatnak, plusz egy csempe, így a szabad jelzés sem kényszerít vonatot foglalt keresztezésbe.',
     guideSingleLine:
-      'Kétirányú egyvágányú vonalon a kitérő mindkét végére tegyél jelzőt, a közös vonal felé nézve. A kitérő legyen elég hosszú az egész vonatnak. A Beállításokban a Token szint közös szakaszonként egy vonatot enged. A jelzők a behaladást szabályozzák; hiányzó kitérőt nem pótolnak.',
+      'Kétirányú egyvágányú vonalon a kitérő mindkét végére tegyél jelzőt, a közös vonal felé nézve. A kitérő legyen elég hosszú az egész vonatnak. A fenti Token szint közös szakaszonként egy vonatot enged, de alatta a vonatok nem figyelik a jelzőket, ezért vagy az egyiket, vagy a másikat használd. A jelzők a behaladást szabályozzák; hiányzó kitérőt nem pótolnak.',
   },
   hints: {
     camera:
@@ -1070,14 +1070,15 @@ export const HU: Strings = {
     seeOffers: 'Ajánlatok',
     autoSubMixed: 'Minden ritkaság a saját beállítását követi.',
     perRarity: 'Ritkaságonként: Beállítások',
-    perRarityHint: 'Megnyitja a Beállításokban a ritkaságonkénti ajánlatkezelést.',
+    perRarityHint: 'Megnyitja a Beállítások fülön a ritkaságonkénti ajánlatkezelést.',
+    settingsTab: 'Beállítások',
     autoAllTitle: 'Minden ritkaság automatikus elfogadása?',
     autoAllText:
       'Most minden ritkaság a saját beállítását követi. Ez mind az ötöt automatikus elfogadásra állítja, és felülírja, amit külön választottál.',
     autoAllYes: 'Mind az öt',
     cargoAmount: (n: number, cargo: string) => `${n} u ${cargo.toLowerCase()}`,
     autoHint:
-      'Be: az ajánlatokat érkezéskor elfogadja, amíg a földeden van hely még egy aktív szerződésnek; a többi itt vár. Ki: az ajánlatok itt várnak rád. A ritkaságonkénti beállítás a Beállításokban van.',
+      'Be: az ajánlatokat érkezéskor elfogadja, amíg a földeden van hely még egy aktív szerződésnek; a többi itt vár. Ki: az ajánlatok itt várnak rád. A ritkaságonkénti beállítás a Beállítások fülön van.',
     stats: (done: number, failed: number) => `${done} teljesítve · ${failed} sikertelen`,
     offersBadge: (n: number) => `${n} új`,
     sideEmpty: 'Nincs aktív szerződés.',
@@ -1288,17 +1289,17 @@ export const HU: Strings = {
       in_cab: 'Vezetőállás',
     },
     signalHint: {
-      auto: 'A vonatokat a szokásos módon tartja távol egymástól.',
-      token: 'Sima szakaszonként egy vonat, bármerre is halad.',
-      absolute_block:
-        'A szemaforok nem engedik a vonatot foglalt szakaszba; a vonatok 10 csempe távolságot tartanak.',
+      auto: 'A vonatok felzárkóznak az előttük haladóhoz, nincs megszabott távolság.',
+      token:
+        'Sima szakaszonként egy vonat, bármerre is halad. A vonatok nem figyelik a szemaforokat.',
+      absolute_block: 'A vonatok 10 csempe távolságot tartanak.',
       ctc: 'A vonatok 6 csempe távolságot tartanak.',
-      in_cab: 'A vonatok 3 csempe távolságot tartanak; csak felszerelt járművekkel.',
+      in_cab:
+        'A vezetőállás-jelzéssel felszerelt vonatok 3 csempe távolságot tartanak, a többiek 10-et.',
     },
-    signallingNote: 'A szemaforok a Token feletti minden szinten működnek.',
+    signallingNote: 'A szemaforok a Token kivételével minden szinten működnek.',
     title: 'Beállítások',
     saves: 'Mentések',
-    contractsTab: 'Szerződések',
     appliesAtOnce: 'A beállítások azonnal érvényesek.',
     thisGame: 'Ez a játék',
     audio: 'Hang',

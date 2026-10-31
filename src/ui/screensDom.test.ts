@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { STR } from '../strings';
-import type { Settings, SlotMeta } from '../sim/save';
+import { SETTINGS_KEY, readSettings, type Settings, type SlotMeta } from '../sim/save';
 import type { LevelData } from '../world/level';
+import { ContractsScreen } from './contractsScreen';
 import { ScreenFrame, ScreenManager, type Screen } from './modal';
 import { NamePrompt } from './namePrompt';
 import { SettingsScreen, type SettingsActions } from './settingsScreen';
@@ -150,6 +151,7 @@ const page = {
   activeElement: null as FakeEl | null,
   createElement: (tag: string) => new FakeEl(tag.toUpperCase()),
   createTextNode: (t: string) => t,
+  createDocumentFragment: () => new FakeEl('FRAGMENT'),
 };
 /** A timer of 0 has run: the dialog puts the focus on its answer in one. */
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -895,7 +897,7 @@ describe('the title screen', () => {
 
 describe('the screens that read something and use nothing', () => {
   it('keeps the tool in hand while the semaphore guide is up', () => {
-    expect(new SignalGuideScreen().keepsTool).toBe(true);
+    expect(new SignalGuideScreen({} as Settings, () => undefined).keepsTool).toBe(true);
   });
 
   it('reads what Start loses once, when New game opens, not at every refresh', () => {
@@ -909,5 +911,178 @@ describe('the screens that read something and use nothing', () => {
     for (let i = 0; i < 6; i++) screen.frameFooter();
     expect(asks).toHaveBeenCalledTimes(1);
     expect(screen.frameFooter().actions![0].title).toBe(STR.newGameScreen.startAsks);
+  });
+});
+
+/** A Contracts screen over a board with nothing on it, its Settings tab on `settings`. */
+function contractsOver(settings: Settings, onChange = () => {}) {
+  const board = {
+    offers: [],
+    active: [],
+    contracts: [],
+    stats: { completed: 0, failed: 0 },
+    activeFull: () => false,
+    limit: () => 3,
+    canGenerate: () => true,
+    byId: () => undefined,
+  };
+  const screen = new ContractsScreen(
+    board as never,
+    {} as never,
+    { time: 0 } as never,
+    () => undefined,
+    { confirm: () => Promise.resolve(true) },
+  );
+  screen.policy = { settings, onChange };
+  screen.autoAccept = { state: () => 'prompt', set: () => undefined };
+  return screen;
+}
+
+describe('the Contracts screen and its Settings tab', () => {
+  it('has a tab called Settings, after the three of cards', () => {
+    expect(
+      contractsOver({} as Settings)
+        .frameTabs()
+        .tabs.map((t) => t.label),
+    ).toEqual([
+      STR.contracts.offers,
+      STR.contracts.active,
+      STR.contracts.history,
+      STR.contracts.settingsTab,
+    ]);
+  });
+
+  it('opens on it when asked, as the Economy menu asks, with a row for each rarity', () => {
+    const screen = contractsOver({} as Settings);
+    screen.show('settings');
+    screen.onOpen();
+    expect(screen.frameTabs().current).toBe('settings');
+    expect(fake(screen.root).text()).toContain(STR.settings.contractPolicy);
+    expect(fake(screen.root).all.filter((e) => e.className === 'k-row')).toHaveLength(5);
+  });
+
+  it('goes there from Per rarity on the Offers tab, in the same screen', () => {
+    const screen = contractsOver({} as Settings);
+    const redraw = vi.fn();
+    screen.redraw = redraw;
+    screen.onOpen();
+    expect(screen.frameTabs().current).toBe('offers');
+    fake(screen.root).button(STR.contracts.perRarity).fire('click');
+    expect(screen.frameTabs().current).toBe('settings');
+    expect(redraw).toHaveBeenCalled();
+  });
+
+  it('stores a choice for one rarity and tells the game', () => {
+    const settings = { contractPolicy: { common: 'prompt' } } as Settings;
+    const onChange = vi.fn();
+    const screen = contractsOver(settings, onChange);
+    screen.show('settings');
+    fake(screen.root).button(STR.settings.policy.deny).fire('click');
+    expect(settings.contractPolicy?.common).toBe('deny');
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('is back on the offers the next time it opens', () => {
+    const screen = contractsOver({} as Settings);
+    screen.show('settings');
+    screen.onClose();
+    expect(screen.frameTabs().current).toBe('offers');
+  });
+
+  it('builds the tab once: a refresh swaps no button away', () => {
+    const screen = contractsOver({} as Settings);
+    screen.show('settings');
+    const button = fake(screen.root).button(STR.settings.policy.deny);
+    screen.refresh();
+    expect(fake(screen.root).button(STR.settings.policy.deny)).toBe(button);
+  });
+});
+
+describe('the Signals screen', () => {
+  const level = (screen: SignalGuideScreen, name: string) =>
+    fake(screen.root).all.find(
+      (e) => e.tagName === 'BUTTON' && e.text().startsWith(STR.settings.signalLevel[name]),
+    );
+
+  it('heads the guide with the signalling level, each level with what it does', () => {
+    const screen = new SignalGuideScreen({} as Settings, () => undefined);
+    screen.onOpen();
+    const text = fake(screen.root).text();
+    expect(text.indexOf(STR.settings.signalling)).toBeLessThan(
+      text.indexOf(STR.signals.guidePlace),
+    );
+    for (const id of Object.keys(STR.settings.signalLevel)) {
+      expect(text).toContain(STR.settings.signalLevel[id]);
+      expect(text).toContain(STR.settings.signalHint[id]);
+    }
+    expect(text).toContain(STR.settings.signallingNote);
+    expect(level(screen, 'auto')?.attrs.get('aria-checked')).toBe('true');
+  });
+
+  it('stores the level picked and tells the game', () => {
+    const settings = {} as Settings;
+    const onChange = vi.fn();
+    const screen = new SignalGuideScreen(settings, onChange);
+    screen.onOpen();
+    level(screen, 'ctc')?.fire('click');
+    expect(settings.signalling).toBe('ctc');
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('an old settings file', () => {
+  /** Written when Contracts and Signalling were tabs of Settings. */
+  const OLD = {
+    master: 0.4,
+    signalling: 'in_cab',
+    contractPolicyVersion: 2,
+    contractPolicy: {
+      common: 'accept',
+      uncommon: 'prompt',
+      rare: 'deny',
+      epic: 'prompt',
+      legendary: 'accept',
+    },
+  };
+  const stored = () => {
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => (k === SETTINGS_KEY ? JSON.stringify(OLD) : null),
+      setItem() {},
+      removeItem() {},
+    });
+    return readSettings();
+  };
+
+  it('keeps its signalling level, and the Signals screen shows it', () => {
+    const settings = stored();
+    expect(settings.signalling).toBe('in_cab');
+    const screen = new SignalGuideScreen(settings, () => undefined);
+    screen.onOpen();
+    const picked = fake(screen.root).all.filter((e) => e.attrs.get('aria-checked') === 'true');
+    expect(picked.map((e) => e.text())).toEqual([
+      STR.settings.signalLevel.in_cab + STR.settings.signalHint.in_cab,
+    ]);
+  });
+
+  it('keeps its policy for each rarity, and the Contracts Settings tab shows it', () => {
+    const settings = stored();
+    expect(settings.contractPolicy).toEqual(OLD.contractPolicy);
+    const screen = contractsOver(settings);
+    screen.show('settings');
+    const picked = fake(screen.root).all.filter((e) => e.attrs.get('aria-checked') === 'true');
+    const { accept, prompt, deny } = STR.settings.policy;
+    expect(picked.map((e) => e.text())).toEqual([accept, prompt, deny, prompt, accept]);
+  });
+
+  it('finds Settings without the two tabs that left', () => {
+    const { audio, gameplay, controls, saves } = STR.settings;
+    const screen = new SettingsScreen(
+      stored(),
+      () => undefined,
+      { slots: () => [] } as unknown as SettingsActions,
+      () => ({ seed: 1, savedAt: null, version: 'v24', warning: null, saveOff: false }),
+      { confirm: () => Promise.resolve(true) },
+    );
+    expect(screen.frameTabs().tabs.map((t) => t.label)).toEqual([audio, gameplay, controls, saves]);
   });
 });

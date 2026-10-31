@@ -316,13 +316,13 @@ const EN = {
     guideDiagram:
       '→ A  ═════ protected block ═════  → B  ═════ next block ═════  → C\n       one train at a time                  another train may follow',
     guideAspects:
-      'Red / horizontal arm: stop before entering the protected block. Yellow: this block is clear, but the next is occupied. Green / raised arm: both are clear. A block ends at the next signal facing the same travel direction.',
+      'Both arms level: the protected block is occupied, and a train stops at the post before entering it. Red arm raised, yellow arm level: this block is clear but the next is occupied, so a train slows to a crawl at the post, then runs on. Red arm raised, yellow arm lowered: both are clear. A block ends at the next signal facing the same travel direction; with none, it runs to the end of the rails.',
     guideFence:
-      'Fence a stretch by putting posts at its entry and exit. Leave at least your longest train plus one tile between posts. Select a signal to highlight its protected stretch. Posts work in Automatic mode as soon as you place them; unsignalled track still uses traffic reservations.',
+      'Fence a stretch by putting posts at its entry and exit. Leave at least your longest train plus one tile between posts. Select a signal to highlight its protected stretch. Posts work as soon as you place them, at every signalling level except Token; all track, signalled or not, still uses traffic reservations.',
     guideJunction:
-      'Before a junction, put the entry signal on its approach and exit signals beyond each branch, leaving room for a complete train. Junction reservations still require a clear exit, so a green signal alone cannot force a train into a blocked crossing.',
+      'Before a junction, put the entry signal on its approach and exit signals beyond each branch, leaving room for a complete train. A train reads a signal along its own route; the arms and the highlight follow the straight road through a switch. Junction reservations still require the exit clear for the whole train plus one tile, so a clear signal alone cannot force a train into a blocked crossing.',
     guideSingleLine:
-      'On a two-way single line, put signals on both approaches to a passing loop, facing into the shared line. Keep the loop long enough for the entire train. Token working in Settings allows one train per shared plain section. Signals regulate entry; they cannot create a missing siding.',
+      'On a two-way single line, put signals on both approaches to a passing loop, facing into the shared line. Keep the loop long enough for the entire train. The Token level above allows one train per shared plain section, but under it trains ignore the signals, so use one or the other. Signals regulate entry; they cannot create a missing siding.',
   },
   hints: {
     camera: 'WASD / arrows / middle-drag: pan   wheel: zoom   M: overview   `: debug',
@@ -1218,7 +1218,9 @@ const EN = {
     seeOffers: 'See offers',
     autoSubMixed: 'Each rarity follows its own setting.',
     perRarity: 'Per rarity: Settings',
-    perRarityHint: 'Open the offer policy of each rarity in Settings.',
+    perRarityHint: 'Open the offer policy of each rarity on the Settings tab.',
+    /** the tab with the offer policy of each rarity */
+    settingsTab: 'Settings',
     autoAllTitle: 'Auto-accept every rarity?',
     autoAllText:
       'Each rarity now follows its own setting. This sets all five to Auto-accept and replaces what you chose for each.',
@@ -1226,7 +1228,7 @@ const EN = {
     /** an order's size: units and cargo */
     cargoAmount: (n: number, cargo: string) => `${n} u ${cargo}`,
     autoHint:
-      'On: offers are accepted as they come, while your land has room for another active contract; the rest wait here. Off: offers wait here for you. Finer control per rarity is in Settings.',
+      'On: offers are accepted as they come, while your land has room for another active contract; the rest wait here. Off: offers wait here for you. Finer control per rarity is on the Settings tab.',
     stats: (done: number, failed: number) => `${done} delivered · ${failed} failed`,
     offersBadge: (n: number) => `${n} new`,
     sideEmpty: 'No active contracts.',
@@ -1446,18 +1448,15 @@ const EN = {
       in_cab: 'In-cab',
     } as Record<string, string>,
     signalHint: {
-      auto: 'Keeps trains apart as before.',
-      token: 'One train per plain section, whichever way it runs.',
-      absolute_block:
-        'Semaphores hold trains out of an occupied block; trains keep 10 tiles apart.',
+      auto: 'Trains close up behind the train ahead, with no set distance.',
+      token: 'One train per plain section, whichever way it runs. Trains ignore semaphores.',
+      absolute_block: 'Trains keep 10 tiles apart.',
       ctc: 'Trains keep 6 tiles apart.',
-      in_cab: 'Trains keep 3 tiles apart; equipped stock only.',
+      in_cab: 'Trains with an in-cab locomotive keep 3 tiles apart; the others keep 10.',
     } as Record<string, string>,
-    signallingNote: 'Semaphores work under every level above Token.',
+    signallingNote: 'Semaphores work at every level except Token.',
     title: 'Settings',
     saves: 'Saves',
-    /** The tab of the contract offers; the well in it says the rest. */
-    contractsTab: 'Contracts',
     appliesAtOnce: 'Settings apply at once.',
     thisGame: 'This game',
     audio: 'Audio',

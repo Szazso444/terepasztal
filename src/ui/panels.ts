@@ -511,10 +511,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   );
   contractsScreen.trainName = (id) => d.fleet.byId(id)?.name ?? null;
   contractsScreen.redraw = () => d.screens.redraw();
-  contractsScreen.openPolicies = () => {
-    settingsScreen.showTab('contracts');
-    d.screens.push(settingsScreen);
-  };
+  contractsScreen.policy = { settings: d.settings, onChange: () => host.applySettings() };
   contractsScreen.autoAccept = {
     state: () => autoState(CONTRACT_RARITIES.map((r) => contractPolicyFor(d.settings, r))),
     set: (v) => {
@@ -603,7 +600,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     if (d.build.selectedDecor) d.build.selectDecor(null);
   });
   decorPanel.houses = d.houses;
-  const signalGuide = new SignalGuideScreen();
+  const signalGuide = new SignalGuideScreen(d.settings, () => host.applySettings());
   decorPanel.onSignalGuide = () => d.screens.toggle(signalGuide);
   decorPanel.onSignalBlock = (dec) => host.highlightSignalBlock(dec);
   const alertBar = new AlertBar(d.atlas, d.tooltip, d.toasts);
