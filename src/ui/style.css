@@ -3905,7 +3905,8 @@ table.market td {
 .k-pane-h:empty {
   display: none;
 }
-.k-pane-h > .k-tabs + .k-well {
+.k-pane-h > .k-tabs + .k-well,
+.k-pane-h > .k-well + .k-tabs {
   margin-top: 6px;
 }
 .k-pane-b {
@@ -3963,8 +3964,6 @@ html[lang='hu'] .dp-li .k-li-m > small:has(> .dp-aboard) {
 }
 .dp-pick:hover:not(.on) {
   background: rgba(255, 255, 255, 0.03);
-}
-.k-spr > .dp-img {
 }
 
 /* ---- the economy screens: Contracts, Market, Crafting, Roster, Inspect 3D ---- */
@@ -4367,13 +4366,6 @@ html[lang='hu'] .dp-li .k-li-m > small:has(> .dp-aboard) {
 .dp-veh:hover {
   border-color: var(--amber);
 }
-.dp-veh > .dp-img {
-  width: 64px;
-  height: 40px;
-  object-fit: contain;
-  background: var(--stone-dark);
-  border: 1px solid var(--border-dark);
-}
 .dp-veh > small {
   display: inline-flex;
   align-items: center;
@@ -4406,10 +4398,11 @@ html[lang='hu'] .dp-li .k-li-m > small:has(> .dp-aboard) {
   border: 1px solid var(--border-dark);
   box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.4);
 }
-.dp-big > .dp-img {
-  max-width: 140px;
-  max-height: 84px;
-  object-fit: contain;
+.dp-big > .k-spr {
+  width: 132px;
+  height: 88px;
+  border: none;
+  box-shadow: none;
 }
 .dp-modectl {
 }
@@ -5104,4 +5097,350 @@ body.title-up #topbar .now-playing:not(.held) {
 .au-silenced .k-lab,
 .au-silenced .k-sl {
   opacity: 0.45;
+}
+/* ---- the Depot: the depot bar, the train list, the consist strip, the stock by model ---- */
+.dp-screen {
+  flex-direction: column;
+  gap: 6px;
+}
+.dp-screen > .k-split {
+  flex: 1;
+  min-height: 0;
+  padding-top: 0;
+}
+/* the depots: one line of chips, which scrolls when there are more than it shows */
+.dp-bar {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  padding: 2px 6px 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+.dp-bar > .k-p {
+  margin: 4px 0;
+}
+.dp-dep {
+  flex: 0 1 270px;
+  min-width: 262px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1px 8px;
+  align-items: center;
+  padding: 3px 8px 4px;
+  border: 1px solid var(--border-dark);
+  background: var(--stone);
+  box-shadow:
+    inset 1px 1px 0 var(--border-light),
+    inset -1px -1px 0 var(--border-dark);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dp-bar.many > .dp-dep {
+  min-width: 196px;
+}
+.dp-bar.many .dp-gz {
+  display: none;
+}
+.dp-dep:hover:not(.on) {
+  background: var(--iron);
+}
+.dp-dep.on {
+  border-color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 12%, var(--stone));
+  box-shadow: inset 0 -2px 0 var(--amber);
+}
+.dp-dep-h {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.dp-dep-h > b {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dp-dep > small {
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dp-gst {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-dim);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.dp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-light);
+}
+.dp-gst.ok {
+  color: var(--text-good);
+}
+.dp-gst.ok > .dp-dot {
+  background: var(--text-good);
+}
+.dp-gst.bad {
+  color: var(--text-bad);
+}
+.dp-gst.bad > .dp-dot {
+  background: var(--text-bad);
+}
+/* the list: This depot or All under New train, and a train as a row of two lines */
+.dp-scope:not(:empty) {
+  margin-top: 4px;
+}
+.dp-scope > .k-seg {
+  display: flex;
+}
+.dp-scope > .k-seg > button {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-li.dp-train {
+  position: relative;
+  min-height: 34px;
+  gap: 7px;
+  padding: 3px 6px 3px 9px;
+}
+.dp-train > .k-spr {
+  width: 42px;
+  height: 28px;
+}
+.dp-stripe {
+  position: absolute;
+  left: 2px;
+  top: 3px;
+  bottom: 3px;
+  width: 4px;
+  border-radius: 1px;
+}
+.dp-tl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.dp-tn {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dp-tl > .ol-chip {
+  flex: none;
+  font-weight: 400;
+}
+/* the strip: the consist as a train, under it what it weighs and hauls */
+.dp-cars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 5px 10px 3px;
+}
+.dp-sum > .dp-cars:not(:first-child) {
+  padding-top: 1px;
+}
+.dp-car {
+  position: relative;
+  flex: none;
+  cursor: pointer;
+}
+.dp-cars.ro .dp-car {
+  cursor: default;
+}
+.dp-car-w {
+  margin-left: 7px;
+}
+.dp-car > .k-spr {
+  width: 46px;
+  height: 31px;
+}
+.dp-cars:not(.ro) > .dp-car:hover > .k-spr,
+.dp-car:focus-visible > .k-spr {
+  border-color: var(--amber);
+}
+.dp-car-bad > .k-spr {
+  border-color: var(--text-bad);
+  box-shadow: inset 0 0 0 1px var(--text-bad);
+}
+.dp-car.drag {
+  opacity: 0.45;
+}
+.dp-car.over > .k-spr {
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+.dp-car > em {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  padding: 0 2px;
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--text);
+  font:
+    600 9px/11px var(--font-body),
+    sans-serif;
+  font-style: normal;
+  pointer-events: none;
+}
+.dp-cars > .btn {
+  align-self: center;
+}
+.dp-hint {
+  flex: 1 0 auto;
+  align-self: center;
+  color: var(--text-dim);
+  font-size: 10.5px;
+  text-align: right;
+}
+.dp-pickt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+/* a vehicle's picture and name open its card */
+.k-spr:has(> .dp-card) {
+  position: relative;
+}
+.k-spr > .dp-card {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.dp-card {
+  cursor: inherit;
+}
+.dp-vt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.dp-vt > .dp-card {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dp-vt > .label-row {
+  flex: none;
+}
+/* a list of the stock keeps its head in sight as it scrolls */
+.dp-stockw > .k-sec {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--stone);
+}
+/* what cannot roll out of this depot, folded under one line */
+.dp-fold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 28px;
+  padding: 3px 10px;
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.22);
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.dp-fold:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+}
+.dp-fold > .k-ic {
+  flex: none;
+  transform: rotate(180deg);
+}
+.dp-fold.on > .k-ic {
+  transform: rotate(90deg);
+}
+.dp-fold > span:not(.k-ic) {
+  flex: none;
+}
+.dp-fold > small {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.btn.dp-use[hidden] {
+  display: none;
+}
+.btn.dp-use {
+  flex: none;
+}
+/* a row of the stock: how many are free, how many ride, the way to the Roster */
+.dp-li:has(.dp-vt) {
+  min-height: 38px;
+  padding: 3px 8px;
+}
+.dp-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dp-stock > small {
+  color: var(--text-dim);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.dp-stock .k-num input {
+  width: 20px;
+  text-align: center;
+}
+.dp-stock .k-num > span {
+  padding: 0 3px;
+}
+/* the card as a tooltip: its picture and labels */
+.tt-vehicle {
+  display: grid;
+  gap: 4px;
+  margin: 2px 0;
+}
+.tt-vehicle > .k-spr {
+  width: 100%;
+  height: 120px;
+}
+/* a tooltip does not open another one over itself from its labels */
+.tt-vehicle .tt-label {
+  pointer-events: none;
+}
+/* the roll-out block: the gate line, then Show and the name, on one line */
+.dp-dock {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+.dp-rl-g {
+  flex: 1;
+}
+.dp-rl-n {
+  flex: 0 0 250px;
 }

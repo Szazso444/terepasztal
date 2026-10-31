@@ -1,7 +1,10 @@
 import type { AtlasRegistry } from '../engine/atlas';
+import { itemDef } from '../gacha/items';
 import { withAgeIcons } from './ageIcon';
 import { el } from './dom';
-import { lineIcon } from './kit';
+import { vehicleArt } from './economyParts';
+import { lineIcon, spriteSlot } from './kit';
+import { vehicleLabels } from './labels';
 import {
   ttDim,
   ttHint,
@@ -50,6 +53,13 @@ function renderBlock(b: Block, atlas: AtlasRegistry): HTMLElement {
         total: b.total,
         indent: b.indent,
       });
+    case 'vehicle':
+      return el(
+        'div',
+        { class: 'tt-vehicle' },
+        spriteSlot(vehicleArt(atlas, b.defId)),
+        vehicleLabels(itemDef(b.defId)),
+      );
   }
 }
 

@@ -9,7 +9,7 @@ import { Economy } from './economy';
 import { Fleet, MAX_LOCOS, MAX_WAGONS } from './fleet';
 import { Inventory } from '../gacha/inventory';
 import { rules, DEFAULT_RULES } from './rules';
-import { resetTrainIds, type StopPlan } from './trains';
+import { Train, resetTrainIds, type StopPlan } from './trains';
 import { resetStationIds } from './stations';
 import { STR } from '../strings';
 import { storeWith } from '../testing/storeFixtures';
@@ -183,5 +183,56 @@ describe('Fleet.dispatchCheck', () => {
         'object',
       );
     });
+  });
+});
+
+describe('the depot a train belongs to', () => {
+  const rolledOut = () => {
+    const w = world(8);
+    const t = w.fleet.create([w.inventory.add('rocket', 0).uid], [], [], undefined, 'schedule');
+    if (typeof t === 'string') throw new Error(t);
+    return { ...w, t };
+  };
+
+  it('is the one it rolled out of, and a save keeps it', () => {
+    const { t, depot, fleet, track } = rolledOut();
+    expect(t.depotId).toBe(depot.id);
+    expect(fleet.homeDepot(t)).toBe(depot);
+    const back = Train.fromJSON(JSON.parse(JSON.stringify(t.toJSON())), track);
+    expect(back.depotId).toBe(depot.id);
+  });
+
+  it('reads as none from a file written before trains kept it', () => {
+    const { t, track } = rolledOut();
+    const old = JSON.parse(JSON.stringify(t.toJSON()));
+    delete old.depot;
+    expect(Train.fromJSON(old, track).depotId).toBeNull();
+  });
+
+  it('is the depot of its gauge on its rails for a train that does not say', () => {
+    const { t, depot, builder, fleet } = rolledOut();
+    builder.placeStation(40, 40, 'narrow_depot', 0);
+    // the depot off its rails stands first in the list
+    builder.stations.reverse();
+    t.depotId = null;
+    expect(builder.depots()[0]).not.toBe(depot);
+    expect(fleet.homeDepot(t)).toBe(depot);
+  });
+
+  it('passes to another depot of its gauge when its own is gone', () => {
+    const { t, depot, builder, fleet } = rolledOut();
+    const other = builder.placeStation(40, 40, 'narrow_depot', 0)!;
+    t.depotId = 9999;
+    expect(fleet.homeDepot(t)).toBe(depot);
+    // not on the map at all: the first of its gauge
+    builder.stations.reverse();
+    const off = new Train([{ uid: -1, def: t.locos[0].def, level: 1 }], 'off', 77);
+    expect(fleet.homeDepot(off)).toBe(other);
+  });
+
+  it('is nobody with no depot left', () => {
+    const { t, builder, fleet } = rolledOut();
+    builder.stations.length = 0;
+    expect(fleet.homeDepot(t)).toBeNull();
   });
 });

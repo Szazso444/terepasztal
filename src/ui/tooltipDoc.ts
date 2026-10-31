@@ -61,7 +61,9 @@ export type Block =
       readonly total?: boolean;
       /** set in from the left, under the line it belongs to */
       readonly indent?: boolean;
-    };
+    }
+  /** a vehicle's picture and labels, as a Roster card has them; it reads as no text */
+  | { readonly kind: 'vehicle'; readonly defId: string; readonly parts: Parts };
 /** A tooltip: its title first, then its lines and rows. */
 export type TipDoc = readonly Block[];
 
@@ -114,6 +116,9 @@ export function dim(...parts: Inline[]): Block {
 }
 export function hint(...parts: Inline[]): Block {
   return { kind: 'hint', parts };
+}
+export function vehicle(defId: string): Block {
+  return { kind: 'vehicle', defId, parts: [] };
 }
 export function row(
   label: Inline | Parts,

@@ -349,6 +349,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const depot = new DepotScreen(d.inventory, d.fleet, d.builder, toast, d.atlas, d.namePrompt);
   depot.onFocusTrain = (t) => host.focusTrain(t);
   depot.onRedraw = () => d.screens.redraw();
+  depot.stuckFor = (id) => host.stuckFor(id);
   depot.onFocusDepot = (dep, gate) => {
     // peek at the shed behind the dimmed screen and mark the gate the train would take
     host.peekDepot(dep, gate);
@@ -491,6 +492,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   };
   craftingScreen.onInspect = inspect;
   rosterScreen.onInspect = inspect;
+  // the Roster over the Depot, on that vehicle: Back returns with the draft as it was
+  depot.onRoster = (uid) => {
+    rosterScreen.showCopy(uid);
+    d.screens.push(rosterScreen);
+  };
   const contractsScreen = new ContractsScreen(
     d.contracts,
     d.builder,
@@ -702,7 +708,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     stuckFor: (id) => host.stuckFor(id),
     onClose: () => host.selectFieldTrain(null),
     onDetails: trainDetails,
-    onDepot: () => d.screens.open(depot),
+    onDepot: () => {
+      // the panel asks about the train it shows: the Depot opens on that train
+      if (trainPanel.train) depot.showTrain(trainPanel.train);
+      d.screens.open(depot);
+    },
   });
   const buildInfo = new BuildInfo(
     d.atlas,

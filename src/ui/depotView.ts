@@ -101,17 +101,6 @@ export function haulTone(weight: number, haul: number): '' | 'warn' | 'bad' {
   return haul > 0 && weight > haul * 0.85 ? 'warn' : '';
 }
 
-/** A pick of `uid` in a list that holds at most `max`: the new list, and whether it was full. */
-export function togglePick(
-  list: readonly number[],
-  uid: number,
-  max: number,
-): { list: number[]; full: boolean } {
-  if (list.includes(uid)) return { list: list.filter((u) => u !== uid), full: false };
-  if (list.length >= max) return { list: [...list], full: true };
-  return { list: [...list, uid], full: false };
-}
-
 /**
  * The picks that are still free: a vehicle another screen levelled, used up or put in a train
  * since it was picked leaves the stock, and the pick goes with it. The order is kept.
@@ -119,6 +108,282 @@ export function togglePick(
 export function pruneToFree(picks: readonly number[], free: readonly number[]): number[] {
   const open = new Set(free);
   return picks.filter((u) => open.has(u));
+}
+
+// ---------------------------------------------------------------- the free stock, by model
+
+/** A free copy, as the groups read it. */
+export interface StockCopy {
+  uid: number;
+  defId: string;
+  level: number;
+  inCab?: boolean;
+}
+
+/** The copies one row stands for: one model at one level, fitted alike. */
+export interface StockGroup {
+  key: string;
+  defId: string;
+  level: number;
+  /** fitted with in-cab signalling, which works where the others do not */
+  inCab: boolean;
+  /** the free copies, in the order of the stock */
+  uids: number[];
+  /** how many of them are in the draft */
+  picked: number;
+}
+
+/**
+ * One row per model. Copies that differ stay apart: another level, or a fitting the others lack.
+ * The groups stand in the order their first copy has in the stock.
+ */
+export function stockGroups(copies: readonly StockCopy[], picks: readonly number[]): StockGroup[] {
+  const groups = new Map<string, StockGroup>();
+  const inDraft = new Set(picks);
+  for (const c of copies) {
+    const inCab = !!c.inCab;
+    const key = `${c.defId}:${c.level}:${inCab ? 'cab' : ''}`;
+    let g = groups.get(key);
+    if (!g)
+      groups.set(key, (g = { key, defId: c.defId, level: c.level, inCab, uids: [], picked: 0 }));
+    g.uids.push(c.uid);
+    if (inDraft.has(c.uid)) g.picked++;
+  }
+  return [...groups.values()];
+}
+
+/**
+ * The rows in the order they are read: what can roll out of this depot first, by name, the higher
+ * level first; what cannot stands last. It does not depend on the picks, so a row stays where it
+ * is as it is picked.
+ */
+export function stockOrder<G extends { level: number }>(
+  groups: readonly G[],
+  about: (g: G) => { name: string; barred: boolean },
+): G[] {
+  return groups
+    .map((g) => ({ g, ...about(g) }))
+    .sort(
+      (a, b) =>
+        Number(a.barred) - Number(b.barred) ||
+        a.name.localeCompare(b.name) ||
+        b.g.level - a.g.level,
+    )
+    .map((r) => r.g);
+}
+
+/**
+ * `want` copies of a group in the draft, as near as the free copies and the `max` of the list let
+ * it. Those last picked go first; `full` says the list stopped it, not the copies.
+ */
+export function setPicked(
+  picks: readonly number[],
+  uids: readonly number[],
+  want: number,
+  max: number,
+): { list: number[]; full: boolean } {
+  const own = new Set(uids);
+  const mine = picks.filter((u) => own.has(u));
+  const target = Math.max(0, Math.min(want, uids.length));
+  if (target <= mine.length) {
+    const off = new Set(mine.slice(target));
+    return { list: picks.filter((u) => !off.has(u)), full: false };
+  }
+  const missing = target - mine.length;
+  const room = Math.max(0, max - picks.length);
+  const fresh = uids.filter((u) => !picks.includes(u)).slice(0, Math.min(missing, room));
+  return { list: [...picks, ...fresh], full: missing > room };
+}
+
+/** A row of the stock, and why it cannot roll out of the depot chosen, if it cannot. */
+export interface StockLine<G> {
+  g: G;
+  reason: string | null;
+}
+
+/**
+ * What a list of the stock shows. What cannot roll out of this depot folds under one line, so that
+ * a long list of another gauge does not stand between the engines and the wagons. A model in the
+ * train stays out, to be seen and taken off. `reason` is what the folded rows share, if they do.
+ */
+export function foldStock<G extends { picked: number }>(
+  lines: readonly StockLine<G>[],
+  open: boolean,
+): { shown: StockLine<G>[]; folded: number; reason: string | null } {
+  const barred = lines.filter((l) => l.reason !== null && l.g.picked === 0);
+  const reasons = new Set(barred.map((l) => l.reason));
+  return {
+    shown: open ? [...lines] : lines.filter((l) => !barred.includes(l)),
+    folded: barred.length,
+    reason: reasons.size === 1 ? barred[0].reason : null,
+  };
+}
+
+/**
+ * A free copy for each vehicle of a train, to build another like it: the same model, at the level
+ * nearest to it. `missing` counts the vehicles no copy was free for.
+ */
+export function copiesLike(
+  vehicles: readonly { defId: string; level: number }[],
+  free: readonly StockCopy[],
+): { uids: number[]; missing: number } {
+  const left = [...free];
+  const uids: number[] = [];
+  let missing = 0;
+  for (const v of vehicles) {
+    const nearest = left
+      .filter((c) => c.defId === v.defId)
+      .sort((a, b) => Math.abs(a.level - v.level) - Math.abs(b.level - v.level))[0];
+    if (!nearest) {
+      missing++;
+      continue;
+    }
+    uids.push(nearest.uid);
+    left.splice(left.indexOf(nearest), 1);
+  }
+  return { uids, missing };
+}
+
+/** What a click on a row asks for: one more, or with every copy picked one fewer. */
+export function clickedCount(g: Pick<StockGroup, 'uids' | 'picked'>): number {
+  return g.picked < g.uids.length ? g.picked + 1 : g.picked - 1;
+}
+
+// ---------------------------------------------------------------- the train as it stands
+
+/** A vehicle in the consist strip. */
+export interface Car {
+  uid: number;
+  defId: string;
+  level: number;
+  loco: boolean;
+  /** it cannot roll out of the depot chosen */
+  bad?: boolean;
+}
+
+/**
+ * The consist in the order the train runs it: the engines as picked, then the wagons as picked.
+ * That is the order `Fleet.create` makes the train in. A pick no longer in the stock is left out.
+ */
+export function stripCars(
+  locos: readonly number[],
+  wagons: readonly number[],
+  copy: (uid: number) => { defId: string; level: number } | null | undefined,
+): Car[] {
+  const cars = (uids: readonly number[], loco: boolean) =>
+    uids.flatMap((uid) => {
+      const c = copy(uid);
+      return c ? [{ uid, defId: c.defId, level: c.level, loco }] : [];
+    });
+  return [...cars(locos, true), ...cars(wagons, false)];
+}
+
+/** The picks with `uid` moved to place `to`: a place past either end is that end. */
+export function movedPick(picks: readonly number[], uid: number, to: number): number[] {
+  if (!picks.includes(uid)) return [...picks];
+  const out = picks.filter((u) => u !== uid);
+  out.splice(Math.max(0, Math.min(to, out.length)), 0, uid);
+  return out;
+}
+
+// ---------------------------------------------------------------- the trains of a depot
+
+/** The list on the left: the trains of the depot chosen, or all of them. */
+export type TrainScope = 'here' | 'all';
+
+/** The trains the list shows; with no depot to choose there is only All. */
+export function trainsShown<T extends { home: number | null }>(
+  trains: readonly T[],
+  scope: TrainScope,
+  depotId: number | null,
+): T[] {
+  if (scope === 'all' || depotId === null) return [...trains];
+  return trains.filter((t) => t.home === depotId);
+}
+
+/** A depot's head in the list of all trains, and its trains. */
+export interface TrainGroup<T> {
+  depotId: number | null;
+  title: string;
+  trains: T[];
+}
+
+/** All the trains under their depots, in the order of the depots; those of none come last. */
+export function trainsByDepot<T extends { home: number | null }>(
+  trains: readonly T[],
+  depots: readonly { id: number; name: string }[],
+): TrainGroup<T>[] {
+  const groups: TrainGroup<T>[] = depots.map((d) => ({
+    depotId: d.id,
+    title: d.name,
+    trains: trains.filter((t) => t.home === d.id),
+  }));
+  const known = new Set(depots.map((d) => d.id));
+  groups.push({
+    depotId: null,
+    title: STR.depot.noHome,
+    trains: trains.filter((t) => t.home === null || !known.has(t.home)),
+  });
+  return groups.filter((g) => g.trains.length > 0);
+}
+
+// ---------------------------------------------------------------- the depots and their gates
+
+/** The last answer to whether a train could roll out of a depot. */
+export interface GateAnswer {
+  /** when it was asked */
+  at: number;
+  /** how long it stands, ms */
+  lifetime: number;
+  /** why not; null when one could */
+  reason: string | null;
+}
+
+/** What the depot bar shows of a gate: nothing until it has been asked. */
+export function gateShown(a: GateAnswer | undefined): {
+  text: string;
+  tone: '' | 'ok' | 'bad';
+  why: string;
+} {
+  if (!a) return { text: '', tone: '', why: '' };
+  return a.reason === null
+    ? { text: STR.depot.gateOpen, tone: 'ok', why: STR.depot.gateOpen }
+    : { text: STR.depot.gateShut, tone: 'bad', why: a.reason };
+}
+
+/**
+ * The next depot to ask about: the one whose answer ran out longest ago, one at a time, as each
+ * question walks the track. None while every answer stands.
+ */
+export function staleGate(
+  ids: readonly number[],
+  answers: ReadonlyMap<number, GateAnswer>,
+  now: number,
+): number | null {
+  let best: number | null = null;
+  let bestAt = Infinity;
+  for (const id of ids) {
+    const a = answers.get(id);
+    const ends = a ? a.at + a.lifetime : -Infinity;
+    if (ends <= now && ends < bestAt) {
+      best = id;
+      bestAt = ends;
+    }
+  }
+  return best;
+}
+
+/**
+ * Why a train may not go from the depot chosen. `Fleet.dispatchCheck` answers for the depot the
+ * consist's gauge finds. When that is another one, its gates are not what stops this train: on this
+ * screen the depot comes first, and a train is not sent elsewhere behind the player's back.
+ */
+export function refusalAt(
+  answer: { reason: string | null; depot: { id: number } | null },
+  chosen: { id: number; name: string } | null,
+): string | null {
+  const elsewhere = chosen && answer.depot && answer.depot.id !== chosen.id;
+  return elsewhere ? STR.fleet.wrongDepot(chosen.name) : answer.reason;
 }
 
 /** How long the answer to "would it roll out?" stands, ms, before the gate is looked at again. */
