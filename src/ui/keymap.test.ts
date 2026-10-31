@@ -154,7 +154,11 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
   crafting: () => screenCases('crafting'),
   roster: () => screenCases('roster'),
   market: () => screenCases('market'),
-  overview: () => [{ calls: ['toggleOverview'] }],
+  overview: () => [
+    { calls: ['toggleOverview'] },
+    // an open menu of the top bar closes as the other view comes up
+    { state: { barMenuOpen: true }, calls: ['closeBarMenu', 'toggleOverview'] },
+  ],
   nextTool: () => [{ state: { categoryOpen: true }, calls: ['cycleTool(1)'] }, { calls: [] }],
   prevTool: () => [{ state: { categoryOpen: true }, calls: ['cycleTool(-1)'] }, { calls: [] }],
   upgradeTrack: () => [

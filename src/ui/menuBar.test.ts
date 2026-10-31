@@ -132,4 +132,16 @@ describe('the menu bar and the document', () => {
     now += PICK_GRACE_MS;
     expect(press(MAP)).toBe(true);
   });
+
+  it('closes the menu on the wheel over the map, which zooms there', () => {
+    openView();
+    listeners.get('wheel')!({ target: MAP });
+    expect(bar.isOpen).toBe(false);
+  });
+
+  it('stays open under the wheel over the UI, which zooms nothing', () => {
+    openView();
+    listeners.get('wheel')!({ target: UI });
+    expect(bar.isOpen).toBe(true);
+  });
 });

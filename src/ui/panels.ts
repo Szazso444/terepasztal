@@ -960,7 +960,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       if (d.tooltip.stack.escape()) d.build.takeEscape();
     },
     closeBarMenu: () => {
-      // spent as well: the tool in hand stays
+      // an Escape that closed it is spent as well: the tool in hand stays
       hud.menuBar.close();
       d.build.takeEscape();
     },

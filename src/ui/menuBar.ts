@@ -59,6 +59,7 @@ export class MenuBar {
     this.pane.style.display = 'none';
     // in the capture phase: a panel that keeps its clicks to itself still closes the menu
     document.addEventListener('mousedown', this.onMouseDown, true);
+    document.addEventListener('wheel', this.onWheel, { capture: true, passive: true });
   }
 
   private entryButton(entry: MenuEntry) {
@@ -110,6 +111,11 @@ export class MenuBar {
     const kept = onMap(e) && this.state.keepsPress(e.button, performance.now());
     this.close();
     if (kept) e.stopPropagation();
+  };
+
+  /** The wheel on the map zooms or changes the view, which the open menu does not stay over. */
+  private readonly onWheel = (e: WheelEvent) => {
+    if (onMap(e)) this.close();
   };
 
   private draw() {

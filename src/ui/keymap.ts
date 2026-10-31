@@ -188,7 +188,9 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
   crafting: (h) => screen(h, 'crafting'),
   roster: (h) => screen(h, 'roster'),
   market: (h) => screen(h, 'market'),
+  // the other view comes up: an open menu of the top bar does not stay over it
   overview: (h) => {
+    if (h.barMenuOpen) h.closeBarMenu();
     h.toggleOverview();
     return false;
   },
