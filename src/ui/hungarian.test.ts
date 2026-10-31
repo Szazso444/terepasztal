@@ -55,9 +55,8 @@ describe('the Hungarian table has the shape of the English one', () => {
   });
 
   it('is a type error with a key missing or added, or a function of the wrong signature', () => {
-    const { title: _title, ...missing } = HU;
     // @ts-expect-error a key is missing
-    const a: Strings = missing;
+    const a: Strings = { title: 'x' };
     // @ts-expect-error a key is added
     const b: Strings = { ...HU, added: 'x' };
     // @ts-expect-error the function takes a number
@@ -120,10 +119,12 @@ describe('the Hungarian table has the shape of the English one', () => {
     expect(HU.saves.ago(5 * 60_000)).toBe('5 perce');
     expect(HU.saves.ago(3 * 3_600_000)).toBe('3 órája');
     expect(HU.saves.ago(2 * 86_400_000)).toBe('2 napja');
-    expect(HU.saves.detail(3, HU.ages.name.steam, '1 000 $')).toBe('3. nap · Gőzkorszak · 1 000 $');
+    expect(HU.saves.detail(3, HU.ages.name.steam, '1\u00a0000\u00a0$')).toBe(
+      '3. nap · Gőzkorszak · 1\u00a0000\u00a0$',
+    );
     expect(HU.hud.ageUp(1)).toContain('Dízelkorszak');
     expect(HU.build.tierLocked(2)).toContain('Villamos korszak');
-    expect(HU.overview.price(40_000)).toBe('40 000 $');
+    expect(HU.overview.price(40_000)).toBe('40\u00a0000\u00a0$');
     expect(HU.compat.runsOn('Fregatt', ['Mellékvonal'])).toBe('Fregatt · Mellékvonal pályán jár');
     expect(HU.history.demolishedTiles(4, 'sín')).toBe('Lebontva: sín, 4 csempe');
     expect(HU.town.needs(true, true)).toContain('egy lakóház és egy raktár');
@@ -300,11 +301,17 @@ describe('a game in Hungarian', () => {
   it('writes numbers the Hungarian way where the formats are kept in one place', async () => {
     const m = await loaded('hu', modules);
     const { fmtInt, fmtMoney, fmtDuration, fmtDecimal } = m[7];
-    expect(fmtInt(1000)).toBe('1 000');
-    expect(fmtMoney(1234567)).toBe('1 234 567 $');
+    expect(fmtInt(1000)).toBe('1\u00a0000');
+    expect(fmtMoney(1234567)).toBe('1\u00a0234\u00a0567\u00a0$');
     expect(fmtDecimal(1.5)).toBe('1,5');
     expect(fmtDuration(240 * 4.1)).toBe('4,1 nap');
     expect(fmtDuration(240 * 0.5)).toBe('12 ó 00 p');
+  });
+
+  it('bolds a Hungarian number whole in a tooltip', async () => {
+    const { richText } = await import('./tooltipDoc');
+    expect(richText('Ár: 40\u00a0000\u00a0$')).toEqual(['Ár: ', { num: '40\u00a0000\u00a0$' }]);
+    expect(richText('1,5 csempe')).toEqual([{ num: '1,5' }, ' csempe']);
   });
 
   it('leaves the English formats as they were', async () => {

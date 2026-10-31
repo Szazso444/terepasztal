@@ -1196,7 +1196,11 @@ export class Fleet {
     const idle = this.trains.filter((t) => t.state === 'idle' && !t.holding);
     if (!idle.length) return;
     const w = this.map.w;
-    const notes: string[] = [ENGLISH.traffic.waitAside, ENGLISH.traffic.noWayAside, ENGLISH.traffic.replan];
+    const notes: string[] = [
+      ENGLISH.traffic.waitAside,
+      ENGLISH.traffic.noWayAside,
+      ENGLISH.traffic.replan,
+    ];
     const routes = new Map(this.trains.map((t) => [t.id, t.pathTileKeys(w)]));
     let sidings: Set<number> | null = null;
     for (const t of idle) {

@@ -20,19 +20,33 @@ function ageLabel(t: number) {
   return AGE_NAMES[AGE_IDS[t]] ?? `${t}. korszak`;
 }
 /** A whole number with its thousands apart, on one line. */
-const grouped = (v: number) => Math.round(v).toLocaleString('en-US').replace(/,/g, ' ');
-const money = (v: number) => `${grouped(v)} $`;
+const grouped = (v: number) => Math.round(v).toLocaleString('en-US').replace(/,/g, '\u00a0');
+const money = (v: number) => `${grouped(v)}\u00a0$`;
 /** A number with a decimal comma. */
 const dec = (v: number, digits = 2) => v.toFixed(digits).replace('.', ',');
 /** A number as it is, with a decimal comma. */
 const comma = (v: number) => String(v).replace('.', ',');
 
+/** The ids the simulation and the editor hand a message: a terrain's and a deposit's. */
+const GROUND: Record<string, string> = {
+  grass: 'fű',
+  forest: 'erdő',
+  hill: 'domb',
+  water: 'víz',
+  rock: 'szikla',
+  sand: 'homok',
+  mountain: 'hegy',
+};
+const ground = (id: string) => GROUND[id.toLowerCase()] ?? id;
+const DEPOSIT: Record<string, string> = { coal: 'szénér', oil: 'olajszivárgás' };
+const deposit = (id: string) => DEPOSIT[id] ?? id;
+
 export const HU: Strings = {
   title: 'Terepasztal',
   format: {
     decimalMark: ',',
-    thousandsMark: ' ',
-    money: (amount: string) => `${amount} $`,
+    thousandsMark: '\u00a0',
+    money: (amount: string) => `${amount}\u00a0$`,
     days: (days: string) => `${days} nap`,
     hoursMinutes: (hours: number, minutes: string) => `${hours} ó ${minutes} p`,
   },
@@ -47,7 +61,7 @@ export const HU: Strings = {
       'WASD, a nyilak vagy a középső gombos húzás mozgatja a kamerát, a görgő nagyít.',
       'A várost az állomása lerakásakor nevezheted el, és bármikor átnevezheted.',
       'Mutass a dátum melletti korszakra, és látod, mit kér a következő.',
-      'A vonat nem indul olyan útra, amelyet nem tud végigmenni úgy, hogy utána még elérje az üzemanyagot.',
+      'A vonat nem indul olyan útra, amelynek a végéről már nem érné el az üzemanyagot.',
       'Az egyvágányú pályát egész szakaszokban osztja a játék, így a vonatok sosem találkoznak szemből.',
     ],
   },
@@ -332,7 +346,7 @@ export const HU: Strings = {
     deckLevels: 'Az alátámasztott elem sínjei egy szinten legyenek, és ne a talaj alatt',
     trackInWay: 'Sín van útban: előbb bontsd el',
     needWaterside: 'Víz mellett kell állnia',
-    needTerrain: (t: string) => `Ezen kell állnia: ${t}`,
+    needTerrain: (t: string) => `Ezen kell állnia: ${ground(t)}`,
     sameSupply: 'Már így van villamosítva',
     gaugeBreak:
       'A keskeny nyomtáv nem csatlakozik a normál vonalakhoz: keresztezőelemmel menj át rajtuk',
@@ -362,14 +376,15 @@ export const HU: Strings = {
     funds: 'Nincs elég pénz',
     tierLocked: (t: number) => `Ez kell hozzá: ${ageLabel(t)}`,
     supplyLocked: 'Nem része ennek a játéknak a termelési láncában',
-    needDeposit: (k: string) => `Lelőhely kell a csempére: ${k}`,
+    needDeposit: (k: string) => `Lelőhely kell a csempére: ${deposit(k)}`,
     nothingOn: {
       water: 'Vízre semmi sem építhető.',
       rock: 'Sziklára semmi sem építhető.',
       mountain: 'Hegyre semmi sem építhető.',
     },
     standOn: { pump: 'Vízszivattyú csak fűre vagy erdőbe kerülhet.' },
-    needGround: (grounds: readonly string[]) => `Ezen kell állnia: ${grounds.join(' vagy ')}`,
+    needGround: (grounds: readonly string[]) =>
+      `Ezen kell állnia: ${grounds.map(ground).join(' vagy ')}`,
     besideWater: { pump: 'A vízszivattyúnak közvetlenül a víz mellett kell állnia.' },
     needTrack: 'Sínhez kell érnie',
     depotLocked: (n: number) => `A következő fűtőház ${n} saját chunknál nyílik meg`,
@@ -484,7 +499,7 @@ export const HU: Strings = {
       works:
         'Szabad fű-, erdő-, homok- vagy sík dombcsempére. A legközelebbi készletből dolgozik; nem kell hozzá sín.',
       deposit: (k: string) =>
-        `Csak olyan csempére, ahol van lelőhely: ${k} (a térképen jelölve). A legközelebbi készletből dolgozik; nem kell hozzá sín.`,
+        `Csak olyan csempére, ahol van lelőhely: ${deposit(k)} (a térképen jelölve). A legközelebbi készletből dolgozik; nem kell hozzá sín.`,
       plant:
         'Szabad fű-, erdő-, homok- vagy sík dombcsempére. Távvezeték-oszlopokat láncolj belőle a sínekig.',
       reclass:
@@ -1691,7 +1706,7 @@ export const HU: Strings = {
     brush: 'Terepecset',
     brushHint:
       'Válassz terepet az eszköztáron, és húzd a festéshez. A festés mindent eltüntet, ami a csempén áll.',
-    fill: (t: string) => `Kitöltés: ${t}`,
+    fill: (t: string) => `Kitöltés: ${ground(t)}`,
     regenerate: 'Térkép újragenerálása',
     file: 'Pálya',
     save: 'Pálya mentése',
