@@ -42,7 +42,7 @@ export class Minimap {
     onNavigate: (wx: number, wy: number) => void,
   ) {
     const W = 432;
-    const H = 236;
+    const H = 216;
     this.W = W;
     this.H = H;
     this.canvas = el('canvas', { width: String(W), height: String(H) });
@@ -51,7 +51,7 @@ export class Minimap {
       'div',
       { id: 'minimap', class: 'panel' },
       el('div', { class: 'panel-title', text: STR.minimap.title }),
-      this.canvas,
+      el('div', { class: 'panel-body' }, this.canvas),
     );
     this.base = document.createElement('canvas');
     this.base.width = W;

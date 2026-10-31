@@ -407,8 +407,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     marketScreen.pick(resource);
     d.screens.toggle(marketScreen);
   });
-  // the money is the bar's first cell; the tickets stay in the HUD's block at its end
-  resourceBar.right.append(hud.funds);
   resourceBar.passengers = () => {
     let n = 0;
     for (const s of d.builder.stations) n += s.stored('passengers');
@@ -578,11 +576,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     toggleDepth: () => host.toggleDepth(),
     regenerate: () => host.regenerate(debug.seedValue),
   });
-  const overviewBanner = el('div', {
-    id: 'overview-banner',
-    class: 'panel',
-    text: STR.overview.hint,
-  });
+  const overviewBanner = el('div', { id: 'overview-banner', text: STR.overview.hint });
   const toolbar = new Toolbar(
     (t: Tool) => d.build.setTool(t),
     () => (host.mode === 'editor' ? 99 : d.economy.tier),
@@ -1079,13 +1073,16 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.tooltip.stackRoot,
   );
 
-  // the toasts stand over the dock, which changes height with what it shows; hidden, it measures 0
-  if (typeof ResizeObserver !== 'undefined')
-    new ResizeObserver(() => {
-      d.toasts.root.style.bottom = `${toastBottom(toolbar.root.offsetHeight)}px`;
-      // and the train panel ends over it, whatever it shows (style.css)
+  // the toasts stand over the bar, which changes height with what it shows; hidden, it measures 0
+  if (typeof ResizeObserver !== 'undefined') {
+    const dockWatch = new ResizeObserver(() => {
+      d.toasts.root.style.bottom = `${toastBottom(toolbar.barRoot.offsetHeight)}px`;
+      // and the panels at the top left end over the dock, whatever it shows (style.css)
       d.uiRoot.style.setProperty('--dock-height', `${toolbar.root.offsetHeight}px`);
-    }).observe(toolbar.root);
+    });
+    dockWatch.observe(toolbar.root);
+    dockWatch.observe(toolbar.barRoot);
+  }
 
   // ---------------------------------------------------------------- keys
   const keyScreens: Record<KeyScreen, Screen> = {

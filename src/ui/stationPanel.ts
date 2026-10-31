@@ -18,6 +18,7 @@ import { STR } from '../strings';
 import { buildIcon } from './buildIcons';
 import { BuildingPanel } from './buildingPanel';
 import { btn, el, fmtInt } from './dom';
+import { sectionHeader } from './kit';
 import type { Amount } from './outlinerRows';
 import { groundRows } from './placingTooltip';
 import { renameField } from './renameField';
@@ -98,10 +99,10 @@ interface CallParts {
  */
 export class StationPanel {
   readonly root = el('div', { id: 'station-panel', class: 'panel' });
-  private readonly head = el('div', { class: 'tp-head' });
+  private readonly head = el('div', { class: 'panel-title' });
   private readonly tabs = new Map<StationTab, HTMLButtonElement>();
-  private readonly scroll = el('div', { class: 'tp-scroll' });
-  private readonly foot = el('div', { class: 'tp-foot' });
+  private readonly scroll = el('div', { class: 'panel-body tp-scroll' });
+  private readonly foot = el('div', { class: 'panel-foot' });
   /** the Overview's picture: drawn only when the level or the season changes */
   private readonly picture = el('div', { class: 'sp-illu' });
   /** the rows of the Overview above the ground rows, and below them */
@@ -280,10 +281,10 @@ export class StationPanel {
     const key = JSON.stringify([s.id, s.name, s.level]);
     if (key === this.headKey) return;
     this.headKey = key;
-    const name = el('span', { class: 'tp-name', text: s.name, title: STR.outliner.renameTip });
+    const name = el('span', { class: 'panel-name', text: s.name, title: STR.outliner.renameTip });
     name.addEventListener('dblclick', () => this.rename(s));
     this.name = name;
-    const close = btn('', () => this.close(), 'small bi-x');
+    const close = btn('', () => this.close(), 'panel-x');
     close.title = STR.trainPanel.close;
     close.append(buildIcon('close', 14));
     this.head.replaceChildren(
@@ -341,7 +342,7 @@ export class StationPanel {
     return i;
   }
   private section(title: string, right = '') {
-    return el('div', { class: 'bi-sec' }, title, right ? el('em', { text: right }) : '');
+    return sectionHeader(title, right);
   }
   private meter(percent: number, cls = '') {
     return el('span', { class: `ol-meter ${cls}` }, el('i', { style: `width:${percent}%` }));

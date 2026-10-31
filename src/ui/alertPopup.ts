@@ -48,11 +48,14 @@ export class AlertPopup implements Screen {
       this.screens.close();
       if (n) this.look(n);
     };
+    // with no target the frame's own Close is the way out
     return {
-      actions: [
-        { label: STR.alerts.close, onClick: () => this.screens.close() },
-        ...(n?.target ? [{ label: STR.alerts.goTo, onClick: goTo, primary: true }] : []),
-      ],
+      actions: n?.target
+        ? [
+            { label: STR.alerts.close, onClick: () => this.screens.close() },
+            { label: STR.alerts.goTo, onClick: goTo, primary: true },
+          ]
+        : [],
     };
   }
 }

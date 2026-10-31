@@ -22,7 +22,7 @@ import type { WorksStatus } from './tooltipContent';
 export class BuildingPanel {
   readonly root: HTMLElement;
   private body = el('div', { class: 'panel-body' });
-  private title = el('span');
+  private title = el('span', { class: 'panel-name' });
   building: Building | null = null;
 
   constructor(
@@ -37,7 +37,7 @@ export class BuildingPanel {
         'div',
         { class: 'panel-title' },
         this.title,
-        btn('×', () => this.close(), 'small'),
+        btn('×', () => this.close(), 'panel-x'),
       ),
       this.body,
     );

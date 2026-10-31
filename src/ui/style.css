@@ -110,32 +110,102 @@ body {
   background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.55) 100%);
 }
 
-/* ---- panels ---- */
+/* ---- panels: one frame, head, body and foot, for the HUD and the screens alike ---- */
 .panel {
-  background: var(--stone);
+  background: var(--stone-dark);
   border: 1px solid var(--border-dark);
   box-shadow:
-    inset 1px 1px 0 var(--border-light),
-    inset -1px -1px 0 var(--border-dark),
-    0 2px 6px rgba(0, 0, 0, 0.6);
+    inset 1px 1px 0 rgba(108, 127, 96, 0.35),
+    0 3px 10px rgba(0, 0, 0, 0.45);
   color: var(--text);
 }
+/* the head: an amber title on the frame; `.panel-name` takes what the badges and the close leave */
 .panel-title {
-  font-family: var(--font-title);
-  font-size: 15px;
-  letter-spacing: 1px;
-  color: var(--amber);
-  text-transform: uppercase;
-  padding: 4px 8px;
-  border-bottom: 1px solid var(--border-dark);
-  box-shadow: 0 1px 0 var(--border-light);
-  background: var(--stone-dark);
+  flex: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-family: var(--font-title);
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.panel-name,
+.k-ttl {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* the close of a HUD panel: a mark on the frame, not a button */
+.btn.panel-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1;
+  opacity: 0.75;
+}
+.btn.panel-x:hover {
+  background: none;
+  color: var(--amber);
+  opacity: 1;
+}
+/* the body: a bevelled well, with the kit's own wells */
+.panel-body,
+.k-well {
+  background: var(--stone);
+  box-shadow:
+    inset 1px 1px 0 var(--border-light),
+    inset -1px -1px 0 var(--border-dark);
 }
 .panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0 4px 4px;
   padding: 6px 8px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+/* the foot: under the well, a line of light on the frame */
+.panel-foot,
+.k-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  box-shadow: inset 0 1px 0 rgba(108, 127, 96, 0.3);
+}
+.panel-foot {
+  gap: 5px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+/* the top bar and the resource bar: stone strips across the screen */
+.strip {
+  display: flex;
+  align-items: center;
+  background: var(--stone);
+  border-bottom: 1px solid var(--border-dark);
+  box-shadow:
+    inset 0 -1px 0 rgba(108, 127, 96, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  white-space: nowrap;
 }
 .btn {
   font-family: var(--font-body);
@@ -145,7 +215,7 @@ body {
   border: 1px solid var(--border-dark);
   box-shadow:
     inset 1px 1px 0 var(--border-light),
-    inset -1px -1px 0 var(--border-dark);
+    inset -1px -1px 0 var(--stone);
   padding: 3px 9px;
   cursor: pointer;
   border-radius: 0;
@@ -201,41 +271,47 @@ body {
   left: 0;
   right: 0;
   height: 30px;
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  border-top: none;
+  font-size: 13px;
 }
 #topbar .title {
-  font-family: var(--font-title);
-  font-size: 15px;
-  letter-spacing: 2px;
-  color: var(--amber);
-  padding: 0 10px;
-  white-space: nowrap;
+  position: relative;
+  flex: none;
+  align-self: stretch;
   display: flex;
   align-items: center;
-  border-right: 1px solid var(--border-dark);
-  box-shadow: 1px 0 0 var(--border-light);
+  padding: 0 14px 0 12px;
+  font-family: var(--font-title);
+  font-size: 14.5px;
+  letter-spacing: 0.12em;
+  color: var(--amber);
+}
+#topbar .title::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 0;
+  bottom: 4px;
+  width: 1px;
+  background: var(--border-light);
+  opacity: 0.45;
 }
 #topbar .stat {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 0 9px;
-  white-space: nowrap;
-  border-right: 1px solid var(--border-dark);
-  box-shadow: 1px 0 0 var(--border-light);
-}
-#topbar .stat .label {
-  color: var(--text-dim);
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 1px;
 }
 #topbar .stat .value {
   font-family: var(--font-mono);
   font-size: 12px;
+}
+#topbar .stat.weather .value {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-dim);
+  text-overflow: ellipsis;
 }
 #topbar .spacer {
   flex: 1;
@@ -243,30 +319,48 @@ body {
 #topbar .time {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 10px;
+  gap: 2px;
 }
-/* day, clock and speed read as one group, the last cell of the bar */
+/* day, clock and speed read as one block, the last of the bar, with the era widget against it */
+#topbar .era,
 #topbar .datespeed {
-  gap: 8px;
-  padding-right: 0;
-  border-right: none;
-  box-shadow: none;
+  height: 26px;
+}
+#topbar .datespeed {
+  width: 250px;
+  justify-content: space-between;
+  gap: 6px;
+  margin-right: 4px;
+}
+#topbar .datespeed .value {
+  font-family: var(--font-title);
+  font-weight: 700;
+  white-space: nowrap;
+}
+#topbar .datespeed .value + .value {
+  margin-left: -2px;
+}
+#topbar .datespeed .value + .value::before {
+  content: '· ';
 }
 #topbar .datespeed .time {
-  padding: 0 10px 0 4px;
+  margin-left: auto;
 }
 /* undo and redo right of the menus: a disabled button lets the pointer through to its tooltip */
 #topbar .history {
-  gap: 2px;
+  gap: 3px;
   padding: 0 6px;
 }
 #topbar .history .btn {
   display: flex;
   align-items: center;
-  padding: 2px 4px;
+  justify-content: center;
+  width: 25px;
+  height: 20px;
+  padding: 0;
 }
 #topbar .history .btn:disabled {
+  opacity: 0.35;
   pointer-events: none;
 }
 /* the era widget, just before the date: a term drawn as a cell, not as a link */
@@ -276,7 +370,8 @@ body {
   border-bottom: none;
 }
 #topbar .era {
-  gap: 6px;
+  gap: 7px;
+  width: 220px;
 }
 #topbar .era-icon {
   display: flex;
@@ -290,53 +385,74 @@ body {
   font-family: var(--font-title);
   font-size: 13px;
   font-weight: bold;
+  white-space: nowrap;
 }
 #topbar .era-bar {
-  width: 44px;
+  flex: 1;
+  min-width: 24px;
   height: 7px;
-  background: var(--stone-dark);
+  background: var(--stone);
   border: 1px solid var(--border-dark);
-  border-radius: 4px;
+  border-radius: 99px;
   overflow: hidden;
 }
 #topbar .era-fill {
   height: 100%;
-  background: var(--amber-dark);
+  background: var(--amber);
 }
 #topbar .era-pct {
   color: var(--text-dim);
-  font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
 }
 #topbar .time .btn {
-  padding: 1px 7px;
-  min-width: 30px;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 3px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-dim);
 }
 #topbar .time .btn.pause {
-  font-size: 15px;
-  line-height: 18px;
-  min-width: 38px;
-  padding: 2px 8px;
-  margin-right: 4px;
+  min-width: 21px;
+  margin-right: 3px;
+  color: var(--text);
+}
+#topbar .time .btn:hover:enabled {
+  color: #f4ead2;
+}
+#topbar .time .btn.active,
+#topbar .time .btn.active:hover {
+  background: var(--amber);
+  box-shadow:
+    inset 1px 1px 0 var(--amber-hi),
+    inset -1px -1px 0 var(--amber-lo);
+  color: var(--stone-dark);
 }
 #topbar .time .btn.pause.paused {
-  color: var(--amber);
-  border-color: var(--amber-dark);
   animation: pausePulse 1.6s ease-in-out infinite;
 }
 @keyframes pausePulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(224, 160, 64, 0);
+    box-shadow:
+      inset 1px 1px 0 var(--amber-hi),
+      inset -1px -1px 0 var(--amber-lo),
+      0 0 0 0 rgba(224, 160, 64, 0);
   }
   50% {
-    box-shadow: 0 0 8px 1px rgba(224, 160, 64, 0.45);
+    box-shadow:
+      inset 1px 1px 0 var(--amber-hi),
+      inset -1px -1px 0 var(--amber-lo),
+      0 0 8px 1px rgba(224, 160, 64, 0.45);
   }
 }
 /* the menu bar gives way last, by clipping; the era widget and the date and speed never do */
 #topbar .menus {
-  gap: 3px;
-  padding: 0 6px;
+  gap: 5px;
+  padding: 0 6px 0 8px;
   min-width: 0;
   overflow: hidden;
 }
@@ -364,6 +480,9 @@ body {
   display: flex;
   flex-direction: column;
   padding: 3px;
+  box-shadow:
+    inset 1px 1px 0 var(--border-light),
+    0 8px 18px rgba(0, 0, 0, 0.5);
   z-index: 30;
 }
 .btn.mb-item {
@@ -379,7 +498,7 @@ body {
   white-space: nowrap;
 }
 .btn.mb-item:hover {
-  background: var(--stone-light);
+  background: var(--stone);
 }
 .btn.mb-item kbd {
   color: var(--text-dim);
@@ -401,7 +520,7 @@ body {
 }
 /* short of room (Hud.fit): tighter cells and buttons and no weather text; if still short, compact-2 */
 #topbar.compact .title {
-  padding: 0 6px;
+  padding: 0 8px;
 }
 #topbar.compact .stat {
   gap: 4px;
@@ -414,22 +533,8 @@ body {
 #topbar.compact-2 .era-name {
   display: none;
 }
-#topbar.compact .datespeed {
-  gap: 5px;
-  padding-right: 0;
-}
-#topbar.compact .datespeed .time {
-  gap: 3px;
-  padding: 0 6px 0 2px;
-}
-#topbar.compact .time .btn {
-  min-width: 26px;
-  padding: 1px 4px;
-}
-#topbar.compact .time .btn.pause {
-  min-width: 32px;
-  padding: 2px 6px;
-  margin-right: 2px;
+#topbar.compact-2 .era {
+  width: 110px;
 }
 
 /* ---- minimap ---- */
@@ -438,14 +543,25 @@ body {
   right: 8px;
   bottom: 8px;
   width: 448px;
+  height: 252px;
+  display: flex;
+  flex-direction: column;
+}
+#minimap .panel-title {
+  padding: 4px 8px;
+}
+#minimap .panel-body {
+  display: grid;
+  place-items: center;
+  margin: 0 6px 6px;
+  padding: 0;
+  overflow: hidden;
 }
 #minimap canvas {
   display: block;
   width: 432px;
-  height: 236px;
+  height: 216px;
   image-rendering: pixelated;
-  background: #16211a;
-  border: 1px solid var(--border-dark);
   cursor: crosshair;
 }
 
@@ -457,29 +573,39 @@ body {
   padding: 3px 8px;
   color: var(--text-dim);
   font-size: 11px;
-  background: rgba(10, 10, 12, 0.7);
+  background: rgba(26, 37, 29, 0.85);
   border: 1px solid var(--border-dark);
 }
 
 /* ---- debug ---- */
 #debug {
   position: absolute;
-  top: 40px;
-  right: 600px;
-  width: 260px;
+  left: 416px;
+  top: 110px;
+  width: 220px;
+  max-height: calc(100% - 126px - var(--dock-height, 0px));
   display: none;
+  flex-direction: column;
 }
 #debug.open {
-  display: block;
+  display: flex;
 }
 
 /* ---- tooltip ---- */
+#tooltip,
+.tt {
+  box-shadow:
+    inset 1px 1px 0 var(--border-light),
+    inset -1px -1px 0 var(--stone),
+    0 6px 16px rgba(0, 0, 0, 0.55);
+  font-size: 12px;
+  line-height: 1.45;
+}
 #tooltip {
   position: absolute;
   display: none;
-  padding: 4px 8px;
-  max-width: 260px;
-  font-size: 11px;
+  padding: 6px 10px 8px;
+  max-width: 330px;
   pointer-events: none !important;
   z-index: 50;
 }
@@ -489,7 +615,8 @@ body {
 #tooltip .tt-title {
   font-family: var(--font-title);
   color: var(--amber);
-  font-size: 13px;
+  font-size: 14px;
+  letter-spacing: 0.03em;
 }
 
 /* ---- tooltip stack (src/ui/tooltipStack.ts) ---- */
@@ -506,10 +633,10 @@ body {
 .tt {
   position: fixed;
   z-index: 85;
-  max-width: 300px;
-  padding: 5px 9px 7px;
+  min-width: 160px;
+  max-width: 330px;
+  padding: 6px 10px 8px;
   font-family: var(--font-body);
-  font-size: 11px;
   pointer-events: none;
 }
 .tt.tt-locked {
@@ -518,23 +645,24 @@ body {
 }
 .tt-body {
   display: grid;
-  gap: 2px;
+  gap: 3px;
 }
 .tt .tt-title {
   font-family: var(--font-title);
   color: var(--amber);
-  font-size: 13px;
+  font-size: 14px;
+  letter-spacing: 0.03em;
   /* room for the ring */
   padding-right: 22px;
 }
 .tt-row {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
   font-variant-numeric: tabular-nums;
 }
 .tt-num {
-  font-weight: bold;
+  font-weight: 600;
   color: var(--text-bright);
 }
 .tt-good,
@@ -564,6 +692,7 @@ body {
 }
 .tt-hint {
   color: var(--text-dim);
+  font-size: 11px;
   font-style: italic;
 }
 .tt-term {
@@ -588,8 +717,8 @@ body {
 }
 .tt-ring {
   position: absolute;
-  top: 5px;
-  right: 6px;
+  top: 6px;
+  right: 7px;
   width: 14px;
   height: 14px;
 }
@@ -598,7 +727,7 @@ body {
   stroke-width: 2.4;
 }
 .tt-ring-track {
-  stroke: var(--stone-light);
+  stroke: var(--stone);
 }
 .tt-ring-arc {
   stroke: var(--amber);
@@ -639,18 +768,25 @@ body {
 /* ---- overview banner ---- */
 #overview-banner {
   position: absolute;
-  top: 38px;
+  top: 108px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 3px 12px;
-  font-family: var(--font-title);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--cyan);
+  width: 520px;
+  height: 32px;
   display: none;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(0, 0, 0, 0.6);
 }
 #overview-banner.show {
-  display: block;
+  display: flex;
 }
 
 /* ---- loading ---- */
@@ -788,16 +924,15 @@ body {
 #build-dock {
   position: absolute;
   left: 8px;
+  /* the survey map stands bottom right, 448 px wide */
+  right: 464px;
   bottom: 8px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
-  width: 720px;
-  /* the survey map stands bottom right, 448 px wide */
-  max-width: calc(100vw - 472px);
   /* under the two top bars */
-  max-height: calc(100vh - 70px);
+  max-height: calc(100% - 70px);
   pointer-events: none;
 }
 #build-dock > * {
@@ -829,7 +964,6 @@ body {
 /* a refusal is read whole: it wraps, and the bar grows up from its bottom edge */
 .tb-status {
   padding: 3px 8px;
-  border-bottom: 1px solid var(--border-dark);
   font-size: 11px;
   color: var(--text-dim);
 }
@@ -855,6 +989,7 @@ body {
   padding: 0 9px;
   font-family: var(--font-title);
   font-size: 12px;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 .btn.tb-qe {
@@ -982,12 +1117,22 @@ body {
 .btn.tb-cat {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   width: 100%;
   min-width: 0;
-  padding: 0 6px;
+  padding: 0 8px;
   font-family: var(--font-title);
-  font-size: 12.5px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+/* a narrower bar: every name still reads whole */
+@media (max-width: 1399px) {
+  .btn.tb-cat {
+    gap: 5px;
+    padding: 0 6px;
+    letter-spacing: 0.06em;
+  }
 }
 .tb-cat-name {
   flex: 1;
@@ -1004,12 +1149,17 @@ body {
 .btn.tb-cat.active,
 .btn.tb-type.active,
 .btn.tb-item.active {
+  background: var(--iron);
   border-color: var(--amber);
-  box-shadow: inset 0 0 0 1px var(--amber);
+  box-shadow:
+    inset 0 0 0 1px var(--amber),
+    inset 2px 2px 0 rgba(0, 0, 0, 0.3);
 }
 .btn.tb-dem.active {
   border-color: var(--text-bad);
-  box-shadow: inset 0 0 0 1px var(--text-bad);
+  box-shadow:
+    inset 0 0 0 1px var(--text-bad),
+    inset 2px 2px 0 rgba(0, 0, 0, 0.3);
   color: var(--text-bad);
 }
 .btn.lock,
@@ -1019,30 +1169,10 @@ body {
   color: var(--text);
   box-shadow:
     inset 1px 1px 0 var(--border-light),
-    inset -1px -1px 0 var(--border-dark);
+    inset -1px -1px 0 var(--stone);
   opacity: 0.42;
   filter: grayscale(0.8);
   cursor: default;
-}
-.tb-group {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  padding-right: 8px;
-  border-right: 1px solid var(--border-dark);
-  box-shadow: 1px 0 0 var(--border-light);
-}
-.tb-group:last-child {
-  border-right: none;
-  box-shadow: none;
-}
-.tb-label {
-  font-family: var(--font-title);
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-size: 10px;
-  margin-right: 4px;
 }
 /* over the closed bar, its status line included; an open bar covers it */
 #hint {
@@ -1054,15 +1184,12 @@ body {
 #decor-panel {
   position: absolute;
   left: 8px;
-  top: 40px;
+  top: 62px;
   width: 300px;
-  max-height: calc(100vh - 170px);
+  /* clear of the camera keys' hint and of the build dock, whichever stands higher */
+  max-height: min(calc(100% - 170px), calc(100% - 78px - var(--dock-height, 0px)));
   display: flex;
   flex-direction: column;
-}
-#building-panel .panel-body,
-#decor-panel .panel-body {
-  overflow-y: auto;
 }
 .kv {
   display: flex;
@@ -1127,29 +1254,32 @@ body {
 #toasts {
   position: absolute;
   left: 50%;
-  /* the least: createPlayUi keeps them over the build dock (`toastBottom`) */
-  bottom: 110px;
+  /* the least: createPlayUi keeps them over the build bar (`toastBottom`) */
+  bottom: 80px;
   transform: translateX(-50%);
+  /* centred, so it keeps off the survey map, which stands 456 px from the right, by as much left */
+  width: min(380px, calc(100% - 928px));
   display: flex;
   flex-direction: column;
   gap: 3px;
-  align-items: center;
   pointer-events: none !important;
   z-index: 600;
 }
+/* a line is 44 px tall; a refusal is read whole, so a longer one wraps */
 .toast {
-  padding: 3px 10px;
-  background: rgba(20, 20, 24, 0.92);
-  border: 1px solid var(--border-dark);
-  box-shadow: inset 1px 1px 0 var(--border-light);
+  padding: 13px 12px 13px 10px;
+  border-left: 4px solid var(--amber);
   font-size: 12px;
+  line-height: 16px;
   transition: opacity 0.5s;
 }
 .toast.warn {
-  color: #e0715f;
+  border-left-color: var(--text-bad);
+  color: var(--text-bad);
 }
 .toast.good {
-  color: #a6c47a;
+  border-left-color: var(--text-good);
+  color: var(--text-good);
 }
 .toast.fade {
   opacity: 0;
@@ -1393,7 +1523,8 @@ input.text {
   position: absolute;
   right: 8px;
   top: 62px;
-  bottom: 284px;
+  /* never down to the survey map, 252 px tall on its 8 */
+  bottom: 268px;
   width: 300px;
   max-height: 560px;
   display: flex;
@@ -1403,7 +1534,6 @@ input.text {
 .ol-tabs {
   flex: none;
   display: flex;
-  background: var(--stone-dark);
   border-bottom: 1px solid var(--border-dark);
 }
 .btn.ol-tab {
@@ -1420,15 +1550,21 @@ input.text {
   border-bottom: 2px solid transparent;
   box-shadow: none;
 }
+.btn.ol-tab:hover {
+  background: none;
+  color: var(--text);
+}
 .btn.ol-tab.on {
   flex: 2.6 1 0;
-  color: var(--text);
+  color: var(--amber);
   border-bottom-color: var(--amber);
 }
 .ol-tab b {
   font-family: var(--font-title);
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1456,11 +1592,11 @@ input.text {
   background: var(--iron);
   box-shadow: inset 1px 1px 0 var(--border-light);
 }
-.ol-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 2px 0;
+/* what is on these rows has its own sides */
+.ol-body,
+.tp-scroll,
+.bi-scroll {
+  padding: 2px 0 6px;
 }
 .ol-empty {
   margin: 0;
@@ -1537,7 +1673,12 @@ input.text {
 }
 .ol-lv {
   flex: none;
+  padding: 0 5px;
+  border: 1px solid var(--border-light);
+  font-family: var(--font-body);
   font-size: 10.5px;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--amber);
 }
 .ol-chip {
@@ -1637,16 +1778,10 @@ input.text {
   color: var(--text);
 }
 .ol-foot {
-  flex: none;
-  display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 6px;
   min-height: 25px;
   padding: 3px 10px;
-  font-size: 11px;
-  color: var(--text-dim);
-  border-top: 1px solid var(--border-dark);
 }
 .rename-field {
   width: 100%;
@@ -1676,28 +1811,9 @@ input.text {
 #overview-banner.show ~ #station-panel {
   display: none;
 }
-.tp-head {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  background: var(--stone-dark);
-  border-bottom: 1px solid var(--border-dark);
-  font-family: var(--font-title);
-  font-size: 15px;
-  font-weight: 700;
-  white-space: nowrap;
-}
 .tp-stripe {
   width: 6px;
   margin: -3px 0;
-}
-.tp-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .tp-eye {
   flex: none;
@@ -1714,32 +1830,37 @@ input.text {
   color: var(--amber);
   box-shadow: inset 0 0 0 1px var(--amber);
 }
+/* the panels' tabs are the screens' */
 .tp-tabs {
   flex: none;
   display: flex;
-  background: var(--stone-dark);
   border-bottom: 1px solid var(--border-dark);
 }
 .btn.tp-tab {
-  flex: 1;
-  padding: 6px 4px;
-  font-size: 12px;
-  color: var(--text-dim);
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 7px 2px 6px;
+  overflow: hidden;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
   box-shadow: none;
+  color: var(--text-dim);
+  font-family: var(--font-title);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.btn.tp-tab:hover {
+  background: none;
+  color: var(--text);
 }
 .btn.tp-tab.on {
-  color: var(--text);
-  font-weight: 700;
   border-bottom-color: var(--amber);
-}
-.tp-scroll {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  padding-bottom: 6px;
+  color: var(--amber);
 }
 .tp-status {
   display: flex;
@@ -1846,13 +1967,6 @@ input.text {
   margin: 0;
   padding: 0 10px;
 }
-.tp-foot {
-  flex: none;
-  display: flex;
-  gap: 5px;
-  padding: 6px 10px;
-  border-top: 1px solid var(--border-dark);
-}
 .tp-details {
   cursor: pointer;
 }
@@ -1873,6 +1987,7 @@ input.text {
   place-items: end start;
   overflow: hidden;
   border: 1px solid var(--border-dark);
+  box-shadow: inset 0 0 0 1px var(--border-light);
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='s' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23d9c79a'/%3E%3Cstop offset='.6' stop-color='%23e9d9b0'/%3E%3Cstop offset='1' stop-color='%23c8b27c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='200' fill='url(%23s)'/%3E%3Cpath d='M0 118 Q60 92 130 110 T260 100 T400 108 V200 H0z' fill='%23a8a06a' opacity='.7'/%3E%3Cpath d='M0 136 Q90 118 200 132 T400 126 V200 H0z' fill='%23858a44'/%3E%3Cpath d='M0 160 H400 V200 H0z' fill='%236f7334'/%3E%3Cpath d='M0 172 H400' stroke='%234a3d2c' stroke-width='3'/%3E%3Cpath d='M0 178 H400' stroke='%238d8476' stroke-width='1.5'/%3E%3Cpath d='M0 186 H400' stroke='%238d8476' stroke-width='1.5'/%3E%3C/svg%3E")
     center / cover;
 }
@@ -1911,6 +2026,9 @@ input.text {
   min-width: 0;
   padding: 5px 8px;
   background: var(--stone);
+  box-shadow:
+    inset 1px 1px 0 var(--border-light),
+    inset -1px -1px 0 var(--border-dark);
   font-size: 12px;
 }
 .sp-kv > .wide {
@@ -1953,7 +2071,6 @@ input.text {
   font-size: 11.5px;
   background: var(--stone-dark);
   border: 1px solid var(--border-dark);
-  border-radius: 99px;
 }
 .sp-pad {
   padding: 0 10px 4px;
@@ -2109,29 +2226,8 @@ input.text {
   flex: 0 1 auto;
   width: 340px;
   max-width: 100%;
+  max-height: 330px;
   min-height: 0;
-}
-#build-info .panel-body {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 0;
-}
-.bi-head {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  background: var(--stone-dark);
-  border-bottom: 1px solid var(--border-dark);
-  font-family: var(--font-title);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--amber);
-  white-space: nowrap;
-  overflow: hidden;
 }
 .bi-ic {
   flex: none;
@@ -2143,54 +2239,15 @@ input.text {
   align-items: center;
   justify-content: center;
 }
-.bi-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .bi-type {
   flex: none;
   padding: 0 5px;
   border: 1px solid var(--border-light);
-  border-radius: 2px;
   font-family: var(--font-body);
   font-size: 10.5px;
-  font-weight: 400;
-  color: var(--text-dim);
-}
-.btn.bi-x {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-}
-.bi-scroll {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  padding-bottom: 6px;
-}
-.bi-sec {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px 4px;
-  font-family: var(--font-title);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-.bi-sec em {
-  margin-left: auto;
-  font-style: normal;
-  font-weight: 400;
   letter-spacing: 0;
   text-transform: none;
+  color: var(--text-dim);
 }
 .bi-p {
   margin: 0;
@@ -2204,13 +2261,6 @@ input.text {
   align-items: center;
   gap: 4px 12px;
   padding: 3px 10px 6px;
-}
-.bi-foot {
-  flex: none;
-  padding: 6px 10px;
-  border-top: 1px solid var(--border-dark);
-  font-size: 11px;
-  color: var(--text-dim);
 }
 .bi-res {
   display: inline-flex;
@@ -2358,15 +2408,6 @@ input.text {
   image-rendering: crisp-edges;
   display: block;
 }
-.item-art {
-  width: 36px;
-  height: 32px;
-  object-fit: contain;
-  flex: 0 0 36px;
-  margin-right: 4px;
-  background: var(--border-dark);
-  border: 1px solid var(--border-dark);
-}
 .gcard-top {
   display: flex;
   justify-content: space-between;
@@ -2409,15 +2450,6 @@ input.text {
 #topbar .stat.weather {
   min-width: 0;
 }
-#topbar .stat.weather .value {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-#building-panel .panel-body,
-#decor-panel .panel-body {
-  min-height: 0;
-}
 
 /* ---- menus ---- */
 .menu-root {
@@ -2438,15 +2470,12 @@ select.text {
 #editor-panel {
   position: absolute;
   right: 8px;
-  top: 40px;
+  top: 62px;
   width: 300px;
-  max-height: calc(100vh - 175px);
+  /* never down to the survey map */
+  max-height: calc(100% - 330px);
   display: flex;
   flex-direction: column;
-}
-#editor-panel .panel-body {
-  overflow-y: auto;
-  min-height: 0;
 }
 body.editor #alert-bar,
 body.editor #outliner,
@@ -2470,23 +2499,6 @@ body.editor #train-panel {
   margin-left: 6px;
 }
 
-/* ---- content editor ---- */
-.content-entry {
-  border: 1px solid var(--border-dark);
-  background: var(--stone-dark);
-  padding: 4px 8px 6px;
-}
-.content-head {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  margin-bottom: 4px;
-}
-.content-head .name {
-  flex: 1;
-  font-weight: bold;
-  color: var(--amber);
-}
 input[type='range'] {
   accent-color: var(--amber);
 }
@@ -2498,76 +2510,54 @@ input[type='range'] {
   left: 0;
   right: 0;
   height: 24px;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  border-top: none;
+  padding: 0 11px;
+  font-size: 12.5px;
   cursor: pointer;
 }
-/* the cells shrink and clip before they push the tickets off the right edge */
+/* the cells shrink and clip before they leave the screen */
 #resbar .res-cells {
   flex: 1 1 0;
   min-width: 0;
+  height: 100%;
   overflow: hidden;
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 /* the store the bar shows; a click steps to the next */
 #resbar .res-store {
-  margin: 0 6px 0 4px;
+  flex: none;
   max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-#resbar .res-right {
-  flex: none;
-  display: flex;
-  align-items: stretch;
-  margin-left: auto;
-}
-#resbar .funds {
-  display: flex;
-  align-items: stretch;
-}
-#resbar .funds .stat {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 10px;
-  border-left: 1px solid var(--border-dark);
-  box-shadow: -1px 0 0 var(--border-light);
-  white-space: nowrap;
-}
-#resbar .funds .stat .label {
-  color: var(--text-dim);
-  font-family: var(--font-body);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-#resbar .funds .stat .value {
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
 #resbar .res-group {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
-/* a gap between the groups: funds | materials | fuel and power | food | people */
+/* a line between the groups: funds | materials | fuel and power | food | people */
 #resbar .res-sep {
-  width: 10px;
   flex: none;
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--border-light);
+  opacity: 0.45;
 }
-/* each cell is a term (its tooltip links the buildings), drawn as the cell, not as a link */
-/* when the cells would overflow: tighter padding, icon close to its value, narrower separators */
+/* when the cells would overflow: tighter gaps, icon close to its value */
+#resbar.compact .res-cells,
+#resbar.compact .res-group {
+  gap: 4px;
+}
 #resbar.compact .res {
   gap: 2px;
-  padding: 0 4px;
 }
 #resbar.compact .res-sep {
-  width: 4px;
+  margin: 0 1px;
 }
+/* each cell is a term (its tooltip links the buildings), drawn as the cell, not as a link */
 #resbar .tt-term {
   display: flex;
   color: inherit;
@@ -2630,17 +2620,18 @@ input[type='range'] {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
 }
 #alert-bar .al {
   position: relative;
   flex: none;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 30px;
+  height: 30px;
+  margin: 0 4px;
+  transform: rotate(45deg);
   border: 2px solid var(--sv, var(--border-light));
-  border-radius: 50%;
   background: var(--stone-dark);
   color: var(--sv, var(--text));
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
@@ -2660,13 +2651,17 @@ input[type='range'] {
   display: grid;
   place-items: center;
 }
+/* the face stands upright in the diamond */
+#alert-bar .al > * {
+  transform: rotate(-45deg);
+}
 #alert-bar .al-mark {
   color: var(--text);
 }
 #alert-bar .al-face b {
   position: absolute;
-  right: -6px;
-  top: -6px;
+  left: calc(50% + 2px);
+  top: -13px;
   min-width: 17px;
   height: 17px;
   padding: 0 4px;
@@ -2698,22 +2693,26 @@ input[type='range'] {
   /* left of the outliner */
   right: 316px;
   width: 320px;
-  max-height: 60vh;
+  max-height: 120px;
   display: flex;
   flex-direction: column;
   z-index: 20;
 }
-#advisor .panel-body {
-  overflow-y: auto;
+/* the words on the overview are about 240 px: narrower than their box, they clear the advisor */
+@media (max-width: 1791px) {
+  #overview-banner {
+    width: 360px;
+  }
 }
-#advisor .panel-title {
-  gap: 6px;
-}
-#advisor .panel-title .btn {
-  margin-left: auto;
-}
-#advisor .panel-title .btn + .btn {
-  margin-left: 0;
+/* the alert bar stands in the middle: a narrower window puts the advisor under it, and the words on
+   the overview between the advisor and the Town list */
+@media (max-width: 1639px) {
+  #advisor {
+    top: 110px;
+  }
+  #overview-banner {
+    left: calc(50% - 184px);
+  }
 }
 .badge {
   display: inline-block;
@@ -2743,32 +2742,17 @@ input[type='range'] {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 8px;
-  border-right: 1px solid var(--border-dark);
-  box-shadow: 1px 0 0 var(--border-light);
   white-space: nowrap;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
-#resbar .res .label {
-  color: var(--text-dim);
-  font-family: var(--font-body);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+#resbar .res-icon {
+  width: 17px;
+  height: 17px;
 }
 .res-icon {
   width: 14px;
   height: 14px;
-}
-#building-panel,
-#decor-panel,
-#editor-panel,
-#debug {
-  top: 62px;
-}
-#overview-banner {
-  top: 106px;
 }
 select.text.small {
   font-size: 10px;
@@ -2793,28 +2777,23 @@ table.market td {
   border-bottom: 1px dotted var(--stone-light);
 }
 
-.kv-bar {
-  margin: 2px 0;
-}
-
 /* ---- towns ---- */
 #town-panel {
   position: absolute;
   left: 8px;
   top: 62px;
   width: 260px;
-  max-height: calc(100vh - 340px);
+  max-height: min(calc(100% - 170px), calc(100% - 78px - var(--dock-height, 0px)));
   display: flex;
   flex-direction: column;
   z-index: 5;
 }
 #town-panel .panel-body {
-  overflow-y: auto;
   padding: 4px 6px;
 }
 .town-card {
   border: 1px solid var(--border-dark);
-  background: var(--stone);
+  background: var(--stone-dark);
   padding: 4px 6px;
   margin: 3px 0;
   font-size: 11px;
@@ -2855,24 +2834,6 @@ table.market td {
   background: rgba(4, 4, 6, 0.35);
 }
 
-.vehicle-preview-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #14201ab8;
-}
-.vehicle-preview-panel {
-  width: min(720px, 95vw);
-  max-height: 90vh;
-  overflow: auto;
-}
-.vehicle-preview-panel .panel-title {
-  display: flex;
-  justify-content: space-between;
-}
 .gcard-art {
   object-fit: contain;
   max-width: 100%;
@@ -3032,10 +2993,6 @@ table.market td {
   flex-direction: column;
   max-width: 95vw;
   max-height: 90vh;
-  background: var(--stone-dark);
-  box-shadow:
-    inset 1px 1px 0 rgba(108, 127, 96, 0.35),
-    0 3px 10px rgba(0, 0, 0, 0.45);
   outline: none;
   overflow: hidden;
 }
@@ -3054,22 +3011,8 @@ table.market td {
   display: contents;
 }
 .k-head {
-  flex: none;
-  justify-content: flex-start;
-  gap: 8px;
   padding: 8px 8px 8px 14px;
-  border-bottom: none;
-  box-shadow: none;
   font-size: 16px;
-  font-weight: 400;
-  letter-spacing: 0.1em;
-}
-.k-ttl {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .k-head .k-ic {
   font-size: 17px;
@@ -3122,19 +3065,11 @@ table.market td {
   flex: none;
   padding: 2px 0 6px;
   min-width: 0;
-  background: var(--stone);
-  box-shadow:
-    inset 1px 1px 0 var(--border-light),
-    inset -1px -1px 0 var(--border-dark);
 }
 .k-foot {
-  flex: none;
-  display: flex;
-  align-items: center;
   gap: 8px;
   min-height: 42px;
   padding: 6px 8px;
-  box-shadow: inset 0 1px 0 rgba(108, 127, 96, 0.3);
 }
 .k-foot:empty {
   display: none;
@@ -5211,6 +5146,10 @@ body.title-up
 }
 #debug .k-kv {
   padding: 2px 10px;
+}
+/* a narrow panel: the label keeps its width, and the value wraps */
+#debug .k-kv > span {
+  flex: none;
 }
 #debug .k-kv > b {
   font-family: var(--font-mono);

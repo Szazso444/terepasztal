@@ -124,12 +124,15 @@ export interface FootLayout {
 /**
  * The one footer: secondary actions on the left in the order given, the primary rightmost. The
  * Back rule: on top of another screen or a menu, Back is the leftmost secondary, never the accent.
- * Done is an accent only on a screen with no forward action of its own. Null when nothing shows.
+ * Done is an accent only on a screen with no forward action of its own. A `closable` screen on its
+ * own with neither Done nor a primary leads with a plain Close, where Back would stand: the accent
+ * stays for what moves forward. Null when nothing shows.
  */
 export function footerLayout(
   spec: FootSpec | null,
   stacked: boolean,
   leave: () => void,
+  closable = false,
 ): FootLayout | null {
   const actions = spec?.actions ?? [];
   const left = actions.filter((a) => !a.primary);
@@ -143,6 +146,8 @@ export function footerLayout(
       primary: true,
       title: STR.kit.closeHint(null),
     });
+  else if (closable && !right.length)
+    left.unshift({ label: STR.kit.close, onClick: leave, title: STR.kit.closeHint(null) });
   const note = spec?.note ?? null;
   return left.length || right.length || note ? { left, note, right } : null;
 }

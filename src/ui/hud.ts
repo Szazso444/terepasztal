@@ -1,4 +1,4 @@
-import { el, btn, fmtInt } from './dom';
+import { el, btn } from './dom';
 import { STR } from '../strings';
 import { SPEED_ORDER, type GameClock } from '../sim/time';
 import type { AgeStatus } from '../sim/ages';
@@ -14,7 +14,6 @@ import { MenuBar } from './menuBar';
 import type { History } from '../sim/history';
 
 export interface HudModel {
-  tickets: number;
   /** current age index (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic, 5 hyper) */
   tier: number;
 }
@@ -25,9 +24,7 @@ export type HistoryView = Pick<History, 'canUndo' | 'canRedo' | 'undoLabel' | 'r
 /**
  * Top bar: title, the menu bar (`menuBar.ts`) and undo and redo on the left; on the right the
  * season, the era widget (the current age's icon and name, and a bar toward the next age; resting
- * on it lists every age with its goals), then day, clock and speed as the last block. Tickets live
- * in `funds`, which the game places at the right end of the resource row (the money itself is the
- * resource bar's first cell).
+ * on it lists every age with its goals), then day, clock and speed as the last block.
  *
  * When the bar is short of room (`fit`) it goes `compact` in two steps: first tighter spacing and
  * the weather words in the Weather row's tooltip; only if that is still not enough, the era widget
@@ -36,7 +33,6 @@ export type HistoryView = Pick<History, 'canUndo' | 'canRedo' | 'undoLabel' | 'r
  */
 export class Hud {
   readonly root: HTMLElement;
-  private tickets = el('span', { class: 'value' });
   /** the era widget: the age's icon and name, the bar toward the next age and its percent */
   private eraIcon = el('span', { class: 'era-icon' });
   private eraName = el('span', { class: 'era-name' });
@@ -56,8 +52,6 @@ export class Hud {
   private historyCell = el('div', { class: 'stat history' });
   /** what the history can do now; its tooltips read it when they open */
   private history: HistoryView | null = null;
-  /** the tickets block for the resource row */
-  readonly funds: HTMLElement;
   onHistory: ((way: HistoryWay) => void) | null = null;
   private locked = false;
   private fps = el('span', { class: 'value dim' });
@@ -73,8 +67,6 @@ export class Hud {
     atlas: AtlasRegistry,
     tooltip: Tooltip,
   ) {
-    const stat = (label: string, v: HTMLElement) =>
-      el('div', { class: 'stat' }, el('span', { class: 'label', text: label }), v);
     const time = el('div', { class: 'time' });
     // the buttons read in SPEED_ORDER; speedBtns stays by real index, as clock.speedIndex is
     for (const i of SPEED_ORDER) {
@@ -89,10 +81,9 @@ export class Hud {
       time.append(b);
     }
     this.menuBar = new MenuBar((text) => tipBuild(atlas, () => [title(text)]));
-    this.funds = el('div', { class: 'funds' }, stat(STR.hud.tickets, this.tickets));
     // the whole widget is the term: resting on it opens the ages tooltip
     const era = ttTerm(
-      el('div', { class: 'stat era' }, this.eraIcon, this.eraName, this.eraBar, this.eraPct),
+      el('div', { class: 'panel stat era' }, this.eraIcon, this.eraName, this.eraBar, this.eraPct),
       tipBuild(atlas, () => ageTip(this.ages())),
     );
     // a term around the button: a disabled button still says what it would do
@@ -101,7 +92,7 @@ export class Hud {
     this.historyCell.append(ttTerm(this.undoBtn, undoTip), ttTerm(this.redoBtn, redoTip));
     this.root = el(
       'div',
-      { id: 'topbar', class: 'panel' },
+      { id: 'topbar', class: 'strip' },
       el('div', { class: 'title', text: STR.title }),
       this.menuBar.root,
       this.historyCell,
@@ -110,7 +101,7 @@ export class Hud {
       el('div', { class: 'stat weather' }, this.weather),
       era,
       // one block at the right end, the era widget just before it
-      el('div', { class: 'stat datespeed' }, this.day, this.clockEl, time),
+      el('div', { class: 'panel stat datespeed' }, this.day, this.clockEl, time),
     );
     tooltip.bindTerms(this.root);
     // a window resize, or a cell that grows or shrinks (an age, the weather, the advisor's badge, the
@@ -232,7 +223,6 @@ export class Hud {
   }
 
   update(m: HudModel) {
-    this.tickets.textContent = fmtInt(m.tickets);
     this.updateEra(m.tier);
     this.day.textContent = STR.hud.day(this.clock.day);
     this.clockEl.textContent = this.clock.formatClock();
