@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Graphics, MeshSimple, Texture, type Container, type FillInstruction } from 'pixi.js';
 import {
+  ACROSS,
   bridgeJoins,
   bridgePlan,
   deckAt,
@@ -289,6 +290,7 @@ describe('bridge deck geometry', () => {
   });
 
   it('leaves a bridge with no narrow gauge as wide as it was', () => {
+    expect(ACROSS.deck).toBe(0.5);
     const [t] = plans([span(5, 5)]);
     expect(t.plan.deck).toEqual({ x0: -0.5, x1: 0.5, y0: -0.5, y1: 0.5 });
     expect(Math.abs(t.plan.parapets[0].y1)).toBeCloseTo(PARAPET);
