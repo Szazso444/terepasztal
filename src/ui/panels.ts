@@ -76,6 +76,7 @@ import { ContractsSide } from './contractsSide';
 import { Minimap } from './minimap';
 import { DebugPanel } from './debug';
 import { Toolbar, type Tool } from './toolbar';
+import { toastBottom } from './buildBar';
 import { BuildingPanel } from './buildingPanel';
 import { DecorPanel } from './decorPanel';
 import { TrainSide } from './trainSide';
@@ -846,6 +847,12 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.tooltip.root,
     d.tooltip.stackRoot,
   );
+
+  // the toasts stand over the dock, which changes height with what it shows; hidden, it measures 0
+  if (typeof ResizeObserver !== 'undefined')
+    new ResizeObserver(() => {
+      d.toasts.root.style.bottom = `${toastBottom(toolbar.root.offsetHeight)}px`;
+    }).observe(toolbar.root);
 
   // ---------------------------------------------------------------- keys
   const keyScreens: Record<KeyScreen, Screen> = {

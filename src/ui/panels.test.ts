@@ -108,6 +108,18 @@ describe('the editor play test asks before replacing the stored game (confirmRep
   });
 });
 
+// ------------------------------------------------------------------ what follows what
+
+describe('the toasts and the build dock', () => {
+  const source = readFileSync(new URL('./panels.ts', import.meta.url), 'utf8');
+
+  it('watches the dock and moves the toasts over it, as no fixed height holds for every bar', () => {
+    expect(source).toMatch(/new ResizeObserver\([\s\S]{0,160}toastBottom\(/);
+    expect(source).toMatch(/d\.toasts\.root\.style\.bottom\s*=/);
+    expect(source).toMatch(/\.observe\(toolbar\.root\)/);
+  });
+});
+
 // ------------------------------------------------------------------ what each action is wired to
 //
 // The wiring in `createPlayUi` needs a DOM, so it is checked in the source: every call that

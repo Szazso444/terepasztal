@@ -14,6 +14,8 @@ import { TRACK_ITEMS, itemKey } from '../world/track';
 import { blockText, type TipDoc } from './tooltipDoc';
 import {
   BuildBar,
+  DOCK_BOTTOM,
+  TOAST_FLOOR,
   arrowTip,
   buildCatalog,
   categoryTip,
@@ -31,6 +33,7 @@ import {
   refundPercent,
   shownItems,
   statusLine,
+  toastBottom,
   stationPlace,
   stepCategory,
   typeLockAge,
@@ -638,6 +641,21 @@ describe('the line at the top of the bar', () => {
     expect(refundPercent(true)).toBeNull();
     expect(STR.toolbar.demolishOn(25)).toContain('25%');
     expect(STR.toolbar.demolishOn(null)).not.toContain('%');
+  });
+});
+
+describe('where the toasts stand', () => {
+  it('stays above the dock, whatever it holds', () => {
+    // a closed bar, one row of tiles, two rows, two rows with the card, the tallest the dock can be
+    for (const height of [60, 187, 242, 262, 560, 650])
+      expect(toastBottom(height), `${height}`).toBeGreaterThan(DOCK_BOTTOM + height);
+  });
+  it('rises with the dock, not in steps', () => {
+    expect(toastBottom(500) - toastBottom(400)).toBe(100);
+  });
+  it('keeps its place over a hidden dock (the overview) or a low one', () => {
+    expect(toastBottom(0)).toBe(TOAST_FLOOR);
+    expect(toastBottom(40)).toBe(TOAST_FLOOR);
   });
 });
 

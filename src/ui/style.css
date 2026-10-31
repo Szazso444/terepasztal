@@ -779,9 +779,6 @@ body {
   border-bottom: 1px solid var(--border-dark);
   font-size: 11px;
   color: var(--text-dim);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .tb-status.warn {
   color: var(--text-bad);
@@ -1078,8 +1075,8 @@ body {
 #toasts {
   position: absolute;
   left: 50%;
-  /* over an open build bar */
-  bottom: 192px;
+  /* the least: createPlayUi keeps them over the build dock (`toastBottom`) */
+  bottom: 110px;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
