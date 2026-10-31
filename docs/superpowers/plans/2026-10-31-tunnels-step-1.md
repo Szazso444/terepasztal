@@ -17,7 +17,7 @@
 - Each task is one role's branch `<role>/<issue>-<slug>` and one pull request into `develop`; a task never changes a path outside its role (`node tools/agents/scope.mjs check --role <role>`).
 - Map generation goldens change only with the author's own `gate:approved`. No agent sets it.
 - Before each push: `npm run typecheck`, `npm run lint`, `npm test`, `npm run format:check`.
-- Every player-facing string goes through `src/strings.ts` and the Hungarian strings.
+- Every player-facing string goes through `src/strings.ts`; the Hungarian text in `src/data/strings.hu.ts` is Gameplay's path.
 - Prices are placeholders in `src/sim/rules.ts`, each a tuning slider: Raise and Lower `$100` per tile-level, Drill `$500` per tile, portal `$2,000`, `2` stone per dug tile, back-fill refunds half.
 - Rail level inside is 0 in this step; each dug tile stores its floor so step 2 starts from saved data.
 - A refusal covers the whole action: nothing moves and nothing is charged.
@@ -123,7 +123,7 @@ it('agrees with tileLevels on every tile of a map with both planes', () => {
 **Interfaces:**
 - Produces: `RELIEF_MAX = 200`; `ReliefStyle.softFrom?: number`, shipped `3`; `heightFactor(level, heightLight): number`.
 
-- [ ] **Step 1: Write the failing tests.** `softFrom: a cell with a tile at level 3 or more ramps across the whole tile`; `cells of soft and hard banks meet exactly on their shared edge` (sample both sides over 200 points); `heightFactor is 1.24 at level 4 and 1.312 at level 16`; `a raised Forest tile paints as Grass and a level 0 one as Forest`.
+- [ ] **Step 1: Write the failing tests.** `softFrom: a cell with a tile at level 3 or more ramps across the whole tile`; `cells of soft and hard banks meet exactly on their shared edge` (sample both sides over 200 points); `heightFactor is 1.24 at level 4 and 1.348 at level 16`; `a raised Forest tile paints as Grass and a level 0 one as Forest`.
 - [ ] **Step 2: Run them.** Expected: FAIL.
 - [ ] **Step 3: Implement.** `terraceHeight` picks the bank per cell (`hooks.diff`). `heightFactor` is `1 + heightLight * (level <= 4 ? level : 4 + (level - 4) * 0.15)`, used by the painter and, with `levelAt`, for the peak tint. Peak pictures show only on a tile with no higher tile within 3 and at level 7 or more (`trial:clearSummits`).
 - [ ] **Step 4: Run** `npm test`. Expected: PASS.
@@ -199,7 +199,6 @@ export class Underground {
 - Produces:
 
 ```ts
-export interface ReshapeStop { x: number; y: number; floor: number } // lowest the tile may go
 export interface Reshape { moved: { x: number; y: number; to: number }[]; refused: { x: number; y: number }[] }
 export function reshape(
   map: Elevated, levels: Uint8Array, tiles: readonly { x: number; y: number }[], delta: 1 | -1,
@@ -232,7 +231,8 @@ export function reshape(
 ### Task 8: Raise and Lower in the build menu (UI/UX, then Engine)
 
 **Files:**
-- Modify: `src/ui/buildBar.ts`, `src/ui/buildController.ts`, `src/strings.ts`, `src/data/strings.hu.ts`
+- Modify: `src/ui/buildBar.ts`, `src/ui/buildController.ts`, `src/strings.ts`
+- Before it, on its own Gameplay branch: `src/data/strings.hu.ts`
 - Then, on its own Engine branch: `src/game.ts`
 - Test: `src/ui/buildBar.test.ts`, `src/ui/buildController.test.ts`
 
@@ -354,7 +354,8 @@ it('fill refuses a tile with track', () => {});
 ### Task 14: The Drill in the build menu (UI/UX, then Engine)
 
 **Files:**
-- Modify: `src/ui/buildBar.ts`, `src/ui/buildController.ts`, `src/strings.ts`, `src/data/strings.hu.ts`
+- Modify: `src/ui/buildBar.ts`, `src/ui/buildController.ts`, `src/strings.ts`
+- Before it, on its own Gameplay branch: `src/data/strings.hu.ts`
 - Then, on its own Engine branch: `src/game.ts`, `src/engine/loadRepair.ts`
 - Editor: `src/editor`, with UI/UX
 - Test: `src/ui/buildController.test.ts`, `src/engine/loadRepair.test.ts`
