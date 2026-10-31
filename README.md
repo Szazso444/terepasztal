@@ -91,8 +91,9 @@ the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
   use and speed (see `src/data/biomes.json`); rivers and islands are generated.
 - **People**: the population idles around its buildings by day, gathers nearby and waits at
   stations for coaches; towns produce passengers who pay a fare when they reach another town.
-- **Notices and Advisor**: blockers show up in the notices panel and as markers on both maps; the
-  Advisor (top right) explains what to do and can be silenced.
+- **Alerts and Advisor**: blockers show up as icons in the alert bar, one for each kind, and as
+  markers on both maps; a click on an icon goes through them, and the Notifications screen sets
+  what each kind does. The Advisor (top right) explains what to do and can be silenced.
 - **Track classes**: Regular and High-speed. High-speed curves and switches are 2×2 with a
   1.5-tile radius (nearly full speed through the turn), joined to regular track through a
   transition piece; three crossings cross the classes at grade. Everything derives from the class

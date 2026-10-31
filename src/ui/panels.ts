@@ -81,7 +81,10 @@ import { toastBottom } from './buildBar';
 import { BuildingPanel } from './buildingPanel';
 import { DecorPanel } from './decorPanel';
 import { TrainSide } from './trainSide';
-import { NoticePanel } from './noticePanel';
+import { AlertBar } from './alertBar';
+import { AlertDesk } from './alertDesk';
+import { AlertPopup } from './alertPopup';
+import { NotificationsScreen } from './notificationsScreen';
 import { Advisor } from './advisor';
 import { BuildInfo } from './buildInfo';
 import { StationPanel } from './stationPanel';
@@ -171,7 +174,7 @@ export interface UiHost {
   peekDepot(depot: Station, gate: { x: number; y: number } | null): void;
   /** take down the gate mark `peekDepot` put up */
   endDepotPeek(): void;
-  /** look at what a notice points to; a train's notice also opens its screen */
+  /** look at what a notice points to */
   focusNotice(n: Notice): void;
   /** back to the field view, the camera over a tile */
   returnToRts(tx: number, ty: number): void;
@@ -252,7 +255,6 @@ export interface UiHost {
 export interface PlayUi {
   readonly hud: Hud;
   readonly depot: DepotScreen;
-  readonly trainScreen: TrainScreen;
   readonly marketScreen: MarketScreen;
   readonly resourceBar: ResourceBar;
   readonly tuningScreen: TuningScreen;
@@ -270,7 +272,7 @@ export interface PlayUi {
   readonly buildingPanel: BuildingPanel;
   readonly decorPanel: DecorPanel;
   readonly trainSide: TrainSide;
-  readonly noticePanel: NoticePanel;
+  readonly alerts: AlertDesk;
   readonly advisor: Advisor;
   readonly buildInfo: BuildInfo;
   readonly stationPanel: StationPanel;
@@ -328,7 +330,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.screens.root.classList.add('peek');
   };
   d.screens.onChange = (sc) => {
-    if (sc) d.build.setTool({ kind: 'none' });
+    if (sc && !sc.keepsTool) d.build.setTool({ kind: 'none' });
     if (!sc) {
       d.screens.root.classList.remove('peek');
       host.endDepotPeek();
@@ -534,8 +536,26 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   decorPanel.onSignalGuide = showSignalGuide;
   decorPanel.onSignalBlock = (dec) => host.highlightSignalBlock(dec);
   const trainSide = new TrainSide(d.builder, d.atlas, d.commands, toast);
-  const noticePanel = new NoticePanel();
-  noticePanel.onFocus = (n) => host.focusNotice(n);
+  const alertBar = new AlertBar(d.atlas, d.tooltip, d.toasts);
+  alertBar.onLook = (n) => host.focusNotice(n);
+  const notificationsScreen = new NotificationsScreen(d.settings, d.screens, () =>
+    host.saveSettings(),
+  );
+  alertBar.onSettings = () => notificationsScreen.openFrom(null);
+  settingsScreen.onNotifications = () => notificationsScreen.openFrom(settingsScreen);
+  const alerts = new AlertDesk({
+    settings: d.settings,
+    clock: d.clock,
+    toasts: d.toasts,
+    bar: alertBar,
+    popup: new AlertPopup(
+      d.screens,
+      () => !d.namePrompt.open,
+      (n) => host.focusNotice(n),
+    ),
+    // a toast fired under the loading screen would never be read
+    live: () => host.mode === 'play' && !menuOpen() && !document.getElementById('loading-screen'),
+  });
   const advisor = new Advisor(d.settings.advisor === false);
   advisor.onSilence = (v) => {
     d.settings.advisor = !v;
@@ -848,11 +868,12 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     pauseMenu.root,
     d.screens.root,
     advisor.root,
-    el('div', { id: 'right-col' }, noticePanel.root, contractsSide.root, trainSide.root),
+    el('div', { id: 'right-col' }, contractsSide.root, trainSide.root),
     el('div', { class: 'vignette' }),
     yieldLabel.root,
     hud.root,
     resourceBar.root,
+    alertBar.root,
     minimap.root,
     debug.root,
     overviewBanner,
@@ -948,7 +969,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   return {
     hud,
     depot,
-    trainScreen,
     marketScreen,
     resourceBar,
     tuningScreen,
@@ -966,7 +986,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     buildingPanel,
     decorPanel,
     trainSide,
-    noticePanel,
+    alerts,
     advisor,
     buildInfo,
     stationPanel,

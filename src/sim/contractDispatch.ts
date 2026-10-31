@@ -86,6 +86,7 @@ export class ContractDispatcher {
         {
           key: `contract:${c.id}:train`,
           kind: 'warn',
+          type: 'contract',
           text: STR.notice.contractNoTrain(c.name),
           target: { kind: 'tile', x: dest.x, y: dest.y },
         },
