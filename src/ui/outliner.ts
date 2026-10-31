@@ -99,7 +99,7 @@ export class Outliner {
   private readonly tabsBox = el('div', { class: 'ol-tabs' });
   private readonly tabs = new Map<OutlinerTab, HTMLButtonElement>();
   private readonly scopeBtns = new Map<OutlinerScope, HTMLButtonElement>();
-  private readonly body = el('div', { class: 'ol-body' });
+  private readonly body = el('div', { class: 'panel-body ol-body' });
   private readonly counts = el('span', { class: 'ol-counts' });
   private readonly extra = el('span', { class: 'ol-extra' });
   private readonly refuel = btn(STR.trainSide.refuelAll, () => this.refuelShown(), 'small');
@@ -147,7 +147,7 @@ export class Outliner {
       this.tabsBox,
       el('div', { class: 'ol-bar' }, seg),
       this.body,
-      el('div', { class: 'ol-foot' }, this.counts, this.extra),
+      el('div', { class: 'panel-foot ol-foot' }, this.counts, this.extra),
     );
     this.root.addEventListener('pointerdown', () => (this.held = true));
     window.addEventListener('pointerup', () => (this.held = false));

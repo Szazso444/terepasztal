@@ -128,6 +128,10 @@ export class Toolbar {
     this.paint(true);
   }
 
+  /** The bar alone: the card stands over it, in the dock, left of the toasts. */
+  get barRoot() {
+    return this.panel;
+  }
   get categories() {
     return this.bar.categories;
   }

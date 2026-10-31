@@ -12,7 +12,7 @@ import { upgradeRow } from './upgradeRow';
 export class DecorPanel {
   readonly root: HTMLElement;
   private body = el('div', { class: 'panel-body' });
-  private title = el('span');
+  private title = el('span', { class: 'panel-name' });
   decor: Decor | null = null;
   /** set by the game: townhouse state for house entries */
   houses: HouseRegistry | null = null;
@@ -33,7 +33,7 @@ export class DecorPanel {
         'div',
         { class: 'panel-title' },
         this.title,
-        btn('×', () => this.close(), 'small'),
+        btn('×', () => this.close(), 'panel-x'),
       ),
       this.body,
     );

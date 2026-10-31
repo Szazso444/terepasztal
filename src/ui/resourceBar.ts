@@ -22,7 +22,7 @@ const STOCKPILED = new Set(RESOURCE_IDS);
  * in stock (`barGroups`); the famine warning ends it.
  */
 export class ResourceBar {
-  readonly root = el('div', { id: 'resbar', class: 'panel' });
+  readonly root = el('div', { id: 'resbar', class: 'strip' });
   /** the groups and the famine warning: it shrinks and clips, so nothing leaves the screen */
   private cellsBox = el('div', { class: 'res-cells' });
   /** the name of the store shown; a click asks for the next one (`onNextStore`) */

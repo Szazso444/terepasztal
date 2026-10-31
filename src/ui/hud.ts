@@ -83,7 +83,7 @@ export class Hud {
     this.menuBar = new MenuBar((text) => tipBuild(atlas, () => [title(text)]));
     // the whole widget is the term: resting on it opens the ages tooltip
     const era = ttTerm(
-      el('div', { class: 'stat era' }, this.eraIcon, this.eraName, this.eraBar, this.eraPct),
+      el('div', { class: 'panel stat era' }, this.eraIcon, this.eraName, this.eraBar, this.eraPct),
       tipBuild(atlas, () => ageTip(this.ages())),
     );
     // a term around the button: a disabled button still says what it would do
@@ -92,7 +92,7 @@ export class Hud {
     this.historyCell.append(ttTerm(this.undoBtn, undoTip), ttTerm(this.redoBtn, redoTip));
     this.root = el(
       'div',
-      { id: 'topbar', class: 'panel' },
+      { id: 'topbar', class: 'strip' },
       el('div', { class: 'title', text: STR.title }),
       this.menuBar.root,
       this.historyCell,
@@ -101,7 +101,7 @@ export class Hud {
       el('div', { class: 'stat weather' }, this.weather),
       era,
       // one block at the right end, the era widget just before it
-      el('div', { class: 'stat datespeed' }, this.day, this.clockEl, time),
+      el('div', { class: 'panel stat datespeed' }, this.day, this.clockEl, time),
     );
     tooltip.bindTerms(this.root);
     // a window resize, or a cell that grows or shrinks (an age, the weather, the advisor's badge, the

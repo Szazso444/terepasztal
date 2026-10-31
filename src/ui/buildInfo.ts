@@ -12,6 +12,7 @@ import { rules } from '../sim/rules';
 import { STR } from '../strings';
 import { footprintOf } from '../world/track';
 import { btn } from './dom';
+import { sectionHeader } from './kit';
 
 /**
  * Who pays for the work under the pointer, read from the builder's own verdict on it
@@ -71,10 +72,6 @@ export function recipeBatches(perWeek: number): number {
 }
 
 /** A heading of the card, with a few words at its right end. */
-function section(title: string, right = ''): HTMLElement {
-  return el('div', { class: 'bi-sec' }, title, right ? el('em', { text: right }) : '');
-}
-
 /**
  * The card over the build bar. For a build item: its picture, name and type with a close mark; its
  * description, cost, what it makes, where it goes and, while it is placed on the field, the store
@@ -83,7 +80,6 @@ function section(title: string, right = ''): HTMLElement {
  */
 export class BuildInfo {
   readonly root = el('div', { id: 'build-info', class: 'panel' });
-  private body = el('div', { class: 'panel-body' });
   private shown: ToolItem | null = null;
   /** what the item's card was last drawn from: a refresh leaves its close mark under the pointer */
   private itemKey = '';
@@ -97,7 +93,6 @@ export class BuildInfo {
     /** the run being dragged (`BuildController.run`): only a straight's tool lays one */
     private readonly run: () => RunPlan | null,
   ) {
-    this.root.append(this.body);
     this.root.style.display = 'none';
   }
   show(item: ToolItem | null) {
@@ -143,26 +138,26 @@ export class BuildInfo {
     if (item.costText || !cost.length)
       costs.append(el('span', { class: 'dim', text: item.costText ?? STR.build.free }));
     else cost.forEach(([k, v], i) => costs.append(this.amount(k, v, short[i])));
-    const close = btn('', () => this.onClose?.(), 'small bi-x');
+    const close = btn('', () => this.onClose?.(), 'panel-x');
     close.append(buildIcon('close', 14));
-    this.body.replaceChildren(
+    this.root.replaceChildren(
       el(
         'div',
-        { class: 'bi-head' },
+        { class: 'panel-title' },
         itemPicture(this.atlas, item, 'bi-ic', 18),
-        el('span', { class: 'bi-name', text: item.name }),
+        el('span', { class: 'panel-name', text: item.name }),
         item.typeLabel ? el('span', { class: 'bi-type', text: item.typeLabel }) : '',
         close,
       ),
       el(
         'div',
-        { class: 'bi-scroll' },
+        { class: 'panel-body bi-scroll' },
         item.desc ? el('p', { class: 'bi-p', text: item.desc }) : '',
-        section(STR.toolbar.secCost),
+        sectionHeader(STR.toolbar.secCost),
         costs,
         ...(item.recipe
           ? [
-              section(
+              sectionHeader(
                 STR.toolbar.secMakes,
                 STR.toolbar.batches(recipeBatches(item.recipe.perWeek)),
               ),
@@ -170,17 +165,17 @@ export class BuildInfo {
             ]
           : []),
         ...(item.place
-          ? [section(STR.toolbar.secWhere), el('p', { class: 'bi-p', text: item.place })]
+          ? [sectionHeader(STR.toolbar.secWhere), el('p', { class: 'bi-p', text: item.place })]
           : []),
         pay ? el('p', { class: `bi-p ${pay.ok ? '' : 'red'}`, text: pay.text }) : '',
         ...(run
           ? [
-              section(STR.toolbar.secRun, STR.toolbar.runSize(run.tiles, run.curves)),
+              sectionHeader(STR.toolbar.secRun, STR.toolbar.runSize(run.tiles, run.curves)),
               el('div', { class: 'bi-line' }, ...this.amounts(run.cost)),
             ]
           : []),
       ),
-      el('div', { class: 'bi-foot', text: controlsHint(item) }),
+      el('div', { class: 'panel-foot', text: controlsHint(item) }),
     );
   }
   /**
