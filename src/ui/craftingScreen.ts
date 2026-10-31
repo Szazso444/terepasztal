@@ -96,6 +96,7 @@ export class CraftingScreen implements Screen {
     cls: 'wide small',
     onChange: (id) => {
       this.filter = pickFilter(id, this.filter);
+      this.listScroll.top();
       this.drawList(true);
     },
   });
@@ -103,6 +104,7 @@ export class CraftingScreen implements Screen {
     placeholder: STR.craft.search,
     onInput: (text) => {
       this.search = text;
+      this.listScroll.top();
       this.drawList(true);
     },
   });
