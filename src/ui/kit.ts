@@ -222,7 +222,6 @@ const ICONS = {
   export: '<path d="M12 15V3.5M7.5 8L12 3.5 16.5 8"/><path d="M5 13v7h14v-7"/>',
   import: '<path d="M12 3.5V15M7.5 10.5L12 15l4.5-4.5"/><path d="M5 13v7h14v-7"/>',
   copy: '<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="1.2"/><path d="M15.5 8.5V4H4v11.5h4.5"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>',
   mountain: '<path d="M2 20l7-12 4 6.5 3-4 6 9.5z"/>',
   keys: '<rect x="3" y="7.5" width="18" height="9" rx="2"/><path d="M8 12h8"/>',
   scroll:
