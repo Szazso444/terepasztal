@@ -306,9 +306,12 @@ body {
   font-size: 12px;
 }
 #topbar .stat.weather .value {
+  min-width: 0;
+  overflow: hidden;
   font-family: var(--font-body);
   font-size: 11px;
   color: var(--text-dim);
+  text-overflow: ellipsis;
 }
 #topbar .spacer {
   flex: 1;
@@ -2662,15 +2665,6 @@ input.text {
 
 #topbar .stat.weather {
   min-width: 0;
-}
-#topbar .stat.weather .value {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-#building-panel .panel-body,
-#decor-panel .panel-body {
-  min-height: 0;
 }
 
 /* ---- menus ---- */
