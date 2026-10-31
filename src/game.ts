@@ -72,6 +72,7 @@ import { Toasts } from './ui/toast';
 import { Inventory } from './gacha/inventory';
 import { Fleet } from './sim/fleet';
 import { TrainRenderer } from './render/trainRenderer';
+import { FollowCamera } from './ui/followCamera';
 import { ScreenManager } from './ui/modal';
 import type { Train } from './sim/trains';
 import { defaultStop as defaultStopFor } from './sim/trains';
@@ -256,6 +257,8 @@ export class Game implements UiHost {
   /** train under the cursor in the field view, and the one picked with a click */
   private fieldHover: Train | null = null;
   private fieldSelected: Train | null = null;
+  /** the train the camera stays on */
+  readonly follow = new FollowCamera();
   private spawnMarkTimer = 0;
   private pathHighlight: { x: number; y: number }[][] = [];
   private pathTimer = 0;
@@ -467,17 +470,17 @@ export class Game implements UiHost {
   get contractsScreen() {
     return this.ui.contractsScreen;
   }
-  get contractsSide() {
-    return this.ui.contractsSide;
-  }
   get buildingPanel() {
     return this.ui.buildingPanel;
   }
   get decorPanel() {
     return this.ui.decorPanel;
   }
-  get trainSide() {
-    return this.ui.trainSide;
+  get outliner() {
+    return this.ui.outliner;
+  }
+  get trainPanel() {
+    return this.ui.trainPanel;
   }
   get buildInfo() {
     return this.ui.buildInfo;
@@ -2007,6 +2010,7 @@ export class Game implements UiHost {
   focusNotice(n: Notice) {
     const p = this.noticePos(n);
     if (!p) return;
+    this.follow.note('alert');
     if (n.target?.kind === 'junction')
       this.flashJunction(this.fleet.junctions.contributingTiles(n.target.id) ?? n.target.tiles);
     if (this.viewTarget === 1) {
@@ -2169,22 +2173,10 @@ export class Game implements UiHost {
     return tips.slice(0, 8);
   }
 
-  /** Trains whose head is inside the camera view (field) or all of them (overview). */
-  private updateTrainSide(dt: number) {
-    const all = this.viewTarget === 1;
-    let list: Train[];
-    if (all) list = this.fleet.trains;
-    else {
-      const r = this.camera.viewRect();
-      list = this.fleet.trains.filter((t) => {
-        const p = t.poses[0];
-        if (!p) return false;
-        const w = tileToWorld(p.x, p.y);
-        return w.x >= r.x - 40 && w.x <= r.x + r.w + 40 && w.y >= r.y - 40 && w.y <= r.y + r.h + 40;
-      });
-    }
-    this.trainSide.update(list, all);
-    if (all) this.townPanel.render();
+  /** The outliner, the overview's town list, the depot's gate mark and the traced train path. */
+  private updateTrainMarks(dt: number) {
+    this.outliner.update(dt);
+    if (this.viewTarget === 1) this.townPanel.render();
     if (this.spawnMarkTimer > 0) {
       this.spawnMarkTimer -= dt;
       const sp = this.world.getStructure('spawn-preview');
@@ -2225,12 +2217,14 @@ export class Game implements UiHost {
       }
     return best;
   }
-  /** Pick a train in the field view: its path lights up and the card above the survey map follows it. */
+  /** Pick a train in the field view: its path lights up, its panel opens, the camera follows it. */
   selectFieldTrain(t: Train | null) {
+    if (t) this.follow.start(t.id);
+    else this.follow.stop();
     if (this.fieldSelected === t) return;
     this.fieldSelected = t;
     this.trainRenderer.selectedId = t ? t.id : null;
-    this.buildInfo.showTrain(t);
+    this.trainPanel.show(t);
     if (t) {
       this.build.select(null);
       this.build.selectBuilding(null);
@@ -2238,7 +2232,7 @@ export class Game implements UiHost {
     }
     this.setHoverTrain(t);
   }
-  private updateFieldTrains(active: boolean) {
+  private updateFieldTrains(active: boolean, dt: number) {
     if (this.fieldSelected && !this.fleet.byId(this.fieldSelected.id)) this.selectFieldTrain(null);
     const canPick = active && this.build.tool.kind === 'none';
     const hover = canPick ? this.trainUnderMouse() : null;
@@ -2257,7 +2251,38 @@ export class Game implements UiHost {
         } else if (this.fieldSelected) this.selectFieldTrain(null);
       }
     }
-    if (this.fieldSelected) this.buildInfo.refreshTrain();
+    if (this.fieldSelected) this.trainPanel.update(dt);
+  }
+  get selectedTrain() {
+    return this.fieldSelected;
+  }
+  /** Pick a train from the outliner: from the overview, the camera lands on it first. */
+  pickTrain(t: Train) {
+    if (this.viewTarget === 1) this.focusTrain(t);
+    this.selectFieldTrain(t);
+  }
+  /** What the camera shows, in world pixels; null in the overview, which shows everything. */
+  viewRect() {
+    return this.viewTarget === 1 ? null : this.camera.viewRect();
+  }
+  /** Where a tile point is drawn, its ground's height included, in world pixels. */
+  tilePoint(x: number, y: number) {
+    const w = tileToWorld(x, y);
+    return { x: w.x, y: w.y + this.world.elevationOf(Math.floor(x + 0.5), Math.floor(y + 0.5)) };
+  }
+  stuckFor(id: number) {
+    return this.traffic.stuckTrains(this.clock.time).find((s) => s.id === id)?.since ?? null;
+  }
+  /** Keep the camera on the train followed; a train gone ends the following. */
+  private followTrain(dt: number) {
+    const find = (id: number) => {
+      const t = this.fleet.byId(id);
+      if (!t) return undefined;
+      const p = t.poses[0];
+      return p ? this.tilePoint(p.x, p.y) : null;
+    };
+    const to = this.follow.step(this.camera, find, dt);
+    if (to) this.camera.centerOn(to.x, to.y);
   }
   private applyPathHighlight(legs: { x: number; y: number }[][]) {
     for (const leg of this.pathHighlight)
@@ -2273,11 +2298,14 @@ export class Game implements UiHost {
   focusTrain(t: Train) {
     const p = t.poses[0];
     if (!p) return;
+    const following = this.follow.trainId === t.id;
     this.screens.close();
     this.returnToRts(p.x, p.y);
+    if (following) this.follow.start(t.id);
   }
   /** Look at a depot behind the dimmed screen and mark the gate a train would leave by. */
   peekDepot(depot: Station, gate: { x: number; y: number } | null) {
+    this.follow.note('jump');
     const p = tileToWorld(depot.cx + 0.5, depot.cy + 0.5);
     this.camera.zoomIndex = 2;
     this.camera.zoom = ZOOM_STEPS[2];
@@ -2297,6 +2325,7 @@ export class Game implements UiHost {
   centerCamera(wx: number, wy: number) {
     // a pan from the minimap closes the tooltips as the field's own pans do
     this.tooltip.stack.closeAll();
+    this.follow.note('pan');
     this.camera.centerOn(wx, wy);
   }
 
@@ -2329,6 +2358,7 @@ export class Game implements UiHost {
     this.camera.viewH = this.app.screen.height;
     this.handleInput(dt);
     this.closeTipsOnChange();
+    this.followTrain(dt);
     this.camera.update(dt);
     this.updateViewBlend(dt);
     if (this.railsDirty) this.refreshRails();
@@ -2382,7 +2412,7 @@ export class Game implements UiHost {
       !this.input.overUi &&
       !this.screens.current &&
       !this.menuOpen;
-    this.updateFieldTrains(fieldActive);
+    this.updateFieldTrains(fieldActive, dt);
     this.build.update(fieldActive);
     this.world.harvest.follow(
       fieldActive ? this.hoverTile : null,
@@ -2411,7 +2441,6 @@ export class Game implements UiHost {
       if (this.stationPanel.station) this.stationPanel.render();
       if (this.buildingPanel.building) this.buildingPanel.render();
       if (this.decorPanel.decor) this.decorPanel.render();
-      this.contractsSide.update();
       this.screens.refresh();
       this.buildInfo.refresh();
     }
@@ -2438,7 +2467,7 @@ export class Game implements UiHost {
     this.halos.update(dt);
     this.workBars.sync([...this.builder.works(), ...this.houses.works()]);
     this.powerLines.update(dt);
-    this.updateTrainSide(dt);
+    this.updateTrainMarks(dt);
     this.minimap.draw(this.minimapMarks());
     if (this.debug.open) this.updateDebug();
   }
@@ -2645,7 +2674,10 @@ export class Game implements UiHost {
         else {
           // a zoom moves the map under the tooltips: they close
           this.tooltip.stack.closeAll();
-          this.camera.zoomBy(dir, inp.mouseX, inp.mouseY);
+          // a train followed stays in the middle: the zoom is about it, not about the pointer
+          if (this.follow.trainId !== null) this.camera.zoomBy(dir);
+          else this.camera.zoomBy(dir, inp.mouseX, inp.mouseY);
+          this.follow.note('zoom');
         }
       } else if (dir > 0) {
         const t = this.overviewTileAt(inp.mouseX, inp.mouseY);
@@ -2678,11 +2710,13 @@ export class Game implements UiHost {
       if (dx || dy) {
         const l = Math.hypot(dx, dy);
         this.tooltip.stack.closeAll();
+        this.follow.note('pan');
         this.camera.pan((dx / l) * PAN_SPEED * dt, (dy / l) * PAN_SPEED * dt);
       }
       // middle-drag
       if (inp.buttons.has(1) && (inp.dragDX || inp.dragDY)) {
         this.tooltip.stack.closeAll();
+        this.follow.note('pan');
         this.camera.pan(-inp.dragDX, -inp.dragDY);
       }
     } else if (this.viewBlend > 0.99) {
@@ -2813,7 +2847,11 @@ export class Game implements UiHost {
     this.overviewBanner.classList.toggle('show', v === 1);
     this.toolbar.root.style.display = v === 1 ? 'none' : '';
     this.townPanel.show(v === 1);
-    if (v === 1) this.build.setTool({ kind: 'none' });
+    this.trainPanel.setOverview(v === 1);
+    if (v === 1) {
+      this.follow.note('overview');
+      this.build.setTool({ kind: 'none' });
+    }
     if (v === 0) {
       this.overview.hover = null;
       this.ovSelected = null;
@@ -2823,6 +2861,7 @@ export class Game implements UiHost {
     }
   }
   returnToRts(tx: number, ty: number) {
+    this.follow.note('jump');
     const p = tileToWorld(tx, ty);
     this.camera.zoomIndex = 1;
     this.camera.zoom = ZOOM_STEPS[1];

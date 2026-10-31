@@ -137,7 +137,13 @@ export class Commands {
    * `label`, unless it changes nothing. The level editor records nothing, as `act` has it. A train
    * since recalled refuses the step: it is no longer there to change.
    */
-  private editTrain<T>(t: Train, label: string, was: T, now: T, set: (v: T) => void): CommandResult {
+  private editTrain<T>(
+    t: Train,
+    label: string,
+    was: T,
+    now: T,
+    set: (v: T) => void,
+  ): CommandResult {
     if (was === now) return done();
     set(now);
     if (this.builder.free) return done();

@@ -1,7 +1,8 @@
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Builder } from '../sim/build';
-import { defaultStop, type StopPlan } from '../sim/trains';
+import type { Commands } from '../sim/commands';
+import { defaultStop, type StopPlan, type Train } from '../sim/trains';
 import { cargoDef } from '../sim/cargo';
 
 /**
@@ -159,4 +160,51 @@ export class ScheduleEditor {
       ),
     );
   }
+}
+
+/**
+ * The stop editor on a live train, as the Train screen and the train panel show it. It works on a
+ * copy of the train's own program, also while a contract job runs its two stops, and hands each
+ * edit to the train, which then follows it on schedule (`Commands.setSchedule`). A refused list
+ * (fewer than two stops) leaves the train as it was, and the editor shows the train's stops again.
+ */
+export class TrainStops {
+  private readonly editor: ScheduleEditor;
+  private train: Train | null = null;
+  private stops: StopPlan[] = [];
+
+  constructor(
+    builder: Builder,
+    private readonly commands: Commands,
+    private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
+  ) {
+    this.editor = new ScheduleEditor(builder, () => this.apply());
+  }
+  get root() {
+    return this.editor.root;
+  }
+  show(t: Train) {
+    this.train = t;
+    this.stops = t.program.map(copyStop);
+    this.editor.render(this.stops, this.current(t));
+  }
+  /** The stop being run, when the train runs its own program rather than a contract job. */
+  private current(t: Train) {
+    return t.program === t.schedule ? t.routeIndex % Math.max(1, t.schedule.length) : -1;
+  }
+  private apply() {
+    const t = this.train;
+    if (!t) return;
+    const did = this.commands.setSchedule(t, this.stops.map(copyStop));
+    if (did.ok) return;
+    this.toast(did.message, 'warn');
+    // the same array the editor holds, so its own redraw shows the train's stops
+    this.stops.splice(0, this.stops.length, ...t.program.map(copyStop));
+    this.editor.render(this.stops, this.current(t));
+  }
+}
+
+/** A stop of its own, so an edit never reaches a stop the train holds. */
+function copyStop(s: StopPlan): StopPlan {
+  return { ...s };
 }
