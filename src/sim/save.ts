@@ -61,7 +61,10 @@ export { SETTINGS_KEY };
 export interface SaveParts {
   seed: number;
   clock: { time: number; speedIndex: number };
-  /** v9: `tier` is the age index; `earned` the lifetime income (reputation dropped) */
+  /**
+   * v9: `tier` is the age index; `earned` the lifetime income (reputation dropped); v24: the
+   * tickets, and `granted`, the ages that had paid some, dropped
+   */
   economy: {
     money: number;
     tier: number;

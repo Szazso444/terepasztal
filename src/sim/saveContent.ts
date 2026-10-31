@@ -1,8 +1,8 @@
 /**
  * Content a save names that the game no longer defines: removed in an update, or hidden by a
  * content override. Loading such a save used to throw at the first lookup ("unknown station
- * mill"); instead the things are dropped before the save is applied, the player is refunded and
- * a report says what went. It works on the parsed save alone: no DOM, no storage.
+ * mill"); instead the things are dropped before the save is applied, what stood on the map is
+ * refunded and a report says what went. It works on the parsed save alone: no DOM, no storage.
  */
 import type { SaveGame } from './save';
 import type { StopPlan, TrainJob } from './trains';
