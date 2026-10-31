@@ -1134,6 +1134,12 @@ html[lang='hu'] .tb-cost {
   flex: 0 1 136px;
   max-width: 150px;
 }
+/* so do the categories: a long word takes its room, and none is cut while the bar has any */
+html[lang='hu'] .tb-cats .tt-term {
+  flex: 0 1 auto;
+  min-width: 118px;
+  max-width: none;
+}
 .btn.tb-cat {
   display: flex;
   align-items: center;
@@ -1873,6 +1879,10 @@ input.text {
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
+}
+/* Hungarian's tabs differ in length: each takes what its word needs, then a share of the rest */
+html[lang='hu'] .btn.tp-tab {
+  flex: 1 1 auto;
 }
 .btn.tp-tab:hover {
   background: none;
