@@ -34,7 +34,14 @@ import {
 } from './kit';
 import { Bindings, bindMeter, keepPlace, keepScroll } from './liveView';
 import { vehicleRow, vehicleSprite } from './vehicleRow';
-import { haulShare, haulTone, stateText, stateTone, wagonStats } from './depotView';
+import {
+  haulShare,
+  haulTone,
+  serviceResource,
+  stateText,
+  stateTone,
+  wagonStats,
+} from './depotView';
 import {
   cargoAboard,
   currentStopIndex,
@@ -692,7 +699,10 @@ export class TrainScreen implements Screen {
       labelValue(STR.train.carries, STR.roster.carries[w.def.carries] ?? w.def.carries),
       labelValue(STR.train.size, STR.roster.size[w.def.size ?? 'small']),
     ];
-    if (cart) parts.push(labelValue(STR.train.refuelCart, wagonStats(w.def, m)));
+    if (cart)
+      parts.push(
+        labelValue(STR.train.refuelCart, `+${w.def.serviceCap ?? 0} ${serviceResource(cart)}`),
+      );
     else {
       parts.push(labelValue(STR.roster.capacity, `${cap} u`));
       parts.push(
