@@ -500,6 +500,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     advisor: () => advisor.toggle(),
     notifications: () => notificationsScreen.openFrom(null),
   };
+  // the game applied its settings before this UI existed
+  hud.setToggles(d.settings.weather, d.settings.dayNight);
 
   const minimap = new Minimap(d.map, d.regions, d.camera, (wx, wy) => host.centerCamera(wx, wy));
   const debug = new DebugPanel(host.seed, {
