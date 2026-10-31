@@ -35,9 +35,13 @@ export interface KeyHost {
   readonly overviewTrain: boolean;
   /** a tooltip is open: Escape closes the stack and does nothing else */
   readonly tooltipsOpen: boolean;
+  /** a menu of the top bar is open: Escape closes it and does nothing else */
+  readonly barMenuOpen: boolean;
   toggleDebug(): void;
   /** close every tooltip */
   closeTooltips(): void;
+  /** close the open menu of the top bar */
+  closeBarMenu(): void;
   closeScreen(): void;
   closeMenus(): void;
   openPauseMenu(): void;
@@ -135,7 +139,7 @@ const SPEED_STEP_KEYS = [...SPEED_STEP.keys()];
 /**
  * Each action returns true when the rest of the frame's input is left alone: Escape opened or
  * closed something. In every context Escape closes an open tooltip stack first, and then nothing
- * else.
+ * else; after that, in the same way, an open menu of the top bar.
  */
 const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
   debug: (h) => {
@@ -153,6 +157,7 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
   // opens. A category whose items are all locked holds no tool for the build controller to drop
   pauseOrClose: (h) => {
     if (h.tooltipsOpen) h.closeTooltips();
+    else if (h.barMenuOpen) h.closeBarMenu();
     else if (h.screenOpen) h.closeScreen();
     else if (h.building) return false;
     else if (h.categoryOpen) h.closeCategory();
@@ -163,6 +168,10 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
   overviewBack: (h) => {
     if (h.tooltipsOpen) {
       h.closeTooltips();
+      return true;
+    }
+    if (h.barMenuOpen) {
+      h.closeBarMenu();
       return true;
     }
     if (h.screenOpen) {

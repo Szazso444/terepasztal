@@ -57,7 +57,6 @@ export const STR = {
     dayToggleHint: 'Toggle the day and night cycle',
     ageUp: (t: number) =>
       `The ${ageLabel(t)} begins. New works, stations and rolling stock unlocked.`,
-    signalGuide: 'Signals?',
   },
   history: {
     undo: 'Undo',
@@ -1727,7 +1726,6 @@ export const STR = {
     signals: 'Signals',
     contracts: 'Contracts',
     gacha: 'Gacha',
-    craft: 'Craft',
     crafting: 'Crafting',
     roster: 'Roster',
     market: 'Market',

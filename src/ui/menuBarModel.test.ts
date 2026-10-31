@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { KEYMAP, type KeyAction } from './keymap';
 import {
@@ -271,5 +272,33 @@ describe('the rules in the level editor', () => {
     s.click('economy');
     s.setMode('editor');
     expect(s.open).toBeNull();
+  });
+});
+
+describe('where the pane stands', () => {
+  const css = readFileSync(new URL('./style.css', import.meta.url), 'utf8').replace(
+    /\/\*[\s\S]*?\*\//g,
+    '',
+  );
+  /** The `z-index` of a selector: the last of its own rules that sets one, as the last one wins. */
+  const z = (selector: string) => {
+    const set = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .filter((m) => m[1].split(',').some((s) => s.trim() === selector))
+      .map((m) => /z-index:\s*(\d+)/.exec(m[2]))
+      .filter((m) => m !== null);
+    return Number(set[set.length - 1]?.[1]);
+  };
+
+  it('is over every panel of the HUD and under the menus and the modal screens', () => {
+    const pane = z('#menu-pane');
+    expect(pane).toBeGreaterThan(0);
+    for (const hud of ['#advisor', '#alert-bar', '#right-col'])
+      expect(pane, hud).toBeGreaterThan(z(hud));
+    for (const over of ['.menu-root', '#modal-root']) expect(pane, over).toBeLessThan(z(over));
+  });
+
+  it('is a child of the UI root, where the input sees the pointer over it', () => {
+    const panels = readFileSync(new URL('./panels.ts', import.meta.url), 'utf8');
+    expect(panels).toMatch(/d\.uiRoot\.append\([^;]*hud\.menuBar\.pane,/);
   });
 });

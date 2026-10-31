@@ -23,7 +23,8 @@ type StateKey =
   | 'categoryOpen'
   | 'recording'
   | 'overviewTrain'
-  | 'tooltipsOpen';
+  | 'tooltipsOpen'
+  | 'barMenuOpen';
 type State = { -readonly [K in StateKey]: KeyHost[K] };
 
 const CONTEXTS: KeyContext[] = ['menu', 'play', 'overview'];
@@ -49,12 +50,14 @@ function fakeHost(context: KeyContext, over: Partial<State> = {}) {
     recording: false,
     overviewTrain: false,
     tooltipsOpen: false,
+    barMenuOpen: false,
     ...over,
   };
   const host: KeyHost = {
     ...state,
     toggleDebug: log('toggleDebug'),
     closeTooltips: log('closeTooltips'),
+    closeBarMenu: log('closeBarMenu'),
     closeScreen: log('closeScreen'),
     closeMenus: log('closeMenus'),
     openPauseMenu: log('openPauseMenu'),
@@ -419,6 +422,22 @@ describe('Escape and the tooltip stack, in every state the keys read', () => {
         expect(handlePlayKeys(keys(['Escape']), host), at).toBe(true);
         expect(calls, at).toEqual(['closeTooltips']);
       }
+  });
+
+  it('closes an open menu of the top bar and nothing else, whatever else is', () => {
+    for (const context of ['play', 'overview'] as const)
+      for (const s of states()) {
+        const { host, calls } = fakeHost(context, { ...s, barMenuOpen: true });
+        const at = `${context} ${JSON.stringify(s)}`;
+        expect(handlePlayKeys(keys(['Escape']), host), at).toBe(true);
+        expect(calls, at).toEqual(['closeBarMenu']);
+      }
+  });
+
+  it('closes the tooltips before a menu of the top bar', () => {
+    const both = fakeHost('play', { tooltipsOpen: true, barMenuOpen: true });
+    handlePlayKeys(keys(['Escape']), both.host);
+    expect(both.calls).toEqual(['closeTooltips']);
   });
 
   it('leaves every other key, and Escape with no tooltip open, as they were', () => {
