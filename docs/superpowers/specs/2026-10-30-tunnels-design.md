@@ -99,16 +99,16 @@ chunks they hold.
 
 **Steeper than one level.** Generated neighbours may differ by up to 4. `tileLevels` and `levelAt`
 stop clamping generated ground; Raise and Lower keep their one level a tile. Rail still takes one
-level a tile, so a piece refuses an edge with a bigger step and the line finds a way round or goes
-through.
+level a tile, so a link across an edge with a bigger step refuses, unless a tile of that edge is dug
+or cut. Rail may run along a cliff.
 
 **Softer slopes.** Above level 3 a bank runs the whole tile, not half of it, so a tall slope is a
 slope and not a staircase. Level 2 and under keep the approved terraces. `terraceHeight` picks the
 width per cell, and cells still meet exactly.
 
 **What stands on it.** Trees low down, grass, then rock, with a cliff rock at any height. Forest
-ground is painted for the flat and breaks on a slope, so a raised forest tile is grass with the
-forest's trees. Peak pictures stand only on true tops.
+ground is painted for the flat and breaks on a slope, so a raised forest tile paints as grass under
+the forest's trees; its terrain stays Forest. Peak pictures stand only on true tops.
 
 **What it leaves alone.** Water, the map border, and what is built: a mountain falls away toward
 them. Rivers that start in mountains are this work's open design point; the trial sculpts over a
@@ -129,7 +129,7 @@ outline. Dug tiles show as rooms with a floor and see-through walls along their 
 
 | Rule          | Value                                                                                                                                                                        |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Low ground    | Digging under ground lower than rail + 3 raises it by Raise's rules, at Raise's price, shown in the ghost. So a tunnel crosses a low saddle, and the ridge it makes is Rock. |
+| Low ground    | A tile under rail + 3 between dug tiles is raised by Raise's rules, at Raise's price, shown in the ghost. So a tunnel crosses a low saddle, and the ridge it makes is Rock. A tile that leads down to open ground is a cut. |
 | Water         | A tile touching water, on a side or a corner, refuses. No digging under water.                                                                                               |
 | Above         | A dug tile takes no track, road or building on the surface.                                                                                                                  |
 | Stone         | Each dug tile adds stone to the stock: `2` placeholder.                                                                                                                      |
@@ -150,9 +150,8 @@ flat bed. Their tiles ask no ground (`Builder.groundCheck`), as they stand under
 
 A portal makes itself when a dug line breaks out onto a slope, and goes when the line is back-filled.
 
-- **Where.** On the tile where the bank reaches rail + 3, with the next tile inward at rail + 3 or
-  higher. Lower ground refuses, in red, until raised. A portal is free of the tile count and costs
-  `$2,000`, a placeholder.
+- **Where.** On the first tile at rail + 3 or higher going in from the open side. A portal is free of
+  the tile count and costs `$2,000`, a placeholder.
 - **Cutting.** From the portal out to the foot of the bank the rail runs in a cutting: a flat bed
   without `bridge`. The relief carves the ground under it with no new code (proved). `railProfile`
   reads a cut or dug tile at its bed level, so the line does not start climbing on the first tile
