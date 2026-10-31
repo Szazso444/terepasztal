@@ -1,11 +1,12 @@
 import { content, type CargoDef, type CargoClass } from '../data/content';
+import { STR } from '../strings';
 
 export type { CargoDef, CargoClass };
 export const CARGO: CargoDef[] = content.cargo;
 const byId = new Map(CARGO.map((c) => [c.id, c]));
 /** Display name for a cargo or 'power'. */
 export function cargoName(id: string): string {
-  if (id === 'power') return 'power';
+  if (id === 'power') return STR.town.power;
   const d = CARGO.find((c) => c.id === id);
   return d ? d.name : id;
 }

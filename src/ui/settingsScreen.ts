@@ -18,7 +18,7 @@ import {
   type FootSpec,
 } from './kit';
 import { contractRarityLabel } from './labels';
-import { STR } from '../strings';
+import { LANGUAGE, LANGUAGES, LANGUAGE_NAME, STR, type Language } from '../strings';
 import type { FrameTabs, Screen } from './modal';
 import { slotRows, type Confirm } from './saveRows';
 import { autosaveText } from './saveSlots';
@@ -92,6 +92,8 @@ export class SettingsScreen implements Screen {
   readonly root = el('div', { class: 'k-page' });
   /** the row that opens the Notifications screen */
   onNotifications: (() => void) | null = null;
+  /** the language control: it reloads the page, or the control goes back (`render`) */
+  onLanguage: ((language: Language) => void) | null = null;
   private tab: SettingsTab = 'audio';
   /** how many named saves the Saves tab counts; storage is not read at every refresh */
   private slotCount = 0;
@@ -338,6 +340,15 @@ export class SettingsScreen implements Screen {
         return [
           well(
             STR.settings.gameplay,
+            formRow(
+              STR.settings.language,
+              segmented({
+                options: LANGUAGES.map((id) => ({ id, label: LANGUAGE_NAME[id] })),
+                value: LANGUAGE,
+                onChange: (id) => this.onLanguage?.(id as Language),
+              }),
+              STR.settings.languageNote,
+            ),
             this.switchRow(STR.settings.edgeScroll, 'edgeScroll'),
             this.switchRow(STR.settings.autosave, 'autosave'),
             this.switchRow(STR.settings.dayNight, 'dayNight'),

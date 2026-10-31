@@ -1,5 +1,6 @@
 import { el, fmtMoney } from './dom';
 import { STR } from '../strings';
+import { noteText } from './noteText';
 import { rarityLabel } from './labels';
 import type { FrameTabs, Screen } from './modal';
 import {
@@ -306,7 +307,7 @@ export class TrainScreen implements Screen {
         () => (stateTone(t.state, t.blocked) === 'bad' ? 'bad' : ''),
       ),
     ];
-    if (t.lastMessage) status.push(this.kv(STR.train.note, () => t.lastMessage));
+    if (t.lastMessage) status.push(this.kv(STR.train.note, () => noteText(t.lastMessage)));
     if (t.hungry)
       status.push(
         this.kv(

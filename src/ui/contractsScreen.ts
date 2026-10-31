@@ -14,7 +14,7 @@ import {
 } from './kit';
 import type { FrameTabs, Screen } from './modal';
 import type { Confirm } from './menu';
-import type { ContractBoard, Contract } from '../sim/contracts';
+import { contractTitle, type ContractBoard, type Contract } from '../sim/contracts';
 import type { Builder } from '../sim/build';
 import type { GameClock } from '../sim/time';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -292,7 +292,7 @@ export class ContractsScreen implements Screen {
         contractRarityLabel(c.rarity),
         rarityName,
       ),
-      title: c.name,
+      title: contractTitle(c.name),
       right: el('span', { class: `ec-pay ${lost ? 'lost' : ''}`.trim(), text: fmtMoney(c.payout) }),
       sub: fragment(
         this.atlas ? resIcon(this.atlas, c.cargo) : null,
@@ -339,7 +339,7 @@ export class ContractsScreen implements Screen {
         STR.contracts.accept,
         () => {
           if (this.board.accept(c, this.clock.time))
-            this.toast(STR.contracts.accepted(c.name), 'good');
+            this.toast(STR.contracts.accepted(contractTitle(c.name)), 'good');
           // an offer that expired since the board was drawn just leaves it
           else if (this.board.activeFull())
             this.toast(STR.contracts.activeFull(this.board.limit()), 'warn');
@@ -394,11 +394,12 @@ export class ContractsScreen implements Screen {
     const fine = fmtMoney(this.board.cancelFine(c));
     const ok = await this.prompt.confirm(
       STR.contracts.cancelTitle,
-      STR.contracts.confirmCancel(c.name, fine),
+      STR.contracts.confirmCancel(contractTitle(c.name), fine),
       { yes: STR.contracts.cancelTitle, no: STR.contracts.keepContract, danger: true },
     );
     if (!ok) return;
-    if (this.board.cancel(c)) this.toast(STR.contracts.cancelledMsg(c.name, fine), 'warn');
+    if (this.board.cancel(c))
+      this.toast(STR.contracts.cancelledMsg(contractTitle(c.name), fine), 'warn');
     this.build(true);
   }
 }

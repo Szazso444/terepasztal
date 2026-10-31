@@ -1,7 +1,7 @@
 import type { Train } from './trains';
 import type { Builder } from './build';
 import type { PowerGrid } from './power';
-import type { ContractBoard } from './contracts';
+import { contractTitle, type ContractBoard } from './contracts';
 import { buildingDef, missingInput } from './buildings';
 import { cargoName } from './cargo';
 import { STR } from '../strings';
@@ -207,7 +207,7 @@ export class Notices {
             key: `contract:${c.id}:risk`,
             kind: 'warn',
             type: 'contract',
-            text: STR.notice.contractAtRisk(c.name),
+            text: STR.notice.contractAtRisk(contractTitle(c.name)),
             target: destOf(c.destId),
           });
       for (const c of board.offers)
@@ -215,7 +215,7 @@ export class Notices {
           key: `offer:${c.id}`,
           kind: 'info',
           type: 'offer',
-          text: STR.notice.contractOffered(c.name),
+          text: STR.notice.contractOffered(contractTitle(c.name)),
           target: destOf(c.destId),
         });
     }

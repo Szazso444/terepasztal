@@ -1,5 +1,5 @@
 import { el, btn, fmtInt } from './dom';
-import { STR } from '../strings';
+import { LANGUAGE, LANGUAGES, LANGUAGE_NAME, STR, type Language } from '../strings';
 import { SPEED_ORDER, type GameClock } from '../sim/time';
 import type { AgeStatus } from '../sim/ages';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -10,6 +10,7 @@ import { ageTip, eraView } from './ageTooltip';
 import { ageIconSvg } from './ageIcon';
 import { compactLevel, topbarCompact, type CompactLevel } from './fit';
 import { historyIconSvg, historyTip, type HistoryWay } from './historyControls';
+import { segmented } from './kit';
 import { MenuBar } from './menuBar';
 import type { History } from '../sim/history';
 
@@ -56,9 +57,13 @@ export class Hud {
   private historyCell = el('div', { class: 'stat history' });
   /** what the history can do now; its tooltips read it when they open */
   private history: HistoryView | null = null;
+  /** EN | HU, right of the menus and of undo and redo */
+  private languageCell = el('div', { class: 'stat lang', title: STR.settings.language });
   /** the tickets block for the resource row */
   readonly funds: HTMLElement;
   onHistory: ((way: HistoryWay) => void) | null = null;
+  /** the language control: it reloads the page, or `showLanguage` puts the control back */
+  onLanguage: ((language: Language) => void) | null = null;
   private locked = false;
   private fps = el('span', { class: 'value dim' });
   private weather = el('span', { class: 'value' });
@@ -99,12 +104,14 @@ export class Hud {
     const undoTip = tipBuild(atlas, () => historyTip('undo', this.history?.undoLabel ?? null));
     const redoTip = tipBuild(atlas, () => historyTip('redo', this.history?.redoLabel ?? null));
     this.historyCell.append(ttTerm(this.undoBtn, undoTip), ttTerm(this.redoBtn, redoTip));
+    this.showLanguage();
     this.root = el(
       'div',
       { id: 'topbar', class: 'panel' },
       el('div', { class: 'title', text: STR.title }),
       this.menuBar.root,
       this.historyCell,
+      this.languageCell,
       el('div', { class: 'spacer' }),
       el('div', { class: 'stat' }, this.fps),
       el('div', { class: 'stat weather' }, this.weather),
@@ -129,6 +136,22 @@ export class Hud {
     b.disabled = true;
     return b;
   }
+  /** The language control, on the language of this page load. */
+  showLanguage() {
+    this.languageCell.replaceChildren(
+      segmented({
+        options: LANGUAGES.map((id) => ({
+          id,
+          label: id.toUpperCase(),
+          title: LANGUAGE_NAME[id],
+        })),
+        value: LANGUAGE,
+        onChange: (id) => this.onLanguage?.(id as Language),
+        cls: 'small',
+      }),
+    );
+  }
+
   /** Undo and redo follow the history: a button with nothing to do is disabled. */
   setHistory(h: HistoryView) {
     this.history = h;

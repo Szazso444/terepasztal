@@ -21,6 +21,7 @@ import type { SupplyMode } from './sim/supply';
 import { armDevReload, takeDevSession, reportDevTraffic } from './engine/devsession';
 import { groundPassPending, startupToasts } from './engine/saveMessages';
 import { audio } from './engine/audio';
+import { LANGUAGE, STR } from './strings';
 import {
   BOOT_STAGES,
   BootProgress,
@@ -64,7 +65,7 @@ function levelForEdit(i: Extract<Intent, { action: 'edit' }>): LevelData | null 
   const map = i.blank
     ? emptyMap(seed, size, size, Terrain.Grass)
     : generateMap(seed, paramsFromRules(size));
-  const level = levelFromMap(map, `Level ${new Date().toLocaleDateString()}`);
+  const level = levelFromMap(map, STR.menu.levelDefaultName(new Date().toLocaleDateString()));
   level.start = {
     money: rules.startMoney,
     tickets: rules.startTickets,
@@ -167,6 +168,7 @@ async function continueFromTitle(game: Game) {
 }
 
 async function boot() {
+  document.documentElement.lang = LANGUAGE;
   // no music until loading finishes or the title screen's Play; its first track downloads
   // meanwhile, so it starts at once
   audio.hold();

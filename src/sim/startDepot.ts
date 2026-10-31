@@ -2,7 +2,7 @@ import { inBounds, startRegion, terrainAt, type GameMap } from '../world/tiles';
 import { networkOf, type TrackClass, type TrackItem, type TrackPiece } from '../world/track';
 import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Gauge } from '../data/content';
-import { STR } from '../strings';
+import { ENGLISH, STR } from '../strings';
 import { rules } from './rules';
 import { unbuildable, type Builder } from './build';
 import { stationDef, stationFootprint, stationGates, type Station } from './stations';
@@ -155,7 +155,7 @@ export function grantDepot(
       builder.removeStation(d);
       return null;
     }
-    if (gate.item.cls === 'branch') d.name = STR.station.depotName;
+    if (gate.item.cls === 'branch') d.name = ENGLISH.station.depotName;
     builder.onStationChanged?.(d, false);
     return d;
   });

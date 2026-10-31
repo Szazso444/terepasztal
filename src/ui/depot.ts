@@ -1,5 +1,6 @@
 import { el, fmtMoney } from './dom';
 import { STR } from '../strings';
+import { noteText } from './noteText';
 import type { Screen } from './modal';
 import type { Inventory } from '../gacha/inventory';
 import { Fleet, MAX_LOCOS, MAX_WAGONS } from '../sim/fleet';
@@ -362,7 +363,7 @@ export class DepotScreen implements Screen {
         cargoUnits: t.totalCargo(),
         weight: t.weight,
         power: t.power,
-        message: t.lastMessage,
+        message: noteText(t.lastMessage),
       });
       set(name, t.name);
       set(consist, x.consist);

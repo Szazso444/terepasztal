@@ -489,6 +489,11 @@ export const RULE_META: RuleMeta[] = [
     hint: 'lower = more forest',
   },
 ];
+if (LANGUAGE === 'hu')
+  for (const m of RULE_META) {
+    m.group = HU_RULE_GROUPS[m.group] ?? m.group;
+    Object.assign(m, HU_RULES[m.key]);
+  }
 
 /**
  * The key the stored tuning used to live under. Nothing reads or writes it any more; a page load
@@ -712,3 +717,5 @@ export function daySeconds() {
 export function weekSeconds() {
   return daySeconds() * 7;
 }
+import { HU_RULES, HU_RULE_GROUPS } from '../data/names.hu';
+import { LANGUAGE } from '../strings';

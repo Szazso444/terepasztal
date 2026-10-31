@@ -395,6 +395,11 @@ body {
 .btn.mb-item.mb-cheat {
   color: var(--text-dim);
 }
+/* EN | HU, right of undo and redo: it stays whole however short the bar is */
+#topbar .lang {
+  flex: none;
+  padding: 0 6px;
+}
 #topbar .datespeed,
 #topbar > .tt-term {
   flex: none;

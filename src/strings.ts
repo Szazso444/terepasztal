@@ -1,3 +1,31 @@
+import { HU } from './strings.hu';
+
+/** The languages of the game. English is the default; the setting lives with the settings. */
+export const LANGUAGES = ['en', 'hu'] as const;
+export type Language = (typeof LANGUAGES)[number];
+/** Each language under its own name, as the language control shows it. */
+export const LANGUAGE_NAME: Record<Language, string> = { en: 'English', hu: 'Magyar' };
+/** A stored value as a language: anything else, an older settings file's nothing, is English. */
+export function languageOf(v: unknown): Language {
+  return LANGUAGES.find((l) => l === v) ?? 'en';
+}
+/** Where the settings are stored (`readSettings`); read here for the one field the strings need. */
+export const SETTINGS_KEY = 'terepasztal.settings';
+function storedLanguage(): Language {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    return raw ? languageOf((JSON.parse(raw) as { language?: unknown } | null)?.language) : 'en';
+  } catch {
+    return 'en';
+  }
+}
+/**
+ * The language of this page load. The strings are chosen once, here, before any module reads them,
+ * so changing the language reloads the page (`Game.switchLanguage`). Nothing in the world or the
+ * save depends on it: what the simulation keeps is in English, in `ENGLISH` and the data's names.
+ */
+export const LANGUAGE: Language = storedLanguage();
+
 /**
  * Age names by index (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic, 5 hyper); ids match
  * `src/data/ages.json`.
@@ -15,9 +43,20 @@ function ageLabel(t: number) {
   return AGE_NAMES[AGE_ORDER[t]] ?? `age ${t}`;
 }
 
-/** All user-facing strings. Keep flat so a Hungarian table can mirror this file later. */
-export const STR = {
+/**
+ * All user-facing strings, in English. `strings.hu.ts` mirrors this table: the same keys and the
+ * same functions (`Strings`). Read them through `STR`, in the language of the page load.
+ */
+const EN = {
   title: 'Terepasztal',
+  /** how numbers read in this language (`src/ui/numberFormat.ts`) */
+  format: {
+    decimalMark: '.',
+    thousandsMark: ',',
+    money: (amount: string) => `$${amount}`,
+    days: (days: string) => `${days}d`,
+    hoursMinutes: (hours: number, minutes: string) => `${hours}h ${minutes}m`,
+  },
   /** the loading screen (`src/ui/loadingScreen.ts`): one tip is shown, picked at random */
   loadingScreen: {
     /** names the progress bar for a screen reader */
@@ -49,6 +88,8 @@ export const STR = {
     speedKey: (label: string, key: string) => `${label} speed (${key})`,
     pause: 'Pause (Space)',
     resume: 'Resume (Space)',
+    /** the weather words of the top bar, by `WeatherKind` */
+    sky: { clear: 'Clear', rain: 'Rain', fog: 'Fog' } as Record<string, string>,
     weatherToggle: 'Weather',
     weatherToggleHint: 'Toggle rain, fog and seasons',
     /** the same, in a narrow top bar: the season and weather it no longer shows come first */
@@ -320,6 +361,25 @@ export const STR = {
     /** toast when the painted landscape fails for the session and the per-tile ground stands in */
     landscapeLost:
       'The detailed terrain could not load, so simple ground is shown for this session. The browser console has details.',
+  },
+  /**
+   * A train's note where it is not one of `traffic`'s: the simulation keeps a note in English, and
+   * the save holds it; `noteText` (src/ui/noteText.ts) puts it in the language on screen.
+   */
+  trainNote: {
+    service: 'Heading to nearby fuel / water service',
+    onContract: (name: string) => `on contract: ${name}`,
+    regularRun: 'back on the regular run',
+    noTrackToStop: 'no track to the chosen stop',
+    noPlatform: (name: string) => `${name} has no platform`,
+    parked: 'parked: no way to the chosen stop',
+    detouring: 'detouring around an oncoming train',
+    rerouted: 'rerouted around traffic',
+    ranDry: 'Out of fuel or water',
+    outOfFuel: 'out of fuel or water',
+    noPower: 'no power on this line',
+    tooHeavy: 'too heavy for the engines',
+    movingAway: 'moving out of the way',
   },
   traffic: {
     pullingAside: 'Pulling aside on a reserved escape route',
@@ -1432,6 +1492,10 @@ export const STR = {
     audioNote:
       'Pastoral Pulse opens each session, then its four arrangements play in shuffled order. Nature sounds follow the weather and time of day.',
     gameplay: 'Gameplay',
+    language: 'Language',
+    languageNote: 'Changing the language reloads the page; a game in play is saved first.',
+    /** the game could not be stored first, so nothing changed */
+    languageHeld: 'The language stays as it is: the game could not be saved first.',
     edgeScroll: 'Edge scrolling',
     autosave: 'Autosave (every minute)',
     dayNight: 'Day / night cycle',
@@ -1737,6 +1801,8 @@ export const STR = {
     playLevelOver: 'Play this level; it replaces the game in progress, so it asks first',
     editLevelHint: 'Open it in the level editor',
     deleteLevelHint: 'Delete this level; asks first',
+    /** A new level's name until it is given one; `date` as the browser writes it. */
+    levelDefaultName: (date: string) => `Level ${date}`,
     /** The Map choice of New level: size is "64 x 64", as the list's "64x64" is the game's own. */
     levelSizeOption: (n: number) => `${n} x ${n}`,
     paused: 'Paused',
@@ -1795,6 +1861,8 @@ export const STR = {
     usedFor: (names: string) => `In the game: ${names}`,
     source: 'Source',
     licence: 'Licence',
+    /** a credit's kind, as `src/data/credits.json` names it */
+    kind: { '3D model': '3D model', Music: 'Music', Icons: 'Icons' } as Record<string, string>,
   },
   prompt: {
     ok: 'OK',
@@ -2312,3 +2380,23 @@ export const STR = {
     makesAnywhere: 'Makes {res}: {amount} a week at level {level}.',
   },
 } as const;
+
+/**
+ * The strings the simulation keeps in its state, which reach the save, and compares: a train's
+ * note. The screen shows them through `noteText`. Everything else reads `STR`.
+ */
+export const ENGLISH = EN;
+
+/** A literal's type as what it is: a text that a translation may word its own way. */
+type Widen<T> = T extends string
+  ? string
+  : T extends (...args: infer A) => infer R
+    ? (...args: A) => Widen<R>
+    : T extends object
+      ? { readonly [K in keyof T]: Widen<T[K]> }
+      : T;
+/** The shape of a translation: every key of the English table, each function with its arguments. */
+export type Strings = Widen<typeof EN>;
+
+/** All user-facing strings, in the language of this page load. */
+export const STR: typeof EN = LANGUAGE === 'hu' ? (HU as unknown as typeof EN) : EN;

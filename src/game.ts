@@ -76,7 +76,7 @@ import { FollowCamera } from './ui/followCamera';
 import { ScreenManager } from './ui/modal';
 import type { Train } from './sim/trains';
 import { defaultStop as defaultStopFor } from './sim/trains';
-import { ContractBoard } from './sim/contracts';
+import { ContractBoard, contractTitle } from './sim/contracts';
 import { Rng } from './engine/rng';
 import { DayNight, Glows, Smoke, GroundLights, Rain, Fog, nightness } from './render/fx';
 import {
@@ -108,6 +108,7 @@ import {
   KNOWN_SAVE_KEYS,
   firstNonFinite,
   readSettings,
+  savedSettings,
   writeSettings,
   contractPolicyFor,
   convertOneTileRegular,
@@ -783,6 +784,16 @@ export class Game implements UiHost {
     setIntentAndReload({ action: 'menu' });
   }
   /**
+   * The page again in the language just stored: a game just stored comes back as Continue brings
+   * it, the level editor on its level, the title as the title.
+   */
+  reloadInLanguage(playing: boolean) {
+    const level = this.editor?.level.id;
+    if (level) setIntentAndReload({ action: 'edit', levelId: level });
+    else if (playing) this.reloadIntoStoredSave();
+    else this.reloadToMenu();
+  }
+  /**
    * The debug panel's Regenerate: a new game on its seed text (a number, other text hashed, empty
    * a random seed) in the running game's production chain. The new game replaces the stored one,
    * so the running game is not written back on its way out, as in `reloadIntoStoredSave`.
@@ -1039,8 +1050,11 @@ export class Game implements UiHost {
           key: `contract:${e.contract.id}:done`,
           kind: 'info',
           type: 'done',
-          text: STR.notice.contractDone(e.contract.name),
-          toast: STR.contracts.completed(e.contract.name, fmtMoney(e.contract.payout)),
+          text: STR.notice.contractDone(contractTitle(e.contract.name)),
+          toast: STR.contracts.completed(
+            contractTitle(e.contract.name),
+            fmtMoney(e.contract.payout),
+          ),
           target: dest ? { kind: 'tile', x: dest.x, y: dest.y } : null,
         });
         sfx('contract.done');
@@ -1058,7 +1072,7 @@ export class Game implements UiHost {
             key: `contract:${e.contract.id}`,
             kind: 'bad',
             type: 'ctfail',
-            text: STR.notice.contractFailed(e.contract.name),
+            text: STR.notice.contractFailed(contractTitle(e.contract.name)),
             toast: STR.contracts.failedMsg(
               e.contract.name,
               fmtMoney(this.contracts.failFine(e.contract)),
@@ -1067,7 +1081,7 @@ export class Game implements UiHost {
           },
           60,
         );
-        this.lastFailedContract = e.contract.name;
+        this.lastFailedContract = contractTitle(e.contract.name);
         sfx('contract.fail');
       } else if (e.kind === 'accepted') sfx('contract.accept');
     };
@@ -1178,7 +1192,7 @@ export class Game implements UiHost {
       map: this.map,
       regions: this.regions,
       camera: this.camera,
-      settings: this.settings,
+      settings: savedSettings(this.settings),
       toasts: this.toasts,
       screens: this.screens,
       namePrompt: this.namePrompt,

@@ -18,7 +18,14 @@ import {
 } from '../world/track';
 import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
-import { content, type DecorDef, type Cost, type Gauge, type StationDef } from '../data/content';
+import {
+  content,
+  dataName,
+  type DecorDef,
+  type Cost,
+  type Gauge,
+  type StationDef,
+} from '../data/content';
 import { rules } from './rules';
 import {
   Station,
@@ -1019,7 +1026,7 @@ export class Builder {
       defId,
       x,
       y,
-      count ? `${stationDef(defId).name} ${count + 1}` : undefined,
+      count ? `${dataName(stationDef(defId))} ${count + 1}` : undefined,
     );
     s.rot = turn;
     s.terrainFactor = terrainFactorAt(this.map, x, y, defId);

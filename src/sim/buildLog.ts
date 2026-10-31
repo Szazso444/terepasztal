@@ -6,7 +6,7 @@ import { buildingDef, buildingFootprint, buildingLevel, type Building } from './
 import type { SupplyKind } from './catenary';
 import type { CommandResult } from './commands';
 import type { ContractDispatcher } from './contractDispatch';
-import type { Contract, ContractBoard } from './contracts';
+import { contractTitle, type Contract, type ContractBoard } from './contracts';
 import type { Fleet } from './fleet';
 import type { HistoryStep } from './history';
 import type { House, HouseRegistry } from './houses';
@@ -259,7 +259,7 @@ export class BuildLog {
   name(s: Station, now: string) {
     if (s.name === now) return;
     this.touch(s.footprint());
-    this.ops.push({ op: 'name', station: s, was: s.name, now });
+    this.ops.push({ op: 'name', station: s, was: s.storedName, now });
   }
 
   /** The action is over: the step it makes, or null when it did nothing. */
@@ -432,7 +432,7 @@ export class BuildStep implements HistoryStep {
     for (const { held, origin, dest } of this.lapsed(forward)) {
       const c = held.contract;
       if (held.status === 'active' && c.trainId !== null && !contractJobs.canWork(c, origin, dest))
-        return STR.history.contractNoTrain(c.name);
+        return STR.history.contractNoTrain(contractTitle(c.name));
     }
     return null;
   }

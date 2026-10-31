@@ -1,4 +1,6 @@
 import biomeJson from '../data/biomes.json';
+import { translateRows } from '../data/content';
+import { HU_NAMES } from '../data/names.hu';
 import { Biome, type GameMap } from '../world/tiles';
 
 export interface BiomeDef {
@@ -18,6 +20,7 @@ export interface BiomeDef {
 }
 /** Indexed by `Biome`: ids are appended and never renumbered. */
 export const BIOME_DEFS: BiomeDef[] = biomeJson as unknown as BiomeDef[];
+translateRows(BIOME_DEFS, HU_NAMES.biomes);
 export function biomeDef(b: Biome): BiomeDef {
   return BIOME_DEFS[b] ?? BIOME_DEFS[0];
 }
