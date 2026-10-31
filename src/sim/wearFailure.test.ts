@@ -346,6 +346,134 @@ describe('a failed piece', () => {
     expect(c.until(() => t.state === 'loading', 120)).toBe(true);
   });
 
+  it('a queue at a break waits in noRoute, no train stuck, and all leave after the repair', () => {
+    const w = simWorld({ terrain: 'grass', size: 64 });
+    line(w, 4, ROW, 60);
+    const st = quarry(w, 6);
+    const queue = [36, 44, 52].map((x) => westbound(w, x, [st]));
+    const c = clock(w);
+    fail(w, [24, ROW]);
+    c.until(() => false, 120);
+    for (const t of queue) expect(t.state).toBe('noRoute');
+    expect(queue[0].headTile).toEqual({ x: 25, y: ROW });
+    expect(w.fleet.traffic.stuckTrains(0)).toEqual([]);
+    expect(w.fleet.traffic.counters.deadlocks).toBe(0);
+    repair(w, 24, ROW);
+    const past = new Set<number>();
+    const each = () => {
+      for (const t of queue) if (t.headTile!.x < 24) past.add(t.id);
+    };
+    expect(c.until(() => past.size === queue.length, 180, each)).toBe(true);
+  });
+
+  /**
+   * Three F7s loading at x 16 and bound on for x 6, once the piece under their tail and the piece
+   * at `cut` on their way have failed: at rest in noRoute after running off.
+   */
+  function tailOnFailed(cut: number) {
+    const w = simWorld({ terrain: 'grass', size: 64 });
+    line(w, 4, ROW, 40);
+    const here = quarry(w, 16);
+    const next = quarry(w, 6);
+    const t = westbound(w, 36, [here, next], 3);
+    const c = clock(w);
+    expect(c.until(() => t.state === 'loading', 60)).toBe(true);
+    fail(w, [17, ROW], [cut, ROW]);
+    expect(c.until(() => t.state === 'moving', 120)).toBe(true);
+    const crawl = () => {
+      if (standsOnFailed(w, t)) expect(t.speed).toBeLessThanOrEqual(CRAWL());
+    };
+    expect(c.until(() => t.state === 'noRoute', 60, crawl)).toBe(true);
+    return { w, t, c, next };
+  }
+
+  it('a train with only its tail on a failed piece runs clear when sound track lies ahead', () => {
+    const { w, t, c, next } = tailOnFailed(8);
+    expect(standsOnFailed(w, t)).toBe(false);
+    expect(t.headTile!.x).toBeGreaterThan(8);
+    repair(w, 8, ROW);
+    expect(c.until(() => t.atStation === next, 60)).toBe(true);
+  });
+
+  it('a train too long for the sound track ahead runs on as far as it can and stands', () => {
+    const { w, t, c, next } = tailOnFailed(10);
+    expect(t.headTile).toEqual({ x: 11, y: ROW });
+    expect(standsOnFailed(w, t)).toBe(true);
+    c.until(
+      () => false,
+      30,
+      () => {
+        expect(t.state).toBe('noRoute');
+        expect(t.headTile).toEqual({ x: 11, y: ROW });
+      },
+    );
+    repair(w, 10, ROW);
+    expect(c.until(() => t.atStation === next, 60)).toBe(true);
+  });
+
+  it('a train in noRoute takes its tail off a failed piece that fails under it', () => {
+    const w = simWorld({ terrain: 'grass', size: 64 });
+    line(w, 4, ROW, 40);
+    const t = westbound(w, 36, [quarry(w, 6)], 3);
+    const c = clock(w);
+    fail(w, [20, ROW]);
+    expect(c.until(() => t.state === 'noRoute', 60)).toBe(true);
+    expect(t.headTile).toEqual({ x: 21, y: ROW });
+    // the way opens as far as x 11, and the piece under the tail goes
+    repair(w, 20, ROW);
+    fail(w, [10, ROW], [23, ROW]);
+    expect(standsOnFailed(w, t)).toBe(true);
+    expect(c.until(() => !standsOnFailed(w, t), 120)).toBe(true);
+    expect(c.until(() => t.state === 'noRoute', 60)).toBe(true);
+    expect(t.headTile!.x).toBeGreaterThan(10);
+  });
+
+  it('with no room ahead a train with its tail on a failed piece stands still', () => {
+    const w = simWorld({ terrain: 'grass', size: 64 });
+    line(w, 4, ROW, 40);
+    const here = quarry(w, 16);
+    const t = westbound(w, 36, [here, quarry(w, 6)], 3);
+    const c = clock(w);
+    expect(c.until(() => t.state === 'loading', 60)).toBe(true);
+    fail(w, [17, ROW], [15, ROW]);
+    expect(c.until(() => t.state === 'noRoute', 120)).toBe(true);
+    const head = t.headTile;
+    c.until(
+      () => false,
+      30,
+      () => {
+        expect(t.state).toBe('noRoute');
+        expect(t.headTile).toEqual(head);
+      },
+    );
+  });
+
+  it('a train on a failed piece behind a train standing on its way waits for room', () => {
+    const w = simWorld({ terrain: 'grass', size: 64 });
+    line(w, 4, ROW, 60);
+    const st = quarry(w, 6);
+    const lead = westbound(w, 36, [st]);
+    const next = westbound(w, 41, [st]);
+    const c = clock(w);
+    fail(w, [24, ROW]);
+    expect(c.until(() => lead.state === 'noRoute' && lead.speed === 0, 60)).toBe(true);
+    expect(c.until(() => next.state === 'noRoute', 60)).toBe(true);
+    const x = next.headTile!.x;
+    fail(w, [x, ROW]);
+    // the train ahead leaves it no room to run off: it stands, and does not go to and fro
+    c.until(
+      () => false,
+      30,
+      () => {
+        expect(next.state).toBe('noRoute');
+        expect(next.headTile!.x).toBe(x);
+      },
+    );
+    expect(w.fleet.traffic.stuckTrains(0)).toEqual([]);
+    repair(w, 24, ROW);
+    expect(c.until(() => next.headTile!.x < x, 60)).toBe(true);
+  });
+
   it('a train loading on a platform whose other tile fails finishes and leaves', () => {
     const w = simWorld({ terrain: 'grass', size: 64 });
     line(w, 4, ROW, 40);

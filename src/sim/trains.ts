@@ -641,6 +641,8 @@ export class Train {
   private pathPts: { x: number; y: number; seg: PathSegment; factor: number }[] = [];
   private pathCum: number[] = [];
   private pathPos = 0;
+  /** the path ends where failed track stops it, not at a stop: held on it, the train has no way on */
+  private shortWay = false;
   /** the piece whose wear the head last paid for (not saved): one hit per piece entered */
   lastWornPiece: TrackPiece['wear'] | null = null;
   /** `pathPts` grouped by tile, built once per path (`pathTiles`) */
@@ -1890,6 +1892,7 @@ export class Train {
    */
   private setPath(path: PathSegment[], map: GameMap, track: TrackGraph, headRoute?: number) {
     this.path = path;
+    this.shortWay = false;
     this.pathPts = [];
     this.pathCum = [];
     track.resolveRoutes(path);
@@ -2042,17 +2045,20 @@ export class Train {
   }
 
   /**
-   * A head standing on a failed piece runs off it: on over every failed piece in a row, then over
+   * A train standing on a failed piece runs off it: on over every failed piece in a row, then over
    * sound track until the whole train is clear, the way its path goes where it can, and stops
-   * there to look for a way on (`noRoute`). It never runs from sound track onto a failed piece, so
-   * a stretch of sound track too short for it, or the end of the line, leaves its tail behind.
-   * False when the head stands on sound track, or no sound tile lies ahead.
+   * there to look for a way on (`noRoute`). It never runs from sound track onto a failed piece or
+   * into a train, so a stretch of sound track too short for it, or the end of the line, leaves its
+   * tail behind. False when no vehicle stands on a failed piece, or the head would reach no new
+   * tile, or no sound one: a train with no room stands, and does not go to and fro.
    */
   leaveBroken(ctx: TickCtx): boolean {
     const track = ctx.track;
     const head = this.headSeg;
-    const under = head && track.get(head.x, head.y);
-    if (!head || !under || stateOf(under) !== 'unusable') return false;
+    const failed = ctx.builder.wear.unusable;
+    if (!head || !track.has(head.x, head.y)) return false;
+    if (!this.headFailed(track) && !this.occupancyKeys(track.w).some((k) => failed.has(k)))
+      return false;
     const stateKey = (s: { x: number; y: number; in: Dir }) => track.key(s.x, s.y) * 4 + s.in;
     const planned = new Map(this.path?.map((s) => [stateKey(s), s.out]));
     planned.set(stateKey(head), head.out);
@@ -2070,7 +2076,8 @@ export class Train {
           !!next &&
           track.connected(at.x, at.y, out) &&
           this.fits(next, opposite(out)) &&
-          !(onSound && stateOf(next) === 'unusable')
+          !(onSound && stateOf(next) === 'unusable') &&
+          !ctx.occupied(at.x + DIR_DX[out], at.y + DIR_DY[out], this.id)
         );
       });
       const want = planned.get(stateKey(at)) ?? opposite(at.in);
@@ -2085,12 +2092,19 @@ export class Train {
       if (!ways.length) break;
       at = { x: at.x + DIR_DX[out], y: at.y + DIR_DY[out], in: opposite(out) };
     }
-    if (sound === null) return false;
+    if (sound === null || path.length < 2) return false;
     this.serviceStop = null;
     this.setPath(path, ctx.map, track, path[0].out === head.out ? head.route : undefined);
+    this.shortWay = true;
     this.trackVersion = track.version;
     this.setState('moving');
     return true;
+  }
+  /** Does the head stand on a failed piece? */
+  private headFailed(track: TrackGraph) {
+    const head = this.headSeg;
+    const under = head && track.get(head.x, head.y);
+    return !!under && stateOf(under) === 'unusable';
   }
   /**
    * With no way round a failed piece on its path, run on at the speed the train has as far as the
@@ -2109,6 +2123,7 @@ export class Train {
     const way = path.slice(from, cut);
     if (!this.pathStillValid(ctx.track, way)) return false;
     this.followAfterLoad(way, ctx.builder, way[0].route);
+    this.shortWay = true;
     return true;
   }
 
@@ -2145,7 +2160,10 @@ export class Train {
         this.speed = 0;
         return;
       }
-      if (!this.pathStillValid(ctx.track) && !this.leaveBroken(ctx)) {
+      if (
+        !this.pathStillValid(ctx.track) &&
+        !(this.headFailed(ctx.track) && this.leaveBroken(ctx))
+      ) {
         if (this.dispatch(ctx.track, ctx.builder, ctx.map)) this.onPathReady(ctx);
         else if (!this.stopShort(ctx)) this.setState('noRoute');
       }
@@ -2229,7 +2247,7 @@ export class Train {
             this.stateTime = 0;
             break;
           }
-          if (this.leaveBroken(ctx)) break;
+          if (this.headFailed(ctx.track) && this.leaveBroken(ctx)) break;
           // a contract closed while the train stood here (or before a reload): never retry its
           // stops, go back to the program
           if (!this.job && this.suspended) {
@@ -2240,7 +2258,7 @@ export class Train {
           if (!this.job && this.jobs.length) this.startJob();
           if (this.dispatch(ctx.track, ctx.builder, ctx.map)) {
             if (!this.planFuelDetour(ctx)) this.onPathReady(ctx);
-          } else this.stateTime = 0;
+          } else if (!this.leaveBroken(ctx)) this.stateTime = 0;
         }
         break;
     }
@@ -2425,6 +2443,11 @@ export class Train {
       }
     }
     if (this.blocked) {
+      if (this.shortWay && this.speed === 0) {
+        // nothing lies past this way but failed track: it waits for the repair, not for the train
+        this.setState('noRoute');
+        return;
+      }
       this.blockedTime += gdt;
       if (!this.holding && this.blockedTime > REROUTE_AFTER && !this.rerouted) {
         this.rerouted = true;
