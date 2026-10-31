@@ -89,7 +89,8 @@ What these give at 1x, where a game day is 4 minutes and Diesel arrives after ab
 - A 400 t train on Trunk takes 9.6 HP, so a Trunk piece lasts about 255 such passes.
 
 The figures are a starting point. The implementation plan runs them through a headless simulation
-and reports when the first piece degrades on the balance model's networks.
+and reports when the first piece degrades on a network of the size the balance model reaches at
+Diesel (six trains).
 
 ## 4. Failure and trains
 
@@ -170,10 +171,11 @@ piece and from any distance.
 
 ## 8. How it is built
 
-- **HP lives on the piece.** `TrackPiece` gets `hp`, on the anchor tile of a multi-tile piece, read
-  through `anchorOf`. Absent means full. Deleting a piece deletes its health and `place` starts it
-  full, with no second table to keep in step. `refreshSwitchForms` carries `hp` across, as it does
-  `bridgeCapacity`.
+- **HP lives on the piece.** `TrackPiece` gets `wear`, one small object shared by every member tile
+  of a multi-tile piece, holding the health as a share from 0 to 1, so `Train.canUse` reads it
+  without going through the anchor, and a changed max HP in tuning does not move a piece's state.
+  Deleting a piece deletes its health and `place` starts it full, with no second table to keep in
+  step. `refreshSwitchForms` carries `wear` across, as it does `bridgeCapacity`.
 - **`src/sim/wear.ts`** (new): max HP, state, the train hit, the daily scan, repair. Pure functions
   over `TrackGraph` where possible.
 - **The hit.** When the head enters a new piece, once per pass, so a 5x5 curve takes one hit.
@@ -248,5 +250,5 @@ Deterministic tests, headless:
 - Payment: reaches a store past `buildReach`; waits with a notice when none can pay.
 - Saves: a v22 save loads with full track; HP and the flags survive a round trip.
 - Tuning: `trackWearMul` 0 leaves every piece full.
-- The numbers: the headless run of section 3 reports the first degraded piece on the balance model's
+- The numbers: the headless run of section 3 reports the first degraded piece on a six-train
   Steam network.
