@@ -184,10 +184,11 @@ describe('opening and closing a menu', () => {
     expect(s.open).toBeNull();
   });
 
-  it('goes to another menu on a click on its entry', () => {
+  it('closes when the pointer comes to another entry and clicks it, as on a native bar', () => {
     const s = opened('fleet');
-    s.click('view');
-    expect(s.open).toBe('view');
+    s.hover('view');
+    expect(s.click('view')).toBeNull();
+    expect(s.open).toBeNull();
   });
 
   it('closes when told to: a click elsewhere, Escape, a screen opening', () => {
