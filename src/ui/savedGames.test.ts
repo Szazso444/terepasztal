@@ -9,6 +9,7 @@ import {
   loadEffect,
   replaceEffect,
   saveNameState,
+  saveOffReason,
   savedGamesTabs,
   slotNameOf,
   type ReplaceSituation,
@@ -146,16 +147,47 @@ describe('what a load does where it is picked, and whether there is a game to sa
   });
 });
 
+describe('why saving is off where it is', () => {
+  it('says there is no game yet at the title at boot, and that the editor has none to save', () => {
+    expect(saveOffReason(situation({ titleShown: true }))).toBe(STR.savedGames.saveOff);
+    expect(saveOffReason(situation({ titleShown: true, stored: true }))).toBe(
+      STR.savedGames.saveOff,
+    );
+    expect(saveOffReason(situation({ mode: 'editor' }))).toBe(STR.savedGames.saveOffEditor);
+    expect(saveOffReason(situation({ mode: 'editor', titleShown: true }))).toBe(
+      STR.savedGames.saveOffEditor,
+    );
+  });
+
+  it('says nothing where a game is being played: over it, or under a title opened over it', () => {
+    expect(saveOffReason(situation())).toBeNull();
+    expect(saveOffReason(situation({ titleShown: true, titleOverGame: true }))).toBeNull();
+  });
+
+  it('is off exactly where canSaveHere says so, and the two reasons are told apart', () => {
+    for (const mode of ['play', 'editor'] as const)
+      for (const titleShown of [false, true])
+        for (const titleOverGame of [false, true]) {
+          const s = situation({ mode, titleShown, titleOverGame });
+          expect(saveOffReason(s) === null, JSON.stringify(s)).toBe(canSaveHere(s));
+        }
+    expect(STR.savedGames.saveOffEditor).not.toBe(STR.savedGames.saveOff);
+  });
+});
+
 describe('the tabs of Saved games', () => {
-  it('turns Save off with its reason where no game is being played, and counts the named saves on Load', () => {
-    const off = savedGamesTabs(false, 3);
+  it('turns Save off with its reason where it is off, and counts the named saves on Load', () => {
+    const off = savedGamesTabs(STR.savedGames.saveOff, 3);
     expect(off.map((t) => t.id)).toEqual(['save', 'load']);
     expect(off[0].off).toBe(STR.savedGames.saveOff);
     expect(off[1]).toMatchObject({ off: null, count: 3 });
-    expect(savedGamesTabs(true, 0)[0].off).toBeNull();
+    expect(savedGamesTabs(STR.savedGames.saveOffEditor, 0)[0].off).toBe(
+      STR.savedGames.saveOffEditor,
+    );
+    expect(savedGamesTabs(null, 0)[0].off).toBeNull();
     // the count sits on Load only: a bare number, as every other tab has it
-    expect(savedGamesTabs(true, 0)[0].count).toBeNull();
-    expect(savedGamesTabs(true, 0)[1].count).toBe(0);
+    expect(savedGamesTabs(null, 0)[0].count).toBeNull();
+    expect(savedGamesTabs(null, 0)[1].count).toBe(0);
   });
 });
 
@@ -185,8 +217,14 @@ describe('the Save tab asks before it replaces a save', () => {
   it('puts the dialog, red and answered Replace, before the call that stores the save', () => {
     const statements = saveStatements();
     const asked = statements.findIndex((t) =>
-      /s\.clash\s*&&\s*!\(await this\.prompt\.confirm\(/.test(t),
+      /replaces\s*&&\s*!\(await this\.prompt\.confirm\(/.test(t),
     );
+    // whether it replaces one is asked of the store at the click, not of the list drawn earlier
+    const decided = statements.findIndex((t) =>
+      /const replaces = s\.clash \|\| this\.actions\.exists\(s\.name\)/.test(t),
+    );
+    expect(decided, 'the check at click time').toBeGreaterThanOrEqual(0);
+    expect(decided).toBeLessThan(asked);
     const stored = statements.findIndex((t) => t.includes('this.actions.saveAs('));
     expect(asked, 'the question').toBeGreaterThanOrEqual(0);
     expect(stored, 'the save').toBeGreaterThan(asked);

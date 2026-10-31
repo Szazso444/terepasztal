@@ -30,6 +30,7 @@ import {
   CONTRACT_RARITIES,
   continueMeta,
   contractPolicyFor,
+  hasSlot,
   listSlots,
   readSave,
   readSlot,
@@ -96,10 +97,12 @@ import { TownPanel } from './townPanel';
 import { SignalGuideScreen } from './signalGuide';
 import {
   asksBeforeReplacing,
+  canSaveHere,
   continueTargetFor,
   loadQuestion,
   replaceEffect,
   replaceQuestion,
+  saveOffReason,
   type ReplaceSituation,
   type Replacement,
 } from './saveSlots';
@@ -427,7 +430,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.namePrompt,
   );
   const contentScreen = new ContentScreen(() => {
-    if (host.mode === 'play' && !menuOpen()) host.save(true);
+    // a game in play is saved first, over the pause menu too; the title at boot has none
+    if (canSaveHere(savingSituation())) host.save(true);
     host.reloadToMenu();
   }, d.namePrompt);
   contentScreen.redraw = () => d.screens.redraw();
@@ -458,7 +462,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       savedAt: host.savedAt,
       version: `v${SAVE_VERSION}`,
       warning: host.deprecatedSave,
-      saveOff: mainMenu.visible && !titleOverGame,
+      saveOff: saveOffReason(savingSituation()) !== null,
+      saveOffWhy: saveOffReason(savingSituation()) ?? undefined,
     }),
     d.namePrompt,
   );
@@ -822,6 +827,10 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     titleOverGame = false;
     host.resumeGame();
   }
+  /** Where the player stands for saving: no storage is read, so it may be asked at every refresh. */
+  function savingSituation(): ReplaceSituation {
+    return { mode: host.mode, titleShown: mainMenu.visible, titleOverGame, stored: false };
+  }
   /** What decides whether a replacement asks first, read when the player picks the action. */
   function replaceSituation(): ReplaceSituation {
     return {
@@ -867,6 +876,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       },
       deleteSlot: (name) => {
         host.deleteSlot(name);
+        mainMenu.changed();
         d.toasts.push(STR.settings.slotDeleted(name), 'info');
       },
     };
@@ -910,22 +920,27 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       loadLast: loadLastSave,
       situation: replaceSituation,
       defaultName: () => `${STR.menu.day(d.clock.day)} · ${host.seed}`,
+      exists: (name) => hasSlot(name),
       saveAs: (name) => host.saveSlot(name),
     },
     d.namePrompt,
   );
   savedGames.redraw = () => d.screens.redraw();
-  // a save went through: the menus close and the game goes on, or Settings is shown again
+  /** the screen Saved games was opened over: Settings, which it goes back to; none, a menu */
+  let savedOver: Screen | null = null;
+  // a save went through: Saved games goes back to the screen it was opened over, which is drawn
+  // again (the clock stays where it was); opened from a menu it closes the menus, and the game goes on
   savedGames.onSaved = () => {
-    if (menuOpen()) {
+    if (savedOver) {
+      d.screens.back();
+      if (savedOver === settingsScreen) settingsScreen.render();
+    } else {
       d.screens.close();
       closeMenus();
-    } else {
-      d.screens.back();
-      settingsScreen.render();
     }
   };
   function openSaved(tab: SavedTab) {
+    savedOver = d.screens.current;
     savedGames.show(tab);
     d.screens.push(savedGames);
   }

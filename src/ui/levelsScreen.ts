@@ -1,5 +1,5 @@
 import { STR } from '../strings';
-import type { LevelData } from '../world/level';
+import { isLevel, type LevelData } from '../world/level';
 import { el } from './dom';
 import {
   actionButton,
@@ -45,15 +45,19 @@ export function newLevelRequest(size: number, map: LevelMap, seed: string) {
   return { size, generated: map === 'generated', seed: seed.trim() };
 }
 
-/** The id a level text carries, null when it is no JSON or has none: the row an import picks out. */
-export function levelIdOf(text: string): string | null {
+/** The level a text holds, null when it is no JSON or not a level (`isLevel`). */
+export function levelOfText(text: string): LevelData | null {
   try {
     const v: unknown = JSON.parse(text);
-    const id = v && typeof v === 'object' ? (v as { id?: unknown }).id : null;
-    return typeof id === 'string' ? id : null;
+    return isLevel(v) ? v : null;
   } catch {
     return null;
   }
+}
+
+/** The id a level text carries, null when it holds no level: the row an import picks out. */
+export function levelIdOf(text: string): string | null {
+  return levelOfText(text)?.id ?? null;
 }
 
 /** What the screen needs of the title screen's actions. */
@@ -88,7 +92,7 @@ export class LevelsScreen implements Screen {
   // the fields outlive a redraw of the list: what is typed or pasted stays
   private seed = textField({ placeholder: STR.settings.seedPlaceholder });
   private box = pasteBox({ placeholder: STR.menu.importHint, title: STR.menu.importBoxHint });
-  private importButton = actionButton(STR.menu.importLevel, () => this.import(), {
+  private importButton = actionButton(STR.menu.importLevel, () => void this.import(), {
     icon: 'import',
   });
 
@@ -118,15 +122,34 @@ export class LevelsScreen implements Screen {
     this.importButton.title = empty ? STR.menu.importEmptyHint : STR.menu.importButtonHint;
   }
 
-  /** A level text that is no level is told so at the well's head; one that is goes on the list. */
-  private import() {
+  /**
+   * A level text that is no level is told so at the well's head; one that is goes on the list, and
+   * one that is a level already on it asks before it takes its place. A level the store would not
+   * keep says that, not that it is no level.
+   */
+  private async import() {
     const text = this.box.value.trim();
     if (!text) return;
-    if (!this.actions.importLevel(text)) {
+    const level = levelOfText(text);
+    if (!level) {
       this.error.textContent = STR.editor.badLevel;
       return;
     }
-    this.picked = levelIdOf(text);
+    const same = this.actions.levels().find((l) => l.id === level.id);
+    if (
+      same &&
+      !(await this.prompt.confirm(
+        STR.menu.replaceLevelTitle,
+        STR.menu.confirmReplaceLevel(same.name),
+        { yes: STR.prompt.replace, danger: true },
+      ))
+    )
+      return;
+    if (!this.actions.importLevel(text)) {
+      this.error.textContent = STR.menu.importFailed;
+      return;
+    }
+    this.picked = level.id;
     this.box.value = '';
     this.error.textContent = '';
     this.render();

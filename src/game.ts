@@ -767,8 +767,8 @@ export class Game implements UiHost {
     try {
       const l = JSON.parse(json) as LevelRecord;
       if (!isLevel(l)) return false;
-      saveLevel(l);
-      return true;
+      // false when storage would not keep it, as when the text is no level
+      return saveLevel(l);
     } catch {
       return false;
     }

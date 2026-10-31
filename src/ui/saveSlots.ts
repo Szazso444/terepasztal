@@ -210,14 +210,19 @@ export interface SavedTab {
   off: string | null;
 }
 
-export function savedGamesTabs(canSave: boolean, named: number): SavedTab[] {
+/**
+ * Why saving is off where the player stands, null where it is on: the level editor has no game to
+ * save, and the title at boot has none yet.
+ */
+export function saveOffReason(s: ReplaceSituation): string | null {
+  if (canSaveHere(s)) return null;
+  return s.mode === 'editor' ? STR.savedGames.saveOffEditor : STR.savedGames.saveOff;
+}
+
+/** `saveOff` is why the Save tab is off (`saveOffReason`), null when it is on. */
+export function savedGamesTabs(saveOff: string | null, named: number): SavedTab[] {
   return [
-    {
-      id: 'save',
-      label: STR.savedGames.save,
-      count: null,
-      off: canSave ? null : STR.savedGames.saveOff,
-    },
+    { id: 'save', label: STR.savedGames.save, count: null, off: saveOff },
     { id: 'load', label: STR.savedGames.load, count: named, off: null },
   ];
 }

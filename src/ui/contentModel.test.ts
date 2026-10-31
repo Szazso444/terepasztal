@@ -30,7 +30,7 @@ describe('bringing a bundle in as text', () => {
     const wagons = [{ ...draft.wagons[0], name: 'Imported' }];
     const before = draft.locomotives;
     const read = importBundle(draft, JSON.stringify({ wagons }));
-    expect(read).toEqual({ ok: true, tables: ['wagons'] });
+    expect(read).toEqual({ ok: true, tables: ['wagons'], skipped: [] });
     expect(draft.wagons).toEqual(wagons);
     expect(draft.locomotives).toBe(before);
   });
@@ -39,7 +39,7 @@ describe('bringing a bundle in as text', () => {
     const draft = clone(content);
     const text = JSON.stringify({ cargo: draft.cargo, decor: draft.decor, nothing: 1 });
     const read = importBundle(draft, text);
-    expect(read).toEqual({ ok: true, tables: ['cargo', 'decor'] });
+    expect(read).toEqual({ ok: true, tables: ['cargo', 'decor'], skipped: [] });
   });
 
   it('refuses text that is no JSON object, and changes nothing', () => {
@@ -51,7 +51,40 @@ describe('bringing a bundle in as text', () => {
   });
 
   it('takes an empty object for a bundle with no tables', () => {
-    expect(importBundle(clone(content) as ContentBundle, '{}')).toEqual({ ok: true, tables: [] });
+    expect(importBundle(clone(content) as ContentBundle, '{}')).toEqual({
+      ok: true,
+      tables: [],
+      skipped: [],
+    });
+  });
+
+  it('leaves out a table that is not in the shape of its own: the editor could not draw it', () => {
+    const draft = clone(content);
+    const locomotives = draft.locomotives;
+    const stations = draft.stations;
+    const text = JSON.stringify({
+      locomotives: 5,
+      stations: [1],
+      wagons: null,
+      cargo: draft.cargo,
+    });
+    expect(importBundle(draft, text)).toEqual({
+      ok: true,
+      tables: ['cargo'],
+      skipped: ['locomotives', 'wagons', 'stations'],
+    });
+    expect(draft.locomotives).toBe(locomotives);
+    expect(draft.stations).toBe(stations);
+  });
+
+  it('takes an object for an object table and a list for a list, whatever is in them', () => {
+    const draft = clone(content);
+    const read = importBundle(
+      draft,
+      JSON.stringify({ locomotives: [], stations: { levels: [], defs: [] } }),
+    );
+    expect(read).toEqual({ ok: true, tables: ['locomotives', 'stations'], skipped: [] });
+    expect(draft.locomotives).toEqual([]);
   });
 });
 
@@ -71,6 +104,22 @@ describe('what Apply says', () => {
 
   it('says what applying does when there is nothing wrong', () => {
     expect(applyState([], summary)).toEqual({ disabled: false, note: STR.content.applyNote });
+    expect(applyState([], summary, 0).disabled).toBe(false);
+  });
+
+  it('waits while a box holds a value the form refused: the draft has none of it', () => {
+    const one = applyState([], summary, 1);
+    expect(one.disabled).toBe(true);
+    expect(one.note).toBe(STR.content.refusedValues(1));
+    expect(applyState([], summary, 3).note).toBe(STR.content.refusedValues(3));
+    // the refused value is named before the draft's own problems: it is what the player sees red
+    expect(applyState(['a: bad'], summary, 2).note).toBe(STR.content.refusedValues(2));
+    expect(STR.content.refusedValues(1)).not.toBe(STR.content.refusedValues(2));
+  });
+
+  it('does not promise a save the screen does not make: it says a game in play is saved', () => {
+    expect(STR.content.applyNote).toMatch(/game in play/);
+    expect(STR.content.applyNote).not.toMatch(/current game/);
   });
 });
 

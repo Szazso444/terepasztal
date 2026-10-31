@@ -69,6 +69,8 @@ export class ContentScreen implements Screen {
   private tab: ContentTab = 'locomotives';
   /** what the draft is refused for, read when it changes: the footer reads this, not the draft */
   private problems: string[] = [];
+  /** the boxes that hold a value the form refused: framed red, and not in the draft */
+  private refused = new Set<HTMLElement>();
   /** what became of the stored tables at load; fixed for the session */
   private readonly report = contentOverrideReport();
   // the box outlives a redraw of the tab: what was exported or pasted stays
@@ -97,7 +99,7 @@ export class ContentScreen implements Screen {
     };
   }
   frameFooter(): FootSpec {
-    const state = applyState(this.problems, (p) => problemSummary(p, 4));
+    const state = applyState(this.problems, (p) => problemSummary(p, 4), this.refused.size);
     return {
       actions: [
         {
@@ -153,7 +155,10 @@ export class ContentScreen implements Screen {
     const placeholder = f.unset ?? '';
     // a value the form refused stays in its box, framed red, until it is fixed
     const set = (box: HTMLElement, v: string) => {
-      box.classList.toggle('bad', !readField(row, f, kind, v));
+      const ok = readField(row, f, kind, v);
+      box.classList.toggle('bad', !ok);
+      if (ok) this.refused.delete(box);
+      else this.refused.add(box);
       this.validate();
     };
     if (kind === 'bool' && f.unset === undefined)
@@ -324,7 +329,11 @@ export class ContentScreen implements Screen {
       return;
     }
     this.validate();
-    this.setTransfer(STR.content.imported(read.tables.length));
+    const left = read.skipped.length ? ` ${STR.content.skipped(read.skipped.length)}` : '';
+    this.setTransfer(
+      STR.content.imported(read.tables.length) + left,
+      read.skipped.length ? 'warn' : '',
+    );
   }
 
   private setTransfer(text: string | null, cls = '') {
@@ -337,8 +346,17 @@ export class ContentScreen implements Screen {
   private render(keep = false) {
     const at = keep ? this.root.scrollTop : 0;
     if (this.tab === TRANSFER) this.setTransfer(null);
-    const body = this.tab === TRANSFER ? this.transfer() : this.table(this.tab);
+    // what is on the screen is the draft again: a refused value was never in it
+    this.refused.clear();
+    let body: (HTMLElement | null)[];
+    try {
+      body = this.tab === TRANSFER ? this.transfer() : this.table(this.tab);
+    } catch {
+      // a table that is not in the shape the forms read (an import of nonsense): say so
+      body = [well(null, note(STR.content.badShape, 'bad'))];
+    }
     this.root.replaceChildren(...body.filter((n): n is HTMLElement => n !== null));
+    this.redraw();
     this.root.scrollTop = at;
   }
 }

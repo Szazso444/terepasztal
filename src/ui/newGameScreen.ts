@@ -42,6 +42,8 @@ export class NewGameScreen implements Screen {
    */
   private tuningPick: string | null = null;
   private supply: SupplyMode = DEFAULT_SUPPLY;
+  /** what Start loses, read when the screen opens: the footer is read at every refresh, storage is not */
+  private asking: ReplaceEffect | null = null;
   private seed = textField({
     placeholder: STR.settings.seedPlaceholder,
     title: STR.newGameScreen.seedHint,
@@ -50,6 +52,7 @@ export class NewGameScreen implements Screen {
   constructor(private readonly actions: NewGameActions) {}
 
   onOpen() {
+    this.asking = this.actions.asks();
     this.seed.input.value = '';
     this.supply = DEFAULT_SUPPLY;
     this.render();
@@ -61,7 +64,7 @@ export class NewGameScreen implements Screen {
           label: STR.newGameScreen.start,
           primary: true,
           icon: 'play',
-          title: startTip(this.actions.asks()),
+          title: startTip(this.asking),
           onClick: () => this.start(),
         },
       ],

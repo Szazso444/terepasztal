@@ -1,10 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { STR } from '../strings';
 import type { Settings, SlotMeta } from '../sim/save';
+import type { LevelData } from '../world/level';
 import { ScreenFrame, ScreenManager, type Screen } from './modal';
 import { NamePrompt } from './namePrompt';
 import { SettingsScreen, type SettingsActions } from './settingsScreen';
-import { slider, textField } from './kit';
+import { numberField, slider, textField, type ConfirmOptions } from './kit';
+import { LevelsScreen, type LevelsActions } from './levelsScreen';
+import { MainMenu, PauseMenu, type MainMenuActions, type PauseMenuActions } from './menu';
+import { NewGameScreen } from './newGameScreen';
+import { SavedGamesScreen, type SavedGamesActions } from './savedGamesScreen';
+import type { ReplaceSituation } from './saveSlots';
+import { SignalGuideScreen } from './signalGuide';
 
 // the buttons play a sound when clicked; the context that plays it is a browser's
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -50,6 +57,8 @@ class FakeEl {
       this.className = (on ? [...rest, c] : rest).join(' ');
       return on;
     },
+    add: (c: string) => this.classList.toggle(c, true),
+    remove: (c: string) => this.classList.toggle(c, false),
   };
 
   constructor(readonly tagName: string) {}
@@ -410,14 +419,14 @@ describe('the Settings screen', () => {
     money: 0,
   };
 
-  function settings(saveOff: boolean, slots: SlotMeta[] = []) {
+  function settings(saveOff: boolean, slots: SlotMeta[] = [], saveOffWhy?: string) {
     const saveAs = vi.fn();
     const actions = { saveAs, slots: () => slots } as unknown as SettingsActions;
     const screen = new SettingsScreen(
       { autosave: true } as Settings,
       () => undefined,
       actions,
-      () => ({ seed: 1, savedAt: null, version: 'v22', warning: null, saveOff }),
+      () => ({ seed: 1, savedAt: null, version: 'v22', warning: null, saveOff, saveOffWhy }),
       { confirm: () => Promise.resolve(true) },
     );
     return { screen, saveAs };
@@ -444,6 +453,14 @@ describe('the Settings screen', () => {
     const button = saveAsButton(screen);
     expect(button.disabled).toBe(true);
     expect(button.title).toBe(STR.settings.saveOff);
+  });
+
+  it('says why Save as is off where that is the level editor, not that no game has begun', () => {
+    const { screen } = settings(true, [], STR.savedGames.saveOffEditor);
+    const button = saveAsButton(screen);
+    expect(button.disabled).toBe(true);
+    expect(button.title).toBe(STR.savedGames.saveOffEditor);
+    expect(button.title).not.toBe(STR.settings.saveOff);
   });
 
   it('has no name field of its own: a save is named in Saved games only', () => {
@@ -477,5 +494,420 @@ describe('the Settings screen', () => {
       }),
     });
     expect(fake(screens.root).find('k-cnt')?.text()).toBe('3');
+  });
+});
+
+// ------------------------------------------------------------------ PR 12d: the title, Saved games, Levels
+
+describe('a number typed beside a slider, or in a number field', () => {
+  /** The slider of a rule that rounds what it is given to a multiple of 32, as the map size does. */
+  function mapSize(extra: Partial<Parameters<typeof slider>[0]> = {}) {
+    const given: number[] = [];
+    const control = fake(
+      slider({
+        value: 96,
+        label: 'Map size',
+        min: 32,
+        max: 256,
+        step: 32,
+        field: true,
+        onInput: (v) => {
+          given.push(v);
+          return Math.round(v / 32) * 32;
+        },
+        ...extra,
+      }),
+    );
+    const typed = control.all.find((e) => e.tagName === 'INPUT' && e.attrs.get('type') === 'text')!;
+    return { given, control, typed };
+  }
+  const key = (e: FakeEl, k: string, shift = false) => {
+    const ev = new FakeEvent('keydown', e, k, k);
+    ev.shiftKey = shift;
+    (e as unknown as { bubble(e: FakeEvent): void }).bubble(ev);
+    return ev;
+  };
+
+  it('shows what the rule kept, not what was typed: 100 is 96 on the map size', () => {
+    const { given, typed } = mapSize();
+    typed.value = '100';
+    typed.fire('change');
+    expect(given).toEqual([100]);
+    expect(typed.value).toBe('96');
+  });
+
+  it('takes a decimal comma, and keeps the digits of a value no rule rounds', () => {
+    const given: number[] = [];
+    const { typed } = mapSize({ min: 0, max: 5, step: 0.05, onInput: (v) => void given.push(v) });
+    typed.value = '0,3';
+    typed.fire('change');
+    typed.value = '1.234';
+    typed.fire('change');
+    expect(given).toEqual([0.3, 1.234]);
+    expect(typed.value).toBe('1.234');
+  });
+
+  it('gives nothing on and shows the value again for text that is no number', () => {
+    const { given, typed } = mapSize();
+    typed.value = 'big';
+    typed.fire('change');
+    expect(given).toEqual([]);
+    expect(typed.value).toBe('96');
+  });
+
+  it('has a stepper: − and + move by the step, Shift by the big step, and show what was kept', () => {
+    const { given, control, typed } = mapSize({ bigStep: 64 });
+    control.button('+').fire('click');
+    expect(typed.value).toBe('128');
+    control.button('−').fire('click');
+    control.button('−').fire('click');
+    expect(typed.value).toBe('64');
+    expect(given).toEqual([128, 96, 64]);
+    const shifted = new FakeEvent('click', control.button('+'));
+    shifted.shiftKey = true;
+    (control.button('+') as unknown as { bubble(e: FakeEvent): void }).bubble(shifted);
+    expect(typed.value).toBe('128');
+  });
+
+  it('steps on the up and down keys too, and the keys stay in the field', () => {
+    const { given, typed } = mapSize();
+    const up = key(typed, 'ArrowUp');
+    expect(up.prevented).toBe(true);
+    expect(up.stopped).toBe(true);
+    key(typed, 'ArrowDown');
+    key(typed, 'ArrowDown');
+    expect(given).toEqual([128, 96, 64]);
+    expect(typed.value).toBe('64');
+  });
+
+  it('lets a number field show what was stored too', () => {
+    const field = fake(
+      numberField({
+        value: 10,
+        label: 'Buy per cycle',
+        min: 0,
+        max: 5000,
+        step: 10,
+        onChange: () => 70,
+      }),
+    );
+    const input = field.all.find((e) => e.tagName === 'INPUT')!;
+    input.value = '55';
+    input.fire('change');
+    expect(input.value).toBe('70');
+    field.button('+').fire('click');
+    expect(input.value).toBe('70');
+  });
+});
+
+describe('the Saved games screen', () => {
+  const meta = (name: string): SlotMeta => ({
+    name,
+    savedAt: 1,
+    version: 22,
+    seed: 1,
+    day: 2,
+    age: 0,
+    money: 3,
+  });
+  const play: ReplaceSituation = {
+    mode: 'play',
+    titleShown: false,
+    titleOverGame: false,
+    stored: true,
+  };
+
+  function saved(over: Partial<SavedGamesActions> = {}, answer = true) {
+    const saveAs = vi.fn(() => true);
+    const confirm = vi.fn((_t: string, _q: string, _o?: ConfirmOptions) => Promise.resolve(answer));
+    const actions = {
+      slots: () => [meta('Szeged'), meta('Baranya')],
+      loadSlot: () => undefined,
+      deleteSlot: () => undefined,
+      autosave: () => null,
+      savedAt: () => null,
+      autosaveOn: () => true,
+      loadLast: () => undefined,
+      situation: () => play,
+      defaultName: () => 'Day 3 · 9',
+      exists: () => false,
+      saveAs,
+      ...over,
+    } as SavedGamesActions;
+    const screen = new SavedGamesScreen(actions, { confirm });
+    const onSaved = vi.fn();
+    screen.onSaved = onSaved;
+    return { screen, saveAs, confirm, onSaved };
+  }
+  const open = (screen: SavedGamesScreen, tab: 'save' | 'load') => {
+    screen.show(tab);
+    screen.onOpen();
+  };
+  const press = async (screen: SavedGamesScreen) => {
+    screen.frameFooter().actions![0].onClick();
+    await tick();
+  };
+
+  it('keeps the name in view on the Save tab: the saves scroll in a well under it', () => {
+    const { screen } = saved();
+    open(screen, 'save');
+    const root = fake(screen.root);
+    expect(root.className.split(' ')).toContain('sg-pinned');
+    const scroll = root.find('sg-scroll')!;
+    expect(scroll.all.filter((e) => e.className.split(' ').includes('k-li'))).toHaveLength(2);
+    const field = root.all.find((e) => e.attrs.get('placeholder') === STR.savedGames.nameField)!;
+    expect(scroll.all).not.toContain(field);
+    // the Load tab is the old page that scrolls as a whole
+    screen.frameTabs().pick('load');
+    expect(root.className.split(' ')).not.toContain('sg-pinned');
+  });
+
+  it('asks of the store at the click whether it replaces a save, not of the list it drew', async () => {
+    // the list does not show a save of that name; the store has one by now
+    const { screen, saveAs, confirm, onSaved } = saved(
+      { slots: () => [], exists: () => true },
+      false,
+    );
+    open(screen, 'save');
+    await press(screen);
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(confirm.mock.calls[0][2]).toMatchObject({ danger: true, yes: STR.prompt.replace });
+    expect(saveAs).not.toHaveBeenCalled();
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it('saves on a yes, and asks nothing for a name that is free', async () => {
+    const yes = saved({ slots: () => [], exists: () => true }, true);
+    open(yes.screen, 'save');
+    await press(yes.screen);
+    expect(yes.saveAs).toHaveBeenCalledWith('Day 3 · 9');
+    expect(yes.onSaved).toHaveBeenCalledTimes(1);
+    const free = saved();
+    open(free.screen, 'save');
+    await press(free.screen);
+    expect(free.confirm).not.toHaveBeenCalled();
+    expect(free.saveAs).toHaveBeenCalledTimes(1);
+  });
+
+  it('turns Save off in the level editor, with the editor reason, and opens on Load', () => {
+    const { screen } = saved({ situation: () => ({ ...play, mode: 'editor' }) });
+    open(screen, 'save');
+    const tabs = screen.frameTabs();
+    expect(tabs.current).toBe('load');
+    expect(tabs.tabs[0].off).toBe(STR.savedGames.saveOffEditor);
+  });
+
+  it('reads storage when the tab is drawn, not at every refresh', () => {
+    const slots = vi.fn(() => [meta('Szeged')]);
+    const situation = vi.fn(() => play);
+    const { screen } = saved({ slots, situation });
+    open(screen, 'load');
+    const reads = [slots.mock.calls.length, situation.mock.calls.length];
+    for (let i = 0; i < 5; i++) {
+      screen.refresh();
+      screen.frameTabs();
+      screen.frameFooter();
+    }
+    expect([slots.mock.calls.length, situation.mock.calls.length]).toEqual(reads);
+  });
+});
+
+describe('the Levels screen', () => {
+  const level = (id: string, name: string) =>
+    ({
+      id,
+      name,
+      description: '',
+      createdAt: 1,
+      updatedAt: 2,
+      w: 32,
+      h: 32,
+      seed: 1,
+      terrain: '',
+      variant: '',
+      track: [],
+      stations: [],
+      decor: [],
+      start: { money: 1, tickets: 0, tier: 0 },
+    }) as unknown as LevelData;
+
+  function levels(existing: LevelData[], answer = true, keeps = true) {
+    const importLevel = vi.fn(() => keeps);
+    const confirm = vi.fn((_t: string, _q: string, _o?: ConfirmOptions) => Promise.resolve(answer));
+    const screen = new LevelsScreen(
+      {
+        levels: () => existing,
+        playLevel: () => undefined,
+        editLevel: () => undefined,
+        newLevel: () => undefined,
+        deleteLevel: () => undefined,
+        importLevel,
+        asks: () => null,
+      },
+      { confirm },
+    );
+    screen.onOpen();
+    const root = fake(screen.root);
+    const box = root.all.find((e) => e.tagName === 'TEXTAREA')!;
+    const error = () => root.find('k-err')!.text();
+    /** Paste `text` and press Import level. */
+    const paste = async (text: string) => {
+      box.value = text;
+      box.fire('input');
+      root.button(STR.menu.importLevel).fire('click');
+      await tick();
+    };
+    return { screen, importLevel, confirm, paste, error, box };
+  }
+  const text = (l: LevelData) => JSON.stringify(l);
+
+  it('says a text that is no level is none, and imports nothing', async () => {
+    const { importLevel, paste, error } = levels([]);
+    await paste('{"id":"x"}');
+    expect(importLevel).not.toHaveBeenCalled();
+    expect(error()).toBe(STR.editor.badLevel);
+  });
+
+  it('adds a level that is new without a question, and empties the box', async () => {
+    const { importLevel, confirm, paste, error, box } = levels([level('a', 'A')]);
+    await paste(text(level('b', 'B')));
+    expect(confirm).not.toHaveBeenCalled();
+    expect(importLevel).toHaveBeenCalledTimes(1);
+    expect(error()).toBe('');
+    expect(box.value).toBe('');
+  });
+
+  it('asks, red, before a level takes the place of one of the same id, and a no imports nothing', async () => {
+    const { importLevel, confirm, paste, box } = levels([level('a', 'Alföld')], false);
+    await paste(text(level('a', 'Other')));
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(confirm.mock.calls[0][1]).toBe(STR.menu.confirmReplaceLevel('Alföld'));
+    expect(confirm.mock.calls[0][2]).toMatchObject({ danger: true, yes: STR.prompt.replace });
+    expect(importLevel).not.toHaveBeenCalled();
+    // what was pasted stays, to be changed
+    expect(box.value).not.toBe('');
+  });
+
+  it('replaces it on a yes', async () => {
+    const { importLevel, paste } = levels([level('a', 'Alföld')], true);
+    await paste(text(level('a', 'Other')));
+    expect(importLevel).toHaveBeenCalledTimes(1);
+  });
+
+  it('says so when the store would not keep the level, and does not say it is no level', async () => {
+    const { paste, error, box } = levels([], true, false);
+    await paste(text(level('b', 'B')));
+    expect(error()).toBe(STR.menu.importFailed);
+    expect(error()).not.toBe(STR.editor.badLevel);
+    expect(box.value).not.toBe('');
+  });
+});
+
+describe('the title screen', () => {
+  function title(over: Record<string, unknown> = {}) {
+    const slots = vi.fn(() => [] as SlotMeta[]);
+    const levels = vi.fn(() => [] as LevelData[]);
+    const actions = {
+      slots,
+      levels,
+      volume: () => 0.5,
+      setVolume: () => undefined,
+      tunings: () => [],
+      asks: () => null,
+      deleteLevel: () => undefined,
+      importLevel: () => true,
+      ...over,
+    } as unknown as MainMenuActions;
+    const menu = new MainMenu(
+      actions,
+      { confirm: () => Promise.resolve(true) },
+      {
+        open: () => undefined,
+      },
+    );
+    return { menu, slots, levels };
+  }
+  const save = {
+    meta: { name: '', savedAt: 1, version: 22, seed: 1, day: 2, age: 0, money: 3 },
+    live: false,
+  };
+
+  it('counts the saves and the levels when it shows, and again only after something changed them', () => {
+    const { menu, slots, levels } = title();
+    menu.show(null, { content: false });
+    expect([slots.mock.calls.length, levels.mock.calls.length]).toEqual([1, 1]);
+    // a screen over it, and gone: nothing it did changed a count
+    menu.setCovered(true);
+    menu.setCovered(false);
+    menu.setCovered(true);
+    menu.setCovered(false);
+    expect([slots.mock.calls.length, levels.mock.calls.length]).toEqual([1, 1]);
+    menu.changed();
+    menu.setCovered(true);
+    menu.setCovered(false);
+    expect([slots.mock.calls.length, levels.mock.calls.length]).toEqual([2, 2]);
+  });
+
+  it('reads the counts again after the levels screen deletes or imports a level', () => {
+    // the Levels screen's own actions are wrapped by the title: the deletes and imports it makes count
+    const { menu, levels } = title();
+    menu.show(null, { content: false });
+    const screen = (menu as unknown as { levelsScreen: LevelsScreen }).levelsScreen;
+    const actions = (screen as unknown as { actions: LevelsActions }).actions;
+    const before = levels.mock.calls.length;
+    actions.deleteLevel('x');
+    menu.setCovered(false);
+    expect(levels.mock.calls.length).toBe(before + 1);
+    actions.importLevel('{}');
+    menu.setCovered(false);
+    expect(levels.mock.calls.length).toBe(before + 2);
+  });
+
+  it('puts the focus on its first button that can be pressed, so Tab and Enter work from the start', () => {
+    const first = title();
+    first.menu.show(save, { content: false });
+    expect(fake(page.activeElement).text()).toContain('Continue');
+    // with nothing to continue that button is off: the focus is on the next
+    const none = title();
+    none.menu.show(null, { content: false });
+    expect(fake(page.activeElement).text()).toContain('New game');
+    expect(fake(page.activeElement).disabled).toBe(false);
+  });
+
+  it('hides the game under it while it is up, and shows it again when it goes', () => {
+    const { menu } = title();
+    menu.show(null, { content: false });
+    expect(page.body.className.split(' ')).toContain('title-up');
+    menu.hide();
+    expect(page.body.className.split(' ')).not.toContain('title-up');
+  });
+
+  it('gives the pause menu the focus on Resume as well', () => {
+    const menu = new PauseMenu({
+      slots: () => [],
+      volume: () => 0.5,
+      setVolume: () => undefined,
+    } as unknown as PauseMenuActions);
+    menu.show({ testing: false, editor: false });
+    expect(fake(page.activeElement).text()).toContain(STR.menu.resume);
+  });
+});
+
+describe('the screens that read something and use nothing', () => {
+  it('keeps the tool in hand while the semaphore guide is up', () => {
+    expect(new SignalGuideScreen().keepsTool).toBe(true);
+  });
+
+  it('reads what Start loses once, when New game opens, not at every refresh', () => {
+    const asks = vi.fn(() => 'stored' as const);
+    const screen = new NewGameScreen({
+      newGame: () => undefined,
+      tunings: () => [],
+      asks,
+    });
+    screen.onOpen();
+    for (let i = 0; i < 6; i++) screen.frameFooter();
+    expect(asks).toHaveBeenCalledTimes(1);
+    expect(screen.frameFooter().actions![0].title).toBe(STR.newGameScreen.startAsks);
   });
 });

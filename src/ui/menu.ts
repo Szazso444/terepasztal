@@ -81,6 +81,9 @@ export class MainMenu {
   private levelsScreen: LevelsScreen;
   /** what the title was last shown with: it is drawn again, for its counts, when a screen leaves */
   private last: { save: ContinueTarget | null; custom: { content: boolean } } | null = null;
+  /** the counts on the buttons; read again only after something that changes them */
+  private counts = { named: 0, levels: 0 };
+  private stale = true;
   visible = false;
 
   constructor(
@@ -99,8 +102,15 @@ export class MainMenu {
         playLevel: (id) => actions.playLevel(id),
         editLevel: (id) => actions.editLevel(id),
         newLevel: (size, generated, seed) => actions.newLevel(size, generated, seed),
-        deleteLevel: (id) => actions.deleteLevel(id),
-        importLevel: (json) => actions.importLevel(json),
+        deleteLevel: (id) => {
+          actions.deleteLevel(id);
+          this.changed();
+        },
+        importLevel: (json) => {
+          const kept = actions.importLevel(json);
+          if (kept) this.changed();
+          return kept;
+        },
         asks: () => actions.asks('overwrite'),
       },
       prompt,
@@ -115,6 +125,7 @@ export class MainMenu {
     this.root.style.display = 'flex';
     document.body.classList.add('title-up');
     this.last = { save, custom };
+    this.stale = true;
     this.render();
   }
   hide() {
@@ -127,6 +138,11 @@ export class MainMenu {
     this.root.style.visibility = covered ? 'hidden' : '';
     // what the screen over it changed (a level imported, a save deleted) shows on its buttons
     if (!covered && this.visible) this.render();
+  }
+
+  /** A save or a level was added or deleted: the counts are read again when the title is drawn. */
+  changed() {
+    this.stale = true;
   }
 
   /** The tunings saved in Game tuning, drawn again in New game, and nothing else of it. */
@@ -158,7 +174,7 @@ export class MainMenu {
     }
   }
 
-  private button(e: TitleEntry, save: ContinueTarget | null): HTMLElement {
+  private button(e: TitleEntry, save: ContinueTarget | null): HTMLButtonElement {
     const b = actionButton(e.label, () => this.press(e), {
       icon: e.icon,
       cls: e.primary ? 'pri' : '',
@@ -182,13 +198,18 @@ export class MainMenu {
 
   private render() {
     const { save, custom } = this.last ?? { save: null, custom: { content: false } };
+    if (this.stale) {
+      this.stale = false;
+      this.counts = { named: this.actions.slots().length, levels: this.actions.levels().length };
+    }
     const entries = titleEntries({
       canContinue: !!save,
       overGame: !!save?.live,
-      named: this.actions.slots().length,
-      levels: this.actions.levels().length,
+      named: this.counts.named,
+      levels: this.counts.levels,
       contentModified: custom.content,
     });
+    const buttons = entries.map((e) => this.button(e, save));
     const screen: Screen = {
       id: 'title',
       title: STR.title,
@@ -198,11 +219,14 @@ export class MainMenu {
       formKeys: true,
       root: page(
         note(STR.menu.tagline, 'k-tag'),
-        well(null, el('div', { class: 'k-stack' }, ...entries.map((e) => this.button(e, save)))),
+        well(null, el('div', { class: 'k-stack' }, ...buttons)),
         audioWell(this.actions),
       ),
     };
     this.frame.show(screen, { stacked: false, paused: !!save?.live });
+    // nothing has the focus when it opens: it starts on the first button that can be pressed, so
+    // Tab goes on from there and Enter presses it
+    buttons.find((b) => !b.disabled)?.focus();
   }
 }
 
@@ -240,11 +264,8 @@ export class PauseMenu {
     this.root.style.display = 'flex';
     const item = (icon: IconName, label: string, run: () => void, cls = '', extra?: string) =>
       actionButton(label, run, { icon, cls, extra });
-    const stack = el(
-      'div',
-      { class: 'k-stack' },
-      item('play', STR.menu.resume, () => this.actions.resume(), 'pri', STR.kit.esc),
-    );
+    const resume = item('play', STR.menu.resume, () => this.actions.resume(), 'pri', STR.kit.esc);
+    const stack = el('div', { class: 'k-stack' }, resume);
     if (!opts.editor)
       stack.append(
         item('save', STR.settings.save, () => this.actions.save()),
@@ -275,6 +296,7 @@ export class PauseMenu {
       root: page(well(null, stack), audioWell(this.actions)),
     };
     this.frame.show(screen, { stacked: false, paused: !opts.editor });
+    resume.focus();
   }
   hide() {
     this.visible = false;

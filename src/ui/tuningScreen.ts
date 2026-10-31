@@ -185,9 +185,12 @@ export class TuningScreen implements Screen {
         field: true,
         onInput: (v) => {
           setRules({ [m.key]: v } as Partial<Rules>);
-          row.classList.toggle('chg', isChanged(rules[m.key] as number, shipped));
+          // the rules may round it (the map size is a multiple of 32): the field shows what is kept
+          const stored = rules[m.key] as number;
+          row.classList.toggle('chg', isChanged(stored, shipped));
           this.setStatus(null);
           this.onChange();
+          return stored;
         },
       }),
       m.hint,

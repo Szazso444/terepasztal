@@ -4234,28 +4234,29 @@ body.title-up
 }
 
 /* ---- Game tuning, the Content editor, the semaphore guide, Credits and the debug panel (PR 12d) ---- */
-/* a slider whose value is typed in a field */
-.k-sl:has(.k-sv) {
-  grid-template-columns: minmax(0, 1fr) 76px;
+/* a slider whose value is a number field: the field has its − and + */
+.k-sl:has(.k-num) {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
-.k-sl > input.k-sv {
-  box-sizing: border-box;
-  width: 100%;
-  height: 22px;
-  padding: 0 6px;
-  border: 1px solid var(--border-dark);
-  background: var(--stone-dark);
-  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.4);
-  color: var(--text);
-  font:
-    600 12px/1 var(--font-body),
-    sans-serif;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
+.k-row .k-sl:has(.k-num) {
+  width: 300px;
 }
-.k-sl > input.k-sv:focus {
-  border-color: var(--amber);
-  outline: none;
+/* the Save tab: the name stays in view, and the saves scroll under it */
+.k-page.sg-pinned {
+  overflow: hidden;
+}
+.k-well.sg-list {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.sg-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
 }
 /* a rule that is not what the shipped rules say */
 .k-row.chg .k-lab > span:first-child {

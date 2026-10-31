@@ -116,8 +116,10 @@ export class SettingsScreen implements Screen {
       savedAt: number | null;
       version: string;
       warning: string | null;
-      /** there is no game to save: the title screen at boot */
+      /** there is no game to save: the title screen at boot, the level editor */
       saveOff: boolean;
+      /** why, as the buttons' tip; the title's reason without it */
+      saveOffWhy?: string;
     },
     /** the game's dialog, for overwrite, delete and import questions */
     private readonly prompt: Confirm,
@@ -211,7 +213,8 @@ export class SettingsScreen implements Screen {
   private saveTab(): HTMLElement {
     const info = this.info();
     this.showAutosave();
-    const off = { disabled: info.saveOff, title: info.saveOff ? STR.settings.saveOff : undefined };
+    const why = info.saveOffWhy ?? STR.settings.saveOff;
+    const off = { disabled: info.saveOff, title: info.saveOff ? why : undefined };
     const left = [
       well(
         STR.settings.thisGame,
@@ -250,7 +253,7 @@ export class SettingsScreen implements Screen {
         buttonRow(
           actionButton(STR.menu.saveAs, () => this.actions.saveAs(), {
             ...off,
-            title: info.saveOff ? STR.settings.saveOff : STR.settings.saveAsOpens,
+            title: info.saveOff ? why : STR.settings.saveAsOpens,
             icon: 'saveas',
           }),
         ),

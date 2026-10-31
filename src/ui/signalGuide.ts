@@ -12,6 +12,8 @@ export class SignalGuideScreen implements Screen {
   readonly title = STR.signals.guideTitle;
   readonly frameSize = 'M';
   readonly icon = 'scroll';
+  /** it is read, not used on the map: the tool in hand stays in hand while it is up */
+  readonly keepsTool = true;
   readonly root = page();
 
   constructor() {

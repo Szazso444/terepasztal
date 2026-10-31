@@ -1470,6 +1470,7 @@ export const STR = {
     save: 'Save',
     load: 'Load',
     saveOff: 'No game is being played yet: Continue or start a new game, then save.',
+    saveOffEditor: 'The level editor has no game to save: save the level from its own panel.',
     saveAsWell: 'Save as',
     nameField: 'Save name',
     nameHint:
@@ -1558,6 +1559,12 @@ export const STR = {
       'A level exported from the level editor; a level with the same id is replaced. Click, then paste (Ctrl+V) or type. Enter ends the typing.',
     importButtonHint: 'Add the level to the list',
     importEmptyHint: 'Paste a level JSON first',
+    /** Asked before a pasted level takes the place of one of the same id. */
+    replaceLevelTitle: 'Replace level',
+    confirmReplaceLevel: (n: string) =>
+      `A level with this id is already in the list ("${n}"). Replace it?`,
+    /** The import could not be kept: storage is full or blocked. */
+    importFailed: 'Could not keep the level (storage full or blocked)',
     levelSize: 'Size',
     levelMap: 'Map',
     levelBlankNote: 'A blank map of grass to paint and build on in the level editor.',
@@ -1758,7 +1765,17 @@ export const STR = {
     resetTitle: 'Discard custom content',
     confirmReset: 'Discard all custom content and reload?',
     apply: 'Apply and reload',
-    applyNote: 'Applying reloads the page; the current game is saved first.',
+    /** The footer's line while nothing is wrong: what Apply does. */
+    applyNote: 'Applying reloads the page; a game in play is saved first.',
+    /** Apply waits: `n` boxes hold a value the form could not read, framed red. */
+    refusedValues: (n: number) =>
+      `${n} value${n === 1 ? '' : 's'} could not be read (the red box${n === 1 ? '' : 'es'}): fix ${n === 1 ? 'it' : 'them'} first`,
+    /** After Import JSON: tables whose shape the editor cannot read were left out. */
+    skipped: (n: number) =>
+      `${n} table${n === 1 ? '' : 's'} left out: not in the shape the editor reads.`,
+    /** In place of a table the editor cannot draw. */
+    badShape:
+      'This table is not in the shape the editor reads. Reset to shipped data, or import a corrected one.',
   },
   train: {
     title: 'Train',

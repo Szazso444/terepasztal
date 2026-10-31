@@ -23,12 +23,24 @@ export function contentTabs(custom: readonly ContentKey[]): TabDef[] {
   ];
 }
 
-/** What the text box brought: the tables it replaced in the draft, or that it was no JSON object. */
-export type ImportResult = { ok: true; tables: ContentKey[] } | { ok: false };
+/**
+ * What the text box brought: the tables it replaced in the draft and the ones left out for their
+ * shape, or that it was no JSON object.
+ */
+export type ImportResult =
+  { ok: true; tables: ContentKey[]; skipped: ContentKey[] } | { ok: false };
+
+/** Does `value` have the shape of the table `like`: a list for a list, an object for an object. */
+function sameShape(value: unknown, like: unknown): boolean {
+  if (Array.isArray(like)) return Array.isArray(value);
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
 
 /**
  * Put the tables a bundle text holds into `draft`, each in place of its own; a key the bundle
- * does not have keeps the draft's table. Text that is not a JSON object changes nothing.
+ * does not have keeps the draft's table, and so does one that is not in the table's shape (a list
+ * where an object stands, a number for a list), which the editor could not draw. Text that is not a
+ * JSON object changes nothing.
  */
 export function importBundle(draft: ContentBundle, text: string): ImportResult {
   let parsed: unknown;
@@ -40,19 +52,29 @@ export function importBundle(draft: ContentBundle, text: string): ImportResult {
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { ok: false };
   const j = parsed as Partial<Record<ContentKey, unknown>>;
   const tables: ContentKey[] = [];
+  const skipped: ContentKey[] = [];
   for (const k of CONTENT_KEYS)
     if (j[k] !== undefined) {
-      (draft as unknown as Record<string, unknown>)[k] = j[k];
-      tables.push(k);
+      if (!sameShape(j[k], draft[k])) skipped.push(k);
+      else {
+        (draft as unknown as Record<string, unknown>)[k] = j[k];
+        tables.push(k);
+      }
     }
-  return { ok: true, tables };
+  return { ok: true, tables, skipped };
 }
 
-/** What the footer says: Apply waits while the draft has problems, and the note says which. */
+/**
+ * What the footer says: Apply waits while a box holds a value the form refused (the draft has
+ * none of it, so Apply would not do what the screen shows) and while the draft has problems, and
+ * the note says which.
+ */
 export function applyState(
   problems: readonly string[],
   summary: (p: string[]) => string,
+  refused = 0,
 ): { disabled: boolean; note: string } {
+  if (refused > 0) return { disabled: true, note: STR.content.refusedValues(refused) };
   return problems.length
     ? { disabled: true, note: summary([...problems]) }
     : { disabled: false, note: STR.content.applyNote };

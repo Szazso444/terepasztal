@@ -3,7 +3,7 @@ import ts from 'typescript';
 import { describe, it, expect } from 'vitest';
 import { STR } from '../strings';
 import type { LevelData } from '../world/level';
-import { LEVEL_SIZES, levelIdOf, levelRows, newLevelRequest } from './levelsScreen';
+import { LEVEL_SIZES, levelIdOf, levelOfText, levelRows, newLevelRequest } from './levelsScreen';
 import { startTip } from './newGameScreen';
 
 const level = (over: Partial<LevelData> = {}): LevelData => ({
@@ -76,9 +76,17 @@ describe('Import level', () => {
     expect(levelIdOf(JSON.stringify(level({ id: 'lvl_x' })))).toBe('lvl_x');
   });
 
-  it('has no id for text that is no JSON object or carries none', () => {
-    for (const text of ['', 'not json', '5', 'null', '[]', '{}', '{"id":3}'])
+  it('has no id for text that is no JSON object, no level, or carries none', () => {
+    for (const text of ['', 'not json', '5', 'null', '[]', '{}', '{"id":3}', '{"id":"x"}'])
       expect(levelIdOf(text), text).toBeNull();
+  });
+
+  it('reads a level by the rule the game stores one by, and nothing less', () => {
+    const l = level({ id: 'lvl_y' });
+    expect(levelOfText(JSON.stringify(l))?.id).toBe('lvl_y');
+    expect(levelOfText(JSON.stringify({ ...l, terrain: 5 }))).toBeNull();
+    expect(levelOfText(JSON.stringify({ ...l, start: null }))).toBeNull();
+    expect(levelOfText(JSON.stringify({ ...l, track: 'none' }))).toBeNull();
   });
 });
 

@@ -16,10 +16,10 @@ import type { FrameTabs, Screen } from './modal';
 import { slotRows, textLines, type Confirm, type SlotActions, type Track } from './saveRows';
 import {
   SLOT_NAME_MAX,
-  canSaveHere,
   continueText,
   loadEffect,
   saveNameState,
+  saveOffReason,
   savedGamesTabs,
   type LoadEffect,
   type ReplaceSituation,
@@ -40,6 +40,8 @@ export interface SavedGamesActions extends SlotActions {
   situation(): ReplaceSituation;
   /** the name offered, "Day N · seed" */
   defaultName(): string;
+  /** is there a named save of this name now: asked at the moment of saving, not read from the list */
+  exists(name: string): boolean;
   /** store the game under a name and say so; false when storage refused it */
   saveAs(name: string): boolean;
 }
@@ -114,8 +116,12 @@ export class SavedGamesScreen implements Screen {
   private get situation(): ReplaceSituation {
     return (this.where ??= this.actions.situation());
   }
+  /** why the Save tab is off here, null where it is on */
+  private get saveOff() {
+    return saveOffReason(this.situation);
+  }
   private get canSave() {
-    return canSaveHere(this.situation);
+    return this.saveOff === null;
   }
   private get shown(): SavedTab {
     return this.tab === 'save' && this.canSave ? 'save' : 'load';
@@ -135,7 +141,7 @@ export class SavedGamesScreen implements Screen {
     }
   }
   frameTabs(): FrameTabs {
-    const tabs: TabDef[] = savedGamesTabs(this.canSave, this.slots.length).map((t) => ({
+    const tabs: TabDef[] = savedGamesTabs(this.saveOff, this.slots.length).map((t) => ({
       id: t.id,
       label: t.label,
       count: t.count,
@@ -200,8 +206,10 @@ export class SavedGamesScreen implements Screen {
   private async save() {
     const s = this.state();
     if (!s.canSave || !this.canSave) return;
+    // asked of the store now: another tab of the game may have written that name since the list was read
+    const replaces = s.clash || this.actions.exists(s.name);
     if (
-      s.clash &&
+      replaces &&
       !(await this.prompt.confirm(STR.saves.overwriteTitle, STR.saves.confirmOverwrite(s.name), {
         yes: STR.prompt.replace,
         danger: true,
@@ -245,10 +253,11 @@ export class SavedGamesScreen implements Screen {
         el('div', { class: 'k-inrow' }, this.name.root),
         this.nameNote,
       ),
+      // the list scrolls in its own well: the name and what it replaces stay in view
       well(
-        { title: STR.savedGames.named, right: String(slots.length) },
+        { title: STR.savedGames.named, right: String(slots.length), cls: 'sg-list' },
         slots.length ? note(STR.savedGames.pickNote) : null,
-        ...rows,
+        el('div', { class: 'sg-scroll' }, ...rows),
       ),
     ];
   }
@@ -313,6 +322,7 @@ export class SavedGamesScreen implements Screen {
     this.read();
     this.clocks = [];
     this.pickRows = [];
+    this.root.classList.toggle('sg-pinned', this.shown === 'save');
     this.root.replaceChildren(...(this.shown === 'save' ? this.saveTab() : this.loadTab()));
   }
 }
