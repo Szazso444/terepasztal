@@ -576,6 +576,8 @@ html[lang='hu'] .panel-name {
 
 /* ---- hint bar ---- */
 #hint {
+  /* its parts stand three spaces apart */
+  white-space: pre-wrap;
   position: absolute;
   left: 8px;
   bottom: 8px;
@@ -972,6 +974,8 @@ html[lang='hu'] .panel-name {
 }
 /* a refusal is read whole: it wraps, and the bar grows up from its bottom edge */
 .tb-status {
+  /* its parts stand three spaces apart */
+  white-space: pre-wrap;
   padding: 3px 8px;
   font-size: 11px;
   color: var(--text-dim);
