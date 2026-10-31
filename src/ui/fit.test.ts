@@ -19,7 +19,7 @@ describe('topbarCompact', () => {
   it('tightens when the bar overflows', () => {
     expect(topbarCompact(box(1418, 1278), [fits, fits])).toBe(true);
   });
-  it('tightens when the screen buttons or the weather text would be cut, though the bar fits', () => {
+  it('tightens when the menu bar or the weather text would be cut, though the bar fits', () => {
     expect(topbarCompact(box(1278, 1278), [box(420, 300), fits])).toBe(true);
     expect(topbarCompact(box(1278, 1278), [fits, box(96, 20)])).toBe(true);
   });

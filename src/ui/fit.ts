@@ -15,9 +15,9 @@ export const needsCompact = (scrollWidth: number, clientWidth: number) => scroll
 
 /**
  * Whether the top bar takes its compact spacing, from boxes measured with compact off: the bar
- * itself, and the boxes that give way when it is short of room (the screen buttons, the weather
- * text), each cut once its content is wider than it is. A hidden box measures 0 and fits. Null
- * while the bar is not laid out (hidden, or before its first layout): keep the last answer.
+ * itself, and the boxes that give way when it is short of room (the menu bar, the weather text),
+ * each cut once its content is wider than it is. A hidden box measures 0 and fits. Null while the
+ * bar is not laid out (hidden, or before its first layout): keep the last answer.
  */
 export function topbarCompact(bar: Measured, giving: readonly Measured[]): boolean | null {
   if (!bar.clientWidth) return null;
@@ -26,7 +26,7 @@ export function topbarCompact(bar: Measured, giving: readonly Measured[]): boole
 
 /**
  * How tight the top bar's spacing is: 0 normal, 1 compact (tighter spacing, the weather text in
- * its toggle's tooltip), 2 compact without the era's name as well.
+ * its menu row's tooltip), 2 compact without the era's name as well.
  */
 export type CompactLevel = 0 | 1 | 2;
 
