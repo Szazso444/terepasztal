@@ -8,9 +8,10 @@
  * it that is today's shipped table or any past shipped version of it (`PAST_SHIPPED`) is an
  * untouched copy and is dropped without a word; only a table the player edited is converted:
  * stamped with today's table, checked like any other and stored in the per-table format, which is
- * how the conversion runs once. A stored contracts table made while contracts paid tickets loses
- * its ticket fields and applies (`TICKETED_CONTRACTS`). Overrides are applied once, here, at module
- * load so every consumer sees one consistent bundle for the session. Editing content therefore takes effect on
+ * how the conversion runs once. A stored contracts table made from the last table that paid
+ * tickets loses their fields and applies, until that table next changes (`ticketedEdit`). Overrides
+ * are applied once, here, at module load so every consumer sees one consistent bundle for the
+ * session. Editing content therefore takes effect on
  * the next page load (the editor reloads for you).
  */
 import locoJson from './locomotives.json';
@@ -581,14 +582,22 @@ function isUntouchedCopy(key: ContentKey, data: unknown) {
 }
 
 /**
- * The stamp the contracts table shipped under while contracts paid tickets. That table differs
- * from today's by its ticket fields alone, so a table stored with this stamp is an edit of today's
- * table once they are gone (`withoutTicketFields`), and is not stale.
+ * The stamps of the contracts table on either side of the tickets leaving: the last table with
+ * their fields, and the first without, which differs from it by those fields alone. A table stored
+ * with the first stamp is an edit of the second once they are gone (`withoutTicketFields`), and is
+ * not stale. That holds only while the second is what ships: the next change to the table makes
+ * such an edit stale like any other (`contentStamp`).
  */
 const TICKETED_CONTRACTS = '39fa427f';
+const UNTICKETED_CONTRACTS = 'd458f41d';
+
+/** Was this stored contracts table made from the table that ships today, ticket fields aside? */
+function ticketedEdit(key: ContentKey, stamp: string) {
+  return key === 'contracts' && stamp === TICKETED_CONTRACTS && STAMP[key] === UNTICKETED_CONTRACTS;
+}
 
 /** A contracts table without the ticket fields of its templates and rarities. */
-function withoutTicketFields(data: unknown): unknown {
+export function withoutTicketFields(data: unknown): unknown {
   if (!isObj(data)) return data;
   const without = (list: unknown, field: string): unknown =>
     Array.isArray(list)
@@ -1059,7 +1068,7 @@ function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport 
       if (!isObj(e) || typeof e.stamp !== 'string' || e.data === undefined) {
         const problem = `${k}: stored entry needs a stamp and data`;
         setAside(k, 'invalid', [problem], problem);
-      } else if (k === 'contracts' && e.stamp === TICKETED_CONTRACTS) fromTicketedBuild(k, e.data);
+      } else if (ticketedEdit(k, e.stamp)) fromTicketedBuild(k, e.data);
       else if (e.stamp !== STAMP[k])
         setAside(k, 'stale', [], `made for shipped table ${e.stamp}, which is now ${STAMP[k]}`);
       else candidates.set(k, e.data);

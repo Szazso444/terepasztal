@@ -724,7 +724,11 @@ describe('a stored gacha table, from before the gacha left the game', () => {
 });
 
 describe('a stored contracts edit, from before the tickets left', () => {
-  /** The stamp of the last contracts table that shipped with its ticket fields. */
+  /**
+   * The stamp of the last contracts table that shipped with its ticket fields. The next change to
+   * `contracts.json` ends all this: such an edit is stale, as the test of that says, and the
+   * branch in `content.ts` and the tests here that apply one can go with it.
+   */
   const STAMP = '39fa427f';
   /** That table: today's with the fields it held. */
   function withTickets() {
@@ -794,6 +798,24 @@ describe('a stored contracts edit, from before the tickets left', () => {
     const { applied, setAside } = mod.contentOverrideReport();
     expect(applied).toEqual([]);
     expect(setAside.map((s) => [s.key, s.reason])).toEqual([['contracts', 'stale']]);
+  });
+
+  it('goes stale like any other edit once the shipped table changes again', async () => {
+    const changed = clone(shipped.DEFAULT_CONTENT.contracts);
+    changed.failFine += 1;
+    vi.doMock('./contracts.json', () => ({ default: changed }));
+    try {
+      const edited = withTickets();
+      edited.cancelFine = 0.5;
+      const mod = await load(stamped({ contracts: edited }, STAMP));
+      const { applied, setAside } = mod.contentOverrideReport();
+      expect(applied).toEqual([]);
+      expect(setAside.map((s) => [s.key, s.reason])).toEqual([['contracts', 'stale']]);
+      expect(mod.content.contracts.cancelFine).toBe(changed.cancelFine);
+      expect(warnedAbout('contracts')).toBe(true);
+    } finally {
+      vi.doUnmock('./contracts.json');
+    }
   });
 
   it('in the old whole-bundle format: an edit converts without the ticket fields', async () => {
