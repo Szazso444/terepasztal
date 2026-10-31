@@ -145,9 +145,6 @@ function setUp(c) {
   const w = simWorld({ size: c.map, terrain: 'grass', seed: 4242 });
   w.builder.free = true;
   for (let i = 0; i < w.regions.unlocked.length; i++) w.regions.own(i);
-  w.stock.add('coal', 1e7, 1e9);
-  w.stock.add('water', 1e7, 1e9);
-  w.stock.add('wood', 1e7, 1e9);
   w.economy.money = 1e9;
   const L = c.route;
   // the fixture recomputes the whole map's rail beds on every placed tile: lay first, then once
