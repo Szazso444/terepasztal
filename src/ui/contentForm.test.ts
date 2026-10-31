@@ -274,7 +274,7 @@ function membersOf(type: ts.TypeNode | undefined, where: string): readonly ts.Ty
     // except the fields a rendered model brings at load, which no form edits
     const inherited = decl?.heritageClauses?.flatMap((h) => h.types) ?? [];
     if (inherited.some((t) => t.expression.getText() !== 'RenderedModelFields'))
-      throw new Error(`${where}: ${decl.name.text} extends another type, whose fields go unread`);
+      throw new Error(`${where}: ${decl?.name.text} extends another type, whose fields go unread`);
     if (decl) return decl.members;
   }
   throw new Error(`${where} is not an interface or object type of content.ts`);

@@ -517,4 +517,3 @@ describe('a pinned steam engine', () => {
     expect(wheels).toBeLessThan(0.1);
   });
 });
-

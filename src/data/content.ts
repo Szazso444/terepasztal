@@ -92,6 +92,10 @@ export interface RenderedModelFields {
    * that box (body.ts swingMesh).
    */
   boxes?: Record<string, [number, number, number, number]>;
+  /** where smoke leaves it: the part, tiles ahead of that part's centre, pixels above the rail */
+  smoke?: { part: PartKind; along: number; up: number }[];
+  /** its headlamps: the part, tiles ahead of and to the left of that part's centre, pixels above the rail */
+  lamps?: { part: PartKind; along: number; across: number; up: number }[];
 }
 
 export interface LocoDef extends RenderedModelFields {
@@ -118,10 +122,6 @@ export interface LocoDef extends RenderedModelFields {
   /** electric only: power units per tile */
   powerPerTile?: number;
   starter?: boolean;
-  /** where smoke leaves it: the part, tiles ahead of that part's centre, pixels above the rail */
-  smoke?: { part: PartKind; along: number; up: number }[];
-  /** its headlamps: the part, tiles ahead of and to the left of that part's centre, pixels above the rail */
-  lamps?: { part: PartKind; along: number; across: number; up: number }[];
   /**
    * Withdrawn from the game: no banner, starter kit or workshop hands out a new one. The entry
    * stays in the table so copies a player already owns keep loading and running.
