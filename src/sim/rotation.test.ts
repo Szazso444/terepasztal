@@ -214,7 +214,6 @@ describe('a save from before rotations', () => {
       trains: [],
       contracts: { contracts: [] },
       inventory: { items: [] },
-      gacha: {},
       camera: { x: 0, y: 0, zoomIndex: 2 },
       lastDay: 0,
     };

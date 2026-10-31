@@ -42,6 +42,14 @@ describe('bringing a bundle in as text', () => {
     expect(read).toEqual({ ok: true, tables: ['cargo', 'decor'], skipped: [] });
   });
 
+  it('passes over the gacha table of a bundle exported before the gacha left', () => {
+    const draft = clone(content);
+    const wagons = [{ ...draft.wagons[0], name: 'Imported' }];
+    const text = JSON.stringify({ wagons, gacha: { banners: [] } });
+    expect(importBundle(draft, text)).toEqual({ ok: true, tables: ['wagons'], skipped: [] });
+    expect('gacha' in draft).toBe(false);
+  });
+
   it('refuses text that is no JSON object, and changes nothing', () => {
     for (const text of ['', 'not json', '{', '5', 'null', '"wagons"', '[1,2]']) {
       const draft = clone(content);

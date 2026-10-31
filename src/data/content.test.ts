@@ -206,7 +206,6 @@ describe('a bad stored override never stops the load', () => {
     ['track', {}],
     ['houses', 'x'],
     ['cargo', [null]],
-    ['gacha', { banners: [{ id: 'b', pool: null }], rates: null }],
   ] as [ContentKey, unknown][])(
     'current-stamped %s table of the wrong shape: shipped tables, set aside as invalid',
     async (key, data) => {
@@ -270,8 +269,6 @@ describe('validateContent', () => {
       (b) => (b.stations.levels.capacity = b.stations.levels.capacity.slice(0, -1)),
       (b) => ((b.buildings[0] as unknown as Table).recipe = null),
       (b) => ((b.buildings[0].recipe as unknown as Table).in = 'coal'),
-      (b) => ((b.gacha.banners[0] as unknown as Table).pool = null),
-      (b) => ((b.gacha as unknown as Table).rates = { N: '1' }),
       (b) => ((b.track as unknown as Table).pieces = null),
       (b) => ((b.track.pieces as unknown as Table)[Object.keys(b.track.pieces)[0]] = null),
       (b) => ((b.contracts as unknown as Table).templates = null),
@@ -431,16 +428,13 @@ describe('applying stored tables', () => {
   });
 
   it('applies tables that only validate together', async () => {
-    const locos = clone(shipped.DEFAULT_CONTENT.locomotives);
-    locos.push({ ...locos[0], id: 'test_loco', starter: false });
-    const gacha = clone(shipped.DEFAULT_CONTENT.gacha);
-    gacha.banners[0].pool.push('test_loco');
-    const mod = await load(stamped({ locomotives: locos, gacha }));
-    expect(mod.contentOverrideReport()).toEqual({
-      applied: ['locomotives', 'gacha'],
-      setAside: [],
-    });
-    expect(mod.content.gacha.banners[0].pool).toContain('test_loco');
+    const cargo = clone(shipped.DEFAULT_CONTENT.cargo);
+    cargo.push({ ...cargo[0], id: 'test_cargo' });
+    const stations = clone(shipped.DEFAULT_CONTENT.stations);
+    stations.defs[0].accepts.push('test_cargo');
+    const mod = await load(stamped({ cargo, stations }));
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['cargo', 'stations'], setAside: [] });
+    expect(mod.content.stations.defs[0].accepts).toContain('test_cargo');
   });
 
   it('sets aside a table that breaks a shipped one and keeps the tables valid without it', async () => {
@@ -657,6 +651,75 @@ describe('an override in the old whole-bundle format', () => {
       expect(rewriteWarned()).toBe(true);
       expect(storage.getItem(KEY)).toBe(JSON.stringify(old));
     });
+  });
+});
+
+describe('a stored gacha table, from before the gacha left the game', () => {
+  /** A table the old editor stored; nothing today checks it, so it may name anything. */
+  const gacha = { rates: { N: 2 }, banners: [{ id: 'gone', tier: 0, pool: ['no_such_model'] }] };
+  const STAMP = 'fc9d4ee3';
+
+  it('is no table of the bundle: not shipped, listed, checked or hashed', () => {
+    expect(shipped.CONTENT_KEYS).not.toContain('gacha');
+    expect('gacha' in shipped.DEFAULT_CONTENT).toBe(false);
+    expect('gacha' in PAST_SHIPPED).toBe(false);
+    expect(shipped.validateContent(clone(shipped.DEFAULT_CONTENT))).toEqual([]);
+  });
+
+  it.each([
+    ['a table', { stamp: STAMP, data: gacha }],
+    ['a table stamped by no build', { stamp: 'x', data: gacha }],
+    ['a table with no stamp', { data: gacha }],
+    ['malformed data', { stamp: STAMP, data: null }],
+    ['no entry at all', 'x'],
+  ])('alone in the store as %s: the shipped tables load, without a word', async (_, entry) => {
+    const mod = await load({ format: 2, tables: { gacha: entry } });
+    expect(mod.content).toEqual(shipped.content);
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(mod.contentIsCustom()).toBe(false);
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it('beside an edited table: the edit applies and nothing is set aside', async () => {
+    const stored = stamped({ locomotives: editedLocomotives() });
+    const mod = await load({
+      ...stored,
+      tables: { ...stored.tables, gacha: { stamp: STAMP, data: gacha } },
+    });
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['locomotives'], setAside: [] });
+    expect(mod.content.locomotives[0].speed).toBe(shipped.content.locomotives[0].speed + 1);
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it('holds Apply up for nothing, and the next Apply takes it out of storage', async () => {
+    const mod = await load({ format: 2, tables: { gacha: { stamp: STAMP, data: gacha } } });
+    const draft = clone(mod.sourceContent);
+    expect(mod.validateContent(draft)).toEqual([]);
+    expect(mod.changedTables(draft)).toEqual({});
+    draft.locomotives[0].speed += 1;
+    expect(mod.validateContent(draft)).toEqual([]);
+    expect(mod.writeContentOverrides(mod.changedTables(draft))).toBe(true);
+    const stored = JSON.parse(localStorage.getItem(KEY)!) as { tables: Table };
+    expect(Object.keys(stored.tables)).toEqual(['locomotives']);
+  });
+
+  it('in the old whole-bundle format: dropped with the conversion, without a warning', async () => {
+    const mod = await load({
+      ...oldBundle((b) => void (b.locomotives[0].speed += 1)),
+      gacha,
+    });
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['locomotives'], setAside: [] });
+    expect(console.warn).not.toHaveBeenCalled();
+    const stored = JSON.parse(localStorage.getItem(KEY)!) as { format: number; tables: Table };
+    expect(stored.format).toBe(2);
+    expect(Object.keys(stored.tables)).toEqual(['locomotives']);
+  });
+
+  it('alone in the old whole-bundle format: the shipped tables load, without a word', async () => {
+    const mod = await load({ gacha });
+    expect(mod.content).toEqual(shipped.content);
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(console.warn).not.toHaveBeenCalled();
   });
 });
 

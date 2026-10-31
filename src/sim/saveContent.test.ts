@@ -136,7 +136,6 @@ function oldSave(track: TrackGraph): SaveGame {
       ],
       nextUid: 8,
     },
-    gacha: {},
     camera: { x: 0, y: 0, zoomIndex: 2 },
     lastDay: 0,
     decor: [
@@ -629,7 +628,6 @@ function buildSave(spec: SaveSpec): SaveGame {
       completedToday: 0,
     },
     inventory: { items, nextUid: uid },
-    gacha: {},
     camera: { x: 0, y: 0, zoomIndex: 2 },
     lastDay: 0,
     decor: spec.decor.map((id, i) => [i, 8, id, 0]),

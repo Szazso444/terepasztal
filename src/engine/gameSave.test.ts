@@ -364,7 +364,6 @@ describe('Game.loadSlot, Game.loadSave and Game.importSave', () => {
     trains: [],
     contracts: { contracts: [] },
     inventory: { items: [] },
-    gacha: {},
     camera: { x: 0, y: 0, zoomIndex: 2 },
     lastDay: 0,
   });
@@ -1112,7 +1111,6 @@ function gameOn(w: SimWorld): Game {
     fleet: w.fleet,
     people: w.people,
     contracts: w.contracts,
-    gacha: w.gacha,
     crafting: w.crafting,
     contractJobs: w.contractJobs,
     trade: w.trade,

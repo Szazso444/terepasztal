@@ -35,7 +35,7 @@ export type WorldSpec =
     }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 23;
+export const SAVE_VERSION = 24;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -89,7 +89,6 @@ export interface SaveParts {
   trains: unknown[];
   contracts: unknown;
   inventory: unknown;
-  gacha: unknown;
   camera: { x: number; y: number; zoomIndex: number };
   lastDay: number;
   /** v2: signals, services and houses [x, y, id, rot] (rot below the decor's `rotations`) */
@@ -147,7 +146,6 @@ type SaveCore =
   | 'trains'
   | 'contracts'
   | 'inventory'
-  | 'gacha'
   | 'camera'
   | 'lastDay';
 
@@ -160,7 +158,10 @@ export interface SaveGame extends Pick<SaveParts, SaveCore>, Partial<Omit<SavePa
    * alone: never read, never written, and an old file's copy goes on its next save.
    */
   settings?: Settings;
-  /** set on load when the file was written by another format version (not persisted) */
+  /**
+   * set on load when the file was written by another format version and the player is told so: a
+   * file only quiet steps upgraded (`Migration.quiet`) has none (not persisted)
+   */
   loadedFrom?: number;
   /** what the migration steps filled in (not persisted) */
   migrationNotes?: string[];
@@ -267,8 +268,13 @@ export const DEFAULT_SETTINGS: Settings = {
 /** One step of the migration chain: brings a save from `from` to `from + 1`. */
 export interface Migration {
   from: number;
-  /** what the step fills in with defaults, shown to the player */
+  /** what the step fills in with defaults, shown to the player unless the step is `quiet` */
   note: string;
+  /**
+   * The player could not tell the step ran: nothing in the game changed for them. It adds no note,
+   * and a file only such steps stand between loads and lists as one of this build's.
+   */
+  quiet?: boolean;
   run(j: SaveGame): void;
 }
 /** The station kinds that were depots when the stores replaced the global stockpile (v21). */
@@ -664,7 +670,23 @@ export const MIGRATIONS: Migration[] = [
       for (const t of j.trains) if (isRecord(t)) t.colour = t.colour ?? 0;
     },
   },
+  {
+    from: 23,
+    note: 'the gacha left the game, crafting having replaced it: its section is dropped',
+    quiet: true,
+    run: (j) => {
+      delete j.gacha;
+    },
+  },
 ];
+/**
+ * The oldest format that loads without a word: only quiet steps (`Migration.quiet`) stand between
+ * it and this build, so nothing is told about the file and no list marks it as another format.
+ */
+export const SAVE_QUIET_VERSION = MIGRATIONS.reduce(
+  (oldest, m) => (m.quiet ? oldest : Math.max(oldest, m.from + 1)),
+  SAVE_MIN_VERSION,
+);
 /** Every field of `SaveParts`, once: leaving one out, or naming one it lacks, fails to compile. */
 const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
   seed: true,
@@ -675,7 +697,6 @@ const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
   trains: true,
   contracts: true,
   inventory: true,
-  gacha: true,
   camera: true,
   lastDay: true,
   decor: true,
@@ -961,11 +982,14 @@ export function migrate(j: SaveGame): SaveGame {
       continue;
     }
     step.run(j);
-    const note = LANGUAGE === 'hu' ? (HU_MIGRATIONS[step.from] ?? step.note) : step.note;
-    notes.push(`v${step.from}→v${step.from + 1}: ${note}`);
+    if (!step.quiet) {
+      const note = LANGUAGE === 'hu' ? (HU_MIGRATIONS[step.from] ?? step.note) : step.note;
+      notes.push(`v${step.from}→v${step.from + 1}: ${note}`);
+    }
     j.version = step.from + 1;
   }
-  if (from !== SAVE_VERSION) {
+  // a file from a newer build says so; an older one only when a step has something to tell
+  if (from > SAVE_VERSION || notes.length) {
     j.loadedFrom = from;
     j.migrationNotes = notes;
   }

@@ -535,7 +535,6 @@ describe('a pump a save holds where it may no longer be placed', () => {
       trains: [],
       contracts: { contracts: [] },
       inventory: { items: [] },
-      gacha: {},
       camera: { x: 0, y: 0, zoomIndex: 2 },
       lastDay: 0,
     };

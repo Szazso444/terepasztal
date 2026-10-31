@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
+  SAVE_QUIET_VERSION,
   SAVE_VERSION,
   SAVE_MIN_VERSION,
   SAVE_KEY,
@@ -107,7 +108,6 @@ function fullParts(): SaveParts {
     trains: [{ id: 1 }],
     contracts: { contracts: [], rng: 42 },
     inventory: { items: [], nextUid: 1 },
-    gacha: { pity: 0 },
     camera: { x: 10, y: 20, zoomIndex: 3 },
     lastDay: 42,
     decor: [[5, 6, 'signal', 1]],
@@ -254,7 +254,6 @@ const DECLARED: Record<keyof Declared<SaveGame>, true> = {
   trains: true,
   contracts: true,
   inventory: true,
-  gacha: true,
   camera: true,
   lastDay: true,
   decor: true,
@@ -338,7 +337,7 @@ describe('migrate', () => {
     const j = migrate(oldestSave());
     expect(j.version).toBe(SAVE_VERSION);
     expect(j.loadedFrom).toBe(SAVE_MIN_VERSION);
-    expect(j.migrationNotes).toHaveLength(SAVE_VERSION - SAVE_MIN_VERSION);
+    expect(j.migrationNotes).toHaveLength(MIGRATIONS.filter((m) => !m.quiet).length);
     expect(j.migrationNotes?.[0]).toContain('v1→v2');
     // Nothing may be left undone by the steps that promise a default.
     expect(j.decor).toEqual([]);
@@ -3418,13 +3417,16 @@ describe('readSaveText, for any text', () => {
         const file = fileIn(raw);
         const from = fromVersion(file.version);
         expect(save.version).toBe(Math.max(from, SAVE_VERSION));
-        expect(save.loadedFrom).toBe(from === SAVE_VERSION ? undefined : from);
+        // only a file some step has something to tell about says where it came from
+        const told = from < SAVE_QUIET_VERSION || from > SAVE_VERSION;
+        expect(save.loadedFrom).toBe(told ? from : undefined);
         // the world a save describes is of the save's own seed, and the seed is a number
         if (save.world) expect(save.world.seed).toBe(save.seed);
-        if (from < SAVE_VERSION) {
-          expect(save.migrationNotes).toHaveLength(SAVE_VERSION - from);
+        if (told && from < SAVE_VERSION) {
+          const steps = MIGRATIONS.filter((m) => m.from >= from && !m.quiet);
+          expect(save.migrationNotes).toHaveLength(steps.length);
           save.migrationNotes!.forEach((note, i) =>
-            expect(note.startsWith(`v${from + i}→v${from + i + 1}: `), note).toBe(true),
+            expect(note.startsWith(`v${steps[i].from}→v${steps[i].from + 1}: `), note).toBe(true),
           );
         }
         for (const key of Object.keys(save))

@@ -198,7 +198,6 @@ function partsOf(w: SimWorld, step: SimStep, camera: SaveParts['camera']): SaveP
     contracts: w.contracts.toJSON(),
     trade: w.trade.toJSON(),
     inventory: w.inventory.toJSON(),
-    gacha: w.gacha.toJSON(),
     crafting: w.crafting.toJSON(),
     camera,
     lastDay: step.lastDay,

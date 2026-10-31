@@ -18,7 +18,6 @@ import cargoJson from './cargo.json';
 import stationJson from './stations.json';
 import contractJson from './contracts.json';
 import decorJson from './decor.json';
-import gachaJson from './gacha.json';
 import trackJson from './track.json';
 import buildingJson from './buildings.json';
 import craftingJson from './crafting.json';
@@ -85,8 +84,8 @@ export interface LocoDef {
   powerPerTile?: number;
   starter?: boolean;
   /**
-   * Withdrawn from the game: no banner, starter kit or workshop hands out a new one. The entry
-   * stays in the table so copies a player already owns keep loading and running.
+   * Withdrawn from the game: neither the starter kit nor the workshop hands out a new one. The
+   * entry stays in the table so copies a player already owns keep loading and running.
    */
   retired?: boolean;
   /**
@@ -389,21 +388,6 @@ export interface HouseConfig {
   /** newcomers when the first train reaches the town */
   bonusFirstTrain: number;
 }
-export interface Banner {
-  id: string;
-  name: string;
-  tier: number;
-  pool: string[];
-}
-export interface GachaConfig {
-  rates: Record<Rarity, number>;
-  pity: number;
-  tenPullGuarantee: string;
-  pullCost: number;
-  levelCap: number;
-  statPerLevel: number;
-  banners: Banner[];
-}
 export interface TrackConfig {
   pieces: Record<string, { name: string; cost: Cost; rotations: number }>;
   terrainCost: Record<string, number>;
@@ -467,7 +451,6 @@ export interface ContentBundle {
   contracts: ContractConfig;
   decor: DecorDef[];
   buildings: BuildingDef[];
-  gacha: GachaConfig;
   track: TrackConfig;
   crafting: CraftingConfig;
   houses: HouseConfig;
@@ -481,7 +464,6 @@ export const CONTENT_KEYS: ContentKey[] = [
   'contracts',
   'decor',
   'buildings',
-  'gacha',
   'track',
   'crafting',
   'houses',
@@ -515,7 +497,6 @@ const SHIPPED: Record<ContentKey, () => unknown> = {
   contracts: () => contractJson,
   decor: () => decorJson,
   buildings: () => [...buildingJson, ...buildingFullJson],
-  gacha: () => gachaJson,
   track: () => trackJson,
   crafting: () => craftingJson,
   houses: () => houseJson,
@@ -733,21 +714,9 @@ function idSet(v: unknown) {
   if (Array.isArray(v)) for (const x of v) if (isObj(x) && typeof x.id === 'string') out.add(x.id);
   return out;
 }
-/** Ids of the rows a list table marks `retired` (none when it is malformed). */
-function retiredIdSet(v: unknown) {
-  const out = new Set<string>();
-  if (Array.isArray(v))
-    for (const x of v)
-      if (isObj(x) && typeof x.id === 'string' && x.retired === true) out.add(x.id);
-  return out;
-}
 
 interface Refs {
   cargo: Set<string>;
-  locos: Set<string>;
-  wagons: Set<string>;
-  /** locomotives and wagons withdrawn from the game: defined, but nothing may hand one out */
-  retired: Set<string>;
 }
 /**
  * One table's checks. They take the table as unknown data and never assume its shape. A problem
@@ -882,31 +851,6 @@ const CHECKS: Record<ContentKey, Check> = {
           out.push(`building ${bd.id}: unknown output "${k}"`);
     }
   },
-  gacha(t, ref, out) {
-    if (!isObj(t)) {
-      out.push('gacha: missing configuration');
-      return;
-    }
-    for (const bn of rows<Banner>(t.banners, 'gacha banners', out)) {
-      if (!Array.isArray(bn.pool) || !bn.pool.length) out.push(`banner ${bn.id}: empty pool`);
-      else {
-        for (const id of bn.pool)
-          if (!ref.locos.has(id) && !ref.wagons.has(id))
-            out.push(`banner ${bn.id}: unknown item "${id}"`);
-        // a pool may still list a retired model (pulls skip it), but something must be left
-        if (bn.pool.every((id) => ref.retired.has(id)))
-          out.push(`banner ${bn.id}: every item in the pool is retired`);
-      }
-    }
-    const rates = isObj(t.rates) ? Object.values(t.rates) : null;
-    if (!rates || rates.some((v) => typeof v !== 'number'))
-      out.push('gacha: rates must be numbers');
-    else {
-      const rateSum = (rates as number[]).reduce((a, v) => a + v, 0);
-      if (!(Math.abs(rateSum - 1) <= 0.01))
-        out.push(`gacha rates sum to ${rateSum.toFixed(2)}, expected 1`);
-    }
-  },
   track(t, _ref, out) {
     const pieces = isObj(t) ? t.pieces : undefined;
     if (!isObj(pieces)) {
@@ -979,12 +923,7 @@ function failure(e: unknown) {
 
 /** Problems per table; a check that throws becomes a problem of its own table. */
 function tableProblems(b: ContentBundle): Map<ContentKey, string[]> {
-  const ref: Refs = {
-    cargo: idSet(b.cargo),
-    locos: idSet(b.locomotives),
-    wagons: idSet(b.wagons),
-    retired: new Set([...retiredIdSet(b.locomotives), ...retiredIdSet(b.wagons)]),
-  };
+  const ref: Refs = { cargo: idSet(b.cargo) };
   const found = new Map<ContentKey, string[]>();
   for (const k of CONTENT_KEYS) {
     const out: string[] = [];
@@ -1212,7 +1151,6 @@ function translated(b: ContentBundle): ContentBundle {
   over(b.stations.defs, d.stations.defs, HU_NAMES.stations);
   over(b.buildings, d.buildings, HU_NAMES.buildings);
   over(b.decor, d.decor, HU_NAMES.decor);
-  over(b.gacha.banners, d.gacha.banners, HU_NAMES.banners);
   over(b.contracts.templates, d.contracts.templates, HU_NAMES.contractTemplates);
   over(b.contracts.rarities, d.contracts.rarities, HU_NAMES.contractRarities);
   const pieces: Texts = HU_NAMES.trackPieces;

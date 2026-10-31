@@ -148,7 +148,6 @@ function partsOf(world: SaveParts['world'], supply: SupplyMode = 'simple'): Save
     trains: [],
     contracts: { contracts: [] },
     inventory: { items: [], nextUid: 1 },
-    gacha: {},
     camera: { x: 0, y: 0, zoomIndex: 2 },
     lastDay: 3,
     decor: [],

@@ -92,7 +92,6 @@ import {
 import { decorOffset, type Decor } from './sim/build';
 import { wrapRotation } from './sim/rotation';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
-import { validateBanners } from './gacha/gacha';
 import { Dir, DIRS, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
 import { audio, sfx } from './engine/audio';
 import {
@@ -126,7 +125,6 @@ import { Train as TrainClass, resetTrainIds } from './sim/trains';
 import { pieceFrame } from './world/track';
 import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
-import { Gacha } from './gacha/gacha';
 import { Crafting } from './gacha/crafting';
 import { StoreRegistry, RESOURCE_IDS, type ResourceStore } from './sim/stores';
 import { cityTiles } from './sim/city';
@@ -230,7 +228,6 @@ export class Game implements UiHost {
   contracts!: ContractBoard;
   /** hands accepted contracts to trains */
   contractJobs!: ContractDispatcher;
-  gacha!: Gacha;
   crafting!: Crafting;
   /** every town's, depot's and warehouse's goods; building pays from them */
   stores = new StoreRegistry();
@@ -461,9 +458,6 @@ export class Game implements UiHost {
   }
   get settingsScreen() {
     return this.ui.settingsScreen;
-  }
-  get gachaScreen() {
-    return this.ui.gachaScreen;
   }
   get craftingScreen() {
     return this.ui.craftingScreen;
@@ -993,7 +987,6 @@ export class Game implements UiHost {
     this.houses.onUpgraded = (e) => this.onUpgraded(e);
     this.builder.onReclassed = (tiles, dir) => this.onReclassed(tiles, dir);
     this.weather = new Weather(new Rng(this.seed ^ 0x77ea));
-    validateBanners();
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
     this.economy.onAgeUp = (t) => this.onAgeUp(t);
     this.inventory.seedStarter(0);
@@ -1031,7 +1024,6 @@ export class Game implements UiHost {
       b ? this.people.board(st, n) : this.people.alight(st, n);
     this.people = new PeopleSim(this.map, this.builder);
     this.contracts = new ContractBoard(new Rng(this.seed ^ 0x5eed), this.builder, this.economy);
-    this.gacha = new Gacha(new Rng(this.seed ^ 0x9ac4a), this.inventory);
     this.crafting = new Crafting(new Rng(this.seed ^ 0xc4af7), this.inventory, this.economy);
     this.crafting.grantFromInventory();
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
@@ -1168,7 +1160,6 @@ export class Game implements UiHost {
       builder: this.builder,
       economy: this.economy,
       trade: this.trade,
-      gacha: this.gacha,
       inventory: this.inventory,
       towns: this.towns,
       houses: this.houses,
@@ -1186,7 +1177,6 @@ export class Game implements UiHost {
       fleet: this.fleet,
       builder: this.builder,
       contracts: this.contracts,
-      gacha: this.gacha,
       crafting: this.crafting,
       trade: this.trade,
       towns: this.towns,
@@ -1261,7 +1251,6 @@ export class Game implements UiHost {
         contracts: this.contracts.toJSON(),
         trade: this.trade.toJSON(),
         inventory: this.inventory.toJSON(),
-        gacha: this.gacha.toJSON(),
         crafting: this.crafting.toJSON(),
         camera: { x: this.camera.x, y: this.camera.y, zoomIndex: this.camera.zoomIndex },
         lastDay: this.sim.lastDay,
@@ -1385,7 +1374,6 @@ export class Game implements UiHost {
       this.onStationChanged(st, false);
     }
     this.inventory.load(j.inventory as ReturnType<typeof this.inventory.toJSON>);
-    this.gacha.load(j.gacha as ReturnType<typeof this.gacha.toJSON>);
     this.crafting.load(j.crafting as ReturnType<typeof this.crafting.toJSON> | undefined);
     this.contracts.load(j.contracts as ReturnType<typeof this.contracts.toJSON>);
     this.trade.load(j.trade as ReturnType<typeof this.trade.toJSON> | undefined);

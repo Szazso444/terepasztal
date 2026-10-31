@@ -401,7 +401,6 @@ describe('a v13 save', () => {
       trains: j.trains,
       contracts: { contracts: [] },
       inventory: { items: [] },
-      gacha: {},
       camera: { x: 0, y: 0, zoomIndex: 2 },
       lastDay: 0,
     };
