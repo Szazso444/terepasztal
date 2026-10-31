@@ -238,7 +238,7 @@ export const STR = {
     guideButton: 'Semaphore guide',
     guideTitle: 'Semaphores and track blocks',
     guidePlace:
-      'Place semaphores on the rails from Utility. Press R before placement, or use Rotate direction after selecting a post. The direction shown in the selection panel is the direction of travel it governs.',
+      'Place semaphores on the rails from Tools. Press R before placement, or use Rotate direction after selecting a post. The direction shown in the selection panel is the direction of travel it governs.',
     guideDiagram:
       '→ A  ═════ protected block ═════  → B  ═════ next block ═════  → C\n       one train at a time                  another train may follow',
     guideAspects:
@@ -706,7 +706,7 @@ export const STR = {
       noWater:
         'No water source. Build a Water Pump station or a Water Tower so steam engines can refill.',
       unwired: (n: string) =>
-        `${n} is not connected. Chain Power Line poles from it to the rails (Utility).`,
+        `${n} is not connected. Chain Power Line poles from it to the rails (Tools).`,
       noPower: (n: string) =>
         `${n} needs powered rails: build a Power Plant and Power Line poles along its route.`,
       chunk: (v: string) =>

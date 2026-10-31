@@ -2760,7 +2760,7 @@ export class Game implements UiHost {
     // the map and the overview do not share their tooltips
     this.tooltip.stack.closeAll();
     this.overviewBanner.classList.toggle('show', v === 1);
-    this.toolbar.root.style.display = v === 1 ? 'none' : '';
+    this.ui.buildDock.style.display = v === 1 ? 'none' : '';
     this.townPanel.show(v === 1);
     if (v === 1) this.build.setTool({ kind: 'none' });
     if (v === 0) {

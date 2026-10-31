@@ -194,7 +194,7 @@ export class Toolbar {
 
   private renderRows() {
     // a tooltip resting on a button of these rows goes with it: no mouseleave will come
-    this.tooltip.stack.termLeave(-1);
+    if (this.root.matches(':hover')) this.tooltip.stack.termLeave(-1);
     const bar = this.bar;
     const c = bar.open ? bar.category(bar.open) : null;
     if (!c && this.tiles.size) this.onHover?.(null);
