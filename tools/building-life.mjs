@@ -64,14 +64,14 @@ const names = (...list) => list.map((n) => `structures/${n}`);
  * `exact` seeds are the demo's numbers, taken as they stand.
  */
 export const POT_GROUPS = [
-  // the 3D models' pictures (assets/source/models-2026-10-27), every level the same picture:
+  // the 3D models' pictures (assets/source/models), every level the same picture:
   // town hall, a chimney on each gable, the cupola is no chimney
   {
     keys: names('town_1', 'town_2', 'town_3', 'town_4', 'town_5'),
     work: false,
     at: [
-      [91, 1],
-      [319, 115],
+      [77.5, 1],
+      [272, 98],
     ],
   },
   // townhouses
@@ -87,7 +87,7 @@ export const POT_GROUPS = [
   {
     keys: names('station_1', 'station_2', 'station_3', 'station_4', 'station_5'),
     work: false,
-    at: [[153.5, 1]],
+    at: [[136.5, 1]],
   },
   { keys: names('station_2_r1', 'station_2_r3'), work: false, at: [[26.5, 1]] },
   { keys: names('station_2_r2'), work: false, at: [[19.5, 1]] },
@@ -96,15 +96,15 @@ export const POT_GROUPS = [
     keys: names('warehouse_1', 'warehouse_2', 'warehouse_3', 'warehouse_4', 'warehouse_5'),
     work: false,
     at: [
-      [91, 1],
-      [320.5, 100],
+      [77.5, 1],
+      [272.5, 85],
     ],
   },
   // sawmills: one works chimney, a brick stack from level 3 in the turns
   {
     keys: names('lumber_1', 'lumber_2', 'lumber_3', 'lumber_4', 'lumber_5'),
     work: true,
-    at: [[122.5, 1]],
+    at: [[133.5, 1]],
   },
   { keys: names('lumber_3_r1', 'lumber_3_r3'), work: true, at: [[32.5, 1]] },
   { keys: names('lumber_3_r2'), work: true, at: [[25.5, 1]] },
@@ -115,7 +115,7 @@ export const POT_GROUPS = [
   },
   { keys: names('lumber_4_r2', 'lumber_5_r2'), work: true, at: [[26, 2]] },
   // farms: the farmhouse chimney, not the silo
-  { keys: names('farm_1', 'farm_2', 'farm_3', 'farm_4', 'farm_5'), work: false, at: [[180.5, 1]] },
+  { keys: names('farm_1', 'farm_2', 'farm_3', 'farm_4', 'farm_5'), work: false, at: [[155, 1]] },
   // pumping stations: one works chimney of twin pots
   { keys: names('pump_1'), work: true, exact: true, at: [[120.3, 6]] },
   { keys: names('pump_2'), work: true, at: [[136, 8]] },
@@ -306,8 +306,17 @@ export function loadOf(frame, rope, pivot = null) {
 
 /* ---------------------------------------------------------------- the data */
 
-/** A texel position in world px from the frame's anchor. */
-const world = (f, x, y) => [round((x - f.ax) / f.resolution), round((y - f.ay) / f.resolution)];
+/**
+ * A texel position in world px from the frame's anchor, rounded but never past the frame's top or
+ * left edge (a pot on the picture's top row of an anchor with a fraction stays inside its frame).
+ */
+const world = (f, x, y) => {
+  const edge = (v) => Math.ceil(v * 100 - 1e-9) / 100 + 0;
+  return [
+    Math.max(round((x - f.ax) / f.resolution), edge(-f.ax / f.resolution)),
+    Math.max(round((y - f.ay) / f.resolution), edge(-f.ay / f.resolution)),
+  ];
+};
 
 /**
  * The data of every frame in the tables, from the atlas `frames` (`atlasFrames`):
