@@ -1,8 +1,40 @@
 import { describe, it, expect } from 'vitest';
 import { generateMap } from './mapgen';
-import { levelAt, levelTarget, tileLevels, MAX_LEVEL } from './elevation';
-import { Terrain } from './tiles';
-import { forAll } from '../testing/property';
+import {
+  LEGACY_MOUNTAIN_LEVEL,
+  levelAt,
+  levelTarget,
+  maxStep,
+  tileLevels,
+  MAX_LEVEL,
+  NO_LEVEL,
+} from './elevation';
+import { MAX_WATER_LEVEL } from './waterfalls';
+import { Terrain, type GameMap } from './tiles';
+import { SEEDS, forAll } from '../testing/property';
+
+/** A map of w x h tiles of ground that sets no level itself (Grass), with the planes it is given. */
+function flatMap(
+  w: number,
+  h: number,
+  planes: Pick<Partial<GameMap>, 'generatedLevel' | 'groundLevel'> = {},
+) {
+  return { w, h, terrain: new Uint8Array(w * h).fill(Terrain.Grass), ...planes };
+}
+
+/** A plane of w x h tiles at NO_LEVEL, with the given tiles (x, y, level) set. */
+function plane(w: number, h: number, set: [number, number, number][], base = NO_LEVEL) {
+  const p = new Uint8Array(w * h).fill(base);
+  for (const [x, y, level] of set) p[y * w + x] = level;
+  return p;
+}
+
+/** A map of the given rows of terrain, no planes. */
+function terrainMap(rows: Terrain[][]) {
+  const h = rows.length,
+    w = rows[0].length;
+  return { w, h, terrain: Uint8Array.from(rows.flat()) };
+}
 
 describe('tile elevation', () => {
   // a generated map, each tile's level read on its own: about 0.5 s alone
@@ -76,7 +108,7 @@ describe('tile elevation', () => {
         const waterSurface = plane ? new Uint8Array(w * h) : undefined;
         if (waterSurface)
           for (let i = 0; i < w * h; i++)
-            if (terrain[i] === Terrain.Water) waterSurface[i] = rng.int(0, MAX_LEVEL);
+            if (terrain[i] === Terrain.Water) waterSurface[i] = rng.int(0, MAX_WATER_LEVEL);
         return { w, h, terrain, waterSurface };
       },
       (m) => {
@@ -104,5 +136,103 @@ describe('tile elevation', () => {
     );
     // water above level 1 stood at its own level somewhere
     expect(raised).toBeGreaterThan(0);
+  });
+
+  it('reads the player plane before the generated one', () => {
+    const m = flatMap(7, 7, {
+      generatedLevel: plane(7, 7, [], 2),
+      groundLevel: plane(7, 7, [[3, 3, 3]]),
+    });
+    const levels = tileLevels(m);
+    expect([levels[3 * 7 + 2], levels[3 * 7 + 3], levels[3 * 7 + 4]]).toEqual([2, 3, 2]);
+    expect(levelTarget(m, 3 * 7 + 3)).toBe(3);
+    expect(levelTarget(m, 3 * 7 + 2)).toBe(2);
+  });
+  it('keeps a generated step of 4 and clamps a step of 5', () => {
+    for (const [level, want] of [
+      [4, 4],
+      [5, 4],
+    ]) {
+      const m = flatMap(9, 9, { generatedLevel: plane(9, 9, [[4, 4, level]], 0) });
+      expect(maxStep(m)).toBe(4);
+      expect(tileLevels(m)[4 * 9 + 4]).toBe(want);
+      expect(levelAt(m, 4, 4)).toBe(want);
+    }
+  });
+  it('keeps the one-level rule without a plane', () => {
+    const G = Terrain.Grass,
+      M = Terrain.Mountain;
+    const m = terrainMap([[G, G, G, G, G, G, G]]);
+    expect(maxStep(m)).toBe(1);
+    const rows = Array.from({ length: 11 }, (_, y) =>
+      Array.from({ length: 11 }, (_, x) => (x > 0 && y > 0 && x < 10 && y < 10 ? M : G)),
+    );
+    const mountain = terrainMap(rows);
+    const levels = tileLevels(mountain);
+    // a mountain with no plane stops at the old top, however wide the block
+    expect(levelAt(mountain, 5, 5)).toBe(levels[5 * 11 + 5]);
+    expect(levels[5 * 11 + 5]).toBe(LEGACY_MOUNTAIN_LEVEL);
+    expect(Math.max(...levels)).toBe(LEGACY_MOUNTAIN_LEVEL);
+    for (let y = 0; y < 11; y++)
+      for (let x = 0; x < 11; x++) {
+        if (x)
+          expect(
+            Math.abs(levelAt(mountain, x, y) - levelAt(mountain, x - 1, y)),
+          ).toBeLessThanOrEqual(1);
+        if (y)
+          expect(
+            Math.abs(levelAt(mountain, x, y) - levelAt(mountain, x, y - 1)),
+          ).toBeLessThanOrEqual(1);
+      }
+  });
+  it('agrees with tileLevels on every tile of a map with both planes', () => {
+    const palette = [Terrain.Grass, Terrain.Hill, Terrain.Mountain, Terrain.Water];
+    forAll(
+      (rng) => {
+        const w = rng.int(1, 12),
+          h = rng.int(1, 12);
+        const terrain = new Uint8Array(w * h);
+        const waterSurface = new Uint8Array(w * h);
+        const raw = new Uint8Array(w * h);
+        for (let i = 0; i < w * h; i++) {
+          terrain[i] = rng.pick(palette);
+          waterSurface[i] = rng.int(0, MAX_WATER_LEVEL);
+          raw[i] = rng.chance(0.3) ? NO_LEVEL : rng.int(0, MAX_LEVEL);
+        }
+        // the planes a map stores hold settled levels: tileLevels of the raw ones, the player's
+        // plane set on some tiles only
+        const levels = tileLevels({ w, h, terrain, waterSurface, generatedLevel: raw });
+        const groundLevel = new Uint8Array(w * h).fill(NO_LEVEL);
+        for (let i = 0; i < w * h; i++) if (rng.chance(0.3)) groundLevel[i] = levels[i];
+        return { w, h, terrain, waterSurface, generatedLevel: levels, groundLevel, raw };
+      },
+      (m) => {
+        const settled = tileLevels(m);
+        expect([...settled]).toEqual([...m.generatedLevel]);
+        for (let y = 0; y < m.h; y++)
+          for (let x = 0; x < m.w; x++)
+            if (levelAt(m, x, y) !== settled[y * m.w + x])
+              throw new Error(
+                `levelAt ${levelAt(m, x, y)}, ${settled[y * m.w + x]} at (${x}, ${y})`,
+              );
+        // a plane that sets nothing falls to the terrain, a step of 4 for tile and tile
+        const unset = {
+          ...m,
+          generatedLevel: new Uint8Array(m.w * m.h).fill(NO_LEVEL),
+          groundLevel: undefined,
+        };
+        const want = tileLevels(unset);
+        for (let y = 0; y < m.h; y++)
+          for (let x = 0; x < m.w; x++)
+            if (levelAt(unset, x, y) !== want[y * m.w + x])
+              throw new Error(
+                `unset levelAt ${levelAt(unset, x, y)}, ${want[y * m.w + x]} at (${x}, ${y})`,
+              );
+      },
+      {
+        seeds: SEEDS.slice(0, 40),
+        format: (m) => `${m.w} x ${m.h}: terrain ${m.terrain.join('')}, planes ${m.raw.join(',')}`,
+      },
+    );
   });
 });

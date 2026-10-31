@@ -7,7 +7,7 @@ import {
   type MapGenParams,
   type MapPlanes,
 } from './mapgen';
-import { MAX_LEVEL, tileLevels } from './elevation';
+import { tileLevels } from './elevation';
 import { Biome, Terrain, type GameMap } from './tiles';
 import {
   CHUNK_TILES,
@@ -26,6 +26,7 @@ import { bytesOf, oldChunkText, textOf } from './oldChunkTexts';
 import {
   FALL_BITS,
   MAX_DROP,
+  MAX_WATER_LEVEL,
   fallAt,
   fallDrop,
   fallEdge,
@@ -108,7 +109,7 @@ function falls(m: GameMap): string[] {
 describe('the feature byte', () => {
   it('holds a drop of 1 to MAX_DROP and the edge it falls over, as waterfalls.ts lays them out', () => {
     // a drop of the highest water level to the lowest, and no more
-    expect(MAX_DROP).toBe(MAX_LEVEL);
+    expect(MAX_DROP).toBe(MAX_WATER_LEVEL);
     for (let drop = 1; drop <= MAX_DROP; drop++)
       for (const edge of DIRS) {
         const f = fallFeature(drop, edge);
@@ -177,7 +178,7 @@ describe('waterfalls on hand-made rivers', () => {
         const seen = new Set<number>();
         let x = rng.int(0, size - 1);
         let y = rng.int(0, size - 1);
-        let level = rng.int(0, MAX_LEVEL);
+        let level = rng.int(0, MAX_WATER_LEVEL);
         for (let k = rng.int(1, 30); k > 0; k--) {
           course.push([x, y, level]);
           seen.add(y * size + x);
@@ -948,7 +949,7 @@ describe('waterfalls of a world grown beside a stored chunk of any ground', () =
   /**
    * A world of RAISED_WORLDS, and a chunk an older generator stored `near` one of its rivers:
    * ground of the first `kinds` of GROUND in square patches of `patch` tiles, its water at any level
-   * 0 to MAX_LEVEL, a river on some of it running any way, out of the chunk too (`rivers`), and on
+   * 0 to MAX_WATER_LEVEL, a river on some of it running any way, out of the chunk too (`rivers`), and on
    * some of those a waterfall of any drop over that way (`falls`), whatever the levels say. With
    * `pool`, the tiles a river at level 1 or 2 of the world runs into are still water at level 0.
    */
@@ -1033,7 +1034,7 @@ describe('waterfalls of a world grown beside a stored chunk of any ground', () =
     const rng = new Rng(c.salt);
     const side = CHUNK_TILES / c.patch;
     const kinds = Array.from({ length: side * side }, () => GROUND[rng.int(0, c.kinds - 1)]);
-    const levels = Array.from({ length: side * side }, () => rng.int(0, MAX_LEVEL));
+    const levels = Array.from({ length: side * side }, () => rng.int(0, MAX_WATER_LEVEL));
     for (let y = 0; y < CHUNK_TILES; y++)
       for (let x = 0; x < CHUNK_TILES; x++) {
         const i = (cy * CHUNK_TILES + y) * 160 + cx * CHUNK_TILES + x;

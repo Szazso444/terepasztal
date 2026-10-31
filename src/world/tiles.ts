@@ -102,12 +102,24 @@ export interface GameMap {
    */
   climate?: Uint8Array;
   /**
-   * per-tile water level of each Water tile, 0 to MAX_LEVEL: the level its surface stands at
+   * per-tile water level of each Water tile, 0 to MAX_WATER_LEVEL: the level its surface stands at
    * (levelTarget). Rivers on high ground stand above level 0 and never rise downstream. A map
    * without the plane, a level or the editor's, and a chunk stored before it, has all its water at
    * level 0, as has a tile whose terrain is not Water.
    */
   waterSurface?: Uint8Array;
+  /**
+   * per-tile ground level the generator set, 0 to MAX_LEVEL, or NO_LEVEL where the tile has none
+   * and its level comes from its terrain (levelTarget). Neighbours may differ by up to 4 here
+   * (maxStep). A map without the plane, a level or the editor's, has every tile at NO_LEVEL.
+   */
+  generatedLevel?: Uint8Array;
+  /**
+   * per-tile ground level the player set, 0 to MAX_LEVEL, or NO_LEVEL where the tile is as
+   * generated. It is read before generatedLevel (levelTarget). A map without the plane has every
+   * tile at NO_LEVEL.
+   */
+  groundLevel?: Uint8Array;
   /**
    * per-tile flow of each river tile: the tiles of rain it gathers, 1 to FLOW_CAP (0 in a chunk
    * stored before the plane), 0 elsewhere

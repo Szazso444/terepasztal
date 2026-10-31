@@ -1,5 +1,4 @@
 import { DIR_DX, DIR_DY, type Dir } from '../engine/iso';
-import { MAX_LEVEL } from './elevation';
 import { Terrain, type GameMap } from './tiles';
 
 /**
@@ -21,7 +20,7 @@ import { Terrain, type GameMap } from './tiles';
  *   them yet, and a stored chunk holds them at 0 (chunks.ts) until #356 gives them a meaning;
  * - bit 7: unused, 0.
  *
- * Water stands at levels 0 to MAX_LEVEL, so no drop is more than MAX_DROP and none needs splitting
+ * Water stands at levels 0 to MAX_WATER_LEVEL, so no drop is more than MAX_DROP and none needs splitting
  * over several tiles. Generation marks the waterfalls of a map on the ground around it
  * (markWaterfalls in mapgen.ts), so a river tile at the map's edge knows the tile beyond it, and
  * stored chunks keep the plane from CHUNK_VERSION 4; a chunk stored before it has no waterfalls.
@@ -32,8 +31,14 @@ import { Terrain, type GameMap } from './tiles';
  * drop would stand in it as a single level.
  */
 
+/**
+ * The highest level water stands at. Ground reaches MAX_LEVEL (elevation.ts), water stays at 0 to 4:
+ * rivers keep to the low ground, and a waterfall's drop is held in three bits.
+ */
+export const MAX_WATER_LEVEL = 4;
+
 /** The largest drop: from the highest water level to the lowest. */
-export const MAX_DROP = MAX_LEVEL;
+export const MAX_DROP = MAX_WATER_LEVEL;
 
 /** The drop's bits of a feature byte. */
 const DROP_BITS = 0b111;
