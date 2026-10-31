@@ -156,6 +156,29 @@ const EN = {
     /** a locked item of the build bar: the age that opens it, and the one to reach before that */
     unlocksIn: (age: string) => `Locked. Unlocks in the ${age}`,
     reachFirst: (age: string) => `Reach the ${age} first.`,
+    /**
+     * What is new in an age (src/ui/ageNews.ts), one line per kind: `{list}` is filled with the
+     * things, named or, for a long list, as the count of its `...Count`.
+     */
+    news: {
+      track: 'Track: {list}',
+      stations: 'Stations: {list}',
+      services: 'Town and services: {list}',
+      works: 'Works: {list}',
+      electric: 'Electrification: {list}',
+      engines: 'Engines: {list}',
+      wagons: 'Wagons: {list}',
+      contracts: 'Contracts: {list}',
+      level: (n: number) => `Buildings rise to level ${n}`,
+      trackCount: (n: number) => `${n} kinds of track`,
+      stationsCount: (n: number) => `${n} stations`,
+      servicesCount: (n: number) => `${n} kinds of building`,
+      worksCount: (n: number) => `${n} works`,
+      electricCount: (n: number) => `${n} supplies`,
+      enginesCount: (n: number) => `${n} engines`,
+      wagonsCount: (n: number) => `${n} wagons`,
+      contractsCount: (n: number) => `${n} kinds`,
+    },
   },
   overview: {
     locked: 'UNCHARTED',
@@ -2327,7 +2350,7 @@ const EN = {
     /**
      * A harvesting station's kind in the plural, by `StationDef.id`: written out, because adding
      * an s spells "quarrys". Every station with a `terrain` needs one, and so does every station
-     * a biome's `production` names.
+     * a biome's `production` names and every works tied to its ground (`tileGoods`).
      */
     plural: {
       farm: 'farm halts',
@@ -2337,6 +2360,8 @@ const EN = {
       mine: 'iron mines',
       sand_pit: 'sand pits',
       copper_mine: 'copper mines',
+      colliery: 'collieries',
+      oil_derrick: 'oil derricks',
     } as Record<string, string>,
     /**
      * The station tooltip a biome tooltip opens: what the station makes at level 1 on bare
@@ -2347,6 +2372,321 @@ const EN = {
       'Makes {res}: {amount} a week at level {level}, more with {tiles} within {radius} tiles (nearer ones count more) and in a biome that suits it.',
     /** the same for a station that counts no ground */
     makesAnywhere: 'Makes {res}: {amount} a week at level {level}.',
+  },
+  /**
+   * The in-game Guide (src/ui/guideContent.ts). The words around what the data says: a `{name}` is
+   * filled there (`fill` in src/ui/tooltipDoc.ts) with a number, a resource or a name from the data,
+   * so no cost, count or name is typed here.
+   */
+  guide: {
+    title: 'Guide',
+    search: 'Search…',
+    searchLabel: 'Search the Guide',
+    noMatch: 'No page has that.',
+    /** the note under the list: the chain the pages are written for */
+    chain: (name: string) => `Production chain of this game: ${name}`,
+    /** the last join of a list, and between alternatives */
+    and: 'and',
+    or: 'or',
+    /** an empty table cell */
+    none: '–',
+    /** keys that do not read as their code, by `KeyboardEvent.code` */
+    keyNames: {
+      Space: 'Space',
+      Escape: 'Esc',
+      Tab: 'Tab',
+      Enter: 'Enter',
+      Backquote: '`',
+    } as Record<string, string>,
+    pages: {
+      first: 'First minutes',
+      track: 'Track and lines',
+      stations: 'Stations, depots and towns',
+      trains: 'Trains',
+      signals: 'Signals',
+      goods: 'Goods and production',
+      contracts: 'Contracts',
+      market: 'Market and crafting',
+      ages: 'Ages',
+      keys: 'Keys and controls',
+    },
+    /** what each action of `KEYMAP` does */
+    keyAction: {
+      debug: 'Debug panel',
+      menuBack: 'Back',
+      pauseOrClose: 'Close the top screen or tool; with nothing open, the Menu',
+      overviewBack: 'Stop the recording, drop the picked train, or leave the map',
+      depot: 'Depot',
+      contracts: 'Contracts',
+      crafting: 'Crafting',
+      roster: 'Roster',
+      market: 'Market',
+      overview: 'Overview map, and back',
+      nextTool: 'Next item of the open category',
+      prevTool: 'Previous item of the open category',
+      upgradeTrack: 'Upgrade track',
+      downgradeTrack: 'Downgrade track',
+      prevType: 'Previous type',
+      nextType: 'Next type',
+      prevCategory: 'Previous category',
+      nextCategory: 'Next category',
+      demolish: 'Demolish',
+      pause: 'Pause and resume',
+      pieceOrCategory: 'A build category, then an item of it',
+      speedStep: 'Faster, slower',
+      record: 'Record stops for the picked train',
+      finishRoute: 'Finish the recording',
+      undo: 'Undo the last step',
+      redo: 'Redo it',
+    } as Record<string, string>,
+    first: {
+      intro:
+        'A new game gives you {money}, a {depot} with goods in its store, and a few engines and wagons for {line}. That is enough to get a first train earning.',
+      haveHead: 'What you start with',
+      goods: 'In the store: {list}.',
+      copies: 'You hold {engines} of each engine and {wagons} of each wagon.',
+      stepsHead: 'Your first train',
+      look: 'Rest the pointer on the ground. The tooltip says what each tile gives: {forest} on forest, {rock} on rock and hills, {grass} on grass.',
+      lay: 'Open {category} (key {key}) and pick {line}. Drag from the track at a gate of the {depot} to lay a run.',
+      place:
+        'Open {category} (key {key}), then {type}, and place a {a}, a {b} or a {c} with the track touching one side. That track becomes its platform.',
+      train:
+        'Press {key} for the {depot}. Pick a locomotive, add wagons that carry the good, and press {dispatch}.',
+      sell: 'What the train brings goes into the depot store. Press {key} for the {market} and sell some of it: that is your first income.',
+      nextHead: 'What comes next',
+      money:
+        'Money comes from the {market}, from passengers and from {contracts}. Goods in a store earn nothing until they are sold.',
+      reach: 'Building is paid from a store within {reach} tiles of the work.',
+      food: 'Crews and residents eat {food} every week. A {windmill} makes it from {wheat}.',
+      land: 'Press {key} for the overview map and click an uncharted chunk beside your land to buy it. The first ring costs {price}.',
+      age: 'Rest on the age beside the date to see what each age asks for and what it brings.',
+      advisor: 'The {advisor} tells you what to do next.',
+    },
+    track: {
+      intro:
+        'Track comes in lines. A line sets the size of its curves, its price, its speed and the trains it takes.',
+      colLine: 'Line',
+      colClass: 'Trains',
+      colCurve: 'Curve',
+      colCurveSpeed: 'Speed in a curve',
+      colCost: 'Cost',
+      colSpeed: 'Top speed, tiles/s',
+      colAge: 'Opens in',
+      noLimit: 'no limit',
+      gaugeHead: 'Gauges and networks',
+      narrow:
+        '{narrow} is a network of its own. Only narrow trains run on it, and it joins no other line. It crosses {crossed} with a crossing piece.',
+      standard: '{lines} are one network and join each other directly.',
+      classes: 'A train runs on the line of its class and on every bigger line of its network.',
+      curvesHead: 'Curves and switches',
+      curves:
+        'A curve or a switch fills a square of tiles, the size in the table, and the inner tiles of a curve stay blocked. A train takes a wide curve faster: the table gives the share of its speed it keeps.',
+      pieces:
+        'On {line} a straight costs {straight}, a curve {curve} and a switch {switch}. The table gives the other lines against it.',
+      slopesHead: 'Slopes',
+      climb:
+        'A train slows on a climb and runs faster coming down. Its panel says how slow it gets.',
+      groundHead: 'Ground',
+      ground:
+        'The ground multiplies what track costs. Water needs a bridge. Rock and mountain take track only where it continues a line already there.',
+      colGround: 'Ground',
+      bridgesHead: 'Bridges',
+      bridges:
+        'Bridge platforms carry straight rails over water or a dip. Above {share} of its capacity a train crosses at {speed} of its speed, and a train too heavy finds another route.',
+      colBridge: 'Bridge',
+      colCapacity: 'Capacity',
+      colPrice: 'Cost',
+      upgradeHead: 'Upgrading a line',
+      upgrade: '{name} (key {key}):',
+    },
+    stations: {
+      intro:
+        'Trains call at stations. A station must touch track when you place it: that track is its platform.',
+      colStation: 'Station',
+      colCost: 'Cost',
+      colMakes: 'Makes',
+      colGround: 'Counts',
+      colAge: 'Age',
+      repeat: 'Every further one of a kind costs {pct} of its base price more, depots apart.',
+      depotsHead: 'Depots',
+      depots:
+        'Trains are built in a depot and roll out of its gates. A {depot} builds standard trains and a {narrow} narrow ones.',
+      depotCount:
+        'How many depots you may own follows your land: more chunks allow more, each gauge counted on its own.',
+      depotStore: 'Goods unloaded at a gate enter its store, which holds {cap} of each good.',
+      producersHead: 'What stations make',
+      harvest:
+        'A harvesting station counts its ground within {radius} tiles, nearer tiles more. At level 1 it makes {base} a week on plenty of ground; bare ground still gives {floor} of that, and a dense patch up to {ceil}.',
+      placing:
+        'The biome and the season change it too. The placing tooltip shows all of it before you click.',
+      levelsHead: 'Levels',
+      levels:
+        'Stations, works and houses rise one level per age, from the age they appear in. A building being upgraded is closed until it is done; a depot upgrades at once.',
+      colLevel: 'Level',
+      colStorage: 'Storage',
+      colLoad: 'Loading / s',
+      colPlatforms: 'Platforms',
+      colWeek: 'Makes / week',
+      storesHead: 'Stores',
+      stores:
+        'Goods are kept in stores: one for each town, one for each depot and one for each warehouse outside a town.',
+      storesSimple: 'In this production chain the stores on one rail network share their goods.',
+      storesFull:
+        'In this production chain every store stands alone: goods move between stores only by train.',
+      townStore:
+        'A town store holds {town} of each good, and every warehouse level in the town adds {warehouse}. A warehouse outside a town holds {warehouse} of each good per level.',
+      reach:
+        'Works and crews use their town store, or else the nearest store within {reach} tiles. Building is paid from the nearest store in that reach that holds the whole cost.',
+      outlet:
+        'A harvesting station inside a town carries what it makes straight to the town store.',
+      townsHead: 'Towns',
+      found:
+        'Place a {townhouse}, then a {house} and a {warehouse} within {radius} tiles of it: that founds a town. Townhouses keep {spacing} tiles apart.',
+      growth:
+        'A house takes {built} days to build and opens with {first} residents. After that one resident moves in every {days} days while the town store has {food}.',
+      houses: 'A house holds, level by level: {list} residents.',
+      spawn:
+        'At {pct} of its housing a town starts a new house by itself, and train traffic makes it start more.',
+      passengers:
+        'A {station} serves the homes within {reach} tiles. Join two of them with coaches and people travel; the fare grows with the distance.',
+      servicesHead: 'Services',
+      services:
+        'A service building fills trains at the stations in its reach, from a store within {reach} tiles of it.',
+      colService: 'Service',
+      colReach: 'Reach, tiles',
+      colGives: 'Gives',
+    },
+    trains: {
+      consistHead: 'Consists',
+      limits: 'A train has at least one engine, and at most {locos} engines and {wagons} wagons.',
+      haul: 'Engines have a haul rating, and the wagons must stay under it. A train takes on only the load its engines can haul.',
+      speed:
+        'A train runs at the speed of its slowest vehicle. More engines pull harder; they do not go faster.',
+      colClass: 'Class',
+      colRuns: 'Runs on',
+      colWagons: 'Wagons',
+      colGoods: 'Carry',
+      fuelHead: 'Fuel and water',
+      colEngine: 'Engine',
+      colUses: 'Uses',
+      steamUses: '{coal} or {wood}, and {water}',
+      fillUp:
+        'A train fills up at a stop with a store (a {depot}, a {warehouse}, a {townhouse}) and at a station in reach of a service building.',
+      seek: 'A train running low looks for the nearest service that holds what it needs, and goes there by itself.',
+      carts:
+        'A refuelling cart adds to the tanks of engines of its kind and cuts their use by {saving}, up to {cap} in all.',
+      emergency: '{name}:',
+      crew: 'Each crew member eats {n} {food} a week. A train pays at the next store where it fills up; owing more than a day of food, it runs at {pct} of its speed.',
+      sand: 'In this production chain every train spreads {sand} on the rails and pays for it at the next store where it fills up.',
+      electricHead: 'Electric running',
+      electric:
+        'Electric engines need live wire. Chain {pole} poles from a power source ({plant}) to a {battery}, then lay wire along the track: it is live within {radius} tiles of a powered battery.',
+      colSupply: 'Supply',
+      colCeiling: 'Speed limit, tiles/s',
+      colAbout: 'What it is',
+      routesHead: 'Routes and schedules',
+      routes:
+        'A train follows a schedule or plans its own stops. You pick the route in the Depot, and can change it later in the train details.',
+      colRoute: 'Route',
+      colWhat: 'What it does',
+      record:
+        'On the overview map (key {overview}) pick a train, press {record} and click stations to record new stops; {finish} finishes.',
+      levelsHead: 'Levels',
+      levels:
+        'A spare copy of a model raises another one level, up to level {cap}. Each level adds {pct} to speed and power, or to capacity.',
+      weather: 'Rain and fog slow trains a little, and so do some biomes.',
+    },
+    signals: {
+      intro:
+        'On track with no signals trains keep apart by themselves. How close they may follow is the signalling level, in {settings} on the {tab} tab.',
+      colLevel: 'Level',
+      colHeadway: 'Gap, tiles',
+      colWhat: 'What it does',
+      inCab: 'Fitting it costs {cost}, in the {roster}.',
+      postCost: 'A semaphore costs {cost}.',
+    },
+    goods: {
+      intro: 'This game runs the {chain} production chain.',
+      rawHead: 'Raw goods',
+      colGood: 'Good',
+      colMaker: 'Made by',
+      colGround: 'From',
+      worksHead: 'Works',
+      works:
+        'A works needs no track: it runs from its town store, or else the nearest store within {reach} tiles.',
+      worksLevels: 'Each level makes a works faster.',
+      colWorks: 'Works',
+      colRecipe: 'Recipe',
+      colBatches: 'Batches a week',
+      colAge: 'Age',
+      allHead: 'Every good',
+      colMadeBy: 'Made by',
+      colUsedBy: 'Used by',
+      foodHead: 'Food',
+      food: 'Residents and crews each eat {n} {food} a week from their store.',
+      famine:
+        'A store that runs out goes hungry: what is made around it falls to {pct} until food comes back.',
+    },
+    contracts: {
+      intro:
+        'A contract asks you to carry an amount of one good from one station to another by a deadline, for a payout. Offers wait on the board until you accept them or they run out.',
+      ends: 'Offers come from what your stations make and what another station takes, and both need platform track. Only {ends} can end a contract: {shut} never do.',
+      limit:
+        'Your land limits open offers and active contracts alike: {base} on the start chunk, {per} more for each further chunk, rounded down, and {max} at most.',
+      timing: 'The board looks for new offers every {days} days. An offer stays {life} days.',
+      trains:
+        'When you accept, the game hands the contract to the train best placed to work it, and a train on the Contract route is picked ahead of the rest. It goes back to its work afterwards.',
+      payHead: 'Pay and fines',
+      pay: 'The payout grows with the amount, the price of the good, the distance and the rarity.',
+      fines:
+        'Missing the deadline costs {fail} of the payout, and cancelling costs {cancel}. Declining an offer is free.',
+      lapse: 'If a station of a contract is demolished, the contract lapses with no fine.',
+      colRarity: 'Rarity',
+      colChance: 'Chance',
+      colReward: 'Pay',
+      colAmount: 'Amount',
+      colDeadline: 'Deadline',
+      colKind: 'Kind',
+      colAge: 'From',
+      colSize: 'Units',
+      colPay: 'Pay',
+    },
+    market: {
+      marketHead: 'The Market',
+      where: 'The {market} buys into and sells from the store picked on the top bar.',
+      prices: "You pay {buy} of a good's base price and get {sell} of it.",
+      colGood: 'Good',
+      colBuy: 'Buy',
+      colSell: 'Sell',
+      craftHead: 'Crafting',
+      craft:
+        'The engines and wagons you own are in the {roster}. New ones come from {crafting}, in two steps.',
+      unlock:
+        'Unlock a recipe: pay money for {cards} cards of one kind and age, and keep one. A card you already know gives {refund} back instead.',
+      build:
+        'Craft it: spend goods from the store picked on the top bar. Rarer models cost more and can fail; a failure gives back {pct} of the goods.',
+      anyAge:
+        'Recipes are sorted by age, but you may draw any of them at any time. An engine still needs its fuel or its wire.',
+      starters: 'Key {key} opens the {roster}.',
+      colAge: 'Age',
+      colEngine: 'Engine',
+      colWagon: 'Wagon',
+      colQuality: 'Quality',
+      colCostMul: 'Cost',
+      colFail: 'Fails',
+      colSize: 'Size',
+    },
+    ages: {
+      intro:
+        'Each age opens new things. Rolling stock is sorted by age, but its recipes are not locked by it.',
+      goals: 'To reach it: {goals}.',
+    },
+    keys: {
+      fieldHead: 'In the field',
+      overviewHead: 'On the overview map',
+      menuHead: 'Over a menu',
+      pointerHead: 'Camera and pointer',
+    },
   },
 } as const;
 

@@ -72,6 +72,7 @@ import { ContentScreen } from './contentScreen';
 import { SettingsScreen } from './settingsScreen';
 import { SavedGamesScreen, type SavedTab } from './savedGamesScreen';
 import { CreditsScreen } from './creditsScreen';
+import { GuideScreen } from './guideScreen';
 import { CraftingScreen } from './craftingScreen';
 import { RosterScreen } from './rosterScreen';
 import { InspectScreen } from './inspectScreen';
@@ -315,6 +316,8 @@ export interface PlayUi {
   openPauseMenu(): void;
   /** both menus down; the clock runs again */
   closeMenus(): void;
+  /** open the Guide, or close it when it is up */
+  openGuide(): void;
   /** what `handlePlayKeys` reads and calls */
   readonly keys: KeyHost;
 }
@@ -445,6 +448,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   }, d.namePrompt);
   contentScreen.redraw = () => d.screens.redraw();
   const creditsScreen = new CreditsScreen();
+  const guideScreen = new GuideScreen(d.atlas);
   const settingsScreen = new SettingsScreen(
     d.settings,
     () => host.applySettings(),
@@ -859,6 +863,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
         })
         .then((ok) => ok && host.reloadToMenu());
   }
+  function openGuide() {
+    d.screens.toggle(guideScreen);
+  }
   function closeMenus() {
     pauseMenu.hide();
     mainMenu.hide();
@@ -1233,6 +1240,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     openMainMenu,
     openPauseMenu,
     closeMenus,
+    openGuide,
     keys,
   };
 }

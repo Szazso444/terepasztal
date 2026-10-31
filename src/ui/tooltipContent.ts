@@ -330,7 +330,7 @@ function defOf(ref: BuildRef) {
 }
 
 /** "30 wood, 10 stone": each amount in bold, each resource with its icon. */
-function amounts(cost: Cost): Inline[] {
+export function amounts(cost: Cost): Inline[] {
   const out: Inline[] = [];
   for (const [cargo, v] of Object.entries(cost)) {
     if (v <= 0) continue;
