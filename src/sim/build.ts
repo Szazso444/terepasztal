@@ -56,8 +56,15 @@ import { inSupplyMode } from './supply';
 import { wrapRotation } from './rotation';
 import { STR } from '../strings';
 import { cargoWord } from './cargo';
-import { bridgeCapacity } from './bridges';
-import { climbAxes, supportedDeck } from '../world/railProfile';
+import {
+  bridgeCapacity,
+  connectedPlatforms,
+  MAX_DECK_HEIGHT,
+  RAISE_SHARE,
+  spanLevel,
+} from './bridges';
+import { climbAxes, rampReach, supportedDeck } from '../world/railProfile';
+import { levelAt } from '../world/elevation';
 import { sfx } from '../engine/audio';
 import { planReclass, type PieceChange, type ReclassDir } from '../world/reclass';
 import { continuesLine, onRails, stone } from './mountainTrack';
@@ -191,6 +198,8 @@ export class Builder {
    * per tile, `level` pieces and structures need a level tile. Unset means level everywhere.
    */
   groundCheck: ((x: number, y: number, need: 'straight' | 'level') => boolean) | null = null;
+  /** A train stands on the tile (set by the game): no deck rises under it. */
+  busy: ((x: number, y: number) => boolean) | null = null;
   onStationChanged: ((s: Station, removed: boolean) => void) | null = null;
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
@@ -259,6 +268,94 @@ export class Builder {
   bridgeAt(x: number, y: number) {
     const b = this.buildingAt(x, y);
     return b && buildingDef(b.id).bridge ? b : undefined;
+  }
+  /** `bridgeAt` for any tile, on the map or off it. */
+  platformAt(x: number, y: number) {
+    return inBounds(this.map, x, y) ? this.bridgeAt(x, y) : undefined;
+  }
+  /** The stored deck height on a tile, if a raised platform stands there. */
+  private deckAt = (x: number, y: number) => this.platformAt(x, y)?.deck;
+  /** A tile a ramp cannot lift: a road crosses it, or a station stands on its rail. */
+  private staysLevel = (x: number, y: number) =>
+    this.roads.has(x, y) || !!this.stationForTrackTile(x, y);
+  /**
+   * Whether the bridge at (x, y) can rise one height, and what it costs: half a platform's price
+   * per platform (`RAISE_SHARE`). It is refused at `MAX_DECK_HEIGHT`, where a road or station
+   * stands on it, where a train is on it or on its ramps, and where a ramp would climb under a
+   * piece that must stay level (`rampReach`).
+   */
+  checkRaise(x: number, y: number): PlacementCheck {
+    const why = STR.build.raise,
+      no = (reason: string): PlacementCheck => ({ ok: false, cost: {}, reason }),
+      b = this.platformAt(x, y);
+    if (!b) return no(why.none);
+    const span = connectedPlatforms(this, b),
+      deck = spanLevel(this, span) + 1;
+    if (deck > MAX_DECK_HEIGHT) return no(why.highest);
+    if (span.some((p) => this.roads.has(p.x, p.y))) return no(why.road);
+    if (span.some((p) => this.stationForTrackTile(p.x, p.y))) return no(why.station);
+    const on = new Set(span.map((p) => this.key(p.x, p.y))),
+      split = span.some((p) => {
+        const unit = this.track.get(p.x, p.y)?.unit;
+        return (
+          unit && this.track.unitTiles(unit.ax, unit.ay).some((t) => !on.has(this.key(t.x, t.y)))
+        );
+      }),
+      reach = rampReach(
+        this.map,
+        (tx, ty) => (inBounds(this.map, tx, ty) ? this.track.get(tx, ty) : undefined),
+        span.map((p) => ({ x: p.x, y: p.y, deck })),
+        this.staysLevel,
+        (tx, ty) => this.deckAt(tx, ty) !== undefined,
+      );
+    if (split || reach.blocked.length) return no(why.ramp);
+    if ([...span, ...reach.climbs].some((t) => this.busy?.(t.x, t.y))) return no(why.train);
+    const cost: Cost = {};
+    for (const p of span)
+      for (const [k, v] of Object.entries(this.priced(buildingDef(p.id).cost, RAISE_SHARE)))
+        cost[k] = (cost[k] ?? 0) + v;
+    return this.affordable(cost, x, y);
+  }
+  /**
+   * Lift the whole bridge at (x, y) one height, its stored height from then on. The approaches
+   * ramp up by themselves (railProfile); capacity levels stay as they are.
+   */
+  raiseSpan(x: number, y: number): boolean {
+    const c = this.checkRaise(x, y);
+    if (!c.ok || !this.pay(c, x, y)) {
+      sfx('build.invalid');
+      return false;
+    }
+    const span = connectedPlatforms(this, this.platformAt(x, y)!),
+      deck = spanLevel(this, span) + 1;
+    for (const p of span) {
+      this.log?.deck(p);
+      this.setDeck(p, deck);
+    }
+    sfx('build.place');
+    return true;
+  }
+  /** Stand a platform's deck at `deck`, or back on automatic. */
+  setDeck(b: Building, deck: number | undefined) {
+    if (deck === undefined) delete b.deck;
+    else b.deck = deck;
+    this.worksLevelChanged(b);
+  }
+  /** Would laying `tiles` (in `piece`, the probe they lie on) put a level piece on a ramp? */
+  private onRamp(tiles: readonly { x: number; y: number }[], piece: TrackGraph) {
+    const decks = new Map<number, { x: number; y: number; deck: number }>();
+    for (const t of tiles)
+      for (const d of DIRS)
+        for (let n = 0; n <= MAX_DECK_HEIGHT; n++) {
+          const x = t.x + DIR_DX[d] * n,
+            y = t.y + DIR_DY[d] * n,
+            deck = this.deckAt(x, y);
+          if (deck !== undefined) decks.set(this.key(x, y), { x, y, deck });
+        }
+    if (!decks.size) return false;
+    const pieceAt = (x: number, y: number) =>
+      inBounds(this.map, x, y) ? (piece.get(x, y) ?? this.track.get(x, y)) : undefined;
+    return rampReach(this.map, pieceAt, [...decks.values()], this.staysLevel).blocked.length > 0;
   }
   refreshBridgeCapacity(x: number, y: number) {
     const p = this.track.get(x, y);
@@ -626,12 +723,19 @@ export class Builder {
     const members = tiles.map((t) => ({ ...t, links: probe.get(t.x, t.y)?.links ?? [] })),
       // Members of a wide piece are parts of a curve or switch, whatever their links look like.
       climbs = !wide && members.some((m) => climbAxes(m.links).length > 0);
-    if (this.groundCheck && !climbs && !tiles.every((t) => this.groundCheck!(t.x, t.y, 'level'))) {
+    const raised = tiles.some((t) => this.deckAt(t.x, t.y) !== undefined);
+    if (
+      !climbs &&
+      (raised || (this.groundCheck && !tiles.every((t) => this.groundCheck!(t.x, t.y, 'level'))))
+    ) {
       if (!tiles.every((t) => this.bridgeAt(t.x, t.y)))
         return { ok: false, cost: {}, reason: STR.build.notSmooth };
-      if (supportedDeck(this.map, members, (bx, by) => !!this.bridgeAt(bx, by)) === null)
+      if (
+        supportedDeck(this.map, members, (bx, by) => !!this.bridgeAt(bx, by), this.deckAt) === null
+      )
         return { ok: false, cost: {}, reason: STR.build.deckLevels };
     }
+    if (this.onRamp(tiles, probe)) return { ok: false, cost: {}, reason: STR.build.onRamp };
     for (const t of tiles) {
       const p = probe.get(t.x, t.y);
       if (!p) continue;
@@ -1307,6 +1411,12 @@ export class Builder {
   /** Raise a works or a platform its check let through: no price, no sound. */
   private layBuilding(x: number, y: number, defId: string, rot: number): Building {
     const b: Building = { id: defId, x, y, acc: 0, rot, active: false, rate: 0 };
+    // A platform beside a raised deck carries the bridge on at that height.
+    if (buildingDef(defId).bridge) {
+      const beside = DIRS.map((d) => this.deckAt(x + DIR_DX[d], y + DIR_DY[d]) ?? -1),
+        deck = Math.max(...beside);
+      if (deck >= 0) b.deck = Math.max(deck, levelAt(this.map, x, y));
+    }
     this.log?.building(b, true);
     this.standBuilding(b);
     this.onIndustryPlaced?.(x, y);
