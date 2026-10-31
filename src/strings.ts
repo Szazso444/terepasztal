@@ -1252,6 +1252,13 @@ export const STR = {
           { keys: ['Esc'], text: 'Close the tool' },
         ],
       },
+      {
+        title: 'Undo',
+        rows: [
+          { keys: ['Ctrl+Z'], text: 'Undo the last step' },
+          { keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], text: 'Redo it' },
+        ],
+      },
     ],
     controlsText:
       'WASD / arrows / middle-drag pan · wheel zoom · M overview · 1-5 build category, then 1-9 item · Tab next item · Q / E type · Shift+Q / E category · R rotate · U upgrade track, Shift+U downgrade · X demolish · Right-click / Delete remove · Ctrl+Z undo · Ctrl+Y redo · Esc cancel · Space pause · + / − speed · F depot · C contracts · G craft · V roster · K market · ` debug',

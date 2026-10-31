@@ -14,6 +14,7 @@ function label(code: string, shift?: boolean): string {
     'Char-': '−',
   };
   if (name[code]) return name[code];
+  if (code.startsWith('Ctrl+')) return code;
   if (code.startsWith('Digit')) return Number(code.slice(5)) <= 5 ? '1–5' : '1–9';
   const letter = code.slice('Key'.length);
   return shift ? `Shift+${letter}` : letter;
