@@ -803,5 +803,25 @@
     "size": "small",
     "controlClass": "emd",
     "gauge": "narrow"
+  },
+  {
+    "id": "transrapid",
+    "class": "hydrofoil",
+    "name": "Transrapid SMT",
+    "rarity": "SSR",
+    "type": "electric",
+    "era": "2004, Shanghai. No wheels, no wire: it floats on its guideway at 431 km/h.",
+    "body": "electric_hs",
+    "paint": "iron",
+    "bogieStyle": "none",
+    "speed": 4,
+    "power": 160,
+    "weight": 60,
+    "crew": 1,
+    "powerPerTile": 0.3,
+    "size": "medium",
+    "inCab": true,
+    "gauge": "maglev",
+    "tier": 4
   }
 ]

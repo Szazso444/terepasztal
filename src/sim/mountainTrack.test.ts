@@ -37,7 +37,7 @@ import { onRails } from './mountainTrack';
 import { storeWith } from '../testing/storeFixtures';
 
 /** An economy in the Electric Age: Main and Trunk Line are open. */
-const electricAge = () => Object.assign(new Economy(), { tier: 2 });
+const allLinesOpen = () => Object.assign(new Economy(), { tier: 4 });
 
 // Track on rock and mountain (#322): a piece goes there only as the continuation of a line, the
 // slope rule of the ground decides the rest as anywhere, and it is priced at the terrain's price
@@ -76,7 +76,7 @@ function field(free = false) {
     }
   const regions = new RegionState(map);
   for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-  const builder = new Builder(map, regions, track, electricAge(), stores);
+  const builder = new Builder(map, regions, track, allLinesOpen(), stores);
   builder.free = free;
   builder.groundCheck = (x, y, need) => groundAllowsOn(map, x, y, need);
   for (const k of RES) stock.amounts.set(k, 1e6);
@@ -574,7 +574,7 @@ describe('mountain lines on generated maps', () => {
           { stores, depot: stock } = storeWith({}),
           regions = new RegionState(map);
         for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
-        const builder = new Builder(map, regions, track, electricAge(), stores);
+        const builder = new Builder(map, regions, track, allLinesOpen(), stores);
         builder.groundCheck = (x, y, need) => groundAllowsOn(map, x, y, need);
         for (const k of RES) stock.amounts.set(k, 1e9);
         const rng = new Rng(c.pick);
@@ -651,7 +651,7 @@ describe('a train on mountain track', () => {
   function freeSpeed(biome: number, paint: (map: GameMap, hx: number, hy: number) => void) {
     const map = emptyMap(4242, 96, 96, Terrain.Grass),
       track = new TrackGraph(96, 96),
-      economy = electricAge();
+      economy = allLinesOpen();
     const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
     builder.free = true;
     const fleet = new Fleet(track, builder, map, new Inventory(), economy);

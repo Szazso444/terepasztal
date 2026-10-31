@@ -172,6 +172,10 @@ export const TRACK_ITEMS: TrackItem[] = [
   { kind: 'crossing', cls: 'trunk', cls2: 'trunk' },
   { kind: 'crossing', cls: 'branch', cls2: 'trunk' },
   { kind: 'crossing', cls: 'main', cls2: 'trunk' },
+  { kind: 'straight', cls: 'maglev' },
+  { kind: 'curve', cls: 'maglev' },
+  { kind: 'switch', cls: 'maglev' },
+  { kind: 'crossing', cls: 'maglev', cls2: 'maglev' },
 ];
 /** Lines that have pieces to build. */
 export const BUILDABLE_CLASSES = TRACK_CLASSES.filter((c) => TRACK_ITEMS.some((i) => i.cls === c));

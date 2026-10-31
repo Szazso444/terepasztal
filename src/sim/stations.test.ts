@@ -228,8 +228,8 @@ describe('a station read from a save or a level file', () => {
 });
 
 describe('a depot read from a save', () => {
-  it('is one of two kinds: the depot and the narrow depot', () => {
-    expect(DEPOTS.map((d) => d.id).sort()).toEqual(['depot', 'narrow_depot']);
+  it('is one of three kinds: the depot, the narrow depot and the maglev depot', () => {
+    expect(DEPOTS.map((d) => d.id).sort()).toEqual(['depot', 'maglev_depot', 'narrow_depot']);
   });
 
   it('loads open at every level, whatever work its save holds', () => {

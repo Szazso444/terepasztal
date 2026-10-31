@@ -347,9 +347,9 @@ export class DepotScreen implements Screen {
         return it ? [locoDef(it.defId)] : [];
       }),
     );
-    return gauge === 'regular' || gauge === 'narrow'
-      ? this.builder.depotsOf(gauge)
-      : this.builder.depots();
+    return gauge === null || gauge === 'mixed'
+      ? this.builder.depots()
+      : this.builder.depotsOf(gauge);
   }
   /** Keep the selected depot among those the chosen engines can use; returns it. */
   private syncDepot(): Station | undefined {

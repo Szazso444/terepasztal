@@ -40,7 +40,7 @@ export type CargoClass = 'liquid' | 'mineral' | 'bulk' | 'people';
 export type LocoType = 'steam' | 'diesel' | 'electric';
 export type VehicleSize = 'tiny' | 'small' | 'medium' | 'large';
 /** Track gauge: narrow stock runs on narrow track only, regular stock never does. */
-export type Gauge = 'regular' | 'narrow';
+export type Gauge = 'regular' | 'narrow' | 'maglev';
 /**
  * Train class: the smallest track line a vehicle runs on (specs/track-classes.md). Corvette on
  * Narrow Gauge; Frigate, Destroyer and Cruiser on Branch, Main and Trunk Line and every bigger one
@@ -118,6 +118,8 @@ export interface LocoDef {
   class?: TrainClass;
   /** track gauge (default regular) */
   gauge?: Gauge;
+  /** the age it belongs to, where that is not its traction's (a maglev set: 4, magnetic) */
+  tier?: number;
 }
 export interface WagonDef {
   id: string;

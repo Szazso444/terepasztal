@@ -116,7 +116,9 @@ function oldBundle(edit: (b: ContentBundle) => void) {
 const PAST = {
   houses: () => clone(PRE_92_HOUSES),
   stations: () => {
-    const defs = clone(shipped.DEFAULT_CONTENT.stations.defs);
+    const defs = clone(shipped.DEFAULT_CONTENT.stations.defs).filter(
+      (d) => d.id !== 'maglev_depot',
+    );
     // before stations had doors (#406), and before one could cover tiles by a span of its own
     // (the Town Hall and the warehouse, 2026-10-27)
     for (const d of defs) {

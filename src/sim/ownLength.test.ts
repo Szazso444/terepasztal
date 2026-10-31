@@ -247,8 +247,8 @@ function ownLoco(id: string, length: number): LocoDef {
   return { ...locoDef(id), length };
 }
 
-const REGULAR_LOCOS = content.locomotives.filter((d) => d.gauge !== 'narrow' && !d.retired);
-const REGULAR_WAGONS = content.wagons.filter((d) => d.gauge !== 'narrow' && !d.retired);
+const REGULAR_LOCOS = content.locomotives.filter((d) => !d.gauge && !d.retired);
+const REGULAR_WAGONS = content.wagons.filter((d) => !d.gauge && !d.retired);
 
 describe('a consist of locomotives with lengths of their own', () => {
   it('is as long as its bodies and the gaps between them, and stands so on the line', () => {

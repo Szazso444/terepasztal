@@ -57,6 +57,8 @@ export const PORTRAIT_IDS: ReadonlySet<string> = new Set([
   'heavy_flat',
   'wooden_coach',
   'steel_coach',
+  'transrapid',
+  'transrapid_car',
   'pullman',
   'brake_van',
   'boxcar',

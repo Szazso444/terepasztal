@@ -89,6 +89,8 @@ export const SOURCES = {
   heavy_flat: 'renders/roster-portraits/heavy_flat.png',
   wooden_coach: 'renders/roster-portraits/wooden_coach.png',
   steel_coach: 'renders/roster-portraits/steel_coach.png',
+  transrapid: 'models3d/shanghai_maglev/out_look/full_d48.png',
+  transrapid_car: 'models3d/maglev_mid/out_look/full_d48.png',
   pullman: 'renders/roster-portraits/pullman.png',
   brake_van: 'renders/roster-portraits/brake_van.png',
   boxcar: 'renders/roster-portraits/boxcar.png',

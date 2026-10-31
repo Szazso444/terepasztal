@@ -14,7 +14,7 @@ const item = (kind: TrackItem['kind'], cls: TrackItem['cls'], cls2?: TrackItem['
 
 describe('track types', () => {
   it('lists the types narrow first, bridges last', () => {
-    expect(TRACK_GROUPS).toEqual(['narrow', 'branch', 'main', 'trunk', 'bridges']);
+    expect(TRACK_GROUPS).toEqual(['narrow', 'branch', 'main', 'trunk', 'maglev', 'bridges']);
   });
 
   it('gives every piece a type and a slot of its own in it', () => {

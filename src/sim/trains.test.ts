@@ -887,6 +887,7 @@ function stockOf(gauge: Gauge) {
 const STOCK: Record<Gauge, ReturnType<typeof stockOf>> = {
   regular: stockOf('regular'),
   narrow: stockOf('narrow'),
+  maglev: stockOf('maglev'),
 };
 
 /** A consist of the gauge's stock, up to the most units and wagons a train may have, often the most. */
