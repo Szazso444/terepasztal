@@ -47,6 +47,7 @@ import type { Screen, ScreenManager } from './modal';
 import type { Toasts } from './toast';
 import type { Tooltip } from './tooltip';
 import { renderTip } from './tooltipRender';
+import { tileToWorld } from '../engine/iso';
 import { YieldLabel } from './yieldLabel';
 import { seasonOf, type Season } from '../sim/weather';
 import type { NamePrompt } from './namePrompt';
@@ -74,20 +75,22 @@ import { GachaScreen } from './gachaScreen';
 import { CraftingScreen } from './craftingScreen';
 import { RosterScreen } from './rosterScreen';
 import { ContractsScreen } from './contractsScreen';
-import { ContractsSide } from './contractsSide';
 import { Minimap } from './minimap';
 import { DebugPanel } from './debug';
 import { Toolbar, type Tool } from './toolbar';
 import { toastBottom } from './buildBar';
 import { BuildingPanel } from './buildingPanel';
 import { DecorPanel } from './decorPanel';
-import { TrainSide } from './trainSide';
 import { AlertBar } from './alertBar';
 import { AlertDesk } from './alertDesk';
 import { AlertPopup } from './alertPopup';
 import { NotificationsScreen } from './notificationsScreen';
 import { Advisor } from './advisor';
 import { BuildInfo } from './buildInfo';
+import { Outliner } from './outliner';
+import type { ViewRect } from './outlinerRows';
+import { TrainPanel } from './trainPanel';
+import type { FollowCamera } from './followCamera';
 import { StationPanel } from './stationPanel';
 import { TownPanel } from './townPanel';
 import { showSignalGuide } from './signalGuide';
@@ -183,8 +186,20 @@ export interface UiHost {
   centerCamera(wx: number, wy: number): void;
   setView(v: 0 | 1): void;
   toggleOverview(): void;
-  /** pick a train in the field view: its path lights up and its card follows it */
+  /** pick a train in the field view: its path lights up, its panel opens, the camera follows it */
   selectFieldTrain(t: Train | null): void;
+  /** the train picked in the field view */
+  readonly selectedTrain: Train | null;
+  /** pick a train from anywhere, the overview too, and go to it */
+  pickTrain(t: Train): void;
+  /** which train the camera follows */
+  readonly follow: FollowCamera;
+  /** what the camera shows, in world pixels; null in the overview, which shows everything */
+  viewRect(): ViewRect | null;
+  /** where a tile point is drawn, in world pixels */
+  tilePoint(x: number, y: number): { x: number; y: number };
+  /** the seconds a train has stood stuck; null if it has not */
+  stuckFor(id: number): number | null;
   /** trace a train's path while the pointer is on its card */
   setHoverTrain(t: Train | null): void;
   /** tint the block a signal guards; null clears it */
@@ -265,14 +280,14 @@ export interface PlayUi {
   readonly craftingScreen: CraftingScreen;
   readonly rosterScreen: RosterScreen;
   readonly contractsScreen: ContractsScreen;
-  readonly contractsSide: ContractsSide;
   readonly minimap: Minimap;
   readonly debug: DebugPanel;
   readonly overviewBanner: HTMLElement;
   readonly toolbar: Toolbar;
   readonly buildingPanel: BuildingPanel;
   readonly decorPanel: DecorPanel;
-  readonly trainSide: TrainSide;
+  readonly outliner: Outliner;
+  readonly trainPanel: TrainPanel;
   readonly alerts: AlertDesk;
   readonly advisor: Advisor;
   readonly buildInfo: BuildInfo;
@@ -484,8 +499,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       host.applySettings();
     },
   };
-  const contractsSide = new ContractsSide(d.contracts, d.builder, d.clock);
-  contractsSide.onOpenBoard = () => d.screens.toggle(contractsScreen);
   hud.menuBar.actions = {
     pause: () => (menuOpen() ? closeMenus() : openPauseMenu()),
     save: () => void host.save(),
@@ -565,7 +578,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   decorPanel.houses = d.houses;
   decorPanel.onSignalGuide = showSignalGuide;
   decorPanel.onSignalBlock = (dec) => host.highlightSignalBlock(dec);
-  const trainSide = new TrainSide(d.builder, d.atlas, d.commands, toast);
   const alertBar = new AlertBar(d.atlas, d.tooltip, d.toasts);
   alertBar.onLook = (n) => host.focusNotice(n);
   const notificationsScreen = new NotificationsScreen(d.settings, d.screens, () =>
@@ -592,14 +604,60 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     host.saveSettings();
   };
   advisor.onCount = (count, urgent) => hud.menuBar.setBadge('advisor', count, urgent);
-  trainSide.onRefuel = (trains) => {
-    const ok = d.fleet.refuelAll(trains);
-    d.toasts.push(ok ? STR.trainSide.refuelled : STR.trainSide.refuelShort, ok ? 'good' : 'warn');
-    trainSide.update(trains, host.viewTarget === 1, true);
+  /** The camera over a tile, keeping its zoom; from the overview, back in the field. */
+  const lookAt = (x: number, y: number) => {
+    if (host.viewTarget === 1) return host.returnToRts(x, y);
+    const w = tileToWorld(x, y);
+    host.centerCamera(w.x, w.y);
   };
-  trainSide.onDetails = trainDetails;
-  trainSide.onLocate = (t) => host.focusTrain(t);
-  trainSide.onHover = (t) => host.setHoverTrain(t);
+  const outliner = new Outliner({
+    fleet: d.fleet,
+    builder: d.builder,
+    contracts: d.contracts,
+    clock: d.clock,
+    commands: d.commands,
+    atlas: d.atlas,
+    toast,
+    view: () => host.viewRect(),
+    tilePoint: (x, y) => host.tilePoint(x, y),
+    selectedTrain: () => host.selectedTrain,
+    followedTrain: () => host.follow.trainId,
+    stuckFor: (id) => host.stuckFor(id),
+    onTrain: (t) => {
+      d.build.setTool({ kind: 'none' });
+      host.pickTrain(t);
+    },
+    // off a row, the path of the train picked stays lit
+    onHover: (t) => host.setHoverTrain(t ?? host.selectedTrain),
+    // a station, a works or a decor piece: one is picked at a time, as a click on the map has it
+    onStation: (s) => {
+      d.build.setTool({ kind: 'none' });
+      lookAt(s.cx + 0.5, s.cy + 0.5);
+      d.build.selectDecor(null);
+      d.build.select(s);
+    },
+    onWorks: (b) => {
+      d.build.setTool({ kind: 'none' });
+      lookAt(b.x + 0.5, b.y + 0.5);
+      d.build.select(null);
+      d.build.selectDecor(null);
+      d.build.selectBuilding(b);
+    },
+    onContract: () => d.screens.open(contractsScreen),
+  });
+  const trainPanel = new TrainPanel({
+    fleet: d.fleet,
+    builder: d.builder,
+    commands: d.commands,
+    atlas: d.atlas,
+    toast,
+    followedTrain: () => host.follow.trainId,
+    toggleFollow: (t) => host.follow.toggle(t.id),
+    stuckFor: (id) => host.stuckFor(id),
+    onClose: () => host.selectFieldTrain(null),
+    onDetails: trainDetails,
+    onDepot: () => d.screens.open(depot),
+  });
   const buildInfo = new BuildInfo(
     d.atlas,
     d.builder,
@@ -608,9 +666,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   );
   buildInfo.onClose = () => toolbar.select({ kind: 'none' });
   toolbar.root.prepend(buildInfo.root);
-  buildInfo.onTrainDetails = trainDetails;
-  buildInfo.onTrainLocate = (t) => host.focusTrain(t);
-  buildInfo.onTrainClose = () => host.selectFieldTrain(null);
   const stationPanel = new StationPanel(
     d.builder,
     () => d.build.selected && d.build.select(null),
@@ -653,10 +708,17 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     if (s) stationPanel.open(s);
     else if (stationPanel.station) stationPanel.close();
   };
-  d.build.onSelectBuilding = (b) =>
-    b ? buildingPanel.open(b) : buildingPanel.building && buildingPanel.close();
-  d.build.onSelectDecor = (dec) =>
-    dec ? decorPanel.open(dec) : decorPanel.decor && decorPanel.close();
+  // the panels stand where the train panel does: picking one lets the train go
+  d.build.onSelectBuilding = (b) => {
+    if (b) host.selectFieldTrain(null);
+    if (b) buildingPanel.open(b);
+    else if (buildingPanel.building) buildingPanel.close();
+  };
+  d.build.onSelectDecor = (dec) => {
+    if (dec) host.selectFieldTrain(null);
+    if (dec) decorPanel.open(dec);
+    else if (decorPanel.decor) decorPanel.close();
+  };
   /** the run the build card showed at the last status */
   let runShown = false;
   d.build.onStatus = (t) => {
@@ -678,6 +740,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   d.build.onToolChanged = (t) => {
     toolbar.setActive(t);
     buildInfo.show(toolbar.item(t));
+    // what is built stands still under the pointer
+    if (t.kind !== 'none') host.follow.note('tool');
   };
 
   // ---------------------------------------------------------------- undo
@@ -691,6 +755,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     stationPanel.render();
     buildingPanel.render();
     decorPanel.render();
+    outliner.update(0, true);
+    trainPanel.update(0, true);
   };
   hud.onHistory = historyStep;
   d.commands.history.onChange = () => hud.setHistory(d.commands.history);
@@ -910,7 +976,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     pauseMenu.root,
     d.screens.root,
     advisor.root,
-    el('div', { id: 'right-col' }, contractsSide.root, trainSide.root),
+    outliner.root,
+    trainPanel.root,
     el('div', { class: 'vignette' }),
     yieldLabel.root,
     hud.root,
@@ -936,6 +1003,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   if (typeof ResizeObserver !== 'undefined')
     new ResizeObserver(() => {
       d.toasts.root.style.bottom = `${toastBottom(toolbar.root.offsetHeight)}px`;
+      // and the train panel ends over it, whatever it shows (style.css)
+      d.uiRoot.style.setProperty('--dock-height', `${toolbar.root.offsetHeight}px`);
     }).observe(toolbar.root);
 
   // ---------------------------------------------------------------- keys
@@ -971,6 +1040,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     get categoryOpen() {
       return toolbar.open !== null;
     },
+    get trainOpen() {
+      return host.selectedTrain !== null;
+    },
     get recording() {
       return host.recordingRoute;
     },
@@ -994,6 +1066,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       d.build.takeEscape();
     },
     closeScreen: () => d.screens.back(),
+    closeTrain: () => host.selectFieldTrain(null),
     closeMenus,
     openPauseMenu,
     toggleScreen: (s) => d.screens.toggle(keyScreens[s]),
@@ -1029,14 +1102,14 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     craftingScreen,
     rosterScreen,
     contractsScreen,
-    contractsSide,
     minimap,
     debug,
     overviewBanner,
     toolbar,
     buildingPanel,
     decorPanel,
-    trainSide,
+    outliner,
+    trainPanel,
     alerts,
     advisor,
     buildInfo,

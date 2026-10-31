@@ -9,7 +9,7 @@ import type { ContractBoard } from '../sim/contracts';
 import type { GameClock } from '../sim/time';
 import { rules } from '../sim/rules';
 import type { Season } from '../sim/weather';
-import { fmtDuration } from './contractsScreen';
+import { fmtDuration } from './numberFormat';
 import { biomeAt } from '../sim/biomes';
 import type { TownRegistry, Town } from '../sim/towns';
 import { upgradeView } from './upgradeView';

@@ -47,6 +47,7 @@ import {
   type BuildingJSON,
 } from './buildings';
 import { MAX_LEVEL } from './levels';
+import { isTrainColour, shownTrainColour } from './trainColours';
 import type { Work } from './upgrade';
 import type { HousesJSON } from './houses';
 import { simWorld } from '../testing/simWorld';
@@ -1509,11 +1510,11 @@ describe('v16 to v17', () => {
     const step = MIGRATIONS.find((m) => m.from === 16)!;
     const v16 = migrate({ ...oldestSave(), version: 16, trains: [{ id: 1 }] });
     expect(v16.migrationNotes?.[0]).toBe(`v16→v17: ${step.note}`);
-    expect(v16.trains).toEqual([{ id: 1, ...V17_DEFAULTS, ...V18_DEFAULTS }]);
+    expect(v16.trains).toEqual([{ id: 1, ...V17_DEFAULTS, ...V18_DEFAULTS, ...V23_DEFAULTS }]);
     // a v17 file is only given what the later steps fill, and keeps the train making way
     const v17 = { ...oldestSave(), version: 17, trains: [{ id: 1 }, { id: 2, aside: true }] };
     expect(migrate(asStored(v17) as SaveGame).trains).toEqual(
-      v17.trains.map((t) => ({ ...t, ...V18_DEFAULTS })),
+      v17.trains.map((t) => ({ ...t, ...V18_DEFAULTS, ...V23_DEFAULTS })),
     );
   });
 
@@ -1639,9 +1640,9 @@ describe('v17 to v18', () => {
     });
     expect(v17.migrationNotes?.[0]).toBe(`v17→v18: ${step.note}`);
     expect(v17.trains).toEqual([
-      { id: 1, mode: 'freight', ...V18_DEFAULTS },
-      { id: 2, mode: 'transport', ...V18_DEFAULTS },
-      { id: 3, ...V18_DEFAULTS },
+      { id: 1, mode: 'freight', ...V18_DEFAULTS, ...V23_DEFAULTS },
+      { id: 2, mode: 'transport', ...V18_DEFAULTS, ...V23_DEFAULTS },
+      { id: 3, ...V18_DEFAULTS, ...V23_DEFAULTS },
     ]);
     // a file of the current version is not stepped: it holds what it holds
     const v18 = { ...oldestSave(), version: SAVE_VERSION, trains: [{ id: 1, mode: 'production' }] };
@@ -3854,6 +3855,8 @@ const V17_HELD: Readonly<Record<string, readonly unknown[]>> = {
  * had put no goods down at the stop it stands at.
  */
 const V18_DEFAULTS: Readonly<Record<string, unknown>> = { dropped: false };
+/** The field the step from v22 gives every train: its colour code, the first. */
+const V23_DEFAULTS: Readonly<Record<string, unknown>> = { colour: 0 };
 /** Values a file may already hold in the field the step from v17 fills, none the default. */
 const V18_HELD: Readonly<Record<string, readonly unknown[]>> = { dropped: [true] };
 /** The fields a step fills on every train, by the version the step upgrades from. */
@@ -3861,6 +3864,7 @@ const TRAIN_DEFAULTS: readonly [from: number, defaults: Readonly<Record<string, 
   [13, RESUME_DEFAULTS],
   [16, V17_DEFAULTS],
   [17, V18_DEFAULTS],
+  [22, V23_DEFAULTS],
 ];
 /** A station's turn in a file: none, one of the four, or null. */
 const ROT_VALUES: unknown[] = [undefined, 0, 1, 2, 3, null];
@@ -4559,4 +4563,41 @@ describe('the ground of a file of any version', () => {
     );
     expect(frozenAll).toBeGreaterThan(0);
   }, 15_000);
+});
+
+describe('v22 to v23', () => {
+  it('gives every train of an older save the first colour, and no more than that', () => {
+    const file = {
+      ...oldestSave(),
+      version: 22,
+      trains: [{ id: 3, name: 'Rocket 3' }, 'not a train'],
+    } as SaveGame;
+    const j = runStep(22, file);
+    expect(j.trains).toEqual([{ id: 3, name: 'Rocket 3', colour: 0 }, 'not a train']);
+  });
+
+  it('keeps a colour a file already holds', () => {
+    const file = { ...oldestSave(), version: 22, trains: [{ id: 3, colour: 4 }] } as SaveGame;
+    expect(runStep(22, file).trains).toEqual([{ id: 3, colour: 4 }]);
+  });
+
+  it("a train keeps its colour through a save, a later build's too; what is none is the first", () => {
+    const track = new TrackGraph(8, 8);
+    const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+    t.colour = 3;
+    const json = JSON.parse(JSON.stringify(t.toJSON()));
+    const load = (colour: unknown) =>
+      Train.fromJSON({ ...json, colour: colour as number }, track).colour;
+    expect(load(3)).toBe(3);
+    expect(load(99)).toBe(99);
+    expect(shownTrainColour(load(99))).toBe(0);
+    for (const none of [undefined, null, -1, 1.5, 'red']) expect(load(none), String(none)).toBe(0);
+  });
+
+  it('reaches a train of the oldest save, through the whole chain', () => {
+    const file = { ...oldestSave(), trains: [{ id: 3, name: 'Rocket 3' }] };
+    const [train] = migrate(file as SaveGame).trains as { colour: number }[];
+    expect(train.colour).toBe(0);
+    expect(isTrainColour(train.colour)).toBe(true);
+  });
 });

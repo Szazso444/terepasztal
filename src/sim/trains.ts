@@ -37,6 +37,7 @@ import {
   type BodyFields,
 } from './body';
 import { dieselFuelId, sandPerTile } from './supply';
+import { savedTrainColour } from './trainColours';
 
 const trackData = content.track;
 import { sfx } from '../engine/audio';
@@ -589,6 +590,8 @@ export function resetTrainIds(v = 1) {
 export class Train {
   readonly id: number;
   name: string;
+  /** the player's colour code, an index into `TRAIN_COLOURS`: the outliner groups trains by it */
+  colour = 0;
   locos: LocoSlot[];
   wagons: WagonSlot[] = [];
   schedule: StopPlan[] = [];
@@ -3412,6 +3415,7 @@ export class Train {
     return {
       id: this.id,
       name: this.name,
+      colour: this.colour,
       locos: this.locos.map((l) => ({
         uid: l.uid,
         defId: l.def.id,
@@ -3517,6 +3521,7 @@ export class Train {
       j.name,
       j.id,
     );
+    t.colour = savedTrainColour(j.colour);
     t.wagons = j.wagons.map((w) => ({
       uid: w.uid,
       def: wagonDef(w.defId),

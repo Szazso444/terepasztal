@@ -75,7 +75,12 @@ function tickState(fleet: Fleet, full: boolean): string {
       tail ? [r6(tail.x), r6(tail.y)] : null,
       t.poses.length,
     ]);
-    if (full) parts.push(roundedJSON(t.toJSON()));
+    if (full) {
+      // the colour code is the player's mark on a train: it moves nothing, and the goldens are older
+      const saved: Partial<ReturnType<Train['toJSON']>> = t.toJSON();
+      delete saved.colour;
+      parts.push(roundedJSON(saved));
+    }
   }
   parts.push([...fleet.traffic.claims]);
   parts.push(fleet.traffic.counters);

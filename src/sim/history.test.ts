@@ -23,6 +23,31 @@ function step(label: string, log: string[] = []) {
 }
 
 describe('History', () => {
+  it('passes over a step whose subject is gone, without running it', () => {
+    const log: string[] = [];
+    const h = new History();
+    const gone = { ...step('gone', log), gone: () => true };
+    h.push(step('a', log));
+    h.push(gone);
+    expect(h.undoLabel).toBe('a');
+    expect(h.undo()).toEqual({ ok: true });
+    expect(log).toEqual(['undo a']);
+    expect(h.canUndo).toBe(false);
+  });
+
+  it('has nothing to undo or redo when only such steps are left', () => {
+    const h = new History();
+    h.push({ ...step('gone'), gone: () => true });
+    expect(h.canUndo).toBe(false);
+    expect(h.undo()).toEqual({ ok: false, message: STR.history.nothingToUndo });
+    let there = true;
+    h.push({ ...step('later'), gone: () => !there });
+    expect(h.undo()).toEqual({ ok: true });
+    there = false;
+    expect(h.redoLabel).toBeNull();
+    expect(h.redo()).toEqual({ ok: false, message: STR.history.nothingToRedo });
+  });
+
   it('starts with nothing to undo or redo, and says so', () => {
     const h = new History();
     expect(h.canUndo).toBe(false);
