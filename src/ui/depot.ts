@@ -251,7 +251,7 @@ export class DepotScreen implements Screen {
    * Open on this depot: its trains in the list, a new train rolling out of it. The caller puts the
    * screen up; the draft stands as it was left.
    */
-  openOnDepot(id: number) {
+  openOn(id: number) {
     this.depotId = id;
     this.scope = 'here';
     this.showBarred = false;
