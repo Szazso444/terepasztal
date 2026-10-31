@@ -33,7 +33,7 @@ export type WorldSpec =
     }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 22;
+export const SAVE_VERSION = 23;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -651,6 +651,13 @@ export const MIGRATIONS: Migration[] = [
     from: 21,
     note: 'the six track lines replaced the track classes: wide and high-speed track became Branch Line, and transitions became Branch Line straights',
     run: (j) => (j.track = liftLegacyTrack(j.track)),
+  },
+  {
+    from: 22,
+    note: 'trains took a colour code: every train of an older save has the first colour',
+    run: (j) => {
+      for (const t of j.trains) if (isRecord(t)) t.colour = t.colour ?? 0;
+    },
   },
 ];
 /** Every field of `SaveParts`, once: leaving one out, or naming one it lacks, fails to compile. */

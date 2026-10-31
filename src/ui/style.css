@@ -1559,72 +1559,472 @@ input.text {
   color: #e0715f;
 }
 
-/* ---- contracts side list ---- */
-#right-col {
+/* ---- the outliner, top right and clear of the survey map ---- */
+#outliner {
   position: absolute;
   right: 8px;
   top: 62px;
   bottom: 284px;
-  width: 240px;
+  width: 300px;
+  max-height: 560px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  pointer-events: none;
   z-index: 5;
 }
-#right-col > * {
-  pointer-events: auto;
-}
-#contracts-side {
-  width: 240px;
-  max-height: 200px;
+.ol-tabs {
+  flex: none;
   display: flex;
-  flex-direction: column;
-  flex: 0 0 auto;
+  background: var(--stone-dark);
+  border-bottom: 1px solid var(--border-dark);
 }
-#train-side {
-  width: 240px;
+.btn.ol-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 4px;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  box-shadow: none;
+}
+.btn.ol-tab.on {
+  flex: 2.6 1 0;
+  color: var(--text);
+  border-bottom-color: var(--amber);
+}
+.ol-tab b {
+  font-family: var(--font-title);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ol-bar {
+  flex: none;
+  padding: 6px 8px;
+}
+.ol-seg {
+  display: flex;
+  border: 1px solid var(--border-dark);
+  background: var(--stone-dark);
+}
+.btn.ol-scope {
+  flex: 1;
+  padding: 3px 6px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+.btn.ol-scope.on {
+  color: var(--text);
+  background: var(--iron);
+  box-shadow: inset 1px 1px 0 var(--border-light);
+}
+.ol-body {
   flex: 1 1 auto;
-  min-height: 60px;
-  display: flex;
-  flex-direction: column;
-}
-#train-side .panel-body {
+  min-height: 0;
   overflow-y: auto;
-  padding: 4px 6px;
+  padding: 2px 0;
 }
-#train-side .panel-title .num {
-  margin-left: auto;
+.ol-empty {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 11px;
   color: var(--text-dim);
 }
-.ts-card {
-  border: 1px solid var(--border-dark);
-  background: var(--stone);
-  padding: 4px 6px;
-  margin: 3px 0;
-  font-size: 11px;
-}
-.ts-card:hover {
-  background: var(--stone-light);
-  border-color: var(--amber-dark);
-}
-.ts-card .ts-head {
+.ol-grp {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  padding: 7px 10px 3px;
+  font-size: 10.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-dim);
 }
-.ts-card .name {
-  font-family: var(--font-title);
+.ol-grp i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+.ol-grp em {
+  margin-left: auto;
+  font-style: normal;
+}
+.ol-row {
+  display: flex;
+  gap: 7px;
+  padding: 5px 9px 5px 7px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+.ol-row:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+.ol-row.sel,
+.ol-row.exp {
+  background: color-mix(in srgb, var(--amber) 9%, transparent);
+}
+.ol-stripe,
+.tp-stripe {
+  flex: none;
+  width: 5px;
+  border-radius: 2px;
+  align-self: stretch;
+  cursor: pointer;
+}
+.ol-blank {
+  flex: none;
+  width: 5px;
+}
+.ol-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ol-l1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12.5px;
+}
+.ol-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.ol-lv {
+  flex: none;
+  font-size: 10.5px;
   color: var(--amber);
 }
-.ts-card .kv {
-  padding: 1px 0;
+.ol-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: 11px;
+  white-space: nowrap;
+  color: var(--sv, var(--text-dim));
 }
-.ts-card .kv .v {
-  font-size: 10px;
-  max-width: 60%;
+.ol-chip.sev-good {
+  color: var(--text-good);
+}
+.ol-chip .build-icon {
+  display: inline-flex;
+}
+.ol-l1 > .build-icon {
+  flex: none;
+  display: inline-flex;
+  color: var(--amber);
+}
+.ol-l2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.ol-route {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ol-cg {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.ol-meter {
+  flex: 0 0 56px;
+  height: 5px;
+  background: var(--stone-dark);
+  border: 1px solid var(--border-dark);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.ol-meter i {
+  display: block;
+  height: 100%;
+  background: var(--amber);
+}
+.ol-meter.warn i {
+  background: var(--sv, #e8c04a);
+}
+.ol-meter.bad i {
+  background: var(--text-bad);
+}
+.ol-open {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ol-l3 {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 3px 8px;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.ol-l3 > span:nth-child(odd) {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ol-l4 {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.ol-l4 span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.ol-l4 b {
+  color: var(--text);
+}
+.ol-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 25px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border-dark);
+}
+.rename-field {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0 3px;
+  font-weight: 400;
+}
+
+/* ---- the train panel, top left and clear of the build dock ---- */
+#train-panel {
+  position: absolute;
+  left: 8px;
+  top: 62px;
+  bottom: calc(var(--dock-height, 0px) + 16px);
+  width: 400px;
+  max-height: 640px;
+  display: flex;
+  flex-direction: column;
+  z-index: 5;
+}
+.tp-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--stone-dark);
+  border-bottom: 1px solid var(--border-dark);
+  font-family: var(--font-title);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.tp-stripe {
+  width: 6px;
+  margin: -3px 0;
+}
+.tp-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-eye {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 22px;
+  color: var(--text-dim);
+  border: 1px solid var(--border-dark);
+  background: var(--stone);
+  cursor: pointer;
+}
+.tp-eye.on {
+  color: var(--amber);
+  box-shadow: inset 0 0 0 1px var(--amber);
+}
+.tp-tabs {
+  flex: none;
+  display: flex;
+  background: var(--stone-dark);
+  border-bottom: 1px solid var(--border-dark);
+}
+.btn.tp-tab {
+  flex: 1;
+  padding: 6px 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  box-shadow: none;
+}
+.btn.tp-tab.on {
+  color: var(--text);
+  font-weight: 700;
+  border-bottom-color: var(--amber);
+}
+.tp-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 6px;
+}
+.tp-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px 0;
+  font-size: 12px;
+}
+.tp-status .build-icon {
+  display: inline-flex;
+  vertical-align: -2px;
+}
+.tp-note {
+  padding: 4px 10px 0;
+  font-size: 11.5px;
+}
+.tp-problem {
+  display: grid;
+  gap: 4px;
+  margin: 8px 10px 2px;
+  padding: 7px 9px;
+  font-size: 12px;
+  color: var(--sv);
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 10%, var(--stone));
+}
+.tp-problem b {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.tp-problem > span {
+  color: var(--text);
+}
+.tp-problem .row {
+  margin: 0;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tp-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 8px;
+  padding: 3px 10px;
+  font-size: 12px;
+}
+.tp-line > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.tp-line .ol-meter {
+  grid-column: 1 / -1;
+  flex: none;
+  margin-top: 2px;
+}
+.tp-line small {
+  grid-column: 1 / -1;
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+.tp-goods {
+  display: inline-flex;
+  gap: 8px;
+}
+.tp-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 4px;
+  padding: 10px 10px 4px;
+}
+.tp-car {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 34px;
+  background: var(--stone-dark);
+  border: 1px solid var(--border-dark);
+}
+.tp-car .sprite-preview:first-child {
+  width: 42px;
+  height: 32px;
+  object-fit: contain;
+}
+.tp-car .res-icon {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+}
+.tp-none {
+  align-self: center;
+  padding: 0 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.tp-loco {
+  padding-bottom: 2px;
+}
+.tp-loco .label-row {
+  margin: 0;
+  padding: 0 10px;
+}
+.tp-foot {
+  flex: none;
+  display: flex;
+  gap: 5px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--border-dark);
+}
+.tp-details {
+  cursor: pointer;
+}
+/* the camera keys' hint would stand out from behind the panel */
+#train-panel.open ~ #hint {
+  visibility: hidden;
+}
+.tp-scroll .schedule-editor {
+  padding: 0 6px;
 }
 #build-info {
   display: flex;
@@ -1640,10 +2040,6 @@ input.text {
   flex: 1 1 auto;
   min-height: 0;
   padding: 0;
-}
-.bi-train {
-  padding: 6px 8px;
-  overflow-y: auto;
 }
 .bi-head {
   flex: none;
@@ -1739,42 +2135,11 @@ input.text {
   font-size: 11px;
   color: var(--text-dim);
 }
-.bi-top {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-}
-.bi-art {
-  width: 72px;
-  height: 64px;
-  object-fit: contain;
-  background: var(--border-dark);
-  border: 1px solid var(--border-dark);
-  flex: 0 0 72px;
-}
-.bi-text .name {
-  font-family: var(--font-title);
-  color: var(--amber);
-  font-size: 14px;
-  margin-bottom: 4px;
-}
 .bi-res {
   display: inline-flex;
   align-items: center;
   gap: 3px;
   font-family: var(--font-mono);
-  font-size: 12px;
-}
-.bi-place {
-  margin-top: 4px;
-  color: var(--cyan);
-  font-size: 11px;
-}
-.bi-desc {
-  margin-top: 6px;
-  color: var(--text-dim);
-  font-style: italic;
-  font-family: var(--font-title);
   font-size: 12px;
 }
 .route-step.current {
@@ -1783,35 +2148,6 @@ input.text {
 .schedule-editor .item.disabled {
   opacity: 0.5;
   cursor: default;
-}
-#contracts-side .panel-body {
-  overflow-y: auto;
-}
-.side-contract {
-  padding: 3px 0;
-  border-bottom: 1px dotted var(--stone-light);
-}
-.side-contract.urgent .num {
-  color: #e0715f;
-}
-.side-contract.urgent .meter.time > div {
-  background: var(--red);
-}
-.sc-line {
-  display: flex;
-  justify-content: space-between;
-  gap: 6px;
-}
-.sc-line.sub {
-  color: var(--text-dim);
-  font-size: 10px;
-}
-.meter.time {
-  height: 3px;
-  margin-top: 1px;
-}
-.meter.time > div {
-  background: var(--amber-dark);
 }
 
 /* ---- gacha ---- */
@@ -2321,8 +2657,8 @@ select.text {
   min-height: 0;
 }
 body.editor #alert-bar,
-body.editor #contracts-side,
-body.editor #train-side {
+body.editor #outliner,
+body.editor #train-panel {
   display: none;
 }
 
@@ -2528,9 +2864,6 @@ input[type='range'] {
   border-bottom: none;
   cursor: inherit;
 }
-#train-side .panel-title .num {
-  margin-left: auto;
-}
 .tip {
   display: flex;
   align-items: flex-start;
@@ -2652,7 +2985,8 @@ input[type='range'] {
 #advisor {
   position: absolute;
   top: 62px;
-  right: 256px;
+  /* left of the outliner */
+  right: 316px;
   width: 320px;
   max-height: 60vh;
   display: flex;
@@ -2689,71 +3023,11 @@ input[type='range'] {
 .badge.urgent {
   background: var(--red);
 }
-.ts-amt {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  margin-left: 5px;
-  font-family: var(--font-mono);
-}
-.ts-amt.red {
-  color: var(--red);
-}
-.ts-card .kv.red .v {
-  color: var(--red);
-}
-.ts-card .kv.amber .v {
-  color: var(--amber);
-}
-.ts-card .kv .v {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 2px;
-  max-width: 70%;
-}
 .btn.tiny {
   padding: 0 4px;
   font-size: 9px;
   line-height: 13px;
   margin-left: 3px;
-}
-.ts-wagons {
-  margin: 3px 0;
-  border-top: 1px dotted var(--stone-light);
-}
-.ts-wagon {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 1px 0;
-  font-size: 11px;
-}
-.ts-wagon-art {
-  width: 26px;
-  height: 20px;
-  object-fit: contain;
-  flex: 0 0 26px;
-}
-.ts-wagon-name {
-  flex: 1;
-  color: var(--text-dim);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.ts-week {
-  margin-top: 3px;
-  border-top: 1px dotted var(--stone-light);
-}
-.ts-week-title {
-  font-family: var(--font-title);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-size: 9px;
-  color: var(--text-dim);
-  padding: 2px 0;
 }
 #resbar .res {
   display: flex;
@@ -2777,7 +3051,6 @@ input[type='range'] {
   width: 14px;
   height: 14px;
 }
-#contracts-side,
 #station-panel,
 #editor-panel,
 #debug {
@@ -2987,16 +3260,6 @@ table.market td {
 }
 .res .value.good {
   color: #9ccc7c;
-}
-
-#train-side .panel-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-#train-side .panel-title .num {
-  margin-left: auto;
 }
 
 /* a track line's badge beside a name (src/ui/lineBadge.ts) */

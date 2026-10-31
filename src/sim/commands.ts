@@ -19,6 +19,7 @@ import type { ContractDispatcher } from './contractDispatch';
 import type { GameClock } from './time';
 import type { Station } from './stations';
 import type { Train, RouteMode, StopPlan } from './trains';
+import { isTrainColour } from './trainColours';
 
 /** What a command did: applied, or refused with the reason to show the player. */
 export type CommandResult = { ok: true } | { ok: false; message: string };
@@ -43,6 +44,8 @@ export interface CommandDeps {
 
 /** Longest station name, in characters. */
 export const STATION_NAME_MAX = 24;
+/** Longest train name, in characters. */
+export const TRAIN_NAME_MAX = 32;
 
 const done = (): CommandResult => ({ ok: true });
 const refuse = (message: string) => ({ ok: false as const, message });
@@ -113,6 +116,47 @@ export class Commands {
   /** Which solid fuel a steam train takes first. */
   setFuelPreference(t: Train, pref: 'coal' | 'wood'): CommandResult {
     t.fuelPreference = pref;
+    return done();
+  }
+  /** Rename a train: trimmed and cut to `TRAIN_NAME_MAX` characters; never empty. */
+  renameTrain(t: Train, name: string): CommandResult {
+    if (!this.fleet.byId(t.id)) return refuse(STR.train.gone);
+    const n = name.trim().slice(0, TRAIN_NAME_MAX);
+    if (!n) return refuse(STR.train.nameEmpty);
+    return this.editTrain(t, STR.history.renamed(t.name, n), t.name, n, (v) => (t.name = v));
+  }
+  /** Give a train a colour code (`TRAIN_COLOURS`). */
+  recolourTrain(t: Train, colour: number): CommandResult {
+    if (!this.fleet.byId(t.id)) return refuse(STR.train.gone);
+    if (!isTrainColour(colour)) return refuse(STR.train.noColour);
+    const label = STR.history.recoloured(t.name, STR.train.colour[colour]);
+    return this.editTrain(t, label, t.colour, colour, (v) => (t.colour = v));
+  }
+  /**
+   * Set something the player named or marked on a train: a step of its own in the history, named
+   * `label`, unless it changes nothing. The level editor records nothing, as `act` has it. A train
+   * recalled since is gone for good, and its steps with it (`HistoryStep.gone`).
+   */
+  private editTrain<T>(
+    t: Train,
+    label: string,
+    was: T,
+    now: T,
+    set: (v: T) => void,
+  ): CommandResult {
+    if (was === now) return done();
+    set(now);
+    if (this.builder.free) return done();
+    const apply = (v: T): CommandResult => {
+      set(v);
+      return done();
+    };
+    this.history.push({
+      label,
+      undo: () => apply(was),
+      redo: () => apply(now),
+      gone: () => !this.fleet.byId(t.id),
+    });
     return done();
   }
 

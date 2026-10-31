@@ -336,7 +336,7 @@ describe('where the pane stands', () => {
   it('is over every panel of the HUD and under the menus and the modal screens', () => {
     const pane = z('#menu-pane');
     expect(pane).toBeGreaterThan(0);
-    for (const hud of ['#advisor', '#alert-bar', '#right-col'])
+    for (const hud of ['#advisor', '#alert-bar', '#outliner', '#train-panel'])
       expect(pane, hud).toBeGreaterThan(z(hud));
     for (const over of ['.menu-root', '#modal-root']) expect(pane, over).toBeLessThan(z(over));
   });
