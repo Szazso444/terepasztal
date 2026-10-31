@@ -1,0 +1,338 @@
+[
+  {
+    "file": "01-merchants-last-stop-grid-v3.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 790342,
+    "solid_bounds": [
+      135,
+      36,
+      1401,
+      986
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "01-merchants-last-stop.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 758734,
+    "solid_bounds": [
+      70,
+      11,
+      1403,
+      995
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "02-overgrown-bathhouse-grid-v3.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 853030,
+    "solid_bounds": [
+      136,
+      61,
+      1412,
+      955
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "02-overgrown-bathhouse.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 678639,
+    "solid_bounds": [
+      58,
+      25,
+      1493,
+      1006
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "03-bellkeepers-refuge-grid-v2.png",
+    "size": [
+      1122,
+      1402
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "transparent_pixels": 968371,
+    "solid_bounds": [
+      190,
+      19,
+      913,
+      1388
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "03-bellkeepers-refuge-grid-v3.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "transparent_pixels": 1141541,
+    "solid_bounds": [
+      409,
+      14,
+      896,
+      1238
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "03-bellkeepers-refuge.png",
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 890790,
+    "solid_bounds": [
+      129,
+      24,
+      888,
+      1507
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "04-flooded-archive.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 629064,
+    "solid_bounds": [
+      21,
+      20,
+      1514,
+      1002
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "05-rootbound-workshop.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 836022,
+    "solid_bounds": [
+      221,
+      7,
+      1315,
+      1009
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "06-cliffside-cable-station.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 965053,
+    "solid_bounds": [
+      129,
+      48,
+      1450,
+      951
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "07-stormglass-observatory.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 991405,
+    "solid_bounds": [
+      351,
+      21,
+      1246,
+      989
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "08-ashen-conservatory.png",
+    "size": [
+      1774,
+      887
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "transparent_pixels": 841048,
+    "solid_bounds": [
+      232,
+      20,
+      1650,
+      866
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "09-inverted-manor.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 855394,
+    "solid_bounds": [
+      247,
+      43,
+      1326,
+      981
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "10-sleeping-foundry.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 682454,
+    "solid_bounds": [
+      56,
+      21,
+      1492,
+      980
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "11-moonwell-pavilion.png",
+    "size": [
+      1374,
+      1145
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "transparent_pixels": 977385,
+    "solid_bounds": [
+      253,
+      17,
+      1139,
+      1107
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  },
+  {
+    "file": "12-house-between-seasons.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 705783,
+    "solid_bounds": [
+      98,
+      27,
+      1446,
+      1001
+    ],
+    "solid_touches_canvas": false,
+    "projection_status": "not-certified"
+  }
+]

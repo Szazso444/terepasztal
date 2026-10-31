@@ -1,0 +1,17 @@
+Use case: stylized-concept.
+Asset type: one unified game art direction contact sheet, twelve landmark concepts, not a runtime sprite atlas.
+Create a polished landscape concept sheet arranged as exactly 4 columns by 3 rows, each panel showing one complete isolated isometric landmark, same 2:1 orthographic isometric camera and upper-left lighting. Cozy illustrated miniature architecture for a pastoral railway logistics game, warm timber, oat limestone, moss greens, slate, copper and muted teal. Painterly clean readable silhouettes, restrained magical details, no characters, no UI, no logos. Pale warm neutral sheet background and generous gutters. No chunky floating terrain cubes; small thin diamond ground footprints with faint tile divisions, buildings correctly seated. Each panel has only the exact name and footprint below in crisp readable type. Vary mass and footprint visibly, maintain a consistent architectural scale, tall structures can extend upward. Show discovery/abandoned condition.
+Panels in reading order:
+1 "Merchant's Last Stop" "3 x 2 tiles": crooked timber inn incorporating a huge abandoned covered wagon, cargo crates.
+2 "Overgrown Bathhouse" "4 x 3 tiles": limestone bathhouse ruin, turquoise pools and vines, partially broken glass roof.
+3 "Bellkeeper's Refuge" "1 x 1 tile": narrow tall limestone tower, large bronze bell, tiny timber room under bell.
+4 "Flooded Archive" "4 x 4 tiles": half submerged library, broken roof and visible shelves, reeds, shallow teal water.
+5 "Rootbound Workshop" "2 x 2 tiles": little timber workshop lifted by thick twisting living roots, small workbench.
+6 "Cliffside Cable Station" "3 x 2 tiles": timber winch house on a cliff edge, short hanging cable and suspended cargo basket, no enormous bridge.
+7 "Stormglass Observatory" "2 x 2 tiles": stone observatory, weathered copper dome, telescope, restrained pale blue crystal.
+8 "Ashen Conservatory" "4 x 2 tiles": elongated blackened greenhouse, broken glazing, bright surviving vegetation.
+9 "Inverted Manor" "3 x 3 tiles": upside down small manor lodged roof first into a shallow crater, foundations facing upward.
+10 "Sleeping Foundry" "5 x 4 tiles": broad abandoned brick foundry with cold furnaces, chimneys, glimpse of dormant mechanical guardian in open doorway.
+11 "Moonwell Pavilion" "2 x 2 tiles": round delicate stone pavilion around still reflective pool with subtle silver glow.
+12 "House Between Seasons" "4 x 4 tiles": four joined little wings surrounding courtyard, snow, spring blossoms, lush summer, autumn leaves, one coherent building.
+No rarity text or gameplay paragraphs. This is one curated reference sheet; distinct labeled panels must not merge.
