@@ -348,8 +348,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   /** progress towards every age: the era widget's, and what the build bar's locks wait for */
   const ages = () => ageStatus(d.economy.tier, host.ageSnapshot());
   const hud = new Hud(d.clock, ages, d.atlas, d.tooltip);
-  const depot = new DepotScreen(d.inventory, d.fleet, d.builder, toast, d.atlas);
+  const depot = new DepotScreen(d.inventory, d.fleet, d.builder, toast, d.atlas, d.namePrompt);
   depot.onFocusTrain = (t) => host.focusTrain(t);
+  depot.onRedraw = () => d.screens.redraw();
   depot.onFocusDepot = (dep, gate) => {
     // peek at the shed behind the dimmed screen and mark the gate the train would take
     host.peekDepot(dep, gate);
@@ -371,9 +372,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   };
   const trainScreen = new TrainScreen(d.fleet, d.builder, d.commands, d.atlas, toast);
   trainScreen.onLocate = (t) => host.focusTrain(t);
+  trainScreen.onRedraw = () => d.screens.redraw();
+  // over the Depot when it is up: Back returns to it
   const trainDetails = (t: Train) => {
     trainScreen.open(t);
-    d.screens.open(trainScreen);
+    d.screens.push(trainScreen);
   };
   depot.onDetails = trainDetails;
   const stores = d.builder.stores;

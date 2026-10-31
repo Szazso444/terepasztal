@@ -29,7 +29,14 @@ export interface GateInfo {
 import type { Builder } from './build';
 import type { GameMap } from '../world/tiles';
 import type { Inventory } from '../gacha/inventory';
-import { wagonDef, locoDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
+import {
+  wagonDef,
+  locoDef,
+  levelMul,
+  type Item,
+  type LocoDef,
+  type WagonDef,
+} from '../gacha/items';
 import { DIR_DX, DIR_DY, DIRS, type Dir } from '../engine/iso';
 import type { Economy } from './economy';
 import { previewOf, type ResourceStore } from './stores';
@@ -452,15 +459,19 @@ export class Fleet {
       ? { gate: null, depot, reason: r, stops }
       : { gate: r, depot, reason: null, stops };
   }
-  /** Assemble a train and roll it out of a depot gate. Returns an error string on failure. */
-  create(
+  /**
+   * The train a consist, a route and a depot make, ready to roll out, or the reason it cannot be
+   * made: every refusal `create` has before the gate, in its order. `id` is for a probe, which
+   * takes no train number. Nothing is changed.
+   */
+  private assemble(
     locoUids: number[],
     wagonUids: number[],
     schedule: (StopPlan | number)[],
-    name?: string,
-    mode: RouteMode = 'schedule',
-    depotId: number | null = null,
-  ): Train | string {
+    name: string | undefined,
+    depotId: number | null,
+    id?: number,
+  ): { train: Train; depot: Station; locoItems: Item[]; wagonItems: Item[] } | string {
     if (!locoUids.length) return STR.fleet.needLoco;
     if (locoUids.length > MAX_LOCOS) return STR.fleet.tooManyLocos(MAX_LOCOS);
     if (wagonUids.length > MAX_WAGONS) return STR.fleet.tooManyWagons(MAX_WAGONS);
@@ -476,7 +487,7 @@ export class Fleet {
       level: l!.level,
       inCab: l!.inCab,
     }));
-    const t = new Train(locos, name);
+    const t = new Train(locos, name, id);
     t.wagons = wagons.map((w) => ({
       uid: w!.uid,
       def: wagonDef(w!.defId),
@@ -494,6 +505,48 @@ export class Fleet {
     if (stops.length < 2) stops = this.autoSchedule(depot);
     if (stops.length < 2) return STR.fleet.needTwoStops;
     t.schedule = stops;
+    return { train: t, depot, locoItems: locoItems as Item[], wagonItems: wagons as Item[] };
+  }
+
+  /**
+   * Whether `create` would roll this train out, and where, with no side effects: the one question
+   * `create` and the depot screen both ask, so they never disagree. The consist is the real one,
+   * wagons and length included, rolled out of the depot's gates as it would be. `reason` is what
+   * `create` would answer, null when it would go; `gate`, `depot` and `stops` are what is known by
+   * then (the route is the automatic one when `schedule` has fewer than two stops).
+   */
+  dispatchCheck(
+    locoUids: number[],
+    wagonUids: number[],
+    schedule: (StopPlan | number)[],
+    depotId: number | null,
+  ): {
+    reason: string | null;
+    gate: { x: number; y: number } | null;
+    depot: Station | null;
+    stops: StopPlan[];
+  } {
+    const made = this.assemble(locoUids, wagonUids, schedule, 'probe', depotId, -1);
+    if (typeof made === 'string') return { reason: made, gate: null, depot: null, stops: [] };
+    const { train, depot } = made;
+    const placed = this.rollOut(train, depot);
+    return typeof placed === 'string'
+      ? { reason: placed, gate: null, depot, stops: train.schedule }
+      : { reason: null, gate: placed, depot, stops: train.schedule };
+  }
+
+  /** Assemble a train and roll it out of a depot gate. Returns an error string on failure. */
+  create(
+    locoUids: number[],
+    wagonUids: number[],
+    schedule: (StopPlan | number)[],
+    name?: string,
+    mode: RouteMode = 'schedule',
+    depotId: number | null = null,
+  ): Train | string {
+    const made = this.assemble(locoUids, wagonUids, schedule, name, depotId);
+    if (typeof made === 'string') return made;
+    const { train: t, depot, locoItems, wagonItems: wagons } = made;
     t.mode = mode;
     const placed = this.rollOut(t, depot);
     if (typeof placed === 'string') return placed;
