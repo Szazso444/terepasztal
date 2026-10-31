@@ -12,7 +12,9 @@ import {
   appendStop,
   checkLifetime,
   clickedCount,
+  copiesLike,
   editorSignature,
+  foldStock,
   gateShown,
   haulShare,
   haulTone,
@@ -178,6 +180,77 @@ describe('the free stock, by model', () => {
     ];
     const order = stockOrder(rows, (r) => r).map((r) => `${r.name} ${r.level}`);
     expect(order).toEqual(['Mule 4', 'Mule 1', 'Zebra 1', 'Alpha 1']);
+  });
+});
+
+describe('what cannot roll out of this depot', () => {
+  const line = (name: string, reason: string | null, picked = 0) => ({
+    g: { name, picked },
+    reason,
+  });
+  const names = (l: { g: { name: string } }[]) => l.map((x) => x.g.name);
+  const lines = [line('A', null), line('B', 'other gauge'), line('C', 'other gauge')];
+
+  it('folds under one line, and says what it folded', () => {
+    const f = foldStock(lines, false);
+    expect(names(f.shown)).toEqual(['A']);
+    expect(f.folded).toBe(2);
+    expect(f.reason).toBe('other gauge');
+  });
+
+  it('shows every row when it is opened, and still counts them', () => {
+    const f = foldStock(lines, true);
+    expect(names(f.shown)).toEqual(['A', 'B', 'C']);
+    expect(f.folded).toBe(2);
+  });
+
+  it('gives no reason when the rows folded have different ones', () => {
+    const f = foldStock([line('A', 'too big'), line('B', 'other gauge')], false);
+    expect(f.reason).toBeNull();
+  });
+
+  it('leaves out a model in the train: it has to be seen to come off', () => {
+    const f = foldStock([line('A', 'other gauge', 2), line('B', 'other gauge')], false);
+    expect(names(f.shown)).toEqual(['A']);
+    expect(f.folded).toBe(1);
+  });
+
+  it('folds nothing where everything can roll out', () => {
+    const f = foldStock([line('A', null)], false);
+    expect(f.folded).toBe(0);
+    expect(f.reason).toBeNull();
+  });
+});
+
+describe('building a train like another', () => {
+  const tub = (uid: number, level = 1) => ({ uid, defId: 'mine_tub', level });
+  const wanted = (level: number) => ({ defId: 'mine_tub', level });
+
+  it('finds a free copy of each vehicle, in the order of the train', () => {
+    const free = [{ uid: 1, defId: 'rocket', level: 1 }, tub(2)];
+    expect(copiesLike([wanted(1), { defId: 'rocket', level: 1 }], free)).toEqual({
+      uids: [2, 1],
+      missing: 0,
+    });
+  });
+
+  it('uses each copy once, and counts the vehicles it found none for', () => {
+    expect(copiesLike([wanted(1), wanted(1), wanted(1)], [tub(1), tub(2)])).toEqual({
+      uids: [1, 2],
+      missing: 1,
+    });
+  });
+
+  it('takes the copy nearest in level', () => {
+    expect(copiesLike([wanted(3)], [tub(1, 1), tub(2, 4), tub(3, 3)]).uids).toEqual([3]);
+    expect(copiesLike([wanted(3)], [tub(1, 1), tub(2, 4)]).uids).toEqual([2]);
+  });
+
+  it('never takes another model', () => {
+    expect(copiesLike([wanted(1)], [{ uid: 1, defId: 'rocket', level: 1 }])).toEqual({
+      uids: [],
+      missing: 1,
+    });
   });
 });
 

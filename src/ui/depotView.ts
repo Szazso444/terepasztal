@@ -195,6 +195,55 @@ export function setPicked(
   return { list: [...picks, ...fresh], full: missing > room };
 }
 
+/** A row of the stock, and why it cannot roll out of the depot chosen, if it cannot. */
+export interface StockLine<G> {
+  g: G;
+  reason: string | null;
+}
+
+/**
+ * What a list of the stock shows. What cannot roll out of this depot folds under one line, so that
+ * a long list of another gauge does not stand between the engines and the wagons. A model in the
+ * train stays out, to be seen and taken off. `reason` is what the folded rows share, if they do.
+ */
+export function foldStock<G extends { picked: number }>(
+  lines: readonly StockLine<G>[],
+  open: boolean,
+): { shown: StockLine<G>[]; folded: number; reason: string | null } {
+  const barred = lines.filter((l) => l.reason !== null && l.g.picked === 0);
+  const reasons = new Set(barred.map((l) => l.reason));
+  return {
+    shown: open ? [...lines] : lines.filter((l) => !barred.includes(l)),
+    folded: barred.length,
+    reason: reasons.size === 1 ? barred[0].reason : null,
+  };
+}
+
+/**
+ * A free copy for each vehicle of a train, to build another like it: the same model, at the level
+ * nearest to it. `missing` counts the vehicles no copy was free for.
+ */
+export function copiesLike(
+  vehicles: readonly { defId: string; level: number }[],
+  free: readonly StockCopy[],
+): { uids: number[]; missing: number } {
+  const left = [...free];
+  const uids: number[] = [];
+  let missing = 0;
+  for (const v of vehicles) {
+    const nearest = left
+      .filter((c) => c.defId === v.defId)
+      .sort((a, b) => Math.abs(a.level - v.level) - Math.abs(b.level - v.level))[0];
+    if (!nearest) {
+      missing++;
+      continue;
+    }
+    uids.push(nearest.uid);
+    left.splice(left.indexOf(nearest), 1);
+  }
+  return { uids, missing };
+}
+
 /** What a click on a row asks for: one more, or with every copy picked one fewer. */
 export function clickedCount(g: Pick<StockGroup, 'uids' | 'picked'>): number {
   return g.picked < g.uids.length ? g.picked + 1 : g.picked - 1;
@@ -208,6 +257,8 @@ export interface Car {
   defId: string;
   level: number;
   loco: boolean;
+  /** it cannot roll out of the depot chosen */
+  bad?: boolean;
 }
 
 /**

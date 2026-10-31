@@ -4,7 +4,7 @@ import { STR } from '../strings';
 import type { Car } from './depotView';
 import { el } from './dom';
 import { vehicleArt } from './economyParts';
-import { spriteSlot } from './kit';
+import { actionButton, spriteSlot } from './kit';
 import { withCard, type CardTip } from './vehicleRow';
 
 /** What a strip that can be changed asks for; a train in service has none. */
@@ -13,6 +13,8 @@ export interface StripEdit {
   remove(car: Car): void;
   /** move it to place `to` among the vehicles of its kind */
   move(car: Car, to: number): void;
+  /** take every vehicle off */
+  clear(): void;
 }
 
 /** The vehicles of one kind, as a move counts its places. */
@@ -37,7 +39,10 @@ export function consistStrip(
     const first = i > 0 && !car.loco && cars[i - 1].loco;
     const e = el(
       'div',
-      { class: `dp-car ${first ? 'dp-car-w' : ''}`.trim(), 'data-uid': String(car.uid) },
+      {
+        class: ['dp-car', first ? 'dp-car-w' : '', car.bad ? 'dp-car-bad' : ''].join(' ').trim(),
+        'data-uid': String(car.uid),
+      },
       spriteSlot(withCard(atlas, vehicleArt(atlas, car.defId), card(car))),
       car.level > 1 ? el('em', { text: STR.roster.lv(car.level) }) : null,
     );
@@ -87,6 +92,13 @@ export function consistStrip(
         edit.move(from, kindOf(cars, car).indexOf(car));
     });
   });
-  if (edit) root.append(el('small', { class: 'dp-hint', text: STR.depot.stripHint }));
+  if (edit)
+    root.append(
+      el('small', { class: 'dp-hint', text: STR.depot.stripHint }),
+      actionButton(STR.depot.clearConsist, () => edit.clear(), {
+        cls: 'small',
+        title: STR.depot.clearHint,
+      }),
+    );
   return root;
 }

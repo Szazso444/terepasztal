@@ -696,7 +696,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     stuckFor: (id) => host.stuckFor(id),
     onClose: () => host.selectFieldTrain(null),
     onDetails: trainDetails,
-    onDepot: () => d.screens.open(depot),
+    onDepot: () => {
+      // the panel asks about the train it shows: the Depot opens on that train
+      if (trainPanel.train) depot.showTrain(trainPanel.train);
+      d.screens.open(depot);
+    },
   });
   const buildInfo = new BuildInfo(
     d.atlas,

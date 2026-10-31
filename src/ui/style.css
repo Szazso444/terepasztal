@@ -4985,7 +4985,7 @@ body.title-up
 }
 .dp-dep {
   flex: 0 1 270px;
-  min-width: 178px;
+  min-width: 262px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1px 8px;
@@ -5000,6 +5000,12 @@ body.title-up
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+.dp-bar.many > .dp-dep {
+  min-width: 196px;
+}
+.dp-bar.many .dp-gz {
+  display: none;
 }
 .dp-dep:hover:not(.on) {
   background: var(--iron);
@@ -5134,6 +5140,10 @@ body.title-up
 .dp-car:focus-visible > .k-spr {
   border-color: var(--amber);
 }
+.dp-car-bad > .k-spr {
+  border-color: var(--text-bad);
+  box-shadow: inset 0 0 0 1px var(--text-bad);
+}
 .dp-car.drag {
   opacity: 0.45;
 }
@@ -5152,6 +5162,9 @@ body.title-up
     sans-serif;
   font-style: normal;
   pointer-events: none;
+}
+.dp-cars > .btn {
+  align-self: center;
 }
 .dp-hint {
   flex: 1 0 auto;
@@ -5190,6 +5203,59 @@ body.title-up
   text-overflow: ellipsis;
 }
 .dp-vt > .label-row {
+  flex: none;
+}
+/* a list of the stock keeps its head in sight as it scrolls */
+.dp-stockw > .k-sec {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--stone);
+}
+/* what cannot roll out of this depot, folded under one line */
+.dp-fold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 28px;
+  padding: 3px 10px;
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.22);
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.dp-fold:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+}
+.dp-fold > .k-ic {
+  flex: none;
+  transform: rotate(180deg);
+}
+.dp-fold.on > .k-ic {
+  transform: rotate(90deg);
+}
+.dp-fold > span:not(.k-ic) {
+  flex: none;
+}
+.dp-fold > small {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.btn.dp-use[hidden] {
+  display: none;
+}
+.btn.dp-use {
   flex: none;
 }
 /* a row of the stock: how many are free, how many ride, the way to the Roster */

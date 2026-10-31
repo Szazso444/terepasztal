@@ -24,6 +24,8 @@ export interface DepotBarHost {
 }
 
 const GATE_TONES: readonly string[] = ['ok', 'bad'];
+/** How many depots the bar shows in full. */
+const ROOMY = 4;
 
 /**
  * The head of the Depot: every depot with its gauge, its trains and its gate. It is drawn again
@@ -35,7 +37,18 @@ export class DepotBar {
   /** what the chips were drawn from */
   private drawn = '';
 
-  constructor(private readonly h: DepotBarHost) {}
+  constructor(private readonly h: DepotBarHost) {
+    // more depots than it shows: a mouse wheel goes along the line
+    this.root.addEventListener(
+      'wheel',
+      (e) => {
+        if (!e.deltaY || this.root.scrollWidth <= this.root.clientWidth) return;
+        this.root.scrollLeft += e.deltaY;
+        e.preventDefault();
+      },
+      { passive: false },
+    );
+  }
 
   /** Bring the bar up to the depots there are. */
   sync(depots: readonly BarDepot[]) {
@@ -49,6 +62,8 @@ export class DepotBar {
 
   private draw(depots: readonly BarDepot[]) {
     this.live.clear();
+    // past what fits, the chips drop the gauge's word: its badge still shows it
+    this.root.classList.toggle('many', depots.length > ROOMY);
     this.root.replaceChildren(
       ...(depots.length
         ? depots.map((d) => this.chip(d))
@@ -66,7 +81,12 @@ export class DepotBar {
       'button',
       { type: 'button', class: 'dp-dep', role: 'radio' },
       el('span', { class: 'dp-dep-h' }, lineBadge(gaugeLine(d.gauge)), el('b', { text: d.name })),
-      el('small', {}, `${STR.depot.gaugeName[d.gauge]} · `, count),
+      el(
+        'small',
+        {},
+        el('span', { class: 'dp-gz', text: `${STR.depot.gaugeName[d.gauge]} · ` }),
+        count,
+      ),
       gate,
     );
     root.addEventListener('click', (e) => {
