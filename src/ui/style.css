@@ -4632,6 +4632,8 @@ select.text.small {
 }
 .ec-eye .k-ic {
   margin: 0;
+}
+
 /* ---- the title screen, Saved games, Levels and New game (PR 12d) ---- */
 /* the title: the wordmark heads an S frame that stands on the left, the map showing on its right */
 #menu-root {

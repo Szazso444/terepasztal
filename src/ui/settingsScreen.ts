@@ -134,7 +134,7 @@ export class SettingsScreen implements Screen {
   }
   /** Stand on a tab when it opens: a screen that sends the player here says which. */
   showTab(id: string) {
-    if (TABS.some((t) => t.id === id)) this.tab = id as Tab;
+    if (TABS.some((t) => t.id === id)) this.tab = id as SettingsTab;
   }
   refresh() {
     if (this.tab === 'saves') this.showAutosave();
