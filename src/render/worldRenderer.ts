@@ -92,6 +92,8 @@ import { surfaceVersions } from './fx';
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
 /** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
 export type TexturedBridge = Omit<BridgeSite, 'deck'> & {
+  /** The height stored for the deck, in levels; absent where it is automatic. */
+  height?: number;
   /** Rail, or a road where the platform has a road and no rail (bridgeSpan's road case). */
   carries: BridgeCarries;
   /** Over water: supports stand in it, and the deck never sinks below the waterline's. */
@@ -817,7 +819,7 @@ export class WorldRenderer {
       if (this.isBuilt(i % this.map.w, Math.floor(i / this.map.w))) this.buildPropsAt(i, list);
   }
   private buildPropsAt(i: number, list: PropInstance[]) {
-    if (this.propSprites.has(i)) return;
+    if (this.propSprites.has(i) || this.behindDecks.has(i)) return;
     {
       const x = i % this.map.w;
       const y = Math.floor(i / this.map.w);
@@ -878,6 +880,7 @@ export class WorldRenderer {
     const i = idx(this.map, x, y);
     for (const { s } of this.scatterSprites.get(i) ?? []) s.destroy();
     this.scatterSprites.delete(i);
+    if (this.behindDecks.has(i)) return;
     if (!this.isBuilt(x, y)) return;
     const list = scatterFor(this.map, x, y, {
       occupied: (xx, yy) =>
@@ -1323,7 +1326,7 @@ export class WorldRenderer {
    * the deck (`deck` world pixels up, 4 px thick), so none is longer than the drop it spans and
    * none sinks into the terrain. Straight spans (`axis` 0 along y, 1 along x) get a pair of
    * piers (stone) or a braced trestle (wood); curves and switches (`axis` null) a pier per
-   * corner. `material` null removes them.
+   * corner. `material` null removes them; `water` stands them in the water under a raised deck.
    */
   setBridgePiers(
     x: number,
@@ -1331,6 +1334,7 @@ export class WorldRenderer {
     material: 'wood' | 'stone' | null,
     axis: 0 | 1 | null = null,
     deck = 0,
+    water = false,
   ) {
     const k = idx(this.map, x, y);
     let g = this.pierGraphics.get(k);
@@ -1377,7 +1381,7 @@ export class WorldRenderer {
     for (const p of posts) {
       const fx = x + p.dx,
         fy = y + p.dy,
-        ground = -this.elevationOf(fx, fy);
+        ground = water ? this.waterDeck(fx, fy) + WATERLINE : -this.elevationOf(fx, fy);
       feet.push({ x: fx, y: fy, ground });
       if (top - ground < 1) continue;
       const corner = (sx: number, sy: number, z: number) =>
@@ -1469,6 +1473,32 @@ export class WorldRenderer {
     }
   }
   private texturedParts = new Map<number, { key: string; under: Container; near: Container }>();
+  /** Tiles behind a raised deck, on which nothing that grows is drawn (`setRaisedDecks`). */
+  private behindDecks = new Set<number>();
+  /**
+   * The raised decks now, each with its top in world px up. Decks are drawn under what stands on
+   * the map, so what grows behind one would stand on it: each clears the tiles behind it, as far
+   * as it stands over its ground (`TILE_H` px a tile along both axes), of trees and scatter.
+   */
+  setRaisedDecks(decks: readonly { x: number; y: number; top: number }[]) {
+    const { w, h } = this.map,
+      was = this.behindDecks,
+      now = new Set<number>();
+    for (const d of decks) {
+      const reach = Math.ceil((d.top - this.bridgeGround(d.x, d.y)) / TILE_H);
+      for (let a = 0; a <= reach; a++)
+        for (let b = 0; a + b <= reach; b++)
+          if (d.x - a >= 0 && d.y - b >= 0 && d.x - a < w && d.y - b < h)
+            now.add(idx(this.map, d.x - a, d.y - b));
+    }
+    this.behindDecks = now;
+    for (const k of now)
+      if (!was.has(k)) {
+        this.removeProps(k % w, Math.floor(k / w));
+        this.buildScatterAt(k % w, Math.floor(k / w));
+      }
+    for (const k of was) if (!now.has(k)) this.rebuildProps(k % w, Math.floor(k / w));
+  }
   /** The bridge tiles last drawn, drawn again when the water painted round them may change. */
   private texturedTiles: readonly TexturedBridge[] = [];
   /** A town's paving or a terrain edit came near a textured bridge since it was drawn. */
@@ -1492,7 +1522,7 @@ export class WorldRenderer {
         ? tiles.map((t) =>
             roadDecks.has(idx(this.map, t.x, t.y))
               ? { ...t, open: this.roadDeckEnds(t), deck: this.roadDeckProfile(t, roadDecks) }
-              : { ...t, deck: this.deckProfile(t.x, t.y, t.axis, t.water) },
+              : { ...t, deck: this.deckProfile(t.x, t.y, t.axis, t.water, t.height) },
           )
         : [],
       joins = bridgeJoins(sites, this.map.w),
@@ -1509,6 +1539,7 @@ export class WorldRenderer {
           site.carries,
           site.axis,
           site.water,
+          site.raised,
           site.level,
           site.open,
           j,
@@ -1591,13 +1622,21 @@ export class WorldRenderer {
   }
   /**
    * A bridge deck's top (the rail level) in world px up at DECK_SAMPLES along its axis; one level
-   * for a pad. Over water it never sinks below the waterline's deck.
+   * for a pad. Over water it never sinks below the waterline's deck, and it never sinks below the
+   * `height` stored for it, in levels: a raised deck with no rail on it stands there too.
    */
-  private deckProfile(x: number, y: number, axis: 0 | 1 | null, water: boolean): number[] {
+  private deckProfile(
+    x: number,
+    y: number,
+    axis: 0 | 1 | null,
+    water: boolean,
+    height = 0,
+  ): number[] {
     const tile = this.railBeds.get(idx(this.map, x, y)),
       dir = axis === 1 ? 'x' : 'y',
       bed = tile?.axis === dir ? tile : tile?.cross?.axis === dir ? tile.cross : undefined,
-      floor = (z: number) => (water ? Math.max(0, z) : z);
+      least = Math.max(water ? this.waterDeck(x, y) : -Infinity, height * this.levelPx),
+      floor = (z: number) => Math.max(least, z);
     if (axis === null || !bed || this.landscape.failed) return [floor(-this.railAt(x, y).dz)];
     return deckSamples(bed, axis === 1 ? x : y, this.levelPx).map(floor);
   }
@@ -1619,7 +1658,13 @@ export class WorldRenderer {
         y < this.map.h &&
         this.map.terrain[idx(this.map, x, y)] === Terrain.Water;
     }
-    return water ? WATERLINE : -this.elevationOf(tx, ty);
+    return water ? this.waterDeck(tx, ty) + WATERLINE : -this.elevationOf(tx, ty);
+  }
+  /** World px up a deck at the water's level stands over (tx, ty): 0 at level 0. */
+  waterDeck(tx: number, ty: number) {
+    const x = Math.max(0, Math.min(this.map.w - 1, Math.round(tx))),
+      y = Math.max(0, Math.min(this.map.h - 1, Math.round(ty)));
+    return (this.map.waterSurface?.[idx(this.map, x, y)] ?? 0) * this.levelPx;
   }
   /** A height (world px up) the ground under bridges never exceeds in the box given. */
   private groundTop(x0: number, y0: number, x1: number, y1: number) {
@@ -1660,7 +1705,8 @@ export class WorldRenderer {
    * Everything under a kit bridge deck on one tile, in the pier layer: piers or trestle posts cut
    * to the ground (or into the water) under each one, timber braces between the posts, and over
    * water stone arches or timber trusses hung from both deck edges. `axis` 0 runs along y, 1
-   * along x, null is a pad under a curve or switch; `deck` is the rail level in world px.
+   * along x, null is a pad under a curve or switch; `deck` is the rail level in world px. A
+   * `raised` deck stands on piers or posts in the water too, and over land on the ground.
    */
   setBridgeKit(
     x: number,
@@ -1669,6 +1715,7 @@ export class WorldRenderer {
     axis: 0 | 1 | null = null,
     deck = 0,
     water = false,
+    raised = false,
   ) {
     const k = idx(this.map, x, y);
     this.kitParts.get(k)?.destroy({ children: true });
@@ -1684,9 +1731,10 @@ export class WorldRenderer {
         const p = tileToWorld(tx, ty);
         return { x: p.x, y: p.y - z };
       },
-      ground = (tx: number, ty: number) => (water ? -30 : -this.elevationOf(tx, ty));
+      ground = (tx: number, ty: number) =>
+        water ? this.waterDeck(tx, ty) - 30 : -this.elevationOf(tx, ty);
     // Walls hung under both long edges, over water: the far one first.
-    if (water && axis !== null) {
+    if ((water || raised) && axis !== null) {
       const key = `${material}-${stone ? 'arch' : 'truss'}-${dir}`,
         f = this.atlas.get(`bridgekit/${key}`),
         h = BRIDGE_KIT[key].height!;
@@ -1707,7 +1755,7 @@ export class WorldRenderer {
       spots: { dx: number; dy: number }[] = [];
     if (axis === null)
       for (const a of [-0.36, 0.36]) for (const b of [-0.36, 0.36]) spots.push({ dx: a, dy: b });
-    else if (!water || !stone)
+    else if (!water || !stone || raised)
       for (const l of [-0.4, 0.4]) for (const w of [-0.3, 0.3]) spots.push(at(l, w));
     spots.sort((a, b) => a.dx + a.dy - (b.dx + b.dy));
     const feet = new Map<string, number>();
@@ -1737,14 +1785,18 @@ export class WorldRenderer {
           span = underside - lo;
         if (span < 5) continue;
         // The brace is drawn on the near tile edge; move it onto this post line, 0.8 tile long.
-        const s = new Sprite(bf.texture),
-          edge = at(0, 0.5),
+        const edge = at(0, 0.5),
           line = at(0, w),
-          p = screen(x + line.dx - edge.dx, y + line.dy - edge.dy, lo);
-        s.anchor.set(bf.anchorX, bf.anchorY);
-        s.scale.set(BRIDGE_KIT[key].along ?? 0.8, span / bh);
-        s.position.set(p.x, p.y);
-        c.addChild(s);
+          // A raised trestle stands in storeys, each brace about as tall as it was painted.
+          storeys = raised ? Math.max(1, Math.round(span / bh)) : 1;
+        for (let n = 0; n < storeys; n++) {
+          const s = new Sprite(bf.texture),
+            p = screen(x + line.dx - edge.dx, y + line.dy - edge.dy, lo + (n * span) / storeys);
+          s.anchor.set(bf.anchorX, bf.anchorY);
+          s.scale.set(BRIDGE_KIT[key].along ?? 0.8, span / storeys / bh);
+          s.position.set(p.x, p.y);
+          c.addChild(s);
+        }
       }
     }
     this.piers.addChild(c);
@@ -1907,7 +1959,7 @@ export class WorldRenderer {
     return changed.length;
   }
   /** World pixels one level rises. */
-  private get levelPx() {
+  get levelPx() {
     return this.landscape.failed ? DEFAULT_RELIEF.step : this.landscape.step;
   }
   /**

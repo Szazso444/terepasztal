@@ -3,6 +3,8 @@ import { TILE_H, tileToWorld } from '../engine/iso';
 import {
   deckAtOffset,
   spanPoint,
+  STOREY,
+  trestleStoreys,
   type BridgePlan,
   type BridgeSite,
   type Rect,
@@ -85,6 +87,8 @@ export const GROUND_BOX = [-0.6, 0.6 + SIGHT] as const;
  * and the next tile on (terrainMaterials.ts).
  */
 export const WATER_TILES = [-1, 3] as const;
+/** World px of wall a raised span's arch leaves under the deck. */
+const ARCH_HEAD = 5;
 /** About half a world pixel on screen, in tile units along an axis. */
 const ABUTMENT_INSET = 1 / 64;
 
@@ -477,7 +481,9 @@ function archWall(p: Painter, w: number, underside: Z) {
         z1 = underside(x, y),
         z0 = p.ground(x, y),
         rise = Math.max(4, Math.min(z1 - z0 - 5, 0.9 * open * EDGE)),
-        arch = Math.abs(l) < open ? z0 + rise * Math.sqrt(1 - (l / open) ** 2) : z0;
+        // A raised span's arch springs high under the deck, on piers down to the ground.
+        spring = t.raised ? Math.max(z0, z1 - ARCH_HEAD - rise) : z0,
+        arch = Math.abs(l) < open ? spring + rise * Math.sqrt(1 - (l / open) ** 2) : z0;
       // s along the wall in map coordinates, so neighbours continue the courses.
       return upright(p, x, y, (axis === 1 ? x : y) * EDGE, z1, arch);
     },
@@ -520,30 +526,48 @@ function trestle(p: Painter, w: number, underside: Z, feet: Foot[]) {
   const lo = Math.max(...ends.map((e) => e.foot)),
     hi = Math.min(...ends.map((e) => e.head));
   if (hi - lo > 5) {
-    // Braces on the near face of the post line, one rising each way, from the higher foot.
+    // Braces on the near face of the post line, one rising each way, from the higher foot; a
+    // raised trestle has a pair per storey, each as tall as a low one's, topped by a girt.
     const a = at(-0.4, w + post + 0.005),
       c = at(0.4, w + post + 0.005),
-      d = 1.6;
-    for (const [za, zb] of [
-      [lo + d, hi - 1],
-      [hi - 1, lo + d],
-    ])
-      p.quad(
-        'woodGrain',
-        axis === 1 ? 'left' : 'right',
-        [
-          screen(a.x, a.y, za + d),
-          screen(c.x, c.y, zb + d),
-          screen(c.x, c.y, zb - d),
-          screen(a.x, a.y, za - d),
-        ],
-        [
-          [0, 0],
-          [0, 1.4],
-          [0.4, 1.4],
-          [0.4, 0],
-        ],
-      );
+      d = 1.6,
+      storeys = t.raised ? trestleStoreys(hi - lo) : 1,
+      tall = (hi - lo) / storeys,
+      light = axis === 1 ? 'left' : 'right';
+    for (let s = 0; s < storeys; s++) {
+      const low = lo + s * tall,
+        high = low + tall;
+      for (const [za, zb] of [
+        [low + d, high - 1],
+        [high - 1, low + d],
+      ])
+        p.quad(
+          'woodGrain',
+          light,
+          [
+            screen(a.x, a.y, za + d),
+            screen(c.x, c.y, zb + d),
+            screen(c.x, c.y, zb - d),
+            screen(a.x, a.y, za - d),
+          ],
+          [
+            [0, 0],
+            [0, (1.4 * tall) / STOREY],
+            [0.4, (1.4 * tall) / STOREY],
+            [0.4, 0],
+          ],
+        );
+      if (s < storeys - 1)
+        prism(
+          p,
+          box(-0.46, 0.46, w - post, w + post),
+          () => high + 1.2,
+          () => high - 1.2,
+          'woodGrain',
+          null,
+          true,
+        );
+    }
     p.flush();
   }
   // A cap beam along the post tops carries the deck.
