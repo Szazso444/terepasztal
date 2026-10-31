@@ -1410,9 +1410,10 @@ describe('a train renamed or recoloured, a step of its own', () => {
 
   it('a train recalled since does not stand in the way of the steps under it', () => {
     const g = game();
-    run(g, 10, 22);
+    g.commands.act(() => run(g, 10, 22));
     const t = train(g, 12);
     const built = g.history.undoLabel;
+    expect(built).not.toBeNull();
     g.commands.recolourTrain(t, 4);
     g.commands.renameTrain(t, 'Short lived');
     g.fleet.recall(t);
