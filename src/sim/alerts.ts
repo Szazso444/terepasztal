@@ -49,8 +49,9 @@ export const ALERT_DEFS: Record<
     readonly event?: true;
   }
 > = {
-  nofuel: { severity: 'critical', start: MARKED },
-  stuck: { severity: 'critical', start: MARKED },
+  // the pause on a critical alert must say why: these two start with a toast
+  nofuel: { severity: 'critical', start: ['icon', 'pin', 'toast'] },
+  stuck: { severity: 'critical', start: ['icon', 'pin', 'toast'] },
   ctfail: { severity: 'critical', start: ['icon', 'pin', 'toast'], event: true },
   noroute: { severity: 'problem', start: MARKED },
   full: { severity: 'problem', start: MARKED },

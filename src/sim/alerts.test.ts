@@ -63,6 +63,8 @@ describe('the alert rows', () => {
     for (const t of ['nofuel', 'stuck', 'noroute', 'full', 'starved', 'contract', 'jam'] as const)
       expect(on(t), t).toEqual(['icon', 'pin']);
     expect(on('ctfail')).toEqual(['icon', 'pin', 'toast']);
+    expect(on('nofuel')).toEqual(['icon', 'pin', 'toast']);
+    expect(on('stuck')).toEqual(['icon', 'pin', 'toast']);
   });
 
   it('starts a slow train on the alert icon alone', () => {
