@@ -150,6 +150,7 @@ import type { ReclassDir } from './world/reclass';
 import { PowerLines } from './render/powerLines';
 import { buildingDef as buildingDefOf } from './sim/buildings';
 import { Notices, type Notice } from './sim/notices';
+import { alertOn } from './sim/alerts';
 import type { Tip } from './ui/advisor';
 import { locoFrame, structureFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
@@ -174,6 +175,8 @@ const PAN_SPEED = 900; // screen px / s at zoom 1
 const TRANSITION_MS = 300;
 /** Relaid track pieces that start their shimmer in one frame; a long stroke's others follow. */
 const PIECE_HALOS_PER_FRAME = 12;
+/** real seconds a "train arrived" notice lasts, for the player who turned that row on */
+const ARRIVAL_NOTICE_TTL = 15;
 
 /** What the pointer is on, for the tooltip stack: its target, and its content made when asked. */
 interface HoverTip {
@@ -287,6 +290,8 @@ export class Game implements UiHost {
   private aspectTimer = 0;
   private bobTime = 0;
   private panelRefresh = 0;
+  /** the tile an alert panned the overview to; null while it shows the whole map */
+  private overviewFocus: { x: number; y: number } | null = null;
   /** 0 = RTS view, 1 = overview. Animated. */
   viewBlend = 0;
   viewTarget: 0 | 1 = 0;
@@ -362,7 +367,7 @@ export class Game implements UiHost {
           flip: !DRAWN_FACINGS.has(t.facingOf(0, t.poses[0])),
         })),
     markers: () =>
-      this.notices.list
+      this.pinnedNotices()
         .map((n) => {
           const p = this.noticePos(n);
           return p ? { x: p.x, y: p.y, kind: n.kind } : null;
@@ -435,9 +440,6 @@ export class Game implements UiHost {
   get depot() {
     return this.ui.depot;
   }
-  get trainScreen() {
-    return this.ui.trainScreen;
-  }
   get marketScreen() {
     return this.ui.marketScreen;
   }
@@ -480,8 +482,8 @@ export class Game implements UiHost {
   get buildInfo() {
     return this.ui.buildInfo;
   }
-  get noticePanel() {
-    return this.ui.noticePanel;
+  get alerts() {
+    return this.ui.alerts;
   }
   get advisor() {
     return this.ui.advisor;
@@ -961,7 +963,10 @@ export class Game implements UiHost {
     this.fleet.gridDraw = (x, y, u) => this.catenary.addDraw(x, y, u);
     this.fleet.gridBegin = () => this.catenary.beginTick();
     this.fleet.signals.level = this.settings.signalling ?? 'auto';
-    this.fleet.onArrive = (_t, s) => this.houses.arrival(s, this.clock.time);
+    this.fleet.onArrive = (t, s) => {
+      this.houses.arrival(s, this.clock.time);
+      this.noteArrival(t, s);
+    };
     this.fleet.junctions.onAlert = (a) =>
       this.notices.push(
         {
@@ -1003,11 +1008,16 @@ export class Game implements UiHost {
         if (policy === 'accept') this.contracts.accept(e.contract, this.clock.time);
         else if (policy === 'deny') this.contracts.decline(e.contract);
       }
+      const dest = this.builder.stationById(e.contract.destId);
       if (e.kind === 'completed') {
-        this.toasts.push(
-          STR.contracts.completed(e.contract.name, fmtMoney(e.contract.payout)),
-          'good',
-        );
+        this.notices.push({
+          key: `contract:${e.contract.id}:done`,
+          kind: 'info',
+          type: 'done',
+          text: STR.notice.contractDone(e.contract.name),
+          toast: STR.contracts.completed(e.contract.name, fmtMoney(e.contract.payout)),
+          target: dest ? { kind: 'tile', x: dest.x, y: dest.y } : null,
+        });
         sfx('contract.done');
       } else if (e.kind === 'cancelled') {
         this.toasts.push(
@@ -1018,17 +1028,16 @@ export class Game implements UiHost {
           'warn',
         );
       } else if (e.kind === 'failed') {
-        this.toasts.push(
-          STR.contracts.failedMsg(e.contract.name, fmtMoney(this.contracts.failFine(e.contract))),
-          'warn',
-        );
-        const dest = this.builder.stationById(e.contract.destId);
         this.notices.push(
           {
             key: `contract:${e.contract.id}`,
             kind: 'bad',
             type: 'ctfail',
             text: STR.notice.contractFailed(e.contract.name),
+            toast: STR.contracts.failedMsg(
+              e.contract.name,
+              fmtMoney(this.contracts.failFine(e.contract)),
+            ),
             target: dest ? { kind: 'tile', x: dest.x, y: dest.y } : null,
           },
           60,
@@ -1776,9 +1785,9 @@ export class Game implements UiHost {
       ? STR.settings.newerSave(from, SAVE_VERSION)
       : STR.settings.olderSave(from, SAVE_VERSION, j.migrationNotes ?? []);
     this.deprecatedSave = text;
-    this.toasts.push(newer ? STR.settings.newerToast(from) : STR.settings.olderToast(from), 'warn');
+    const toast = newer ? STR.settings.newerToast(from) : STR.settings.olderToast(from);
     this.notices.push(
-      { key: 'save:deprecated', kind: 'warn', type: 'note', text, target: null },
+      { key: 'save:deprecated', kind: 'warn', type: 'note', text, toast, target: null },
       180,
     );
   }
@@ -1788,7 +1797,6 @@ export class Game implements UiHost {
     // `saves.refund` takes the money already formatted, and empty when none was refunded
     const money = report.money ? fmtMoney(report.money) : '';
     const text = STR.saves.pruned(list, STR.saves.refund(money, report.tickets));
-    this.toasts.push(text, 'warn');
     this.notices.push({ key: 'save:pruned', kind: 'warn', type: 'note', text, target: null }, 180);
   }
   /** warning text for the settings screen while a converted save is in play */
@@ -1816,7 +1824,6 @@ export class Game implements UiHost {
   private onAgeUp(tier: number) {
     this.toolbar.refresh();
     const text = STR.hud.ageUp(tier);
-    this.toasts.push(text, 'good');
     this.notices?.push({ key: `age:${tier}`, kind: 'info', type: 'goal', text, target: null }, 120);
     sfx('tier.up');
     audio.setAge(ageDef(tier).id);
@@ -1837,6 +1844,7 @@ export class Game implements UiHost {
         kind: 'info',
         type: 'note',
         text,
+        toast: null,
         target: { kind: 'tile', x: e.x, y: e.y },
       });
   }
@@ -1982,18 +1990,36 @@ export class Game implements UiHost {
     const p = t?.poses[0];
     return p ? { x: p.x, y: p.y } : null;
   }
+  /** Look at a notice's object: the overview pans to it and stays, the field view goes there. */
   focusNotice(n: Notice) {
     const p = this.noticePos(n);
     if (!p) return;
-    if (n.target?.kind === 'train') {
-      const t = this.fleet.byId(n.target.id);
-      if (t) {
-        this.trainScreen.open(t);
-        this.screens.open(this.trainScreen);
-      }
-    } else if (n.target?.kind === 'junction')
+    if (n.target?.kind === 'junction')
       this.flashJunction(this.fleet.junctions.contributingTiles(n.target.id) ?? n.target.tiles);
-    this.returnToRts(p.x, p.y);
+    if (this.viewTarget === 1) {
+      this.overviewFocus = p;
+      // leaving the overview lands on it too
+      const w = tileToWorld(p.x, p.y);
+      this.centerCamera(w.x, w.y);
+    } else this.returnToRts(p.x, p.y);
+  }
+  /** What the Map pin cells let through. */
+  private pinnedNotices() {
+    return this.notices.list.filter((n) => alertOn(this.settings.alerts, n.type, 'pin'));
+  }
+  /** A train reached a station: routine, so a notice only if the player turned its row on. */
+  private noteArrival(t: Train, s: Station) {
+    if (!Object.values(this.settings.alerts.channels.arrived).some(Boolean)) return;
+    this.notices.push(
+      {
+        key: `arrived:${t.id}:${this.clock.time}`,
+        kind: 'info',
+        type: 'arrived',
+        text: STR.notice.arrived(t.name, s.name),
+        target: { kind: 'train', id: t.id },
+      },
+      ARRIVAL_NOTICE_TTL,
+    );
   }
   /** Tint the tiles of a contended junction for a few seconds. */
   private junctionFlash: { tiles: { x: number; y: number }[]; until: number } | null = null;
@@ -2018,7 +2044,7 @@ export class Game implements UiHost {
   /** Keep one world marker per notice with a target. */
   private syncNoticeMarkers() {
     const live = new Set<string>();
-    for (const n of this.notices.list) {
+    for (const n of this.pinnedNotices()) {
       const p = this.noticePos(n);
       if (!p) continue;
       const id = `notice:${n.key}`;
@@ -2386,7 +2412,7 @@ export class Game implements UiHost {
         stuck: this.traffic.stuckTrains(this.clock.time),
         contracts: { board: this.contracts, now: this.clock.time },
       });
-      this.noticePanel.render(this.notices.list);
+      this.alerts.update(this.notices.list);
       this.advisor.update(this.computeTips(), this.notices.list);
       this.syncNoticeMarkers();
       this.syncContractMarker();
@@ -2767,6 +2793,8 @@ export class Game implements UiHost {
   setView(v: 0 | 1) {
     if (this.viewTarget === v) return;
     this.viewTarget = v;
+    // kept on the way out, so the view blends from where the overview stood
+    if (v === 1) this.overviewFocus = null;
     // the map and the overview do not share their tooltips
     this.tooltip.stack.closeAll();
     this.overviewBanner.classList.toggle('show', v === 1);
@@ -2815,8 +2843,11 @@ export class Game implements UiHost {
     const fit = Math.min((vw - 300) / ob.w, (vh - 90) / ob.h);
     const camTile = worldToTileInt(this.camera.x, this.camera.y);
     const s = fit * (1.6 - 0.6 * e);
-    const centerX = lerp((camTile.x + 0.5) * OV_UNIT, ob.x + ob.w / 2, e);
-    const centerY = lerp((camTile.y + 0.5) * OV_UNIT, ob.y + ob.h / 2, e);
+    const focus = this.overviewFocus;
+    const endX = focus ? (focus.x + 0.5) * OV_UNIT : ob.x + ob.w / 2;
+    const endY = focus ? (focus.y + 0.5) * OV_UNIT : ob.y + ob.h / 2;
+    const centerX = lerp((camTile.x + 0.5) * OV_UNIT, endX, e);
+    const centerY = lerp((camTile.y + 0.5) * OV_UNIT, endY, e);
     o.scale.set(s);
     o.position.set(vw / 2 - centerX * s, vh / 2 + 18 - centerY * s);
     if (o.visible) this.overview.refresh();

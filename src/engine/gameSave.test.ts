@@ -868,12 +868,12 @@ describe('the end of a load (Game.storeLoadedGround)', () => {
     }
   });
 
-  it('gives stored ground it could not read one toast and one notice, and no write', () => {
+  it("gives stored ground it could not read one notice, its toast its row's, and no write", () => {
     const g = standIn();
     g.host.ground = ground(0, 2);
     settle(g);
     const text = STR.saves.groundUnreadable(2);
-    expect(g.toasts).toEqual([{ text, kind: 'warn' }]);
+    expect(g.toasts).toEqual([]);
     expect(g.notices).toEqual([
       {
         key: 'save:ground',
@@ -885,12 +885,12 @@ describe('the end of a load (Game.storeLoadedGround)', () => {
       },
     ]);
     expect(store.items.size).toBe(0);
-    // with ground generated as well, the write is made and its refusal follows the notice's toast
+    // with ground generated as well, the write is made and its refusal is still a toast
     const h = standIn();
     h.host.ground = ground(1, 2);
     store.refuses = true;
     settle(h);
-    expect(h.toasts).toEqual([{ text, kind: 'warn' }, unsaved]);
+    expect(h.toasts).toEqual([unsaved]);
     expect(h.notices).toHaveLength(1);
   });
 
@@ -928,7 +928,6 @@ describe('the end of a load (Game.storeLoadedGround)', () => {
     const unreadable = built?.unreadable ?? 0;
     if (unreadable > 0) {
       const text = STR.saves.groundUnreadable(unreadable);
-      toasts.push({ text, kind: 'warn' });
       notices.push({
         key: 'save:ground',
         kind: 'warn',

@@ -597,8 +597,6 @@ export const STR = {
     done: (name: string, level: number) => `${name} is now level ${level}`,
   },
   notice: {
-    title: 'Notices',
-    none: 'All quiet.',
     more: (n: number) => `+${n} more`,
     outOfFuel: (n: string) => `${n}: out of fuel or water`,
     noPower: (n: string) => `${n}: no power on this line`,

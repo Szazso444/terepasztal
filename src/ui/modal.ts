@@ -4,6 +4,8 @@ export interface Screen {
   readonly id: string;
   readonly title: string;
   readonly root: HTMLElement;
+  /** a screen smaller than the full frame */
+  readonly frameSize?: 'small' | 'medium';
   onOpen?(): void;
   onClose?(): void;
   /** periodic refresh while open */
@@ -40,6 +42,7 @@ export class ScreenManager {
     this.current?.onClose?.();
     this.current = s;
     this.titleEl.textContent = s.title;
+    this.frame.className = `panel ${s.frameSize ?? ''}`.trim();
     this.body.innerHTML = '';
     this.body.append(s.root);
     this.root.style.display = 'flex';
