@@ -7,6 +7,10 @@ and then not always (sections 1 and 2, measured). Epic #529; artwork and handoff
 `art/528-rare-landmarks-handoff` @ `210cfe5d`, `docs/art-direction/rare-landmarks-handoff.md` and
 `assets/source/rare-landmarks-v1/final/manifest.json` there).
 
+Refreshed by Core on 2026-10-31 against `develop` @ `9c3628c4`, after town stores (#589), the new
+UI (#610–#623), the end of gacha and save v23. What changed is listed in section 12. Map generation
+has not changed since the sites were measured, so sections 1 and 2 stand.
+
 ## Goal
 
 Twelve rare, optional landmarks appear in newly generated terrain. The player spots one, surveys
@@ -17,7 +21,7 @@ reason to run a line somewhere; it never gates essential progression.
 The handoff describes the landmarks with on-foot exploration, stamina, creatures, combat and
 gravity. This game is a railway logistics game, so every one of those is retold as story text in
 the landmark's panel and resolved through what the game already has: stations, train deliveries,
-the stockpile, money, passengers, station boosts, weather and the clock (decision D1).
+the stores, money, passengers, station boosts, weather and the clock (decision D1).
 
 ## Non-goals
 
@@ -112,8 +116,11 @@ Seasons is **site-led**: it is looked for wherever its site happens to be.
   (8-neighbour), the one with the lower spacing hash drops out. This only reads rolls, never stored
   state, so it does not depend on order; the nearest two landmarks are then at least one whole
   chunk apart.
-- **When it is placed.** Only when its anchor chunk is newly generated (the `added` chunks of
-  `buildMap`), and only if the anchor chunk is not the start chunk. A chunk that is already stored
+- **Which worlds.** Generated worlds only; a level (`spec.kind === 'level'`) has no landmarks.
+- **When it is placed.** Only when its anchor chunk is newly generated (the `added` chunks that
+  `groundOf` reports while the game starts), and only if the anchor chunk is not the start chunk.
+  In a new game that is every chunk of the first map, before the start depot looks for its site,
+  so the depot goes round a landmark as it goes round anything the builder refuses. A chunk that is already stored
   never gets a landmark later, so old saves keep their existing land as it is (decision D4).
 - **Where.** Up to 64 seeded candidate corners inside the anchor chunk, with the whole footprint at
   least 3 tiles from the chunk's edges (out of reach of `seam()`, and the site rule's window stays
@@ -143,9 +150,16 @@ refund (decision D6). A landmark's tiles block all building, forever; it cannot 
 
 **Deliveries.** While a landmark is `restoring`, cargo of a required kind unloaded at any station
 within reach is credited to it first, up to what is still missing; the rest of the delivery goes on
-as today (contracts, stockpile). Several landmarks within reach of one station are credited in
-instance id order. Crediting reads `DeliveryEvent` (`src/sim/trains.ts`) through the game's
-`fleet.onDelivery` hook.
+as today (contracts, then the station's store). Several landmarks within reach of one station are
+credited in instance id order. Crediting reads `DeliveryEvent` (`src/sim/trains.ts`) through the
+game's `fleet.onDelivery` hook.
+
+A station only unloads what it `accepts` or can store, and a train takes on goods only for a later
+stop that takes them, so a landmark's need has to count for both: any station within reach of a
+`restoring` landmark takes the cargo the landmark still misses, up to that amount, whatever the
+station's own `accepts` says, a depot and a warehouse included. A scheduled train is how goods get
+there: a roaming freight train never carries them from a store. The credited goods leave the train
+and enter no store.
 
 **Conditions** (decision D11) are checked when the last requirement arrives and then every tick
 until they hold: `night` is game hours 20:00–05:00 by `GameClock` (independent of the day/night
@@ -157,12 +171,24 @@ Every landmark has **Salvage** (instant, one-time reward) and **Restore** (train
 lasting effect). Two landmarks also make a pick when Restore completes. Outcomes use only these
 effect kinds in the first version (decision D7):
 
-| Effect       | What it does                                                                                      | Built on                         |
-| ------------ | ------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `grant`      | one-time money and/or cargo into the stockpile, as a recorded transaction                         | Economy, `Stockpile`             |
-| `produce`    | `n` cargo per game day into the stockpile, optionally consuming `m` of another cargo per day      | `tickBuildings` precedent        |
-| `attraction` | `n` passengers per game day appear at the nearest station within reach                            | passenger generation (`step.ts`) |
-| `boost`      | stations within reach get the decor-style boost (`refreshStationBoosts`), with the given strength | decor `radius` boosts            |
+| Effect       | What it does                                                                           | Built on                         |
+| ------------ | -------------------------------------------------------------------------------------- | -------------------------------- |
+| `grant`      | one-time money and/or cargo, as a recorded transaction                                 | `Economy`, `StoreRegistry`       |
+| `produce`    | `n` cargo per game day into a store, optionally consuming `m` of another cargo per day | `tickBuildings`, `worksStore`    |
+| `attraction` | `n` passengers per game day more at the nearest passenger station within reach         | `Station` output (`stations.ts`) |
+| `boost`      | stations within reach load faster: strength 1 is one decor's `loadBoost` (+0.25)       | `refreshStationBoosts`           |
+
+The global stockpile is gone (town stores, #589), so these say where goods go:
+
+- **`grant`.** Money through `Economy.earn`. Cargo into the nearest store at any distance
+  (`StoreRegistry.nearest(x, y, Infinity)`), and what does not fit into the next nearest; what
+  fits nowhere is lost. The grant is still paid once.
+- **`produce`.** Runs like a works: from the store `supplierFor` gives for the footprint's corner,
+  which means its town's store or the nearest within `rules.buildReach`. With no such store, or
+  with the consumed cargo missing, it makes nothing that day and the panel says why.
+- **`attraction`.** Added to the station's output after its population cap, so a lonely station
+  beside a landmark still gets visitors. With no passenger station within reach it adds nothing.
+- **`boost`.** Added to the decor boost, outside its limit of two; two landmarks in reach add up.
 
 Phase 2 adds the landmark-specific effects marked "later" below: `reveal` (marks the nearest hidden
 landmark as spotted), `forecast` (weather of the next two days in the weather readout), `merchant`
@@ -195,11 +221,13 @@ production chains.
 
 ## 6. Save format
 
-`SAVE_VERSION` 20 → 21, one new top-level field (a `SaveParts` key, listed in `SAVE_PART_KEYS`):
+`SAVE_VERSION` 23 → 24, one new top-level field (a `SaveParts` key, listed in `SAVE_PART_KEYS`).
+Track wear and resource modes also want 24: whichever lands later takes the next number.
 
 ```
 landmarks: {
   nextId: number,
+  skipRoll?: true,         // set by the migration; the first load rolls nothing and clears it
   items: Array<{
     id: number,            // unique, from nextId
     def: string,           // landmarks.json id
@@ -215,11 +243,12 @@ landmarks: {
 }
 ```
 
-- The step `from: 20` fills `{ nextId: 1, items: [] }` and nothing else, and marks the save so that
-  the chunks generated in the first load after the migration are not rolled (a save older than v19
-  regenerates all of its terrain in that load and must not gain landmarks under its track).
+- The step `from: 23` fills `{ nextId: 1, items: [], skipRoll: true }` and nothing else: the
+  chunks generated in the first load after the migration are not rolled (a save older than v19
+  generates all of its terrain in that load and must not gain landmarks under its track).
 - `expandSave` shifts every item's `x`, `y` like other saved coordinates.
-- An item whose `def` is unknown is carried through untouched, not drawn and not ticked.
+- An item whose `def` is unknown is carried through untouched, not drawn and not ticked;
+  `pruneUnknownContent` leaves it alone.
 - The chunk store and the landmark items are always written in the same snapshot, so a landmark
   can never be lost or doubled by a reload between them; `paid` makes a grant idempotent.
 
@@ -232,12 +261,16 @@ landmarks: {
 - **Marker.** A `?` icon over `spotted` landmarks, in the world and on the overview map.
 - **Select tool.** Clicking any footprint tile opens the landmark panel (after station, building
   and decor picks; landmark tiles hold none of those).
-- **Landmark panel.** Name and story (or "Unknown" while `spotted`), stage, the two paths with
+- **Tile tooltip.** A landmark tile names the landmark, or "Unknown" while it is `spotted`.
+- **Landmark panel.** Built from the new UI kit (`src/ui/kit.ts`), as the other panels. Name and story (or "Unknown" while `spotted`), stage, the two paths with
   what each costs and gives, Start / Salvage / Cancel buttons with a confirmation for the final
   ones, per-cargo progress while `restoring`, the condition and whether it holds, and the effect
   once `restored`.
 - **Toasts.** Surveyed, restored, salvaged. A tile notice points to a landmark when it is surveyed.
-- **Strings.** Every name, story, path and effect line lives in `src/strings.ts`.
+- **Strings.** Every name, story, path and effect line lives in `src/strings.ts` and, key for key,
+  in `src/data/strings.hu.ts`; `landmarkChance` gets its Hungarian label in `src/data/names.hu.ts`.
+- **Content editor.** `landmarks.json` is a table of the content editor like the others.
+- **Undo.** Start, Salvage and Cancel are not steps of the history: the choices are final.
 
 ## 8. Art
 
@@ -251,6 +284,9 @@ landmarks: {
   128, workshop 180, cable station 128, observatory 154, conservatory 128, manor 141, foundry 103,
   house 103. The archive (arches, no door) and the pavilion (no door) took the median ratio. Art
   measures them properly and records them, as the buildings' `DOOR_FRACTION` table does.
+  The buildings drawn from 3D models went to their real size on 2026-10-27, after this rule; the
+  landmarks keep the door rule the author approved for them until the author says otherwise, and
+  the review page shows them beside those buildings.
 - Art calibrates each one before export: ground-contact corners against the 64×32 grid, the
   footprint's axis, the anchor, the door. A footprint Art measures that differs from section 1 is
   reported to Core, not changed in silence. A picture that does not fit is **regenerated, never
@@ -275,14 +311,16 @@ landmarks: {
 3. No placed footprint breaks a legality rule or its site rule, crosses its chunk's 3-tile margin,
    or sits in the start chunk; no two rolled landmarks sit in 8-neighbouring chunks; a house and a
    rolled landmark never share a chunk.
-4. A chunk already in the store never gains a landmark: loading a v20 save and expanding it adds
+4. A chunk already in the store never gains a landmark: loading a v23 save and expanding it adds
    landmarks only in chunks that were not stored; the mapgen goldens are unchanged.
-5. Every save version migrates to 21; a v21 round trip keeps every item; `expandSave` shifts
+5. Every save version migrates to 24; a v24 round trip keeps every item; `expandSave` shifts
    items with the rest; a migrated pre-v19 save gets no landmarks in its first load.
 6. A one-time grant is paid exactly once across any sequence of save, load, expand and reload, and
    money and cargo change only through recorded transactions.
 7. The state machine accepts only the transitions in section 3; deliveries credit at most the
-   missing amount; conditions gate completion; cancel keeps no refund.
+   missing amount; conditions gate completion; cancel keeps no refund. A scheduled train from a
+   depot unloads at a plain station within reach of a `restoring` landmark until the landmark has
+   what it needs, and takes nothing more there.
 8. No build tool can place track, station, building, decor or road on a landmark tile.
 9. A review scene shows all twelve on legal terrain at their footprints, with footprint outlines,
    anchors, selection and a train passing in front of and behind each.
@@ -337,8 +375,8 @@ The original list, answered:
 
 ## 11. Tasks
 
-Filed on 2026-10-22 as sub-issues of #529; the issues carry the full briefs and are the source of
-truth from now on. T1 #541, T2 #542, T3 #544, T4 #545, T5 #546, T6 #543, T7 #547, T8 #548,
+Filed on 2026-10-22 as sub-issues of #529; the issues carry the full briefs and, with section 12,
+are the source of truth from now on. T1 #541, T2 #542, T3 #544, T4 #545, T5 #546, T6 #543, T7 #547, T8 #548,
 T9 #549. Every branch starts from `origin/develop`. All are blocked by this spec reaching
 `develop` (#540); the links below are the extra ones. The briefs here are the drafts they were
 filed from. On 2026-10-23 the footprints, the rolls and the door-rule size changed (sections 1, 2
@@ -493,3 +531,26 @@ Codex); regeneration of any picture T6 flags.
 
 Dependency graph: T1, T2 and T6 start in parallel; T3 after T1; T4 after T3; T5 after T2 and T3;
 T7 after T5 and T6; T8 after T3 and T5; T9 after T7.
+
+## 12. What changed by 2026-10-31
+
+Measured against `develop` @ `9c3628c4`. These override the task briefs of section 11 and the
+filed issues.
+
+| What changed since the spec  | What it changes here                                                                                                                                                                                                                |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Save is at v23               | v24, step `from: 23`, `skipRoll` as the mark (section 6); every "v21" and "from: 20" in T3, T5 and the issues reads so                                                                                                              |
+| Town stores (#589)           | `Stockpile` is gone: `grant` and `produce` name their store (section 4); `toJSON` / `load` meet `StoreRegistry`, loaded after the stations                                                                                          |
+| Unloading since #589         | `contractable` in `src/sim/trains.ts` skips stations that do not accept the cargo and pool stations, and the loader asks whether a later stop takes it: both count a landmark's need, in T3, and the fleet context gains that query |
+| New UI (#610–#623)           | T8 builds on `src/ui/kit.ts`; the tile tooltip names a landmark; the content editor gets the table                                                                                                                                  |
+| Hungarian (#622)             | every string also in `src/data/strings.hu.ts`, which Gameplay owns and UI/UX does not, so the strings of T8 go first as a Gameplay pull request; T1 adds the Hungarian rule label in `src/data/names.hu.ts`                         |
+| Game undo (#612)             | landmark commands stay out of the history (section 7)                                                                                                                                                                               |
+| Gacha removed (#624 pending) | no landmark pays tickets, and none did; phase 2's `recipe` is crafting, which stays                                                                                                                                                 |
+| Buildings at real size       | the door rule stays for landmarks for now (section 8): a question for the author in the review page                                                                                                                                 |
+| Resource modes (in progress) | `global` and Easy mode reach `grant` and `produce` through `StoreRegistry`; that plan adapts the one lookup when it lands                                                                                                           |
+| Map generation               | unchanged, so the sites and rolls stand; the calibration test watches them, as `vizek-hegyek` and tunnels may change terrain                                                                                                        |
+
+Order of work, one branch stacked on the one before, each a pull request of its own role whose
+base is the branch below it until that merges: this refresh (Core), #528, #543 (Art), #541, #542
+(World), #544, #545 (Gameplay), #546 (Engine), #547 (Rendering), the strings of #548 (Gameplay), the
+panel of #548 (UI/UX), #549 (Engine).
