@@ -1,14 +1,20 @@
 import { describe, expect, it } from 'vitest';
+import { LEVEL_CAP, locoDef, wagonDef } from '../gacha/items';
+import { STR } from '../strings';
 import {
   SIZE_FILTERS,
   filtered,
   levelGainPercent,
   levelUpState,
   pickOf,
+  revealFilters,
+  rosterCard,
+  rosterCardTip,
   rosterItems,
   type RosterEntry,
   type RosterFilters,
 } from './rosterView';
+import { blockText, type TipDoc } from './tooltipDoc';
 
 let uid = 0;
 const copy = (o: Partial<RosterEntry> & { name: string }): RosterEntry => ({
@@ -134,5 +140,98 @@ describe('levelling up', () => {
   it('gains a whole percent per level', () => {
     expect(levelGainPercent(0.08)).toBe(8);
     expect(levelGainPercent(0.125)).toBe(13);
+  });
+});
+
+describe('a card of the Roster', () => {
+  const copy = { defId: 'rocket', kind: 'loco', level: 1 } as const;
+  const said = (doc: TipDoc) => doc.map(blockText).filter(Boolean);
+
+  it('says what a copy does at its level', () => {
+    const one = rosterCard(copy, null, 2);
+    const five = rosterCard({ ...copy, level: 5 }, null, 2);
+    expect(one.name).toBe(locoDef('rocket').name);
+    expect(one.level).toBe(STR.roster.lv(1));
+    expect(five.level).toBe(STR.roster.lv(5));
+    expect(five.lines[0]).not.toBe(one.lines[0]);
+  });
+
+  it('says where a copy is', () => {
+    expect(rosterCard(copy, null, 1).where).toBe(STR.roster.inDepot);
+    const serving = rosterCard(copy, 'Coal run', 1);
+    expect(serving.where).toBe(STR.roster.assignedTo('Coal run'));
+    expect(serving.inService).toBe(true);
+  });
+
+  it('counts the copies, or says the level is the last', () => {
+    expect(rosterCard(copy, null, 3).stock).toBe(STR.roster.copies(3));
+    expect(rosterCard({ ...copy, level: LEVEL_CAP }, null, 3).stock).toBe(STR.roster.maxLevel);
+  });
+
+  it('says what a wagon carries and a refuelling cart adds', () => {
+    const tub = rosterCard({ defId: 'mine_tub', kind: 'wagon', level: 1 }, null, 1);
+    expect(tub.lines[0]).toContain(STR.roster.capacity);
+    const cart = wagonDef('coal_cart');
+    const lines = rosterCard({ defId: 'coal_cart', kind: 'wagon', level: 1 }, null, 1).lines;
+    expect(lines).toContain(STR.roster.serviceLine(cart.service ?? '', cart.serviceCap ?? 0));
+  });
+
+  it('as a tooltip says all that the card does, and no more', () => {
+    const c = rosterCard(copy, 'Coal run', 2);
+    expect(said(rosterCardTip(c))).toEqual([
+      `${c.name} ${c.level}`,
+      c.era,
+      ...c.lines,
+      c.where,
+      c.stock,
+    ]);
+  });
+
+  it('as a tooltip carries the picture of the model', () => {
+    const doc = rosterCardTip(rosterCard(copy, null, 1));
+    expect(doc.find((b) => b.kind === 'vehicle')).toMatchObject({ defId: 'rocket' });
+  });
+});
+
+describe('opening the Roster on a copy', () => {
+  const entry: RosterEntry = {
+    uid: 1,
+    kind: 'wagon',
+    rarity: 'R',
+    size: 'tiny',
+    name: 'Mine Tub',
+    level: 1,
+    assigned: 7,
+    obtainedAt: 0,
+  };
+  const none: RosterFilters = {
+    kind: 'all',
+    rarity: 'all',
+    size: 'all',
+    freeOnly: false,
+    sort: 'name',
+  };
+
+  it('leaves filters that show the copy as they are', () => {
+    expect(revealFilters(none, entry)).toEqual(none);
+    const fitting = { ...none, kind: 'wagon', rarity: 'R', size: 'tiny' };
+    expect(revealFilters(fitting, entry)).toEqual(fitting);
+  });
+
+  it('lets go of what would hide it, and of nothing else', () => {
+    const hiding = { kind: 'loco', rarity: 'SR', size: 'large', freeOnly: true, sort: 'level' };
+    const shown = revealFilters(hiding, entry);
+    expect(shown).toEqual({ ...none, sort: 'level' });
+    expect(rosterItems([entry], shown)).toEqual([entry]);
+  });
+
+  it('keeps Unassigned only for a copy that is free', () => {
+    const f = { ...none, freeOnly: true };
+    expect(revealFilters(f, { ...entry, assigned: null }).freeOnly).toBe(true);
+  });
+
+  it('reads a model with no size as small', () => {
+    const f = { ...none, size: 'small' };
+    expect(revealFilters(f, { ...entry, size: undefined }).size).toBe('small');
   });
 });

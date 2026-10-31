@@ -76,9 +76,11 @@ function tickState(fleet: Fleet, full: boolean): string {
       t.poses.length,
     ]);
     if (full) {
-      // the colour code is the player's mark on a train: it moves nothing, and the goldens are older
+      // the colour code is the player's mark on a train, and the depot it left is where the Depot
+      // lists it: they move nothing, and the goldens are older
       const saved: Partial<ReturnType<Train['toJSON']>> = t.toJSON();
       delete saved.colour;
+      delete saved.depot;
       parts.push(roundedJSON(saved));
     }
   }

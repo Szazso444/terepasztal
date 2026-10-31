@@ -11,22 +11,33 @@ import {
   MAX_DWELL,
   appendStop,
   checkLifetime,
+  clickedCount,
   editorSignature,
+  gateShown,
   haulShare,
   haulTone,
   locoStats,
   moveStopUp,
+  movedPick,
   pruneToFree,
+  refusalAt,
   removeStopAt,
   routeText,
   serviceResource,
+  setPicked,
+  staleGate,
   stateText,
   stateTone,
   stationRow,
+  stockGroups,
+  stockOrder,
   stopSummary,
-  togglePick,
+  stripCars,
   trainRowText,
+  trainsByDepot,
+  trainsShown,
   wagonStats,
+  type GateAnswer,
   type StationInput,
   type TrainRowInput,
 } from './depotView';
@@ -122,23 +133,242 @@ describe('the haul meter', () => {
   });
 });
 
-describe('picking vehicles for a new train', () => {
-  it('adds a vehicle, and takes it out when it is picked again', () => {
-    expect(togglePick([], 5, 4)).toEqual({ list: [5], full: false });
-    expect(togglePick([5, 6], 5, 4)).toEqual({ list: [6], full: false });
+describe('the free stock, by model', () => {
+  const tub = (uid: number, level = 1) => ({ uid, defId: 'mine_tub', level });
+
+  it('makes one row of the copies of a model, and says how many are in the draft', () => {
+    const [g, ...rest] = stockGroups([tub(1), tub(2), tub(3)], [2]);
+    expect(rest).toEqual([]);
+    expect(g.uids).toEqual([1, 2, 3]);
+    expect(g.picked).toBe(1);
   });
 
-  it('refuses a vehicle past the limit and says it was full', () => {
-    expect(togglePick([1, 2, 3, 4], 9, 4)).toEqual({ list: [1, 2, 3, 4], full: true });
-    // a picked one can always be taken out of a full list
-    expect(togglePick([1, 2, 3, 4], 3, 4)).toEqual({ list: [1, 2, 4], full: false });
+  it('keeps copies of different levels apart, as they differ', () => {
+    const rows = stockGroups([tub(1), tub(2, 3), tub(3)], [2]);
+    expect(rows.map((g) => [g.level, g.uids, g.picked])).toEqual([
+      [1, [1, 3], 0],
+      [3, [2], 1],
+    ]);
+  });
+
+  it('keeps a copy fitted with in-cab signalling apart: it works where the others do not', () => {
+    const rows = stockGroups(
+      [
+        { uid: 1, defId: 'f7', level: 1 },
+        { uid: 2, defId: 'f7', level: 1, inCab: true },
+      ],
+      [],
+    );
+    expect(rows.map((g) => [g.inCab, g.uids])).toEqual([
+      [false, [1]],
+      [true, [2]],
+    ]);
+  });
+
+  it('holds nothing for a stock with nothing free', () => {
+    expect(stockGroups([], [1, 2])).toEqual([]);
+  });
+
+  it('reads what can roll out first, by name, the higher level first, whatever is picked', () => {
+    const rows = [
+      { level: 1, name: 'Zebra', barred: false },
+      { level: 1, name: 'Alpha', barred: true },
+      { level: 1, name: 'Mule', barred: false },
+      { level: 4, name: 'Mule', barred: false },
+    ];
+    const order = stockOrder(rows, (r) => r).map((r) => `${r.name} ${r.level}`);
+    expect(order).toEqual(['Mule 4', 'Mule 1', 'Zebra 1', 'Alpha 1']);
+  });
+});
+
+describe('the stepper of a stock row', () => {
+  const uids = [10, 11, 12];
+
+  it('adds the next free copy, after what is already picked', () => {
+    expect(setPicked([5], uids, 1, 4)).toEqual({ list: [5, 10], full: false });
+    expect(setPicked([5, 10], uids, 2, 4)).toEqual({ list: [5, 10, 11], full: false });
+  });
+
+  it('takes the copy picked last off first, and keeps the order of the rest', () => {
+    expect(setPicked([10, 5, 12, 11], uids, 1, 16)).toEqual({ list: [10, 5], full: false });
+    expect(setPicked([10, 5], uids, 0, 16)).toEqual({ list: [5], full: false });
+  });
+
+  it('stops at the free copies, without calling the list full', () => {
+    expect(setPicked([10, 11, 12], uids, 9, 16)).toEqual({ list: [10, 11, 12], full: false });
+    expect(setPicked([], uids, 9, 16)).toEqual({ list: [10, 11, 12], full: false });
+    expect(setPicked([10], uids, -3, 16)).toEqual({ list: [], full: false });
+  });
+
+  it('stops at the limit of the list, and says it was full', () => {
+    expect(setPicked([1, 2, 3], uids, 2, 4)).toEqual({ list: [1, 2, 3, 10], full: true });
+    expect(setPicked([1, 2, 3, 4], uids, 1, 4)).toEqual({ list: [1, 2, 3, 4], full: true });
+    // a pick can always come off a full list
+    expect(setPicked([1, 2, 3, 10], uids, 0, 4)).toEqual({ list: [1, 2, 3], full: false });
   });
 
   it('does not change the list it is given', () => {
-    const list = [1, 2];
-    togglePick(list, 3, 4);
-    togglePick(list, 1, 4);
-    expect(list).toEqual([1, 2]);
+    const list = [10];
+    setPicked(list, uids, 3, 16);
+    setPicked(list, uids, 0, 16);
+    expect(list).toEqual([10]);
+  });
+
+  it('takes a click on a row for one more, and one fewer once every copy is picked', () => {
+    expect(clickedCount({ uids, picked: 0 })).toBe(1);
+    expect(clickedCount({ uids, picked: 2 })).toBe(3);
+    expect(clickedCount({ uids, picked: 3 })).toBe(2);
+    // the single copy a row used to toggle still does
+    expect(clickedCount({ uids: [1], picked: 1 })).toBe(0);
+  });
+});
+
+describe('the consist strip', () => {
+  const stock: Record<number, { defId: string; level: number }> = {
+    1: { defId: 'rocket', level: 1 },
+    2: { defId: 'mav490', level: 2 },
+    7: { defId: 'mine_tub', level: 1 },
+    8: { defId: 'narrow_box', level: 3 },
+  };
+  const order = (locos: number[], wagons: number[]) =>
+    stripCars(locos, wagons, (u) => stock[u]).map((c) => c.uid);
+
+  it('shows the engines as picked, then the wagons as picked', () => {
+    expect(order([2, 1], [8, 7])).toEqual([2, 1, 8, 7]);
+    expect(stripCars([1], [7], (u) => stock[u])).toEqual([
+      { uid: 1, defId: 'rocket', level: 1, loco: true },
+      { uid: 7, defId: 'mine_tub', level: 1, loco: false },
+    ]);
+  });
+
+  it('leaves out a pick that has left the stock', () => {
+    expect(order([1, 99], [7])).toEqual([1, 7]);
+  });
+
+  it('is empty with nothing picked', () => {
+    expect(order([], [])).toEqual([]);
+  });
+
+  it('moves a pick along the list, stopping at either end', () => {
+    expect(movedPick([1, 2, 3], 3, 0)).toEqual([3, 1, 2]);
+    expect(movedPick([1, 2, 3], 1, 1)).toEqual([2, 1, 3]);
+    expect(movedPick([1, 2, 3], 2, -1)).toEqual([2, 1, 3]);
+    expect(movedPick([1, 2, 3], 2, 9)).toEqual([1, 3, 2]);
+  });
+
+  it('leaves the list as it is for what is not in it', () => {
+    expect(movedPick([1, 2], 9, 0)).toEqual([1, 2]);
+  });
+});
+
+describe('the trains of a depot', () => {
+  const trains = [
+    { name: 'A', home: 1 },
+    { name: 'B', home: 2 },
+    { name: 'C', home: 1 },
+    { name: 'D', home: null },
+  ];
+  const names = (l: { name: string }[]) => l.map((t) => t.name);
+  const depots = [
+    { id: 2, name: 'Narrow' },
+    { id: 1, name: 'Main' },
+  ];
+
+  it('lists the trains of the depot chosen, in the order of the fleet', () => {
+    expect(names(trainsShown(trains, 'here', 1))).toEqual(['A', 'C']);
+    expect(names(trainsShown(trains, 'here', 2))).toEqual(['B']);
+    expect(trainsShown(trains, 'here', 3)).toEqual([]);
+  });
+
+  it('lists every train under All', () => {
+    expect(names(trainsShown(trains, 'all', 1))).toEqual(['A', 'B', 'C', 'D']);
+  });
+
+  it('lists every train when there is no depot to choose', () => {
+    expect(names(trainsShown(trains, 'here', null))).toEqual(['A', 'B', 'C', 'D']);
+  });
+
+  it('groups all the trains by depot, in the order of the depots, those of none last', () => {
+    expect(trainsByDepot(trains, depots).map((g) => [g.title, names(g.trains)])).toEqual([
+      ['Narrow', ['B']],
+      ['Main', ['A', 'C']],
+      [STR.depot.noHome, ['D']],
+    ]);
+  });
+
+  it('gives no head to a depot with no train', () => {
+    const groups = trainsByDepot([{ home: 1 }], depots);
+    expect(groups.map((g) => g.depotId)).toEqual([1]);
+  });
+
+  it('puts a train of a depot not on the list with those of none', () => {
+    const groups = trainsByDepot([{ home: 9 }], depots);
+    expect(groups.map((g) => g.title)).toEqual([STR.depot.noHome]);
+  });
+});
+
+describe('the gates in the depot bar', () => {
+  const answer = (at: number, lifetime: number): GateAnswer => ({ at, lifetime, reason: null });
+
+  it('says a train can leave, or that it cannot and why', () => {
+    expect(gateShown(answer(0, 1)).tone).toBe('ok');
+    const shut = gateShown({ at: 0, lifetime: 1, reason: 'No track at the gates' });
+    expect(shut).toEqual({
+      text: STR.depot.gateShut,
+      tone: 'bad',
+      why: 'No track at the gates',
+    });
+  });
+
+  it('shows nothing until the gate has been asked about', () => {
+    expect(gateShown(undefined)).toEqual({ text: '', tone: '', why: '' });
+  });
+
+  it('asks about a depot it has no answer for before any other', () => {
+    const answers = new Map([[1, answer(0, 10)]]);
+    expect(staleGate([1, 2], answers, 50)).toBe(2);
+  });
+
+  it('asks about the answer that ran out longest ago, one at a time', () => {
+    const answers = new Map([
+      [1, answer(0, 40)],
+      [2, answer(0, 10)],
+    ]);
+    expect(staleGate([1, 2], answers, 50)).toBe(2);
+    expect(staleGate([1, 2], answers, 20)).toBe(2);
+  });
+
+  it('asks nothing while every answer stands', () => {
+    const answers = new Map([[1, answer(0, 40)]]);
+    expect(staleGate([1], answers, 39)).toBeNull();
+    expect(staleGate([], answers, 39)).toBeNull();
+  });
+});
+
+describe('what refuses a train at the depot chosen', () => {
+  const main = { id: 1, name: 'Main' };
+
+  it('is what the game answers', () => {
+    expect(refusalAt({ reason: 'Too heavy', depot: main }, main)).toBe('Too heavy');
+    expect(refusalAt({ reason: 'Too heavy', depot: null }, null)).toBe('Too heavy');
+  });
+
+  it('is nothing for a train that goes from there', () => {
+    expect(refusalAt({ reason: null, depot: main }, main)).toBeNull();
+  });
+
+  it('names the depot chosen when the consist would go from another one', () => {
+    const answer = { reason: null, depot: { id: 2 } };
+    expect(refusalAt(answer, main)).toBe(STR.fleet.wrongDepot('Main'));
+  });
+
+  it('does not quote the gates of a depot the train was not asked to leave', () => {
+    const answer = { reason: 'Gate 9,9: a train stands on it', depot: { id: 2 } };
+    expect(refusalAt(answer, main)).toBe(STR.fleet.wrongDepot('Main'));
+  });
+
+  it('has nothing against a train when no depot is chosen', () => {
+    expect(refusalAt({ reason: null, depot: main }, null)).toBeNull();
   });
 });
 
