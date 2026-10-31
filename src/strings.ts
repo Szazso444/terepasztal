@@ -53,11 +53,10 @@ export const STR = {
     weatherToggleHint: 'Toggle rain, fog and seasons',
     /** the same, in a narrow top bar: the season and weather it no longer shows come first */
     weatherToggleHintNow: (now: string) => `${now}\nToggle rain, fog and seasons`,
-    dayToggle: 'Day/night',
+    dayToggle: 'Day / night',
     dayToggleHint: 'Toggle the day and night cycle',
     ageUp: (t: number) =>
       `The ${ageLabel(t)} begins. New works, stations and rolling stock unlocked.`,
-    signalGuide: 'Signals?',
   },
   history: {
     undo: 'Undo',
@@ -1714,12 +1713,23 @@ export const STR = {
     cannotPlace: 'Could not place train',
   },
   topbar: {
+    /** the menu bar's entries (src/ui/menuBarModel.ts) */
+    menuTip: 'Menu · Esc',
+    game: 'Game',
+    fleet: 'Fleet',
+    economy: 'Economy',
+    view: 'View',
+    /** their rows */
+    save: 'Save',
+    quit: 'Quit to title',
     depot: 'Depot',
+    signals: 'Signals',
     contracts: 'Contracts',
     gacha: 'Gacha',
-    craft: 'Craft',
+    crafting: 'Crafting',
     roster: 'Roster',
     market: 'Market',
+    overview: 'Overview map',
     settings: 'Settings',
     cheat: 'Cheat',
     cheated: '+$10,000 and every resource topped up',
