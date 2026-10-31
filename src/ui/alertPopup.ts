@@ -1,7 +1,8 @@
 import type { Notice } from '../sim/notices';
 import { STR } from '../strings';
 import { withAgeIcons } from './ageIcon';
-import { btn, el } from './dom';
+import { el } from './dom';
+import type { FootSpec } from './kit';
 import type { Screen, ScreenManager } from './modal';
 
 /**
@@ -11,11 +12,13 @@ import type { Screen, ScreenManager } from './modal';
  */
 export class AlertPopup implements Screen {
   readonly id = 'alert-popup';
-  readonly frameSize = 'small';
+  readonly frameSize = 'S';
   readonly keepsTool = true;
   title = '';
   readonly root = el('div', { class: 'alert-popup' });
   private queue: Notice[] = [];
+  /** the message up */
+  private notice: Notice | null = null;
 
   constructor(
     private readonly screens: ScreenManager,
@@ -33,20 +36,23 @@ export class AlertPopup implements Screen {
   pump() {
     if (!this.queue.length || this.screens.current || !this.free()) return;
     const n = this.queue.shift()!;
+    this.notice = n;
     this.title = STR.alerts.type[n.type];
+    this.root.replaceChildren(el('div', { class: 'alert-popup-text' }, ...withAgeIcons(n.text)));
+    this.screens.open(this);
+  }
+
+  frameFooter(): FootSpec {
+    const n = this.notice;
     const goTo = () => {
       this.screens.close();
-      this.look(n);
+      if (n) this.look(n);
     };
-    this.root.replaceChildren(
-      el('div', { class: 'alert-popup-text' }, ...withAgeIcons(n.text)),
-      el(
-        'div',
-        { class: 'nt-foot' },
-        n.target ? btn(STR.alerts.goTo, goTo, 'accent') : null,
-        btn(STR.alerts.close, () => this.screens.close()),
-      ),
-    );
-    this.screens.open(this);
+    return {
+      actions: [
+        { label: STR.alerts.close, onClick: () => this.screens.close() },
+        ...(n?.target ? [{ label: STR.alerts.goTo, onClick: goTo, primary: true }] : []),
+      ],
+    };
   }
 }

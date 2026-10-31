@@ -2,7 +2,7 @@ import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
 import { harvestBreakdown, weeklyOutput, type Station } from '../sim/stations';
 import type { Builder } from '../sim/build';
-import type { Commands } from '../sim/commands';
+import { STATION_NAME_MAX, type Commands } from '../sim/commands';
 import { cargoDef } from '../sim/cargo';
 import { inSupplyMode } from '../sim/supply';
 import type { ContractBoard } from '../sim/contracts';
@@ -17,6 +17,7 @@ import { upgradeRow } from './upgradeRow';
 import { groundRows } from './placingTooltip';
 import { blockText, type TipDoc } from './tooltipDoc';
 import type { TipContent } from './tooltip';
+import type { NamePrompt } from './namePrompt';
 
 /** How the panel draws its ground rows, and the season their yield is worked out for (#336). */
 export interface GroundView {
@@ -55,6 +56,8 @@ export class StationPanel {
     private readonly commands: Commands,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
     private readonly view: GroundView,
+    /** the game's dialog, for a station's new name */
+    private readonly prompt: Pick<NamePrompt, 'ask'>,
   ) {
     this.body.append(this.head, this.ground, this.tail);
     this.root = el(
@@ -64,7 +67,7 @@ export class StationPanel {
         'div',
         { class: 'panel-title' },
         this.title,
-        btn('x', () => this.close(), 'small'),
+        btn('×', () => this.close(), 'small'),
       ),
       this.body,
     );
@@ -245,8 +248,13 @@ export class StationPanel {
           ? btn(STR.station.renameTown, () => this.onRenameTown(town), 'small')
           : btn(
               STR.station.rename,
-              () => {
-                const n = prompt(STR.station.rename, s.name);
+              async () => {
+                const n = await this.prompt.ask(
+                  STR.station.renameTitle,
+                  STR.station.renameHint,
+                  s.name,
+                  STATION_NAME_MAX,
+                );
                 // cancelled, or left blank: nothing to rename
                 if (!n?.trim()) return;
                 const done = this.commands.renameStation(s, n);

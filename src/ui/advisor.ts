@@ -38,7 +38,7 @@ export class Advisor {
         { class: 'panel-title' },
         el('span', { text: STR.advisor.title }),
         this.silenceBtn,
-        btn('x', () => this.toggle(false), 'small'),
+        btn('×', () => this.toggle(false), 'small'),
       ),
       this.body,
     );
