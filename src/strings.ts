@@ -458,6 +458,11 @@ const EN = {
       noLine: 'No line to convert to that way',
       nothing: 'Nothing to convert here',
     } as Record<string, string>,
+    /** the Repair tool: its line over the bar, and why a click mends nothing */
+    repairCost: (cost: string) => `Repair: ${cost}`,
+    repairIdle: 'Repair: click a piece or drag along the line',
+    repairNothing: 'Nothing to repair here',
+    repairNoStore: (missing: string) => `No store holds ${missing}`,
     bridgeOnWater: 'Bridges only span water',
     occupied: 'Tile occupied',
     funds: 'Not enough funds',
@@ -571,6 +576,10 @@ const EN = {
         ? 'Demolish: click what you built · X or Esc: stop'
         : `Demolish: click what you built · ${percent}% of its listed cost comes back · X or Esc: stop`,
     demolishKeys: 'X · Right-click or Delete removes with any tool',
+    repair: 'Repair',
+    /** hand repair is instant and dearer than a maintenance train; any store pays, however far */
+    repairTip:
+      'Click track, or drag along it, to mend it at once. Dearer than a maintenance train; the nearest store that holds the price pays, however far.',
     upgrade: 'Upgrade',
     downgrade: 'Downgrade',
     upgradeHint: 'Raises track one line: Branch to Main, Main to Trunk. Costs the difference.',

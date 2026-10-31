@@ -604,6 +604,36 @@ describe('the bar', () => {
     expect(bar.active).toEqual(noTool);
   });
 
+  it('toggles Repair, which stands on no list and closes the open category', () => {
+    const { bar, held } = barOn(catalog());
+    bar.openCategory('roads');
+    bar.toggleRepair();
+    expect(bar.active).toEqual({ kind: 'repair' });
+    expect(bar.open).toBeNull();
+    expect(bar.item({ kind: 'repair' })).toBeNull();
+    bar.closeCategory();
+    expect(bar.active).toEqual({ kind: 'repair' });
+    bar.toggleRepair();
+    expect(bar.active).toEqual(noTool);
+    expect(held.map((t) => t.kind)).toEqual(['road', 'repair', 'none']);
+  });
+
+  it('picking Repair, as the wear window does, keeps it in hand rather than putting it down', () => {
+    const { bar } = barOn(catalog());
+    bar.select({ kind: 'repair' });
+    bar.select({ kind: 'repair' });
+    expect(bar.active).toEqual({ kind: 'repair' });
+    bar.openCategory('track');
+    expect(bar.active.kind).toBe('track');
+  });
+
+  it('keeps Repair off in the level editor, where nothing wears', () => {
+    const { bar } = barOn(catalog());
+    bar.setEditor(true);
+    bar.toggleRepair();
+    expect(bar.active).toEqual(noTool);
+  });
+
   it('opening a category ends Demolish, even one with nothing to take up', () => {
     const { bar } = barOn(catalog());
     bar.toggleDemolish();

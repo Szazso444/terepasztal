@@ -372,6 +372,10 @@ export const HU: Strings = {
       noLine: 'Arra nincs vonal, amivé átalakítható lenne',
       nothing: 'Itt nincs mit átalakítani',
     },
+    repairCost: (cost: string) => `Javítás: ${cost}`,
+    repairIdle: 'Javítás: kattints egy elemre, vagy húzd végig a vonalon',
+    repairNothing: 'Itt nincs mit javítani',
+    repairNoStore: (missing: string) => `Egy raktár sem tart ennyit: ${missing}`,
     bridgeOnWater: 'Híd csak víz fölé kerülhet',
     occupied: 'A csempe foglalt',
     funds: 'Nincs elég pénz',
@@ -442,6 +446,9 @@ export const HU: Strings = {
         ? 'Bontás: kattints arra, amit építettél · X vagy Esc: vége'
         : `Bontás: kattints arra, amit építettél · a listaár ${percent}%-a visszajár · X vagy Esc: vége`,
     demolishKeys: 'X · Jobb klikk vagy Delete bármelyik eszközzel bont',
+    repair: 'Javítás',
+    repairTip:
+      'Kattints a sínre, vagy húzd végig rajta, és azonnal megjavul. Drágább, mint a karbantartó vonat; a legközelebbi raktár fizet, amelyik tartja az árat, bármilyen messze van.',
     upgrade: 'Fejlesztés',
     downgrade: 'Visszaminősítés',
     upgradeHint:

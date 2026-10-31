@@ -646,6 +646,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const wearAlert = new WearAlertScreen(d.screens);
   // the Depot button opens the depot (the maintenance wagon's tab comes with the wagons)
   wearAlert.onDepot = () => d.screens.open(depot);
+  // the Repair button takes up the Repair tool, and keeps it when it is in hand already
+  wearAlert.onRepair = () => toolbar.select({ kind: 'repair' });
   const advisor = new Advisor(d.settings.advisor === false);
   advisor.onSilence = (v) => {
     d.settings.advisor = !v;

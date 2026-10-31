@@ -16,6 +16,7 @@ export type BuildIcon =
   | 'road'
   | 'mountain'
   | 'demolish'
+  | 'repair'
   | 'chevl'
   | 'chevr'
   | 'up'
@@ -40,6 +41,7 @@ export const BUILD_ICON: Record<BuildIcon, string> = {
   road: '<path d="M8 3L4 21M16 3l4 18M12 4v3M12 10.5v3M12 17v3.5"/>',
   mountain: '<path d="M2 20l7-12 4 6.5 3-4 6 9.5z"/>',
   demolish: '<path d="M14 3.5l6.5 6.5-3 3L11 6.5zM11.5 7L3 15.5 6.5 19 15 10.5"/>',
+  repair: '<path d="M14.5 4.5l5 5-2.5 2.5-5-5zM12.8 8.2l-8.6 8.6a1.8 1.8 0 0 0 2.5 2.5l8.6-8.6"/>',
   chevl: '<path d="M15 5l-7 7 7 7"/>',
   chevr: '<path d="M9 5l7 7-7 7"/>',
   up: '<path d="M12 20V5M6 11l6-6 6 6"/>',

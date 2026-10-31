@@ -6,11 +6,13 @@
  * piece at zero closes to traffic: `Train.canUse` reads its health, and `TrackWear.flush` tells the
  * trains.
  */
+import type { Cost } from '../data/content';
 import type { Dir } from '../engine/iso';
-import type { TrackGraph, TrackClass, TrackPiece } from '../world/track';
+import { pieceCost, type TrackGraph, type TrackClass, type TrackPiece } from '../world/track';
 import type { Builder } from './build';
 import { pieceClassFor } from './compat';
 import { rules } from './rules';
+import { scaleCost } from './stores';
 
 export type WearState = 'healthy' | 'degraded' | 'unusable';
 
@@ -123,6 +125,24 @@ export class TrackWear {
   daily(): void {
     for (const { x, y, piece } of this.track.anchors())
       if (!this.exempt(x, y)) this.lose(x, y, piece, rules.trackTimeWear * rules.trackWearMul);
+  }
+  /**
+   * What mending `share` of the piece's HP costs: that share of its build cost at the repair price,
+   * each resource rounded up; by hand it is dearer (`trackHandRepairMul`).
+   */
+  repairCost(p: TrackPiece, share: number, hand: boolean): Cost {
+    const mul =
+      share * rules.trackRepairPrice * rules.buildCostMul * (hand ? rules.trackHandRepairMul : 1);
+    return scaleCost(pieceCost(p.kind, p.cls, p.cls2), mul);
+  }
+  /** Mend the piece at (x, y) by `share` of its HP, never past full, and tell the trains what opened. */
+  restore(x: number, y: number, share: number): void {
+    const p = this.track.get(x, y);
+    if (!p) return;
+    const was = stateOf(p);
+    p.wear.health = Math.min(1, p.wear.health + Math.max(0, share));
+    this.settle(x, y, p, was);
+    this.flush();
   }
   /**
    * Keys (y * w + x) of every tile of an unusable piece. Rebuilt after a track edit or a load,

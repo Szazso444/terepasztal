@@ -312,10 +312,13 @@ export class Builder {
       .join(', ');
     return { ok: false, cost, reason: STR.build.noStoreInReach(rules.buildReach, what) };
   }
-  /** Pay what a check approved for work at (x, y), from the store it named (`payer`). */
-  pay(c: PlacementCheck, x: number, y: number) {
+  /**
+   * Pay what a check approved for work at (x, y), from the store it named (`payer`), which stands
+   * within `reach` tiles.
+   */
+  pay(c: PlacementCheck, x: number, y: number, reach = rules.buildReach) {
     if (this.free || !hasPrice(c.cost)) return true;
-    const payer = this.stores.nearest(x, y).find((s) => s.key === c.payer);
+    const payer = this.stores.nearest(x, y, reach).find((s) => s.key === c.payer);
     return !!payer && payer.spend(c.cost);
   }
   /** Give back the refund share of `cost` to the store that supplies (x, y), else the nearest. */
@@ -810,6 +813,47 @@ export class Builder {
       c.changes.map((p) => ({ x: p.x, y: p.y })),
       dir,
     );
+    return true;
+  }
+  /**
+   * What mending the pieces on `tiles` by hand would cost: every one that is not whole, once
+   * however many of its tiles are given, at the hand price, paid from the nearest store that holds
+   * it, however far (`StoreRegistry.payerAnywhere`). `pieces` holds their anchors.
+   */
+  checkRepair(tiles: { x: number; y: number }[]): PlacementCheck & {
+    pieces: { x: number; y: number }[];
+  } {
+    const pieces: { x: number; y: number }[] = [];
+    const cost: Cost = {};
+    const seen = new Set<object>();
+    for (const t of tiles) {
+      const p = this.track.get(t.x, t.y);
+      if (!p || seen.has(p.wear)) continue;
+      seen.add(p.wear);
+      if (this.wear.exempt(t.x, t.y) || p.wear.health >= 1) continue;
+      pieces.push(this.track.anchorOf(t.x, t.y));
+      for (const [k, v] of Object.entries(this.wear.repairCost(p, 1 - p.wear.health, true)))
+        cost[k] = (cost[k] ?? 0) + v;
+    }
+    if (!pieces.length) return { ok: false, cost: {}, pieces, reason: STR.build.repairNothing };
+    if (this.free || !hasPrice(cost)) return { ok: true, cost, pieces };
+    const at = tiles[0];
+    const payer = this.stores.payerAnywhere(cost, at.x, at.y);
+    if (payer) return { ok: true, cost, pieces, payer: payer.key };
+    const miss = this.stores.nearest(at.x, at.y, Infinity)[0]?.missing(cost) ?? cost;
+    const what = Object.entries(miss)
+      .filter(([, v]) => v > 0)
+      .map(([k, v]) => `${v} ${cargoWord(k)}`)
+      .join(', ');
+    return { ok: false, cost, pieces, reason: STR.build.repairNoStore(what) };
+  }
+  /** Mend the pieces on `tiles` at once, paying the price `checkRepair` named. */
+  repairTrack(tiles: { x: number; y: number }[]): boolean {
+    const c = this.checkRepair(tiles);
+    const at = tiles[0];
+    if (!c.ok || !this.pay(c, at.x, at.y, Infinity)) return false;
+    for (const { x, y } of c.pieces) this.wear.restore(x, y, 1 - this.track.get(x, y)!.wear.health);
+    sfx('build.place');
     return true;
   }
   /** Compatibility: lay a Branch Line piece by kind. */

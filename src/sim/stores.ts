@@ -827,6 +827,10 @@ export class StoreRegistry {
   payerFor(cost: Cost, x: number, y: number): ResourceStore | null {
     return this.nearest(x, y).find((s) => s.canAfford(cost)) ?? null;
   }
+  /** `payerFor` with no reach limit: the nearest store that holds the whole cost, however far. */
+  payerAnywhere(cost: Cost, x: number, y: number): ResourceStore | null {
+    return this.nearest(x, y, Infinity).find((s) => s.canAfford(cost)) ?? null;
+  }
 
   /**
    * Begin the weekly flows over, once the start goods are in or a save is loaded (the goods a game

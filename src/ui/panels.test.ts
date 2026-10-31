@@ -123,6 +123,14 @@ describe('the toasts and the build dock', () => {
   });
 });
 
+describe('the wear window', () => {
+  const source = readFileSync(new URL('./panels.ts', import.meta.url), 'utf8');
+
+  it('takes up the Repair tool with its Repair button', () => {
+    expect(source).toContain("wearAlert.onRepair = () => toolbar.select({ kind: 'repair' });");
+  });
+});
+
 describe('what closes the menu bar', () => {
   const source = readFileSync(new URL('./panels.ts', import.meta.url), 'utf8');
 
