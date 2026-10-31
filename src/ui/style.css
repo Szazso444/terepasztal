@@ -2095,6 +2095,11 @@ input.text {
   width: 100%;
   box-sizing: border-box;
 }
+.sp-on {
+  display: inline-flex;
+  flex: none;
+  gap: 7px;
+}
 .sp-week {
   display: flex;
   flex-wrap: wrap;

@@ -3,6 +3,7 @@ import { LAST_AGE } from '../sim/ages';
 import { MAX_LEVEL } from '../sim/levels';
 import { rules } from '../sim/rules';
 import { LEVELS, Station, stationDef, weeklyOutput } from '../sim/stations';
+import { FAMINE_PRODUCTION_MUL } from '../sim/step';
 import type { Flow } from '../sim/stores';
 import { fmtCost } from '../sim/stores';
 import { setSupplyMode } from '../sim/supply';
@@ -10,23 +11,29 @@ import { TRAIN_COLOURS } from '../sim/trainColours';
 import { STR } from '../strings';
 import { trainFacts } from '../testing/trainFacts';
 import { fmtDuration } from './numberFormat';
+import { worksChip } from './outlinerRows';
 import {
-  STATION_TABS,
+  boardShape,
   callState,
+  callsShape,
   fillTone,
+  reachSources,
   stationCargo,
   stationExpansion,
   stationOverview,
-  stationTabs,
+  stationPerWeek,
   stationTimetable,
   stationTrains,
+  upgradeShape,
   type CallFacts,
   type ContractFacts,
+  type MakerFacts,
   type ReachSource,
   type StationFacts,
   type StationWorld,
+  type WorksFacts,
 } from './stationView';
-import { upgradeHours } from './upgradeView';
+import { upgradeHours, type UpgradeView } from './upgradeView';
 
 const P = STR.stationPanel;
 
@@ -54,10 +61,13 @@ function station(defId: string, more: Partial<StationFacts> = {}): StationFacts 
     firstAge: def.tier ?? 0,
     terrainFactor: 1,
     productionMul: 1,
+    productionPerWeek: 0,
     passengerPopulation: 0,
     occupants: new Set(),
     def,
     dock: null,
+    outlet: null,
+    distTo: () => 0,
     availableCargo: () => def.produces.map((p) => p.cargo),
     producedCargo: () => def.produces.map((p) => p.cargo),
     stored: (c) => held[c] ?? 0,
@@ -88,8 +98,10 @@ function world(more: Partial<StationWorld> = {}): StationWorld {
     free: false,
     town: null,
     hasTrack: true,
-    perWeek: 0,
+    famine: false,
     outletName: null,
+    storeName: null,
+    storeShared: false,
     reach: [],
     now: 0,
     contracts: [],
@@ -129,17 +141,105 @@ const contract = (more: Partial<ContractFacts>): ContractFacts => ({
   ...more,
 });
 
-describe('the tabs of each kind', () => {
-  it('gives a plain station, a harvest station and a warehouse all five', () => {
-    expect(stationTabs(stationDef('station'))).toEqual(STATION_TABS);
-    expect(stationTabs(stationDef('farm'))).toEqual(STATION_TABS);
-    expect(stationTabs(stationDef('warehouse'))).toEqual(STATION_TABS);
-    expect(stationTabs(stationDef('town'))).toEqual(STATION_TABS);
+/** A works that runs, as literals: a test sets what it is about. */
+const works = (more: Partial<WorksFacts> = {}): WorksFacts => ({
+  name: 'Windmill',
+  x: 10,
+  y: 10,
+  store: 'town:1',
+  out: { food: 5 },
+  rate: 4,
+  status: { kind: 'running' },
+  ...more,
+});
+
+/** A harvester carrying to a store with room, as literals. */
+const maker = (more: Partial<MakerFacts> = {}): MakerFacts => ({
+  id: 2,
+  name: 'Farm Halt',
+  x: 20,
+  y: 10,
+  closed: false,
+  productionMul: 1.5,
+  productionPerWeek: 20,
+  outlet: { key: 'town:1', get: () => 0, cap: () => 100 },
+  producedCargo: () => ['wheat'],
+  fill: () => 0,
+  ...more,
+});
+
+const running = { id: 1, distTo: (x: number) => Math.abs(x - 4) };
+const noFamine = () => false;
+
+describe('what a station makes now', () => {
+  it("is the tick's figure: its week, season and biome, half in a famine", () => {
+    const s = { productionPerWeek: 20, productionMul: 1.5 };
+    expect(stationPerWeek(s, false)).toBe(30);
+    expect(stationPerWeek(s, true)).toBe(30 * FAMINE_PRODUCTION_MUL);
   });
-  it('leaves a depot without a Timetable, of either gauge', () => {
-    const shed = ['overview', 'cargo', 'trains', 'expansion'];
-    expect(stationTabs(stationDef('depot'))).toEqual(shed);
-    expect(stationTabs(stationDef('narrow_depot'))).toEqual(shed);
+  it('agrees with a real station: closed it makes nothing', () => {
+    const s = new Station('farm', 3, 3);
+    s.terrainFactor = 0.5;
+    s.productionMul = 2;
+    expect(stationPerWeek(s, false)).toBe(weeklyOutput(1, 0.5) * 2);
+    s.work = { to: 2, left: 10, total: 20 };
+    expect(stationPerWeek(s, false)).toBe(0);
+  });
+});
+
+describe('what makes goods for a store', () => {
+  it('reads a works by what it really makes, not by its most', () => {
+    const [r] = reachSources(running, [], [works({ rate: 2.5 })], noFamine);
+    expect(r).toEqual({
+      name: 'Windmill',
+      tiles: 6,
+      store: 'town:1',
+      makes: { food: 12.5 },
+      chip: null,
+    });
+  });
+  it('says what holds a works back, and what it still makes', () => {
+    const starved = works({ rate: 0.5, status: { kind: 'starved', missing: 'wheat' } });
+    const full = works({ rate: 0, status: { kind: 'full' } });
+    const closed = works({ rate: 0, status: { kind: 'closed' } });
+    const rows = reachSources(running, [], [starved, full, closed], noFamine);
+    expect(rows.map((r) => [r.makes.food, r.chip?.text])).toEqual([
+      [2.5, STR.outliner.noInput],
+      [0, STR.outliner.full],
+      [0, STR.outliner.closed],
+    ]);
+  });
+  it('leaves power out: it goes to the grid, and no store receives it', () => {
+    const plant = works({ name: 'Power Plant', out: { power: 60 } });
+    const both = works({ name: 'Kiln', out: { power: 5, coal: 3 } });
+    const rows = reachSources(running, [], [plant, both], noFamine);
+    expect(rows.map((r) => [r.name, r.makes])).toEqual([['Kiln', { coal: 12 }]]);
+  });
+  it('leaves out a works that makes nothing', () => {
+    expect(reachSources(running, [], [works({ out: {} })], noFamine)).toEqual([]);
+  });
+  it('reads a harvester as a tick does, shared between its goods, half in a famine', () => {
+    const two = maker({ producedCargo: () => ['wheat', 'food'] });
+    const [r] = reachSources(running, [two], [], noFamine);
+    expect(r.makes).toEqual({ wheat: 15, food: 15 });
+    expect(r.store).toBe('town:1');
+    expect(r.tiles).toBe(16);
+    expect(reachSources(running, [two], [], () => true)[0].makes.wheat).toBe(7.5);
+  });
+  it('says a harvester is closed, or its goods have no room in the store', () => {
+    const shut = maker({ closed: true, productionPerWeek: 0 });
+    const brim = maker({ outlet: { key: 'town:1', get: () => 100, cap: () => 100 } });
+    const rows = reachSources(running, [shut, brim], [], noFamine);
+    expect(rows.map((r) => [r.makes.wheat, r.chip?.text])).toEqual([
+      [0, STR.outliner.closed],
+      [0, STR.outliner.full],
+    ]);
+  });
+  it('leaves out the station itself, one that carries nowhere, and one that makes nothing', () => {
+    const self = maker({ id: 1 });
+    const own = maker({ outlet: null });
+    const idle = maker({ producedCargo: () => [] });
+    expect(reachSources(running, [self, own, idle], [], noFamine)).toEqual([]);
   });
 });
 
@@ -147,7 +247,8 @@ describe('the Overview', () => {
   it('says what a plain station is at: platforms, loading, storage, crew, its people', () => {
     const s = holding('station', { passengers: 15 }, { occupants: new Set([7]), platforms: 2 });
     s.passengerPopulation = 38;
-    const v = stationOverview(s, world({ perWeek: 15.2 }));
+    s.productionPerWeek = 15.2;
+    const v = stationOverview(s, world());
     expect(v.notes).toEqual([]);
     expect(v.facts.map((f) => f.label)).toEqual([
       STR.station.platforms,
@@ -159,22 +260,40 @@ describe('the Overview', () => {
     expect(v.facts[2].meter).toBe(25);
     expect(v.residents).toBe(38);
     expect(v.production).toEqual([
-      { res: 'passengers', name: 'Passengers', tiles: null, perWeek: 15.2 },
+      { res: 'passengers', name: 'Passengers', tiles: null, perWeek: 15.2, chip: null },
     ]);
     expect(v.waiting).toEqual([{ res: 'passengers', amount: 15 }]);
   });
   it('counts no week for a station with storage of its own', () => {
-    const v = stationOverview(holding('farm', { wheat: 3 }), world({ perWeek: 30 }));
-    expect(v.week).toBeNull();
+    const v = stationOverview(holding('farm', { wheat: 3 }), world());
+    expect(v.weekOf).toBeNull();
+    expect(v.week).toEqual([]);
     expect(v.residents).toBeNull();
   });
-  it('gives a harvest station the rate of its breakdown, none while it is closed', () => {
-    const s = holding('farm', { wheat: 3 });
-    expect(stationOverview(s, world({ perWeek: 41.26 })).production[0].perWeek).toBe(41.3);
+  it('gives a harvest station its rate on this ground, none while it is closed', () => {
+    const s = holding('farm', { wheat: 3 }, { productionPerWeek: 27.51, productionMul: 1.5 });
+    expect(stationOverview(s, world()).production[0].perWeek).toBe(41.3);
     const shut = holding('farm', { wheat: 3 }, { closed: true });
-    const v = stationOverview(shut, world({ perWeek: 0 }));
-    expect(v.production[0].perWeek).toBe(0);
+    const v = stationOverview(shut, world());
+    expect(v.production[0]).toMatchObject({ perWeek: 0, chip: worksChip({ kind: 'closed' }) });
     expect(v.notes).toEqual([{ cls: 'amber', text: STR.upgrade.closed }]);
+  });
+  it('halves what it makes while the crews at its store starve', () => {
+    const s = station('farm', { productionPerWeek: 30 });
+    expect(stationOverview(s, world({ famine: true })).production[0].perWeek).toBe(15);
+  });
+  it('makes nothing while its storage is full, and says so', () => {
+    const s = station('farm', { productionPerWeek: 30, fill: () => 1 });
+    const [r] = stationOverview(s, world()).production;
+    expect(r).toMatchObject({ perWeek: 0, chip: worksChip({ kind: 'full' }) });
+  });
+  it('looks to the store for a harvester that carries there, not to its own fill', () => {
+    const room = { key: 'town:1', get: () => 50, cap: () => 100 };
+    const s = station('farm', { productionPerWeek: 30, fill: () => 1, outlet: room });
+    expect(stationOverview(s, world()).production[0]).toMatchObject({ perWeek: 30, chip: null });
+    const brim = { ...room, get: () => 100 };
+    const full = station('farm', { productionPerWeek: 30, outlet: brim });
+    expect(stationOverview(full, world()).production[0].chip).toEqual(worksChip({ kind: 'full' }));
   });
   it('tells what has to be seen: no track, a water tower', () => {
     const s = station('farm', { loadBoost: 1.5 });
@@ -186,8 +305,12 @@ describe('the Overview', () => {
   it('shares what it makes between its goods, as a tick does', () => {
     const def = stationDef('farm');
     const two = { ...def, produces: [...def.produces, { cargo: 'food', level: 1 }] };
-    const s = station('farm', { def: two, producedCargo: () => ['wheat', 'food'] });
-    const v = stationOverview(s, world({ perWeek: 30 }));
+    const s = station('farm', {
+      def: two,
+      producedCargo: () => ['wheat', 'food'],
+      productionPerWeek: 30,
+    });
+    const v = stationOverview(s, world());
     expect(v.production.map((p) => [p.res, p.perWeek])).toEqual([
       ['wheat', 15],
       ['food', 15],
@@ -201,12 +324,15 @@ describe('the Overview', () => {
     const s = holding('warehouse', { coal: 0.4, wood: 2.9 });
     expect(stationOverview(s, world()).waiting).toEqual([{ res: 'wood', amount: 2 }]);
   });
-  it('reads a store: the fullest good of its cap, what it handled, what works from it', () => {
-    const near: ReachSource = { name: 'Mill', tiles: 2, store: 'st:1', makes: { food: 20.04 } };
-    const far: ReachSource = { name: 'Quarry', tiles: 9, store: 'st:1', makes: { stone: 30 } };
-    const other: ReachSource = { name: 'Kiln', tiles: 1, store: 'st:9', makes: { coal: 5 } };
-    const none: ReachSource = { name: 'Dam', tiles: 1, store: null, makes: { power: 5 } };
-    const idle: ReachSource = { name: 'Press', tiles: 3, store: 'st:1', makes: { wire: 0 } };
+  it('reads a store: the fullest good of its cap, its week, what works from it', () => {
+    const src = (name: string, tiles: number, store: string | null, makes: object) =>
+      ({ name, tiles, store, makes, chip: null }) as ReachSource;
+    const near = src('Mill', 2, 'st:1', { food: 20.04 });
+    const far = src('Quarry', 9, 'st:1', { stone: 30 });
+    const other = src('Kiln', 1, 'st:9', { coal: 5 });
+    const none = src('Dam', 1, null, { coal: 5 });
+    const held = worksChip({ kind: 'full' });
+    const stopped = { ...src('Press', 3, 'st:1', { wire: 0 }), chip: held };
     const s = holding(
       'warehouse',
       { coal: 150, wood: 40 },
@@ -222,7 +348,7 @@ describe('the Overview', () => {
         }),
       },
     );
-    const v = stationOverview(s, world({ reach: [far, other, near, none, idle] }));
+    const v = stationOverview(s, world({ reach: [far, other, near, none, stopped] }));
     expect(v.facts[2].value).toBe('150 / 200 a good');
     expect(v.facts[2].meter).toBe(75);
     expect(v.week).toEqual([
@@ -231,16 +357,51 @@ describe('the Overview', () => {
       { res: 'wood', amount: 20 },
     ]);
     expect(v.production).toEqual([
-      { res: 'food', name: 'Mill', tiles: 2, perWeek: 20 },
-      { res: 'stone', name: 'Quarry', tiles: 9, perWeek: 30 },
+      { res: 'food', name: 'Mill', tiles: 2, perWeek: 20, chip: null },
+      { res: 'wire', name: 'Press', tiles: 3, perWeek: 0, chip: held },
+      { res: 'stone', name: 'Quarry', tiles: 9, perWeek: 30, chip: null },
     ]);
   });
   it('shows an empty week of a store as a week, not as none', () => {
-    expect(stationOverview(station('depot', { dock: dock('st:1') }), world()).week).toEqual([]);
+    const v = stationOverview(station('depot', { dock: dock('st:1') }), world());
+    expect(v.weekOf).toBe(P.storeWeek(P.ownStore));
+    expect(v.week).toEqual([]);
   });
   it('gives no reach to a station without a store', () => {
-    const r: ReachSource = { name: 'Mill', tiles: 2, store: 'town:1', makes: { food: 20 } };
+    const r = { name: 'Mill', tiles: 2, store: 'town:1', makes: { food: 20 }, chip: null };
     expect(stationOverview(station('farm'), world({ reach: [r] })).production).toHaveLength(1);
+  });
+});
+
+describe('whose week the figures are', () => {
+  const flows = { coal: { produced: 12 } };
+
+  it('calls a store of the station alone this store', () => {
+    const s = station('depot', { id: 7, dock: dock('st:7', flows) });
+    const w = world({ storeName: 'Depot' });
+    expect(stationOverview(s, w).weekOf).toBe(P.storeWeek(P.ownStore));
+    expect(stationCargo(s, w).title).toBe(P.ownStore);
+  });
+  it('names the town for a Townhouse and for every warehouse in the town', () => {
+    const w = world({ storeName: 'Szeged' });
+    for (const id of ['town', 'warehouse']) {
+      const s = station(id, { dock: dock('town:1', flows) });
+      expect(stationOverview(s, w).weekOf).toBe('Szeged town store, this week');
+      expect(stationCargo(s, w).title).toBe('Szeged town store');
+    }
+  });
+  it("calls a store shared on a rail network the network's, town or not", () => {
+    const w = world({ storeName: 'Szeged', storeShared: true });
+    for (const key of ['town:1', 'st:1']) {
+      const s = station('warehouse', { dock: dock(key, flows) });
+      expect(stationOverview(s, w).weekOf).toBe(P.storeWeek(P.networkStore));
+      expect(stationCargo(s, w).title).toBe(P.networkStore);
+    }
+  });
+  it("keeps the station's own heading where there is no store", () => {
+    const v = stationCargo(station('station'), world());
+    expect(v.title).toBe(P.cargoHere);
+    expect(v.counted).toBe(false);
   });
 });
 
@@ -607,5 +768,122 @@ describe('the Timetable tab', () => {
   it('fills to the platforms of a harvest station, past them never', () => {
     const s = station('farm', { id: 1, platforms: 1, occupants: new Set([1, 2]) });
     expect(stationTimetable(s, world()).share).toBe(100);
+  });
+});
+
+describe("a train's onward stop", () => {
+  const at = (stops: { stationId: number; pass: boolean }[], more: Partial<CallFacts> = {}) =>
+    train(
+      1,
+      stops.map((p) => p.stationId),
+      { schedule: stops, program: stops, state: 'loading', ...more },
+    );
+  const stop = (stationId: number, pass = false) => ({ stationId, pass });
+  const here = station('station', { id: 1, occupants: new Set([1]) });
+  const onward = (t: CallFacts) => stationTimetable(here, world({ trains: [t] })).board[0].to;
+
+  it('is the next stop of its round', () => {
+    expect(onward(at([stop(1), stop(2), stop(3)]))).toBe('Stop 2');
+  });
+  it('is not a stop it runs through', () => {
+    expect(onward(at([stop(1), stop(2, true), stop(3)]))).toBe('Stop 3');
+    expect(onward(at([stop(1), stop(2, true), stop(3, true), stop(4)]))).toBe('Stop 4');
+  });
+  it('comes round the end of the list', () => {
+    const t = at([stop(9), stop(5, true), stop(1), stop(6, true)], { routeIndex: 2 });
+    expect(onward(t)).toBe('Stop 9');
+  });
+  it('is unknown when all it does is come back here, or on a one-stop program', () => {
+    expect(onward(at([stop(1), stop(2, true)]))).toBeNull();
+    expect(onward(at([stop(1)]))).toBeNull();
+  });
+  it('after a service stop is its next scheduled stop, past those it runs through', () => {
+    const t = at([stop(8, true), stop(9)], { detour: 1 });
+    expect(onward(t)).toBe('Stop 9');
+  });
+});
+
+describe('what a depot has of the board', () => {
+  it('says the same as any station: who is due, and its tracks in use', () => {
+    const s = station('depot', { id: 1, platforms: 2, occupants: new Set([3]) });
+    const trains = [train(3, [1, 2], { state: 'loading', atStation: { id: 1 } })];
+    const v = stationTimetable(s, world({ trains }));
+    expect(v.board.map((r) => [r.id, r.when, r.to])).toEqual([[3, P.now, 'Stop 2']]);
+    expect([v.used, v.platforms, v.share]).toEqual([1, 2, 50]);
+  });
+});
+
+describe('what a level says a passenger station makes', () => {
+  it('is a most, where the Overview has what the people around it allow', () => {
+    const s = station('station', { productionPerWeek: 12, passengerPopulation: 30 });
+    const w = world({ age: 5 });
+    const v = stationExpansion(s, w);
+    expect(stationOverview(s, w).production[0].perWeek).toBe(12);
+    expect(v.compare[4]).toEqual({ label: P.atMostAWeek, now: '30', next: '50' });
+    expect(v.outputHead).toBe(P.atMostShort);
+  });
+  it('is what it makes for a harvester, whose ground and season the figure holds', () => {
+    const s = station('farm', { productionPerWeek: 15, terrainFactor: 0.5, productionMul: 1 });
+    const w = world({ age: 5 });
+    const v = stationExpansion(s, w);
+    expect(stationOverview(s, w).production[0].perWeek).toBe(v.levels[0].output);
+    expect(v.compare[4].label).toBe(P.makesAWeek);
+    expect(v.outputHead).toBe(P.makesShort);
+  });
+});
+
+describe('what a tab is drawn again for', () => {
+  const inbound = (progress: number) =>
+    train(3, [1, 2], { pathTotal: 100, pathProgress: progress, freeSpeed: 1 });
+  const here = station('station', { id: 1, platforms: 2 });
+  const rows = (progress: number) => stationTrains(here, world({ trains: [inbound(progress)] }));
+
+  it('is not a train coming closer', () => {
+    expect(rows(10)[0].where).not.toBe(rows(50)[0].where);
+    expect(callsShape(rows(10))).toEqual(callsShape(rows(50)));
+    const board = (p: number) => stationTimetable(here, world({ trains: [inbound(p)] }));
+    expect(board(10).board[0].when).not.toBe(board(50).board[0].when);
+    expect(boardShape(board(10))).toEqual(boardShape(board(50)));
+  });
+  it('is a train that comes, goes, or changes what it is doing', () => {
+    const none = stationTrains(here, world());
+    expect(callsShape(none)).not.toEqual(callsShape(rows(10)));
+    const stopped = train(3, [1, 2], { state: 'waiting', atStation: { id: 1 } });
+    const queued = stationTrains(here, world({ trains: [stopped] }));
+    expect(callsShape(queued)).not.toEqual(callsShape(rows(10)));
+  });
+  it("is the board's platforms when one fills", () => {
+    const empty = stationTimetable(here, world());
+    const used = stationTimetable({ ...here, occupants: new Set([9]) }, world());
+    expect(boardShape(empty)).not.toEqual(boardShape(used));
+  });
+  it('is not a work going on, or the stock behind a button that is off', () => {
+    const work = (progress: number, label: string): UpgradeView => ({
+      kind: 'work',
+      label,
+      progress,
+    });
+    expect(upgradeShape(work(0.1, '6 h left'))).toEqual(upgradeShape(work(0.7, '2 h left')));
+    const off = (title: string): UpgradeView => ({
+      kind: 'button',
+      label: 'Upgrade',
+      enabled: false,
+      title,
+    });
+    expect(upgradeShape(off('12 wood short'))).toEqual(upgradeShape(off('3 wood short')));
+  });
+  it('is the button coming on, the work starting and the top reached', () => {
+    const off: UpgradeView = { kind: 'button', label: 'Upgrade', enabled: false, title: 'x' };
+    const on: UpgradeView = { kind: 'button', label: 'Upgrade', enabled: true, title: '' };
+    const work: UpgradeView = { kind: 'work', label: 'x', progress: 0 };
+    const top: UpgradeView = { kind: 'top', label: 'Max level' };
+    const shapes = [off, on, work, top].map((v) => JSON.stringify(upgradeShape(v)));
+    expect(new Set(shapes).size).toBe(4);
+  });
+  it('is not a level table that says the same', () => {
+    const w = world({ age: 5 });
+    const a = stationExpansion(station('farm'), w);
+    const b = stationExpansion(station('farm'), w);
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 });

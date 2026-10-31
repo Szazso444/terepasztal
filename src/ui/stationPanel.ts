@@ -2,20 +2,21 @@ import { structureFrame } from '../art/frames';
 import type { AtlasRegistry } from '../engine/atlas';
 import { biomeAt } from '../sim/biomes';
 import type { Builder } from '../sim/build';
-import { buildingDef, buildingRate, buildingRecipe } from '../sim/buildings';
+import { BUILDING_DEFS, buildingRecipe } from '../sim/buildings';
 import { cargoName } from '../sim/cargo';
 import { STATION_NAME_MAX, type Commands } from '../sim/commands';
 import type { ContractBoard } from '../sim/contracts';
 import type { Fleet } from '../sim/fleet';
 import { rules } from '../sim/rules';
 import { harvestBreakdown, weeklyOutput, type Station } from '../sim/stations';
-import type { StoreRegistry } from '../sim/stores';
+import { StorePool, type StoreRegistry } from '../sim/stores';
 import type { GameClock } from '../sim/time';
 import type { Town, TownRegistry } from '../sim/towns';
 import type { Train } from '../sim/trains';
 import type { Season } from '../sim/weather';
 import { STR } from '../strings';
 import { buildIcon } from './buildIcons';
+import { BuildingPanel } from './buildingPanel';
 import { btn, el, fmtInt } from './dom';
 import type { Amount } from './outlinerRows';
 import { groundRows } from './placingTooltip';
@@ -23,13 +24,16 @@ import { renameField } from './renameField';
 import { spriteImg } from './spritePreview';
 import {
   STATION_TABS,
+  boardShape,
+  callsShape,
   fillTone,
+  reachSources,
   stationCargo,
   stationExpansion,
   stationOverview,
-  stationTabs,
   stationTimetable,
   stationTrains,
+  upgradeShape,
   type CallRow,
   type LevelRow,
   type ReachSource,
@@ -39,12 +43,13 @@ import {
   type StationTab,
   type StationTimetable,
   type StationWorld,
+  type WorksFacts,
 } from './stationView';
 import type { TipContent } from './tooltip';
 import { blockText, type TipDoc } from './tooltipDoc';
 import type { Chip } from './trainView';
 import { upgradeRow } from './upgradeRow';
-import { upgradeView } from './upgradeView';
+import { upgradeView, type UpgradeView } from './upgradeView';
 
 /** How the panel draws its ground rows, and the season their yield is worked out for (#336). */
 export interface GroundView {
@@ -76,11 +81,20 @@ export interface StationPanelHost {
   onTrain(t: Train): void;
 }
 
+/** What a row of the Trains tab writes over as its train runs. */
+interface CallParts {
+  goods: HTMLElement;
+  where: HTMLElement;
+  load: HTMLElement;
+  /** the goods the row shows */
+  said: string;
+}
+
 /**
  * Top left, in the train panel's frame, for the station picked on the map or in the outliner: only
- * one of the two is open. Its tabs are those of its kind (`stationTabs`), each drawn from
- * `stationView.ts` and drawn again only when what it says changed, so what is under the pointer
- * stays the same element.
+ * one of the two is open. Each tab is drawn from `stationView.ts` and drawn again only when what it
+ * is made of changed: what moves with the clock is written over the elements it has, so what is
+ * under the pointer stays the same element.
  */
 export class StationPanel {
   readonly root = el('div', { id: 'station-panel', class: 'panel' });
@@ -110,6 +124,11 @@ export class StationPanel {
   private tabKey = '';
   /** the tab the scroll area holds now */
   private shown: StationTab | null = null;
+  /** what the Trains tab and the board write over as trains run, by train */
+  private readonly calls = new Map<number, CallParts>();
+  private readonly whens = new Map<number, HTMLElement>();
+  /** the upgrade button or the work's bar on the Expansion tab */
+  private upgrade: HTMLElement | null = null;
   /** a button is down, so what is under it must stay what it came down on */
   private held = false;
   private renaming = false;
@@ -129,6 +148,8 @@ export class StationPanel {
   }
 
   open(s: Station) {
+    // picked again: it stays where it was read to
+    if (s === this.station) return this.render();
     this.station = s;
     this.resetKeys();
     this.root.style.display = '';
@@ -159,36 +180,47 @@ export class StationPanel {
   /** Look at the station, and draw what changed. */
   render() {
     const s = this.station;
-    if (!s || this.held || this.renaming) return;
-    const kinds = stationTabs(s.def);
-    // a kind without the tab the panel stood on opens on its Overview
-    if (!kinds.includes(this.tab)) this.tab = 'overview';
-    for (const [id, b] of this.tabs) {
-      b.style.display = kinds.includes(id) ? '' : 'none';
-      b.classList.toggle('on', id === this.tab);
-    }
+    if (!s) return;
+    // a station can go with no word to the panel: the editor's fill takes all of them
+    if (!this.h.builder.stations.includes(s)) return this.close();
+    if (this.held || this.renaming) return;
+    for (const [id, b] of this.tabs) b.classList.toggle('on', id === this.tab);
     this.drawHead(s);
     this.drawFoot(s);
-    if (this.tab === 'overview') this.drawOverview(s);
-    else if (this.tab === 'cargo') this.drawTab(s, stationCargo, (v) => this.drawCargo(v));
-    else if (this.tab === 'trains') this.drawTab(s, stationTrains, (v) => this.drawTrains(v));
-    else if (this.tab === 'timetable')
-      this.drawTab(s, stationTimetable, (v) => this.drawTimetable(v));
-    else this.drawExpansion(s);
+    const w = this.world(s);
+    if (this.tab === 'overview') this.drawOverview(s, w);
+    else if (this.tab === 'cargo') {
+      const v = stationCargo(s, w);
+      this.drawTab(s, v, () => this.drawCargo(v));
+    } else if (this.tab === 'trains') {
+      const v = stationTrains(s, w);
+      this.drawTab(
+        s,
+        callsShape(v),
+        () => this.drawTrains(v),
+        () => this.writeCalls(v),
+      );
+    } else if (this.tab === 'timetable') {
+      const v = stationTimetable(s, w);
+      this.drawTab(
+        s,
+        boardShape(v),
+        () => this.drawTimetable(v),
+        () => this.writeBoard(v),
+      );
+    } else this.showExpansion(s, w);
   }
 
-  /** A tab: what it says now, drawn when that differs from what it said. */
-  private drawTab<V>(
-    s: Station,
-    read: (s: Station, w: StationWorld) => V,
-    draw: (view: V) => void,
-  ) {
-    const view = read(s, this.world(s));
-    const key = JSON.stringify([s.id, this.tab, view]);
-    if (key === this.tabKey) return;
+  /**
+   * A tab: drawn when what it is made of (`shape`) differs from what it was drawn from; else
+   * `write` puts what changes with the clock on the elements it has.
+   */
+  private drawTab(s: Station, shape: unknown, draw: () => void, write?: () => void) {
+    const key = JSON.stringify([s.id, this.tab, shape]);
+    if (key === this.tabKey) return write?.();
     this.tabKey = key;
     this.shown = this.tab;
-    draw(view);
+    draw();
   }
 
   private world(s: Station): StationWorld {
@@ -198,8 +230,10 @@ export class StationPanel {
       free: h.builder.free,
       town: h.towns.townOfStation(s)?.name ?? null,
       hasTrack: h.builder.platformTiles(s).length > 0,
-      perWeek: this.perWeek(s),
+      famine: !!h.stores.supplierFor(s.x, s.y)?.famine,
       outletName: s.outlet ? h.stores.label(s.outlet) : null,
+      storeName: s.dock ? h.stores.label(s.dock) : null,
+      storeShared: s.dock instanceof StorePool && s.dock.members.length > 1,
       reach: this.tab === 'overview' ? this.reach(s) : [],
       now: h.clock.time,
       contracts: h.board.active,
@@ -213,44 +247,31 @@ export class StationPanel {
     };
   }
 
-  /** What it makes a week: a harvest station's breakdown figure, none while it is closed. */
-  private perWeek(s: Station): number {
-    const b = this.breakdown(s);
-    if (!b) return s.productionPerWeek;
-    return s.closed ? 0 : b.perWeek;
-  }
   /** Why a harvest station makes what it does, at its level and in this season. */
   private breakdown(s: Station) {
     if (!s.def.terrain) return null;
     const season = this.h.view.season();
     return harvestBreakdown(this.h.builder.map, s.x, s.y, s.def.id, s.level, season, rules);
   }
-  /** The harvesters and works at work, each with the store it goes to. */
+  /** The harvesters and works of the map, as `reachSources` reads them. */
   private reach(s: Station): ReachSource[] {
     const { builder, stores } = this.h;
-    const out: ReachSource[] = [];
-    for (const o of builder.stations) {
-      const goods = o.producedCargo();
-      if (o === s || o.closed || !o.outlet || !goods.length) continue;
-      const each = (o.productionPerWeek * o.productionMul) / goods.length;
-      out.push({
-        name: o.name,
-        tiles: s.distTo(o.x, o.y),
-        store: o.outlet.key,
-        makes: Object.fromEntries(goods.map((c) => [c, each])),
-      });
-    }
+    const works: WorksFacts[] = [];
     for (const b of builder.buildings.values()) {
-      if (b.work) continue;
-      const made = Object.entries(buildingRecipe(b).out);
-      out.push({
-        name: buildingDef(b.id).name,
-        tiles: s.distTo(b.x, b.y),
+      const def = BUILDING_DEFS.find((d) => d.id === b.id);
+      // a bridge carries trains and makes nothing; a kind the content lost has nothing to show
+      if (!def || def.bridge) continue;
+      works.push({
+        name: def.name,
+        x: b.x,
+        y: b.y,
         store: stores.supplierFor(b.x, b.y)?.key ?? null,
-        makes: Object.fromEntries(made.map(([c, v]) => [c, v * buildingRate(b)])),
+        out: buildingRecipe(b).out,
+        rate: b.rate,
+        status: BuildingPanel.statusKind(b, stores.worksStore(b)),
       });
     }
-    return out;
+    return reachSources(s, builder.stations, works, (x, y) => !!stores.supplierFor(x, y)?.famine);
   }
 
   // ---------------------------------------------------------------- frame
@@ -347,21 +368,21 @@ export class StationPanel {
 
   // ---------------------------------------------------------------- Overview
 
-  private drawOverview(s: Station) {
+  private drawOverview(s: Station, w: StationWorld) {
     if (this.shown !== 'overview') {
       this.scroll.replaceChildren(this.picture, this.upper, this.ground, this.lower);
       this.shown = 'overview';
     }
     this.drawPicture(s);
     this.drawGround(s);
-    const v = stationOverview(s, this.world(s));
+    const v = stationOverview(s, w);
     const key = JSON.stringify([s.id, s.def.flavor, v]);
     if (key === this.tabKey) return;
     this.tabKey = key;
     const P = STR.stationPanel;
     const facts = el('div', { class: 'sp-kv' });
     for (const f of v.facts) facts.append(this.fact(f));
-    if (v.week) facts.append(this.week(v.week));
+    if (v.weekOf) facts.append(this.week(v.weekOf, v.week));
     this.upper.replaceChildren(
       el('p', { class: 'bi-p sp-flavor dim', text: s.def.flavor }),
       ...v.notes.map((n) => el('div', { class: `tp-note ${n.cls}`, text: n.text })),
@@ -379,6 +400,7 @@ export class StationPanel {
             this.icon(p.res),
             p.name,
             p.tiles === null ? null : el('small', { text: P.tilesAway(p.tiles) }),
+            p.chip ? this.chip(p.chip) : null,
           ),
           el('b', { text: String(p.perWeek) }),
         ),
@@ -421,13 +443,13 @@ export class StationPanel {
       f.meter === undefined ? null : this.storageMeter(f),
     );
   }
-  private week(goods: Amount[]) {
+  private week(store: string, goods: Amount[]) {
     const P = STR.stationPanel;
     return el(
       'div',
       { class: 'wide' },
-      el('span', { text: P.handled }),
-      el('b', { class: 'sp-week' }, ...(goods.length ? this.goods(goods) : [P.nothingHandled])),
+      el('span', { text: store }),
+      el('b', { class: 'sp-week' }, ...(goods.length ? this.goods(goods) : [P.nothingMoved])),
     );
   }
   private waitingChip(g: Amount) {
@@ -465,7 +487,7 @@ export class StationPanel {
   private drawCargo(v: StationCargo) {
     const P = STR.stationPanel;
     const cls = `sp-cargo ${v.counted ? 'counted' : ''}`;
-    const out: HTMLElement[] = [this.section(P.cargoHere, v.counted ? P.thisWeek : '')];
+    const out: HTMLElement[] = [this.section(v.title, v.counted ? P.thisWeek : '')];
     if (v.rows.length)
       out.push(
         el(
@@ -534,12 +556,31 @@ export class StationPanel {
 
   private drawTrains(rows: CallRow[]) {
     const P = STR.stationPanel;
+    this.calls.clear();
     this.scroll.replaceChildren(
       this.section(P.calling, rows.length ? String(rows.length) : ''),
       ...(rows.length ? rows.map((r) => this.callRow(r)) : [this.note(P.noTrains)]),
     );
+    this.writeCalls(rows);
+  }
+  /** Where each train is and what it carries, on the rows that stand. */
+  private writeCalls(rows: CallRow[]) {
+    for (const r of rows) {
+      const p = this.calls.get(r.id);
+      if (!p) continue;
+      p.where.textContent = r.where;
+      p.load.style.width = `${r.load}%`;
+      const said = JSON.stringify(r.cargo);
+      if (said === p.said) continue;
+      p.said = said;
+      p.goods.replaceChildren(...(r.cargo.length ? this.goods(r.cargo) : [STR.outliner.empty]));
+    }
   }
   private callRow(r: CallRow) {
+    const goods = el('span', { class: 'sp-on' });
+    const where = el('span', { class: 'ol-route' });
+    const bar = this.meter(0);
+    this.calls.set(r.id, { goods, where, load: bar.firstElementChild as HTMLElement, said: '' });
     return this.picks(
       el(
         'div',
@@ -554,13 +595,7 @@ export class StationPanel {
             el('b', { class: 'ol-name', text: r.name }),
             this.chip(r.chip),
           ),
-          el(
-            'div',
-            { class: 'ol-l2' },
-            ...(r.cargo.length ? this.goods(r.cargo) : [el('span', { text: STR.outliner.empty })]),
-            el('span', { class: 'ol-route', text: r.where }),
-            this.meter(r.load),
-          ),
+          el('div', { class: 'ol-l2' }, goods, where, bar),
         ),
       ),
       r.id,
@@ -569,9 +604,9 @@ export class StationPanel {
 
   // ---------------------------------------------------------------- Expansion
 
-  private drawExpansion(s: Station) {
-    const { builder, commands } = this.h;
-    const v = stationExpansion(s, this.world(s));
+  private showExpansion(s: Station, w: StationWorld) {
+    const { builder } = this.h;
+    const v = stationExpansion(s, w);
     const upgrade = upgradeView({
       check: builder.canUpgrade(s),
       level: s.level,
@@ -579,10 +614,24 @@ export class StationPanel {
       // a depot's upgrade is instant (Builder.upgradeStation)
       instant: !!s.def.depot,
     });
-    const key = JSON.stringify([s.id, this.tab, builder.free, v, upgrade]);
-    if (key === this.tabKey) return;
-    this.tabKey = key;
-    this.shown = 'expansion';
+    this.drawTab(
+      s,
+      [builder.free, v, upgradeShape(upgrade)],
+      () => this.drawExpansion(s, v, upgrade),
+      () => this.writeUpgrade(upgrade),
+    );
+  }
+  /** How far the work is, or why the button is off, on the element that stands. */
+  private writeUpgrade(v: UpgradeView) {
+    const part = this.upgrade;
+    if (!part) return;
+    if (v.kind === 'button') part.title = v.title;
+    if (v.kind !== 'work') return;
+    part.querySelector<HTMLElement>('.bar-fill')!.style.width = `${Math.round(v.progress * 100)}%`;
+    part.querySelector('.bar-label')!.textContent = v.label;
+  }
+  private drawExpansion(s: Station, v: StationExpansion, upgrade: UpgradeView) {
+    const { builder, commands } = this.h;
     const P = STR.stationPanel;
     const raise = () => {
       if (commands.act(() => builder.upgradeStation(s))) this.render();
@@ -611,15 +660,15 @@ export class StationPanel {
           text: P.adds(v.next.unlocks.map(cargoName).join(', ')),
         }),
       );
+    this.upgrade = builder.free ? null : upgradeRow(upgrade, raise);
     out.push(
-      builder.free
-        ? el(
-            'div',
-            { class: 'sp-buy' },
-            btn(STR.editor.levelDown, lower, 'small'),
-            btn(STR.editor.levelUp, raise, 'small'),
-          )
-        : el('div', { class: 'sp-buy' }, upgradeRow(upgrade, raise)),
+      el(
+        'div',
+        { class: 'sp-buy' },
+        ...(this.upgrade
+          ? [this.upgrade]
+          : [btn(STR.editor.levelDown, lower, 'small'), btn(STR.editor.levelUp, raise, 'small')]),
+      ),
       this.section(P.levels),
       this.levelTable(v),
     );
@@ -650,7 +699,7 @@ export class StationPanel {
         el('b', { text: P.loadPerSec }),
         el('b', { text: STR.station.platforms }),
         el('b', { text: P.crew }),
-        made ? el('b', { text: P.makesShort }) : null,
+        made ? el('b', { text: v.outputHead }) : null,
       ),
       ...v.levels.map((l) => this.levelRow(l, cls, made)),
     );
@@ -689,14 +738,17 @@ export class StationPanel {
     const P = STR.stationPanel;
     const out: HTMLElement[] = [this.section(P.arrivals)];
     if (!v.board.length) out.push(this.note(P.noArrivals));
-    for (const r of v.board)
+    this.whens.clear();
+    for (const r of v.board) {
+      const when = el('b', { text: r.when });
+      this.whens.set(r.id, when);
       out.push(
         this.picks(
           el(
             'div',
             { class: 'ol-row sp-board' },
             this.stripe(r.hex),
-            el('b', { text: r.when }),
+            when,
             el(
               'span',
               { class: 'ol-main' },
@@ -708,6 +760,7 @@ export class StationPanel {
           r.id,
         ),
       );
+    }
     out.push(
       this.section(P.platformUse),
       el(
@@ -728,5 +781,12 @@ export class StationPanel {
         ),
       );
     this.scroll.replaceChildren(...out);
+  }
+  /** When each train comes, on the rows that stand. */
+  private writeBoard(v: StationTimetable) {
+    for (const r of v.board) {
+      const when = this.whens.get(r.id);
+      if (when) when.textContent = r.when;
+    }
   }
 }

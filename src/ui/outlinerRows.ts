@@ -348,7 +348,7 @@ export interface WorksRow {
   chip: Chip | null;
 }
 
-function worksChip(s: WorksStatus): Chip | null {
+export function worksChip(s: WorksStatus): Chip | null {
   switch (s.kind) {
     case 'running':
       return null;

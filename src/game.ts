@@ -1823,7 +1823,15 @@ export class Game implements UiHost {
   async renameTown(t: Town, fresh = false) {
     const n = await this.namePrompt.ask(STR.town.namePrompt, STR.town.nameHint, t.name);
     if (n && n !== t.name) {
-      this.towns.rename(t, n);
+      // a town just founded is named as part of placing it: that step takes the name back
+      if (fresh) this.towns.rename(t, n);
+      else {
+        const did = this.commands.renameTown(t, n);
+        if (!did.ok) {
+          this.toasts.push(did.message, 'warn');
+          return;
+        }
+      }
       this.townPanel.render(true);
       if (!fresh) this.toasts.push(STR.town.renamed(n), 'info');
     }

@@ -9,12 +9,14 @@ import { cargoDef, cargoName } from '../sim/cargo';
 import { MAX_LEVEL, ageOfLevel, levelCap } from '../sim/levels';
 import { rules } from '../sim/rules';
 import { LEVELS, weeklyOutput } from '../sim/stations';
+import { FAMINE_PRODUCTION_MUL } from '../sim/step';
 import { RESOURCE_IDS, scaleCost, type ResourceStore } from '../sim/stores';
 import { inSupplyMode } from '../sim/supply';
 import { TRAIN_COLOURS } from '../sim/trainColours';
 import { STR } from '../strings';
 import { fmtDuration, fmtInt } from './numberFormat';
-import type { Amount } from './outlinerRows';
+import { worksChip, type Amount } from './outlinerRows';
+import type { WorksStatus } from './tooltipContent';
 import {
   arrivalOf,
   cargoOf,
@@ -24,10 +26,10 @@ import {
   type Chip,
   type TrainFacts,
 } from './trainView';
-import { upgradeHours } from './upgradeView';
+import { upgradeHours, type UpgradeView } from './upgradeView';
 
 export type StationTab = 'overview' | 'cargo' | 'trains' | 'expansion' | 'timetable';
-/** Every tab, in the order the panel has them. */
+/** The tabs, in the order the panel has them: every kind keeps goods, takes trains and has levels. */
 export const STATION_TABS: readonly StationTab[] = [
   'overview',
   'cargo',
@@ -35,15 +37,6 @@ export const STATION_TABS: readonly StationTab[] = [
   'expansion',
   'timetable',
 ];
-
-/**
- * The tabs of a kind of station. Every kind keeps goods, takes trains and has levels. A depot has
- * no Timetable: it is a shed trains are built in and come to for fuel, with tracks through it that
- * no level widens, not a stop that keeps a board.
- */
-export function stationTabs(def: Pick<StationDef, 'depot'>): readonly StationTab[] {
-  return def.depot ? STATION_TABS.filter((t) => t !== 'timetable') : STATION_TABS;
-}
 
 /** The fields of a station this file reads. */
 export interface StationFacts {
@@ -58,16 +51,43 @@ export interface StationFacts {
   firstAge: number;
   terrainFactor: number;
   productionMul: number;
+  productionPerWeek: number;
   passengerPopulation: number;
   occupants: ReadonlySet<number>;
   def: Pick<StationDef, 'id' | 'cost' | 'produces' | 'accepts' | 'depot' | 'stockpile'>;
   /** its goods are this store's */
   dock: Pick<ResourceStore, 'key' | 'weeklyFlow'> | null;
+  /** its workers carry its output to this store */
+  outlet: Pick<ResourceStore, 'key' | 'get' | 'cap'> | null;
+  distTo(x: number, y: number): number;
   availableCargo(): string[];
   producedCargo(): string[];
   stored(cargo: string): number;
   shownStored(): number;
   fill(): number;
+}
+
+/** What says whether a station makes goods now, and how many. */
+type Maker = Pick<
+  StationFacts,
+  'closed' | 'productionMul' | 'productionPerWeek' | 'outlet' | 'producedCargo' | 'fill'
+>;
+/** A station that may make goods for a store. */
+export type MakerFacts = Maker & { id: number; name: string; x: number; y: number };
+
+/** A works, as what it runs from and what it is doing. */
+export interface WorksFacts {
+  name: string;
+  x: number;
+  y: number;
+  /** the key of the store it works from; null with none */
+  store: string | null;
+  /** what a batch makes (`buildingRecipe`) */
+  out: Record<string, number>;
+  /** batches a week, the sim's running estimate (`Building.rate`) */
+  rate: number;
+  /** what it is doing (`BuildingPanel.statusKind`) */
+  status: WorksStatus;
 }
 
 /** A stop of a train, as far as it says whether the train calls here. */
@@ -114,8 +134,10 @@ export interface ReachSource {
   tiles: number;
   /** the key of the store it works from or carries to; null with none */
   store: string | null;
-  /** units a week, by good */
+  /** units a week it makes now, by good; power goes to the grid and is not here */
   makes: Record<string, number>;
+  /** what holds it back; null while it runs */
+  chip: Chip | null;
 }
 
 /** What the tabs read of the world around a station. */
@@ -127,10 +149,14 @@ export interface StationWorld {
   town: string | null;
   /** whether track runs past it (`Builder.platformTiles`) */
   hasTrack: boolean;
-  /** what it makes a week: a harvester's breakdown figure, or `productionPerWeek` */
-  perWeek: number;
+  /** the crews at the store that supplies it are starving, which halves what it makes */
+  famine: boolean;
   /** the place its workers carry to (`StoreRegistry.label`); null with no outlet */
   outletName: string | null;
+  /** the name of its store's owner (`StoreRegistry.label`); null with no store */
+  storeName: string | null;
+  /** its store is one of several on a rail network, whose ledger is one (Simple mode) */
+  storeShared: boolean;
   /** everything that works from a store, this station's own or not */
   reach: readonly ReachSource[];
   now: number;
@@ -178,6 +204,18 @@ function weekFlows(s: StationFacts): Map<string, WeekFlow> | null {
   return out;
 }
 
+/**
+ * Whose ledger `weeklyFlow` reads: all that enters and leaves the store, by trains or not. In a
+ * town that is the town's store, shared by its Townhouse and its warehouses; on a rail network in
+ * Simple mode, every store of the network. Null for a station with no store.
+ */
+function storeTitle(s: StationFacts, w: StationWorld): string | null {
+  const P = STR.stationPanel;
+  if (!s.dock) return null;
+  if (w.storeShared) return P.networkStore;
+  return s.dock.key.startsWith('town:') ? P.townStore(w.storeName ?? '') : P.ownStore;
+}
+
 /** The goods it has on hand, as a person counts them. */
 function waitingGoods(s: StationFacts): Amount[] {
   return s
@@ -208,14 +246,19 @@ export interface ProductionRow {
   name: string;
   /** tiles away; null for the station's own */
   tiles: number | null;
+  /** what it makes now */
   perWeek: number;
+  /** what holds it back; null while it runs */
+  chip: Chip | null;
 }
 
 export interface StationOverview {
   notes: StationNote[];
   facts: StationFact[];
-  /** what its store handled in a week, the most first; null when the simulation counts none */
-  week: Amount[] | null;
+  /** whose ledger the week's line reads; null when the simulation counts none */
+  weekOf: string | null;
+  /** what that store moved in a week, the most first */
+  week: Amount[];
   production: ProductionRow[];
   /** the people a passenger station draws from; null for any other kind */
   residents: number | null;
@@ -238,23 +281,94 @@ function storageFact(s: StationFacts): StationFact {
 }
 
 /**
+ * What a station makes a week now, as `Station.tick` works it out: nothing while it is closed, half
+ * while the crews at its store starve.
+ */
+export function stationPerWeek(
+  s: Pick<StationFacts, 'productionPerWeek' | 'productionMul'>,
+  famine: boolean,
+): number {
+  return s.productionPerWeek * s.productionMul * (famine ? FAMINE_PRODUCTION_MUL : 1);
+}
+
+/** Its goods have nowhere to go: its own storage, or every good of its own at the store's cap. */
+function outputFull(s: Maker): boolean {
+  const outlet = s.outlet;
+  if (!outlet) return s.fill() >= 1;
+  const made = s.producedCargo();
+  return made.length > 0 && made.every((c) => outlet.get(c) >= outlet.cap(c));
+}
+
+/** What holds a station's output back. */
+function makerChip(s: Maker): Chip | null {
+  if (s.closed) return worksChip({ kind: 'closed' });
+  return outputFull(s) ? worksChip({ kind: 'full' }) : null;
+}
+
+/** What it makes now, shared out between its goods as a tick shares it. */
+function makerRate(s: Maker, famine: boolean, chip: Chip | null): number {
+  return chip ? 0 : stationPerWeek(s, famine) / Math.max(1, s.producedCargo().length);
+}
+
+/**
+ * Every harvester that carries to a store and every works that makes goods, as it does now: a
+ * works by the sim's own estimate of its batches, so a starved one reads what it really makes, with
+ * what holds it back. Power goes to the grid and no store receives it, so it is left out, and a
+ * works that makes nothing else with it. `s` is the station they are told from, and not one of them.
+ */
+export function reachSources(
+  s: Pick<StationFacts, 'id' | 'distTo'>,
+  stations: readonly MakerFacts[],
+  works: readonly WorksFacts[],
+  famine: (x: number, y: number) => boolean,
+): ReachSource[] {
+  const out: ReachSource[] = [];
+  for (const o of stations) {
+    const goods = o.producedCargo();
+    if (o.id === s.id || !o.outlet || !goods.length) continue;
+    const chip = makerChip(o);
+    const each = makerRate(o, famine(o.x, o.y), chip);
+    out.push({
+      name: o.name,
+      tiles: s.distTo(o.x, o.y),
+      store: o.outlet.key,
+      makes: Object.fromEntries(goods.map((c) => [c, each])),
+      chip,
+    });
+  }
+  for (const b of works) {
+    const goods = Object.entries(b.out).filter(([res]) => res !== 'power');
+    if (!goods.length) continue;
+    out.push({
+      name: b.name,
+      tiles: s.distTo(b.x, b.y),
+      store: b.store,
+      makes: Object.fromEntries(goods.map(([res, n]) => [res, n * b.rate])),
+      chip: worksChip(b.status),
+    });
+  }
+  return out;
+}
+
+/**
  * What it makes itself, a line per good as `Station.tick` shares it out, then what works from its
  * store: the nearest first. A place with no store of its own has nothing else in reach.
  */
 function productionRows(s: StationFacts, w: StationWorld): ProductionRow[] {
-  const own = s.producedCargo();
-  const out: ProductionRow[] = own.map((res) => ({
+  const chip = makerChip(s);
+  const out: ProductionRow[] = s.producedCargo().map((res) => ({
     res,
     name: cargoName(res),
     tiles: null,
-    perWeek: oneDecimal(w.perWeek / own.length),
+    perWeek: oneDecimal(makerRate(s, w.famine, chip)),
+    chip,
   }));
   const key = s.dock?.key;
   if (key === undefined) return out;
   const from = w.reach.filter((r) => r.store === key).sort((a, b) => a.tiles - b.tiles);
   for (const r of from)
     for (const [res, n] of Object.entries(r.makes))
-      if (n > 0) out.push({ res, name: r.name, tiles: r.tiles, perWeek: oneDecimal(n) });
+      out.push({ res, name: r.name, tiles: r.tiles, perWeek: oneDecimal(n), chip: r.chip });
   return out;
 }
 
@@ -275,15 +389,15 @@ export function stationOverview(s: StationFacts, w: StationWorld): StationOvervi
   ];
   if (w.town) facts.push({ label: STR.station.town, value: w.town, wide: true });
   const flows = weekFlows(s);
+  const store = storeTitle(s, w);
   return {
     notes,
     facts,
-    week:
-      flows &&
-      [...flows]
-        .map(([res, f]) => ({ res, amount: f.in + f.out }))
-        .sort((a, b) => b.amount - a.amount)
-        .slice(0, WEEK_GOODS),
+    weekOf: store && STR.stationPanel.storeWeek(store),
+    week: [...(flows ?? [])]
+      .map(([res, f]) => ({ res, amount: f.in + f.out }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, WEEK_GOODS),
     production: productionRows(s, w),
     residents: s.def.id === 'station' ? s.passengerPopulation : null,
     waiting: waitingGoods(s),
@@ -312,6 +426,8 @@ export interface ContractLine {
 }
 
 export interface StationCargo {
+  /** whose goods and figures the rows are: its store's, or the station's own */
+  title: string;
   rows: CargoRow[];
   /** the rows have a week's flows */
   counted: boolean;
@@ -347,6 +463,7 @@ export function stationCargo(s: StationFacts, w: StationWorld): StationCargo {
   const goods = s.availableCargo();
   if (flows) for (const res of flows.keys()) if (!goods.includes(res)) goods.push(res);
   return {
+    title: storeTitle(s, w) ?? STR.stationPanel.cargoHere,
     rows: goods.map((res) => {
       const waiting = Math.floor(s.stored(res));
       return {
@@ -435,6 +552,14 @@ export function stationTrains(s: StationFacts, w: StationWorld): CallRow[] {
   );
 }
 
+/**
+ * What the rows are drawn from. Where a train is and what it carries change as it runs: the panel
+ * writes those over the rows it has, so a row under the pointer stays the same element.
+ */
+export function callsShape(rows: readonly CallRow[]): unknown {
+  return rows.map((r) => [r.id, r.name, r.hex, r.chip]);
+}
+
 // ---------------------------------------------------------------- Expansion
 
 /** Where a level stands: reached, the one the station has, the next one up, or further. */
@@ -475,6 +600,8 @@ export interface StationExpansion {
   /** the next level, null at the top */
   next: LevelRow | null;
   compare: LevelCompare[];
+  /** how the level table heads its output column */
+  outputHead: string;
 }
 
 /**
@@ -521,7 +648,13 @@ function levelRow(s: StationFacts, w: StationWorld, level: number, cap: number):
   };
 }
 
-function compareRows(now: LevelRow, next: LevelRow): LevelCompare[] {
+/**
+ * The people around a passenger station can hold it below what a level allows (`productionPerWeek`),
+ * so its figure is a most, where the Overview has what it makes now.
+ */
+const atMost = (s: StationFacts) => s.def.id === 'station';
+
+function compareRows(s: StationFacts, now: LevelRow, next: LevelRow): LevelCompare[] {
   const line = (
     label: string,
     a: number,
@@ -534,8 +667,9 @@ function compareRows(now: LevelRow, next: LevelRow): LevelCompare[] {
     line(STR.station.platforms, now.platforms, next.platforms),
     line(STR.stationPanel.crew, now.crew, next.crew),
   ];
+  const P = STR.stationPanel;
   if (next.output !== null)
-    out.push(line(STR.stationPanel.makesAWeek, now.output ?? 0, next.output, String));
+    out.push(line(atMost(s) ? P.atMostAWeek : P.makesAWeek, now.output ?? 0, next.output, String));
   return out;
 }
 
@@ -551,7 +685,21 @@ export function stationExpansion(s: StationFacts, w: StationWorld): StationExpan
   for (let level = 1; level <= top; level++) levels.push(levelRow(s, w, level, cap));
   const now = levels[s.level - 1];
   const next = levels[s.level] ?? null;
-  return { levels, next, compare: next ? compareRows(now, next) : [] };
+  const P = STR.stationPanel;
+  return {
+    levels,
+    next,
+    compare: next ? compareRows(s, now, next) : [],
+    outputHead: atMost(s) ? P.atMostShort : P.makesShort,
+  };
+}
+
+/**
+ * What the upgrade part is drawn from. The work's progress and the reason on a button that is off
+ * change with the clock and the stock: the panel writes those over what it has.
+ */
+export function upgradeShape(v: UpgradeView): unknown {
+  return v.kind === 'button' ? [v.kind, v.label, v.enabled] : v.kind;
 }
 
 // ---------------------------------------------------------------- Timetable
@@ -577,19 +725,33 @@ export interface StationTimetable {
   queued: number;
 }
 
-/** The stop a train makes for after this one; a one-stop program chooses when it leaves. */
+/**
+ * The stop a train makes for after this one, a stop it runs through not being one; null when that
+ * is this station again, as a one-stop program chooses when it leaves.
+ */
 function onwardId(t: CallFacts, stationId: number): number | null {
-  const n = t.route.length;
+  const stops = t.schedule;
+  const n = stops.length;
   if (n === 0) return null;
-  const scheduled = t.route[t.routeIndex % n];
-  if (t.detour === stationId) return scheduled;
-  return n > 1 && scheduled === stationId ? t.route[(t.routeIndex + 1) % n] : null;
+  const at = t.routeIndex % n;
+  const service = t.detour === stationId;
+  if (!service && stops[at].stationId !== stationId) return null;
+  for (let i = service ? 0 : 1; i <= n; i++) {
+    const stop = stops[(at + i) % n];
+    if (!stop.pass) return stop.stationId === stationId ? null : stop.stationId;
+  }
+  return null;
 }
 
 function boardTime(row: CallRow): string {
   if (row.state === 'platform') return STR.stationPanel.now;
   if (row.state === 'queued') return STR.stationPanel.inQueue;
   return row.eta === null ? '-' : STR.stationPanel.inAbout(fmtDuration(row.eta));
+}
+
+/** What the board is drawn from: when each train comes is written over the rows it has. */
+export function boardShape(v: StationTimetable): unknown {
+  return [v.board.map((r) => [r.id, r.name, r.hex, r.to, r.chip]), v.used, v.platforms, v.queued];
 }
 
 export function stationTimetable(s: StationFacts, w: StationWorld): StationTimetable {

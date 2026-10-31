@@ -905,8 +905,12 @@ export const STR = {
     /** a store's cap is per good: what the fullest good holds of it */
     storedAGood: (stored: string, cap: string) => `${stored} / ${cap} a good`,
     crew: 'Crew',
-    handled: 'Handled this week',
-    nothingHandled: 'Nothing yet',
+    /** whose week's ledger it is: a store's, never one station's */
+    storeWeek: (store: string) => `${store}, this week`,
+    townStore: (town: string) => `${town} town store`,
+    ownStore: 'This store',
+    networkStore: 'Rail network store',
+    nothingMoved: 'Nothing yet',
     production: 'Production in reach',
     perWeek: 'per week',
     tilesAway: (n: number) => `${n} ${n === 1 ? 'tile' : 'tiles'}`,
@@ -936,6 +940,9 @@ export const STR = {
     loadPerSec: 'Loading / s',
     makesAWeek: 'Makes a week',
     makesShort: 'Makes / wk',
+    /** a passenger station's: the people around it can hold it lower */
+    atMostAWeek: 'At most a week',
+    atMostShort: 'At most / wk',
     adds: (goods: string) => `Adds ${goods}`,
     arrivals: 'Arrivals',
     noArrivals: 'No train is on its way here.',
@@ -1881,6 +1888,8 @@ export const STR = {
   },
   town: {
     title: 'Towns',
+    gone: 'That town is gone',
+    nameEmpty: 'A town needs a name',
     none: 'No towns yet. Place a Townhouse, then a House and a warehouse within 7 tiles of it.',
     people: 'people',
     summary: (st: number, works: number, houses: number) =>
