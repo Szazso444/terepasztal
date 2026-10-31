@@ -72,6 +72,8 @@ function fakeHost(context: KeyContext, over: Partial<State> = {}) {
     cancelRecording: log('cancelRecording'),
     dropOverviewTrain: log('dropOverviewTrain'),
     leaveOverview: log('leaveOverview'),
+    undo: log('undo'),
+    redo: log('redo'),
   };
   return { host, calls };
 }
@@ -100,6 +102,13 @@ const STEP_KEYS: [string, 1 | -1][] = [
   ['Char-', -1],
 ];
 const stepDir = (b: KeyBinding) => STEP_KEYS.find(([code]) => code === b.code)![1];
+
+const historyCases = (way: 'undo' | 'redo'): Case[] => [
+  { calls: [way] },
+  // nothing is recorded in the level editor, and a screen stands in front of the world
+  { state: { mode: 'editor' }, calls: [] },
+  { state: { screenOpen: true }, calls: [] },
+];
 
 /** Every action, what it calls and what keeps it quiet. A new action without cases fails to compile. */
 const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
@@ -168,6 +177,8 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
     { calls: [] },
     { state: { recording: true, overviewSettled: false }, calls: [] },
   ],
+  undo: () => historyCases('undo'),
+  redo: () => historyCases('redo'),
 };
 
 const shiftsOf = (b: KeyBinding) => (b.shift === undefined ? SHIFT : [b.shift]);
@@ -473,5 +484,83 @@ describe('+ and − as the browser types them', () => {
     expect(input.wasPressed('Char+')).toBe(false);
     fire('keyup', 'Digit3', '+', true);
     expect(input.isDown('Digit3')).toBe(false);
+  });
+});
+
+describe('undo and redo as the browser types them', () => {
+  /** A real `Input` on stand-ins for the window, the document and the canvas. */
+  function browserInput() {
+    const handlers = new Map<string, ((e: unknown) => void)[]>();
+    vi.stubGlobal('window', {
+      addEventListener: (type: string, fn: (e: unknown) => void) =>
+        handlers.set(type, [...(handlers.get(type) ?? []), fn]),
+    });
+    vi.stubGlobal('document', { addEventListener: () => {} });
+    const input = new Input({ addEventListener: () => {} } as unknown as HTMLElement);
+    return { input, handlers };
+  }
+  afterEach(() => vi.unstubAllGlobals());
+
+  interface Press {
+    code: string;
+    key: string;
+    ctrlKey?: boolean;
+    metaKey?: boolean;
+    shiftKey?: boolean;
+    altKey?: boolean;
+    /** the element with the focus */
+    target?: { tagName: string } | null;
+  }
+  /** What one key down calls in `context`, and whether the browser's own action was stopped. */
+  function press(e: Press, context: KeyContext = 'play', state = {}) {
+    const { input, handlers } = browserInput();
+    let stopped = false;
+    for (const fn of handlers.get('keydown') ?? [])
+      fn({ shiftKey: false, target: null, preventDefault: () => (stopped = true), ...e });
+    const { host, calls } = fakeHost(context, state);
+    handlePlayKeys(input, host);
+    return { calls, stopped };
+  }
+
+  // [layout, code, key, Shift held, what it does]
+  const KEYS: [string, string, string, boolean, 'undo' | 'redo'][] = [
+    ['US Ctrl+Z', 'KeyZ', 'z', false, 'undo'],
+    ['US Ctrl+Y', 'KeyY', 'y', false, 'redo'],
+    ['US Ctrl+Shift+Z', 'KeyZ', 'Z', true, 'redo'],
+    ['Hungarian Ctrl+Z, on the key that is Y elsewhere', 'KeyY', 'z', false, 'undo'],
+    ['Hungarian Ctrl+Y, on the key that is Z elsewhere', 'KeyZ', 'y', false, 'redo'],
+    ['Hungarian Ctrl+Shift+Z', 'KeyY', 'Z', true, 'redo'],
+    ['Caps Lock on', 'KeyZ', 'Z', false, 'undo'],
+  ];
+  it.each(KEYS)('%s (%s typing %s), in both views, Ctrl or Cmd', (_, code, key, shiftKey, call) => {
+    for (const context of ['play', 'overview'] as const)
+      for (const mod of [{ ctrlKey: true }, { metaKey: true }])
+        expect(press({ code, key, shiftKey, ...mod }, context)).toEqual({
+          calls: [call],
+          stopped: true,
+        });
+  });
+
+  it('stops the browser only for its own undo and redo', () => {
+    expect(press({ code: 'KeyZ', key: 'z' })).toEqual({ calls: [], stopped: false });
+    expect(press({ code: 'KeyS', key: 's', ctrlKey: true }).stopped).toBe(false);
+    expect(press({ code: 'KeyY', key: 'y', ctrlKey: true, shiftKey: true }).stopped).toBe(false);
+  });
+
+  it('is no undo with AltGr, which reports Ctrl and Alt and types', () => {
+    const z = { code: 'KeyZ', key: 'z', ctrlKey: true, altKey: true };
+    expect(press(z)).toEqual({ calls: [], stopped: false });
+  });
+
+  it('stays off while a text input has the focus, where the browser undoes the typing', () => {
+    for (const tagName of ['INPUT', 'TEXTAREA'])
+      expect(press({ code: 'KeyZ', key: 'z', ctrlKey: true, target: { tagName } })).toEqual({
+        calls: [],
+        stopped: false,
+      });
+  });
+
+  it('does nothing over a menu', () => {
+    expect(press({ code: 'KeyZ', key: 'z', ctrlKey: true }, 'menu').calls).toEqual([]);
   });
 });

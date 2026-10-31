@@ -64,6 +64,9 @@ export interface KeyHost {
   dropOverviewTrain(): void;
   /** back to the field view where the camera stands */
   leaveOverview(): void;
+  /** take back the player's last building action, or do it again */
+  undo(): void;
+  redo(): void;
 }
 
 /** The input the keymap reads: a key pressed this frame, a key held. */
@@ -88,12 +91,14 @@ export type KeyAction =
   | 'speed'
   | 'speedStep'
   | 'record'
-  | 'finishRoute';
+  | 'finishRoute'
+  | 'undo'
+  | 'redo';
 
 export interface KeyBinding {
   /**
-   * `KeyboardEvent.code`, or `Char+` / `Char-` for the keys bound by the character they type
-   * (`Input`)
+   * `KeyboardEvent.code`, or for the keys bound by the character they type `Char+`, `Char-`,
+   * `Ctrl+Z`, `Ctrl+Y` and `Ctrl+Shift+Z` (`Input`)
    */
   readonly code: string;
   /** true: only with Shift held; false: only without; absent: either */
@@ -217,6 +222,14 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
     if (h.overviewSettled && h.recording) h.finishRecording();
     return false;
   },
+  undo: (h) => {
+    if (h.mode === 'play' && !h.screenOpen) h.undo();
+    return false;
+  },
+  redo: (h) => {
+    if (h.mode === 'play' && !h.screenOpen) h.redo();
+    return false;
+  },
 };
 
 /** The letter keys open their screens in a game, not in the level editor. */
@@ -233,6 +246,11 @@ const SCREEN_KEYS: [string, KeyScreen][] = [
   ['KeyK', 'market'],
 ];
 const digits = (n: number) => Array.from({ length: n }, (_, i) => `Digit${i + 1}`);
+const UNDO_KEYS: [string, 'undo' | 'redo'][] = [
+  ['Ctrl+Z', 'undo'],
+  ['Ctrl+Y', 'redo'],
+  ['Ctrl+Shift+Z', 'redo'],
+];
 
 /** Every hotkey, in the order a frame runs them. */
 export const KEYMAP: readonly KeyBinding[] = [
@@ -256,6 +274,7 @@ export const KEYMAP: readonly KeyBinding[] = [
     context: 'play' as const,
     action: 'speedStep' as const,
   })),
+  ...UNDO_KEYS.map(([code, action]) => ({ code, context: 'play' as const, action })),
 
   { code: 'Backquote', context: 'overview', action: 'debug' },
   ...SCREEN_KEYS.map(([code, action]) => ({ code, context: 'overview' as const, action })),
@@ -268,6 +287,7 @@ export const KEYMAP: readonly KeyBinding[] = [
     context: 'overview' as const,
     action: 'speedStep' as const,
   })),
+  ...UNDO_KEYS.map(([code, action]) => ({ code, context: 'overview' as const, action })),
   { code: 'KeyR', context: 'overview', action: 'record' },
   { code: 'Enter', context: 'overview', action: 'finishRoute' },
 ];
