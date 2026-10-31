@@ -1,4 +1,4 @@
-import type { Strings } from './strings';
+import type { Strings } from '../strings';
 
 /**
  * The game in Hungarian: the table of `strings.ts`, key for key (`Strings` holds the two together).

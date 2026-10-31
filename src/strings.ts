@@ -1,4 +1,4 @@
-import { HU } from './strings.hu';
+import { HU } from './ui/strings.hu';
 
 /** The languages of the game. English is the default; the setting lives with the settings. */
 export const LANGUAGES = ['en', 'hu'] as const;
@@ -44,7 +44,7 @@ function ageLabel(t: number) {
 }
 
 /**
- * All user-facing strings, in English. `strings.hu.ts` mirrors this table: the same keys and the
+ * All user-facing strings, in English. `ui/strings.hu.ts` mirrors this table: the same keys and the
  * same functions (`Strings`). Read them through `STR`, in the language of the page load.
  */
 const EN = {

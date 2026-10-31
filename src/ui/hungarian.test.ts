@@ -6,7 +6,7 @@ import { HU_MIGRATIONS, HU_NAMES, HU_RULES, HU_RULE_GROUPS } from '../data/names
 import { MIGRATIONS, SETTINGS_KEY, readSettings } from '../sim/save';
 import { RULE_META } from '../sim/rules';
 import { ENGLISH, languageOf, type Strings } from '../strings';
-import { HU } from '../strings.hu';
+import { HU } from './strings.hu';
 
 /** A table walked to its leaves, each under the path of keys that leads to it. */
 function leaves(node: unknown, path = '', out = new Map<string, unknown>()) {
