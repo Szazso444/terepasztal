@@ -517,6 +517,7 @@ export class Game implements UiHost {
 
   /** Starting economy for a brand-new game, from the rules (or a level's start block). */
   startFresh(start?: LevelData['start']) {
+    this.commands.history.clear();
     // a new game begins at noon in the player's current season
     setSeasonOffset(seasonFromDate());
     this.clock.time = daySeconds() * 0.5;
@@ -1111,7 +1112,10 @@ export class Game implements UiHost {
       trade: this.trade,
       gacha: this.gacha,
       inventory: this.inventory,
+      towns: this.towns,
+      houses: this.houses,
     });
+    this.build.act = (fn, stroke) => this.commands.act(fn, stroke);
     // every panel, screen and menu, wired to this game; it also sets the build controller's
     // selection and status callbacks
     this.ui = createPlayUi(this, {
@@ -1267,6 +1271,7 @@ export class Game implements UiHost {
   }
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
+    this.commands.history.clear();
     // content the game no longer defines goes first, before anything looks it up
     const pruned = pruneUnknownContent(j);
     // nothing the game held before the load stays in its stores

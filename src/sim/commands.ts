@@ -5,11 +5,15 @@ import { inSupplyMode } from './supply';
 import { locoDef, type Item } from '../gacha/items';
 import { PULL_COST, type Banner, type Gacha, type PullResult } from '../gacha/gacha';
 import type { Inventory } from '../gacha/inventory';
+import { BuildLog } from './buildLog';
+import { History } from './history';
 import type { Fleet } from './fleet';
 import type { Builder, Decor } from './build';
 import type { Economy } from './economy';
 import type { ResourceStore } from './stores';
 import type { TradeDesk } from './trade';
+import type { TownRegistry } from './towns';
+import type { HouseRegistry } from './houses';
 import type { Station } from './stations';
 import type { Train, RouteMode, StopPlan } from './trains';
 
@@ -27,6 +31,8 @@ export interface CommandDeps {
   trade: TradeDesk;
   gacha: Gacha;
   inventory: Inventory;
+  towns: TownRegistry;
+  houses: HouseRegistry;
 }
 
 /** Longest station name, in characters. */
@@ -47,6 +53,10 @@ export class Commands {
   private readonly trade: TradeDesk;
   private readonly gacha: Gacha;
   private readonly inventory: Inventory;
+  private readonly towns: TownRegistry;
+  private readonly houses: HouseRegistry;
+  /** what the player can take back; belongs to this session and is never saved */
+  readonly history = new History();
 
   constructor(deps: CommandDeps) {
     this.fleet = deps.fleet;
@@ -55,6 +65,34 @@ export class Commands {
     this.trade = deps.trade;
     this.gacha = deps.gacha;
     this.inventory = deps.inventory;
+    this.towns = deps.towns;
+    this.houses = deps.houses;
+  }
+
+  // ------------------------------------------------------------ undo
+  /**
+   * One player action: all `fn` does through the builder is recorded (`BuildLog`) and, when it did
+   * anything, becomes one step of the history, named after what was done. An action already open
+   * takes it in. The level editor records nothing. An action that runs over many frames (an Upgrade
+   * drag) calls this frame by frame with one `stroke` number, and its parts make one step.
+   */
+  act<T>(fn: () => T, stroke?: number): T {
+    const b = this.builder;
+    if (b.free || b.log) return fn();
+    const log = new BuildLog({
+      builder: b,
+      fleet: this.fleet,
+      towns: this.towns,
+      houses: this.houses,
+    });
+    b.log = log;
+    try {
+      return fn();
+    } finally {
+      b.log = null;
+      const step = log.close(stroke);
+      if (step) this.history.push(step);
+    }
   }
 
   // ------------------------------------------------------------ trains
@@ -84,7 +122,10 @@ export class Commands {
     if (!this.builder.stations.includes(s)) return refuse(STR.fleet.missingStation);
     const n = name.trim().slice(0, STATION_NAME_MAX);
     if (!n) return refuse(STR.station.nameEmpty);
-    s.name = n;
+    this.act(() => {
+      this.builder.log?.name(s, n);
+      s.name = n;
+    });
     return done();
   }
   /** Turn a signal to govern the next direction of travel: north, east, south, west in turn. */

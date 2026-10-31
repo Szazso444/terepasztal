@@ -231,6 +231,11 @@ export class TownRegistry {
     this.refresh();
   }
 
+  /** A town back with its Townhouse (an undo): the town it was, in the place it had in the list. */
+  restore(t: Town, index: number) {
+    if (!this.towns.includes(t)) this.towns.splice(index, 0, t);
+  }
+
   /**
    * Re-derive the registry from the stations: towns follow their town station, a removed station
    * dissolves its town, and every station inside a founded town is named after it.

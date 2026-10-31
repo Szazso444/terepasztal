@@ -176,7 +176,7 @@ export class DecorPanel {
         btn(
           STR.station.demolish,
           () => {
-            this.builder.removeDecor(d.x, d.y);
+            this.commands.act(() => this.builder.removeDecor(d.x, d.y));
             this.close();
           },
           'small',

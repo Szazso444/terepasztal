@@ -115,6 +115,13 @@ export class BuildController {
   /** set in editor mode */
   editor: Editor | null = null;
   private lastPaint = '';
+  /**
+   * Every action of the player goes through this, to become one undo step (`Commands.act`); the
+   * game sets it. `stroke` names an action that runs over many frames.
+   */
+  act: <T>(fn: () => T, stroke?: number) => T = (fn) => fn();
+  /** the number of the Upgrade / Downgrade stroke under way, or of the last */
+  private reclassStroke = 0;
   /** this frame's Escape closed the tooltip stack (the keymap reads it first): it does nothing here */
   private escapeSpent = false;
   /** the placing tooltip and the yield label's way out, set by createPlayUi */
@@ -351,12 +358,13 @@ export class BuildController {
         this.dragAxis = null;
         for (const g of this.lineGhosts) g.destroy();
         this.lineGhosts = [];
-        layRun(this.builder, planRun(this.builder, line, item));
+        this.act(() => layRun(this.builder, planRun(this.builder, line, item)));
         return;
       }
     } else {
       for (const c of inp.clicks)
-        if (c.button === 0 && inMap) this.builder.placeTrack(t.x, t.y, item, this.rot);
+        if (c.button === 0 && inMap)
+          this.act(() => this.builder.placeTrack(t.x, t.y, item, this.rot));
     }
     if (!inMap) {
       if (this.ghost) this.ghost.visible = false;
@@ -521,7 +529,7 @@ export class BuildController {
     this.status(parts.join('   '));
     for (const c of this.input.clicks) {
       if (c.button === 0) {
-        const s = this.builder.placeStation(t.x, t.y, tool.defId, this.rot);
+        const s = this.act(() => this.builder.placeStation(t.x, t.y, tool.defId, this.rot));
         if (s) {
           this.setTool({ kind: 'none' });
           this.select(s);
@@ -569,7 +577,9 @@ export class BuildController {
       this.dragStart = null;
       for (const g of this.lineGhosts) g.destroy();
       this.lineGhosts = [];
-      for (const l of line) this.builder.placeSupply(l.x, l.y, tool.supply);
+      this.act(() => {
+        for (const l of line) this.builder.placeSupply(l.x, l.y, tool.supply);
+      });
       return;
     }
     if (!inMap) {
@@ -622,7 +632,7 @@ export class BuildController {
       parts.push(STR.signals.governsTravel(STR.signals.directions[this.rot]));
     this.status(parts.join('   '));
     for (const c of this.input.clicks)
-      if (c.button === 0) this.builder.placeDecor(t.x, t.y, tool.defId, this.rot);
+      if (c.button === 0) this.act(() => this.builder.placeDecor(t.x, t.y, tool.defId, this.rot));
   }
 
   private updateBuildingTool(t: { x: number; y: number }, inMap: boolean) {
@@ -650,7 +660,7 @@ export class BuildController {
     if (this.turns()) parts.push(STR.build.rotate);
     this.status(parts.join('   '));
     for (const c of this.input.clicks)
-      if (c.button === 0) this.builder.placeBuilding(t.x, t.y, tool.defId, rot);
+      if (c.button === 0) this.act(() => this.builder.placeBuilding(t.x, t.y, tool.defId, rot));
   }
 
   /** Whether R turns the tool in hand. */
@@ -720,7 +730,7 @@ export class BuildController {
       const tiles = strokeTiles(this.dragStart, this.roadEnd(t));
       this.dragStart = null;
       for (const g of this.lineGhosts) g.visible = false;
-      this.builder.placeRoads(tiles, tiles[0]);
+      this.act(() => this.builder.placeRoads(tiles, tiles[0]));
       return;
     }
     // the button is up: a stroke whose release fell over a panel lays nothing, and is over
@@ -815,16 +825,23 @@ export class BuildController {
     const convert = (
       steps: { tile: { x: number; y: number }; from?: { x: number; y: number } }[],
     ) => {
-      for (const s of steps) {
-        const check = this.builder.checkReclass([s.tile], tool.dir, s.from);
-        for (const a of check.left) this.reclassLeft.set(key(a), a);
-        if (check.ok && this.builder.reclassTrack([s.tile], tool.dir, s.from))
-          for (const c of check.changes) this.reclassLeft.delete(key(c));
-      }
+      if (!steps.length) return;
+      // a frame of the stroke: the frames of one stroke make one undo step
+      this.act(() => {
+        for (const s of steps) {
+          const check = this.builder.checkReclass([s.tile], tool.dir, s.from);
+          for (const a of check.left) this.reclassLeft.set(key(a), a);
+          if (check.ok && this.builder.reclassTrack([s.tile], tool.dir, s.from))
+            for (const c of check.changes) this.reclassLeft.delete(key(c));
+        }
+      }, this.reclassStroke);
     };
     const down = inp.buttons.has(0);
     // a new stroke starts with a clean slate
-    if (down && !this.reclassDown) this.reclassLeft.clear();
+    if (down && !this.reclassDown) {
+      this.reclassLeft.clear();
+      this.reclassStroke++;
+    }
     this.reclassDown = down;
     if (!down) convert(this.stroke.release());
     this.ghostDiamond.visible = false;
@@ -944,6 +961,9 @@ export class BuildController {
   }
 
   removeAt(x: number, y: number): boolean {
+    return this.act(() => this.remove(x, y));
+  }
+  private remove(x: number, y: number): boolean {
     const st = this.builder.stationAt(x, y);
     if (st) {
       if (this.selected === st) this.select(null);
@@ -967,6 +987,14 @@ export class BuildController {
     // a level crossing loses its road first, and stays plain track
     if (this.builder.roads.has(x, y)) return this.builder.removeRoad(x, y);
     return this.builder.removeTrack(x, y);
+  }
+
+  /** An undo or a redo changed the world: what was picked may no longer stand. */
+  dropGone() {
+    const { selected: s, selectedBuilding: b, selectedDecor: d, builder } = this;
+    if (s && !builder.stations.includes(s)) this.select(null);
+    if (b && builder.buildingAt(b.x, b.y) !== b) this.selectBuilding(null);
+    if (d && builder.decorAt(d.x, d.y) !== d) this.selectDecor(null);
   }
 
   private status(s: string) {

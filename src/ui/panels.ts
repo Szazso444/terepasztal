@@ -524,6 +524,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const buildingPanel = new BuildingPanel(
     d.builder,
     () => d.build.selectedBuilding && d.build.selectBuilding(null),
+    d.commands,
   );
   const decorPanel = new DecorPanel(d.builder, d.power, d.commands, toast, () => {
     if (d.build.selectedDecor) d.build.selectDecor(null);
