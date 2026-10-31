@@ -1,253 +1,318 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { DEFAULT_RULES, rules } from '../sim/rules';
+import type { TrainState } from '../sim/trains';
 import { STR } from '../strings';
+import { trainFacts, tripWith } from '../testing/trainFacts';
+import { CLIMB_SPEED } from '../world/railProfile';
 import {
-  cargoAboard,
-  currentStopIndex,
-  emergencyState,
-  levelGain,
-  perTileText,
-  rangeText,
-  recordText,
-  splitFuel,
-  tankRows,
-  tankShare,
-  tankTone,
-  tankValue,
-  type TankInput,
+  LOW_TANK_TILES,
+  arrivalOf,
+  climbSpeed,
+  jobLine,
+  lastStopId,
+  loadShare,
+  nextStopId,
+  problemOf,
+  tanksOf,
+  trainChip,
+  trainOverview,
+  weeklyFlow,
+  weeklyIncome,
 } from './trainView';
 
-const none: TankInput = {
-  steam: false,
-  diesel: false,
-  electric: false,
-  fuelKind: 'coal',
-  oilKind: 'oil',
-  coal: 0,
-  coalCap: 0,
-  coalRate: 0,
-  water: 0,
-  waterCap: 0,
-  waterRate: 0,
-  oil: 0,
-  oilCap: 0,
-  oilRate: 0,
-  battery: 0,
-  batteryCap: 0,
-  powerRate: 0,
-};
-const steam: TankInput = {
-  ...none,
-  steam: true,
-  coal: 80,
-  coalCap: 80,
-  coalRate: 0.16,
-  water: 120,
-  waterCap: 120,
-  waterRate: 0.2,
-};
-
-describe('a tank turns red and amber', () => {
-  it('is red under five tiles of use, amber under a quarter', () => {
-    expect(tankTone(80, 80, 0.16)).toBe('');
-    expect(tankTone(19, 80, 0.16)).toBe('warn');
-    expect(tankTone(0.79, 80, 0.16)).toBe('bad');
-    expect(tankTone(0.8, 80, 0.16)).toBe('warn');
-    expect(tankTone(0, 80, 0.16)).toBe('bad');
-  });
-
-  it('is never red when nothing is used, and an empty tank of no size is quiet', () => {
-    expect(tankTone(0, 80, 0)).toBe('warn');
-    expect(tankTone(0, 0, 0)).toBe('');
-  });
+beforeEach(() => {
+  Object.assign(rules, DEFAULT_RULES);
 });
 
-describe('the tanks of a train', () => {
-  it('lists fuel and water for a steam engine, naming the fuel', () => {
-    const rows = tankRows(steam, 'Oil');
-    expect(rows.map((r) => r.key)).toEqual(['fuel', 'water']);
-    expect(rows[0].label).toBe(`${STR.train.fuel} (coal)`);
-    expect(rows[0].icon).toBe('coal');
-    expect(rows[1].label).toBe(STR.train.water);
+describe('the status chip', () => {
+  it('has a word for every state', () => {
+    const states: TrainState[] = [
+      'moving',
+      'loading',
+      'waiting',
+      'idle',
+      'yielding',
+      'noRoute',
+      'stranded',
+      'noFuel',
+      'noPower',
+      'overweight',
+    ];
+    for (const state of states)
+      expect(trainChip({ state, blocked: false }, null).text).toBeTruthy();
   });
 
-  it('names the fuel that the tank holds, which a preference does not change', () => {
-    expect(tankRows({ ...steam, fuelKind: 'wood' }, 'Oil')[0].label).toBe(
-      `${STR.train.fuel} (wood)`,
-    );
-    expect(tankRows({ ...steam, fuelKind: 'wood' }, 'Oil')[0].icon).toBe('wood');
-  });
-
-  it('lists the oil for a diesel engine under the oil is named', () => {
-    const rows = tankRows({ ...none, diesel: true, oil: 50, oilCap: 100, oilRate: 0.05 }, 'Diesel');
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ key: 'oil', label: 'Diesel', value: 50, cap: 100, tone: '' });
-  });
-
-  it('lists the battery carts of an electric train and no fuel tank', () => {
-    const rows = tankRows(
-      { ...none, electric: true, battery: 0.5, batteryCap: 60, powerRate: 0.12 },
-      'Oil',
-    );
-    expect(rows.map((r) => r.key)).toEqual(['battery']);
-    // half a unit is under five tiles of the power drawn
-    expect(rows[0].tone).toBe('bad');
-  });
-
-  it('has no tank for an electric engine that draws from the wire alone', () => {
-    expect(tankRows({ ...none, electric: true, powerRate: 0.12 }, 'Oil')).toEqual([]);
-  });
-
-  it('lists steam first, then oil, then the battery, as one train can hold all three', () => {
-    const rows = tankRows(
-      {
-        ...steam,
-        diesel: true,
-        oil: 10,
-        oilCap: 20,
-        oilRate: 0.01,
-        batteryCap: 60,
-        battery: 60,
-      },
-      'Oil',
-    );
-    expect(rows.map((r) => r.key)).toEqual(['fuel', 'water', 'oil', 'battery']);
-  });
-
-  it('reads a tank as a value over its size, and how full it is', () => {
-    expect(tankValue({ value: 79.6, cap: 120 })).toBe('80 / 120');
-    expect(tankShare({ value: 30, cap: 120 })).toBe(0.25);
-    expect(tankShare({ value: 200, cap: 120 })).toBe(1);
-    expect(tankShare({ value: 5, cap: 0 })).toBe(0);
-    expect(tankShare({ value: -3, cap: 10 })).toBe(0);
-  });
-});
-
-describe('the range and the use per tile', () => {
-  it('shows whole tiles, and infinity for a train that uses nothing', () => {
-    expect(rangeText(492.9)).toBe(`492 ${STR.train.tiles}`);
-    expect(rangeText(Infinity)).toBe('∞');
-  });
-
-  it('lists what is used per tile, or a dash', () => {
-    expect(
-      perTileText({
-        coalRate: 0.16,
-        fuelKind: 'coal',
-        waterRate: 0.2,
-        oilRate: 0,
-        oilKind: 'oil',
-        powerRate: 0,
-      }),
-    ).toBe('0.16 coal, 0.20 water');
-    expect(
-      perTileText({
-        coalRate: 0,
-        fuelKind: 'coal',
-        waterRate: 0,
-        oilRate: 0,
-        oilKind: 'oil',
-        powerRate: 0.115,
-      }),
-    ).toBe('0.12 power');
-    expect(
-      perTileText({
-        coalRate: 0,
-        fuelKind: 'coal',
-        waterRate: 0,
-        oilRate: 0,
-        oilKind: 'oil',
-        powerRate: 0,
-      }),
-    ).toBe('-');
-  });
-});
-
-describe('a loop record', () => {
-  it('lists what is a twentieth of a unit or more, to a tenth, and a dash for nothing', () => {
-    expect(recordText({ coal: 12.34, water: 0.04, wood: 3 })).toBe('12.3 coal, 3 wood');
-    expect(recordText({})).toBe('-');
-    expect(recordText({ coal: 0.01 })).toBe('-');
-  });
-
-  it('writes a refuelling with a plus', () => {
-    expect(recordText({ refuel_coal: 40 })).toBe('40 +coal');
-  });
-
-  it('splits the fuel into what was used and what was refuelled', () => {
-    expect(splitFuel({ coal: 5, water: 2, refuel_coal: 40 })).toEqual({
-      used: { coal: 5, water: 2 },
-      refuelled: { refuel_coal: 40 },
+  it('a running train held behind another says so', () => {
+    expect(trainChip({ state: 'moving', blocked: true }, null)).toMatchObject({
+      sev: 'attention',
+      text: STR.outliner.status.held,
     });
-    expect(splitFuel({})).toEqual({ used: {}, refuelled: {} });
+    expect(trainChip({ state: 'loading', blocked: true }, null).text).toBe(
+      STR.outliner.status.loading,
+    );
+  });
+
+  it('stuck goes over what holds a train, never over what stopped it', () => {
+    expect(trainChip({ state: 'moving', blocked: true }, 90)).toMatchObject({
+      sev: 'critical',
+      text: STR.outliner.stuck,
+    });
+    expect(trainChip({ state: 'noFuel', blocked: false }, 90).text).toBe(
+      STR.outliner.status.noFuel,
+    );
+  });
+
+  it('out of fuel is the worst there is, and running is good', () => {
+    expect(trainChip({ state: 'noFuel', blocked: false }, null).sev).toBe('critical');
+    expect(trainChip({ state: 'moving', blocked: false }, null).sev).toBe('good');
   });
 });
 
-describe('the cargo aboard', () => {
-  it('sums by cargo over the wagons, the most first, and leaves empty wagons out', () => {
-    expect(
-      cargoAboard([
-        { cargo: 'coal', amount: 20 },
-        { cargo: 'iron', amount: 30 },
-        { cargo: 'coal', amount: 15 },
-        { cargo: null, amount: 0 },
-        { cargo: 'wood', amount: 0 },
-      ]),
-    ).toEqual([
-      ['coal', 35],
-      ['iron', 30],
+describe('from and to', () => {
+  it('the next stop is the one the route points at, round the end too', () => {
+    expect(nextStopId(trainFacts({ route: [5, 6, 7], routeIndex: 1 }))).toBe(6);
+    expect(nextStopId(trainFacts({ route: [5, 6, 7], routeIndex: 4 }))).toBe(6);
+  });
+
+  it('a service stop goes before it', () => {
+    expect(nextStopId(trainFacts({ route: [5, 6], detour: 9 }))).toBe(9);
+  });
+
+  it('no route has no stop', () => {
+    expect(nextStopId(trainFacts())).toBeNull();
+    expect(lastStopId(trainFacts())).toBeNull();
+    expect(lastStopId(trainFacts({ route: [5] }))).toBeNull();
+  });
+
+  it('the last stop is the one before, round the start too', () => {
+    expect(lastStopId(trainFacts({ route: [5, 6, 7], routeIndex: 1 }))).toBe(5);
+    expect(lastStopId(trainFacts({ route: [5, 6, 7], routeIndex: 0 }))).toBe(7);
+  });
+});
+
+describe('the load', () => {
+  it('is what is on board of what the wagons can hold', () => {
+    const wagons = [
+      { cargo: 'coal', amount: 10, level: 1, def: { capacity: 20 } },
+      { cargo: null, amount: 0, level: 1, def: { capacity: 20 } },
+    ];
+    expect(loadShare({ wagons })).toBe(0.25);
+  });
+
+  it('no wagons, no load', () => {
+    expect(loadShare({ wagons: [] })).toBe(0);
+  });
+});
+
+describe('the tanks', () => {
+  it('a steam engine has fuel and water, with the tiles each lasts', () => {
+    const t = trainFacts({
+      hasSteam: true,
+      fuelKind: 'wood',
+      coal: 12,
+      coalCap: 40,
+      coalRate: 0.5,
+      water: 30,
+      waterCap: 60,
+      waterRate: 2,
+    });
+    expect(tanksOf(t)).toEqual([
+      { res: 'wood', have: 12, cap: 40, tiles: 24, low: false },
+      { res: 'water', have: 30, cap: 60, tiles: 15, low: false },
     ]);
-    expect(cargoAboard([])).toEqual([]);
+  });
+
+  it('a diesel shows only its oil, an electric train only its battery carts', () => {
+    const diesel = trainFacts({
+      hasDiesel: true,
+      oilKind: 'diesel',
+      oil: 5,
+      oilCap: 9,
+      oilRate: 1,
+    });
+    expect(tanksOf(diesel).map((k) => k.res)).toEqual(['diesel']);
+    const electric = trainFacts({ hasElectric: true, batteryCap: 10, battery: 4, powerRate: 1 });
+    expect(tanksOf(electric).map((k) => k.res)).toEqual(['power']);
+    expect(tanksOf(trainFacts({ hasElectric: true }))).toEqual([]);
+  });
+
+  it('a tank close to empty is low', () => {
+    const at = (coal: number) =>
+      tanksOf(trainFacts({ hasSteam: true, coal, coalCap: 50, coalRate: 1 }))[0].low;
+    expect(at(LOW_TANK_TILES - 0.5)).toBe(true);
+    expect(at(LOW_TANK_TILES)).toBe(false);
   });
 });
 
-describe('the emergency refuel', () => {
-  const full = { ...steam, diesel: false };
-  const state = (t: Partial<TankInput>) => emergencyState({ ...full, ...t });
-
-  it('is off with the tanks full, and says so', () => {
-    expect(state({})).toEqual({ disabled: true, title: STR.train.tanksFull });
-    // a tank within a thousandth of full counts as full
-    expect(state({ coal: 79.99 }).disabled).toBe(true);
+describe('a week of the last loop', () => {
+  it('nothing before the first loop closes', () => {
+    const open = { ...tripWith({ income: 500 }, 7), endedAt: 0 };
+    expect(weeklyIncome(null)).toBeNull();
+    expect(weeklyIncome(open)).toBeNull();
+    expect(weeklyFlow(open, { coal: 5 })).toBeNull();
   });
 
-  it('is on once any tank has room', () => {
-    expect(state({ coal: 60 })).toEqual({ disabled: false, title: STR.train.emergencyHint });
-    expect(state({ water: 100 }).disabled).toBe(false);
-    expect(state({ steam: false, diesel: true, oil: 3, oilCap: 50 }).disabled).toBe(false);
+  it('a loop of two weeks counts half', () => {
+    expect(weeklyIncome(tripWith({ income: 1000 }, 14))).toBeCloseTo(500);
+    expect(weeklyFlow(tripWith({}, 14), { coal: 8 })).toEqual([{ res: 'coal', amount: 4 }]);
   });
 
-  it('is off for a train with no fuel or water tank', () => {
-    expect(emergencyState({ ...full, steam: false, diesel: false })).toEqual({
-      disabled: true,
-      title: STR.train.noTanks,
+  it('leaves out dust and what the filter leaves out', () => {
+    const rec = { coal: 7, refuel_coal: 7, wood: 0.01 };
+    expect(weeklyFlow(tripWith({}, 7), rec, (k) => !k.startsWith('refuel_'))).toEqual([
+      { res: 'coal', amount: 7 },
+    ]);
+    expect(weeklyFlow(tripWith({}, 7), { wood: 0.01 })).toBeNull();
+  });
+});
+
+describe('the arrival', () => {
+  const running = { pathTotal: 30, pathProgress: 10, freeSpeed: 2 };
+
+  it('is the way left over the speed it runs at', () => {
+    expect(arrivalOf(trainFacts(running))).toEqual({ tiles: 20, seconds: 10 });
+  });
+
+  it('a train that has not run yet is timed at its top speed', () => {
+    const t = trainFacts({ ...running, freeSpeed: 0, maxSpeed: 4 });
+    expect(arrivalOf(t)?.seconds).toBe(5);
+  });
+
+  it('a train that stands or makes way has none', () => {
+    expect(arrivalOf(trainFacts({ ...running, state: 'loading' }))).toBeNull();
+    expect(arrivalOf(trainFacts({ ...running, holding: true }))).toBeNull();
+    expect(arrivalOf(trainFacts({ ...running, blocked: true }))).toBeNull();
+    expect(arrivalOf(trainFacts({ state: 'moving' }))).toBeNull();
+  });
+});
+
+describe('the problem box', () => {
+  it('a train that runs has none', () => {
+    expect(problemOf(trainFacts(), null)).toBeNull();
+    expect(problemOf(trainFacts({ state: 'loading' }), null)).toBeNull();
+  });
+
+  it('out of fuel offers the emergency refuel and the stops', () => {
+    expect(problemOf(trainFacts({ state: 'noFuel' }), null)).toMatchObject({
+      sev: 'critical',
+      title: STR.depot.state.noFuel,
+      actions: ['refuel', 'stops'],
     });
   });
-});
 
-describe('the level of a vehicle', () => {
-  it('says what the level adds, in whole percent', () => {
-    expect(levelGain(2, 1.08, 'speed and power')).toBe(
-      STR.train.levelGain(2, 8, 'speed and power'),
+  it('says what the simulation noted, when it did', () => {
+    const t = trainFacts({ state: 'noRoute', lastMessage: 'Birch has no platform' });
+    expect(problemOf(t, null)?.text).toBe('Birch has no platform');
+    expect(problemOf(trainFacts({ state: 'noRoute' }), null)?.text).toBe(
+      STR.trainPanel.problem.noRoute,
     );
-    expect(levelGain(3, 1.16, 'capacity')).toContain('+16 %');
   });
 
-  it('says a model of level 1 is as built', () => {
-    expect(levelGain(1, 1, 'capacity')).toBe(STR.train.levelBase);
+  it('overweight offers the Depot, where a consist is changed', () => {
+    expect(problemOf(trainFacts({ state: 'overweight' }), null)?.actions).toEqual(['depot']);
+  });
+
+  it('a stranded train offers nothing: only laying the track helps', () => {
+    expect(problemOf(trainFacts({ state: 'stranded' }), null)?.actions).toEqual([]);
+  });
+
+  it('stuck tells for how long, in whole hours', () => {
+    const hours = (n: number) => (n / 24) * rules.daySeconds;
+    expect(problemOf(trainFacts({ blocked: true }), hours(3.5))?.title).toBe(
+      STR.trainPanel.problem.stuckFor(3),
+    );
+  });
+
+  it('a stop for good goes before being stuck, being stuck before hunger', () => {
+    const t = trainFacts({ state: 'noFuel', hungry: true });
+    expect(problemOf(t, 90)?.title).toBe(STR.depot.state.noFuel);
+    expect(problemOf(trainFacts({ hungry: true }), 90)?.sev).toBe('critical');
+    expect(problemOf(trainFacts({ hungry: true }), null)?.sev).toBe('attention');
   });
 });
 
-describe('the stop a train heads for', () => {
-  it('is its place in the program, wrapped to the list', () => {
-    expect(currentStopIndex(true, 1, 4)).toBe(1);
-    expect(currentStopIndex(true, 5, 4)).toBe(1);
+describe('the contract line', () => {
+  const job = { name: 'Coal run', destId: 2 };
+  const name = () => 'Birch';
+
+  it('none without a job', () => {
+    expect(jobLine(trainFacts(), name)).toBeNull();
   });
 
-  it('is none while the train works a contract job', () => {
-    expect(currentStopIndex(false, 1, 4)).toBe(-1);
+  it('says the job at work, and how many wait', () => {
+    const one = STR.trainSide.onContract('Coal run', 'Birch');
+    expect(jobLine(trainFacts({ job, jobs: [] }), name)).toBe(one);
+    expect(jobLine(trainFacts({ job, jobs: [job, job] }), name)).toBe(
+      `${one} · ${STR.trainSide.queuedContracts(2)}`,
+    );
   });
 
-  it('survives an empty program', () => {
-    expect(currentStopIndex(true, 0, 0)).toBe(0);
+  it('a job waiting its turn is told as the next, not as one of those behind it', () => {
+    expect(jobLine(trainFacts({ jobs: [job] }), name)).toBe(
+      STR.trainSide.onContract('Coal run', 'Birch'),
+    );
+  });
+});
+
+describe('the climb', () => {
+  it('is the top speed under its load, at what a climb leaves', () => {
+    expect(climbSpeed({ maxSpeed: 2, loadFactor: 0.5 })).toBe(CLIMB_SPEED);
+  });
+});
+
+describe('the Overview tab', () => {
+  const stations = (id: number) => (id === 2 ? 'Birch' : null);
+
+  it('reads the train as it is, and rounds what it shows', () => {
+    const t = {
+      ...trainFacts({
+        route: [1, 2],
+        routeIndex: 1,
+        pathTotal: 12,
+        pathProgress: 2.4,
+        freeSpeed: 2,
+        maxSpeed: 2.5,
+        hasSteam: true,
+        fuelKind: 'coal',
+        coal: 10,
+        coalCap: 40,
+        coalRate: 0.5,
+        water: 40,
+        waterCap: 40,
+        waterRate: 1,
+        rangeTiles: 20.7,
+        wagons: [{ cargo: 'coal', amount: 7.6, level: 1, def: { capacity: 20 } }],
+        lastTrip: tripWith({ income: 980.4, loaded: { coal: 14 } }, 7),
+      }),
+      speed: 1.24,
+    };
+    const v = trainOverview(t, stations, null);
+    expect(v.next).toBe('Birch');
+    expect(v.speed).toBe(`1.20 ${STR.trainSide.tilesPerSec}`);
+    expect(v.topSpeed).toBe(`2.50 ${STR.trainSide.tilesPerSec}`);
+    expect(v.load).toBe(38);
+    expect(v.cargo).toEqual([{ res: 'coal', amount: 8, share: 38 }]);
+    expect(v.supplies.map((k) => [k.res, k.share, k.tiles])).toEqual([
+      ['coal', 25, 20],
+      ['water', 100, 40],
+    ]);
+    expect(v.range).toBe(STR.trainPanel.tiles(20));
+    expect(v.income).toBe('$980');
+    expect(v.flows.map((f) => f.goods)).toEqual([null, [{ res: 'coal', amount: '14' }], null]);
+    expect(v.problem).toBeNull();
+  });
+
+  it('a train on the wires has no range to run out of, and says what it draws', () => {
+    const t = { ...trainFacts({ hasElectric: true, powerRate: 1.25 }), speed: 0 };
+    const v = trainOverview(t, stations, null);
+    expect(v.range).toBe(STR.trainPanel.unlimited);
+    expect(v.electric).toBe(`1.25 ${STR.trainSide.perTile}`);
+    expect(v.supplies).toEqual([]);
+  });
+
+  it('no loop yet: no money, no flows', () => {
+    const v = trainOverview({ ...trainFacts(), speed: 0 }, stations, null);
+    expect(v.income).toBeNull();
+    expect(v.flows.every((f) => f.goods === null)).toBe(true);
   });
 });

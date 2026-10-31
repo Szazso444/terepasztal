@@ -1,18 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
 import { STR } from '../strings';
 import { defaultStop, type StopPlan } from '../sim/trains';
-import { clampToRange } from './kit';
+import { clampToRange, stepNumber } from './kit';
 import {
+  CHECK_MS,
+  CHECK_REFUSED_MS,
   DWELL_BIG_STEP,
+  DWELL_RANGE,
   DWELL_STEP,
   MAX_DWELL,
   appendStop,
-  dispatchReason,
+  checkLifetime,
   editorSignature,
   haulShare,
   haulTone,
   locoStats,
   moveStopUp,
+  pruneToFree,
   removeStopAt,
   routeText,
   serviceResource,
@@ -23,7 +27,6 @@ import {
   togglePick,
   trainRowText,
   wagonStats,
-  type DispatchInput,
   type StationInput,
   type TrainRowInput,
 } from './depotView';
@@ -139,36 +142,25 @@ describe('picking vehicles for a new train', () => {
   });
 });
 
-describe('what stops Dispatch', () => {
-  const ready: DispatchInput = {
-    locos: 1,
-    mixedGauge: false,
-    barred: null,
-    weight: 10,
-    haul: 40,
-    preview: null,
-  };
-
-  it('lets a consist through that has an engine, fits, and has a gate', () => {
-    expect(dispatchReason(ready)).toBeNull();
+describe('the picks of a draft that are still free', () => {
+  it('keeps what is free, in the order picked, and drops what has left the stock', () => {
+    expect(pruneToFree([5, 2, 9, 3], [1, 2, 3, 5])).toEqual([5, 2, 3]);
+    expect(pruneToFree([5, 2], [])).toEqual([]);
+    expect(pruneToFree([], [1, 2])).toEqual([]);
   });
 
-  it('says what is missing, in the order the game would refuse it', () => {
-    expect(dispatchReason({ ...ready, locos: 0, preview: 'no gate' })).toBe(STR.fleet.needLoco);
-    expect(dispatchReason({ ...ready, mixedGauge: true, barred: 'wrong depot' })).toBe(
-      STR.fleet.mixedGauge,
-    );
-    expect(dispatchReason({ ...ready, barred: 'wrong depot', weight: 90 })).toBe('wrong depot');
-    expect(dispatchReason({ ...ready, weight: 90.4, haul: 40.2, preview: 'no gate' })).toBe(
-      STR.fleet.tooHeavy(90, 40),
-    );
-    expect(dispatchReason({ ...ready, preview: 'Gate 3,4: a train stands on it' })).toBe(
-      'Gate 3,4: a train stands on it',
-    );
+  it('does not change the lists it is given', () => {
+    const picks = [1, 2];
+    pruneToFree(picks, [2]);
+    expect(picks).toEqual([1, 2]);
   });
+});
 
-  it('lets a consist weigh exactly what the engines haul', () => {
-    expect(dispatchReason({ ...ready, weight: 40, haul: 40 })).toBeNull();
+describe('how long the answer to "would it roll out?" stands', () => {
+  it('asks again soon after a go or a cheap refusal, and rarely after a refusal at the gate', () => {
+    expect(checkLifetime(false)).toBe(CHECK_MS);
+    expect(checkLifetime(true)).toBe(CHECK_REFUSED_MS);
+    expect(CHECK_REFUSED_MS).toBeGreaterThan(CHECK_MS);
   });
 });
 
@@ -231,12 +223,19 @@ describe('the stop list edits', () => {
     expect(added).toEqual(defaultStop(7));
   });
 
-  it('keeps every dwell time the game could hold inside what the field shows', () => {
-    // a field of step 5 shows a time of any multiple of 5 as it is; a step of 15 would round 10 to 15
-    const range = { min: 0, max: MAX_DWELL, step: DWELL_STEP, bigStep: DWELL_BIG_STEP };
-    for (let v = 0; v <= MAX_DWELL; v += 5) expect(clampToRange(v, range)).toBe(v);
-    expect(DWELL_BIG_STEP % DWELL_STEP).toBe(0);
+  it('keeps every whole second a stop could hold exactly as the field shows it', () => {
+    for (let v = 0; v <= MAX_DWELL; v++) expect(clampToRange(v, DWELL_RANGE)).toBe(v);
     expect(MAX_DWELL).toBe(600);
+  });
+
+  it('moves a time by 15 s a press and by 5 s with Shift, from any second', () => {
+    expect(DWELL_STEP).toBe(15);
+    expect(DWELL_BIG_STEP).toBe(5);
+    expect(stepNumber(0, 1, DWELL_RANGE)).toBe(15);
+    expect(stepNumber(7, 1, DWELL_RANGE)).toBe(22);
+    expect(stepNumber(7, 1, DWELL_RANGE, true)).toBe(12);
+    expect(stepNumber(595, 1, DWELL_RANGE)).toBe(600);
+    expect(stepNumber(3, -1, DWELL_RANGE)).toBe(0);
   });
 });
 

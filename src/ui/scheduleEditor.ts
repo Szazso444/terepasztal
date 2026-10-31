@@ -1,7 +1,8 @@
 import { el } from './dom';
 import { STR } from '../strings';
 import type { Builder } from '../sim/build';
-import type { StopPlan } from '../sim/trains';
+import type { Commands } from '../sim/commands';
+import type { StopPlan, Train } from '../sim/trains';
 import { cargoDef } from '../sim/cargo';
 import {
   actionButton,
@@ -13,9 +14,7 @@ import {
   toggleSwitch,
 } from './kit';
 import {
-  DWELL_BIG_STEP,
-  DWELL_STEP,
-  MAX_DWELL,
+  DWELL_RANGE,
   appendStop,
   editorSignature,
   moveStopUp,
@@ -23,6 +22,7 @@ import {
   stationRow,
   type StationRow,
 } from './depotView';
+import { currentStopIndex } from './trainScreenView';
 
 /**
  * Editable stop list shared by the train screen (live trains) and the depot (optional custom
@@ -92,10 +92,16 @@ export class ScheduleEditor {
     this.setCurrent(this.current);
   }
 
-  /** An edit the controls already show: tell the owner and remember what is drawn. */
+  /**
+   * An edit the controls already show: tell the owner. If the owner refused it and put the stops
+   * back (the array changes under the editor), the controls are drawn again from what it holds.
+   */
   private edited() {
+    const before = editorSignature(this.schedule, this.stations());
     this.onChange();
-    this.drawn = editorSignature(this.schedule, this.stations());
+    const after = editorSignature(this.schedule, this.stations());
+    if (after === before) this.drawn = after;
+    else this.draw();
   }
   /** An edit that changes the list: tell the owner and draw it again. */
   private restructured() {
@@ -159,10 +165,7 @@ export class ScheduleEditor {
       numberField({
         value,
         label: title,
-        min: 0,
-        max: MAX_DWELL,
-        step: DWELL_STEP,
-        bigStep: DWELL_BIG_STEP,
+        ...DWELL_RANGE,
         unit: STR.depot.dwellUnit,
         cls: 'small',
         onChange: (v) => {
@@ -296,4 +299,67 @@ export class ScheduleEditor {
       b.mark.hidden = i !== current;
     });
   }
+}
+
+/**
+ * The stop editor on a live train, as the Train screen and the train panel show it. It works on a
+ * copy of the train's own program, also while a contract job runs its two stops, and hands each
+ * edit to the train, which then follows it on schedule (`Commands.setSchedule`). A refused list
+ * (fewer than two stops) leaves the train as it was, says why, and the editor shows the train's
+ * stops again.
+ */
+export class TrainStops {
+  private readonly editor: ScheduleEditor;
+  private train: Train | null = null;
+  private stops: StopPlan[] = [];
+
+  constructor(
+    builder: Builder,
+    private readonly commands: Commands,
+    private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
+  ) {
+    this.editor = new ScheduleEditor(builder, () => this.apply());
+  }
+  get root() {
+    return this.editor.root;
+  }
+  /** Draw the stops of `t` now. */
+  show(t: Train) {
+    this.train = t;
+    this.stops = t.program.map(copyStop);
+    this.editor.render(this.stops, currentStop(t));
+  }
+  /**
+   * The refresh: the train's program may have changed under the editor (a contract job, a new
+   * list), and the stop it heads for moves on. Nothing is drawn again that has not changed, and
+   * nothing while a number is being typed.
+   */
+  sync(t: Train) {
+    if (t !== this.train) return this.show(t);
+    if (JSON.stringify(this.stops) !== JSON.stringify(t.program)) {
+      const typing = document.activeElement;
+      if (typing instanceof HTMLInputElement && this.editor.root.contains(typing)) return;
+      this.stops.splice(0, this.stops.length, ...t.program.map(copyStop));
+    }
+    this.editor.sync(this.stops, currentStop(t));
+  }
+  private apply() {
+    const t = this.train;
+    if (!t) return;
+    const did = this.commands.setSchedule(t, this.stops.map(copyStop));
+    if (did.ok) return;
+    this.toast(did.message, 'warn');
+    // the array the editor holds, so that it draws the train's stops again
+    this.stops.splice(0, this.stops.length, ...t.program.map(copyStop));
+  }
+}
+
+/** The stop being run, when the train runs its own program rather than a contract job. */
+function currentStop(t: Train): number {
+  return currentStopIndex(t.program === t.schedule, t.routeIndex, t.schedule.length);
+}
+
+/** A stop of its own, so an edit never reaches a stop the train holds. */
+function copyStop(s: StopPlan): StopPlan {
+  return { ...s };
 }

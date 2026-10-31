@@ -6,7 +6,6 @@ import {
   DYNAMIC_MODES,
   serviceLocoType,
   type RouteMode,
-  type StopPlan,
   type Train,
   type TripStats,
 } from '../sim/trains';
@@ -17,7 +16,7 @@ import { cargoDef, cargoName } from '../sim/cargo';
 import { levelMul } from '../gacha/items';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
-import { ScheduleEditor } from './scheduleEditor';
+import { TrainStops } from './scheduleEditor';
 import {
   actionButton,
   columns,
@@ -44,7 +43,6 @@ import {
 } from './depotView';
 import {
   cargoAboard,
-  currentStopIndex,
   emergencyState,
   levelGain,
   perTileText,
@@ -55,7 +53,27 @@ import {
   tankShare,
   tankValue,
   type TankRow,
-} from './trainView';
+} from './trainScreenView';
+
+/** Fill a train from its supplier at twice the cost, and say what came of it. */
+export function emergencyRefuel(
+  fleet: Fleet,
+  t: Train,
+  toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
+) {
+  const taken = fleet.emergencyRefuel(t);
+  const got = Object.entries(taken)
+    .map(([k, v]) => `${Math.round(v)} ${k}`)
+    .join(', ');
+  toast(
+    got
+      ? STR.train.emergencyDone(got)
+      : fleet.supplierOf(t)
+        ? STR.train.emergencyNone
+        : STR.train.emergencyNoStore,
+    got ? 'good' : 'warn',
+  );
+}
 
 /** The routing buttons: the stop list, then every dynamic mode the simulation offers. */
 const ROUTE_BUTTONS: readonly RouteMode[] = ['schedule', ...DYNAMIC_MODES];
@@ -86,9 +104,7 @@ export class TrainScreen implements Screen {
   private built = '';
   /** the tab and the train on show: drawn again for the same ones, the scroll stays */
   private shown = '';
-  private readonly scheduleEditor: ScheduleEditor;
-  /** the stops the editor works on: a copy of the train's own program, handed back on each edit */
-  private stops: StopPlan[] = [];
+  private readonly stops: TrainStops;
 
   constructor(
     private readonly fleet: Fleet,
@@ -97,7 +113,7 @@ export class TrainScreen implements Screen {
     private readonly atlas: AtlasRegistry,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
   ) {
-    this.scheduleEditor = new ScheduleEditor(builder, () => this.applyStops());
+    this.stops = new TrainStops(builder, commands, toast);
     keepScroll(this.root);
   }
 
@@ -124,7 +140,7 @@ export class TrainScreen implements Screen {
       return;
     }
     this.live.run();
-    if (this.tab === 'stops') this.syncStops(t);
+    if (this.tab === 'stops') this.stops.sync(t);
   }
 
   frameTabs(): FrameTabs | null {
@@ -155,7 +171,7 @@ export class TrainScreen implements Screen {
           icon: 'fuel',
           disabled: e.disabled,
           title: e.title,
-          onClick: () => this.emergencyRefuel(t),
+          onClick: () => this.refuelNow(t),
         },
         { label: STR.depot.locate, icon: 'eye', onClick: () => this.onLocate?.(t) },
       ],
@@ -174,49 +190,10 @@ export class TrainScreen implements Screen {
     return r.ok;
   }
 
-  private emergencyRefuel(t: Train) {
-    const taken = this.fleet.emergencyRefuel(t);
-    const got = Object.entries(taken)
-      .map(([k, v]) => `${Math.round(v)} ${k}`)
-      .join(', ');
-    this.toast(
-      got
-        ? STR.train.emergencyDone(got)
-        : this.fleet.supplierOf(t)
-          ? STR.train.emergencyNone
-          : STR.train.emergencyNoStore,
-      got ? 'good' : 'warn',
-    );
+  private refuelNow(t: Train) {
+    emergencyRefuel(this.fleet, t, this.toast);
     this.live.run();
     this.onRedraw?.();
-  }
-
-  /**
-   * Hand the edited stops to the train as its own program, which it then follows on schedule
-   * (`Commands.setSchedule`). A refused list (fewer than two stops) leaves the train as it was, and
-   * the editor shows the train's stops again.
-   */
-  private applyStops() {
-    const t = this.train;
-    if (!t) return;
-    if (this.accepted(this.commands.setSchedule(t, this.stops.map(copyStop)))) return;
-    // the same array the editor holds, so its own redraw shows the train's stops
-    this.stops.splice(0, this.stops.length, ...t.program.map(copyStop));
-  }
-
-  /** The stop being run, when the train runs its own program rather than a contract job. */
-  private currentStop(t: Train) {
-    return currentStopIndex(t.program === t.schedule, t.routeIndex, t.schedule.length);
-  }
-
-  /** The train's program changed under the editor: show it, unless a number is being typed. */
-  private syncStops(t: Train) {
-    if (JSON.stringify(this.stops) !== JSON.stringify(t.program)) {
-      const typing = document.activeElement;
-      if (typing instanceof HTMLInputElement && this.root.contains(typing)) return;
-      this.stops.splice(0, this.stops.length, ...t.program.map(copyStop));
-    }
-    this.scheduleEditor.sync(this.stops, this.currentStop(t));
   }
 
   // ---------------------------------------------------------------- what is drawn
@@ -524,8 +501,9 @@ export class TrainScreen implements Screen {
         }),
       );
     // the train's own program, also while a contract job runs its two stops
-    this.stops = t.program.map(copyStop);
-    this.scheduleEditor.render(this.stops, this.currentStop(t));
+    this.stops.show(t);
+    const count = el('span');
+    this.live.text(count, () => String(t.program.length));
     return el(
       'div',
       { class: 'k-page' },
@@ -536,9 +514,9 @@ export class TrainScreen implements Screen {
         dyn ? note(STR.depot.dynamicPlans) : null,
       ),
       well(
-        { title: STR.depot.stops, right: String(t.program.length) },
+        { title: STR.depot.stops, right: count },
         note(STR.depot.scheduleLiveHint),
-        this.scheduleEditor.root,
+        this.stops.root,
       ),
     );
   }
@@ -733,9 +711,4 @@ export class TrainScreen implements Screen {
       );
     return out;
   }
-}
-
-/** A stop of its own, so an edit never reaches a stop the train holds. */
-function copyStop(s: StopPlan): StopPlan {
-  return { ...s };
 }

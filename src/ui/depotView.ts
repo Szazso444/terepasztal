@@ -112,27 +112,26 @@ export function togglePick(
   return { list: [...list, uid], full: false };
 }
 
-/** What stands in the way of Dispatch, in the order the game would refuse it. */
-export interface DispatchInput {
-  locos: number;
-  /** locomotives and wagons of both gauges */
-  mixedGauge: boolean;
-  /** why a model picked cannot roll out of the depot (gauge, track), first one */
-  barred: string | null;
-  /** wagon weight and what the engines can haul, t */
-  weight: number;
-  haul: number;
-  /** the preview's reason: no depot, no gate, two stops needed; null when it rolls out */
-  preview: string | null;
+/**
+ * The picks that are still free: a vehicle another screen levelled, used up or put in a train
+ * since it was picked leaves the stock, and the pick goes with it. The order is kept.
+ */
+export function pruneToFree(picks: readonly number[], free: readonly number[]): number[] {
+  const open = new Set(free);
+  return picks.filter((u) => open.has(u));
 }
 
-/** The reason Dispatch is off, or null when the train can go. */
-export function dispatchReason(i: DispatchInput): string | null {
-  if (i.locos < 1) return STR.fleet.needLoco;
-  if (i.mixedGauge) return STR.fleet.mixedGauge;
-  if (i.barred) return i.barred;
-  if (i.weight > i.haul) return STR.fleet.tooHeavy(Math.round(i.weight), Math.round(i.haul));
-  return i.preview;
+/** How long the answer to "would it roll out?" stands, ms, before the gate is looked at again. */
+export const CHECK_MS = 2000;
+/**
+ * A refusal at the gate had to try every gate and every stop, a search of the track each: it is
+ * asked again rarely, and at once when anything the answer depends on is changed.
+ */
+export const CHECK_REFUSED_MS = 10000;
+
+/** How long an answer stands: `refusedAtGate` is a refusal that came after the track was tried. */
+export function checkLifetime(refusedAtGate: boolean): number {
+  return refusedAtGate ? CHECK_REFUSED_MS : CHECK_MS;
 }
 
 /** What a locomotive row says about the engine, at its level's multiplier. */
@@ -180,9 +179,20 @@ export function wagonStats(
 
 /** The longest a stop's times may be, in seconds. */
 export const MAX_DWELL = 600;
-/** What a click on − or + moves a stop's time by, and Shift+click. */
-export const DWELL_STEP = 5;
-export const DWELL_BIG_STEP = 15;
+/** What a click on − or + moves a stop's time by, and Shift+click (the ledger: 15 s). */
+export const DWELL_STEP = 15;
+export const DWELL_BIG_STEP = 5;
+/**
+ * The field of a stop's time: any whole second can be typed or stored, 0 to 600, and a press of
+ * − or + moves it by 15 (Shift: 5). A stored 7 shows as 7.
+ */
+export const DWELL_RANGE = {
+  min: 0,
+  max: MAX_DWELL,
+  step: DWELL_STEP,
+  bigStep: DWELL_BIG_STEP,
+  free: true,
+} as const;
 
 /** A stop moved one place up; the first stays. Returns whether anything moved. */
 export function moveStopUp(stops: StopPlan[], i: number): boolean {

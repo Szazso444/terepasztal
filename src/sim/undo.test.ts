@@ -5,10 +5,11 @@ import { STR } from '../strings';
 import { line, simWorld, station, type SimWorldOptions } from '../testing/simWorld';
 import { layRun, planRun } from '../ui/autoCrossing';
 import { buildingToJSON } from './buildings';
-import { Commands } from './commands';
+import { Commands, TRAIN_NAME_MAX } from './commands';
 import type { Contract } from './contracts';
 import { DEFAULT_RULES, rules } from './rules';
 import type { Station } from './stations';
+import { TRAIN_COLOURS } from './trainColours';
 import { Train, defaultStop } from './trains';
 import type { PropInstance } from '../world/tiles';
 import type { TrackItem } from '../world/track';
@@ -1329,5 +1330,118 @@ describe('what a step leaves around it', () => {
     });
     g.history.undo();
     expect(g.map.props.get(k)).toEqual([{ kind: 'oak', variant: 0, ox: 0.1, oy: 0.2 }]);
+  });
+});
+
+describe('a train renamed or recoloured, a step of its own', () => {
+  it('a rename goes back and comes again, under a label that names it', () => {
+    const g = game();
+    run(g, 10, 22);
+    const t = train(g, 12);
+    t.name = 'Rocket 1';
+    expect(g.commands.renameTrain(t, '  Coal run  ')).toEqual({ ok: true });
+    expect(t.name).toBe('Coal run');
+    expect(g.history.undoLabel).toBe(STR.history.renamed('Rocket 1', 'Coal run'));
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(t.name).toBe('Rocket 1');
+    expect(g.history.redo()).toEqual({ ok: true });
+    expect(t.name).toBe('Coal run');
+  });
+
+  it('a recolour goes back and comes again, and each click is a step', () => {
+    const g = game();
+    run(g, 10, 22);
+    const t = train(g, 12);
+    expect(t.colour).toBe(0);
+    g.commands.recolourTrain(t, 1);
+    g.commands.recolourTrain(t, 2);
+    expect(g.history.undoLabel).toBe(STR.history.recoloured(t.name, STR.train.colour[2]));
+    g.history.undo();
+    expect(t.colour).toBe(1);
+    g.history.undo();
+    expect(t.colour).toBe(0);
+    g.history.redo();
+    g.history.redo();
+    expect(t.colour).toBe(2);
+  });
+
+  it('does not join the step before it, and clears what could be redone', () => {
+    const g = game();
+    run(g, 10, 22);
+    const t = train(g, 12);
+    g.commands.act(() => run(g, 10, 22, ROW + 2), 7);
+    g.commands.recolourTrain(t, 3);
+    g.history.undo();
+    expect(g.history.undoLabel).not.toBeNull();
+    expect(t.colour).toBe(0);
+    expect(g.history.canRedo).toBe(true);
+    g.commands.renameTrain(t, 'New name');
+    expect(g.history.canRedo).toBe(false);
+  });
+
+  it('nothing changed makes no step', () => {
+    const g = game();
+    run(g, 10, 22);
+    const t = train(g, 12);
+    const label = g.history.undoLabel;
+    expect(g.commands.renameTrain(t, ` ${t.name} `)).toEqual({ ok: true });
+    expect(g.commands.recolourTrain(t, t.colour)).toEqual({ ok: true });
+    expect(g.history.undoLabel).toBe(label);
+  });
+
+  it('refuses an empty name and a colour that is none, and makes no step', () => {
+    const g = game();
+    run(g, 10, 22);
+    const t = train(g, 12);
+    const label = g.history.undoLabel;
+    expect(g.commands.renameTrain(t, '   ')).toEqual({ ok: false, message: STR.train.nameEmpty });
+    for (const c of [-1, 1.5, TRAIN_COLOURS.length])
+      expect(g.commands.recolourTrain(t, c)).toEqual({ ok: false, message: STR.train.noColour });
+    expect(g.history.undoLabel).toBe(label);
+  });
+
+  it('cuts a long name to the longest a train may carry', () => {
+    const g = game();
+    run(g, 10, 22);
+    const t = train(g, 12);
+    g.commands.renameTrain(t, 'x'.repeat(TRAIN_NAME_MAX + 9));
+    expect(t.name).toHaveLength(TRAIN_NAME_MAX);
+  });
+
+  it('a train recalled since does not stand in the way of the steps under it', () => {
+    const g = game();
+    g.commands.act(() => run(g, 10, 22));
+    const t = train(g, 12);
+    const built = g.history.undoLabel;
+    expect(built).not.toBeNull();
+    g.commands.recolourTrain(t, 4);
+    g.commands.renameTrain(t, 'Short lived');
+    g.fleet.recall(t);
+    // its two steps are gone with it: the next undo is the build under them
+    expect(g.history.undoLabel).toBe(built);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.history.canUndo).toBe(false);
+  });
+
+  it('a train recalled can no longer be renamed or recoloured', () => {
+    const g = game();
+    run(g, 10, 22);
+    const t = train(g, 12);
+    g.fleet.recall(t);
+    expect(g.commands.renameTrain(t, 'Again')).toEqual({ ok: false, message: STR.train.gone });
+    expect(g.commands.recolourTrain(t, 1)).toEqual({ ok: false, message: STR.train.gone });
+  });
+
+  it('the level editor records nothing', () => {
+    const g = game();
+    run(g, 10, 22);
+    const t = train(g, 12);
+    const label = g.history.undoLabel;
+    g.builder.free = true;
+    g.commands.renameTrain(t, 'Editor test');
+    g.commands.recolourTrain(t, 2);
+    expect(t.name).toBe('Editor test');
+    expect(t.colour).toBe(2);
+    expect(g.history.undoLabel).toBe(label);
   });
 });

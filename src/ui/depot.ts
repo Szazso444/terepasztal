@@ -38,7 +38,8 @@ import { ScheduleEditor } from './scheduleEditor';
 import { Bindings, bindMeter, keepScroll } from './liveView';
 import { vehicleRow, vehicleSprite } from './vehicleRow';
 import {
-  dispatchReason,
+  checkLifetime,
+  pruneToFree,
   haulShare,
   haulTone,
   locoStats,
@@ -49,15 +50,13 @@ import {
   trainRowText,
   wagonStats,
 } from './depotView';
-import { currentStopIndex } from './trainView';
+import { currentStopIndex } from './trainScreenView';
 import type { Confirm } from './menu';
 
 type RouteChoice = 'auto' | 'custom' | RouteMode;
 type NewTab = 'consist' | 'route';
 
 const TONES: readonly string[] = ['good', 'info', 'warn', 'bad'];
-/** how long a roll-out preview stands before the gate is looked at again, ms */
-const PREVIEW_MS = 2000;
 
 /** One train in the list on the left: its row, and the part of it that follows the train. */
 interface TrainRow {
@@ -65,7 +64,21 @@ interface TrainRow {
   update(): void;
 }
 
-type Preview = ReturnType<Fleet['previewSpawn']> & { served: number };
+/** What the dock and the footer say of the new train: the answer of `Fleet.dispatchCheck`. */
+interface Check {
+  /** why `create` would refuse it, null when it would roll out */
+  reason: string | null;
+  /** the dock's line: the gate it would take, or what stops it */
+  dock: { text: string; ok: boolean };
+  depot: Station | null;
+  gate: { x: number; y: number } | null;
+  /** the stations the automatic route would visit, in order */
+  auto: string[];
+  /** stations on the depot's rails */
+  served: number;
+  /** how long the answer stands, ms */
+  lifetime: number;
+}
 
 /** Depot: assemble trains from owned rolling stock and program their looped schedule. */
 export class DepotScreen implements Screen {
@@ -75,7 +88,7 @@ export class DepotScreen implements Screen {
   private readonly split = listDetail(360);
   readonly root = this.split.root;
   // the list on the left
-  private readonly newBtn = actionButton(STR.depot.newTrain, () => this.startNew(), {
+  private readonly newBtn = actionButton(STR.depot.newTrain, () => this.showDraft(), {
     icon: 'plus',
     cls: 'dp-new',
   });
@@ -107,7 +120,7 @@ export class DepotScreen implements Screen {
   private routeMode: RouteChoice = 'auto';
   /** depot the new train rolls out of (null: the first one) */
   private depotId: number | null = null;
-  private previewCache: { key: string; at: number; value: Preview } | null = null;
+  private checkCache: { key: string; at: number; value: Check } | null = null;
   onFocusTrain: ((t: Train) => void) | null = null;
   /** the player picked a depot: the game peeks at it and marks the gate */
   onFocusDepot: ((d: Station, gate: { x: number; y: number } | null) => void) | null = null;
@@ -136,11 +149,16 @@ export class DepotScreen implements Screen {
     );
     // the dock stands under the detail pane's scroll
     this.split.root.lastElementChild?.append(this.dock);
-    this.dockLive.text(this.gateLine, () => this.gateText());
-    this.dockLive.tone(this.gateLine, ['ok', 'bad'], () => (this.preview().gate ? 'ok' : 'bad'));
+    this.dockLive.text(this.gateLine, () => this.check().dock.text);
+    // a long refusal is clipped in the dock: the whole of it is the line's title
+    this.dockLive.add(() => {
+      const t = this.check().dock.text;
+      if (this.gateLine.title !== t) this.gateLine.title = t;
+    });
+    this.dockLive.tone(this.gateLine, ['ok', 'bad'], () => (this.check().dock.ok ? 'ok' : 'bad'));
     this.dockLive.text(this.servedLine, () => {
-      const p = this.preview();
-      return p.depot ? `· ${STR.depot.servedBy(p.served)}` : '';
+      const c = this.check();
+      return c.depot ? `· ${STR.depot.servedBy(c.served)}` : '';
     });
     keepScroll(this.root);
   }
@@ -150,7 +168,7 @@ export class DepotScreen implements Screen {
   }
   refresh() {
     // a train recalled elsewhere leaves the screen with it
-    if (this.editing && !this.fleet.trains.includes(this.editing)) this.startNew();
+    if (this.editing && !this.fleet.trains.includes(this.editing)) this.showDraft();
     this.syncTrains();
     if (this.detailSignature() !== this.detailSig) this.renderDetail();
     else {
@@ -187,7 +205,7 @@ export class DepotScreen implements Screen {
           },
         ],
       };
-    const why = this.dispatchWhy();
+    const why = this.check().reason;
     return {
       actions: [
         {
@@ -205,6 +223,13 @@ export class DepotScreen implements Screen {
 
   // ---------------------------------------------------------------- the actions
 
+  /** New train: the train picked is let go, and the draft stands as it was left. */
+  private showDraft() {
+    this.editing = null;
+    this.render();
+  }
+
+  /** A train gone out: the draft is cleared, to be made again. */
   private startNew() {
     this.editing = null;
     this.locoUids = [];
@@ -213,7 +238,7 @@ export class DepotScreen implements Screen {
     this.routeMode = 'auto';
     this.tab = 'consist';
     this.nameField.input.value = '';
-    this.previewCache = null;
+    this.checkCache = null;
     this.render();
   }
 
@@ -233,12 +258,12 @@ export class DepotScreen implements Screen {
     if (!ok || !this.fleet.trains.includes(t)) return;
     const salvage = this.fleet.recall(t);
     if (salvage > 0) this.toast(STR.depot.salvaged(fmtMoney(salvage)), 'info');
-    if (this.editing === t) this.startNew();
-    else this.render();
+    if (this.editing === t) this.editing = null;
+    this.render();
   }
 
   private dispatch() {
-    if (this.dispatchWhy()) return;
+    if (this.check().reason) return;
     const res = this.fleet.create(
       this.locoUids,
       this.wagonUids,
@@ -247,9 +272,12 @@ export class DepotScreen implements Screen {
       this.routeMode === 'auto' || this.routeMode === 'custom' ? 'schedule' : this.routeMode,
       this.depotId,
     );
-    // the preview is a probe: the roll-out can still be refused
-    if (typeof res === 'string') this.toast(res, 'warn');
-    else {
+    // the check can stand a moment behind the track: create has the last word
+    if (typeof res === 'string') {
+      this.toast(res, 'warn');
+      this.checkCache = null;
+      this.onRedraw?.();
+    } else {
       this.toast(STR.depot.dispatched(res.name), 'good');
       this.startNew();
     }
@@ -258,13 +286,13 @@ export class DepotScreen implements Screen {
   /** Track around the depots changed: re-check what can roll out. */
   onTrackChanged() {
     if (!this.root.isConnected) return;
-    this.previewCache = null;
+    this.checkCache = null;
     this.render();
   }
 
   /** The stop editor changed the new train's stops. */
   private stopsEdited() {
-    this.previewCache = null;
+    this.checkCache = null;
     this.drawHead();
     this.onRedraw?.();
   }
@@ -362,8 +390,18 @@ export class DepotScreen implements Screen {
         t.id,
         t.mode,
         t.locos.map((l) => [l.def.id, l.level, l.mode]),
-        t.wagons.map((w) => [w.def.id, w.level]),
-        t.program.map((s) => [s.stationId, s.load, s.unload, s.depart, s.waitFull, s.refuel]),
+        t.wagons.map((w) => [w.def.id, w.level, t.cartMatched(w)]),
+        t.program.map((s) => [
+          s.stationId,
+          s.load,
+          s.unload,
+          s.depart,
+          s.waitFull,
+          s.refuel,
+          s.pass,
+          s.minDwell ?? 0,
+          s.maxDwell ?? 0,
+        ]),
       ]);
     return JSON.stringify([
       this.inventory.free('loco').map((i) => i.uid),
@@ -373,6 +411,7 @@ export class DepotScreen implements Screen {
   }
 
   private renderDetail() {
+    this.pruneDraft();
     const key = this.editing ? `t${this.editing.id}` : `new:${this.tab}`;
     const d = this.split.detail;
     this.live.clear();
@@ -384,6 +423,13 @@ export class DepotScreen implements Screen {
     // another train or another tab starts at the top; a pick in the same list keeps its place
     if (key !== this.shown) d.body.scrollTop = 0;
     this.shown = key;
+  }
+
+  /** The picks that left the free stock go from the draft: the counts and the rows show it. */
+  private pruneDraft() {
+    const free = (k: 'loco' | 'wagon') => this.inventory.free(k).map((i) => i.uid);
+    this.locoUids = pruneToFree(this.locoUids, free('loco'));
+    this.wagonUids = pruneToFree(this.wagonUids, free('wagon'));
   }
 
   /** The head of a new train: the tabs and the summary. */
@@ -616,7 +662,7 @@ export class DepotScreen implements Screen {
     this.locoUids = r.list;
     if (r.full) this.toast(STR.fleet.tooManyLocos(MAX_LOCOS), 'warn');
     // the engines' gauge decides which depots the train can roll out of
-    this.previewCache = null;
+    this.checkCache = null;
     this.render();
   }
   private toggleWagon(uid: number) {
@@ -630,7 +676,7 @@ export class DepotScreen implements Screen {
     const staticMode = this.routeMode === 'auto' || this.routeMode === 'custom';
     const choose = (id: string) => {
       this.routeMode = id as RouteChoice;
-      this.previewCache = null;
+      this.checkCache = null;
       this.render();
     };
     const modes = el(
@@ -657,9 +703,7 @@ export class DepotScreen implements Screen {
     if (this.routeMode === 'auto') {
       const row = labelValue(STR.depot.stops, '');
       this.live.text(row.lastElementChild as HTMLElement, () => {
-        const names = this.preview().stops.map(
-          (s) => this.builder.stationById(s.stationId)?.name ?? '?',
-        );
+        const names = this.check().auto;
         return names.length ? names.join(' > ') : STR.depot.noStations;
       });
       content.push(row);
@@ -702,8 +746,8 @@ export class DepotScreen implements Screen {
     const depots = this.depotChoices();
     this.syncDepot();
     const show = () => {
-      const p = this.preview();
-      if (p.depot) this.onFocusDepot?.(p.depot, p.gate);
+      const c = this.check();
+      if (c.depot) this.onFocusDepot?.(c.depot, c.gate);
     };
     this.dockDepots.replaceChildren(
       el('span', { class: 'k-note', text: STR.depot.from }),
@@ -713,7 +757,7 @@ export class DepotScreen implements Screen {
         cls: 'small',
         onChange: (id) => {
           this.depotId = Number(id);
-          this.previewCache = null;
+          this.checkCache = null;
           this.renderDock();
           show();
           this.onRedraw?.();
@@ -724,50 +768,43 @@ export class DepotScreen implements Screen {
     this.dockLive.run();
   }
 
-  /** Where the new train would appear, or why it cannot; looked at again every two seconds. */
-  private preview(): Preview {
+  /**
+   * Whether the new train would roll out, and where: `Fleet.dispatchCheck`, the question `create`
+   * itself asks, so the screen never allows what `create` refuses. It walks the track, so the
+   * answer stands for a while (`checkLifetime`) and is asked again at once when the consist, the
+   * route or the depot changes.
+   */
+  private check(): Check {
     const stops = this.routeMode === 'custom' ? this.schedule : [];
-    const key = JSON.stringify([this.locoUids, stops, this.depotId]);
+    const key = JSON.stringify([this.locoUids, this.wagonUids, stops, this.depotId]);
     const now = performance.now();
-    const c = this.previewCache;
-    if (c && c.key === key && now - c.at < PREVIEW_MS) return c.value;
-    const p = this.fleet.previewSpawn(this.locoUids, stops, this.depotId);
-    const value = { ...p, served: p.depot ? this.fleet.stationsServedBy(p.depot).length : 0 };
-    this.previewCache = { key, at: now, value };
+    const c = this.checkCache;
+    if (c && c.key === key && now - c.at < c.value.lifetime) return c.value;
+    const asked = this.fleet.dispatchCheck(this.locoUids, this.wagonUids, stops, this.depotId);
+    // with no engine yet nothing can be checked, but the dock still says where a train would appear
+    const seen = this.locoUids.length
+      ? asked
+      : { ...this.fleet.previewSpawn([], stops, this.depotId), reason: asked.reason };
+    const depot = seen.depot ?? this.syncDepot() ?? null;
+    const auto = this.fleet.autoSchedule(depot ?? undefined);
+    const first = this.builder.stationById(seen.stops[0]?.stationId);
+    const dock =
+      seen.gate && seen.depot
+        ? {
+            text: STR.depot.gateAt(seen.depot.name, seen.gate.x, seen.gate.y, first?.name ?? '?'),
+            ok: true,
+          }
+        : { text: this.locoUids.length ? (asked.reason ?? '') : (seen.reason ?? ''), ok: false };
+    const value: Check = {
+      reason: asked.reason,
+      dock,
+      depot,
+      gate: seen.gate,
+      auto: auto.map((s) => this.builder.stationById(s.stationId)?.name ?? '?'),
+      served: auto.length,
+      lifetime: checkLifetime(depot !== null && seen.gate === null),
+    };
+    this.checkCache = { key, at: now, value };
     return value;
-  }
-
-  private gateText(): string {
-    const p = this.preview();
-    if (!p.gate || !p.depot) return p.reason ?? '';
-    const first = this.builder.stationById(p.stops[0]?.stationId);
-    return STR.depot.gateAt(p.depot.name, p.gate.x, p.gate.y, first?.name ?? '?');
-  }
-
-  /** Why Dispatch is off, or null. */
-  private dispatchWhy(): string | null {
-    const depot = this.syncDepot();
-    const locos = this.locoUids.flatMap((u) => {
-      const it = this.inventory.byUid(u);
-      return it ? [locoDef(it.defId)] : [];
-    });
-    const wagons = this.wagonUids.flatMap((u) => {
-      const it = this.inventory.byUid(u);
-      return it ? [wagonDef(it.defId)] : [];
-    });
-    const s = this.newPhysics();
-    const barred = depot
-      ? ([...locos, ...wagons]
-          .map((def) => this.fleet.modelDeployReason(def, depot))
-          .find((r) => r !== null) ?? null)
-      : null;
-    return dispatchReason({
-      locos: locos.length,
-      mixedGauge: consistGauge([...locos, ...wagons]) === 'mixed',
-      barred,
-      weight: s.weight,
-      haul: s.haul,
-      preview: this.preview().reason,
-    });
   }
 }

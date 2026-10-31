@@ -181,7 +181,7 @@ describe('the naming rules', () => {
   it("a screen's title equals its menu label", () => {
     expect(STR.depot.title).toBe(STR.topbar.depot);
     expect(STR.contracts.title).toBe(STR.topbar.contracts);
-    expect(STR.craft.title).toBe(STR.topbar.craft);
+    expect(STR.craft.title).toBe(STR.topbar.crafting);
     expect(STR.roster.title).toBe(STR.topbar.roster);
     expect(STR.market.title).toBe(STR.topbar.market);
     expect(STR.settings.title).toBe(STR.topbar.settings);

@@ -213,6 +213,8 @@ export class SettingsScreen implements Screen {
     const info = this.info();
     this.showAutosave();
     const off = { disabled: info.saveOff, title: info.saveOff ? STR.settings.saveOff : undefined };
+    this.nameField.input.disabled = info.saveOff;
+    this.nameField.input.title = off.title ?? '';
     const left = [
       well(
         STR.settings.thisGame,
@@ -294,6 +296,7 @@ export class SettingsScreen implements Screen {
   }
 
   private async saveAs() {
+    if (this.info().saveOff) return;
     const f = this.nameField.input;
     const n = f.value.trim();
     if (!n) return;

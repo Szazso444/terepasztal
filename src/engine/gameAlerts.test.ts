@@ -4,6 +4,7 @@ import { defaultAlertSettings } from '../sim/alerts';
 import type { Notice } from '../sim/notices';
 import { STR } from '../strings';
 import type { SaveGame } from '../sim/save';
+import { FollowCamera } from '../ui/followCamera';
 
 // the age and the upgrade play sounds; the context that plays them is a browser's
 vi.mock('./audio', async (original) => ({
@@ -28,6 +29,7 @@ function standIn(more: Record<string, unknown> = {}) {
     notices: { list: [] as Notice[], push: (n: Notice) => pushed.push(n) },
     ui: { toolbar: { refresh() {} } },
     halos: { spawn() {} },
+    follow: new FollowCamera(),
     ...more,
   });
   const call = (name: string, ...args: unknown[]) =>
@@ -131,6 +133,7 @@ describe('the overview after an alert panned it', () => {
       overviewBanner: { classList: { toggle() {} } },
       toolbar: { root: { style: {} } },
       townPanel: { show() {} },
+      trainPanel: { setOverview() {} },
     },
     build: { setTool() {} },
     overview: {},
@@ -149,6 +152,18 @@ describe('the overview after an alert panned it', () => {
     g.call('setView', 1);
     expect(g.game.overviewFocus).toBeNull();
   });
+
+  it('opening it takes the camera off the train followed, and the panel down', () => {
+    const follow = new FollowCamera();
+    follow.start(7);
+    const overview: boolean[] = [];
+    const ui = { ...view.ui, trainPanel: { setOverview: (on: boolean) => overview.push(on) } };
+    const g = standIn({ ...view, ui, viewTarget: 0, follow });
+    g.call('setView', 1);
+    expect(follow.trainId).toBeNull();
+    g.call('setView', 0);
+    expect(overview).toEqual([true, false]);
+  });
 });
 
 describe('looking at a notice (focusNotice)', () => {
@@ -166,6 +181,14 @@ describe('looking at a notice (focusNotice)', () => {
     g.call('focusNotice', at);
     expect(returnToRts.mock.calls).toEqual([[3, 4]]);
     expect(g.game.overviewFocus).toBeUndefined();
+  });
+
+  it('takes the camera off the train followed', () => {
+    const follow = new FollowCamera();
+    follow.start(7);
+    const g = standIn({ viewTarget: 0, returnToRts: vi.fn(), follow });
+    g.call('focusNotice', at);
+    expect(follow.trainId).toBeNull();
   });
 
   it('pans the overview and stays in it, the camera following for the way out', () => {
