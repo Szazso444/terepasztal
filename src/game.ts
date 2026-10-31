@@ -1222,7 +1222,8 @@ export class Game implements UiHost {
     );
     this.loop.start();
     window.addEventListener('beforeunload', () => {
-      if (this.settings.autosave && this.mode === 'play') this.save(true);
+      // the world under the title at boot is no game: a reload does not store it as one
+      if (this.settings.autosave && this.mode === 'play' && this.ui.gameInPlay) this.save(true);
     });
     await onProgress?.('renderer', 1);
   }
