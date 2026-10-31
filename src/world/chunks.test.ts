@@ -18,7 +18,7 @@ import {
   type MapGenerator,
 } from './chunks';
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './mapgen';
-import { levelAt, tileLevels } from './elevation';
+import { MAX_LEVEL, NO_LEVEL, levelAt, tileLevels } from './elevation';
 import { bytesOf, oldChunkText, textOf, type OldVersion } from './oldChunkTexts';
 import { MAX_DROP, fallFeature } from './waterfalls';
 import { Dir } from '../engine/iso';
@@ -190,6 +190,40 @@ describe('chunk keys', () => {
 });
 
 describe('a chunk text', () => {
+  it('round-trips a chunk with levels 0 to 16', () => {
+    const map = emptyMap(7412, 32, 32, Terrain.Grass, 0, 0);
+    const levels = (map.generatedLevel = new Uint8Array(32 * 32).fill(NO_LEVEL));
+    // every level in turn in rows of ground, a stretch of tiles with none, terrain of every kind
+    for (let i = 0; i < levels.length; i++) {
+      map.terrain[i] = (i * 7 + (i >> 5)) % 16;
+      if (i % 37 > 3) levels[i] = (i + (i >> 5)) % (MAX_LEVEL + 1);
+    }
+    expect(new Set(levels)).toEqual(new Set([...Array(MAX_LEVEL + 1).keys(), NO_LEVEL]));
+    const c = decodeChunk(encodeChunk(map, 0, 0))!;
+    expect(c.version).toBe(CHUNK_VERSION);
+    expect(c.generatedLevel).toEqual(levels);
+    const placed = emptyMap(7412, 32, 32, Terrain.Grass, 0, 0);
+    placeChunk(placed, 0, 0, c);
+    expect(placed.generatedLevel).toEqual(levels);
+    // flat ground at level 0 is a plane too, not the absence of one
+    map.generatedLevel.fill(0);
+    expect(decodeChunk(encodeChunk(map, 0, 0))!.generatedLevel).toEqual(new Uint8Array(1024));
+    // a map without the plane reads back with every tile at NO_LEVEL, and builds none
+    delete map.generatedLevel;
+    const bare = decodeChunk(encodeChunk(map, 0, 0))!;
+    expect(bare.generatedLevel).toEqual(new Uint8Array(1024).fill(NO_LEVEL));
+    const empty = emptyMap(7412, 32, 32, Terrain.Grass, 0, 0);
+    placeChunk(empty, 0, 0, bare);
+    expect(empty.generatedLevel).toBeUndefined();
+  });
+
+  it('refuses a level over MAX_LEVEL that is not NO_LEVEL', () => {
+    const map = emptyMap(1, 4, 4);
+    map.generatedLevel = new Uint8Array(16).fill(NO_LEVEL);
+    map.generatedLevel[5] = MAX_LEVEL + 1;
+    expect(() => encodeChunk(map, 0, 0)).toThrow(/levels 0 to 16/);
+  });
+
   // A chunk text in a save must mean the same to every later version. These bytes are version 1,
   // as the encoding's description in chunks.ts spells it out: header 01 01 02 03 02, terrain runs
   // 01 10 61 30, biome 05, variant C1 0E, then two tiles of props (the reeds' variant escaped).
@@ -679,6 +713,53 @@ describe('a map built from stored chunks', () => {
   }, 15_000);
 });
 
+describe('the levels of a map built from stored chunks', () => {
+  // a chunk text of version 5: a text of version 6 with no level set holds the same bytes but its
+  // first, which this checks, so no writer of version 5 is needed
+  const asVersion5 = (text: string) => {
+    const bytes = bytesOf(text);
+    bytes[0] = 5;
+    const old = textOf(bytes);
+    expect(decodeChunk(old)?.version).toBe(5);
+    return old;
+  };
+
+  it('are filled from the old rule where no chunk sets one, so a map from version 5 chunks has the levels it had', () => {
+    const seed = 20260912;
+    const params = { w: 64, h: 32 };
+    const made = buildMap(seed, params, {});
+    expect(made.map.generatedLevel).toBeUndefined();
+    const had = tileLevels(made.map);
+    expect(Math.max(...had)).toBeGreaterThanOrEqual(2);
+
+    // every chunk of version 5: the map keeps the one-level rule and the levels it had
+    const old = Object.fromEntries(Object.entries(made.chunks).map(([k, t]) => [k, asVersion5(t)]));
+    const read = buildMap(seed, params, old, never);
+    expect(read.map.generatedLevel).toBeUndefined();
+    expect(tileLevels(read.map)).toEqual(had);
+    expect(read.chunks).toEqual(old);
+
+    // chunk (1, 0) of version 6 with its levels, chunk (0, 0) of version 5: the tiles the plane
+    // does not set are filled, and the levels across the map are the ones it had
+    const m = emptyMap(seed, params.w, params.h);
+    for (const [k, t] of Object.entries(made.chunks)) {
+      const { cx, cy } = parseChunkKey(k)!;
+      placeChunk(m, cx, cy, decodeChunk(t)!);
+    }
+    const plane = (m.generatedLevel = new Uint8Array(params.w * params.h).fill(NO_LEVEL));
+    for (let y = 0; y < params.h; y++)
+      for (let x = CHUNK_TILES; x < params.w; x++) plane[y * params.w + x] = had[y * params.w + x];
+    const mixed: ChunkStore = { '0,0': old['0,0'], '1,0': encodeChunk(m, 1, 0) };
+    expect(decodeChunk(mixed['1,0'])!.generatedLevel.some((v) => v !== NO_LEVEL)).toBe(true);
+    const built = buildMap(seed, params, mixed, never);
+    const levels = built.map.generatedLevel!;
+    expect(levels.includes(NO_LEVEL)).toBe(false);
+    expect(levels).toEqual(had);
+    expect(tileLevels(built.map)).toEqual(had);
+    expect(built.chunks).toEqual(mixed);
+  });
+});
+
 describe('the production chain of a built map', () => {
   // The chain is an argument of generation (#280), not the game-wide switch. The switch is module
   // state shared with every other test in the worker, so each case starts and ends with the default.
@@ -934,6 +1015,8 @@ interface Garbled {
   salt: number;
   edit: number;
 }
+/** The versions a test can write a text in: the oracle's (1 to 4) and today's. */
+const WRITABLE = [1, 2, 3, 4, CHUNK_VERSION];
 const genGarbled = (rng: Rng): Garbled => {
   const w = rng.int(1, 32);
   const h = rng.int(1, 32);
@@ -941,7 +1024,7 @@ const genGarbled = (rng: Rng): Garbled => {
   return {
     how,
     // a props section by hand goes last, where versions 1 and 2 have theirs
-    version: how === 'props written by hand' ? rng.int(1, 2) : rng.int(1, CHUNK_VERSION),
+    version: how === 'props written by hand' ? rng.int(1, 2) : rng.pick(WRITABLE),
     x0: rng.int(0, 32 - w),
     y0: rng.int(0, 32 - h),
     w,
@@ -1389,6 +1472,7 @@ const plain = (c: ChunkPlanes) => ({
   flow: [...c.flow],
   flowDir: [...c.flowDir],
   feature: [...c.feature],
+  generatedLevel: [...c.generatedLevel],
   props: [...c.props].sort((a, b) => a[0] - b[0]),
 });
 
@@ -1405,6 +1489,7 @@ function planesDiffer(a: ChunkPlanes, b: ChunkPlanes): string | null {
     'flow',
     'flowDir',
     'feature',
+    'generatedLevel',
   ] as const) {
     if (a[k].constructor !== b[k].constructor || a[k].length !== b[k].length) return `${k}'s plane`;
     for (let i = 0; i < a[k].length; i++)
@@ -1417,7 +1502,7 @@ function planesDiffer(a: ChunkPlanes, b: ChunkPlanes): string | null {
 /**
  * What a text of `version` holds of chunk planes `c`: all of them but those the version came
  * before, which read empty (its climate its biome before 2, no water planes before 3, no water
- * features before 4).
+ * features before 4, no generated levels before 6).
  */
 function heldBy(c: ChunkPlanes, version: number): ChunkPlanes {
   const n = c.w * c.h;
@@ -1429,6 +1514,7 @@ function heldBy(c: ChunkPlanes, version: number): ChunkPlanes {
     flow: version >= 3 ? c.flow : new Uint16Array(n),
     flowDir: version >= 3 ? c.flowDir : new Uint8Array(n),
     feature: version >= 4 ? c.feature : new Uint8Array(n),
+    generatedLevel: version >= 6 ? c.generatedLevel : new Uint8Array(n).fill(NO_LEVEL),
   };
 }
 
@@ -1472,6 +1558,7 @@ describe('chunk texts of every version (#392)', () => {
     flow: Uint16Array.of(5, 7, 0, 0, 0, 0),
     flowDir: Uint8Array.of(Dir.E + 1, Dir.E + 1, 0, 0, 0, 0),
     feature: Uint8Array.of(0, fallFeature(1, Dir.E), 0, 0, 0, 0),
+    generatedLevel: new Uint8Array(6).fill(NO_LEVEL),
   };
 
   it('of versions 3 and 4 decodes as it always has', () => {
@@ -1484,11 +1571,12 @@ describe('chunk texts of every version (#392)', () => {
     expect(oldChunkText(spelled, 3)).toBe(v3);
   });
 
-  // Version 5's texts pinned the same way: the planes above as chunk (-1, 2) of a world of seed
-  // 7412; and the 12 x 10 tiles from (0, 0) that generateMap made for seed 7412 in the full chain,
-  // as version 4 and version 5 store them. A change to version 5's model reads them otherwise, so
-  // it needs a version of its own.
+  // Version 5's and 6's texts pinned the same way: the planes above as chunk (-1, 2) of a world of
+  // seed 7412; and the 12 x 10 tiles from (0, 0) that generateMap made for seed 7412 in the full
+  // chain, as version 4, 5 and 6 store them. A change to version 5's or 6's model reads them
+  // otherwise, so it needs a version of its own.
   const V5_SPELLED = 'BQECAwLocwEEOAHBhXgCXXpQWJ6XfMJBx1qzwAAA';
+  const V6_SPELLED = 'BgECAwLocwEEOAHBhXgCXXpQWJ6XfMJBx1qzwAAA';
   const V4_GENERATED =
     'BAAADAoxUQVRMFEGUTBQCTBQCTBQECIFMBEiBTARIgUwEgc0BhMwBmEJYApwCnAQCXARCHASB3ASB3ASB3QGE3AGDwgQ' +
     'ChEJEggTB0ASB0ASB0ATBhQGU5OQZSfuZNXjzplKSdgG7IQjgJjKIPShq+aAUXjnGkhDWFMoI8S3AAMQFgBq/M0sCirt' +
@@ -1498,21 +1586,34 @@ describe('chunk texts of every version (#392)', () => {
   const V5_GENERATED =
     'BQAADArocwAAOUQvcR4Qb3RdCjxBkI+u6PfnF9PI9ntMvf+nyPkEohffnQoZpCeKLRzE/NrlWJpVpPRtghPqIswmBOaB' +
     'cBxtcckNMBR2NUsM4r8vAg==';
+  const V6_GENERATED =
+    'BgAADArocwAAOUQvcR4Qb3RdCjxBkI+u6PfnF9PI9ntMvf+nyPkEohffnQoZpCeKLRzE/NrlWJpVpPRtghPqIswmBOaB' +
+    'cBxtcckNMBR2NUsM4r8vAg==';
 
-  it('of version 5 decodes as it always has, and is written so again', () => {
-    expect(decodeChunk(V5_SPELLED)).toEqual({ ...spelled, version: 5 });
+  it('of version 5 decodes as it always has, with every generated level NO_LEVEL', () => {
+    const c = decodeChunk(V5_SPELLED)!;
+    expect(c).toEqual({ ...spelled, version: 5 });
+    expect(c.generatedLevel).toEqual(new Uint8Array(6).fill(NO_LEVEL));
+    const g = decodeChunk(V5_GENERATED)!;
+    expect(g.generatedLevel).toEqual(new Uint8Array(120).fill(NO_LEVEL));
+  });
+
+  it('of version 6 decodes as it always has, and is written so again', () => {
+    expect(decodeChunk(V6_SPELLED)).toEqual({ ...spelled, version: 6 });
     const m = emptyMap(7412, 3, 2, Terrain.Grass, -CHUNK_TILES + 1, 2 * CHUNK_TILES + 2);
     placeChunk(m, -1, 2, decodeChunk(V5_SPELLED)!);
-    expect(encodeChunk(m, -1, 2)).toBe(V5_SPELLED);
+    expect(encodeChunk(m, -1, 2)).toBe(V6_SPELLED);
     // the generated tiles: rivers, oil and five kinds of tree among them, the same in both texts
     const v4 = decodeChunk(V4_GENERATED)!;
     expect(v4.flowDir.filter((d) => d).length).toBeGreaterThan(0);
     expect(new Set([...v4.props.values()].flat().map((p) => p.kind)).size).toBeGreaterThan(5);
     expect(plain(decodeChunk(V5_GENERATED)!)).toEqual(plain({ ...v4, version: 5 }));
+    expect(plain(decodeChunk(V6_GENERATED)!)).toEqual(plain({ ...v4, version: 6 }));
     const g = emptyMap(7412, 12, 10);
     placeChunk(g, 0, 0, v4);
-    expect(encodeChunk(g, 0, 0)).toBe(V5_GENERATED);
+    expect(encodeChunk(g, 0, 0)).toBe(V6_GENERATED);
     expect(V5_GENERATED.length).toBeLessThan(V4_GENERATED.length / 2);
+    expect(V6_GENERATED.length).toBeLessThan(V4_GENERATED.length / 2);
   });
 
   // six worlds of 49 chunks, each chunk read from a text of every version and written again:
@@ -1572,14 +1673,14 @@ describe('chunk texts of every version (#392)', () => {
   }, 60_000);
 
   it("guesses a chunk's variants from its world's seed, whatever number the seed is", () => {
-    // the head spelled out: version 5 and the rectangle; the seed as a zigzagged varint (7412: E8
+    // the head spelled out: version 6 and the rectangle; the seed as a zigzagged varint (7412: E8
     // 73), or as the varint 2^53 - 1 (FF seven times, 0F) and its float64, the lowest byte first
     // (0.5: 00 six times, E0 3F); then cx and cy zigzagged (-3: 05, 2: 04)
     const head = (seed: number) =>
       bytesOf(encodeChunk(emptyMap(seed, 1, 1, Terrain.Grass, -3 * CHUNK_TILES, 64), -3, 2));
-    expect(head(7412).slice(0, 9)).toEqual([5, 0, 0, 1, 1, 0xe8, 0x73, 5, 4]);
+    expect(head(7412).slice(0, 9)).toEqual([CHUNK_VERSION, 0, 0, 1, 1, 0xe8, 0x73, 5, 4]);
     const float = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f, 0, 0, 0, 0, 0, 0, 0xe0, 0x3f];
-    expect(head(0.5).slice(0, 23)).toEqual([5, 0, 0, 1, 1, ...float, 5, 4]);
+    expect(head(0.5).slice(0, 23)).toEqual([CHUNK_VERSION, 0, 0, 1, 1, ...float, 5, 4]);
     // emptyMap's variants are map generation's: guessed from the seed, a chunk of them costs a bit
     // a row; missed, two bits a tile, 256 bytes for the chunk
     for (const seed of [...ANY_SEEDS, -0, -Infinity, NaN, Number.MAX_VALUE, -Number.MIN_VALUE])
@@ -1599,9 +1700,10 @@ describe('chunk texts of every version (#392)', () => {
   it("loads a store holding chunks of every version unchanged, and grows it in today's", () => {
     const params = { w: 224, h: 224, originX: -96, originY: -96 };
     const made = buildMap(7412, params, {});
-    // each chunk in a version 1 to CHUNK_VERSION by where it lies
+    // each chunk in a version of WRITABLE by where it lies (version 5 has no oracle here, and is
+    // read from its pinned texts above and in the test of buildMap below)
     const versionAt = (cx: number, cy: number) =>
-      ((((cx + 2 * cy) % CHUNK_VERSION) + CHUNK_VERSION) % CHUNK_VERSION) + 1;
+      WRITABLE[(((cx + 2 * cy) % WRITABLE.length) + WRITABLE.length) % WRITABLE.length];
     const store: ChunkStore = {};
     // the map as each chunk's own version reads it
     const want = emptyMap(7412, params.w, params.h, Terrain.Grass, params.originX, params.originY);
@@ -1612,7 +1714,7 @@ describe('chunk texts of every version (#392)', () => {
       placeChunk(want, cx, cy, heldBy(decodeChunk(text)!, v));
     }
     const versions = new Set(Object.values(store).map((t) => decodeChunk(t)!.version));
-    expect([...versions].sort()).toEqual(Array.from({ length: CHUNK_VERSION }, (_, k) => k + 1));
+    expect([...versions].sort()).toEqual(WRITABLE);
     // loaded as a game loads its ground: nothing generated, every text kept as it was
     const world: GeneratedWorld = {
       kind: 'generated',
@@ -1848,6 +1950,7 @@ function planesOfMap(map: GameMap, x0: number, y0: number, version: number): Chu
     flow: map.flow ?? new Uint16Array(n),
     flowDir: map.flowDir ?? new Uint8Array(n),
     feature: map.feature ?? new Uint8Array(n),
+    generatedLevel: map.generatedLevel ?? new Uint8Array(n).fill(NO_LEVEL),
   };
 }
 /** Whether versions 1 to 4 can hold the variants of every prop of `map`. */
