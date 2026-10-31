@@ -1,6 +1,6 @@
 import { levelAt, type Elevated } from './elevation';
 import { Terrain } from './tiles';
-import type { TrackGraph } from './track';
+import type { TrackGraph, TrackPiece } from './track';
 import { Dir, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 
 /**
@@ -28,6 +28,11 @@ export interface RailBed {
 
 /** What a profile reads levels from: the terrain, and the water levels where the map has them. */
 type Levels = Elevated;
+/**
+ * The height a bridge platform's deck is stored at, in levels (absolute, like the terrain's);
+ * undefined where the platform is automatic or there is none.
+ */
+export type DeckAt = (x: number, y: number) => number | undefined;
 
 /** Rail height in levels at position `t` along the bed's axis. */
 export function railLevel(bed: RailBed, t: number): number {
@@ -63,19 +68,24 @@ export function climbAxes(links: readonly (readonly [number, number])[]): ('x' |
 /**
  * Deck level of a curve or switch carried by bridge platforms: the level of the rails it meets
  * off the bridge (neighbours across its links that stand on the ground), or its highest tile when
- * every neighbour is on a platform too. Null when the rails it meets disagree, or the deck would
- * sit below the ground under one of its tiles.
+ * every neighbour is on a platform too. A stored deck under it comes first. Null when the rails
+ * it meets or its stored decks disagree, or the deck would sit below the ground under one of its
+ * tiles.
  */
 export function supportedDeck(
   map: Levels,
   members: readonly { x: number; y: number; links: readonly (readonly [number, number])[] }[],
   bridgeAt: (x: number, y: number) => boolean,
+  deckAt: DeckAt = () => undefined,
 ): number | null {
   const inside = new Set(members.map((m) => m.y * map.w + m.x)),
-    meets = new Set<number>();
+    meets = new Set<number>(),
+    stored = new Set<number>();
   let top = 0;
   for (const m of members) {
     top = Math.max(top, levelAt(map, m.x, m.y));
+    const own = deckAt(m.x, m.y);
+    if (own !== undefined) stored.add(own);
     for (const link of m.links)
       for (const d of link) {
         const nx = m.x + DIR_DX[d],
@@ -84,8 +94,8 @@ export function supportedDeck(
         meets.add(levelAt(map, nx, ny));
       }
   }
-  if (meets.size > 1) return null;
-  const deck = meets.size ? [...meets][0] : top;
+  if (stored.size > 1 || (!stored.size && meets.size > 1)) return null;
+  const deck = stored.size ? [...stored][0] : meets.size ? [...meets][0] : top;
   return deck < top ? null : deck;
 }
 
@@ -100,7 +110,8 @@ export function bedFor(bed: RailBed, x: number, y: number): RailBed {
 
 /**
  * Height profile of every straight rail line (rules: docs/rail-inclines.md). Each tile of a line
- * has a level: its terrain level, or on a bridge the deck level of the higher abutment. Tiles at
+ * has a level: its terrain level, or on a bridge the deck: its stored height (`deckAt`), else the
+ * level of the higher abutment. The rail ramps up to a stored deck one level per tile. Tiles at
  * a level change are transitions (the rail bends a little), a level tile between two transitions
  * of one staircase keeps climbing (incline), and every other tile is level. A run of transitions
  * and inclines climbs from the level before it to the level after it, easing in and out; a crest
@@ -111,6 +122,7 @@ export function railProfile(
   map: Levels,
   track: TrackGraph,
   bridgeAt: (x: number, y: number) => boolean = () => false,
+  deckAt: DeckAt = () => undefined,
 ): Map<number, RailBed> {
   const beds = new Map<number, RailBed>(),
     axesAt = (x: number, y: number) => {
@@ -128,7 +140,7 @@ export function railProfile(
       const tiles: [number, number][] = [];
       for (let tx = x, ty = y; axesAt(tx, ty).includes(axis); tx += dx, ty += dy)
         tiles.push([tx, ty]);
-      lineProfile(map, track, tiles, axis, bridgeAt, beds);
+      lineProfile(map, track, tiles, axis, bridgeAt, deckAt, beds);
     }
   }
   // Curves and switches carried by bridge platforms sit at the deck (supportedDeck).
@@ -141,8 +153,8 @@ export function railProfile(
       links: track.get(t.x, t.y)?.links ?? [],
     }));
     const deck =
-      supportedDeck(map, members, bridgeAt) ??
-      Math.max(...members.map((t) => levelAt(map, t.x, t.y)));
+      supportedDeck(map, members, bridgeAt, deckAt) ??
+      Math.max(...members.map((t) => Math.max(levelAt(map, t.x, t.y), deckAt(t.x, t.y) ?? 0)));
     beds.set(k, {
       axis: 'x',
       spans: [{ from: x - 2, to: x + 2, a: deck, b: deck }],
@@ -159,6 +171,7 @@ function lineProfile(
   tiles: [number, number][],
   axis: 'x' | 'y',
   bridgeAt: (x: number, y: number) => boolean,
+  deckAt: DeckAt,
   beds: Map<number, RailBed>,
 ) {
   const start = axis === 'x' ? tiles[0][0] : tiles[0][1],
@@ -170,7 +183,15 @@ function lineProfile(
     under = tiles.map(([x, y], i) =>
       map.terrain[y * map.w + x] === Terrain.Water ? terrain[i] : 0,
     ),
-    { spans, levels } = lineSpans(terrain, bridge, start, pinned, under);
+    decks = tiles.map(([x, y], i) => (bridge[i] ? deckAt(x, y) : undefined)),
+    // A curve or switch on a stored deck at an end of the line: the rail ramps up to it too.
+    [back, on] = axis === 'x' ? [Dir.W, Dir.E] : [Dir.N, Dir.S],
+    beyond = ([x, y]: [number, number], d: Dir) =>
+      track.connected(x, y, d) ? deckAt(x + DIR_DX[d], y + DIR_DY[d]) : undefined,
+    { spans, levels } = lineSpans(terrain, bridge, start, pinned, under, decks, [
+      beyond(tiles[0], back),
+      beyond(tiles[tiles.length - 1], on),
+    ]);
   tiles.forEach(([x, y], i) => {
     const c = start + i,
       k = y * map.w + x,
@@ -193,8 +214,10 @@ function lineProfile(
 /**
  * Profile spans of one straight line whose tiles have the given terrain levels, the first tile
  * centred at `start` along the axis. `under` is the least a bridge deck may stand at over each
- * tile: the level of the water under it (raised water), 0 where none is given. Returns the spans
- * and the rail level of each tile.
+ * tile: the level of the water under it (raised water), 0 where none is given. `decks` is the
+ * height stored for a deck, undefined where it is automatic, and `ends` the stored decks the line
+ * meets just past its two ends: the rail ramps up to a stored deck one level per tile, over ground
+ * that lies lower. Returns the spans and the rail level of each tile.
  */
 export function lineSpans(
   terrain: readonly number[],
@@ -202,16 +225,26 @@ export function lineSpans(
   start = 0,
   pinned: readonly boolean[] = [],
   under: readonly number[] = [],
+  decks: readonly (number | undefined)[] = [],
+  ends: readonly [number?, number?] = [],
 ) {
   const n = terrain.length,
     r = [...terrain],
-    along = (i: number) => start + i;
-  // A bridge deck carries the rail level from its higher abutment across the dip, and stands no
-  // lower than the water it crosses.
+    along = (i: number) => start + i,
+    stored = (i: number) => (bridge[i] ? decks[i] : undefined),
+    automatic = (i: number) => bridge[i] && stored(i) === undefined,
+    [before, after] = ends;
+  // A stored deck stands at its height, never below the ground or the water under it.
   for (let i = 0; i < n; i++) {
-    if (!bridge[i]) continue;
+    const deck = stored(i);
+    if (deck !== undefined) r[i] = Math.max(deck, terrain[i], under[i] ?? 0);
+  }
+  // An automatic deck carries the rail level from its higher abutment across the dip, and stands
+  // no lower than the water it crosses.
+  for (let i = 0; i < n; i++) {
+    if (!automatic(i)) continue;
     let j = i;
-    while (j + 1 < n && bridge[j + 1]) j++;
+    while (j + 1 < n && automatic(j + 1)) j++;
     const ends = [i > 0 ? r[i - 1] : null, j + 1 < n ? r[j + 1] : null].filter(
       (v): v is number => v !== null,
     );
@@ -222,7 +255,19 @@ export function lineSpans(
     for (let k = i; k <= j; k++) r[k] = deck;
     i = j;
   }
-  const L = (i: number) => r[Math.max(0, Math.min(n - 1, i))],
+  // The rail ramps up to each stored deck from both sides.
+  for (const [from, to, step, end] of [
+    [0, n, 1, before],
+    [n - 1, -1, -1, after],
+  ] as const) {
+    let reach = (end ?? -Infinity) - 1;
+    for (let i = from; i !== to; i += step) {
+      if (stored(i) !== undefined) reach = r[i];
+      else r[i] = Math.max(r[i], reach);
+      reach--;
+    }
+  }
+  const L = (i: number) => (i < 0 ? (before ?? r[0]) : i >= n ? (after ?? r[n - 1]) : r[i]),
     change = (i: number) => L(i + 1) - L(i),
     // Transitions: a level change at either edge.
     bent = r.map((_, i) => change(i - 1) !== 0 || change(i) !== 0),
@@ -266,6 +311,58 @@ export function lineSpans(
     i = q + 1;
   }
   return { spans, levels: r, moving };
+}
+
+/** Where the rail ramps to a stored deck (`rampReach`). */
+export interface RampReach {
+  /** The straight tiles the ramps lift above the ground. */
+  climbs: { x: number; y: number }[];
+  /** Tiles that would have to be lifted but must stay level. */
+  blocked: { x: number; y: number }[];
+}
+/**
+ * What ramping up to the stored decks `decks` does to the track leading away from them, one level
+ * per tile (`lineSpans`). A ramp may only rise under a plain straight: a curve, switch, crossing
+ * or a tile `stays` names must stay level, so it is reported in `blocked`. A ramp ends where it
+ * reaches the ground, where the rail ends, and at a tile of `decks` or one `stops` names (another
+ * stored deck, whose own ramps are its own).
+ */
+export function rampReach(
+  map: Levels,
+  pieceAt: (x: number, y: number) => Pick<TrackPiece, 'links' | 'unit'> | undefined,
+  decks: readonly { x: number; y: number; deck: number }[],
+  stays: (x: number, y: number) => boolean = () => false,
+  stops: (x: number, y: number) => boolean = () => false,
+): RampReach {
+  const inside = new Set(decks.map((t) => t.y * map.w + t.x)),
+    seen = new Set<number>(),
+    climbs: RampReach['climbs'] = [],
+    blocked: RampReach['blocked'] = [];
+  for (const t of decks)
+    for (const d of new Set(pieceAt(t.x, t.y)?.links.flat())) {
+      const back = opposite(d);
+      let need = t.deck,
+        x = t.x,
+        y = t.y;
+      for (;;) {
+        x += DIR_DX[d];
+        y += DIR_DY[d];
+        need--;
+        const k = y * map.w + x,
+          q = pieceAt(x, y);
+        if (inside.has(k) || stops(x, y) || !q?.links.flat().includes(back)) break;
+        if (need <= levelAt(map, x, y)) break;
+        const plain = !q.unit && q.links.length === 1 && q.links[0].includes(d);
+        if (!plain || stays(x, y)) {
+          if (!seen.has(k)) blocked.push({ x, y });
+          seen.add(k);
+          break;
+        }
+        if (!seen.has(k)) climbs.push({ x, y });
+        seen.add(k);
+      }
+    }
+  return { climbs, blocked };
 }
 
 /** Speed while climbing: half. */
