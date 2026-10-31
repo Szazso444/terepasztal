@@ -1,4 +1,6 @@
+import { cargoWord } from '../sim/cargo';
 import { STR } from '../strings';
+import { fmtDecimal } from './numberFormat';
 
 /**
  * What the Train screen says and decides, as plain functions over plain data: the tanks and their
@@ -55,7 +57,7 @@ export function tankRows(t: TankInput, oilName: string): TankRow[] {
     rows.push({
       key: 'fuel',
       icon: t.fuelKind,
-      label: `${STR.train.fuel} (${t.fuelKind})`,
+      label: `${STR.train.fuel} (${cargoWord(t.fuelKind)})`,
       value: t.coal,
       cap: t.coalCap,
       tone: tankTone(t.coal, t.coalCap, t.coalRate),
@@ -115,10 +117,10 @@ export function perTileText(t: {
   powerRate: number;
 }): string {
   const rate = [
-    t.coalRate > 0 ? `${t.coalRate.toFixed(2)} ${t.fuelKind}` : '',
-    t.waterRate > 0 ? `${t.waterRate.toFixed(2)} water` : '',
-    t.oilRate > 0 ? `${t.oilRate.toFixed(2)} ${t.oilKind}` : '',
-    t.powerRate > 0 ? `${t.powerRate.toFixed(2)} power` : '',
+    t.coalRate > 0 ? `${fmtDecimal(t.coalRate, 2)} ${cargoWord(t.fuelKind)}` : '',
+    t.waterRate > 0 ? `${fmtDecimal(t.waterRate, 2)} ${cargoWord('water')}` : '',
+    t.oilRate > 0 ? `${fmtDecimal(t.oilRate, 2)} ${cargoWord(t.oilKind)}` : '',
+    t.powerRate > 0 ? `${fmtDecimal(t.powerRate, 2)} ${cargoWord('power')}` : '',
   ].filter(Boolean);
   return rate.join(', ') || '-';
 }
@@ -128,7 +130,12 @@ export function recordText(rec: Record<string, number>): string {
   return (
     Object.entries(rec)
       .filter(([, v]) => v >= 0.05)
-      .map(([k, v]) => `${Math.round(v * 10) / 10} ${k.replace('refuel_', '+')}`)
+      .map(([k, v]) => {
+        const amount = fmtDecimal(Math.round(v * 10) / 10);
+        return k.startsWith('refuel_')
+          ? `${amount} +${cargoWord(k.slice('refuel_'.length))}`
+          : `${amount} ${cargoWord(k)}`;
+      })
       .join(', ') || '-'
   );
 }

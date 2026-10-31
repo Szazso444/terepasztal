@@ -3,6 +3,7 @@
  * leave, how the pool of an age is grouped, when the unlock button is off and why, and what a
  * waiting draw holds the choices at. DOM-free, so it runs under Node.
  */
+import { cargoWord } from '../sim/cargo';
 
 /** Recipe list filters, in strip order: everything, a locomotive type or what a wagon carries. */
 export const RECIPE_FILTERS = [
@@ -97,5 +98,5 @@ export function knownShare(
 
 /** The materials line of the foot: each resource and how much of it the store holds, whole. */
 export function stockLine(keys: readonly string[], have: (k: string) => number): string {
-  return keys.map((k) => `${Math.floor(have(k))} ${k}`).join(' · ');
+  return keys.map((k) => `${Math.floor(have(k))} ${cargoWord(k)}`).join(' · ');
 }

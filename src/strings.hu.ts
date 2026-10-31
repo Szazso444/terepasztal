@@ -24,6 +24,8 @@ const grouped = (v: number) => Math.round(v).toLocaleString('en-US').replace(/,/
 const money = (v: number) => `${grouped(v)} $`;
 /** A number with a decimal comma. */
 const dec = (v: number, digits = 2) => v.toFixed(digits).replace('.', ',');
+/** A number as it is, with a decimal comma. */
+const comma = (v: number) => String(v).replace('.', ',');
 
 export const HU: Strings = {
   title: 'Terepasztal',
@@ -187,7 +189,7 @@ export const HU: Strings = {
     track: (k: string) => `Sín: ${k}`,
     powered: 'Feszültség alatti sín',
     noTrack: 'Ide nem lehet sínt fektetni',
-    trackCost: (m: number) => `Sínköltség ×${dec(m, Number.isInteger(m) ? 0 : 1)}`,
+    trackCost: (m: number) => `Sínköltség ×${comma(m)}`,
     water: 'Csak híd; a szivattyúk innen merítenek.',
     biome: 'Biom',
     phrase: {
@@ -207,7 +209,7 @@ export const HU: Strings = {
   },
   placing: {
     title: (station: string) => `${station} ide`,
-    ring: '{n} {tiles}, {d} távolságra',
+    ring: '{n} {tiles}, {d} csempére',
     placement: 'Elhelyezés',
     atMost: 'legfeljebb',
     atLeast: 'legalább',
@@ -234,7 +236,8 @@ export const HU: Strings = {
     directions: ['észak', 'kelet', 'dél', 'nyugat'],
     blockHint:
       'A következő, azonos irányú jelzőig védi az előtte lévő sínt. Jelöld ki, és látod a szakaszt.',
-    governs: (dir: string) => `A(z) ${dir} felé haladó vonatokat irányítja`,
+    governs: (dir: string) =>
+      `${dir[0].toUpperCase()}${dir.slice(1)} felé haladó vonatokat irányít`,
     governsTravel: (dir: string) => `Irány: ${dir} felé`,
     rotate: 'Irány forgatása',
     gone: 'Az a jelző már nincs ott',
@@ -345,7 +348,7 @@ export const HU: Strings = {
     reclassFree: (what: string) => `${what}: ingyenes`,
     reclassIdle: (what: string) => `${what}: kattints egy elemre, vagy húzd végig a vonalon`,
     reclassSize: (line: string, need: number, n: number) =>
-      `A(z) ${line} ívei és váltói ${need}×${need} méretűek, ez ${n}×${n}: fektesd le újra a Sín eszközzel`,
+      `A ${line} ívei és váltói ${need}×${need} méretűek, ez ${n}×${n}: fektesd le újra a Sín eszközzel`,
     reclassLeft: (what: string, n: number) =>
       `${what}: ${n === 1 ? 'egy elem maradt' : `${n} elem maradt`} a régiben (piros)`,
     reclass: {
@@ -367,7 +370,7 @@ export const HU: Strings = {
     },
     standOn: { pump: 'Vízszivattyú csak fűre vagy erdőbe kerülhet.' },
     needGround: (grounds: readonly string[]) => `Ezen kell állnia: ${grounds.join(' vagy ')}`,
-    besideWater: { pump: 'A vízszivattyú közvetlenül a víz mellé kell.' },
+    besideWater: { pump: 'A vízszivattyúnak közvetlenül a víz mellett kell állnia.' },
     needTrack: 'Sínhez kell érnie',
     depotLocked: (n: number) => `A következő fűtőház ${n} saját chunknál nyílik meg`,
     townTooClose: (d: number) => `A városi állomások legalább ${d} csempére legyenek egymástól`,
@@ -380,7 +383,7 @@ export const HU: Strings = {
     roadOnBridge: 'Út a hídon',
     crossingStraight: 'Út csak sima egyenes sínt keresztezhet: ívet, váltót vagy keresztezést nem',
     crossingLine: 'Ezen a vonalon nem lehet útátjáró',
-    crossingAlong: 'Az út derékszögben keresztezi a sínt, sosem mentén fut',
+    crossingAlong: 'Az út derékszögben keresztezi a sínt, sosem fut vele párhuzamosan',
     roadLine: (tiles: number, cost: string) => `${tiles} útcsempe: ${cost}`,
     roadNotLaid: (tiles: number, reasons: readonly string[]) =>
       `${tiles} csempe nem készült el: ${reasons.join(' · ')}`,
@@ -389,7 +392,7 @@ export const HU: Strings = {
       `${range} csempén belül nincs készlet, amelyben megvan: ${missing}`,
     paidFrom: (label: string) => `Fizetve innen: ${label}`,
     replace: (what: string, net: string) => `Csere: ${what}, nettó ${net}`,
-    levelOpens: (level: number, age: string) => `A ${level}. szint itt nyílik meg: ${age}`,
+    levelOpens: (level: number, age: string) => `${level}. szint: ${age} nyitja meg`,
     upgradingNow: 'Már fejlesztés alatt áll',
     cost: (v: string) => `Költség: ${v}`,
     refund: (v: string) => `Visszatérítés: ${v}`,
@@ -590,7 +593,7 @@ export const HU: Strings = {
     ecoMode: (n: string) => `${n}: fogytán az üzemanyag, takarékosan halad`,
     held: (n: string) => `${n}: a forgalom feltartja`,
     junction: (level: string, x: number, y: number, trains: number, wait: number) =>
-      `${level} csomópont itt: ${x},${y}: ${trains} vonat, ${wait} mp veszteség`,
+      `${level} csomópont (${x},${y}): ${trains} vonat, ${wait} mp veszteség`,
     junctionLevel: {
       info: 'Forgalmas',
       minor: 'Torlódó',
@@ -605,11 +608,11 @@ export const HU: Strings = {
     storeFull: (n: string, goods: string) => `${n}: tele a készlet: ${goods}`,
     contractFailed: (n: string) => `Nem teljesült szerződés: ${n}`,
     contractDone: (n: string) => `Teljesült a szerződés: ${n}`,
-    contractAtRisk: (n: string) => `Szerződés, amely kifut az időből: ${n}`,
+    contractAtRisk: (n: string) => `Kifut az időből a szerződés: ${n}`,
     contractOffered: (n: string) => `Új szerződésajánlat: ${n}`,
     arrived: (train: string, station: string) => `${train} megérkezett: ${station}`,
     contractNoTrain: (n: string) =>
-      `Egyik vonat sem tudja teljesíteni: „${n}”: rossz kocsik, nincs sín, vagy nincs hatótáv`,
+      `„${n}”: egyik vonat sem tudja teljesíteni (rossz kocsik, nincs sín vagy nincs hatótáv)`,
     famine: 'Elfogyott a személyzet élelme',
   },
   alerts: {
@@ -691,7 +694,7 @@ export const HU: Strings = {
         `Megengedhetsz magadnak egy új chunkot (${v}). Nyomd meg az M-et, és kattints egy feltérképezetlen chunkra a terjeszkedéshez.`,
       offers: (n: number) => `${n} szerződésajánlat vár a Szerződéseknél (C).`,
       failed: (n: string) =>
-        `A(z) „${n}” szerződés nem teljesült. Csak olyat vállalj, amely útba esik a vonataidnak, és figyeld a határidőt.`,
+        `Nem teljesült a szerződés: „${n}”. Csak olyat vállalj, amely útba esik a vonataidnak, és figyeld a határidőt.`,
       capFull: (r: string, store: string) =>
         `${store}: tele van ebből: ${r}. A raktár növeli a város felső határát, és saját árut is tart; vagy adj el a Piacon.`,
       blocked: (n: string) =>
@@ -970,7 +973,7 @@ export const HU: Strings = {
     dwellMinHint: 'Legalább ennyi ideig áll (mp), 0–600',
     dwellMaxHint: 'Legkésőbb ennyi idő után indul (mp), 0–600; 0: a szokásos korlát',
     cargo: (n: number) => `${n} u a vonaton`,
-    fuelHint: (v: string) => `Üzemköltség csempénként: ${v}-tól`,
+    fuelHint: (v: string) => `Üzemköltség csempénként: ${v}`,
     details: 'Részletek',
     haul: (w: number, p: number) =>
       `Kocsik ${w} t, a mozdonyok ${p} t-t bírnak el (rakomány nélkül)`,
@@ -1089,7 +1092,7 @@ export const HU: Strings = {
     rates: 'Esélyek',
     rules: (pity: number) =>
       `SSR ${pity} húzáson belül garantált. A 10x legalább egy R-t garantál.`,
-    pity: (n: number, max: number) => `Szánalom ${n} / ${max}`,
+    pity: (n: number, max: number) => `Garancia ${n} / ${max}`,
     pull1: (c: number) => `Húzás x1 (${c} jegy)`,
     pull10: (c: number) => `Húzás x10 (${c} jegy)`,
     poolSize: (n: number) => `${n} tétel a készletben`,
@@ -1144,7 +1147,7 @@ export const HU: Strings = {
     failedNothing: (name: string) => `${name} selejt lett a műhelyben; az anyag elveszett`,
     stats: (recipes: number, crafts: number, failures: number) =>
       `${recipes} recept · ${crafts} legyártva · ${failures} selejt`,
-    resources: (label: string) => `Anyagok itt: ${label}`,
+    resources: (label: string) => `${label} anyagai`,
     filter: {
       all: 'Minden jármű',
       steam: 'Gőz',
@@ -1178,7 +1181,7 @@ export const HU: Strings = {
   },
   vehicle: {
     body: (size: string, tiles: number, plan: string) =>
-      `${size} · ${dec(tiles, Number.isInteger(tiles) ? 0 : 2)} csempe · ${plan}`,
+      `${size} · ${comma(tiles)} csempe · ${plan}`,
     weight: (t: number) => `${t} t üresen`,
     loco: (type: string, speed: number, haul: number) =>
       `${type} · ${dec(speed)} csempe/mp · ${haul} t vontatás`,
@@ -1627,7 +1630,7 @@ export const HU: Strings = {
       'A szabályok, amelyekkel az új játék indul: az alapszabályok, vagy egy, a Játékhangolásban eltett hangolás',
     shippedRules: 'Alapszabályok',
     tuningUnusable: (n: string) =>
-      `A(z) „${n}” hangolás nem használható, ezért nem indult új játék`,
+      `Ez a hangolás nem használható: „${n}”, ezért nem indult új játék`,
     supplyModes: { simple: 'Egyszerű', full: 'Teljes' },
     supplyHint: {
       simple:

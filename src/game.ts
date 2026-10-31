@@ -108,7 +108,6 @@ import {
   KNOWN_SAVE_KEYS,
   firstNonFinite,
   readSettings,
-  savedSettings,
   writeSettings,
   contractPolicyFor,
   convertOneTileRegular,
@@ -791,7 +790,11 @@ export class Game implements UiHost {
     const level = this.editor?.level.id;
     if (level) setIntentAndReload({ action: 'edit', levelId: level });
     else if (playing) this.reloadIntoStoredSave();
-    else this.reloadToMenu();
+    else {
+      // the world under the title is no game: the way out does not store it as one
+      this.keepStoredSave = true;
+      this.reloadToMenu();
+    }
   }
   /**
    * The debug panel's Regenerate: a new game on its seed text (a number, other text hashed, empty
@@ -1192,7 +1195,7 @@ export class Game implements UiHost {
       map: this.map,
       regions: this.regions,
       camera: this.camera,
-      settings: savedSettings(this.settings),
+      settings: this.settings,
       toasts: this.toasts,
       screens: this.screens,
       namePrompt: this.namePrompt,

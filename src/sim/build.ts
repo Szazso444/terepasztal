@@ -55,6 +55,7 @@ import { biomeDef, biomeAt } from './biomes';
 import { inSupplyMode } from './supply';
 import { wrapRotation } from './rotation';
 import { STR } from '../strings';
+import { cargoWord } from './cargo';
 import { bridgeCapacity } from './bridges';
 import { climbAxes, supportedDeck } from '../world/railProfile';
 import { sfx } from '../engine/audio';
@@ -303,7 +304,7 @@ export class Builder {
     const miss = this.stores.nearest(x, y)[0]?.missing(cost) ?? cost;
     const what = Object.entries(miss)
       .filter(([, v]) => v > 0)
-      .map(([k, v]) => `${v} ${k}`)
+      .map(([k, v]) => `${v} ${cargoWord(k)}`)
       .join(', ');
     return { ok: false, cost, reason: STR.build.noStoreInReach(rules.buildReach, what) };
   }

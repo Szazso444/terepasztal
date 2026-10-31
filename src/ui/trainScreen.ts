@@ -13,7 +13,7 @@ import {
 import type { Fleet } from '../sim/fleet';
 import type { Commands, CommandResult } from '../sim/commands';
 import type { Builder } from '../sim/build';
-import { cargoDef, cargoName } from '../sim/cargo';
+import { cargoDef, cargoName, cargoWord } from '../sim/cargo';
 import { levelMul } from '../gacha/items';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
@@ -64,7 +64,7 @@ export function emergencyRefuel(
 ) {
   const taken = fleet.emergencyRefuel(t);
   const got = Object.entries(taken)
-    .map(([k, v]) => `${Math.round(v)} ${k}`)
+    .map(([k, v]) => `${Math.round(v)} ${cargoWord(k)}`)
     .join(', ');
   toast(
     got

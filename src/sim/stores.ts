@@ -6,7 +6,7 @@ import { supplyMode, type SupplyMode } from './supply';
 import { needsStore, type Building } from './buildings';
 import type { Station } from './stations';
 import type { TownRegistry } from './towns';
-import { CARGO } from './cargo';
+import { CARGO, cargoWord } from './cargo';
 import { STR } from '../strings';
 
 /** Resource ids that can be kept: every cargo plus stored power. */
@@ -19,7 +19,7 @@ export const RESOURCE_IDS: string[] = [
 export function fmtCost(cost: Cost, mul = 1): string {
   const parts = Object.entries(cost)
     .filter(([, v]) => v > 0)
-    .map(([k, v]) => `${Math.ceil(v * mul)} ${k}`);
+    .map(([k, v]) => `${Math.ceil(v * mul)} ${cargoWord(k)}`);
   return parts.length ? parts.join(', ') : STR.build.free;
 }
 export function scaleCost(cost: Cost, mul: number): Cost {

@@ -337,7 +337,7 @@ export class DepotScreen implements Screen {
     const consist = el('span');
     const status = el('span', { class: 'dp-st' });
     const load = el('span');
-    const aboard = el('span');
+    const aboard = el('span', { class: 'dp-aboard' });
     const labels = trainLabels(t.trainClass);
     const root = listRow({
       title: name,

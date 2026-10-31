@@ -179,10 +179,7 @@ export interface Settings {
   smoke: boolean;
   showFps: boolean;
   weather: boolean;
-  /**
-   * the language of the text, read as the page loads (`LANGUAGE`). A setting of the player's and
-   * never of a game: `savedSettings` leaves it out of the save
-   */
+  /** the language of the text, read as the page loads (`LANGUAGE`) */
   language?: Language;
   /** v6: helper tips shown */
   advisor?: boolean;
@@ -1003,12 +1000,6 @@ function settingsFrom(stored: Partial<Settings>): Settings {
   s.alerts = alertSettingsFrom(stored.alerts);
   s.language = languageOf(stored.language);
   return s;
-}
-/** The settings as a save carries them: nothing in a save depends on the language. */
-export function savedSettings(s: Settings): Settings {
-  const out = { ...s };
-  delete out.language;
-  return out;
 }
 export function readSettings(): Settings {
   try {
