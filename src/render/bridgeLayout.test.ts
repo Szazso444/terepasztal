@@ -6,6 +6,8 @@ import {
   deckAt,
   deckAtOffset,
   deckSamples,
+  NARROW,
+  PARAPET,
   pierLength,
   trestleStoreys,
   DECK_SAMPLES,
@@ -246,6 +248,50 @@ describe('bridge deck geometry', () => {
         t.site.y + 0.5,
       ]);
     }
+  });
+
+  it('under narrow gauge keeps the narrow width on free edges and meets its neighbours at the seam', () => {
+    const narrow = { narrow: true };
+    const [lone] = plans([span(5, 5, 1, 20, narrow)]);
+    expect(lone.plan.deck).toEqual({ x0: -0.5, x1: 0.5, y0: -NARROW.deck, y1: NARROW.deck });
+    const pair = plans([span(5, 5, 1, 20, narrow), span(5, 6, 1, 20, narrow)]);
+    expect(pair[0].plan.deck).toEqual({ x0: -0.5, x1: 0.5, y0: -NARROW.deck, y1: 0.5 });
+    expect(pair[1].plan.deck).toEqual({ x0: -0.5, x1: 0.5, y0: -0.5, y1: NARROW.deck });
+    const beside = plans([span(5, 5, 1, 20, narrow), span(5, 6)]);
+    expect(beside[0].plan.deck.y1).toBe(0.5);
+    expect(beside[1].plan.deck.y0).toBe(-0.5);
+  });
+
+  it('pulls parapets and supports in with a narrow deck, inside its edge', () => {
+    for (const water of [false, true])
+      for (const material of ['stone', 'wood'] as const) {
+        const [t] = plans([span(5, 5, 1, 20, { narrow: true, water, material })]);
+        for (const p of t.plan.parapets) {
+          expect(Math.max(Math.abs(p.y0), Math.abs(p.y1))).toBeCloseTo(NARROW.deck);
+          expect(Math.min(Math.abs(p.y0), Math.abs(p.y1))).toBeCloseTo(NARROW.parapet);
+        }
+        for (const w of [...t.plan.trestles, ...t.plan.arches])
+          expect(Math.abs(w)).toBeLessThanOrEqual(NARROW.deck);
+        for (const r of t.plan.piers)
+          expect(Math.max(Math.abs(r.y0), Math.abs(r.y1))).toBeLessThanOrEqual(NARROW.deck);
+      }
+  });
+
+  it('keeps a narrow pad reaching every edge its rail leaves through', () => {
+    const open = [true, true, false, false];
+    const [t] = plans([pad(5, 5, 20, { narrow: true, open })]);
+    expect(t.plan.deck).toEqual({
+      x0: -NARROW.deck,
+      x1: 0.5,
+      y0: -0.5,
+      y1: NARROW.deck,
+    });
+  });
+
+  it('leaves a bridge with no narrow gauge as wide as it was', () => {
+    const [t] = plans([span(5, 5)]);
+    expect(t.plan.deck).toEqual({ x0: -0.5, x1: 0.5, y0: -0.5, y1: 0.5 });
+    expect(Math.abs(t.plan.parapets[0].y1)).toBeCloseTo(PARAPET);
   });
 
   it('follows the rail across a sloping bridge end and meets the next deck at the seam', () => {
