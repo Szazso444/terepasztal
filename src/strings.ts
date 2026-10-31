@@ -1433,7 +1433,6 @@ const EN = {
     serviceLine: (service: string, cap: number) =>
       `Refuelling cart: +${cap} ${service === 'battery' ? 'power' : service === 'fuel' ? 'oil' : 'coal'}, 10% less use per cart (${service === 'coal' ? 'steam' : service === 'fuel' ? 'diesel' : 'electric'} engines only)`,
     maxLevel: 'Max level',
-    dupeProgress: (n: number, need: number) => `Duplicates ${n} / ${need} to next level`,
     assignedTo: (n: string) => `In service: ${n}`,
     inDepot: 'In depot',
   },

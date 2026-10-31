@@ -114,7 +114,10 @@ is untouched. Evidence and commands: `scratchpad/README.md`.
 - Saves are format v24. A v23 save loads without a note and lists as before: its gacha and tickets
   are dropped and nothing refunds them. An older save is told only of its other steps.
 - A stored `gacha` table is passed over without a warning, a stored contracts edit keeps applying
-  without its ticket fields, and a level file with `start.tickets` loads and is written without it.
+  without its ticket fields until the shipped table next changes, a bundle exported with them comes
+  in without them, and a level file with `start.tickets` loads and is written without it.
+- A vehicle no longer keeps duplicate points (`dupes`): nothing read them since copies stopped
+  merging, and the step from v23 drops them.
 
 ## v0.8.0
 

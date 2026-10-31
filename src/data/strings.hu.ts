@@ -1275,7 +1275,6 @@ export const HU: Strings = {
     serviceLine: (service: string, cap: number) =>
       `Tankolókocsi: +${cap} ${service === 'battery' ? 'áram' : service === 'fuel' ? 'olaj' : 'szén'}, kocsinként 10%-kal kisebb fogyasztás (csak ${service === 'coal' ? 'gőz' : service === 'fuel' ? 'dízel' : 'villamos'}mozdonyoknak)`,
     maxLevel: 'Legmagasabb szint',
-    dupeProgress: (n: number, need: number) => `Másodpéldányok: ${n} / ${need} a következő szintig`,
     assignedTo: (n: string) => `Forgalomban: ${n}`,
     inDepot: 'Fűtőházban',
   },

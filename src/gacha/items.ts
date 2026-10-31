@@ -49,8 +49,6 @@ export interface Item {
   level: number;
   /** train id if in service */
   assigned: number | null;
-  /** duplicate points collected towards the next level */
-  dupes: number;
   obtainedAt: number;
   /** in-cab signalling equipment fitted to this locomotive */
   inCab?: boolean;

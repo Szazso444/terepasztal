@@ -43,7 +43,7 @@ function world() {
   return { map, track, stock, economy, builder, fleet, inventory, crafting };
 }
 function item(uid: number, defId: string, kind: Item['kind'], assigned: number | null): Item {
-  return { uid, defId, kind, level: 1, assigned, dupes: 0, obtainedAt: 0 };
+  return { uid, defId, kind, level: 1, assigned, obtainedAt: 0 };
 }
 
 /** A pair of engines a save holds, the track they run on and the wagon behind each. */

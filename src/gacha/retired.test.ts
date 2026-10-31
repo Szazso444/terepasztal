@@ -41,7 +41,6 @@ function item(uid: number, defId: string): Item {
     kind: LOCOS.some((l) => l.id === defId) ? 'loco' : 'wagon',
     level: 1,
     assigned: null,
-    dupes: 0,
     obtainedAt: 0,
   };
 }
@@ -141,7 +140,7 @@ describe('recipe pools and retired models', () => {
           }
           // the run was wide enough to reach every rarity a retired model sits in, wherever the
           // pool still has a model of that rarity to give
-          for (const id of later) {
+          for (const id of [...RETIRED, ...later]) {
             const rarity = itemDef(id).rarity;
             if (pool.some((c) => itemDef(c).rarity === rarity))
               expect(

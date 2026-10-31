@@ -685,6 +685,8 @@ export const MIGRATIONS: Migration[] = [
         if (Array.isArray(j.contracts.contracts))
           for (const c of j.contracts.contracts as unknown[]) if (isRecord(c)) delete c.tickets;
       }
+      if (isRecord(j.inventory) && Array.isArray(j.inventory.items))
+        for (const it of j.inventory.items as unknown[]) if (isRecord(it)) delete it.dupes;
       if (isRecord(j.rules)) delete (j.rules as Record<string, unknown>).startTickets;
       const world: unknown = j.world;
       if (isRecord(world) && isRecord(world.level) && isRecord(world.level.start))

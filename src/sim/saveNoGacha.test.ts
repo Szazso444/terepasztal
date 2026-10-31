@@ -69,7 +69,20 @@ function v23(over: Record<string, unknown> = {}): SaveGame {
       completedToday: 2,
       rng: 5,
     },
-    inventory: { items: [], nextUid: 1 },
+    inventory: {
+      items: [
+        {
+          uid: 1,
+          defId: 'rocket',
+          kind: 'loco',
+          level: 2,
+          assigned: null,
+          dupes: 3,
+          obtainedAt: 5,
+        },
+      ],
+      nextUid: 2,
+    },
     gacha: { pity: 7, totalPulls: 31, rng: 99 },
     camera: { x: 10, y: 20, zoomIndex: 3 },
     lastDay: 42,
@@ -101,8 +114,12 @@ describe('the step from v23', () => {
       stats: { completed: 0, failed: 0 },
       rng: 5,
     });
-    expect(JSON.stringify(after)).not.toMatch(/ticket|gacha|granted|completedToday/i);
-    const changed = ['gacha', 'economy', 'rules', 'contracts', 'version'];
+    expect(after.inventory).toEqual({
+      items: [{ uid: 1, defId: 'rocket', kind: 'loco', level: 2, assigned: null, obtainedAt: 5 }],
+      nextUid: 2,
+    });
+    expect(JSON.stringify(after)).not.toMatch(/ticket|gacha|granted|completedToday|dupes/i);
+    const changed = ['gacha', 'economy', 'rules', 'contracts', 'inventory', 'version'];
     for (const key of Object.keys(before))
       if (!changed.includes(key)) expect(after[key], key).toEqual(before[key]);
   });
@@ -125,6 +142,9 @@ describe('the step from v23', () => {
     ['no gacha section', (j: Record<string, unknown>) => delete j.gacha],
     ['no rules', (j: Record<string, unknown>) => delete j.rules],
     ['no world', (j: Record<string, unknown>) => delete j.world],
+    ['an inventory of no shape', (j: Record<string, unknown>) => (j.inventory = 'x')],
+    ['no item list', (j: Record<string, unknown>) => (j.inventory = { nextUid: 1 })],
+    ['an item of no shape', (j: Record<string, unknown>) => (j.inventory = { items: [1] })],
     ['contracts of no shape', (j: Record<string, unknown>) => (j.contracts = 'x')],
     ['no contract list', (j: Record<string, unknown>) => (j.contracts = { nextId: 1 })],
     ['a contract of no shape', (j: Record<string, unknown>) => (j.contracts = { contracts: [1] })],

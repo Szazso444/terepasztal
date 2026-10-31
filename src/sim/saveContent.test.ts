@@ -73,7 +73,7 @@ function item(
   assigned: number | null,
   kind: 'loco' | 'wagon' = 'wagon',
 ): ItemJSON {
-  return { uid, defId, kind, level: 1, assigned, dupes: 0, obtainedAt: 0 };
+  return { uid, defId, kind, level: 1, assigned, obtainedAt: 0 };
 }
 function contract(id: number, originId: number, destId: number) {
   return { id, originId, destId, cargo: 'stone', amount: 50, delivered: 0, status: 'active' };
@@ -622,7 +622,6 @@ function buildSave(spec: SaveSpec): SaveGame {
       nextId: spec.contracts.length + 1,
       nextRefresh: 0,
       stats: { completed: 0, failed: 0 },
-      completedToday: 0,
     },
     inventory: { items, nextUid: uid },
     camera: { x: 0, y: 0, zoomIndex: 2 },
