@@ -269,6 +269,8 @@ export class SimStep {
     if (clock.day !== this.lastDay) {
       this.lastDay = clock.day;
       builder.wear.daily();
+      // a piece that failed of time closes now, not at the next train's hit
+      builder.wear.flush();
       if (contracts.completedToday > 0) {
         economy.tickets += DAILY_TICKETS;
         this.hooks.dailyTicket?.();

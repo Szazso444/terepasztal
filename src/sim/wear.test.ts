@@ -328,6 +328,19 @@ describe('wear from trains', () => {
     expect(piece.wear.health).toBe(1);
   });
 
+  it('a piece that fails of time closes in the same step', () => {
+    const { w, piece } = branchWorld();
+    const step = new SimStep(w);
+    const key = w.track.key(5, 5);
+    piece.wear.health = 0.001;
+    w.clock.time = daySeconds() * 1 + 1;
+    const v = w.track.version;
+    step.run(0.05, { mode: 'play', weather: false });
+    expect(piece.wear.health).toBe(0);
+    expect(w.track.version).toBeGreaterThan(v);
+    expect(w.builder.wear.unusable.has(key)).toBe(true);
+  });
+
   it('SimStep takes the time wear once at each day change', () => {
     const { w, piece } = branchWorld();
     const step = new SimStep(w);
