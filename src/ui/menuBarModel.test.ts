@@ -133,7 +133,7 @@ describe('the keys the rows show', () => {
 describe('the menu bar in the level editor', () => {
   it('leaves out what the editor has closed, and a menu left empty with it', () => {
     expect(ids('editor')).toEqual(['menu', 'game', 'fleet', 'view']);
-    expect(items('editor', 'game')).toEqual(['settings', 'quit']);
+    expect(items('editor', 'game')).toEqual(['quit']);
     expect(items('editor', 'fleet')).toEqual(['signals']);
     expect(items('editor', 'view')).toEqual(['overview', 'weather', 'dayNight', 'advisor']);
   });
@@ -152,6 +152,7 @@ describe('the menu bar in the level editor', () => {
         'roster',
         'save',
         'savedGames',
+        'settings',
       ].sort(),
     );
   });

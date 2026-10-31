@@ -62,7 +62,7 @@ export const MENU_BAR: readonly MenuEntry[] = [
     items: [
       { action: 'save', label: STR.topbar.save, playOnly: true },
       { action: 'savedGames', label: STR.menu.savedGames, playOnly: true },
-      { action: 'settings', label: STR.topbar.settings },
+      { action: 'settings', label: STR.topbar.settings, playOnly: true },
       { action: 'quit', label: STR.topbar.quit },
     ],
   },
