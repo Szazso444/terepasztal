@@ -588,6 +588,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     const w = tileToWorld(x, y);
     host.centerCamera(w.x, w.y);
   };
+  /** A train's row, in the outliner or in the station panel: the tool down, the train picked. */
+  const pickTrain = (t: Train) => {
+    d.build.setTool({ kind: 'none' });
+    host.pickTrain(t);
+  };
   const outliner = new Outliner({
     fleet: d.fleet,
     builder: d.builder,
@@ -601,10 +606,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     selectedTrain: () => host.selectedTrain,
     followedTrain: () => host.follow.trainId,
     stuckFor: (id) => host.stuckFor(id),
-    onTrain: (t) => {
-      d.build.setTool({ kind: 'none' });
-      host.pickTrain(t);
-    },
+    onTrain: pickTrain,
     // off a row, the path of the train picked stays lit
     onHover: (t) => host.setHoverTrain(t ?? host.selectedTrain),
     // a station, a works or a decor piece: one is picked at a time, as a click on the map has it
@@ -644,21 +646,26 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   );
   buildInfo.onClose = () => toolbar.select({ kind: 'none' });
   toolbar.root.prepend(buildInfo.root);
-  const stationPanel = new StationPanel(
-    d.builder,
-    () => d.build.selected && d.build.select(null),
-    d.contracts,
-    d.clock,
-    d.towns,
-    (t) => host.renameTown(t),
-    d.commands,
-    toast,
-    {
+  const stationPanel = new StationPanel({
+    builder: d.builder,
+    commands: d.commands,
+    board: d.contracts,
+    clock: d.clock,
+    towns: d.towns,
+    fleet: d.fleet,
+    stores,
+    atlas: d.atlas,
+    view: {
       season,
       render: (doc) => renderTip(doc, d.atlas),
       bindTerms: (scope) => d.tooltip.bindTerms(scope),
     },
-  );
+    stuckFor: (id) => host.stuckFor(id),
+    toast,
+    onClose: () => d.build.selected && d.build.select(null),
+    onRenameTown: (t) => host.renameTown(t),
+    onTrain: pickTrain,
+  });
   const townPanel = new TownPanel(d.towns, d.houses, stores);
   townPanel.onGo = (t) => {
     const st = d.towns.station(t);
@@ -944,11 +951,12 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     minimap.root,
     debug.root,
     overviewBanner,
+    // after the banner, whose `show` hides it, and before the hint it hides (style.css)
+    stationPanel.root,
     townPanel.root,
     d.namePrompt.root,
     el('div', { id: 'hint', text: STR.hints.camera }),
     toolbar.root,
-    stationPanel.root,
     buildingPanel.root,
     decorPanel.root,
     d.toasts.root,
