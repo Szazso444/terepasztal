@@ -6,6 +6,8 @@ import {
   deckAt,
   deckAtOffset,
   deckSamples,
+  pierLength,
+  trestleStoreys,
   DECK_SAMPLES,
   roadDeckSamples,
   type BridgePlan,
@@ -70,6 +72,47 @@ const parapetSides = (s: BridgeSite, p: BridgePlan): string[] =>
     const m = onMap(s, r);
     return m.y1 <= s.y - 0.4 ? 'N' : m.y0 >= s.y + 0.4 ? 'S' : m.x1 <= s.x - 0.4 ? 'W' : 'E';
   });
+
+describe('a raised span', () => {
+  const site = (material: BridgeSite['material'], raised: boolean): BridgeSite => ({
+    x: 0,
+    y: 0,
+    material,
+    axis: 1,
+    deck: DECK_SAMPLES.map(() => 0),
+    raised,
+  });
+  const free: Joins = [false, false, false, false];
+
+  it('has supports as long as the deck stands over the ground or the water', () => {
+    const step = 16,
+      waterline = -26;
+    for (let height = 0; height <= 4; height++) {
+      const deck = height * step;
+      expect(pierLength(deck, 0)).toBe(deck);
+      expect(pierLength(deck, waterline)).toBe(deck - waterline);
+    }
+    expect(pierLength(0, 16)).toBe(0);
+  });
+
+  it('stands stone on arched walls over land, and leaves a low bridge as it was', () => {
+    expect(bridgePlan(site('stone', true), free, false)).toMatchObject({ arches: [-0.44, 0.44] });
+    expect(bridgePlan(site('stone', true), free, false).piers).toEqual([]);
+    expect(bridgePlan(site('stone', false), free, false).piers).toHaveLength(2);
+    for (const material of ['wood', 'stone'] as const)
+      for (const water of [false, true])
+        if (material === 'wood' || water)
+          expect(bridgePlan(site(material, true), free, water)).toEqual(
+            bridgePlan(site(material, false), free, water),
+          );
+  });
+
+  it('braces a tall trestle in storeys', () => {
+    expect(trestleStoreys(10)).toBe(1);
+    expect(trestleStoreys(20)).toBe(1);
+    expect(trestleStoreys(80)).toBe(4);
+  });
+});
 
 describe('bridge adjacency', () => {
   it('a lone span walls both long sides and stands on two support lines', () => {
