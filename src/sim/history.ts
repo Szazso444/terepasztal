@@ -18,6 +18,11 @@ export interface HistoryStep {
    * when it did, and `next` makes no step of its own.
    */
   absorb?(next: HistoryStep): boolean;
+  /**
+   * True once what the step changed is gone for good: nothing is left to take back or do again, so
+   * it falls off the stack when it comes up, and the step under it is the next one.
+   */
+  gone?(): boolean;
 }
 
 /**
@@ -30,19 +35,24 @@ export class History {
   /** fired when what can be undone or redone changed */
   onChange: (() => void) | null = null;
 
+  /** The step on top of `stack`, past those whose subject is gone. */
+  private top(stack: HistoryStep[]): HistoryStep | undefined {
+    while (stack[stack.length - 1]?.gone?.()) stack.pop();
+    return stack[stack.length - 1];
+  }
   get canUndo() {
-    return this.done.length > 0;
+    return !!this.top(this.done);
   }
   get canRedo() {
-    return this.undone.length > 0;
+    return !!this.top(this.undone);
   }
   /** What the next undo takes back; null with nothing to undo. */
   get undoLabel(): string | null {
-    return this.done[this.done.length - 1]?.label ?? null;
+    return this.top(this.done)?.label ?? null;
   }
   /** What the next redo does again; null with nothing to redo. */
   get redoLabel(): string | null {
-    return this.undone[this.undone.length - 1]?.label ?? null;
+    return this.top(this.undone)?.label ?? null;
   }
 
   /** A new action: it can be undone, and what was undone before it can no longer be redone. */
@@ -56,7 +66,7 @@ export class History {
   }
 
   undo(): CommandResult {
-    const step = this.done[this.done.length - 1];
+    const step = this.top(this.done);
     if (!step) return { ok: false, message: STR.history.nothingToUndo };
     const did = step.undo();
     if (did.ok) this.move(this.done, this.undone);
@@ -64,7 +74,7 @@ export class History {
   }
 
   redo(): CommandResult {
-    const step = this.undone[this.undone.length - 1];
+    const step = this.top(this.undone);
     if (!step) return { ok: false, message: STR.history.nothingToRedo };
     const did = step.redo();
     if (did.ok) this.move(this.undone, this.done);

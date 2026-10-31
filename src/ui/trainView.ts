@@ -187,11 +187,11 @@ export interface Arrival {
 }
 
 /**
- * The way left to the stop it runs to. Only a train running to a stop has one: a train that stands
- * or is making way has no such way to measure.
+ * The way left to the stop it runs to. Only a train running to a stop has one: a train that stands,
+ * is held behind another or is making way has no such way to measure.
  */
 export function arrivalOf(t: TrainFacts): Arrival | null {
-  if (t.state !== 'moving' || t.holding || t.pathTotal <= 0) return null;
+  if (t.state !== 'moving' || t.blocked || t.holding || t.pathTotal <= 0) return null;
   const tiles = Math.max(0, t.pathTotal - t.pathProgress);
   const speed = t.freeSpeed > 0.01 ? t.freeSpeed : t.maxSpeed;
   return speed > 0 ? { tiles, seconds: tiles / speed } : null;

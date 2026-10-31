@@ -11,13 +11,13 @@ export interface Tip {
 /** Top-right helper: turns blockers and idle opportunities into plain instructions. */
 export class Advisor {
   readonly root = el('div', { id: 'advisor', class: 'panel' });
-  readonly button = btn(STR.advisor.button, () => this.toggle(), 'small');
-  private badge = el('span', { class: 'badge' });
   private body = el('div', { class: 'panel-body' });
   private silenceBtn: HTMLButtonElement;
   open = false;
   silenced = false;
   onSilence: ((v: boolean) => void) | null = null;
+  /** the number of tips for its menu row, empty for none; `urgent` with a blocker among them */
+  onCount: ((count: string, urgent: boolean) => void) | null = null;
   private lastKey = '';
 
   constructor(silenced: boolean) {
@@ -32,7 +32,6 @@ export class Advisor {
       },
       'small',
     );
-    this.button.append(this.badge);
     this.root.append(
       el(
         'div',
@@ -53,9 +52,8 @@ export class Advisor {
     const key = tips.map((t) => t.key).join('|') + '#' + notices.map((n) => n.key).join('|');
     if (key === this.lastKey) return;
     this.lastKey = key;
-    const urgent = tips.filter((t) => t.kind === 'bad').length;
-    this.badge.textContent = this.silenced ? '' : tips.length ? String(tips.length) : '';
-    this.badge.classList.toggle('urgent', urgent > 0);
+    const urgent = tips.some((t) => t.kind === 'bad');
+    this.onCount?.(this.silenced ? '' : tips.length ? String(tips.length) : '', urgent);
     this.body.innerHTML = '';
     if (this.silenced) {
       this.body.append(el('div', { class: 'dim', text: STR.advisor.silencedHint }));

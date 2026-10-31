@@ -1417,10 +1417,10 @@ describe('a train renamed or recoloured, a step of its own', () => {
     g.commands.recolourTrain(t, 4);
     g.commands.renameTrain(t, 'Short lived');
     g.fleet.recall(t);
-    expect(g.history.undo()).toEqual({ ok: true });
-    expect(g.history.undo()).toEqual({ ok: true });
+    // its two steps are gone with it: the next undo is the build under them
     expect(g.history.undoLabel).toBe(built);
     expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.history.canUndo).toBe(false);
   });
 
   it('a train recalled can no longer be renamed or recoloured', () => {

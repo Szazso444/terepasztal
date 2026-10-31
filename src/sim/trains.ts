@@ -37,7 +37,7 @@ import {
   type BodyFields,
 } from './body';
 import { dieselFuelId, sandPerTile } from './supply';
-import { isTrainColour } from './trainColours';
+import { savedTrainColour } from './trainColours';
 
 const trackData = content.track;
 import { sfx } from '../engine/audio';
@@ -3521,7 +3521,7 @@ export class Train {
       j.name,
       j.id,
     );
-    if (isTrainColour(j.colour)) t.colour = j.colour;
+    t.colour = savedTrainColour(j.colour);
     t.wagons = j.wagons.map((w) => ({
       uid: w.uid,
       def: wagonDef(w.defId),

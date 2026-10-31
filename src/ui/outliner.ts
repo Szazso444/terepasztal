@@ -117,6 +117,8 @@ export class Outliner {
   private picked: number | null = null;
   /** a pending open: a click on a name waits, as it may be the first of two */
   private opening = 0;
+  /** the colours the rows stay grouped by while the stripes are worked (`TrainContext`) */
+  private heldColours: ReadonlyMap<number, number> | null = null;
   /** the last click on a name */
   private lastName: { id: number; at: number } | null = null;
   private hovered: Train | null = null;
@@ -155,6 +157,11 @@ export class Outliner {
       this.setHover(row ? (h.fleet.byId(Number(row.dataset.train)) ?? null) : null);
     });
     this.root.addEventListener('mouseleave', () => this.setHover(null));
+    this.body.addEventListener('mouseleave', () => {
+      if (!this.heldColours) return;
+      this.heldColours = null;
+      this.update(0, true);
+    });
     this.markTabs();
   }
 
@@ -185,8 +192,13 @@ export class Outliner {
     for (const [id, b] of this.scopeBtns) b.classList.toggle('on', id === this.scope);
   }
 
-  private stationPoint(s: Station) {
-    return this.h.tilePoint(s.cx + 0.5, s.cy + 0.5);
+  /** The corners of a footprint as drawn. */
+  private corners(x: number, y: number, w: number, h: number): Point[] {
+    const at = (dx: number, dy: number) => this.h.tilePoint(x + dx, y + dy);
+    return [at(0, 0), at(w, 0), at(0, h), at(w, h)];
+  }
+  private stationCorners(s: Station) {
+    return this.corners(s.x, s.y, s.w, s.h);
   }
 
   private trains(view: ViewRect | null): Listed<TrainGroup> {
@@ -198,6 +210,7 @@ export class Outliner {
       selected: h.selectedTrain()?.id ?? null,
       following: h.followedTrain(),
       expanded: this.expanded,
+      heldColours: this.heldColours,
     });
     const ids = new Set(list.rows.flatMap((g) => g.rows.map((r) => r.id)));
     this.shown = h.fleet.trains.filter((t) => ids.has(t.id));
@@ -221,7 +234,7 @@ export class Outliner {
         closed: s.closed,
         goods,
         fill,
-        at: this.stationPoint(s),
+        at: this.stationCorners(s),
       };
     });
     return stationRows(facts, view);
@@ -232,7 +245,7 @@ export class Outliner {
     const now = h.clock.time;
     const end = (id: number) => {
       const s = h.builder.stationById(id);
-      return s ? this.stationPoint(s) : null;
+      return s ? this.stationCorners(s) : [];
     };
     const facts: ContractFacts[] = h.contracts.active.map((c) => ({
       id: c.id,
@@ -244,7 +257,7 @@ export class Outliner {
       expires: c.expires,
       remaining: h.contracts.remaining(c, now),
       dest: h.builder.stationById(c.destId)?.name ?? '?',
-      ends: [end(c.originId), end(c.destId)],
+      ends: [...end(c.originId), ...end(c.destId)],
     }));
     return contractRows(facts, now, view);
   }
@@ -268,7 +281,7 @@ export class Outliner {
         perWeek: (out?.[1] ?? 0) * buildingRate(b) * rules.productionMul,
         status: BuildingPanel.statusKind(b, store),
         store: store ? stores.label(store) : null,
-        at: h.tilePoint(b.x + span.w / 2, b.y + span.h / 2),
+        at: this.corners(b.x, b.y, span.w, span.h),
       });
     }
     return worksRows(facts, view);
@@ -279,7 +292,7 @@ export class Outliner {
     this.since += dt;
     if (!force && this.since < REFRESH_S) return;
     this.since = 0;
-    if (this.renaming || (this.held && !force)) return;
+    if (this.renaming || (!force && (this.held || this.opening))) return;
     const picked = this.h.selectedTrain()?.id ?? null;
     if (picked !== this.picked) {
       this.picked = picked;
@@ -567,7 +580,8 @@ export class Outliner {
     this.lastName = onName ? { id, at: now } : null;
     sfx('ui.click');
     const next = this.expanded === id ? null : id;
-    this.h.onTrain(t);
+    // the train already picked: the click is about its row, and leaves the camera to the player
+    if (this.h.selectedTrain() !== t || !this.h.view()) this.h.onTrain(t);
     window.clearTimeout(this.opening);
     if (onName) {
       // the row opens a moment later: a row closing above would pull the name from under a second click
@@ -587,6 +601,9 @@ export class Outliner {
     const t = this.h.fleet.byId(id);
     if (!t) return;
     sfx('ui.click');
+    // the row stays under the pointer for the next click: the list takes its order again when the
+    // pointer leaves it
+    this.heldColours ??= new Map(this.h.fleet.trains.map((x) => [x.id, x.colour]));
     const did = this.h.commands.recolourTrain(t, nextTrainColour(t.colour));
     if (!did.ok) this.h.toast(did.message, 'warn');
     this.update(0, true);

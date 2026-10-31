@@ -4,7 +4,7 @@ import type { Builder } from '../sim/build';
 import { cargoName } from '../sim/cargo';
 import { TRAIN_NAME_MAX, type Commands } from '../sim/commands';
 import type { Fleet } from '../sim/fleet';
-import { TRAIN_COLOURS, nextTrainColour } from '../sim/trainColours';
+import { TRAIN_COLOURS, nextTrainColour, shownTrainColour } from '../sim/trainColours';
 import type { Train } from '../sim/trains';
 import { STR } from '../strings';
 import { buildIcon } from './buildIcons';
@@ -159,8 +159,14 @@ export class TrainPanel {
   }
   /** What the Stops or the Consist tab was drawn from. */
   private keyOf(t: Train): unknown {
+    const b = this.h.builder;
     if (this.tab === 'stops')
-      return [t.program, t.mode, t.routeIndex, this.h.builder.stations.length];
+      return [
+        t.program,
+        t.mode,
+        t.routeIndex,
+        b.stations.map((s) => [s.id, s.name, b.platformTiles(s).length > 0]),
+      ];
     return [
       t.locos.map((l) => [l.uid, l.mode, l.engaged]),
       t.wagons.map((w) => [w.uid, w.cargo, Math.round(w.amount)]),
@@ -174,7 +180,7 @@ export class TrainPanel {
     const stripe = ttLabel(el('i'), 'tp-stripe', 'tp-stripe', () => [
       ttDim(STR.outliner.stripeTip),
     ]);
-    stripe.style.background = TRAIN_COLOURS[t.colour];
+    stripe.style.background = TRAIN_COLOURS[shownTrainColour(t.colour)];
     stripe.addEventListener('click', () => {
       const did = this.h.commands.recolourTrain(t, nextTrainColour(t.colour));
       if (!did.ok) this.h.toast(did.message, 'warn');

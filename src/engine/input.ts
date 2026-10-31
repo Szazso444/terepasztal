@@ -73,6 +73,9 @@ export class Input {
     window.addEventListener('keydown', (e) => {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+      // a focused select is no text field: the key is the game's, and the browser would step the
+      // select with it too. It changes only by a choice from its open list, which has its own keys
+      if (target?.tagName === 'SELECT') e.preventDefault();
       const undo = undoName(e);
       if (undo) e.preventDefault();
       // macOS sends no key up for a key let go under Cmd, so the key's own repeat tells here

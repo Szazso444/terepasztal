@@ -102,7 +102,7 @@
     w(g.dayNight, 'update', 'B.16 dayNight.update');
     w(g.rain, 'update', 'B.17 rain.update');
     w(g.fog, 'update', 'B.18 fog.update');
-    w(g.contractsSide, 'update', 'B.19 contractsSide.update');
+    w(g.outliner, 'update', 'B.19 outliner.update');
     w(g.app?.renderer, 'render', 'C pixi renderer.render');
     const t0 = g.fleet?.trains[0];
     if (t0) {

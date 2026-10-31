@@ -13,12 +13,25 @@ export const TRAIN_COLOURS = [
   '#a888b4',
 ] as const;
 
-/** Whether a value read from a save is a colour code. */
+/** Whether a value is a colour code of this build. */
 export function isTrainColour(c: unknown): c is number {
   return typeof c === 'number' && Number.isInteger(c) && c >= 0 && c < TRAIN_COLOURS.length;
 }
 
+/**
+ * The code a train keeps from a save: a later build's goes on through this one's saves, as it may
+ * be that build that reads them next; what is no code at all is the first.
+ */
+export function savedTrainColour(c: unknown): number {
+  return typeof c === 'number' && Number.isInteger(c) && c >= 0 ? c : 0;
+}
+
+/** The code this build draws for `c`: one it does not know is the first. */
+export function shownTrainColour(c: number): number {
+  return isTrainColour(c) ? c : 0;
+}
+
 /** The code after `c`: the last steps back to the first. */
 export function nextTrainColour(c: number): number {
-  return (c + 1) % TRAIN_COLOURS.length;
+  return (shownTrainColour(c) + 1) % TRAIN_COLOURS.length;
 }
