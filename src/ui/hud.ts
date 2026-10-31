@@ -8,12 +8,7 @@ import { title } from './tooltipDoc';
 import { tipBuild } from './tooltipRender';
 import { ageTip, eraView } from './ageTooltip';
 import { ageIconSvg } from './ageIcon';
-import {
-  compactLevel,
-  foldCount,
-  topbarCompact,
-  type CompactLevel,
-} from './fit';
+import { compactLevel, foldCount, topbarCompact, type CompactLevel } from './fit';
 import { historyIconSvg, historyTip, type HistoryWay } from './historyControls';
 import { segmented } from './kit';
 import { MenuBar } from './menuBar';
