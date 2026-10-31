@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Dir } from '../engine/iso';
 import { TrackGraph, makePiece, type TrackClass } from '../world/track';
-import { simWorld, type SimWorld } from '../testing/simWorld';
+import { simWorld, station, type SimWorld } from '../testing/simWorld';
 import { content } from '../data/content';
 import { rules, DEFAULT_RULES, daySeconds } from './rules';
 import { SimStep } from './step';
@@ -244,6 +244,36 @@ describe('wear from trains', () => {
     w.builder.wear.daily();
     expect(w.track.get(gate.x, gate.y)!.wear.health).toBe(1);
     expect(w.track.get(gate.x + 4, gate.y)!.wear.health).toBeLessThan(1);
+  });
+
+  it('a depot placed on existing track exempts its gate at once', () => {
+    const w = simWorld({ terrain: 'grass', size: 32 });
+    const gate = new Station('depot', 8, 8).gateTiles()[0];
+    w.track.place(gate.x, gate.y, 'straight', 1, 'branch');
+    // asked before the depot stands: the gate set is built and holds nothing
+    expect(w.builder.wear.exempt(gate.x, gate.y)).toBe(false);
+    const depot = station(w, 'depot', 8, 8);
+    expect(depot.gateTiles()[0]).toEqual(gate);
+    expect(w.builder.wear.exempt(gate.x, gate.y)).toBe(true);
+    w.builder.removeStation(depot);
+    expect(w.builder.wear.exempt(gate.x, gate.y)).toBe(false);
+  });
+
+  it('a gate on any tile of a wide piece exempts the whole piece', () => {
+    const w = simWorld({ terrain: 'grass', size: 32 });
+    const depot = new Station('depot', 8, 8);
+    const [gate] = depot.gateTiles();
+    const tiles = w.track.place(gate.x, gate.y, 'curve', 0, 'main');
+    expect(tiles.length).toBeGreaterThan(1);
+    w.builder.stations.push(depot);
+    w.builder.wear.invalidateGates();
+    const gated = tiles.filter((t) => depot.gateTiles().some((g) => g.x === t.x && g.y === t.y));
+    expect(gated.length).toBeGreaterThan(0);
+    const anchor = w.track.anchorOf(gate.x, gate.y);
+    // the anchor may be a tile with no gate on it: the piece is exempt all the same
+    for (const t of [anchor, ...tiles]) expect(w.builder.wear.exempt(t.x, t.y)).toBe(true);
+    w.builder.wear.daily();
+    expect(w.track.get(gate.x, gate.y)!.wear.health).toBe(1);
   });
 
   it('a free builder wears nothing', () => {

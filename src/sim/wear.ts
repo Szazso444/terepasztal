@@ -88,26 +88,32 @@ export class TrackWear {
   private failedFor = -1;
   /** a piece entered or left the unusable state since the last `flush` */
   private closures = false;
-  /** keys (y * w + x) of every depot gate tile, rebuilt when the track or the stations change */
+  /** keys (y * w + x) of every depot gate tile; `invalidateGates` has it rebuilt */
   private gates = new Set<number>();
-  private gatesFor = '';
+  private gatesStale = true;
   constructor(
     readonly track: TrackGraph,
     readonly builder: Builder,
   ) {}
-  /** Nothing wears here: a free builder, a depot gate, Maglev Guideway or Hyperloop Tube. */
+  /** The stations changed (placed, removed, swapped, loaded): the depot gates are read again. */
+  invalidateGates(): void {
+    this.gatesStale = true;
+  }
+  /**
+   * Nothing wears the piece at (x, y): a free builder, a depot gate on any tile of the piece,
+   * Maglev Guideway or Hyperloop Tube.
+   */
   exempt(x: number, y: number): boolean {
     if (this.builder.free) return true;
     const p = this.track.get(x, y);
     if (!p || !wearsAtAll(p)) return true;
-    const stamp = this.track.version + ':' + this.builder.stations.length;
-    if (stamp !== this.gatesFor) {
-      this.gatesFor = stamp;
+    if (this.gatesStale) {
+      this.gatesStale = false;
       this.gates.clear();
       for (const d of this.builder.depots())
         for (const g of d.gateTiles()) this.gates.add(g.y * this.track.w + g.x);
     }
-    return this.gates.has(y * this.track.w + x);
+    return this.track.unitTiles(x, y).some((t) => this.gates.has(t.y * this.track.w + t.x));
   }
   /** A train of `tonnes` runs onto the piece at (x, y), entering through `entry`. */
   hit(x: number, y: number, entry: Dir, tonnes: number): void {

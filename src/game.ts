@@ -593,6 +593,7 @@ export class Game implements UiHost {
       if (!inBounds(this.map, sj.x, sj.y)) continue;
       const st = Station.fromLevel(sj);
       this.builder.stations.push(st);
+      this.builder.wear.invalidateGates();
       this.onStationChanged(st, false);
     }
     for (const [x, y, id, rot] of level.decor) {
@@ -1396,6 +1397,7 @@ export class Game implements UiHost {
     for (const sj of j.stations) {
       const st = Station.fromJSON(sj);
       this.builder.stations.push(st);
+      this.builder.wear.invalidateGates();
       this.onStationChanged(st, false);
     }
     this.inventory.load(j.inventory as ReturnType<typeof this.inventory.toJSON>);

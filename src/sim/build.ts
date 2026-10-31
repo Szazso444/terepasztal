@@ -332,6 +332,7 @@ export class Builder {
    * stores are derived again, as they follow the stations (`StoreRegistry.refresh`).
    */
   private stationChanged(s: Station, removed: boolean) {
+    this.wear.invalidateGates();
     this.onStationChanged?.(s, removed);
     this.stores.refresh();
   }
@@ -830,7 +831,7 @@ export class Builder {
       const p = this.track.get(t.x, t.y);
       if (!p || seen.has(p.wear)) continue;
       seen.add(p.wear);
-      if (this.wear.exempt(t.x, t.y) || p.wear.health >= 1) continue;
+      if (p.wear.health >= 1) continue;
       pieces.push(this.track.anchorOf(t.x, t.y));
       for (const [k, v] of Object.entries(this.wear.repairCost(p, 1 - p.wear.health, true)))
         cost[k] = (cost[k] ?? 0) + v;

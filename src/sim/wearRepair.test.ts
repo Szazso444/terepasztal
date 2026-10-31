@@ -133,23 +133,37 @@ describe('hand repair', () => {
     expect(w.track.version).toBe(after + 1);
   });
 
-  it('a depot gate, a full piece and a Maglev piece offer nothing to repair', () => {
+  it('a full piece, a Maglev piece and bare ground offer nothing to repair', () => {
     const { w } = worn(1);
-    const depot = w.builder.depots()[0];
-    const gate = depot.gateTiles()[0];
-    line(w, gate.x, gate.y, gate.x);
-    w.track.get(gate.x, gate.y)!.wear.health = 0.5;
+    // Maglev never wears, so it is always full
     w.track.place(60, 60, 'straight', 1, 'maglev');
-    w.track.get(60, 60)!.wear.health = 0.5;
-    for (const at of [{ x: 10, y: 20 }, gate, { x: 60, y: 60 }, { x: 70, y: 70 }]) {
+    w.builder.wear.hit(60, 60, Dir.W, 500);
+    for (const at of [
+      { x: 10, y: 20 },
+      { x: 60, y: 60 },
+      { x: 70, y: 70 },
+    ]) {
       const check = w.builder.checkRepair([at]);
-      expect(check.ok).toBe(false);
+      expect(check.ok, JSON.stringify(at)).toBe(false);
       expect(check.pieces).toEqual([]);
       expect(check.cost).toEqual({});
       expect(check.reason).toBe(STR.build.repairNothing);
       expect(w.builder.repairTrack([at])).toBe(false);
     }
-    expect(w.track.get(gate.x, gate.y)!.wear.health).toBe(0.5);
+  });
+
+  it('a failed piece that became a depot gate can be mended', () => {
+    const { w } = worn(1);
+    const depot = w.builder.depots()[0];
+    const gate = depot.gateTiles()[0];
+    line(w, gate.x, gate.y, gate.x);
+    w.track.get(gate.x, gate.y)!.wear.health = 0;
+    expect(w.builder.wear.exempt(gate.x, gate.y)).toBe(true);
+    const check = w.builder.checkRepair([gate]);
+    expect(check.ok).toBe(true);
+    expect(check.pieces).toEqual([gate]);
+    expect(w.builder.repairTrack([gate])).toBe(true);
+    expect(w.track.get(gate.x, gate.y)!.wear.health).toBe(1);
   });
 
   it('a stroke over several pieces adds them up and mends them all', () => {
@@ -170,8 +184,10 @@ describe('hand repair', () => {
   });
 
   it('is never needed in the level editor, where nothing wears', () => {
-    const { w } = worn(0.5);
+    const { w } = worn(1);
     w.builder.free = true;
+    w.builder.wear.hit(10, 20, Dir.W, 500);
+    w.builder.wear.daily();
     expect(w.builder.checkRepair([{ x: 10, y: 20 }]).pieces).toEqual([]);
   });
 });
