@@ -1,4 +1,5 @@
 import { bridgeCapacity } from '../sim/bridges';
+import { bridgeTitle, deckRise } from './bridgeName';
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Builder } from '../sim/build';
@@ -110,7 +111,8 @@ export class BuildingPanel {
       return;
     }
     const def = buildingDef(b.id);
-    this.title.textContent = STR.building.title(def.name, buildingLevel(b));
+    const span = def.bridge && bridgeTitle(this.builder.map, b, def.bridge.material);
+    this.title.textContent = STR.building.title(span || def.name, buildingLevel(b));
     const body = this.body;
     body.innerHTML = '';
     const row = (k: string, v: string, cls = '') =>
@@ -125,7 +127,11 @@ export class BuildingPanel {
     const st = BuildingPanel.status(b, store);
     body.append(el('div', { class: 'flavor', text: def.flavor }));
     const capacity = bridgeCapacity(b);
-    if (capacity !== null) body.append(row(STR.building.bridgeCapacity, bridgeLimit(capacity)));
+    if (capacity !== null)
+      body.append(
+        row(STR.building.deckHeight, String(deckRise(this.builder.map, b))),
+        row(STR.building.bridgeCapacity, bridgeLimit(capacity)),
+      );
     if (!def.bridge) {
       body.append(row(STR.building.recipe, BuildingPanel.recipeText(b.id, b)));
       body.append(row(STR.building.rate, STR.station.perWeek(Math.round(b.rate * 10) / 10)));
