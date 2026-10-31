@@ -40,8 +40,11 @@ export class NamePrompt {
   constructor() {
     this.input.addEventListener('keydown', (e) => {
       if (e.key === 'Tab') return;
-      if (e.key === 'Enter') this.answerName();
-      else if (e.key === 'Escape') this.flow.dismiss();
+      if (e.key === 'Enter') {
+        // the focus goes back to what asked, and this Enter must not press that too
+        e.preventDefault();
+        this.answerName();
+      } else if (e.key === 'Escape') this.flow.dismiss();
       e.stopPropagation();
     });
     this.input.addEventListener('keyup', (e) => e.stopPropagation());

@@ -82,9 +82,12 @@ class FakeEl {
   /** Fire `type` here and bubble it up, as far as nothing stops it. */
   fire(type: string, key = '', code = key): FakeEvent {
     const e = new FakeEvent(type, this, key, code);
-    for (let at: FakeEl | null = this; at && !e.stopped; at = at.parent)
-      for (const f of at.listeners.get(type) ?? []) f(e);
+    this.bubble(e);
     return e;
+  }
+  private bubble(e: FakeEvent) {
+    for (const f of this.listeners.get(e.type) ?? []) f(e);
+    if (!e.stopped) this.parent?.bubble(e);
   }
   /** A control keeps its label: a test presses it by name. */
   get all(): FakeEl[] {
@@ -118,14 +121,11 @@ class FakeEl {
     );
   }
   getClientRects(): object[] {
-    for (let at: FakeEl | null = this; at; at = at.parent)
-      if (at.style.display === 'none') return [];
-    return [{}];
+    if (this.style.display === 'none') return [];
+    return this.parent ? this.parent.getClientRects() : [{}];
   }
   get isConnected(): boolean {
-    let top: FakeEl = this;
-    while (top.parent) top = top.parent;
-    return top === page.body;
+    return this === page.body || !!this.parent?.isConnected;
   }
   focus() {
     if (this.getClientRects().length) page.activeElement = this;
@@ -388,7 +388,8 @@ describe('the in-game dialog', () => {
     await tick();
     expect(input().maxLength).toBe(20);
     input().value = '  Keleti ';
-    input().fire('keydown', 'Enter', 'Enter');
+    // the focus is back on what asked before the key is over: it must not press that as well
+    expect(input().fire('keydown', 'Enter', 'Enter').prevented).toBe(true);
     expect(await named).toBe('Keleti');
     const blank = prompt.ask('Rename station', 'hint', 'Old');
     await tick();
