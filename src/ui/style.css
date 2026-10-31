@@ -820,7 +820,7 @@ body {
 }
 /* the hint takes what the row leaves; short of room it goes to a line of its own */
 .tb-hint {
-  flex: 1 1 160px;
+  flex: 1 1 auto;
   min-width: 0;
   margin-left: 8px;
   text-align: right;
@@ -851,6 +851,8 @@ body {
   height: 71px;
   padding: 5px 4px 4px;
   font-size: 11.5px;
+  /* two lines of 13 px under the icon: `.btn`'s 16 px does not fit the tile */
+  line-height: 13px;
   overflow: hidden;
 }
 .tb-item .tb-kbd {
@@ -878,12 +880,14 @@ body {
   color: var(--amber);
 }
 .tb-name {
+  flex: none;
   max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .tb-cost {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 5px;
