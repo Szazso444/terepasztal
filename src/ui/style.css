@@ -2004,11 +2004,6 @@ input.text {
   padding: 18px 22px;
   gap: 12px;
 }
-.menu-frame.small {
-  width: 320px;
-  align-items: stretch;
-  gap: 6px;
-}
 .menu-title {
   text-align: center;
   padding: 6px 0 4px;

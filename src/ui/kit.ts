@@ -481,6 +481,7 @@ export function slider(o: SliderOptions): HTMLElement {
     'aria-label': o.label,
   });
   const shown = el('em');
+  let pointing = false;
   const show = (v: number) => {
     shown.textContent = format(v);
     input.style.setProperty('--k-fill', `${rangePercent(v, r)}%`);
@@ -490,7 +491,11 @@ export function slider(o: SliderOptions): HTMLElement {
     show(v);
     o.onInput(v);
   });
-  input.addEventListener('pointerup', () => input.blur());
+  // a press or a drag gives the keys back as it ends, wherever the pointer lets go
+  for (const ended of ['pointerup', 'change'])
+    input.addEventListener(ended, () => pointing && input.blur());
+  input.addEventListener('pointerdown', () => (pointing = true));
+  input.addEventListener('blur', () => (pointing = false));
   fieldKeys(input);
   show(value);
   return el('span', { class: 'k-sl' }, input, shown);

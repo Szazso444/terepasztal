@@ -167,7 +167,7 @@ export class BuildInfo {
         { class: 'row', style: 'margin:4px 0 0 0' },
         btn(STR.depot.details, () => this.onTrainDetails?.(t), 'small'),
         btn(STR.depot.locate, () => this.onTrainLocate?.(t), 'small'),
-        btn('x', () => this.onTrainClose?.(), 'small'),
+        btn('×', () => this.onTrainClose?.(), 'small'),
       ),
     );
   }

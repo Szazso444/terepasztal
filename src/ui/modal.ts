@@ -159,8 +159,8 @@ export class ScreenFrame {
   private screen: Screen | null = null;
   private state: FrameState = { stacked: false, paused: false };
   /** what the strip and the footer drew: they are built again only when it changes */
-  private drawnTabs = '';
-  private drawnFoot = '';
+  private drawnTabs: string | null = null;
+  private drawnFoot: string | null = null;
   private tabs: FrameTabs | null = null;
   private layout: FootLayout | null = null;
 
@@ -195,7 +195,7 @@ export class ScreenFrame {
     );
     this.close.title = STR.kit.closeHint(key);
     this.body.replaceChildren(s.root);
-    this.drawnTabs = this.drawnFoot = '';
+    this.drawnTabs = this.drawnFoot = null;
     this.sync();
   }
 
@@ -263,7 +263,9 @@ export class ScreenFrame {
     e.stopPropagation();
     if (e.code !== 'Tab') return;
     e.preventDefault();
-    const all = [...this.root.querySelectorAll<HTMLElement>('button:not(:disabled), input')];
+    const all = [
+      ...this.root.querySelectorAll<HTMLElement>('button:not(:disabled), input, textarea'),
+    ];
     if (!all.length) return;
     const at = all.indexOf(document.activeElement as HTMLElement);
     all[nextIndex(all.length, at, e.shiftKey)].focus();
@@ -324,12 +326,13 @@ export class ScreenManager {
     this.stack.toggle(s);
   }
   refresh() {
-    this.current?.refresh?.();
+    if (!this.current) return;
+    this.current.refresh?.();
     this.frame.sync();
   }
   /** Draw the tab strip and the footer again now, not at the next refresh. */
   redraw() {
-    this.frame.sync();
+    if (this.current) this.frame.sync();
   }
 
   private show(s: Screen | null) {

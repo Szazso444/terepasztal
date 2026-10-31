@@ -125,7 +125,10 @@ export function slotRows(
       title: sl.name,
       sub: [el('span', {}, ...slotLines(sl, now, 'k-sub'))],
       right: [
-        actionButton(STR.settings.loadSlot, () => actions.loadSlot(sl.name), { cls: 'small' }),
+        actionButton(STR.settings.loadSlot, () => actions.loadSlot(sl.name), {
+          cls: 'small',
+          icon: 'folder',
+        }),
         actionButton(
           STR.settings.deleteSlot,
           () => confirmDeleteSlot(prompt, actions, sl, onDeleted),
@@ -459,7 +462,7 @@ export class PauseMenu {
     const stack = el(
       'div',
       { class: 'k-stack' },
-      item('play', STR.menu.resume, () => this.actions.resume(), 'pri', 'Esc'),
+      item('play', STR.menu.resume, () => this.actions.resume(), 'pri', STR.kit.esc),
     );
     if (!opts.editor) {
       // "Load game" unfolds the named saves under the button
@@ -494,7 +497,7 @@ export class PauseMenu {
       id: 'pause',
       title: opts.editor ? STR.editor.title : STR.menu.menuButton,
       frameSize: 'S',
-      hotkey: 'Esc',
+      hotkey: STR.kit.esc,
       hotkeyHint: STR.menu.menuKeyHint,
       formKeys: true,
       root: page(well(null, stack), this.audio()),

@@ -35,7 +35,7 @@ export class BuildingPanel {
         'div',
         { class: 'panel-title' },
         this.title,
-        btn('x', () => this.close(), 'small'),
+        btn('×', () => this.close(), 'small'),
       ),
       this.body,
     );

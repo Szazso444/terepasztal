@@ -1251,6 +1251,8 @@ export const STR = {
     confirmNew: 'Start a new game? The current save will be replaced on the next autosave.',
     supply: 'Production chain',
     transfer: 'Transfer',
+    transferHint:
+      'Export, Import and Copy diagnostics share this box: paste a save here to import it.',
     exportSave: 'Export to text',
     formatNote:
       'Every save carries a format version. Older saves are upgraded step by step on load; newer ones load as they are. Fields this build does not know are kept and written back.',
@@ -1306,11 +1308,7 @@ export const STR = {
     inProgress: (ago: string | null) =>
       ago ? `in progress · last autosave ${ago}` : 'in progress',
     autosaveStatus: (on: boolean, ago: string | null) =>
-      !on
-        ? 'Autosave off'
-        : ago
-          ? `Autosave on · last saved ${ago}`
-          : 'Autosave on · not saved yet',
+      !on ? 'off' : ago ? `on · last saved ${ago}` : 'on · not saved yet',
     confirmOverwrite: (n: string) => `A save named "${n}" already exists. Replace it?`,
     /** Titles of the in-game dialog that asks before a save is replaced, deleted or loaded. */
     overwriteTitle: 'Replace save',
@@ -1454,6 +1452,7 @@ export const STR = {
     buy: 'Buy',
   },
   kit: {
+    esc: 'Esc',
     back: 'Back',
     done: 'Done',
     backHint: 'Back · Esc',

@@ -96,7 +96,13 @@ export class SettingsScreen implements Screen {
   /** how many named saves the Saves tab counts; storage is not read at every refresh */
   private slotCount = 0;
   /** autosave on or off and when the game was last stored; kept current while the screen is up */
-  private autosaveLine = el('div', { class: 'k-kv' });
+  private autosaveValue = el('b');
+  private autosaveLine = el(
+    'div',
+    { class: 'k-kv' },
+    el('span', { text: STR.saves.autosave }),
+    this.autosaveValue,
+  );
   // the fields outlive a redraw of the tab: what is typed in them stays
   private nameField = textField({
     placeholder: STR.settings.slotName,
@@ -104,7 +110,7 @@ export class SettingsScreen implements Screen {
     onEnter: () => void this.saveAs(),
   });
   private seedField = textField({ placeholder: STR.settings.seedPlaceholder });
-  private transferBox = pasteBox();
+  private transferBox = pasteBox({ placeholder: STR.settings.transferHint });
 
   constructor(
     private readonly settings: Settings,
@@ -146,10 +152,7 @@ export class SettingsScreen implements Screen {
   private showAutosave() {
     const savedAt = this.info().savedAt;
     const text = autosaveText(!!this.settings.autosave, savedAt, Date.now());
-    if (this.autosaveLine.textContent !== text) {
-      this.autosaveLine.textContent = '';
-      this.autosaveLine.append(el('span', { text }));
-    }
+    if (this.autosaveValue.textContent !== text) this.autosaveValue.textContent = text;
     this.autosaveLine.title = savedAt ? new Date(savedAt).toLocaleString() : '';
   }
 
