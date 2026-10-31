@@ -422,6 +422,9 @@ export const HU: Strings = {
     free: 'ingyenes',
     rotate: 'R: forgatás',
     dragHint: 'húzd a vonal lefektetéséhez',
+    bridgeDragHint: 'húzd a híd sínnel együtt lefektetéséhez',
+    raiseHint: (cost: string) => `Kattints: a híd egy szinttel feljebb · ${cost}`,
+    raiseFree: 'Kattints: a híd egy szinttel feljebb',
     runPieces: (n: number, kind: string) => `${n} x ${kind}`,
     runCurves: (n: number) => `+${n} ív`,
     dragTurn: 'R: fordulás a másik saroknál',
@@ -489,7 +492,8 @@ export const HU: Strings = {
     place: {
       track: 'Fűre, erdőbe, homokra vagy dombra. Sziklára nem; vízhez híd kell.',
       bridge: 'Csak vízcsempére, mindkét parton sínhez csatlakozva.',
-      bridgePlatform: 'Vízre. Építés után síneket kell rá fektetni.',
+      bridgePlatform:
+        'Víz fölött híd, szárazföldön vagy megemelve völgyhíd. Húzd, és sínnel együtt fekszik le; a hídra kattintva megemeled.',
       station:
         'Fűre, erdőbe, homokra vagy sík dombcsempére, egyik oldalán sínnel; az a sín lesz a peron.',
       stationOn: {
@@ -591,13 +595,16 @@ export const HU: Strings = {
     waiting: 'Erre vár: {res}',
     unknownInput: '?',
     or: 'vagy',
+    bridgeName: (material: 'wood' | 'stone', viaduct: boolean) =>
+      `${material === 'wood' ? 'Fa' : 'Kő'}${viaduct ? 'völgyhíd' : 'híd'}`,
+    deckHeight: 'Magasság',
     bridgeCapacity: 'Híd teherbírása',
     bridgeLimit: (capacity: number, slowAbove: number) =>
       `${capacity} t · ${slowAbove} t fölött fél sebesség`,
     recipeLine: '{input} → {output}',
     recipeAlt: '{input} (vagy {alt}) → {output}',
     bridgeHint:
-      'Fektess sínt erre a hídpályára. Az összefüggő egyenes sínek folytonos hidat alkotnak. A leggyengébb hídpálya szabja meg az útvonal határát; nehezebb vonathoz minden hídpályát fejlessz.',
+      'Az összefüggő egyenes sínek folytonos hidat alkotnak. A leggyengébb hídpálya szabja meg az útvonal határát; nehezebb vonathoz minden hídpályát fejlessz. A híd eszközzel a hídra kattintva megemeled.',
   },
   upgrade: {
     button: (level: number, cost: string, hours: number) =>
