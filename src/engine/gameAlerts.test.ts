@@ -123,6 +123,34 @@ describe('the Map pin cells', () => {
   });
 });
 
+describe('the overview after an alert panned it', () => {
+  /** The fields `setView` reads. */
+  const view = {
+    tooltip: { stack: { closeAll() {} } },
+    ui: {
+      overviewBanner: { classList: { toggle() {} } },
+      toolbar: { root: { style: {} } },
+      townPanel: { show() {} },
+    },
+    build: { setTool() {} },
+    overview: {},
+    setHoverTrain() {},
+    updateOverviewBanner() {},
+  };
+
+  it('keeps the pan on the way out, so the view blends from where it stood', () => {
+    const g = standIn({ ...view, viewTarget: 1, overviewFocus: { x: 3, y: 4 } });
+    g.call('setView', 0);
+    expect(g.game.overviewFocus).toEqual({ x: 3, y: 4 });
+  });
+
+  it('recentres on its next opening', () => {
+    const g = standIn({ ...view, viewTarget: 0, overviewFocus: { x: 3, y: 4 } });
+    g.call('setView', 1);
+    expect(g.game.overviewFocus).toBeNull();
+  });
+});
+
 describe('looking at a notice (focusNotice)', () => {
   const at: Notice = {
     key: 'a',

@@ -6,18 +6,20 @@ import type { Screen, ScreenManager } from './modal';
 
 /**
  * The Popup channel: a small message on the screen frame, with Go to when it has somewhere to go.
- * It takes its turn: it waits while another screen or a menu is up, and one comes after the other.
+ * It takes its turn: it waits while another screen or a dialog is up, and one comes after the
+ * other. It leaves the build tool in the player's hand.
  */
 export class AlertPopup implements Screen {
   readonly id = 'alert-popup';
   readonly frameSize = 'small';
+  readonly keepsTool = true;
   title = '';
   readonly root = el('div', { class: 'alert-popup' });
   private queue: Notice[] = [];
 
   constructor(
     private readonly screens: ScreenManager,
-    /** no menu is in the way */
+    /** no dialog is in the way: the name prompt stands above the screens */
     private readonly free: () => boolean,
     /** look at what a notice points to */
     private readonly look: (n: Notice) => void,

@@ -1102,7 +1102,15 @@ body {
   place-items: center;
   width: 28px;
   height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
   cursor: pointer;
+}
+.k-cell:focus-visible,
+.k-sw:focus-visible {
+  outline: 1px solid var(--amber);
+  outline-offset: 1px;
 }
 .k-cell::before {
   content: '';
@@ -1124,6 +1132,7 @@ body {
   display: inline-block;
   width: 32px;
   height: 17px;
+  padding: 0;
   background: var(--stone);
   border: 1px solid var(--border-dark);
   box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.45);
@@ -2311,9 +2320,6 @@ input[type='range'] {
 }
 #alert-bar .al-face b:empty {
   display: none;
-}
-#alert-bar .al-more {
-  cursor: help;
 }
 #alert-bar .al-more b {
   font: 700 11px/1 var(--font-body);

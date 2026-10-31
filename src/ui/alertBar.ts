@@ -10,9 +10,11 @@ import {
   alertIconSvg,
   alertTip,
   fitGroups,
+  hiddenGroup,
   hiddenTip,
   nextInstance,
   type AlertGroup,
+  type CyclePlace,
 } from './alertView';
 import { btn, el } from './dom';
 import type { Toasts } from './toast';
@@ -39,8 +41,8 @@ export class AlertBar {
   /** the slot that speaks for the icons there is no room for */
   private more: HTMLElement;
   private hidden: AlertGroup[] = [];
-  /** the key each icon's last click went to */
-  private lastKey = new Map<string, string>();
+  /** where each icon's clicks have got to */
+  private places = new Map<string, CyclePlace>();
   /** look at what a notice points to */
   onLook: ((n: Notice) => void) | null = null;
   /** the button: open the Notifications screen */
@@ -57,6 +59,7 @@ export class AlertBar {
     );
     this.more.classList.add('al', 'al-more');
     this.more.style.display = 'none';
+    this.more.addEventListener('click', () => this.cycle(hiddenGroup(this.hidden)));
     this.row.append(this.more);
     const settings = btn('', () => this.onSettings?.(), 'small al-set');
     settings.title = STR.alerts.title;
@@ -78,17 +81,16 @@ export class AlertBar {
       group: g,
     };
     icon.root.classList.add('al', `sev-${g.severity}`);
-    icon.root.addEventListener('click', () => this.cycle(icon));
+    icon.root.addEventListener('click', () => this.cycle(icon.group));
     return icon;
   }
 
   /** The camera to the next instance of an icon, and a toast naming it. */
-  private cycle(icon: AlertIcon) {
-    const { id } = icon.group;
-    const step = nextInstance(icon.group, this.lastKey.get(id) ?? null);
+  private cycle(group: AlertGroup) {
+    const step = nextInstance(group, this.places.get(group.id) ?? null);
     if (!step) return;
     sfx('ui.click');
-    this.lastKey.set(id, step.notice.key);
+    this.places.set(group.id, { key: step.notice.key, at: step.at });
     this.onLook?.(step.notice);
     this.toasts.push(step.line);
   }
@@ -98,7 +100,7 @@ export class AlertBar {
     if (icon.root.matches(':hover')) this.tooltip.stack.termLeave(-1);
     icon.root.remove();
     this.drawn.delete(id);
-    this.lastKey.delete(id);
+    this.places.delete(id);
   }
 
   update(list: readonly Notice[], s: AlertSettings) {
@@ -127,6 +129,10 @@ export class AlertBar {
     this.hidden = hidden;
     this.more.style.display = hidden.length ? '' : 'none';
     this.more.firstElementChild!.textContent = STR.alerts.plus(hidden.length);
+    this.more.classList.toggle(
+      'al-still',
+      hidden.every((g) => g.notices.every((m) => !m.target)),
+    );
     if (added) this.tooltip.bindTerms(this.root);
   }
 }

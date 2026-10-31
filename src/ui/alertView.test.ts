@@ -9,6 +9,7 @@ import {
   alertIconSvg,
   alertTip,
   fitGroups,
+  hiddenGroup,
   hiddenTip,
   nextInstance,
   noticeToastKind,
@@ -52,7 +53,8 @@ describe('alertGroups', () => {
     off.channels.jam.icon = false;
     expect(alertGroups([notice('a', 'jam')], off)).toEqual([]);
     // news the player did not ask to see in the bar stays out of it by default
-    expect(alertGroups([notice('a', 'done'), notice('b', 'goal')], s)).toEqual([]);
+    const news = [notice('a', 'done'), notice('b', 'goal'), notice('c', 'offer')];
+    expect(alertGroups(news, s)).toEqual([]);
   });
 
   it('is empty for an empty list', () => {
@@ -94,13 +96,46 @@ describe('nextInstance', () => {
   });
 
   it('cycles through them and wraps', () => {
-    expect(nextInstance(three, 'a')?.line).toBe('says b (2/3)');
-    expect(nextInstance(three, 'b')?.line).toBe('says c (3/3)');
-    expect(nextInstance(three, 'c')?.line).toBe('says a (1/3)');
+    expect(nextInstance(three, { key: 'a', at: 0 })?.line).toBe('says b (2/3)');
+    expect(nextInstance(three, { key: 'b', at: 1 })?.line).toBe('says c (3/3)');
+    expect(nextInstance(three, { key: 'c', at: 2 })?.line).toBe('says a (1/3)');
   });
 
-  it('starts over when the last one it went to is gone', () => {
-    expect(nextInstance(three, 'gone')?.notice.key).toBe('a');
+  it('says where it went, for the next click', () => {
+    expect(nextInstance(three, { key: 'a', at: 0 })?.at).toBe(1);
+  });
+
+  it('follows the one it went to when others come and go before it', () => {
+    const list = group([notice('new', 'nofuel'), ...three.notices]);
+    expect(nextInstance(list, { key: 'a', at: 0 })?.notice.key).toBe('b');
+  });
+
+  it('goes to the next one when the one it went to has vanished, not back to the first', () => {
+    // a, b, c: at b, and b goes
+    const left = group([notice('a', 'nofuel'), notice('c', 'nofuel')]);
+    const n = nextInstance(left, { key: 'b', at: 1 });
+    expect(n?.notice.key).toBe('c');
+    expect(n?.line).toBe('says c (2/2)');
+  });
+
+  it('goes around when the last in the list has vanished', () => {
+    const left = group([notice('a', 'nofuel'), notice('b', 'nofuel')]);
+    expect(nextInstance(left, { key: 'c', at: 2 })?.notice.key).toBe('a');
+  });
+
+  it('visits all that are left as instances vanish between clicks', () => {
+    const left = ['a', 'b', 'c', 'd', 'e'];
+    const visited: string[] = [];
+    let place = nextInstance(group(left.map((k) => notice(k, 'nofuel'))), null)!;
+    visited.push(place.notice.key);
+    // after each click the one just visited clears, as a refuelled train does
+    while (left.length > 1) {
+      left.splice(left.indexOf(place.notice.key), 1);
+      const now = group(left.map((k) => notice(k, 'nofuel')));
+      place = nextInstance(now, { key: place.notice.key, at: place.at })!;
+      visited.push(place.notice.key);
+    }
+    expect(visited).toEqual(['a', 'b', 'c', 'd', 'e']);
   });
 
   it('gives no place for a single instance', () => {
@@ -115,11 +150,33 @@ describe('nextInstance', () => {
       notice('d', 'note'),
     ]);
     expect(nextInstance(mixed, null)?.line).toBe('says b (1/2)');
-    expect(nextInstance(mixed, 'b')?.line).toBe('says d (2/2)');
+    expect(nextInstance(mixed, { key: 'b', at: 0 })?.line).toBe('says d (2/2)');
   });
 
   it('is nothing when no instance has a target', () => {
     expect(nextInstance(group([notice('a', 'note', null)]), null)).toBeNull();
+  });
+});
+
+describe('the slot for the icons with no room (hiddenGroup)', () => {
+  const type = (t: AlertType, ...keys: string[]): AlertGroup => ({
+    id: t,
+    type: t,
+    severity: 'info',
+    notices: keys.map((k) => notice(k, t)),
+  });
+
+  it('goes through the instances of every type it hides, in their order', () => {
+    const g = hiddenGroup([type('slow', 'a', 'b'), type('note', 'c')]);
+    expect(nextInstance(g, null)?.line).toBe('says a (1/3)');
+    expect(nextInstance(g, { key: 'a', at: 0 })?.line).toBe('says b (2/3)');
+    expect(nextInstance(g, { key: 'b', at: 1 })?.line).toBe('says c (3/3)');
+    expect(nextInstance(g, { key: 'c', at: 2 })?.line).toBe('says a (1/3)');
+  });
+
+  it('has an id of its own, so its clicks do not mix with an icon of those types', () => {
+    const g = hiddenGroup([type('slow', 'a'), type('note', 'c')]);
+    expect(ALERT_TYPES).not.toContain(g.id);
   });
 });
 
@@ -175,8 +232,12 @@ describe('the words and colour of a toast', () => {
     expect(noticeToastKind('ctfail')).toBe('warn');
     expect(noticeToastKind('noroute')).toBe('warn');
     expect(noticeToastKind('jam')).toBe('warn');
-    expect(noticeToastKind('note')).toBe('info');
+    expect(noticeToastKind('slow')).toBe('info');
     expect(noticeToastKind('offer')).toBe('info');
+  });
+
+  it('keep a save warning a warning', () => {
+    expect(noticeToastKind('note')).toBe('warn');
   });
 });
 

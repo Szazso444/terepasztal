@@ -32,7 +32,7 @@ function flip(
   get: () => boolean,
   set: (v: boolean) => void,
 ): HTMLElement {
-  const e = el('span', { class: cls, role, title: label, 'aria-label': label });
+  const e = el('button', { type: 'button', class: cls, role, title: label, 'aria-label': label });
   const show = () => {
     e.classList.toggle('on', get());
     e.setAttribute('aria-checked', String(get()));
@@ -58,13 +58,30 @@ export class NotificationsScreen implements Screen {
   readonly root = el('div', { class: 'nt-screen' });
   /** the screen it was opened from, which Back returns to */
   private from: Screen | null = null;
+  private first: HTMLElement | null = null;
 
   constructor(
     private readonly settings: { alerts: AlertSettings },
     private readonly screens: ScreenManager,
     /** store the settings */
     private readonly save: () => void,
-  ) {}
+  ) {
+    this.root.addEventListener('keydown', (e) => this.onKey(e));
+  }
+
+  /**
+   * The keys that work the buttons stay here: the game takes Tab and Space for itself. Tab goes
+   * round the buttons of this screen, and Escape carries on to the game, which closes it.
+   */
+  private onKey(e: KeyboardEvent) {
+    if (e.code !== 'Tab' && e.code !== 'Space' && e.code !== 'Enter') return;
+    e.stopPropagation();
+    if (e.code !== 'Tab') return;
+    e.preventDefault();
+    const all = [...this.root.querySelectorAll('button')];
+    const at = all.indexOf(document.activeElement as HTMLButtonElement);
+    all[(at + (e.shiftKey ? all.length - 1 : 1)) % all.length].focus();
+  }
 
   /** Open it, from `from` or, with null, on its own. */
   openFrom(from: Screen | null) {
@@ -73,6 +90,8 @@ export class NotificationsScreen implements Screen {
   }
   onOpen() {
     this.render();
+    // on the first cell, for the keys to start from
+    this.first?.focus();
   }
 
   private matrix(): HTMLElement {
@@ -161,5 +180,6 @@ export class NotificationsScreen implements Screen {
         ? el('div', { class: 'nt-foot left' }, leave, defaults)
         : el('div', { class: 'nt-foot apart' }, defaults, leave),
     );
+    this.first = this.root.querySelector('.k-cell');
   }
 }

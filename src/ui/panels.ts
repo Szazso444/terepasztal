@@ -331,7 +331,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.screens.root.classList.add('peek');
   };
   d.screens.onChange = (sc) => {
-    if (sc) d.build.setTool({ kind: 'none' });
+    if (sc && !sc.keepsTool) d.build.setTool({ kind: 'none' });
     if (!sc) {
       d.screens.root.classList.remove('peek');
       host.endDepotPeek();
@@ -548,10 +548,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     bar: alertBar,
     popup: new AlertPopup(
       d.screens,
-      () => !menuOpen(),
+      () => !d.namePrompt.open,
       (n) => host.focusNotice(n),
     ),
-    live: () => host.mode === 'play' && !menuOpen(),
+    // a toast fired under the loading screen would never be read
+    live: () => host.mode === 'play' && !menuOpen() && !document.getElementById('loading-screen'),
   });
   const advisor = new Advisor(d.settings.advisor === false);
   advisor.onSilence = (v) => {

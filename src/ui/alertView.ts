@@ -90,20 +90,34 @@ export function fitGroups(groups: AlertGroup[], max = MAX_ALERT_ICONS) {
   return { shown: groups.slice(0, max - 1), hidden: groups.slice(max - 1) };
 }
 
+/** The slot that speaks for the icons with no room, as one group its clicks go through. */
+export function hiddenGroup(hidden: AlertGroup[]): AlertGroup {
+  const { type, severity } = hidden[0];
+  return { id: 'hidden', type, severity, notices: hidden.flatMap((g) => g.notices) };
+}
+
+/** Where a click cycle stands: the instance it went to, and its place among them then. */
+export interface CyclePlace {
+  key: string;
+  at: number;
+}
+
 /**
- * Where a click on an icon goes after `last`, the key it went to before, and the line that names
- * it: the next instance with a target, around the end and back. Null when none has one.
+ * Where a click on an icon goes after `last`, with its place and the line that names it: the next
+ * instance with a target, around the end and back. When the last one has gone, the one that took
+ * its place is the next. Null when none has a target.
  */
 export function nextInstance(
   group: AlertGroup,
-  last: string | null,
-): { notice: Notice; line: string } | null {
+  last: CyclePlace | null,
+): { notice: Notice; at: number; line: string } | null {
   const can = group.notices.filter((n) => n.target);
   if (!can.length) return null;
-  const at = (can.findIndex((n) => n.key === last) + 1) % can.length;
+  const was = can.findIndex((n) => n.key === last?.key);
+  const at = was >= 0 ? (was + 1) % can.length : (last?.at ?? 0) % can.length;
   const notice = can[at];
   const line = can.length > 1 ? STR.alerts.cycle(notice.text, at + 1, can.length) : notice.text;
-  return { notice, line };
+  return { notice, at, line };
 }
 
 /** A tooltip lists this many instances at most. */
@@ -136,5 +150,7 @@ export function noticeToastText(n: Notice): string {
 /** The colour of a type's toast. */
 export function noticeToastKind(type: AlertType): 'info' | 'warn' | 'good' {
   if (type === 'done' || type === 'goal') return 'good';
+  // what reaches a note's toast is a save warning: an upgrade has its own
+  if (type === 'note') return 'warn';
   return ALERT_DEFS[type].severity === 'info' ? 'info' : 'warn';
 }
