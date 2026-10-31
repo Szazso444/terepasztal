@@ -6,7 +6,18 @@
 import { STR } from '../strings';
 import type { AgeStatus, GoalKind, GoalStatus } from '../sim/ages';
 import { fmtInt, fmtMoney } from './numberFormat';
-import { dim, good, hint, num, quiet, row, title, type Block, type TipDoc } from './tooltipDoc';
+import {
+  bad,
+  dim,
+  good,
+  hint,
+  num,
+  quiet,
+  row,
+  title,
+  type Block,
+  type TipDoc,
+} from './tooltipDoc';
 
 /** Display name of an age by data id. */
 export function ageName(id: string) {
@@ -77,10 +88,38 @@ function goalRow(g: GoalStatus, indent: boolean): Block {
 }
 
 /**
+ * An age's goals: the alternatives of a group sit indented under a "One of these" line, which says
+ * so in the good tone once one of them is met.
+ */
+function goalBlocks(goals: GoalStatus[]): Block[] {
+  const out: Block[] = [];
+  for (const r of goalRows(goals)) {
+    // a group of one is a plain goal
+    const group = r.length > 1;
+    if (group) out.push(r.some((g) => g.done) ? good(STR.ages.anyOfMet) : dim(STR.ages.anyOf));
+    out.push(...r.map((g) => goalRow(g, group)));
+  }
+  return out;
+}
+
+/**
+ * What a locked item or type of the build bar waits for: the age it opens in, the goals of that age
+ * with their progress and, when another age comes first, which one. `tier` is the age's index.
+ */
+export function lockTip(ages: AgeStatus[], tier: number): Block[] {
+  const waits = ages[tier];
+  if (!waits) return [bad(STR.build.tierLocked(tier))];
+  const before = ages[tier - 1];
+  return [
+    bad(STR.ages.unlocksIn(ageName(waits.id))),
+    ...(before && !before.unlocked ? [dim(STR.ages.reachFirst(ageName(before.id)))] : []),
+    ...goalBlocks(waits.goals),
+  ];
+}
+
+/**
  * Every age as a heading row, its name and its state (the current one in the accent tone, a reached
- * one dim, one to come with its state dim), then its goals. The alternatives of a group sit indented
- * under a "One of these" line, which says so in the good tone once one of them is met. PR 3's
- * "unlocks in the …" terms open this document too.
+ * one dim, one to come with its state dim), then its goals.
  */
 export function ageTip(ages: AgeStatus[]): TipDoc {
   const out: Block[] = [title(STR.ages.title)];
@@ -89,16 +128,8 @@ export function ageTip(ages: AgeStatus[]): TipDoc {
     if (a.current) out.push(row(name, STR.ages.current, { tone: 'accent' }));
     else if (a.unlocked) out.push(row(quiet(name), quiet(STR.ages.reached)));
     else out.push(row(name, quiet(STR.ages.locked)));
-    if (!a.goals.length) {
-      out.push(dim(STR.ages.start));
-      continue;
-    }
-    for (const r of goalRows(a.goals)) {
-      // a group of one is a plain goal
-      const group = r.length > 1;
-      if (group) out.push(r.some((g) => g.done) ? good(STR.ages.anyOfMet) : dim(STR.ages.anyOf));
-      out.push(...r.map((g) => goalRow(g, group)));
-    }
+    if (a.goals.length) out.push(...goalBlocks(a.goals));
+    else out.push(dim(STR.ages.start));
   }
   out.push(hint(STR.ages.hint));
   return out;

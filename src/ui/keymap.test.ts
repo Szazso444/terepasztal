@@ -64,7 +64,10 @@ function fakeHost(context: KeyContext, over: Partial<State> = {}) {
     toggleReclass: log('toggleReclass'),
     cycleType: log('cycleType'),
     selectPiece: log('selectPiece'),
-    setSpeed: log('setSpeed'),
+    openCategory: log('openCategory'),
+    closeCategory: log('closeCategory'),
+    cycleCategory: log('cycleCategory'),
+    toggleDemolish: log('toggleDemolish'),
     stepSpeed: log('stepSpeed'),
     togglePause: log('togglePause'),
     toggleRecording: log('toggleRecording'),
@@ -128,6 +131,10 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
     { state: { screenOpen: true }, calls: ['closeScreen'] },
     // a tool in hand or a picked station: Escape is the build controller's
     { state: { building: true }, calls: [] },
+    { state: { building: true, categoryOpen: true }, calls: [] },
+    // a category with no tool in hand, all its items locked: it closes, no pause menu
+    { state: { categoryOpen: true }, calls: ['closeCategory'] },
+    { state: { categoryOpen: true, screenOpen: true }, calls: ['closeScreen'] },
     // ...unless a tooltip is open: it closes, and nothing else
     { state: { tooltipsOpen: true, building: true }, calls: ['closeTooltips'] },
     { state: { tooltipsOpen: true, screenOpen: true }, calls: ['closeTooltips'] },
@@ -157,12 +164,26 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
   ],
   prevType: () => [{ state: { categoryOpen: true }, calls: ['cycleType(-1)'] }, { calls: [] }],
   nextType: () => [{ state: { categoryOpen: true }, calls: ['cycleType(1)'] }, { calls: [] }],
-  pause: () => [{ calls: ['togglePause'] }],
-  pieceOrSpeed: (b) => [
-    { state: { categoryOpen: true }, calls: [`selectPiece(${digit(b) - 1})`] },
-    { calls: digit(b) <= 3 ? [`setSpeed(${digit(b)})`] : [] },
+  prevCategory: () => [
+    { state: { categoryOpen: true }, calls: ['cycleCategory(-1)'] },
+    { calls: [] },
+    { state: { categoryOpen: true, screenOpen: true }, calls: [] },
   ],
-  speed: (b) => [{ calls: [`setSpeed(${digit(b)})`] }],
+  nextCategory: () => [
+    { state: { categoryOpen: true }, calls: ['cycleCategory(1)'] },
+    { calls: [] },
+    { state: { categoryOpen: true, screenOpen: true }, calls: [] },
+  ],
+  demolish: () => [{ calls: ['toggleDemolish'] }, { state: { screenOpen: true }, calls: [] }],
+  pause: () => [{ calls: ['togglePause'] }],
+  pieceOrCategory: (b) => [
+    { state: { categoryOpen: true }, calls: [`selectPiece(${digit(b) - 1})`] },
+    { calls: digit(b) <= 5 ? [`openCategory(${digit(b) - 1})`] : [] },
+    // the level editor has the same five, Terrain in the place of Roads
+    { state: { mode: 'editor' }, calls: digit(b) <= 5 ? [`openCategory(${digit(b) - 1})`] : [] },
+    { state: { screenOpen: true }, calls: [] },
+    { state: { screenOpen: true, categoryOpen: true }, calls: [] },
+  ],
   speedStep: (b) => [
     { calls: [`stepSpeed(${stepDir(b)})`] },
     // the level editor's clock stays stopped
@@ -206,8 +227,8 @@ const REQUIRED: [KeyContext, string, boolean?][] = [
   ['play', 'KeyU', true],
   ['play', 'KeyQ'],
   ['play', 'KeyE'],
+  ['play', 'KeyX'],
   ...DIGITS(9).map((k): [KeyContext, string] => ['play', k]),
-  ...DIGITS(3).map((k): [KeyContext, string] => ['overview', k]),
   ['overview', 'KeyR'],
   ['overview', 'Enter'],
   // + and − step the speed in both views
@@ -277,6 +298,54 @@ describe('the play keymap', () => {
       handlePlayKeys(keys([]), host);
       expect(calls).toEqual([]);
     }
+  });
+});
+
+describe('the build bar keys', () => {
+  it('sets the speed with no digit anywhere: Space, + and − and the buttons are left', () => {
+    for (const context of CONTEXTS)
+      for (const code of DIGITS(9))
+        for (const state of [{}, { categoryOpen: true }])
+          for (const shift of SHIFT) {
+            const { host, calls } = fakeHost(context, state);
+            handlePlayKeys(keys([code], shift), host);
+            expect(calls.join(), `${context} ${code}`).not.toMatch(/speed/i);
+          }
+    expect(KEYMAP.some((b) => b.context === 'overview' && b.code.startsWith('Digit'))).toBe(false);
+  });
+
+  it('tells the type from the category by Shift on Q and E', () => {
+    const steps: [string, boolean, string][] = [
+      ['KeyQ', false, 'cycleType(-1)'],
+      ['KeyE', false, 'cycleType(1)'],
+      ['KeyQ', true, 'cycleCategory(-1)'],
+      ['KeyE', true, 'cycleCategory(1)'],
+    ];
+    for (const [code, shift, call] of steps) {
+      const { host, calls } = fakeHost('play', { categoryOpen: true });
+      handlePlayKeys(keys([code], shift), host);
+      expect(calls).toEqual([call]);
+    }
+  });
+
+  it('takes X in the field view of a game and of the editor, and not in the overview', () => {
+    for (const mode of ['play', 'editor'] as const) {
+      const { host, calls } = fakeHost('play', { mode });
+      handlePlayKeys(keys(['KeyX']), host);
+      expect(calls, mode).toEqual(['toggleDemolish']);
+    }
+    const { host, calls } = fakeHost('overview');
+    handlePlayKeys(keys(['KeyX']), host);
+    expect(calls).toEqual([]);
+  });
+
+  it('leaves the build controller its Escape with a tool in hand, and ends the frame without one', () => {
+    const held = fakeHost('play', { building: true, categoryOpen: true });
+    expect(handlePlayKeys(keys(['Escape']), held.host)).toBe(false);
+    expect(held.calls).toEqual([]);
+    const bare = fakeHost('play', { categoryOpen: true });
+    expect(handlePlayKeys(keys(['Escape']), bare.host)).toBe(true);
+    expect(bare.calls).toEqual(['closeCategory']);
   });
 });
 
@@ -451,15 +520,15 @@ describe('+ and − as the browser types them', () => {
     },
   );
 
-  it('a + typed as Shift+3 is no digit 3: it picks no piece and sets no 3x', () => {
+  it('a + typed as Shift+3 is no digit 3: it picks no piece and opens no category', () => {
     expect(press('play', 'Digit3', '+', true, { categoryOpen: true })).not.toContain(
       'selectPiece(2)',
     );
-    expect(press('play', 'Digit3', '+', true)).not.toContain('setSpeed(3)');
-    expect(press('overview', 'Digit3', '+', true)).not.toContain('setSpeed(3)');
+    expect(press('play', 'Digit3', '+', true)).toEqual(['stepSpeed(1)']);
+    expect(press('overview', 'Digit3', '+', true)).toEqual(['stepSpeed(1)']);
   });
 
-  it('the 3 key still picks piece 3 or 3x when it types a 3, after a + on it was let go', () => {
+  it('the 3 key still picks piece 3 or category 3 when it types a 3, after a + on it was let go', () => {
     const { input, fire } = browserInput();
     fire('keydown', 'Digit3', '+', true);
     input.endFrame();
@@ -468,7 +537,7 @@ describe('+ and − as the browser types them', () => {
     expect(input.isDown('Digit3')).toBe(true);
     const plain = fakeHost('play');
     handlePlayKeys(input, plain.host);
-    expect(plain.calls).toEqual(['setSpeed(3)']);
+    expect(plain.calls).toEqual(['openCategory(2)']);
     const piece = fakeHost('play', { categoryOpen: true });
     handlePlayKeys(input, piece.host);
     expect(piece.calls).toEqual(['selectPiece(2)']);

@@ -77,6 +77,7 @@ import { ContractsSide } from './contractsSide';
 import { Minimap } from './minimap';
 import { DebugPanel } from './debug';
 import { Toolbar, type Tool } from './toolbar';
+import { toastBottom } from './buildBar';
 import { BuildingPanel } from './buildingPanel';
 import { DecorPanel } from './decorPanel';
 import { TrainSide } from './trainSide';
@@ -316,12 +317,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
    */
   const season = (): Season => (d.settings.weather ? seasonOf(d.clock.day) : 'spring');
 
-  const hud = new Hud(
-    d.clock,
-    () => ageStatus(d.economy.tier, host.ageSnapshot()),
-    d.atlas,
-    d.tooltip,
-  );
+  /** progress towards every age: the era widget's, and what the build bar's locks wait for */
+  const ages = () => ageStatus(d.economy.tier, host.ageSnapshot());
+  const hud = new Hud(d.clock, ages, d.atlas, d.tooltip);
   const depot = new DepotScreen(d.inventory, d.fleet, d.builder, toast, d.atlas);
   depot.onFocusTrain = (t) => host.focusTrain(t);
   depot.onFocusDepot = (dep, gate) => {
@@ -509,6 +507,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     (t: Tool) => d.build.setTool(t),
     () => (host.mode === 'editor' ? 99 : d.economy.tier),
     d.atlas,
+    d.tooltip,
+    ages,
   );
   toolbar.onHover = (it) => buildInfo.show(it ?? toolbar.item(toolbar.active));
   // the next one of a kind costs more: show the live price on the cards
@@ -558,7 +558,14 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   trainSide.onDetails = trainDetails;
   trainSide.onLocate = (t) => host.focusTrain(t);
   trainSide.onHover = (t) => host.setHoverTrain(t);
-  const buildInfo = new BuildInfo(d.atlas, d.builder, () => d.build.placement);
+  const buildInfo = new BuildInfo(
+    d.atlas,
+    d.builder,
+    () => d.build.placement,
+    () => d.build.run,
+  );
+  buildInfo.onClose = () => toolbar.select({ kind: 'none' });
+  toolbar.root.prepend(buildInfo.root);
   buildInfo.onTrainDetails = trainDetails;
   buildInfo.onTrainLocate = (t) => host.focusTrain(t);
   buildInfo.onTrainClose = () => host.selectFieldTrain(null);
@@ -607,7 +614,16 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     b ? buildingPanel.open(b) : buildingPanel.building && buildingPanel.close();
   d.build.onSelectDecor = (dec) =>
     dec ? decorPanel.open(dec) : decorPanel.decor && decorPanel.close();
-  d.build.onStatus = (t) => toolbar.setStatus(t);
+  /** the run the build card showed at the last status */
+  let runShown = false;
+  d.build.onStatus = (t) => {
+    toolbar.setStatus(t);
+    // the card follows a drag from frame to frame, not at the panels' half-second refresh, and
+    // drops the run the frame it ends
+    const run = !!d.build.run;
+    if (run || runShown) buildInfo.refresh();
+    runShown = run;
+  };
   // a harvest station's tool: the placing tooltip is the stack's root, the label floats over the tile
   const yieldLabel = new YieldLabel();
   d.build.placing = {
@@ -832,14 +848,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     pauseMenu.root,
     d.screens.root,
     advisor.root,
-    el(
-      'div',
-      { id: 'right-col' },
-      noticePanel.root,
-      contractsSide.root,
-      trainSide.root,
-      buildInfo.root,
-    ),
+    el('div', { id: 'right-col' }, noticePanel.root, contractsSide.root, trainSide.root),
     el('div', { class: 'vignette' }),
     yieldLabel.root,
     hud.root,
@@ -858,6 +867,12 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.tooltip.root,
     d.tooltip.stackRoot,
   );
+
+  // the toasts stand over the dock, which changes height with what it shows; hidden, it measures 0
+  if (typeof ResizeObserver !== 'undefined')
+    new ResizeObserver(() => {
+      d.toasts.root.style.bottom = `${toastBottom(toolbar.root.offsetHeight)}px`;
+    }).observe(toolbar.root);
 
   // ---------------------------------------------------------------- keys
   const keyScreens: Record<KeyScreen, Screen> = {
@@ -911,11 +926,14 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     openPauseMenu,
     toggleScreen: (s) => d.screens.toggle(keyScreens[s]),
     toggleOverview: () => host.toggleOverview(),
-    cycleTool: (dir) => toolbar.cycle(dir),
-    toggleReclass: (target) => toolbar.toggleReclass(target),
-    cycleType: (dir) => toolbar.cycleGroup(dir),
-    selectPiece: (i) => toolbar.selectIndex(i),
-    setSpeed: (s) => d.clock.setSpeed(s),
+    cycleTool: (dir) => toolbar.bar.cycle(dir),
+    toggleReclass: (target) => toolbar.bar.toggleReclass(target),
+    cycleType: (dir) => toolbar.bar.cycleGroup(dir),
+    selectPiece: (i) => toolbar.bar.selectIndex(i),
+    openCategory: (i) => toolbar.bar.openAt(i),
+    closeCategory: () => toolbar.bar.closeCategory(),
+    cycleCategory: (dir) => toolbar.bar.cycleCategory(dir),
+    toggleDemolish: () => toolbar.bar.toggleDemolish(),
     stepSpeed: (dir) => d.clock.stepSpeed(dir),
     togglePause: () => d.clock.togglePause(),
     toggleRecording: () => host.toggleRecording(),

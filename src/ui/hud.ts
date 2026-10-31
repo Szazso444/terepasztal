@@ -88,8 +88,8 @@ export class Hud {
         i === 0
           ? btn(s, () => this.clock.togglePause(), 'pause')
           : btn(s, () => this.clock.setSpeed(i), 'small');
-      // pause keeps its own title (update); the digits 1-3 set indexes 1-3, ½× has only + and −
-      if (i !== 0) b.title = STR.hud.speedKey(s, i <= 3 ? `${i}, + / −` : '+ / −');
+      // pause keeps its own title (update)
+      if (i !== 0) b.title = STR.hud.speedKey(s, '+ / −');
       this.speedBtns[i] = b;
       time.append(b);
     }

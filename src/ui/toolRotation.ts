@@ -1,4 +1,4 @@
-import type { Tool } from './toolbar';
+import type { Tool } from './buildBar';
 import type { StationDef } from '../data/content';
 import { structureFrame } from '../art/frames';
 import { BUILDING_ROTATIONS, nextRotation, rotationAxis } from '../sim/rotation';
