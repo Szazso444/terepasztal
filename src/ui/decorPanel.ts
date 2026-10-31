@@ -28,7 +28,7 @@ export class DecorPanel {
   ) {
     this.root = el(
       'div',
-      { id: 'station-panel', class: 'panel' },
+      { id: 'decor-panel', class: 'panel' },
       el(
         'div',
         { class: 'panel-title' },

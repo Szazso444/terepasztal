@@ -1,4 +1,5 @@
 import { STR } from '../strings';
+import { parseDecimal } from './decimal';
 import {
   DEFAULT_CONTENT,
   type ContentBundle,
@@ -214,7 +215,7 @@ export function readField(row: Row, f: FormField, kind: FieldKind, text: string)
       v = text === 'true';
       break;
     case 'number':
-      v = Number(text);
+      v = parseDecimal(text);
       if (!Number.isFinite(v)) return false;
       break;
     case 'text':

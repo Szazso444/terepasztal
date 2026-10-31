@@ -42,6 +42,10 @@ export interface Screen {
   readonly hotkeyHint?: string;
   /** a line icon before the title */
   readonly icon?: IconName;
+  /** the root of a menu (the title screen): no ×, and nothing but a choice leaves it */
+  readonly noClose?: boolean;
+  /** a class on the frame, for a screen that dresses its own header */
+  readonly frameClass?: string;
   /**
    * The keys that work controls stay in the frame: Tab goes round the controls that show, and Enter
    * presses the one that has the focus. Space stays the game's pause key and presses nothing.
@@ -190,7 +194,8 @@ export class ScreenFrame {
   show(s: Screen, state: FrameState) {
     this.screen = s;
     this.state = state;
-    this.root.className = `panel k-frame sz-${s.frameSize ?? 'L'}`;
+    this.root.className = `panel k-frame sz-${s.frameSize ?? 'L'} ${s.frameClass ?? ''}`.trim();
+    this.close.style.display = s.noClose ? 'none' : '';
     this.iconSlot.replaceChildren(...(s.icon ? [lineIcon(s.icon)] : []));
     const key = s.hotkey ?? screenKey(s.id);
     this.badges.replaceChildren(

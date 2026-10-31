@@ -1,5 +1,6 @@
 import { sfx } from '../engine/audio';
 import { STR } from '../strings';
+import { parseDecimal } from './decimal';
 import { btn, el } from './dom';
 
 /**
@@ -53,10 +54,13 @@ export function stepNumber(v: number, dir: 1 | -1, r: NumberRange, big = false):
   return clampToRange((between ? r.min + edge * r.step : v) + dir * by, r);
 }
 
-/** What was typed in a number field; text that is no number leaves `current`. */
+/**
+ * What was typed in a number field; text that is no number leaves `current`. A comma is a decimal
+ * mark too (`parseDecimal`).
+ */
 export function parseNumber(text: string, r: NumberRange, current: number): number {
   const t = text.trim();
-  const n = Number(t);
+  const n = parseDecimal(t);
   return t === '' || Number.isNaN(n) ? current : clampToRange(n, r);
 }
 
@@ -218,6 +222,11 @@ const ICONS = {
   export: '<path d="M12 15V3.5M7.5 8L12 3.5 16.5 8"/><path d="M5 13v7h14v-7"/>',
   import: '<path d="M12 3.5V15M7.5 10.5L12 15l4.5-4.5"/><path d="M5 13v7h14v-7"/>',
   copy: '<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="1.2"/><path d="M15.5 8.5V4H4v11.5h4.5"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  mountain: '<path d="M2 20l7-12 4 6.5 3-4 6 9.5z"/>',
+  keys: '<rect x="3" y="7.5" width="18" height="9" rx="2"/><path d="M8 12h8"/>',
+  scroll:
+    '<path d="M7 3h11v14.5a3.5 3.5 0 0 1-3.5 3.5H7.5A3.5 3.5 0 0 1 4 17.5V17h10v.5a3.5 3.5 0 0 0 3.5 3.5M7 3a2.5 2.5 0 0 0-2.5 2.5V8H7M10 8h5M10 12h5"/>',
 };
 export type IconName = keyof typeof ICONS;
 
@@ -518,14 +527,29 @@ function fieldKeys(
 export interface SliderOptions extends Partial<NumberRange> {
   value: number;
   label: string;
-  onInput: (v: number) => void;
+  /**
+   * Takes the value. What it returns is what was stored, which a rule may have rounded: the
+   * control shows that, not what was asked for.
+   */
+  onInput: (v: number) => number | void;
   /** how the value reads; a percentage without it */
   format?: (v: number) => string;
+  /**
+   * The value is a number field beside the track in place of the text: it can be typed in, in its
+   * own units and on no step, and it has the − and + of a number field (Shift for `bigStep`) and
+   * the up and down keys. A rule with an exact value to give.
+   */
+  field?: boolean;
 }
 
 /** A slider with its value: 0 to 100 in whole numbers unless it says otherwise. */
 export function slider(o: SliderOptions): HTMLElement {
-  const r: NumberRange = { min: o.min ?? 0, max: o.max ?? 100, step: o.step ?? 1 };
+  const r: NumberRange = {
+    min: o.min ?? 0,
+    max: o.max ?? 100,
+    step: o.step ?? 1,
+    bigStep: o.bigStep,
+  };
   const format = o.format ?? ((v: number) => `${v}%`);
   const value = clampToRange(o.value, r);
   const input = el('input', {
@@ -536,17 +560,61 @@ export function slider(o: SliderOptions): HTMLElement {
     value: String(value),
     'aria-label': o.label,
   });
-  const shown = el('em');
+  const typed = o.field
+    ? el('input', {
+        type: 'text',
+        inputmode: 'decimal',
+        value: String(value),
+        'aria-label': o.label,
+      })
+    : null;
+  const text = el('em');
   let pointing = false;
+  let current = value;
   const show = (v: number) => {
-    shown.textContent = format(v);
+    current = v;
+    if (typed) typed.value = String(v);
+    else text.textContent = format(v);
     input.style.setProperty('--k-fill', `${rangePercent(v, r)}%`);
   };
-  input.addEventListener('input', () => {
-    const v = clampToRange(Number(input.value), r);
-    show(v);
-    o.onInput(v);
-  });
+  /** Give the value on, and show what was stored. */
+  const take = (v: number) => {
+    const stored = o.onInput(v);
+    const now = typeof stored === 'number' ? stored : v;
+    show(now);
+    if (now !== v) input.value = String(now);
+  };
+  input.addEventListener('input', () => take(clampToRange(Number(input.value), r)));
+  let shown: HTMLElement = text;
+  if (typed) {
+    // any number in range: the field does not snap to the track's steps, the stepper does
+    const range = { min: r.min, max: r.max };
+    const press = (label: string, dir: 1 | -1) => {
+      const b = el('button', { type: 'button', text: label });
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sfx('ui.click');
+        take(stepNumber(current, dir, r, e.shiftKey));
+        input.value = String(current);
+      });
+      return b;
+    };
+    typed.addEventListener('change', () => {
+      const v = parseNumber(typed.value, range, current);
+      // nothing new (or no number): what is stored is shown again, and nothing is given on
+      if (v === current) return show(current);
+      take(v);
+      input.value = String(current);
+    });
+    typed.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+      e.preventDefault();
+      take(stepNumber(current, e.key === 'ArrowUp' ? 1 : -1, r, e.shiftKey));
+      input.value = String(current);
+    });
+    fieldKeys(typed, undefined, () => show(current));
+    shown = el('span', { class: 'k-num' }, press('−', -1), el('span', {}, typed), press('+', 1));
+  }
   // a press or a drag gives the keys back as it ends, wherever the pointer lets go
   for (const ended of ['pointerup', 'change'])
     input.addEventListener(ended, () => pointing && input.blur());
@@ -560,7 +628,8 @@ export function slider(o: SliderOptions): HTMLElement {
 export interface NumberFieldOptions extends NumberRange {
   value: number;
   label: string;
-  onChange: (v: number) => void;
+  /** Takes the value. What it returns is what was stored, and the field shows that. */
+  onChange: (v: number) => number | void;
   /** after the number */
   unit?: string;
   /** `small` for dense rows */
@@ -580,7 +649,11 @@ export function numberField(o: NumberFieldOptions): HTMLElement {
     input.value = String(v);
     if (v === value) return;
     value = v;
-    o.onChange(v);
+    const stored = o.onChange(v);
+    if (typeof stored === 'number') {
+      value = stored;
+      input.value = String(stored);
+    }
   };
   const press = (text: string, dir: 1 | -1) => {
     const b = el('button', { type: 'button', text });
@@ -609,6 +682,8 @@ export interface TextFieldOptions {
   icon?: IconName;
   onInput?: (text: string) => void;
   onEnter?: (text: string) => void;
+  /** Esc: what it does in place of clearing the text, as a field with a default gives that back */
+  onClear?: () => void;
   title?: string;
 }
 
@@ -632,6 +707,7 @@ export function textField(o: TextFieldOptions = {}): TextField {
     input,
     () => o.onEnter?.(input.value),
     () => {
+      if (o.onClear) return o.onClear();
       if (!input.value) return;
       input.value = '';
       o.onInput?.('');
@@ -816,6 +892,8 @@ export interface TabDef {
   count?: number | null;
   /** it cannot be opened, for this reason: dim, with the reason as its title */
   off?: string | null;
+  /** a dot after the label, with this as its title: the tab holds something set apart */
+  mark?: string | null;
 }
 
 /** A strip of tabs: the frame's, or one inside a well. */
@@ -841,6 +919,7 @@ export function tabStrip(
         t.count !== undefined && t.count !== null
           ? el('b', { class: 'k-cnt', text: String(t.count) })
           : null,
+        t.mark ? el('i', { class: 'k-dot', title: t.mark }) : null,
       );
       if (t.off) {
         b.disabled = true;
