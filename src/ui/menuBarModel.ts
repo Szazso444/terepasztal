@@ -112,6 +112,9 @@ export function entriesFor(mode: MenuMode): MenuEntry[] {
     .filter((e) => e.run || e.items.length);
 }
 
+/** How long after a pick the next press still belongs to the menu: a double-click's second. */
+export const PICK_GRACE_MS = 250;
+
 /**
  * Which menu is open, and what the pointer does to it. A click opens a menu and a second one closes
  * it; with one open, resting on another menu's entry switches to it. An entry with no menu has no
@@ -120,6 +123,8 @@ export function entriesFor(mode: MenuMode): MenuEntry[] {
 export class MenuBarState {
   open: MenuId | null = null;
   mode: MenuMode = 'play';
+  /** when a row was last picked */
+  private pickedAt = -Infinity;
 
   get entries(): MenuEntry[] {
     return entriesFor(this.mode);
@@ -152,11 +157,22 @@ export class MenuBarState {
     return true;
   }
 
-  /** A row was picked: the menu closes; what to run, none for a row the open menu does not have. */
-  pick(action: MenuAction): MenuAction | null {
+  /** A row was picked at `now`: the menu closes; what to run, none for a row it does not have. */
+  pick(action: MenuAction, now: number): MenuAction | null {
     const item = this.items.find((i) => i.action === action);
     this.open = null;
-    return item ? item.action : null;
+    if (!item) return null;
+    this.pickedAt = now;
+    return item.action;
+  }
+
+  /**
+   * A press on the map at `now`: does the menu keep it from the map. A left press that dismisses a
+   * menu only dismisses it, so a tool in hand does not build, and so does the second press of a
+   * double-click on a row, which lands where the pane stood. The other buttons act as usual.
+   */
+  keepsPress(button: number, now: number): boolean {
+    return button === 0 && (this.open !== null || now - this.pickedAt < PICK_GRACE_MS);
   }
 
   /** Close the open menu; true when one was open. */

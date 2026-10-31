@@ -14,6 +14,9 @@ import { ttTerm, type TipBuild } from './tooltip';
 /** The three lines of the Menu entry, on a 24 px grid: the workshop mock's. */
 const MENU_ICON = '<path d="M4 6h16M4 12h16M4 18h16"/>';
 
+/** Is this event on the map: anything not under `#ui-root`, as the input sees it. */
+const onMap = (e: Event) => !(e.target as Element | null)?.closest?.('#ui-root');
+
 /**
  * The menu bar of the top bar. `root` is its cell in the bar; `pane`, the open menu, stands in
  * `#ui-root` on its own: the cell clips when the bar runs short of room, and the input takes
@@ -92,22 +95,21 @@ export class MenuBar {
   }
 
   private picked(action: MenuAction) {
-    const run = this.state.pick(action);
+    const run = this.state.pick(action, performance.now());
     this.draw();
     if (run) this.actions?.[run]();
   }
 
   /**
-   * A press anywhere else closes the menu. On the map that is all it does: the world never sees a
-   * press that only dismissed a menu, or a tool in hand would build there. Over the UI the press
-   * goes on, so a button there still works.
+   * A press anywhere else closes the menu. On the map a left press does nothing more
+   * (`MenuBarState.keepsPress`), or a tool in hand would build there; the other buttons act as
+   * usual, and over the UI any press goes on, so a button there still works.
    */
   private readonly onMouseDown = (e: MouseEvent) => {
-    if (this.state.open === null) return;
-    const on = e.target as Element | null;
-    if (on?.closest?.('.mb-entry, #menu-pane')) return;
+    if ((e.target as Element | null)?.closest?.('.mb-entry, #menu-pane')) return;
+    const kept = onMap(e) && this.state.keepsPress(e.button, performance.now());
     this.close();
-    if (!on?.closest?.('#ui-root')) e.stopPropagation();
+    if (kept) e.stopPropagation();
   };
 
   private draw() {

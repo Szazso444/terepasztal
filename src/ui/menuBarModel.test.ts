@@ -4,6 +4,7 @@ import { KEYMAP, type KeyAction } from './keymap';
 import {
   MENU_BAR,
   MenuBarState,
+  PICK_GRACE_MS,
   entriesFor,
   type MenuAction,
   type MenuId,
@@ -200,15 +201,15 @@ describe('opening and closing a menu', () => {
 
   it('closes when a row is picked, and hands back what to run', () => {
     const s = opened('economy');
-    expect(s.pick('market')).toBe('market');
+    expect(s.pick('market', 0)).toBe('market');
     expect(s.open).toBeNull();
   });
 
   it('runs nothing for a row the open menu does not have', () => {
     const s = opened('economy');
-    expect(s.pick('depot')).toBeNull();
+    expect(s.pick('depot', 0)).toBeNull();
     expect(s.open).toBeNull();
-    expect(new MenuBarState().pick('depot')).toBeNull();
+    expect(new MenuBarState().pick('depot', 0)).toBeNull();
   });
 
   it('does what an entry with no menu does, closing the open menu', () => {
@@ -266,7 +267,7 @@ describe('the rules in the level editor', () => {
     const s = editor();
     s.click('fleet');
     expect(s.items.map((i) => i.action)).toEqual(['signals']);
-    expect(s.pick('depot')).toBeNull();
+    expect(s.pick('depot', 0)).toBeNull();
   });
 
   it('closes a menu when the mode changes', () => {
@@ -274,6 +275,47 @@ describe('the rules in the level editor', () => {
     s.click('economy');
     s.setMode('editor');
     expect(s.open).toBeNull();
+  });
+});
+
+describe('what a press on the map does', () => {
+  const [LEFT, MIDDLE, RIGHT] = [0, 1, 2];
+  const opened = () => {
+    const s = new MenuBarState();
+    s.click('view');
+    return s;
+  };
+  const picked = (at: number) => {
+    const s = opened();
+    s.pick('weather', at);
+    return s;
+  };
+
+  it('keeps a left press from the map while a menu is open', () => {
+    expect(opened().keepsPress(LEFT, 0)).toBe(true);
+  });
+
+  it('lets the right and middle buttons act as usual, with a menu open or just after a pick', () => {
+    for (const button of [MIDDLE, RIGHT]) {
+      expect(opened().keepsPress(button, 0), `open ${button}`).toBe(false);
+      expect(picked(1000).keepsPress(button, 1000), `picked ${button}`).toBe(false);
+    }
+  });
+
+  it('leaves the map its presses with no menu open and none picked', () => {
+    expect(new MenuBarState().keepsPress(LEFT, 0)).toBe(false);
+  });
+
+  it('keeps the second press of a double-click on a row, for the grace and no longer', () => {
+    expect(picked(1000).keepsPress(LEFT, 1000)).toBe(true);
+    expect(picked(1000).keepsPress(LEFT, 1000 + PICK_GRACE_MS - 1)).toBe(true);
+    expect(picked(1000).keepsPress(LEFT, 1000 + PICK_GRACE_MS)).toBe(false);
+  });
+
+  it('starts no grace from a pick that ran nothing', () => {
+    const s = opened();
+    s.pick('depot', 1000);
+    expect(s.keepsPress(LEFT, 1000)).toBe(false);
   });
 });
 
