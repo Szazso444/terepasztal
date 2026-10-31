@@ -99,6 +99,8 @@ export class NowPlaying {
     this.shown = now;
     if (now.title !== was?.title) {
       this.text.textContent = now.title ?? STR.nowPlaying.noTrack;
+      // off while it is measured, so a new title that rolls too starts from its beginning
+      this.box.classList.remove('roll');
       this.roll();
     }
     if (now.paused !== was?.paused) {
