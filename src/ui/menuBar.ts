@@ -105,8 +105,9 @@ export class MenuBar {
   /** The depots' rows as they stand now, each with its gauge and its trains. */
   private drawDepots() {
     const rows = depotRows(this.state.mode, this.depots?.() ?? []).map((d) => {
-      const b = btn(d.label, () => this.pickedDepot(d.id), 'mb-item mb-depot');
+      const b = btn(d.label, () => this.pickedDepot(d.id), 'mb-item mb-depot-row');
       b.setAttribute('role', 'menuitem');
+      b.prepend(lineIcon('shed'));
       b.title = STR.topbar.depotHint;
       b.classList.toggle('on', d.on);
       b.append(el('small', { text: d.detail }));

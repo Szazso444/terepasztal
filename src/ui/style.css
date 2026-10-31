@@ -536,16 +536,16 @@ html[lang='hu'] .panel-name {
   display: flex;
   flex-direction: column;
 }
-.btn.mb-item.mb-depot {
-  padding-left: 30px;
+.btn.mb-item.mb-depot-row {
+  padding-left: 22px;
 }
-.btn.mb-item.mb-depot small {
+.btn.mb-item.mb-depot-row small {
   margin-left: auto;
   padding-left: 18px;
   color: var(--text-dim);
   font-size: 11px;
 }
-.btn.mb-item.mb-depot.on::after {
+.btn.mb-item.mb-depot-row.on::after {
   margin-left: 0;
   padding-left: 0;
 }
