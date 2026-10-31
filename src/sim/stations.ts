@@ -309,7 +309,8 @@ const DOCK_PROBE = 'stone';
  * A station's default name as the player reads it, from the name the world keeps: the English kind
  * ("Farm Halt", "Farm Halt 2"), after the name of `town` inside one ("Kisvár Station"). Inside a
  * name the kind goes in lower case, as a Hungarian station's does. Any other name is the player's
- * own and stays as it is.
+ * own and stays as it is. A name the player typed in the very shape of a default ("Station 7") reads
+ * as that default, as `isDefaultName` has always taken it: a station keeps no flag to tell them apart.
  */
 export function localStationName(stored: string, def: StationDef, town: string | null): string {
   const kind = dataName(def);

@@ -1494,8 +1494,8 @@ const EN = {
     gameplay: 'Gameplay',
     language: 'Language',
     languageNote: 'Changing the language reloads the page; a game in play is saved first.',
-    /** the game could not be stored first, so nothing changed */
-    languageHeld: 'The language stays as it is: the game could not be saved first.',
+    /** the game or the setting could not be stored, so nothing changed */
+    languageHeld: 'The language stays as it is: the game or the setting could not be saved.',
     edgeScroll: 'Edge scrolling',
     autosave: 'Autosave (every minute)',
     dayNight: 'Day / night cycle',

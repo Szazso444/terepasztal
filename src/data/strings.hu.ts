@@ -62,7 +62,7 @@ export const HU: Strings = {
       'A várost az állomása lerakásakor nevezheted el, és bármikor átnevezheted.',
       'Mutass a dátum melletti korszakra, és látod, mit kér a következő.',
       'A vonat nem indul olyan útra, amelynek a végéről már nem érné el az üzemanyagot.',
-      'Az egyvágányú pályát egész szakaszokban osztja a játék, így a vonatok sosem találkoznak szemből.',
+      'Az egyvágányú pályát egész szakaszokban osztja ki a játék, így a vonatok egy szakaszon belül sosem találkoznak szemből.',
     ],
   },
   hud: {
@@ -223,7 +223,7 @@ export const HU: Strings = {
   },
   placing: {
     title: (station: string) => `${station} ide`,
-    ring: '{n} {tiles}, {d} csempére',
+    ring: '{n} {tiles} {d} csempényire',
     placement: 'Elhelyezés',
     atMost: 'legfeljebb',
     atLeast: 'legalább',
@@ -268,7 +268,7 @@ export const HU: Strings = {
     guideJunction:
       'Csomópont elé tedd a bejárati jelzőt a ráfutó ágra, a kijárati jelzőket pedig mindegyik ág mögé, egy teljes vonatnak elég hellyel. A csomópontfoglaláshoz akkor is szabad kijárat kell, így a zöld jelző sem kényszerít vonatot foglalt keresztezésbe.',
     guideSingleLine:
-      'Kétirányú egyvágányú vonalon a kitérő mindkét végére tegyél jelzőt, a közös vonal felé nézve. A kitérő legyen elég hosszú az egész vonatnak. A Beállítások Token jelzése közös szakaszonként egy vonatot enged. A jelzők a behaladást szabályozzák; hiányzó kitérőt nem pótolnak.',
+      'Kétirányú egyvágányú vonalon a kitérő mindkét végére tegyél jelzőt, a közös vonal felé nézve. A kitérő legyen elég hosszú az egész vonatnak. A Beállításokban a Token szint közös szakaszonként egy vonatot enged. A jelzők a behaladást szabályozzák; hiányzó kitérőt nem pótolnak.',
   },
   hints: {
     camera:
@@ -304,12 +304,12 @@ export const HU: Strings = {
   },
   trainNote: {
     service: 'Úton a közeli üzemanyag- vagy vízvételi helyhez',
-    onContract: (name: string) => `szerződésen: ${name}`,
+    onContract: (name: string) => `szerződést teljesít: ${name}`,
     regularRun: 'vissza a szokásos útvonalra',
     noTrackToStop: 'nem vezet sín a választott megállóhoz',
     noPlatform: (name: string) => `${name}: nincs peronvágány`,
     parked: 'leállt: nincs út a választott megállóhoz',
-    detouring: 'kerül egy szemből jövő vonat miatt',
+    detouring: 'kerülőt tesz egy szemből jövő vonat miatt',
     rerouted: 'a forgalom miatt új útvonalon',
     ranDry: 'Kifogyott az üzemanyag vagy a víz',
     outOfFuel: 'kifogyott az üzemanyag vagy a víz',
@@ -318,7 +318,7 @@ export const HU: Strings = {
     movingAway: 'félreáll az útból',
   },
   traffic: {
-    pullingAside: 'Félreáll egy lefoglalt kitérőre',
+    pullingAside: 'Félreáll a számára lefoglalt útvonalon',
     makingWay: 'Nincs mit szállítania: félreáll az útból',
     madeWay: 'Félreállt az útból',
     waitAside: 'Útban van: helyre vár, ahová félreállhat',
@@ -326,11 +326,11 @@ export const HU: Strings = {
     jammed: 'Beszorult: nincs kitérő, ahová beállva átengedhetné a másik vonatot',
     keptBack: 'Visszatartva: mindig ugyanannak a vonatnak enged utat, és nincs hol kikerülnie',
     noWayOn: 'Félreállt, és innen nem vezet sín a következő megállóhoz',
-    replan: 'A kitérő nem elérhető; új tervre vár',
-    stalled: (name: string) => `${name}: a kitérés elakadt; újratervezésre engedve`,
-    released: (name: string) => `${name}: a kitérő felszabadult`,
+    replan: 'Nincs szabad félreállási útvonal; új tervre vár',
+    stalled: (name: string) => `${name}: a félreállás elakadt; újratervezésre engedve`,
+    released: (name: string) => `${name}: a félreállási útvonal felszabadult`,
     recoverySummary: (groups: number, owners: string) =>
-      `${groups} akadályozó csoport · ${owners || 'nincs folyamatban kitérés'}`,
+      `${groups} akadályozó csoport · ${owners || 'nincs folyamatban félreállás'}`,
   },
   minimap: { title: 'Felmérés' },
   build: {
@@ -364,7 +364,7 @@ export const HU: Strings = {
     reclassSize: (line: string, need: number, n: number) =>
       `A ${line} ívei és váltói ${need}×${need} méretűek, ez ${n}×${n}: fektesd le újra a Sín eszközzel`,
     reclassLeft: (what: string, n: number) =>
-      `${what}: ${n === 1 ? 'egy elem maradt' : `${n} elem maradt`} a régiben (piros)`,
+      `${what}: ${n === 1 ? 'egy elem' : `${n} elem`} változatlan maradt (piros)`,
     reclass: {
       separate: 'Csak a Mellékvonal, a Fővonal és a Törzsvonal alakítható át egymásba',
       size: 'Ez az ív vagy váltó túl kicsi vagy túl nagy ehhez a vonalhoz: fektesd le újra',
@@ -392,7 +392,7 @@ export const HU: Strings = {
     needTrackHere: 'Jelző csak sínre kerülhet',
     roadHere: 'Itt már van út',
     roadOnBuilding: 'Az út megkerüli az épületet, és csak az ajtajánál találkozik vele',
-    roadInWay: 'Út van útban: előbb bontsd el',
+    roadInWay: 'Itt út fut: előbb bontsd el',
     bridgeCarriesRail: 'Ezen a hídon sín fut: az úthoz előbb bontsd el a sínt',
     bridgeCarriesRoad: 'Ezen a hídon út fut: a sínhez előbb bontsd el az utat',
     roadOnBridge: 'Út a hídon',
@@ -434,8 +434,8 @@ export const HU: Strings = {
     demolish: 'Bontás',
     demolishTip: (percent: number | null) =>
       percent === null
-        ? 'Kattints arra, amit építettél, és lebontja.'
-        : `Kattints arra, amit építettél, és lebontja. A listaár ${percent}%-a visszajár.`,
+        ? 'Kattints arra, amit építettél, és lebontod.'
+        : `Kattints arra, amit építettél, és lebontod. A listaár ${percent}%-a visszajár.`,
     demolishOn: (percent: number | null) =>
       percent === null
         ? 'Bontás: kattints arra, amit építettél · X vagy Esc: vége'
@@ -488,13 +488,13 @@ export const HU: Strings = {
         pump: 'Fűre vagy erdőbe, közvetlenül víz mellé, egyik oldalán sínnel; az a sín lesz a peron.',
       },
       depot:
-        'Két-két csempe, ingyenes. R forgatja; a négy kapu két szemközti oldalon van; fektess sínt hozzájuk. Kilenc saját chunkonként egy fűtőház.',
+        '2×2 csempe, ingyenes. R forgatja; a négy kapu két szemközti oldalon van; fektess sínt hozzájuk. Kilenc saját chunkonként egy fűtőház.',
       town: 'Fűre, erdőbe, homokra vagy sík dombcsempére, egyik oldalán sínnel, legalább 25 csempére minden más városházától.',
       onTrack: 'Meglévő síncsempére. R forgatja.',
       service: (r: number) =>
         `Szabad csempére, legfeljebb ${r} csempére a kiszolgálandó állomásoktól.`,
       powerLine:
-        'Sínre vagy bármilyen szabad csempére. Az oszlopok 2 csempén belül kapcsolódnak egymáshoz és az erőműhöz; egy élő oszloptól 1 csempén belül feszültség alá kerül a sín.',
+        'Sínre vagy bármilyen szabad csempére. Az oszlopok 2 csempén belül kapcsolódnak egymáshoz és az erőműhöz; egy feszültség alatti oszloptól 1 csempén belül feszültség alá kerül a sín.',
       building: 'Szabad fű-, erdő-, homok- vagy sík dombcsempére.',
       works:
         'Szabad fű-, erdő-, homok- vagy sík dombcsempére. A legközelebbi készletből dolgozik; nem kell hozzá sín.',
@@ -509,33 +509,34 @@ export const HU: Strings = {
     trackDesc: {
       straight_branch: 'Mellékvonali egyenes. Húzd egy egyenes szakasz lefektetéséhez.',
       curve_branch:
-        'Két-két csempe, másfél sugarú: a hosszú vonatok is elférnek benne. A belső sarokcsempe foglalt. R forgatja.',
+        '2×2 csempe, másfél csempe sugarú: a hosszú vonatok is elférnek benne. A belső sarokcsempe foglalt. R forgatja.',
       switch_branch:
-        'Két-két csempe: egy vonal kettéágazik. A távolabbi vége mellé fektess egyenest, és az ág párhuzamos vágánnyá hajlik. R végigforgatja mindkét állást.',
+        '2×2 csempe: egy vonal kettéágazik. A távolabbi vége mellé fektess egyenest, és az ág párhuzamos vágánnyá hajlik. R végigforgatja a jobbos és a balos változatot.',
       crossing_branch_branch: 'Két mellékvonal keresztezi egymást, csatlakozás nélkül.',
       bridge_branch: 'Egy vízcsempét ível át. Csak vízre.',
       straight_narrow:
         'Keskeny nyomtávú egyenes. Csak keskeny vonatok járnak rajta. Húzd a szakasz lefektetéséhez.',
       curve_narrow: 'Keskeny nyomtávú negyedív egy csempén, szűk helyekre. R forgatja.',
-      switch_narrow: 'Keskeny nyomtávú váltó egy csempén. R végigforgatja mindkét állást.',
+      switch_narrow:
+        'Keskeny nyomtávú váltó egy csempén. R végigforgatja a jobbos és a balos változatot.',
       crossing_narrow_narrow: 'Két keskeny nyomtávú vonal keresztezi egymást szintben.',
       crossing_narrow_branch:
         'Keskeny nyomtávú vonal keresztez egy mellékvonalat szintben, csatlakozás nélkül. R megcseréli, melyik vonal merre fut.',
       straight_main:
         'Fővonali egyenes: betonaljak széles ágyazaton, rombolókhoz és kisebbekhez. Közvetlenül csatlakozik a Mellékvonalhoz és a Törzsvonalhoz. Húzd a szakasz lefektetéséhez.',
       curve_main:
-        'Három-három csempe, két és fél sugarú: a hosszú vonatok gyorsabban veszik be. A belső csempék foglaltak. R forgatja.',
+        '3×3 csempe, két és fél csempe sugarú: a hosszú vonatok gyorsabban veszik be. A belső csempék foglaltak. R forgatja.',
       switch_main:
-        'Három-három csempe: egy fővonal kettéágazik. A távolabbi vége mellé fektess egyenest, és az ág párhuzamos vágánnyá hajlik. R végigforgatja mindkét állást.',
+        '3×3 csempe: egy fővonal kettéágazik. A távolabbi vége mellé fektess egyenest, és az ág párhuzamos vágánnyá hajlik. R végigforgatja a jobbos és a balos változatot.',
       crossing_main_main: 'Két fővonal keresztezi egymást, csatlakozás nélkül.',
       crossing_branch_main:
         'Mellékvonal keresztez egy fővonalat, csatlakozás nélkül. R megcseréli, melyik vonal merre fut.',
       straight_trunk:
         'Törzsvonali egyenes: nehéz sín széles betonaljakon és sötét bazalton, minden osztálynak. Közvetlenül csatlakozik a Mellékvonalhoz és a Fővonalhoz. Húzd a szakasz lefektetéséhez.',
       curve_trunk:
-        'Négy-négy csempe, három és fél sugarú: a leghosszabb vonatok is elférnek benne. A belső csempék foglaltak. R forgatja.',
+        '4×4 csempe, három és fél csempe sugarú: a leghosszabb vonatok is elférnek benne. A belső csempék foglaltak. R forgatja.',
       switch_trunk:
-        'Négy-négy csempe: egy törzsvonal kettéágazik. A távolabbi vége mellé fektess egyenest, és az ág párhuzamos vágánnyá hajlik. R végigforgatja mindkét állást.',
+        '4×4 csempe: egy törzsvonal kettéágazik. A távolabbi vége mellé fektess egyenest, és az ág párhuzamos vágánnyá hajlik. R végigforgatja a jobbos és a balos változatot.',
       crossing_trunk_trunk: 'Két törzsvonal keresztezi egymást, csatlakozás nélkül.',
       crossing_branch_trunk:
         'Mellékvonal keresztez egy törzsvonalat, csatlakozás nélkül. R megcseréli, melyik vonal merre fut.',
@@ -617,10 +618,10 @@ export const HU: Strings = {
     },
     orphaned: (n: string) => `${n}: nincs peronvágány`,
     unwired: (n: string) => `${n}: nincs távvezetékhez kötve`,
-    starved: (n: string, r: string) => `${n}: erre vár: ${r}`,
+    starved: (n: string, r: string) => `${n} erre vár: ${r}`,
     noStore: (n: string, range: number) => `${n}: ${range} csempén belül nincs készlet`,
     full: (n: string) => `${n}: tele a készlet, a termelés leállt`,
-    storeFull: (n: string, goods: string) => `${n}: tele a készlet: ${goods}`,
+    storeFull: (n: string, goods: string) => `${n} készlete tele: ${goods}`,
     contractFailed: (n: string) => `Nem teljesült szerződés: ${n}`,
     contractDone: (n: string) => `Teljesült a szerződés: ${n}`,
     contractAtRisk: (n: string) => `Kifut az időből a szerződés: ${n}`,
@@ -637,7 +638,7 @@ export const HU: Strings = {
     defaults: 'Alapértékek',
     defaultsHint: 'Vissza a kiinduló csatornákhoz és kapcsolókhoz',
     close: 'Bezárás',
-    goTo: 'Odamegy',
+    goTo: 'Megmutat',
     criticalPause: 'Kritikus riasztásnál mindig megáll',
     group: 'Sok vonat azonos riasztása egy ikonba kerül',
     cycle: (text: string, at: number, of: number) => `${text} (${at}/${of})`,
@@ -648,7 +649,7 @@ export const HU: Strings = {
       stuck: 'Elakadt vonat',
       ctfail: 'Nem teljesült szerződés',
       noroute: 'Nincs útvonal',
-      full: 'Megtelt a raktár',
+      full: 'Megtelt a készlet',
       starved: 'Az üzemnek nincs alapanyaga',
       contract: 'Veszélyben egy szerződés',
       jam: 'Torlódik egy csomópont',
@@ -690,7 +691,7 @@ export const HU: Strings = {
       noTrain:
         'Nyisd meg a Fűtőházat (F), válassz mozdonyt és kocsikat, majd nyomd meg az Indítást. Az útvonal automatikus.',
       idleStock: (n: number) =>
-        `${n} mozdony tétlenül áll a fűtőházban. Indítsd el őket, hogy többet keress.`,
+        `${n} mozdony tétlenül áll a fűtőházban. Indítsd el, hogy többet keress.`,
       lowWheat: (store: string) =>
         `Fogytán az élelem itt: ${store}. Hozz búzát egy tanyáról, és építs szélmalmot, vagy vegyél élelmet a Piacon (K).`,
       famine:
@@ -711,7 +712,7 @@ export const HU: Strings = {
       failed: (n: string) =>
         `Nem teljesült a szerződés: „${n}”. Csak olyat vállalj, amely útba esik a vonataidnak, és figyeld a határidőt.`,
       capFull: (r: string, store: string) =>
-        `${store}: tele van ebből: ${r}. A raktár növeli a város felső határát, és saját árut is tart; vagy adj el a Piacon.`,
+        `${store}: ebből tele a készlet: ${r}. A raktár növeli a város felső határát, és saját árut is tart; vagy adj el a Piacon.`,
       blocked: (n: string) =>
         `${n}: elakadt egy másik vonat mögött. Építs váltókkal kitérőt vagy második vágányt.`,
     },
@@ -812,7 +813,7 @@ export const HU: Strings = {
     },
     picture: (name: string, level: string, season: string) => `${name} · ${level} · ${season}`,
     stored: (stored: string, cap: string) => `${stored} / ${cap}`,
-    storedAGood: (stored: string, cap: string) => `${stored} / ${cap} áruként`,
+    storedAGood: (stored: string, cap: string) => `${stored} / ${cap} áruféleségenként`,
     crew: 'Személyzet',
     storeWeek: (store: string) => `${store}, ezen a héten`,
     townStore: (town: string) => `${town} városi készlete`,
@@ -832,7 +833,7 @@ export const HU: Strings = {
     outWeek: 'Ki',
     noCargo: 'Még nincs itt áru.',
     carriedTo: (place: string) => `A munkások ide viszik, amit termel: ${place} készlete.`,
-    accepts: 'Átvesz',
+    accepts: 'Fogad',
     calling: 'Ide járó vonatok',
     noTrains: 'Ide még nem jár vonat.',
     atPlatform: 'A peronon',
@@ -868,7 +869,7 @@ export const HU: Strings = {
     consumes: 'Fogyaszt',
     collects: 'Felvesz',
     delivers: 'Leszállít',
-    onContract: (n: string, dest: string) => `szerződésen: ${n} → ${dest}`,
+    onContract: (n: string, dest: string) => `szerződést teljesít: ${n} → ${dest}`,
     queuedContracts: (n: number) => `+${n} sorban`,
     refuelAll: 'Mind tankol · 2×',
     refuelAllHint: 'Minden vonatot feltölt, kétszeres nyersanyagáron',
@@ -910,7 +911,7 @@ export const HU: Strings = {
       contract:
         'Dinamikus: szerződéseket teljesít. A peronján vár, amíg el nem fogadsz egy általa szállítható szerződést; a forgalmasabb vonatok előtt kapja meg, a kiindulási helyről a célba viszi, aztán újra vár. Magától tankol.',
       freight:
-        'Dinamikus: az elérhető legtelibb, legnagyobb készletű termelőhöz megy, majd egy másik termelőnél tölt rá, amíg van hely, és az árut a legközelebbi szabad készletbe viszi: fűtőházba, raktárba vagy városházára. Készletből sosem visz el árut, és a városi termelő maga teszi az áruját a város készletébe. Minden megállóban újratervez, és magától tankol.',
+        'Dinamikus: ahhoz a termelőhöz megy az elérhetők közül, ahol a legtöbb áru áll, majd egy másik termelőnél tölt rá, amíg van hely, és az árut a legközelebbi olyan készletbe viszi, ahol még van hely: fűtőházba, raktárba vagy városházára. Készletből sosem visz el árut, és a városi termelő maga teszi az áruját a város készletébe. Minden megállóban újratervez, és magától tankol.',
     },
     dynamicTag: 'dinamikus',
     routeAutoHint:
@@ -1057,7 +1058,7 @@ export const HU: Strings = {
       'Ajánlatok akkor jelennek meg, ha egy állomás olyat termel, amit egy másik állomás átvesz.',
     noActive: 'Nincs aktív szerződés.',
     noHistory: 'Még semmit sem szállítottál le.',
-    done: 'Teljesítve',
+    done: 'Leszállítva',
     failed: 'Lejárt a határidő',
     expired: 'Lejárt',
     accepted: (n: string) => `${n} elfogadva`,
@@ -1335,7 +1336,7 @@ export const HU: Strings = {
     gameplay: 'Játékmenet',
     language: 'Nyelv',
     languageNote: 'A nyelvváltás újratölti az oldalt; a folyamatban lévő játékot előbb menti.',
-    languageHeld: 'A nyelv nem változott: a játékot előbb nem sikerült menteni.',
+    languageHeld: 'A nyelv nem változott: a játékot vagy a beállítást nem sikerült menteni.',
     edgeScroll: 'Görgetés a képernyő szélén',
     autosave: 'Automatikus mentés (percenként)',
     dayNight: 'Nappalok és éjszakák',
@@ -1385,7 +1386,7 @@ export const HU: Strings = {
         title: 'Építés',
         rows: [
           { keys: ['1–5'], text: 'Építési kategória megnyitása' },
-          { keys: ['1–9'], text: 'A nyitott kategória egy eleme' },
+          { keys: ['1–9'], text: 'Elem választása a nyitott kategóriából' },
           { keys: ['Tab'], text: 'Következő elem; Shift+Tab az előző' },
           { keys: ['Q', 'E'], text: 'Előző és következő típus' },
           { keys: ['Shift+Q', 'Shift+E'], text: 'Előző és következő kategória' },
@@ -1445,7 +1446,7 @@ export const HU: Strings = {
     olderSave: (from: number, to: number, notes: string[]) =>
       `Elavult mentés: v${from} formátumban íródott, v${to}-ként töltődött be. ${notes.length ? 'Kiegészítve: ' + notes.join('; ') : 'Semmit sem kellett kiegészíteni'}. Mentéskor v${to} íródik.`,
     newerSave: (from: number, to: number) =>
-      `Újabb verziójú mentés: v${from} formátum, ez a verzió v${to}-t olvas. Amit nem ért, azt megtartja és visszaírja; a rá épülő funkciók hiányozhatnak vagy alapértéket kaphatnak.`,
+      `Újabb verziójú mentés: v${from} formátum, ez a verzió a v${to} formátumot olvassa. Amit nem ért, azt megtartja és visszaírja; a rá épülő funkciók hiányozhatnak vagy alapértéket kaphatnak.`,
     importSave: 'Importálás szövegből',
     confirmImport: 'Lecseréled a mostani játékot a beillesztett mentésre?',
     saved: 'Játék elmentve',
@@ -1636,7 +1637,7 @@ export const HU: Strings = {
         ? 'Ez lecseréli a folyamatban lévő játékot és a mentett játékot is. Az utolsó mentés vagy automatikus mentés óta elért haladás elvész. Folytatod?'
         : 'Ez lecseréli a folyamatban lévő játékot, amely nincs elmentve. A haladása elvész. Folytatod?',
     confirmLeaveGame:
-      'Ezzel elhagyod a folyamatban lévő játékot. A nem mentett vagy automatikusan nem mentett haladás elvész. Folytatod?',
+      'Ezzel elhagyod a folyamatban lévő játékot. Ami nincs elmentve, elvész. Folytatod?',
     menuButton: 'Menü',
     menuKeyHint: 'Az Esc nyitja és zárja a menüt, ha nincs eszköz a kézben',
     supply: 'Termelési lánc',
@@ -1650,7 +1651,7 @@ export const HU: Strings = {
     supplyHint: {
       simple:
         'A faszénégető, a kőőrlő és a finomító a tárolt árukból szenet, vasat és olajat készít; a dízelek olajat égetnek; az egy sínhálózaton lévő készletek megosztják az árut.',
-      full: 'Szénbányák szénéreken, vas- és rézbányák, vasművek, olajkutak olajszivárgásokon, gázolajat készítő finomító, homok a tapadáshoz és rézhuzal. A raktárak csak abból tankolnak, amit a vonatok hoznak.',
+      full: 'Szénbányák szénéreken, vas- és rézbányák, vasművek, olajkutak olajszivárgásokon, gázolajat készítő finomító, homok a tapadáshoz és rézhuzal. A raktáraknál csak abból lehet tankolni, amit a vonatok hoznak.',
     },
   },
   credits: {
@@ -1719,7 +1720,7 @@ export const HU: Strings = {
     unsaved: 'A nem mentett változtatások elvesznek. Folytatod?',
     unsavedTitle: 'Nem mentett változtatások',
     hint: 'Szerkesztő: szabad építés, minden terület nyitva, az óra áll. Esc: menü.',
-    terrain: 'Terep',
+    terrain: 'Domborzat',
     levelDown: 'Szint -',
     levelUp: 'Szint +',
     newName: 'Pálya neve',
@@ -1832,7 +1833,7 @@ export const HU: Strings = {
     levelGain: (level: number, pct: number, what: string) => `Sz. ${level} · +${pct}% ${what}`,
     noTanks: 'Nincs üzemanyag- vagy víztartálya: a villamos vonat a felsővezetékről jár.',
     tanksFull: 'A tartályok tele vannak.',
-    nameEmpty: 'A vonatnak kell név.',
+    nameEmpty: 'A vonatnak név kell.',
     noColour: 'Ez nem tartozik a színkódok közé.',
     colour: ['szürke', 'piros', 'borostyán', 'zöld', 'kék', 'lila'],
     state: 'Állapot',
@@ -1859,7 +1860,7 @@ export const HU: Strings = {
     tiles: 'csempe',
     prefer: 'Gőzüzemanyag:',
     routing: 'Útvonaltervezés',
-    hungry: 'Éhes a személyzet: lassabban fut, amíg élelmes készlethez nem ér',
+    hungry: 'Éhes a személyzet: lassabban fut, amíg olyan készlethez nem ér, ahol van élelem',
     clickHint: 'Kattints a kijelöléshez',
     toward: '{state} → {station}',
     weightPower: (weight: number, power: number) => `${weight} / ${power} t`,
@@ -1874,7 +1875,7 @@ export const HU: Strings = {
       transport: 'Dinamikus: utasok az állomások között.',
       contract: 'Dinamikus: az elfogadott szerződéseket viszi a kiindulási helyről a célba.',
       freight:
-        'Dinamikus: előbb a legtelibb termelő, majd egy másik termelőnél tölt rá, amíg van hely. Az áru a legközelebbi szabad készletbe megy (fűtőház, raktár vagy városháza); készletből nem visz el semmit. Minden megállóban újratervez, és magától tankol.',
+        'Dinamikus: előbb oda megy, ahol a legtöbb áru áll, majd egy másik termelőnél tölt rá, amíg van hely. Az áru a legközelebbi olyan készletbe megy, ahol még van hely (fűtőház, raktár vagy városháza); készletből nem visz el semmit. Minden megállóban újratervez, és magától tankol.',
     },
     coal: 'Szén',
     wood: 'Fa',
@@ -1970,7 +1971,7 @@ export const HU: Strings = {
     frigate: 'Fregatt',
     destroyer: 'Romboló',
     cruiser: 'Cirkáló',
-    carrier: 'Hordozó',
+    carrier: 'Anyahajó',
     hydrofoil: 'Szárnyashajó',
     submarine: 'Tengeralattjáró',
   },
@@ -2055,14 +2056,14 @@ export const HU: Strings = {
   },
   stores: {
     grid: 'Elektromos hálózat',
-    famine: (name: string) => `${name}: elfogyott a személyzet élelme: a termelés a felére esett`,
+    famine: (name: string) => `${name}: elfogyott a személyzet élelme, a termelés a felére esett`,
     fed: (name: string) => `${name}: újra van élelem; a személyzet jóllakott`,
     noStoreNear: (range: number) => `${range} csempén belül nincs készlet`,
   },
   town: {
     title: 'Városok',
     gone: 'Az a város már nincs meg',
-    nameEmpty: 'A városnak kell név',
+    nameEmpty: 'A városnak név kell',
     none: 'Még nincs város. Rakj le egy városházát, majd 7 csempén belül egy lakóházat és egy raktárt.',
     people: 'fő',
     summary: (st: number, works: number, houses: number) =>
@@ -2070,11 +2071,11 @@ export const HU: Strings = {
     needs: (house: boolean, wh: boolean) =>
       `Még nincs megalapítva: kell ${[house ? 'egy lakóház' : '', wh ? 'egy raktár' : ''].filter(Boolean).join(' és ')} 7 csempén belül`,
     store: (fullest: number, cap: number) =>
-      `Készlet: áruként legfeljebb ${fullest}, felső határ ${cap}`,
+      `Készlet: egy áruból legfeljebb ${fullest}, áruféleségenként ${cap} a felső határ`,
     makes: 'Termel / hét',
     uses: 'Felhasznál / hét',
     power: 'áram',
-    go: 'Odamegy',
+    go: 'Megmutat',
     rename: 'Átnevezés',
     namePrompt: 'Nevezd el a várost',
     nameHint:
@@ -2128,7 +2129,7 @@ export const HU: Strings = {
     rename: 'Átnevezés',
     renameTitle: 'Állomás átnevezése',
     renameHint: 'Az állomás új neve.',
-    nameEmpty: 'Az állomásnak kell név',
+    nameEmpty: 'Az állomásnak név kell',
     noPlatform: 'Nincs mellette sín!',
     orphaned: (n: string) => `${n}: elveszett a peronvágánya`,
     boost: (pct: number) => `Víztorony: rakodás +${pct}%`,

@@ -1,6 +1,5 @@
-import { content, dataName } from '../data/content';
 import { contractTitle } from '../sim/contracts';
-import { localStationName } from '../sim/stations';
+import type { Station } from '../sim/stations';
 import { ENGLISH, LANGUAGE, STR } from '../strings';
 
 /** The notes of a table, English to the language on screen, the ones that are plain text. */
@@ -24,15 +23,11 @@ function slotOf(template: (name: string) => string, note: string): string | null
   return note.slice(before.length, note.length - after.length);
 }
 
-/** A station's stored name, from nothing but the name: a note keeps no station. */
-function stationText(stored: string) {
-  for (const def of content.stations.defs) {
-    const kind = ` ${dataName(def)}`;
-    const at = stored.lastIndexOf(kind);
-    const shown = localStationName(stored, def, at > 0 ? stored.slice(0, at) : null);
-    if (shown !== stored) return shown;
-  }
-  return stored;
+/** The world's stations, which a note can name only by what they store. */
+let stations: () => readonly Pick<Station, 'storedName' | 'name'>[] = () => [];
+/** Called once the world stands: the panels say where the stations are. */
+export function noteStationsFrom(list: typeof stations) {
+  stations = list;
 }
 
 /**
@@ -46,6 +41,9 @@ export function noteText(note: string): string {
   const job = slotOf(ENGLISH.trainNote.onContract, note);
   if (job !== null) return STR.trainNote.onContract(contractTitle(job));
   const stop = slotOf(ENGLISH.trainNote.noPlatform, note);
-  if (stop !== null) return STR.trainNote.noPlatform(stationText(stop));
+  if (stop !== null) {
+    const shown = stations().find((s) => s.storedName === stop)?.name;
+    return STR.trainNote.noPlatform(shown ?? stop);
+  }
   return note;
 }

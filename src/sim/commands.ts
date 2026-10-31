@@ -166,6 +166,8 @@ export class Commands {
     if (!this.builder.stations.includes(s)) return refuse(STR.fleet.missingStation);
     const n = name.trim().slice(0, STATION_NAME_MAX);
     if (!n) return refuse(STR.station.nameEmpty);
+    // the name on screen typed again: a default name stays the default it is
+    if (n === s.name) return done();
     this.act(() => {
       this.builder.log?.name(s, n);
       s.name = n;

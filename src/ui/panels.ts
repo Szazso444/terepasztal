@@ -33,6 +33,7 @@ import {
   hasSlot,
   listSlots,
   readSave,
+  readSettings,
   readSlot,
   uniformContractPolicy,
   type SaveRefusal,
@@ -90,6 +91,7 @@ import { AlertPopup } from './alertPopup';
 import { NotificationsScreen } from './notificationsScreen';
 import { Advisor } from './advisor';
 import { BuildInfo } from './buildInfo';
+import { noteStationsFrom } from './noteText';
 import { Outliner } from './outliner';
 import type { ViewRect } from './outlinerRows';
 import { TrainPanel } from './trainPanel';
@@ -564,6 +566,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   // the game applied its settings before this UI existed
   hud.setToggles(d.settings.weather, d.settings.dayNight);
   hud.onLanguage = (language) => void switchLanguage(language);
+  noteStationsFrom(() => d.builder.stations);
   settingsScreen.onLanguage = (language) => void switchLanguage(language);
 
   const minimap = new Minimap(d.map, d.regions, d.camera, (wx, wy) => host.centerCamera(wx, wy));
@@ -906,6 +909,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     }
     d.settings.language = language;
     host.saveSettings();
+    if (readSettings().language !== language) {
+      d.settings.language = LANGUAGE;
+      d.toasts.push(STR.settings.languageHeld, 'warn');
+      return goBack();
+    }
     host.reloadInLanguage(playing);
   }
   /** Where the player stands for saving: no storage is read, so it may be asked at every refresh. */

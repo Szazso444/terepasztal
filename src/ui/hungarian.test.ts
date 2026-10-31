@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import biomeJson from '../data/biomes.json';
 import { DEFAULT_CONTENT } from '../data/content';
@@ -278,6 +278,25 @@ describe('a game in Hungarian', () => {
     expect(s.toJSON().name).toBe('Nagyállomás');
   });
 
+  it('says in the undo tip the name the player read, and logs no rename that changes nothing', async () => {
+    const { simWorld, line, station } = await loaded('hu', () => import('../testing/simWorld'));
+    const { Commands } = await import('../sim/commands');
+    const w = simWorld({ size: 64, terrain: 'grass' });
+    line(w, 8, 20, 30);
+    const farm = station(w, 'farm', 12, 19);
+    const commands = new Commands(w);
+    const steps = () => commands.history.undoLabel;
+    commands.renameStation(farm, farm.name);
+    commands.renameStation(farm, 'Farm Halt');
+    expect(steps()).toBeNull();
+    expect(farm.storedName).toBe('Farm Halt');
+    commands.renameStation(farm, 'Bakterház');
+    expect(steps()).toBe('Átnevezve: Tanyai megálló → Bakterház');
+    commands.history.undo();
+    expect(farm.storedName).toBe('Farm Halt');
+    expect(farm.name).toBe('Tanyai megálló');
+  });
+
   it('writes a contract and a train note in Hungarian from what the world keeps', async () => {
     const m = await loaded('hu', modules);
     const { contractTitle } = m[2];
@@ -288,12 +307,26 @@ describe('a game in Hungarian', () => {
     expect(noteText(en.traffic.jammed)).toBe(STR.traffic.jammed);
     expect(noteText(en.trainNote.parked)).toBe(STR.trainNote.parked);
     expect(noteText(en.fleet.mixedGaugeTrain)).toBe(STR.fleet.mixedGaugeTrain);
-    expect(noteText(en.trainNote.onContract('Rush order'))).toBe('szerződésen: Sürgős rendelés');
+    expect(noteText(en.trainNote.onContract('Rush order'))).toBe(
+      'szerződést teljesít: Sürgős rendelés',
+    );
+    m[8].noteStationsFrom(() => [
+      { storedName: 'Farm Halt 2', name: 'Tanyai megálló 2' },
+      { storedName: 'Kisvár Station', name: 'Kisvár állomás' },
+      { storedName: 'Narrow Depot', name: 'Keskeny fűtőház' },
+    ]);
     expect(noteText(en.trainNote.noPlatform('Farm Halt 2'))).toBe(
       'Tanyai megálló 2: nincs peronvágány',
     );
     expect(noteText(en.trainNote.noPlatform('Kisvár Station'))).toBe(
       'Kisvár állomás: nincs peronvágány',
+    );
+    expect(noteText(en.trainNote.noPlatform('Narrow Depot'))).toBe(
+      'Keskeny fűtőház: nincs peronvágány',
+    );
+    // a name no station holds, or one the player gave, is printed as it stands
+    expect(noteText(en.trainNote.noPlatform('Grand Central Station'))).toBe(
+      'Grand Central Station: nincs peronvágány',
     );
     expect(noteText('')).toBe('');
   });
@@ -330,24 +363,51 @@ describe('nothing in the world depends on the language', () => {
   async function game(language: string) {
     return loaded(language, async () => {
       const { simWorld, line, station } = await import('../testing/simWorld');
+      const { SimStep } = await import('../sim/step');
+      const { SIM_STEP } = await import('../sim/time');
+      const { defaultStop } = await import('../sim/trains');
       const w = simWorld({ size: 64, terrain: 'grass' });
+      w.economy.money = 1e7;
       line(w, 8, 20, 50);
-      station(w, 'farm', 12, 19);
+      const depot = station(w, 'depot', 6, 20);
+      const store = w.stores.byKey(`st:${depot.id}`)!;
+      for (const r of ['coal', 'water', 'oil']) store.add(r, 1e6);
+      const farm = station(w, 'farm', 12, 19);
       station(w, 'farm', 16, 19);
       station(w, 'lumber', 20, 19);
       station(w, 'town', 30, 19);
       station(w, 'station', 34, 19);
-      station(w, 'warehouse', 38, 19);
+      const warehouse = station(w, 'warehouse', 38, 19);
       w.towns.refresh();
       for (let i = 0; i < 6; i++) w.contracts.generate(i, true);
       for (const id of w.inventory.ownedDefs()) w.crafting.recipes.add(id);
       w.crafting.recipes.add('boxcar').add('flatbed').add('steel_hopper').add('wooden_coach');
+      const loco = w.inventory.add('f7', 0);
+      const wagon = w.inventory.add('boxcar', 0);
+      const stops = [defaultStop(farm.id), defaultStop(warehouse.id)];
+      const train = w.fleet.create([loco.uid], [wagon.uid], stops, undefined, 'schedule', depot.id);
+      if (typeof train === 'string') throw new Error(train);
+      const offer = w.contracts.contracts.find((c) => c.status === 'offer');
+      if (offer) w.contracts.accept(offer, w.clock.time);
+      const step = new SimStep(w);
+      const ctx = { mode: 'play' as const, weather: false, stockCap: () => 1e9 };
+      for (let tick = 0; tick < 3000; tick++) {
+        w.clock.time += SIM_STEP;
+        step.run(SIM_STEP, ctx);
+      }
       return {
         stations: w.builder.stations.map((s) => s.toJSON()),
         level: w.builder.stations.map((s) => s.toLevel()),
         towns: w.towns.toJSON(),
         contracts: w.contracts.toJSON(),
         known: w.crafting.known(),
+        trains: w.fleet.trains.map((t) => t.toJSON()),
+        inventory: w.inventory.toJSON(),
+        crafting: w.crafting.toJSON(),
+        stores: w.stores.toJSON(),
+        houses: w.houses.toJSON(),
+        economy: w.economy.toJSON(),
+        trade: w.trade.toJSON(),
         shown: w.builder.stations.map((s) => s.name),
       };
     });
@@ -358,6 +418,8 @@ describe('nothing in the world depends on the language', () => {
     const { shown: hu, ...inHungarian } = await game('hu');
     expect(JSON.stringify(inHungarian)).toBe(JSON.stringify(inEnglish));
     expect(inEnglish.contracts.contracts.length).toBeGreaterThan(0);
+    expect(inEnglish.trains).toHaveLength(1);
+    expect(inEnglish.trains[0].trip?.distance).toBeGreaterThan(0);
     expect(inEnglish.known.length).toBeGreaterThan(4);
     expect(en).toContain('Farm Halt 2');
     expect(hu).toContain('Tanyai megálló 2');
@@ -365,12 +427,17 @@ describe('nothing in the world depends on the language', () => {
   });
 
   it('keeps every train note out of the language: the simulation writes none through STR', () => {
-    for (const file of ['../sim/trains.ts', '../sim/fleet.ts']) {
-      const source = readFileSync(new URL(file, import.meta.url), 'utf8');
-      expect(source).not.toMatch(/STR\.traffic\./);
-      expect(source).not.toMatch(/lastMessage = [`'"][^'"`]/);
-      expect(source).not.toMatch(/\.idle\(['"`][^'"`]/);
+    const sim = new URL('../sim/', import.meta.url);
+    const files = readdirSync(sim).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'));
+    expect(files.length).toBeGreaterThan(20);
+    for (const file of files) {
+      const source = readFileSync(new URL(file, sim), 'utf8');
+      expect(source, file).not.toMatch(/lastMessage = STR\./);
+      expect(source, file).not.toMatch(/lastMessage = [`'"][^'"`]/);
+      expect(source, file).not.toMatch(/\.idle\(['"`][^'"`]/);
     }
+    for (const file of ['trains.ts', 'fleet.ts'])
+      expect(readFileSync(new URL(file, sim), 'utf8'), file).not.toMatch(/STR\.traffic\./);
   });
 });
 

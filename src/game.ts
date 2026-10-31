@@ -63,7 +63,7 @@ import {
 } from './ui/tooltipContent';
 import { tileTip, type TileSnapshot } from './ui/tileTooltip';
 import { STR } from './strings';
-import { content } from './data/content';
+import { content, sourceContent } from './data/content';
 import { TrackGraph, liftLegacyTrack } from './world/track';
 import { Builder } from './sim/build';
 import { Economy } from './sim/economy';
@@ -194,7 +194,7 @@ const LIVE_TIPS: ReadonlySet<TipTarget['kind']> = new Set(['station', 'works', '
 export class Game implements UiHost {
   app!: Application;
   /** generated groups come from the cache this build and content bundle drew them into last boot */
-  atlas = new AtlasRegistry(undefined, undefined, browserAtlasCache(content));
+  atlas = new AtlasRegistry(undefined, undefined, browserAtlasCache(sourceContent));
   /** The sound bus, reachable from `window.game` for the debug panel and the art/audio scripts. */
   readonly audio = audio;
   input!: Input;
@@ -1064,7 +1064,7 @@ export class Game implements UiHost {
       } else if (e.kind === 'cancelled') {
         this.toasts.push(
           STR.contracts.cancelledMsg(
-            e.contract.name,
+            contractTitle(e.contract.name),
             fmtMoney(this.contracts.cancelFine(e.contract)),
           ),
           'warn',
@@ -1077,7 +1077,7 @@ export class Game implements UiHost {
             type: 'ctfail',
             text: STR.notice.contractFailed(contractTitle(e.contract.name)),
             toast: STR.contracts.failedMsg(
-              e.contract.name,
+              contractTitle(e.contract.name),
               fmtMoney(this.contracts.failFine(e.contract)),
             ),
             target: dest ? { kind: 'tile', x: dest.x, y: dest.y } : null,

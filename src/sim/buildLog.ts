@@ -115,7 +115,7 @@ export type BuildOp =
   | { op: 'road'; x: number; y: number; laid: boolean; spur: boolean }
   | { op: 'stationLevel'; station: Station; was: StationLevel; now: StationLevel }
   | { op: 'worksLevel'; building: Building; was: WorksLevel; now: WorksLevel }
-  | { op: 'name'; station: Station; was: string; now: string };
+  | { op: 'name'; station: Station; was: string; now: string; shown: string };
 
 /** Residents a house gained or lost in an action (`HouseRegistry.industryPlaced`). */
 interface PeopleMove {
@@ -257,9 +257,9 @@ export class BuildLog {
   }
   /** Before a station takes the name `now`. */
   name(s: Station, now: string) {
-    if (s.name === now) return;
+    if (s.storedName === now) return;
     this.touch(s.footprint());
-    this.ops.push({ op: 'name', station: s, was: s.storedName, now });
+    this.ops.push({ op: 'name', station: s, was: s.storedName, now, shown: s.name });
   }
 
   /** The action is over: the step it makes, or null when it did nothing. */
@@ -569,7 +569,7 @@ export function stepLabel(ops: readonly BuildOp[]): string {
         buildingLevel({ ...first.building, level: first.was.level }) + 1,
       );
     case 'name':
-      return H.renamed(first.was, first.now);
+      return H.renamed(first.shown, first.now);
     default:
       return H.built(H.track);
   }
