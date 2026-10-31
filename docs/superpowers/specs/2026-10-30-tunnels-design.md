@@ -111,8 +111,13 @@ ground is painted for the flat and breaks on a slope, so a raised forest tile pa
 the forest's trees; its terrain stays Forest. Peak pictures stand only on true tops.
 
 **What it leaves alone.** Water, the map border, and what is built: a mountain falls away toward
-them. Rivers that start in mountains are this work's open design point; the trial sculpts over a
-finished map, so it did not touch them.
+them.
+
+**Rivers start in the mountains.** A low-frequency massif noise lifts the elevation field before
+terrain and rivers read it, so the river plan drains away from the massifs and rock lies where the
+mountains rise. A river keeps to water levels 0 to 4, so the ground falling away toward it cuts a
+valley into the mountain, up to the river's head. Rivers above level 4 and springs drawn as such are
+left out. (author, 2026-10-31)
 
 ## 4. The Drill
 

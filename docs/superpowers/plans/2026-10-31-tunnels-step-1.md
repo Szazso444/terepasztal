@@ -39,8 +39,8 @@
 - **`maxStep`.** A map with `generatedLevel` allows neighbours 4 apart; a map without it (levels, editor) keeps the one-level rule.
 - **Old chunks.** A chunk stored before `CHUNK_VERSION` 6 reads `generatedLevel` as 255; `buildMap` fills those tiles from the old rule, so a built map's plane is always whole.
 - **Rail on cliffs.** `slope.ts` does not change. `trackRules` refuses a link that crosses an edge with a step over 1, unless a tile of that edge is dug or cut. Rail may run along a cliff.
-- **Rivers.** Unchanged: the sculpt pass runs after the water pass and falls away from water. Rivers do not start in the new mountains in this step; the real-map review shows whether that is enough.
-- **Massif mask.** Its own low-frequency noise from a new seed drawn last, as in `trial:sculpt`, not `elev`, because only that was proved.
+- **Rivers start in the mountains (author, 2026-10-31).** The massif noise lifts `elev` at stage ELEV, before terrain and the river plan read it. Rivers keep to water levels 0 to 4; the sculpt pass runs after the water pass and falls away from water, which cuts a valley up to the river's head.
+- **Massif mask.** A low-frequency noise from a new seed drawn last, as in `trial:sculpt`. The sculpt pass and the lift read the same `massifAt`, so both agree on where a mountain stands.
 - **Forest on a slope.** Terrain stays Forest, for the simulation. The painter paints a raised Forest tile as grass.
 
 ## File map
@@ -138,7 +138,7 @@ it('agrees with tileLevels on every tile of a map with both planes', () => {
 
 **Interfaces:**
 - Consumes: `generatedLevel`, `maxStep` (Task 1), chunk version 6 (Task 2).
-- Produces: `sculptMountains(field: SculptField, span: Span, keepClear: Span, seed: number): Uint8Array`; `MOUNTAIN_SHAPES = { hill: 0.7, ridge: 0.2, tower: 0.1 }`; `SCULPT_REACH = 32`.
+- Produces: `massifAt(wx: number, wy: number, seed: number): number`; `sculptMountains(field: SculptField, span: Span, keepClear: Span, seed: number): Uint8Array`; `MOUNTAIN_SHAPES = { hill: 0.7, ridge: 0.2, tower: 0.1 }`; `SCULPT_REACH = 32`.
 
 - [ ] **Step 1: Write the failing tests.**
 
@@ -150,11 +150,13 @@ it('leaves water, the map border and the start chunk at their old levels', () =>
 it('a map grown by a ring has the same levels on the tiles both hold', () => {});
 it('generates the same map twice', () => {});
 it('leaves no flat top: under 2% of raised tiles stand at 16', () => {});
+it('starts most rivers in the mountains: over 20 seeds, 70% of river heads lie within 6 tiles of a massif', () => {});
+it('keeps every river at water level 4 or under, flowing downhill', () => {});
 ```
 
 - [ ] **Step 2: Run them.** Expected: FAIL, module missing.
 - [ ] **Step 3: Implement `sculptMountains`, porting `trial:sculpt`.** Shapes `model`, `ridges` and `towers` only. The shape comes from a noise at wavelength about 90 tiles, cut into the `MOUNTAIN_SHAPES` shares; shapes blend across a band of 8 tiles. The distance to the mask edge and to water is capped at 16 and read over `SCULPT_REACH`, so a level depends on tiles within it, not on map size. Scale by a fixed factor per shape, not by a percentile of the map, which would depend on map size. Cover as in `trial:sculpt`: Forest low, Grass, Rock from level 6, Mountain from 10, Rock at any step of 3 or more, with the noise wobble.
-- [ ] **Step 4: Wire it in `generateMapPlanes`.** Draw the new seed last in `seeds`. Raise `LATE_REACH` by `SCULPT_REACH`. Call it after the water pass and `raiseMountains`, before `startResources`, with `keepClear = grow(start, 4)`. A tile takes the higher of the old level and the sculpted one. Crop to `map.generatedLevel`.
+- [ ] **Step 4: Wire it in `generateMapPlanes`.** Draw the new seed last in `seeds`. `Field` adds a lift from `massifAt` to `elev` at stage ELEV, fading to nothing around the start chunk, so `riverPlan` and `riverWater` drain away from the massifs. Tune the lift against the river test without moving the sea or the start guarantee. Raise `LATE_REACH` by `SCULPT_REACH`. Call it after the water pass and `raiseMountains`, before `startResources`, with `keepClear = grow(start, 4)`. A tile takes the higher of the old level and the sculpted one. Crop to `map.generatedLevel`.
 - [ ] **Step 5: Run** `npm test`. Expected: only golden tests FAIL. List them; update them; say in the PR that the goldens move and every seed makes a new map.
 - [ ] **Step 6: Review on real maps.** Render three seeds in the running game, on a review page, for the author. Stop here until the author has seen the mix, which they have not yet seen on one map.
 - [ ] **Step 7: Commit.** `git commit -m "World: generated mountains, three shapes up to level 16"`
