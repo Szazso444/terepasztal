@@ -26,7 +26,7 @@ function harness() {
   const stock = w.stores.byKey(`st:${depot.id}`)!;
   for (const id of ['wood', 'stone', 'iron']) stock.amounts.set(id, 2000);
   line(w, 10, ROW, 40);
-  const commands = new Commands({ ...w, towns: w.towns, houses: w.houses });
+  const commands = new Commands(w);
   const history = commands.history;
   const keys = new Set<string>();
   const input = {

@@ -31,16 +31,7 @@ function game(opts: SimWorldOptions = {}) {
   const depot = station(w, 'depot', 30, 10);
   const stock = w.stores.byKey(`st:${depot.id}`)!;
   for (const [id, n] of Object.entries(GOODS)) stock.amounts.set(id, n);
-  const commands = new Commands({
-    fleet: w.fleet,
-    builder: w.builder,
-    economy: w.economy,
-    trade: w.trade,
-    gacha: w.gacha,
-    inventory: w.inventory,
-    towns: w.towns,
-    houses: w.houses,
-  });
+  const commands = new Commands(w);
   return { ...w, depot, stock, commands, history: commands.history };
 }
 type Game = ReturnType<typeof game>;

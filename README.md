@@ -120,6 +120,7 @@ the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
 | Zoom     | mouse wheel (0.5x-2x); zoom out past 0.5x opens the overview                                                    |
 | Overview | Tab (Esc, scroll in or click a station/train to return)                                                         |
 | Build    | toolbar buttons, `R` rotate (track and signals), drag to lay straights, right-click / Delete remove, Esc cancel |
+| Undo     | Ctrl+Z undo, Ctrl+Y or Ctrl+Shift+Z redo, or the buttons beside the title                                       |
 | Time     | Space pause, `1` `2` `3` speed                                                                                  |
 | Screens  | `F` depot, `C` contracts, `G` craft, `V` roster, `M` market, `` ` `` debug                                      |
 

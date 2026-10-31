@@ -11,6 +11,8 @@ import { resetStationIds } from '../sim/stations';
 import { resetTrainIds } from '../sim/trains';
 import { CHUNK_TILES, expandSave, ownsBorderChunk } from '../sim/expand';
 import { unbuildable } from '../sim/build';
+import { Commands } from '../sim/commands';
+import type { HistoryStep } from '../sim/history';
 import { INTENT_KEY, type Intent } from '../intent';
 import { bootPlan } from './boot';
 import { MAX_WORLD_CHUNKS } from '../sim/ground';
@@ -1102,6 +1104,7 @@ function gameOn(w: SimWorld): Game {
     trade: w.trade,
     clock: w.clock,
     notices: w.notices,
+    commands: new Commands(w),
     camera: { x: 640, y: 320, zoomIndex: 2, zoom: 1, centerOn() {} },
     sim: { lastDay: 0 },
     settings: { weather: false },
@@ -1500,6 +1503,38 @@ describe('stores through Game.snapshot and Game.applySave', () => {
     over.stores.grid.famine = true;
     gameOn(over).applySave(structuredClone(saved));
     expect(over.stores.toJSON()).toEqual(w.stores.toJSON());
+  });
+
+  /** A step of the game before: taking it back in the game after would be a mistake. */
+  const stale: HistoryStep = {
+    label: 'a step of the game before',
+    undo: () => {
+      throw new Error('undone across a load');
+    },
+    redo: () => {
+      throw new Error('redone across a load');
+    },
+  };
+
+  it('a load leaves nothing to undo or redo', () => {
+    const saved = gameOn(scene().w).snapshot();
+    const game = gameOn(fresh());
+    const { history } = game.commands;
+    history.push(stale);
+    history.push({ label: 'and another', undo: () => ({ ok: true }), redo: () => ({ ok: true }) });
+    history.undo();
+    game.applySave(structuredClone(saved));
+    expect(history.canUndo).toBe(false);
+    expect(history.canRedo).toBe(false);
+    expect(history.undo().ok).toBe(false);
+  });
+
+  it('a new game leaves nothing to undo', () => {
+    const game = gameOn(fresh());
+    game.commands.history.push(stale);
+    game.startFresh();
+    expect(game.commands.history.canUndo).toBe(false);
+    expect(game.commands.history.undo().ok).toBe(false);
   });
 
   it('a new game puts the start stock in the start depot', () => {
