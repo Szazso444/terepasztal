@@ -214,6 +214,33 @@ describe('the footer', () => {
     expect(labels(footerLayout(null, true, leave)?.left)).toEqual([STR.kit.back]);
   });
 
+  it('a closable screen on its own leads with a plain Close, where Back would stand', () => {
+    const none = footerLayout(null, false, leave, true);
+    expect(labels(none?.left)).toEqual([STR.kit.close]);
+    expect(none?.left[0].primary).toBeFalsy();
+    const note = footerLayout({ note: 'n' }, false, leave, true);
+    expect(labels(note?.left)).toEqual([STR.kit.close]);
+    expect(note?.note).toBe('n');
+    const secondary = footerLayout({ actions: [action('Refuel')] }, false, leave, true);
+    expect(labels(secondary?.left)).toEqual([STR.kit.close, 'Refuel']);
+    expect(secondary?.right).toEqual([]);
+  });
+
+  it('holds no Close beside a forward action or Done, and Back takes its place', () => {
+    const go = footerLayout({ actions: [action('Go', { primary: true })] }, false, leave, true);
+    expect(go?.left).toEqual([]);
+    const done = footerLayout({ done: true }, false, leave, true);
+    expect(done?.left).toEqual([]);
+    expect(labels(done?.right)).toEqual([STR.kit.done]);
+    expect(labels(footerLayout(null, true, leave, true)?.left)).toEqual([STR.kit.back]);
+  });
+
+  it('Close leaves the screen', () => {
+    const run = vi.fn();
+    footerLayout(null, false, run, true)?.left[0].onClick();
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps the note, and shows a footer for a note alone', () => {
     expect(footerLayout({ note: 'n', done: true }, true, leave)?.note).toBe('n');
     expect(footerLayout({ note: 'n' }, false, leave)).toEqual({ left: [], note: 'n', right: [] });
