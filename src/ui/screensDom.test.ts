@@ -1054,6 +1054,7 @@ describe('the now-playing widget', () => {
     const state: MusicDeck['view'] = {
       title: 'Pastoral Pulse',
       paused: false,
+      silent: false,
       held: false,
       canGoBack: false,
       canGoForward: true,
@@ -1145,6 +1146,51 @@ describe('the now-playing widget', () => {
     for (let i = 0; i < 5; i++) w.update();
     expect(box).not.toHaveBeenCalled();
     expect(self).not.toHaveBeenCalled();
+  });
+
+  it("names each button in its title and for a screen reader, in the tooltip's words", () => {
+    const d = deck();
+    const { w, back, toggle, forward } = widget(d);
+    const named = (b: FakeEl) => [b.title, b.attrs.get('aria-label')];
+    expect(named(back)).toEqual([STR.nowPlaying.noBack, STR.nowPlaying.noBack]);
+    expect(named(toggle)).toEqual([STR.nowPlaying.pause, STR.nowPlaying.pause]);
+    expect(named(forward)).toEqual([STR.nowPlaying.forward, STR.nowPlaying.forward]);
+    Object.assign(d.state, { paused: true, canGoBack: true });
+    w.update();
+    expect(named(back)).toEqual([STR.nowPlaying.back, STR.nowPlaying.back]);
+    expect(named(toggle)).toEqual([STR.nowPlaying.play, STR.nowPlaying.play]);
+  });
+
+  it('gives the keys back after a press: Enter finishes a route, and must not toggle the music', () => {
+    const d = deck({ canGoBack: true });
+    const { back, toggle, forward } = widget(d);
+    for (const b of [back, toggle, forward]) {
+      b.focus();
+      expect(page.activeElement).toBe(b);
+      b.fire('click');
+      expect(page.activeElement).not.toBe(b);
+    }
+  });
+
+  it('says plainly that nothing can be heard, with its buttons off and saying why', () => {
+    const d = deck({ silent: true, canGoBack: true });
+    const { w, root, back, toggle, forward, tips } = widget(d);
+    expect(root.find('np-text')!.textContent).toBe(STR.nowPlaying.silent);
+    expect(root.find('np-title')!.className).toContain('paused');
+    for (const b of [back, toggle, forward]) {
+      expect(b.disabled).toBe(true);
+      expect(b.title).toBe(STR.nowPlaying.silentTip);
+    }
+    expect(tips.slice(0, 3).map((t) => t())).toEqual(Array(3).fill(STR.nowPlaying.silentTip));
+    // the tooltip still has the track, whose words the row gave up
+    expect(tips[3]()).toBe('Pastoral Pulse');
+    const off = toggle.find('k-ic')!.innerHTML;
+    d.state.silent = false;
+    w.update();
+    expect(root.find('np-text')!.textContent).toBe('Pastoral Pulse');
+    expect(root.find('np-title')!.className).not.toContain('paused');
+    expect(toggle.find('k-ic')!.innerHTML).not.toBe(off);
+    expect([back, toggle, forward].map((b) => b.disabled)).toEqual([false, false, false]);
   });
 
   it('marks the music held, for the title to leave it out', () => {

@@ -58,11 +58,13 @@ export interface MusicView {
   title: string | null;
   /** the player paused the music */
   paused: boolean;
+  /** nothing can be heard: Music is off or at 0, or Master is */
+  silent: boolean;
   /** `hold()` is in force: nothing has started, and nothing can be heard */
   held: boolean;
-  /** there is a track to go back to */
+  /** there is a track to go back to, and no age change is fading the music out */
   canGoBack: boolean;
-  /** there is a track to go on to */
+  /** there is a track to go on to, and no age change is fading the music out */
   canGoForward: boolean;
 }
 
@@ -88,10 +90,10 @@ class AudioBus {
   private unlocked = false;
   private musicEl: HTMLAudioElement | null = null;
   /**
-   * An age change is waiting for the old track to fade out. The new set is already selected, but
-   * `applyMusic` starts nothing until the fade has paused the old track and ended the wait.
+   * The old track, while an age change waits for it to fade out. The new set is already selected,
+   * but `applyMusic` starts nothing until the fade has stopped this one and ended the wait.
    */
-  private handingOver = false;
+  private fading: HTMLAudioElement | null = null;
   /** `hold()` is in force: no music starts, whatever gesture unlocks the bus. */
   private held = false;
   /** The player paused the music: it stands still, and every volume stays as it is. */
@@ -147,9 +149,22 @@ class AudioBus {
     el.addEventListener('ended', () => {
       if (this.musicEl === el) this.advanceMusic();
     });
+    // a media key or a headset works the element and not the bus, and the widget stays true to it
+    const follow = () => this.followElement(el);
+    el.addEventListener('pause', follow);
+    el.addEventListener('play', follow);
     this.musicEl = el;
     el.load();
     return el;
+  }
+
+  /**
+   * The element paused or played. The bus's own stops do not count: a track it let go of, one that
+   * came to its end (the browser pauses it first), and silence, which must not leave the track
+   * paused for when Music comes back. Read from the element, as its event comes after the call.
+   */
+  private followElement(el: HTMLAudioElement) {
+    if (this.musicEl === el && !el.ended && this.musicLevel > 0) this.paused = el.paused;
   }
 
   /** The element's level: an element refuses anything over 1. */
@@ -157,10 +172,18 @@ class AudioBus {
     return Math.min(1, musicGain(this));
   }
 
+  /** A track the bus is done with stops, and gives up the file the browser would hold on to. */
+  private release(el: HTMLAudioElement) {
+    el.pause();
+    el.removeAttribute('src');
+    el.load();
+  }
+
   /** The file selected has changed: the old one stops, and the new one plays as the rest allows. */
   private changeTrack() {
-    this.musicEl?.pause();
-    this.musicEl = null;
+    const old = this.musicEl;
+    this.musicEl = null; // first: nothing the old element does from here on moves the music
+    if (old) this.release(old);
     this.applyMusic();
     this.preload(); // a bus that cannot play yet still fetches the file that comes next
   }
@@ -172,30 +195,38 @@ class AudioBus {
 
   /** On to the next track, as if this one had ended. An age change fading out comes first. */
   forward() {
-    if (this.handingOver || this.musicSets.track === null) return;
+    if (this.fading || this.musicSets.track === null) return;
     this.advanceMusic();
   }
 
   /** Back to the track played before this one; with none, nothing changes. */
   back() {
-    if (this.handingOver || this.musicSets.back() === null) return;
+    if (this.fading || this.musicSets.back() === null) return;
     this.changeTrack();
   }
 
-  /** Pause the music, or let it play on from where it stood. No volume or setting changes. */
+  /**
+   * Pause the music, or let it play on from where it stood. No volume or setting changes. With
+   * nothing to hear it does nothing: a pause no one could hear would hold the track back later.
+   */
   togglePause() {
+    if (this.musicLevel <= 0) return;
     this.paused = !this.paused;
+    // at once, whatever keeps `applyMusic` back: a track fading out is the one to hear now
+    if (this.paused) (this.fading ?? this.musicEl)?.pause();
     this.applyMusic();
   }
 
   /** What the now-playing widget shows. */
   get view(): MusicView {
+    const track = this.musicSets.track;
     return {
-      title: trackTitle(this.musicSets.track),
+      title: trackTitle(track),
       paused: this.paused,
+      silent: this.musicLevel <= 0,
       held: this.held,
-      canGoBack: this.musicSets.canGoBack,
-      canGoForward: this.musicSets.track !== null,
+      canGoBack: !this.fading && this.musicSets.canGoBack,
+      canGoForward: !this.fading && track !== null,
     };
   }
 
@@ -218,7 +249,7 @@ class AudioBus {
    */
   preload() {
     this.listen();
-    if (typeof Audio === 'undefined' || this.handingOver) return;
+    if (typeof Audio === 'undefined' || this.fading) return;
     const src = this.musicSets.track;
     if (src !== null) this.musicTrack(src);
   }
@@ -245,7 +276,7 @@ class AudioBus {
   tryUnlock() {
     this.listen();
     if (this.unlocked || this.held || this.paused) return;
-    if (this.handingOver || typeof Audio === 'undefined') return;
+    if (this.fading || typeof Audio === 'undefined') return;
     const v = this.musicLevel;
     const src = this.musicSets.track;
     if (src === null || v <= 0) return;
@@ -276,18 +307,21 @@ class AudioBus {
    */
   setAge(id: string) {
     if (!this.musicSets.setAge(id)) return;
-    if (this.handingOver) return;
+    if (this.fading) return;
     const old = this.musicEl;
     this.musicEl = null; // the old track's own events no longer move the music on
     if (!old || old.paused) {
       // nothing audible to fade out: a file fetched ahead is let go for the new set's first track
-      if (old) this.preload();
+      if (old) {
+        this.release(old);
+        this.preload();
+      }
       this.applyMusic();
       return;
     }
-    this.handingOver = true;
+    this.fading = old;
     this.fadeOut(old, () => {
-      this.handingOver = false;
+      this.fading = null;
       this.applyMusic();
     });
   }
@@ -302,7 +336,7 @@ class AudioBus {
     const step = () => {
       const left = 1 - (performance.now() - start) / MUSIC_FADE_MS;
       if (left <= 0 || from <= 0) {
-        el.pause();
+        this.release(el);
         done();
         return;
       }
@@ -319,13 +353,15 @@ class AudioBus {
    */
   applyMusic() {
     this.listen();
-    if (!this.unlocked || this.held || this.handingOver) return;
+    if (!this.unlocked || this.held || this.fading) return;
     const v = this.musicLevel;
     const src = this.musicSets.track;
     if (src !== null) {
       const el = this.musicTrack(src);
       el.volume = v;
-      if (v > 0 && !this.paused) {
+      if (v <= 0 || this.paused) el.pause();
+      // every gesture comes through here: a track that plays already is left alone
+      else if (el.paused) {
         // autoplay is allowed here: applyMusic only runs after a gesture unlocked the bus
         void el.play().then(
           () => this.started(el, src),
@@ -340,7 +376,7 @@ class AudioBus {
             this.advanceMusic(true);
           },
         );
-      } else el.pause();
+      }
       this.synth.setMusicVolume(0);
       return;
     }

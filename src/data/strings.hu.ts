@@ -91,6 +91,8 @@ export const HU: Strings = {
     noBack: 'Ez előtt még nem szólt más szám',
     forward: 'Következő szám',
     noTrack: 'A játék saját dallama',
+    silent: 'Zene kikapcsolva',
+    silentTip: 'Nem szól semmi: a Zene vagy a Fő hangerő ki van kapcsolva a Hang képernyőn',
   },
   history: {
     undo: 'Visszavonás',

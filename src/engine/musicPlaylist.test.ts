@@ -62,11 +62,10 @@ describe('the tracks', () => {
     expect(Object.keys(MUSIC_TITLES).sort()).toEqual([...MUSIC_TRACKS].sort());
     const credited = credits.credits.filter((c) => c.kind === 'Music').map((c) => c.title);
     expect(credited).toHaveLength(ALL);
-    const melody = (title: string) => title.split(' (')[0];
     for (const track of MUSIC_TRACKS) {
       const title = trackTitle(track)!;
       expect(title, track).not.toMatch(/\.mp3|\/|-/);
-      expect(credited.map(melody), track).toContain(melody(title));
+      expect(credited, track).toContain(title);
     }
     expect(new Set(MUSIC_TRACKS.map(trackTitle)).size).toBe(ALL);
     expect(trackTitle('/assets/audio/music/pastoral-pulse-liquid-dnb.mp3')).toBe(

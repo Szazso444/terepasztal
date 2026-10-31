@@ -79,12 +79,14 @@ class FakeAudio {
   preload = '';
   volume = 1;
   playing = false;
+  ended = false;
   /** An element is paused until its `play()` and again after its next `pause()`. */
   get paused() {
     return !this.playing;
   }
   addEventListener = vi.fn();
   load = vi.fn();
+  removeAttribute = vi.fn();
   pause = vi.fn(() => {
     this.playing = false;
   });
@@ -1031,6 +1033,142 @@ describe('audio in a browser', () => {
       expect([...session.items.values()]).toEqual([FakeAudio.made[FakeAudio.made.length - 1].src]);
     });
 
+    it.each(['music', 'master'] as const)(
+      'says it is silent at %s 0, and a press leaves no track held for when it comes back',
+      async (knob) => {
+        const { bus, first, playing } = await playingBus();
+        expect(bus.view.silent).toBe(false);
+        const level = bus[knob];
+        bus[knob] = 0; // a slider at 0, and a switch off through `heardVolumes`
+        bus.applyMusic();
+        fire(first, 'pause'); // the element's word on the bus's own stop
+        expect(bus.view).toMatchObject({ silent: true, paused: false });
+        expect(playing()).toEqual([]);
+        bus.togglePause();
+        bus.togglePause();
+        bus.togglePause();
+        expect(bus.view.paused).toBe(false);
+        bus[knob] = level;
+        bus.applyMusic();
+        expect(bus.view.silent).toBe(false);
+        expect(playing()).toEqual([first]);
+      },
+    );
+
+    it('keeps a pause the player made before the silence', async () => {
+      const { bus, first, playing } = await playingBus();
+      bus.togglePause();
+      bus.music = 0;
+      bus.applyMusic();
+      bus.music = 0.5;
+      bus.applyMusic();
+      expect(bus.view.paused).toBe(true);
+      expect(playing()).toEqual([]);
+      bus.togglePause();
+      expect(playing()).toEqual([first]);
+    });
+
+    it('offers no skip while an age change fades the music out, and does after', async () => {
+      const { bus } = await steamPlaying();
+      expect(bus.view.canGoForward).toBe(true);
+      bus.setAge('diesel');
+      expect(bus.view).toMatchObject({ canGoBack: false, canGoForward: false });
+      vi.advanceTimersByTime(MUSIC_FADE_MS);
+      expect(bus.view.canGoForward).toBe(true);
+    });
+
+    it('pauses a fading track at once, and the new set waits for the player', async () => {
+      const { bus, old, srcs, playing } = await steamPlaying();
+      bus.setAge('diesel');
+      vi.advanceTimersByTime(200);
+      bus.togglePause();
+      expect(old.playing).toBe(false);
+      vi.advanceTimersByTime(MUSIC_FADE_MS);
+      expect(srcs()).toEqual([steam[0], diesel[0]]);
+      expect(playing()).toEqual([]);
+      bus.togglePause();
+      expect(playing()).toEqual([FakeAudio.made[1]]);
+      expect(FakeAudio.overlaps).toBe(0);
+    });
+
+    it('lets a skipped element go: it stops, then gives up its file', async () => {
+      const { bus, first } = await playingBus();
+      const loads = first.load.mock.calls.length;
+      bus.forward();
+      expect(first.removeAttribute).toHaveBeenCalledWith('src');
+      expect(first.load).toHaveBeenCalledTimes(loads + 1);
+      const order = [first.pause, first.removeAttribute, first.load].map(
+        (m) => m.mock.invocationCallOrder[m.mock.invocationCallOrder.length - 1],
+      );
+      expect(order).toEqual([...order].sort((a, b) => a - b));
+    });
+
+    it('lets go of a track that faded out, and of one that failed, the same way', async () => {
+      const { bus, old, music } = await steamPlaying();
+      bus.setAge('diesel');
+      vi.advanceTimersByTime(MUSIC_FADE_MS);
+      expect(old.removeAttribute).toHaveBeenCalledWith('src');
+      const opened = music()[1];
+      fire(opened, 'error');
+      expect(opened.removeAttribute).toHaveBeenCalledWith('src');
+    });
+
+    it('takes no word from an element it let go of', async () => {
+      const { bus, first, music, playing } = await playingBus();
+      bus.forward();
+      for (const event of ['pause', 'play', 'error', 'ended', 'canplay']) fire(first, event);
+      expect(bus.view.paused).toBe(false);
+      expect(music()).toHaveLength(2);
+      expect(playing()).toEqual([music()[1]]);
+    });
+
+    it('follows a media key: what the element does is what the widget shows', async () => {
+      const { bus, win, first, playing } = await playingBus();
+      first.pause(); // the key works the element, and the bus hears of it by its event
+      fire(first, 'pause');
+      expect(bus.view.paused).toBe(true);
+      win.fire('pointerdown'); // a gesture does not start it again behind the widget's back
+      expect(playing()).toEqual([]);
+      void first.play();
+      fire(first, 'play');
+      expect(bus.view.paused).toBe(false);
+      expect(playing()).toEqual([first]);
+    });
+
+    it('does not take a track that ended for one that was paused', async () => {
+      const { bus, first, music, playing } = await playingBus();
+      first.ended = true;
+      first.pause(); // the browser pauses it first, and says so before `ended`
+      fire(first, 'pause');
+      fire(first, 'ended');
+      expect(bus.view.paused).toBe(false);
+      expect(playing()).toEqual([music()[1]]);
+    });
+
+    it('does not take its own stop for a pause when the event comes late', async () => {
+      const { bus, first, playing } = await playingBus();
+      bus.music = 0;
+      bus.applyMusic();
+      bus.music = 0.5;
+      bus.applyMusic();
+      fire(first, 'pause'); // by now the element plays again
+      expect(bus.view.paused).toBe(false);
+      expect(playing()).toEqual([first]);
+    });
+
+    it('writes the track to the tab once, not at every gesture', async () => {
+      const session = fakeSession();
+      const write = vi.spyOn(session, 'setItem');
+      vi.stubGlobal('sessionStorage', session);
+      const { bus, win } = await musicBus({});
+      bus.applyMusic();
+      for (let i = 0; i < 6; i++) {
+        win.fire(i % 2 ? 'pointerdown' : 'keydown');
+        await vi.advanceTimersByTimeAsync(0);
+      }
+      expect(write).toHaveBeenCalledTimes(1);
+    });
+
     it('says the music is held, for a widget under a title that holds it', async () => {
       const { bus } = await musicBus({});
       bus.hold();
@@ -1096,11 +1234,12 @@ describe('audio in a browser', () => {
 
     type Step =
       | { op: 'hold' | 'preload' | 'start' | 'apply' | 'sfx' | 'fail' | 'end' | 'canplay' }
+      | { op: 'forward' | 'back' | 'toggle' }
       | { op: 'gesture'; on: 'pointerdown' | 'keydown' }
       | { op: 'volume'; master: number; music: number }
       | { op: 'age'; id: string }
       | { op: 'tick'; ms: number }
-      | { op: 'stale'; event: 'error' | 'ended' | 'canplay'; pick: number };
+      | { op: 'stale'; event: 'error' | 'ended' | 'canplay' | 'pause' | 'play'; pick: number };
     /**
      * `ages` cases change the age and never fail or end the track playing (the age changes are what
      * they exercise); the rest never change the age, and fail and end the track playing.
@@ -1116,6 +1255,7 @@ describe('audio in a browser', () => {
       const ops = [
         ...['gesture', 'gesture', 'gesture', 'start', 'start', 'start'],
         ...['hold', 'preload', 'apply', 'volume', 'volume', 'sfx', 'tick', 'tick', 'stale'],
+        ...['forward', 'forward', 'back', 'toggle'],
         ...(ages ? ['age', 'age', 'age', 'age'] : ['fail', 'fail', 'end', 'end', 'end', 'canplay']),
       ] as Step['op'][];
       const op = rng.pick(ops);
@@ -1131,7 +1271,7 @@ describe('audio in a browser', () => {
         case 'stale':
           return {
             op,
-            event: rng.pick(['error', 'ended', 'canplay'] as const),
+            event: rng.pick(['error', 'ended', 'canplay', 'pause', 'play'] as const),
             pick: rng.int(0, 5),
           };
         default:
@@ -1183,6 +1323,8 @@ describe('audio in a browser', () => {
         let now = 0;
         let settleAt = 0; // an age change may still be fading the old track out until then
         let selected: string | null = null;
+        let paused = false; // the player's pause
+        let moved = false; // a skip since the set opened: its first file is no longer the one due
         const failed = new Set<string>();
         const letGo = new Map<FakeAudio, number>(); // plays an element had when a newer one came
 
@@ -1218,7 +1360,21 @@ describe('audio in a browser', () => {
             case 'sfx':
               bus.play('ui.click');
               break;
+            case 'forward':
+              bus.forward();
+              moved = true;
+              break;
+            case 'back':
+              bus.back();
+              moved = true;
+              break;
+            case 'toggle':
+              bus.togglePause();
+              // with nothing to hear a press does nothing
+              if (bus.master * bus.music > 0) paused = !paused;
+              break;
             case 'age':
+              if (musicForAge(s.id) !== musicForAge(selected)) moved = false;
               bus.setAge(s.id);
               selected = s.id;
               settleAt = now + MUSIC_FADE_MS + 100;
@@ -1272,6 +1428,13 @@ describe('audio in a browser', () => {
             expect(plays(), say('a track played before any gesture')).toBe(0);
             expect(loops, say('the synth loop started before any gesture')).toBe(0);
           }
+          // the pause is the player's: nothing else moves it, and while it stands nothing plays
+          expect(bus.view.paused, say('the pause moved by itself')).toBe(paused);
+          if (paused)
+            expect(
+              els.filter((el) => el.playing),
+              say('a paused bus plays'),
+            ).toEqual([]);
           // two tracks never play together
           expect(FakeAudio.overlaps, say('two tracks played together')).toBe(0);
           expect(els.filter((el) => el.playing).length, say('two tracks play')).toBeLessThan(2);
@@ -1286,7 +1449,8 @@ describe('audio in a browser', () => {
             expect(failed.has(el.src), say(`a failed file was fetched again: ${el.src}`)).toBe(
               false,
             );
-            if (c.ages)
+            if (moved) expect(musicForAge(selected), say('a file of no set')).toContain(el.src);
+            else if (c.ages)
               expect(el.src, say('not the first file of the age')).toBe(musicForAge(selected)[0]);
             else if (before.n === 0)
               expect(el.src, say('Pastoral Pulse is not first')).toBe(MUSIC_TRACKS[0]);
@@ -1295,19 +1459,19 @@ describe('audio in a browser', () => {
           // the synth loop stands in only when every file has failed, and then it does
           const every = failed.size === MUSIC_TRACKS.length;
           if (loops > 0) expect(every, say('the synth loop took over with a file left')).toBe(true);
-          if (every && unlocked && !held && v > 0)
+          if (every && unlocked && !held && v > 0 && !paused)
             expect(loops, say('every file failed and nothing plays')).toBeGreaterThan(0);
           // once a gesture has unlocked a released bus, it plays the newest file at the volumes
           if (unlocked && !held && now >= settleAt && !every) {
             expect(top, say('an unlocked, released bus has no track')).toBeDefined();
             expect(top!.volume, say('not at the volume of the sliders')).toBe(v);
             const playing = els.filter((el) => el.playing).map((el) => els.indexOf(el));
-            const expected = v > 0 ? [els.length - 1] : [];
+            const expected = v > 0 && !paused ? [els.length - 1] : [];
             expect(
               playing,
               say('playing tracks (by index) are not the newest, or not muted'),
             ).toEqual(expected);
-            if (c.ages)
+            if (c.ages && !moved)
               expect(top!.src, say('not the first file of the age')).toBe(musicForAge(selected)[0]);
           }
         };

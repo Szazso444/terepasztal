@@ -38,7 +38,8 @@ export interface MusicDeck {
 
 /**
  * The music in the top bar: back, pause or play, forward and the title. It changes no volume and
- * no setting. The title is the track's, never a file's name, and its tooltip says it in full.
+ * no setting. The title is the track's, never a file's name, and its tooltip says it in full. With
+ * nothing to hear it says so in the title's place, and its buttons are off: Audio is the way back.
  */
 export class NowPlaying {
   private text = el('span', { class: 'np-text' });
@@ -46,6 +47,8 @@ export class NowPlaying {
   private backBtn = this.press('trackback', () => this.deck.back());
   private toggleBtn = this.press('pause', () => this.deck.togglePause());
   private forwardBtn = this.press('trackforward', () => this.deck.forward());
+  /** the icon on the toggle button */
+  private toggleIcon: IconName = 'pause';
   /** what the widget shows now; it is written only where this changes, as it runs every frame */
   private shown: MusicView | null = null;
   readonly root: HTMLElement;
@@ -55,20 +58,26 @@ export class NowPlaying {
     private readonly deck: MusicDeck,
     tip: (text: () => string) => TipBuild,
   ) {
-    const title = () => this.shown?.title ?? STR.nowPlaying.noTrack;
-    const pause = () => (this.shown?.paused ? STR.nowPlaying.play : STR.nowPlaying.pause);
-    const back = () => (this.shown?.canGoBack ? STR.nowPlaying.back : STR.nowPlaying.noBack);
     this.root = el(
       'div',
       { class: 'panel stat now-playing' },
       // a term around the button: one that is off still says why
-      ttTerm(this.backBtn, tip(back)),
-      ttTerm(this.toggleBtn, tip(pause)),
+      ttTerm(
+        this.backBtn,
+        tip(() => this.backSays()),
+      ),
+      ttTerm(
+        this.toggleBtn,
+        tip(() => this.toggleSays()),
+      ),
       ttTerm(
         this.forwardBtn,
-        tip(() => STR.nowPlaying.forward),
+        tip(() => this.forwardSays()),
       ),
-      ttTerm(this.box, tip(title)),
+      ttTerm(
+        this.box,
+        tip(() => this.shown?.title ?? STR.nowPlaying.noTrack),
+      ),
     );
     if (typeof ResizeObserver !== 'undefined') {
       // the room changes with the window, and the text's width when its font arrives
@@ -79,9 +88,36 @@ export class NowPlaying {
   }
 
   private press(icon: IconName, run: () => void): HTMLButtonElement {
-    const b = btn('', run, 'small');
+    const b = btn(
+      '',
+      () => {
+        run();
+        // the keys go back to the game: Enter finishes a route, and Space pauses the clock
+        b.blur();
+      },
+      'small',
+    );
     b.append(lineIcon(icon));
     return b;
+  }
+
+  private backSays() {
+    if (this.shown?.silent) return STR.nowPlaying.silentTip;
+    return this.shown?.canGoBack ? STR.nowPlaying.back : STR.nowPlaying.noBack;
+  }
+  private toggleSays() {
+    if (this.shown?.silent) return STR.nowPlaying.silentTip;
+    return this.shown?.paused ? STR.nowPlaying.play : STR.nowPlaying.pause;
+  }
+  private forwardSays() {
+    return this.shown?.silent ? STR.nowPlaying.silentTip : STR.nowPlaying.forward;
+  }
+
+  /** A button is only an icon: its title and its name for a screen reader say what it does. */
+  private name(b: HTMLButtonElement, text: string) {
+    if (b.title === text) return;
+    b.title = text;
+    b.setAttribute('aria-label', text);
   }
 
   /** Roll the title or let it stand, as it measures now. */
@@ -97,18 +133,26 @@ export class NowPlaying {
     const now = this.deck.view;
     const was = this.shown;
     this.shown = now;
-    if (now.title !== was?.title) {
-      this.text.textContent = now.title ?? STR.nowPlaying.noTrack;
+    const words = now.silent ? STR.nowPlaying.silent : (now.title ?? STR.nowPlaying.noTrack);
+    if (this.text.textContent !== words) {
+      this.text.textContent = words;
       // off while it is measured, so a new title that rolls too starts from its beginning
       this.box.classList.remove('roll');
       this.roll();
     }
-    if (now.paused !== was?.paused) {
-      this.toggleBtn.replaceChildren(lineIcon(now.paused ? 'play' : 'pause'));
-      this.box.classList.toggle('paused', now.paused);
+    const icon = now.silent ? 'speakeroff' : now.paused ? 'play' : 'pause';
+    if (icon !== this.toggleIcon) {
+      this.toggleIcon = icon;
+      this.toggleBtn.replaceChildren(lineIcon(icon));
     }
+    const still = now.paused || now.silent;
+    if (still !== (was?.paused || was?.silent)) this.box.classList.toggle('paused', still);
     if (now.held !== was?.held) this.root.classList.toggle('held', now.held);
-    this.backBtn.disabled = !now.canGoBack;
-    this.forwardBtn.disabled = !now.canGoForward;
+    this.backBtn.disabled = now.silent || !now.canGoBack;
+    this.toggleBtn.disabled = now.silent;
+    this.forwardBtn.disabled = now.silent || !now.canGoForward;
+    this.name(this.backBtn, this.backSays());
+    this.name(this.toggleBtn, this.toggleSays());
+    this.name(this.forwardBtn, this.forwardSays());
   }
 }

@@ -108,6 +108,10 @@ const EN = {
     forward: 'Next track',
     /** no music file could be played, and the game's own loop plays */
     noTrack: 'Game loop',
+    /** in the title's place: Music is off or at 0, or Master is */
+    silent: 'Music off',
+    /** the buttons say it while they are off */
+    silentTip: 'Nothing to hear: Music or Master is off in Audio',
   },
   history: {
     undo: 'Undo',

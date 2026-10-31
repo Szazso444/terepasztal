@@ -238,6 +238,8 @@ const ICONS = {
   keys: '<rect x="3" y="7.5" width="18" height="9" rx="2"/><path d="M8 12h8"/>',
   speaker:
     '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/>',
+  speakeroff:
+    '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9.5l5 5M20.5 9.5l-5 5"/>',
   pause: '<path d="M8.5 5v14M15.5 5v14"/>',
   trackback: '<path d="M18.5 5l-9 7 9 7z"/><path d="M5.5 5v14"/>',
   trackforward: '<path d="M5.5 5l9 7-9 7z"/><path d="M18.5 5v14"/>',

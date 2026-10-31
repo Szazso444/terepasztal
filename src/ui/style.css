@@ -4968,11 +4968,15 @@ body.title-up
 }
 
 /* ---- the music in the top bar, left of the weather (nowPlaying.ts) ---- */
-/* over the title's and the pause menu's scrims: the music plays on under them, and is worked here */
+/*
+ * Over the scrims of the menus (60) and the screens (70), so it can be worked from the Audio screen
+ * with a press that does not close it, and under the name prompt (75) and the tooltips (85). Frames
+ * stop at 90vh, so none reaches the top bar at 720 and over.
+ */
 #topbar .now-playing {
   flex: none;
   position: relative;
-  z-index: 61;
+  z-index: 71;
   gap: 2px;
   width: 190px;
   height: 26px;
