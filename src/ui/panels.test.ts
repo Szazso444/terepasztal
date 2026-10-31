@@ -355,7 +355,7 @@ describe('what each action that replaces or leaves a game is wired to', () => {
     expect(byId.get('MainMenu.newLevel -> host.newLevel')).toEqual(LEAVE);
   });
 
-  it('asks before a named save loads, and before Load last save only over a game being played', () => {
+  it('asks before a named save loads, and before Load last save (Settings and Saved games) only over a game being played', () => {
     const sites = replacingSites(parse('panels.ts', source('panels.ts')));
     const byId = new Map(sites.map((s) => [s.id, s.guard]));
     // the question is the rule's own: over a game, or over a stored game at boot
@@ -364,7 +364,7 @@ describe('what each action that replaces or leaves a game is wired to', () => {
       question: 'loadQuestion',
     });
     // it loads the stored game itself and replaces none: the 'leave' kind, the unchanged text
-    expect(byId.get('SettingsScreen.load -> host.loadSave')).toEqual({
+    expect(byId.get('loadLastSave. -> host.loadSave')).toEqual({
       by: 'ask',
       question: "asksBeforeReplacing('leave') ? STR.saves.confirmLoadLast : null",
     });
@@ -379,7 +379,7 @@ describe('what each action that replaces or leaves a game is wired to', () => {
         'MainMenu.editLevel -> host.editLevel',
         'MainMenu.newLevel -> host.newLevel',
         'slotActions.loadSlot -> host.loadSlot',
-        'SettingsScreen.load -> host.loadSave',
+        'loadLastSave. -> host.loadSave',
         // asks in the settings screen's own button: `if (await this.prompt.confirm(..))`
         'SettingsScreen.newGame -> host.newGame',
       ].sort(),
@@ -625,14 +625,14 @@ function pickUses(sf: ts.SourceFile): string[] {
   return uses;
 }
 
-describe("what the title screen's Tuning choice is wired to", () => {
-  const menu = () => parse('menu.ts', source('menu.ts'));
+describe("what the New game screen's Tuning choice is wired to", () => {
+  const newGame = () => parse('newGameScreen.ts', source('newGameScreen.ts'));
   const panels = () => parse('panels.ts', source('panels.ts'));
   const statements = (b: ts.Block | undefined, sf: ts.SourceFile) =>
     (b?.statements ?? []).map((s) => s.getText(sf));
 
   it('hands the pick to New game and to nothing else: Play level, Edit level and Continue ignore it', () => {
-    const reads = pickUses(menu()).filter((u) => u !== 'write');
+    const reads = pickUses(newGame()).filter((u) => u !== 'write');
     expect(reads).not.toEqual([]);
     expect(new Set(reads)).toEqual(
       new Set([
@@ -643,9 +643,9 @@ describe("what the title screen's Tuning choice is wired to", () => {
     );
   });
 
-  it('starts the pick over each time the title screen is drawn, before the choice is built', () => {
-    const sf = menu();
-    const draw = statements(methodOf(sf, 'MainMenu', 'render'), sf);
+  it('starts the pick over each time the screen is drawn, before the choice is built', () => {
+    const sf = newGame();
+    const draw = statements(methodOf(sf, 'NewGameScreen', 'render'), sf);
     const reset = draw.indexOf('this.tuningPick = null;');
     const build = draw.indexOf('this.refreshTunings();');
     expect(reset).toBeGreaterThanOrEqual(0);
@@ -653,8 +653,8 @@ describe("what the title screen's Tuning choice is wired to", () => {
   });
 
   it('refreshes the choice alone: not the seed, the production chain or the rest of the screen', () => {
-    const sf = menu();
-    const refresh = methodOf(sf, 'MainMenu', 'refreshTunings');
+    const sf = newGame();
+    const refresh = methodOf(sf, 'NewGameScreen', 'refreshTunings');
     expect(refresh).toBeDefined();
     const text = refresh!.getText(sf);
     expect(text).not.toMatch(/this\.(render|show|left|right)\b|\bseedInput\b|\bsupply\b/);

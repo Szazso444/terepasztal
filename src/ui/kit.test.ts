@@ -299,12 +299,6 @@ describe('the game asks in its own dialog', () => {
     });
   }
 
-  /**
-   * The two `prompt()` of the level editor (Save as, Regenerate), which PR 12d takes out of
-   * `game.ts`. Only they pass, and this goes with them.
-   */
-  const LEFT_TO_12D = /\/src\/game\.ts: prompt\(STR\.(editor\.newName|settings\.seedPlaceholder)\b/;
-
   /** The calls of the browser's own `confirm`, `alert` and `prompt` in `text`. */
   function nativeDialogs(file: string, text: string): string[] {
     const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
@@ -325,7 +319,7 @@ describe('the game asks in its own dialog', () => {
     const found = sources(new URL('../', import.meta.url)).flatMap((f) =>
       nativeDialogs(f.pathname, readFileSync(f, 'utf8')),
     );
-    expect(found.filter((f) => !LEFT_TO_12D.test(f))).toEqual([]);
+    expect(found).toEqual([]);
   }, 30_000);
 
   it('sees one, and not a method of the same name', () => {
@@ -335,14 +329,6 @@ describe('the game asks in its own dialog', () => {
         `confirm('a'); window.alert('b'); prompt('c'); this.prompt.confirm('d', 'e');`,
       ),
     ).toHaveLength(3);
-  });
-
-  it('lets through only the two left to PR 12d', () => {
-    const passes = (line: string) => LEFT_TO_12D.test(line);
-    expect(passes('/x/src/game.ts: prompt(STR.editor.newName, editor.level.name)')).toBe(true);
-    expect(passes('/x/src/game.ts: prompt(STR.settings.seedPlaceholder, s)')).toBe(true);
-    expect(passes('/x/src/game.ts: prompt(STR.station.rename, s.name)')).toBe(false);
-    expect(passes('/x/src/ui/stationPanel.ts: prompt(STR.editor.newName, n)')).toBe(false);
   });
 });
 

@@ -70,6 +70,7 @@ import { ResourceBar } from './resourceBar';
 import { TuningScreen } from './tuningScreen';
 import { ContentScreen } from './contentScreen';
 import { SettingsScreen } from './settingsScreen';
+import { SavedGamesScreen, type SavedTab } from './savedGamesScreen';
 import { CreditsScreen } from './creditsScreen';
 import { GachaScreen } from './gachaScreen';
 import { CraftingScreen } from './craftingScreen';
@@ -93,12 +94,15 @@ import { TrainPanel } from './trainPanel';
 import type { FollowCamera } from './followCamera';
 import { StationPanel } from './stationPanel';
 import { TownPanel } from './townPanel';
-import { showSignalGuide } from './signalGuide';
+import { SignalGuideScreen } from './signalGuide';
 import {
   asksBeforeReplacing,
+  canSaveHere,
   continueTargetFor,
   loadQuestion,
+  replaceEffect,
   replaceQuestion,
+  saveOffReason,
   type ReplaceSituation,
   type Replacement,
 } from './saveSlots';
@@ -355,6 +359,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   d.screens.onChange = (sc) => {
     hud.menuBar.close();
     pauseMenu.setCovered(!!sc);
+    mainMenu.setCovered(!!sc);
     if (sc && !sc.keepsTool) d.build.setTool({ kind: 'none' });
     if (!sc) {
       d.screens.root.classList.remove('peek');
@@ -425,32 +430,22 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.namePrompt,
   );
   const contentScreen = new ContentScreen(() => {
-    if (host.mode === 'play' && !menuOpen()) host.save(true);
+    // a game in play is saved first, over the pause menu too; the title at boot has none
+    if (canSaveHere(savingSituation())) host.save(true);
     host.reloadToMenu();
   }, d.namePrompt);
+  contentScreen.redraw = () => d.screens.redraw();
   const creditsScreen = new CreditsScreen();
   const settingsScreen = new SettingsScreen(
     d.settings,
     () => host.applySettings(),
     {
       save: () => host.save(),
-      load: () => {
-        if (!readSave()) {
-          d.toasts.push(STR.settings.noSave, 'warn');
-          return;
-        }
-        // it loads the stored game itself and replaces none, so it asks only over a game in play
-        const question = asksBeforeReplacing('leave', replaceSituation())
-          ? STR.saves.confirmLoadLast
-          : null;
-        askBeforeLoad(question, () => {
-          if (!host.loadSave()) d.toasts.push(STR.settings.noSave, 'warn');
-        });
-      },
+      load: loadLastSave,
       newGame: (seed) => host.newGame(seed, supplyMode()),
       exportSave: () => host.exportSave(),
       exportDiagnostics: () => host.diagnostics(),
-      saveAs: (name) => host.saveSlot(name),
+      saveAs: () => openSaved('save'),
       ...slotActions(),
       // a refused text changes nothing; the player's settings never come from a save
       importSave: (json) => {
@@ -467,7 +462,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       savedAt: host.savedAt,
       version: `v${SAVE_VERSION}`,
       warning: host.deprecatedSave,
-      saveOff: mainMenu.visible && !titleOverGame,
+      saveOff: saveOffReason(savingSituation()) !== null,
+      saveOffWhy: saveOffReason(savingSituation()) ?? undefined,
     }),
     d.namePrompt,
   );
@@ -502,12 +498,15 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   hud.menuBar.actions = {
     pause: () => (menuOpen() ? closeMenus() : openPauseMenu()),
     save: () => void host.save(),
-    savedGames: () => openPauseMenu(true),
+    savedGames: () => {
+      openPauseMenu();
+      openSaved('load');
+    },
     settings: () => d.screens.toggle(settingsScreen),
     quit: quitToTitle,
     depot: () => d.screens.toggle(depot),
     roster: () => d.screens.toggle(rosterScreen),
-    signals: showSignalGuide,
+    signals: () => d.screens.toggle(signalGuide),
     contracts: () => d.screens.toggle(contractsScreen),
     market: () => d.screens.toggle(marketScreen),
     crafting: () => d.screens.toggle(craftingScreen),
@@ -576,7 +575,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     if (d.build.selectedDecor) d.build.selectDecor(null);
   });
   decorPanel.houses = d.houses;
-  decorPanel.onSignalGuide = showSignalGuide;
+  const signalGuide = new SignalGuideScreen();
+  decorPanel.onSignalGuide = () => d.screens.toggle(signalGuide);
   decorPanel.onSignalBlock = (dec) => host.highlightSignalBlock(dec);
   const alertBar = new AlertBar(d.atlas, d.tooltip, d.toasts);
   alertBar.onLook = (n) => host.focusNotice(n);
@@ -804,17 +804,16 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.screens.close();
     pauseMenu.hide();
     d.build.setTool({ kind: 'none' });
-    mainMenu.show(continueTarget(overGame), listLevels(), { content: contentIsCustom() });
+    mainMenu.show(continueTarget(overGame), { content: contentIsCustom() });
   }
   function openMainMenu() {
     showMainMenu(false);
   }
-  /** `slotsOpen` shows the named saves unfolded, for the menu bar's Saved games. */
-  function openPauseMenu(slotsOpen = false) {
+  function openPauseMenu() {
     if (mainMenu.visible) return;
     host.pauseGame();
     d.screens.close();
-    pauseMenu.show({ testing: !!testingLevel(), editor: host.mode === 'editor' }, slotsOpen);
+    pauseMenu.show({ testing: !!testingLevel(), editor: host.mode === 'editor' });
   }
   /** Leave for the title screen: from the editor by a reload, asking over unsaved changes. */
   function quitToTitle() {
@@ -833,6 +832,10 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     mainMenu.hide();
     titleOverGame = false;
     host.resumeGame();
+  }
+  /** Where the player stands for saving: no storage is read, so it may be asked at every refresh. */
+  function savingSituation(): ReplaceSituation {
+    return { mode: host.mode, titleShown: mainMenu.visible, titleOverGame, stored: false };
   }
   /** What decides whether a replacement asks first, read when the player picks the action. */
   function replaceSituation(): ReplaceSituation {
@@ -879,6 +882,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       },
       deleteSlot: (name) => {
         host.deleteSlot(name);
+        mainMenu.changed();
         d.toasts.push(STR.settings.slotDeleted(name), 'info');
       },
     };
@@ -894,27 +898,57 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     };
   }
   /**
-   * "Save as..." from the pause menu: asks for a name in the in-game dialog, and before replacing
-   * a save of that name asks again; a no writes nothing.
+   * Load the stored game, the autosave Continue goes back to. It loads that game itself and
+   * replaces none, so it asks only over a game in play.
    */
-  async function promptSaveAs() {
-    const fallback = `${STR.menu.day(d.clock.day)} · ${host.seed}`;
-    const name = await d.namePrompt.ask(
-      STR.settings.saveAsTitle,
-      STR.settings.saveAsHint,
-      fallback,
-    );
-    if (!name) return;
-    const n = name.slice(0, 32).trim();
-    if (
-      hasSlot(n) &&
-      !(await d.namePrompt.confirm(STR.saves.overwriteTitle, STR.saves.confirmOverwrite(n), {
-        yes: STR.prompt.replace,
-        danger: true,
-      }))
-    )
+  function loadLastSave() {
+    if (!readSave()) {
+      d.toasts.push(STR.settings.noSave, 'warn');
       return;
-    if (host.saveSlot(n)) closeMenus();
+    }
+    const question = asksBeforeReplacing('leave', replaceSituation())
+      ? STR.saves.confirmLoadLast
+      : null;
+    askBeforeLoad(question, () => {
+      if (!host.loadSave()) d.toasts.push(STR.settings.noSave, 'warn');
+    });
+  }
+  /**
+   * Saved games, on a tab: the title's button, the pause menu's Save as... and Load game, and
+   * Settings' Save as... A save asks before it replaces one of the same name, in the screen.
+   */
+  const savedGames = new SavedGamesScreen(
+    {
+      ...slotActions(),
+      autosave: () => continueMeta(),
+      savedAt: () => host.savedAt,
+      autosaveOn: () => !!d.settings.autosave,
+      loadLast: loadLastSave,
+      situation: replaceSituation,
+      defaultName: () => `${STR.menu.day(d.clock.day)} · ${host.seed}`,
+      exists: (name) => hasSlot(name),
+      saveAs: (name) => host.saveSlot(name),
+    },
+    d.namePrompt,
+  );
+  savedGames.redraw = () => d.screens.redraw();
+  /** the screen Saved games was opened over: Settings, which it goes back to; none, a menu */
+  let savedOver: Screen | null = null;
+  // a save went through: Saved games goes back to the screen it was opened over, which is drawn
+  // again (the clock stays where it was); opened from a menu it closes the menus, and the game goes on
+  savedGames.onSaved = () => {
+    if (savedOver) {
+      d.screens.back();
+      if (savedOver === settingsScreen) settingsScreen.render();
+    } else {
+      d.screens.close();
+      closeMenus();
+    }
+  };
+  function openSaved(tab: SavedTab) {
+    savedOver = d.screens.current;
+    savedGames.show(tab);
+    d.screens.push(savedGames);
   }
   const mainMenu = new MainMenu(
     {
@@ -922,6 +956,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       ...audioActions(),
       continue: () => closeMenus(),
       tunings: () => listRulePresets(),
+      levels: () => listLevels(),
+      asks: (kind) => replaceEffect(kind, replaceSituation()),
+      savedGames: () => openSaved('load'),
       // the pick is staged only once every question is answered yes, and a refused staging starts nothing
       newGame: async (seed, supply, tuning) => {
         if (!(await confirmReplacement('overwrite', STR.menu.newGame, STR.prompt.start))) return;
@@ -940,42 +977,38 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
         if (await confirmReplacement('leave', STR.menu.newLevel, STR.menu.newLevel))
           host.newLevel(size, generated, seedText);
       },
-      // the title screen is drawn again over the same game it was opened over
-      deleteLevel: (id) => {
-        host.deleteLevel(id);
-        showMainMenu(titleOverGame);
-      },
-      importLevel: (json) => {
-        if (!host.importLevel(json)) return false;
-        showMainMenu(titleOverGame);
-        return true;
-      },
+      // the Levels screen draws its own list again; the title's count follows when it shows
+      deleteLevel: (id) => host.deleteLevel(id),
+      importLevel: (json) => host.importLevel(json),
       exportLevel: (id) => JSON.stringify(listLevels().find((l) => l.id === id) ?? null),
       tuning: () => d.screens.open(tuningScreen),
       content: () => d.screens.open(contentScreen),
       settings: () => d.screens.open(settingsScreen),
+      controls: () => {
+        settingsScreen.show('controls');
+        d.screens.open(settingsScreen);
+      },
       credits: () => d.screens.open(creditsScreen),
     },
     d.namePrompt,
+    d.screens,
   );
-  const pauseMenu = new PauseMenu(
-    {
-      ...slotActions(),
-      ...audioActions(),
-      resume: () => closeMenus(),
-      save: () => {
-        host.save();
-        closeMenus();
-      },
-      saveAs: () => void promptSaveAs(),
-      settings: () => d.screens.open(settingsScreen),
-      tuning: () => d.screens.open(tuningScreen),
-      content: () => d.screens.open(contentScreen),
-      backToEditor: () => host.backToEditor(),
-      mainMenu: quitToTitle,
+  const pauseMenu = new PauseMenu({
+    ...slotActions(),
+    ...audioActions(),
+    resume: () => closeMenus(),
+    save: () => {
+      host.save();
+      closeMenus();
     },
-    d.namePrompt,
-  );
+    saveAs: () => openSaved('save'),
+    loadGame: () => openSaved('load'),
+    settings: () => d.screens.open(settingsScreen),
+    tuning: () => d.screens.open(tuningScreen),
+    content: () => d.screens.open(contentScreen),
+    backToEditor: () => host.backToEditor(),
+    mainMenu: quitToTitle,
+  });
 
   d.uiRoot.append(
     mainMenu.root,

@@ -10,10 +10,18 @@ interface Question extends ConfirmOptions {
   name?: string;
   /** the longest name it takes */
   maxLength?: number;
+  /** an empty name is an answer too, not a dismissal */
+  empty?: boolean;
 }
 
 /** The longest name `ask` takes unless it says otherwise. */
 const NAME_MAX = 20;
+
+/** What Enter answers with: the name typed, trimmed; an empty one only where that is an answer. */
+export function nameAnswer(typed: string, empty: boolean): string | null {
+  const text = typed.trim();
+  return text || (empty ? '' : null);
+}
 
 /** What a yes reads as: any text, as `ask` answers with the name typed. */
 const YES = 'yes';
@@ -30,6 +38,8 @@ export class NamePrompt {
   readonly root = el('div', { id: 'name-prompt-root' });
   private frame = new ScreenFrame(() => this.flow.dismiss());
   private input = el('input', { class: 'k-cf-in', type: 'text' });
+  /** the question up takes an empty name as an answer */
+  private empty = false;
   private flow = new DialogFlow<Question, string | null>(
     { show: (q) => this.draw(q), hide: () => this.hide() },
     null,
@@ -63,8 +73,15 @@ export class NamePrompt {
     return this.flow.open;
   }
   /** Ask for a name; resolves with the text, or null when dismissed. */
-  ask(title: string, hint: string, value: string, maxLength?: number): Promise<string | null> {
-    return this.flow.ask({ title, text: hint, name: value, maxLength });
+  ask(
+    title: string,
+    hint: string,
+    value: string,
+    maxLength?: number,
+    /** an empty name is an answer too, not a dismissal: a seed left empty is a random one */
+    empty = false,
+  ): Promise<string | null> {
+    return this.flow.ask({ title, text: hint, name: value, maxLength, empty });
   }
   /** A yes / no question. The answer names what it does; destroying something, it is red. */
   confirm(title: string, text: string, o: ConfirmOptions = {}): Promise<boolean> {
@@ -80,7 +97,7 @@ export class NamePrompt {
   }
 
   private answerName() {
-    this.flow.answer(this.input.value.trim() || null);
+    this.flow.answer(nameAnswer(this.input.value, this.empty));
   }
 
   private draw(q: Question) {
@@ -118,6 +135,7 @@ export class NamePrompt {
     };
     this.frame.show(screen, { stacked: false, paused: false });
     this.root.style.display = 'flex';
+    this.empty = !!q.empty;
     if (naming) {
       this.input.maxLength = q.maxLength ?? NAME_MAX;
       this.input.value = q.name ?? '';
