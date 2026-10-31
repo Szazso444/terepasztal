@@ -305,8 +305,13 @@ Sources: `src/art/rolling.ts`, `src/art/frames.ts`, `src/sim/body.ts`,
 
 ![Current resource icons](images/current-icons.png)
 
-Icons currently use 16×16 buffers. Keep a strong single silhouette with a selective outline,
-not a miniature painting. Use the same object meaning in tooltips, recipes, cargo and inventory.
+The picture above shows the generators' 16×16 fallbacks. What ships is `public/assets/icons.png`:
+twelve painted icons (money, wood, stone, iron, coal, water, oil, power, wheat, food, passengers,
+population) cut from one ChatGPT sheet by `tools/resource-icons.mjs`, in square 64×64 texel frames
+because every icon slot in the UI is square, and the six of the full chain still in their older
+pictures until they are painted (`assets/source/resource-icons-2026-10-29/README.md`). Keep a
+strong single silhouette with a selective outline, not a miniature painting. Use the same object
+meaning in tooltips, recipes, cargo and inventory.
 
 | Icon set                   | Proposed visual distinction                                                                            |
 | -------------------------- | ------------------------------------------------------------------------------------------------------ |
