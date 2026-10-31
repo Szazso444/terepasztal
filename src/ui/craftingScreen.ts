@@ -35,7 +35,14 @@ import type { Inventory } from '../gacha/inventory';
 import { cargoDef } from '../sim/cargo';
 import { sfx } from '../engine/audio';
 import type { AtlasRegistry } from '../engine/atlas';
-import { decorateSegmented, fragment, resIcon, ScrollKeep, vehicleArt } from './economyParts';
+import {
+  decorateSegmented,
+  fragment,
+  resIcon,
+  ScrollKeep,
+  setText,
+  vehicleArt,
+} from './economyParts';
 import {
   RECIPE_FILTERS,
   filterRecipes,
@@ -49,6 +56,12 @@ import {
 import { rarityClass } from './rarityClass';
 
 const KINDS: CraftKind[] = ['loco', 'wagon'];
+
+/** One recipe row, and what is set again in it as the materials move. */
+interface RecipeRow {
+  root: HTMLElement;
+  update(cost: Cost, missing: Cost): void;
+}
 
 /**
  * Two steps in one frame: pay money to draw recipe cards and keep one, then spend stored resources
@@ -101,7 +114,9 @@ export class CraftingScreen implements Screen {
   /** what each part last drew, so the same state draws nothing */
   private sideKey = '';
   private mainKey = '';
-  private listKey = '';
+  private listIds = '';
+  private rows = new Map<string, RecipeRow>();
+  private stats = el('em');
 
   constructor(
     private readonly crafting: Crafting,
@@ -116,7 +131,7 @@ export class CraftingScreen implements Screen {
   ) {
     this.searchBox.input.setAttribute('aria-label', STR.craft.searchLabel);
     this.recipesWell = well(
-      { title: STR.craft.recipes, cls: 'ec-fill' },
+      { title: STR.craft.recipes, right: this.stats, cls: 'ec-fill' },
       el('div', { class: 'ec-rhead' }, this.filterSeg),
       el('div', { class: 'ec-rhead' }, this.searchBox.root, this.count),
       this.list,
@@ -125,6 +140,7 @@ export class CraftingScreen implements Screen {
   }
 
   onOpen() {
+    this.mainKey = '';
     this.render(true);
   }
   refresh() {
@@ -175,7 +191,7 @@ export class CraftingScreen implements Screen {
     }
     const pending = this.crafting.pending;
     const mainKey = pending ? `draw|${pending.cards.join(',')}` : 'recipes';
-    if (force || mainKey !== this.mainKey) {
+    if (mainKey !== this.mainKey) {
       this.mainKey = mainKey;
       if (pending) {
         this.drawWell = this.pickWell(pending.cards, pending.kind, pending.tier);
@@ -399,78 +415,70 @@ export class CraftingScreen implements Screen {
     return filterRecipes(known, this.filter, this.search).map((r) => r.id);
   }
 
+  /**
+   * The recipe list. Its rows are built when the recipes it shows change (a filter, a search, a
+   * recipe learned); what moves with the stock, the materials short and the copies, is set again in
+   * place, so a button under the pointer stays the one it was.
+   */
   private drawList(force: boolean) {
     const ids = this.visible();
     const total = this.crafting.recipes.size;
-    const rows = ids.map((id) => {
-      const cost = this.crafting.instanceCost(id);
-      return { id, cost, missing: this.stock.missing(cost) };
-    });
-    const key = JSON.stringify([
-      this.filter,
-      rows.map((r) => [r.id, r.missing, this.inventory.count(r.id)]),
-      total,
-    ]);
     const count =
       ids.length === total ? STR.craft.count(total) : STR.craft.countOf(ids.length, total);
-    if (this.count.textContent !== count) this.count.textContent = count;
-    if (!force && key === this.listKey) return;
-    this.listKey = key;
-    this.listScroll.around(() => {
-      if (!rows.length) {
+    setText(this.count, count);
+    const s = this.crafting.stats;
+    setText(this.stats, STR.craft.stats(total, s.crafts, s.failures));
+    const idsKey = ids.join(',');
+    if (force || idsKey !== this.listIds) {
+      this.listIds = idsKey;
+      this.rows = new Map();
+      this.listScroll.around(() => {
+        if (!ids.length) {
+          this.list.replaceChildren(
+            emptyState({ text: total ? STR.roster.empty : STR.craft.noRecipes, icon: 'factory' }),
+          );
+          return;
+        }
         this.list.replaceChildren(
-          emptyState({ text: total ? STR.roster.empty : STR.craft.noRecipes, icon: 'factory' }),
+          ...ids.map((id) => {
+            const row = this.recipeRow(id);
+            this.rows.set(id, row);
+            return row.root;
+          }),
         );
-        return;
-      }
-      this.list.replaceChildren(...rows.map((r) => this.recipeRow(r.id, r.cost, r.missing)));
-    });
-  }
-
-  private costLine(cost: Cost, missing: Cost): HTMLElement {
-    const line = el('div', { class: 'ec-cost' }, `${STR.craft.cost}: `);
-    for (const [k, v] of Object.entries(cost)) {
-      if (v <= 0) continue;
-      line.append(
-        el(
-          'span',
-          { class: `ec-c ${missing[k] ? 'short' : ''}`.trim(), title: k },
-          resIcon(this.atlas, k),
-          el('b', { text: String(Math.ceil(v)) }),
-        ),
-      );
+      });
     }
-    return line;
+    for (const [id, row] of this.rows) {
+      const cost = this.crafting.instanceCost(id);
+      row.update(cost, this.stock.missing(cost));
+    }
   }
 
-  private recipeRow(id: string, cost: Cost, missing: Cost): HTMLElement {
+  private recipeRow(id: string): RecipeRow {
     const d = itemDef(id);
-    const short = Object.keys(missing).length > 0;
     const props = vehicleProperties(id);
-    const missingText = STR.craft.missing(fmtCost(missing));
     const art = vehicleArt(this.atlas, id, 1);
     art.classList.add('ec-art');
     art.addEventListener('click', () => this.onInspect?.(id));
-    const sub: (HTMLElement | null)[] = [
-      el(
+    // what is needed of each material, built once; the ones short are marked as the stock moves
+    const cost = this.crafting.instanceCost(id);
+    const needs = new Map<string, HTMLElement>();
+    const costLine = el('div', { class: 'ec-cost' }, `${STR.craft.cost}: `);
+    for (const [k, v] of Object.entries(cost)) {
+      if (v <= 0) continue;
+      const need = el(
         'span',
-        {},
-        el(
-          'span',
-          { class: `rarity-${d.rarity}` },
-          rarityStars(d.rarity, `rarity-${d.rarity}`),
-          ` ${STR.craft.quality[d.rarity] ?? d.rarity}`,
-        ),
-        ` · ${props.slice(0, 2).join(' · ')}`,
-      ),
-      el('span', { text: props[2] ?? '' }),
-      this.costLine(cost, missing),
-      el('span', {
-        text: `${STR.craft.failChance(Math.round(this.crafting.failChance(id) * 100))} · ${STR.craft.copies(this.inventory.count(id))}`,
-      }),
-      short ? el('span', { class: 'ec-short', text: missingText }) : null,
-    ];
-    return listRow({
+        { class: 'ec-c', title: k },
+        resIcon(this.atlas, k),
+        el('b', { text: String(Math.ceil(v)) }),
+      );
+      needs.set(k, need);
+      costLine.append(need);
+    }
+    const copies = el('span');
+    const shortLine = el('span', { class: 'ec-short' });
+    const craft = actionButton(STR.craft.craftBtn, () => this.doCraft(id), { cls: 'small pri' });
+    const root = listRow({
       cls: `ec-recipe r-${rarityClass(d.rarity)}`,
       sprite: art,
       title: el(
@@ -482,16 +490,45 @@ export class CraftingScreen implements Screen {
           text: itemKind(id) === 'loco' ? STR.gacha.loco : STR.gacha.wagon,
         }),
       ),
-      sub: sub.filter((n) => n !== null),
+      sub: [
+        el(
+          'span',
+          {},
+          el(
+            'span',
+            { class: `rarity-${d.rarity}` },
+            rarityStars(d.rarity, `rarity-${d.rarity}`),
+            ` ${STR.craft.quality[d.rarity] ?? d.rarity}`,
+          ),
+          ` · ${props.slice(0, 2).join(' · ')}`,
+        ),
+        el('span', { text: props[2] ?? '' }),
+        costLine,
+        copies,
+        shortLine,
+      ],
       right: [
         actionButton(STR.craft.inspect, () => this.onInspect?.(id), { cls: 'small', icon: 'eye' }),
-        actionButton(STR.craft.craftBtn, () => this.doCraft(id), {
-          cls: 'small pri',
-          disabled: short,
-          title: short ? missingText : undefined,
-        }),
+        craft,
       ],
     });
+    return {
+      root,
+      update: (_cost, missing) => {
+        const short = Object.keys(missing).length > 0;
+        const text = STR.craft.missing(fmtCost(missing));
+        for (const [k, need] of needs) need.classList.toggle('short', !!missing[k]);
+        setText(
+          copies,
+          `${STR.craft.failChance(Math.round(this.crafting.failChance(id) * 100))} · ${STR.craft.copies(this.inventory.count(id))}`,
+        );
+        shortLine.hidden = !short;
+        setText(shortLine, short ? text : '');
+        if (craft.disabled !== short) craft.disabled = short;
+        const tip = short ? text : '';
+        if (craft.title !== tip) craft.title = tip;
+      },
+    };
   }
 
   private doCraft(id: string) {

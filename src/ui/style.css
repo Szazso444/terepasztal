@@ -4011,7 +4011,7 @@ select.text.small {
   align-items: center;
   gap: 4px;
 }
-.ec-field small {
+.ec-field > small {
   min-width: 54px;
   text-align: left;
   font-size: 11px;
@@ -4026,7 +4026,7 @@ select.text.small {
 /* crafting */
 .k-seg.off {
   opacity: 0.5;
-  pointer-events: none;
+  cursor: not-allowed;
 }
 .k-seg .age-icon {
   margin: 0;
