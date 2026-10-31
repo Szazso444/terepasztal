@@ -486,6 +486,7 @@ function trainsPage(): GuidePage {
     blocks: [
       head(S.consistHead),
       list(
+        fill(S.build, { depot: STR.depot.title, dispatch: STR.depot.dispatch }),
         fill(S.limits, { locos: num(MAX_LOCOS), wagons: num(MAX_WAGONS) }),
         said(STR.fleet.mixedGauge),
         said(S.haul),
@@ -592,7 +593,7 @@ function signalsPage(): GuidePage {
     title: G.pages.signals,
     icon: 'eye',
     blocks: [
-      para(S.intro, { settings: L.title, tab: L.signalling }),
+      para(S.intro, { fleet: STR.topbar.fleet, signals: STR.topbar.signals }),
       table(
         [S.colLevel, S.colHeadway, S.colWhat],
         SIGNAL_LEVELS.map((lv) => [
@@ -724,7 +725,7 @@ function contractsPage(): GuidePage {
           life: num(C.offerLifetimeDays),
         }),
         said(S.trains),
-        said(STR.settings.contractPolicyHint),
+        [...said(S.policy), ' ', ...said(STR.settings.contractPolicyHint)],
       ),
       head(S.payHead),
       list(

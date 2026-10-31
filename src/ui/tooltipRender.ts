@@ -41,14 +41,14 @@ export function renderTip(doc: TipDoc, atlas: AtlasRegistry): TipContent {
 }
 
 /** An age's picture, or its icon where it has none. */
-export function agePicture(age: string, src: string | null): HTMLElement {
+export function agePicture(age: string, src: string | null, iconSize = 30): HTMLElement {
   const box = el('span', { class: 'tt-pic' });
   if (src) {
     const img = el('img', { src, alt: '' });
     img.draggable = false;
     box.append(img);
     // fixed markup from ageIcon.ts, never from data
-  } else box.innerHTML = ageIconSvg(age, 30);
+  } else box.innerHTML = ageIconSvg(age, iconSize);
   return box;
 }
 

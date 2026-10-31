@@ -2558,8 +2558,10 @@ const EN = {
     },
     trains: {
       consistHead: 'Consists',
+      build:
+        'A new train is put together in the {depot}: the depot it rolls out of, its engines and wagons, its route and, if you like, its name. {dispatch} sends it out through a gate.',
       limits: 'A train has at least one engine, and at most {locos} engines and {wagons} wagons.',
-      haul: 'Engines have a haul rating, and the wagons must stay under it. A train takes on only the load its engines can haul.',
+      haul: 'Engines haul a set weight, and the wagons must stay under it. A train takes on only the load its engines can haul.',
       speed:
         'A train runs at the speed of its slowest vehicle. More engines pull harder; they do not go faster.',
       colClass: 'Class',
@@ -2598,7 +2600,7 @@ const EN = {
     },
     signals: {
       intro:
-        'On track with no signals trains keep apart by themselves. How close they may follow is the signalling level, in {settings} on the {tab} tab.',
+        'On track with no signals trains keep apart by themselves. How close they may follow is the signalling level, set in {fleet} › {signals}.',
       colLevel: 'Level',
       colHeadway: 'Gap, tiles',
       colWhat: 'What it does',
@@ -2636,6 +2638,7 @@ const EN = {
       timing: 'The board looks for new offers every {days} days. An offer stays {life} days.',
       trains:
         'When you accept, the game hands the contract to the train best placed to work it, and a train on the Contract route is picked ahead of the rest. It goes back to its work afterwards.',
+      policy: 'Each rarity has its own policy for new offers.',
       payHead: 'Pay and fines',
       pay: 'The payout grows with the amount, the price of the good, the distance and the rarity.',
       fines:
@@ -2653,7 +2656,8 @@ const EN = {
     },
     market: {
       marketHead: 'The Market',
-      where: 'The {market} buys into and sells from the store picked on the top bar.',
+      where:
+        'The {market} buys into and sells from the store shown on the resource bar. Select a townhouse, a depot or a warehouse on the map to show its store.',
       prices: "You pay {buy} of a good's base price and get {sell} of it.",
       colGood: 'Good',
       colBuy: 'Buy',
@@ -2664,7 +2668,7 @@ const EN = {
       unlock:
         'Unlock a recipe: pay money for {cards} cards of one kind and age, and keep one. A card you already know gives {refund} back instead.',
       build:
-        'Craft it: spend goods from the store picked on the top bar. Rarer models cost more and can fail; a failure gives back {pct} of the goods.',
+        'Craft it: spend goods from the store shown on the resource bar. Rarer models cost more and can fail; a failure gives back {pct} of the goods.',
       anyAge:
         'Recipes are sorted by age, but you may draw any of them at any time. An engine still needs its fuel or its wire.',
       starters: 'Key {key} opens the {roster}.',

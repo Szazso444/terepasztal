@@ -28,7 +28,8 @@ import { BUILDABLE_CLASSES, lineAge, type TrackClass } from '../world/track';
 /**
  * The picture of each age, a path under `public/`; null shows the age's icon. For now a vehicle
  * portrait of the age; the ages with no vehicle of their own have none. A painted picture of an age
- * takes its place here, and nothing else changes.
+ * takes its place here, and nothing else changes: both places show 16:9, the era tooltip at 96×54
+ * and the Guide's Ages page at 320×180.
  */
 export const AGE_PICTURE: Record<string, string | null> = {
   steam: 'assets/portraits/flying_scotsman.png',

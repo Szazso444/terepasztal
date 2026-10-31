@@ -187,6 +187,15 @@ describe('what the pages say is what the game does', () => {
     );
   });
 
+  it('sends the reader where the signalling level and the shown store are chosen', () => {
+    expect(pageWords(page('signals'))).toContain(
+      `${STR.topbar.fleet} › ${STR.topbar.signals}`.toLowerCase(),
+    );
+    const market = pageWords(page('market'));
+    expect(market).not.toContain('picked on the top bar');
+    expect(market).toContain('shown on the resource bar');
+  });
+
   it('gives each age its own heading, picture and what it brings', () => {
     const p = page('ages');
     const heads = blocksOf(p, 'head').map((b) => b.text);
@@ -231,7 +240,7 @@ describe('what the pages say is what the game does', () => {
 
   it('names no event, build helper or station rating, which the game does not have', () => {
     const all = guidePages().map(pageWords).join(' ');
-    expect(all).not.toMatch(/\brating\b(?! the engines)/);
+    expect(all).not.toMatch(/\brating\b/);
     expect(all).not.toMatch(/\bevents?\b/);
     expect(all).not.toMatch(/gacha|ticket/);
   });

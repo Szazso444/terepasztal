@@ -2314,6 +2314,8 @@ export const HU: Strings = {
     },
     trains: {
       consistHead: 'Szerelvények',
+      build:
+        'Új vonatot itt állítasz össze: {depot}. Megadod, melyik fűtőházból gördüljön ki, milyen mozdonyokkal és kocsikkal, milyen útvonalon, és ha akarod, a nevét is. Az {dispatch} gomb kiküldi egy kapun.',
       limits:
         'Egy vonatban legalább egy mozdony van, és legfeljebb {locos} mozdony meg {wagons} kocsi.',
       haul: 'A mozdonynak vontatási határa van, a kocsik ez alatt kell maradjanak. A vonat csak annyit rak fel, amennyit a mozdonyai elbírnak.',
@@ -2355,7 +2357,7 @@ export const HU: Strings = {
     },
     signals: {
       intro:
-        'Jelző nélküli sínen a vonatok maguktól tartják a távolságot. Azt, hogy milyen közel követhetik egymást, a jelzési szint szabja meg. Itt állítod: {settings} › {tab}.',
+        'Jelző nélküli sínen a vonatok maguktól tartják a távolságot. Azt, hogy milyen közel követhetik egymást, a jelzési szint szabja meg. Itt állítod: {fleet} › {signals}.',
       colLevel: 'Szint',
       colHeadway: 'Követési távolság, csempe',
       colWhat: 'Mit csinál',
@@ -2393,6 +2395,7 @@ export const HU: Strings = {
       timing: 'A tábla {days} naponként keres új ajánlatot. Egy ajánlat {life} napig marad.',
       trains:
         'Elfogadáskor a játék a legjobb helyzetben lévő vonatra bízza a szerződést, és a Szerződés útvonalú vonat elsőbbséget kap. Utána visszatér a munkájához.',
+      policy: 'Az új ajánlatokról ritkaságonként külön dönthetsz.',
       payHead: 'Díjazás és bírság',
       pay: 'A díj a mennyiséggel, az áru árával, a távolsággal és a ritkasággal nő.',
       fines:
@@ -2410,7 +2413,8 @@ export const HU: Strings = {
     },
     market: {
       marketHead: 'A Piac',
-      where: 'A {market} a felső sávon kiválasztott készletbe vesz, és abból ad el.',
+      where:
+        'A {market} a felső sávon látható készletbe vesz, és abból ad el. Ha a térképen kijelölsz egy városházát, fűtőházat vagy raktárt, a sáv az ő készletét mutatja.',
       prices: 'Az áru alapárának {buy}-át fizeted, és {sell}-át kapod.',
       colGood: 'Áru',
       colBuy: 'Vétel',
@@ -2421,7 +2425,7 @@ export const HU: Strings = {
       unlock:
         'Oldj fel egy receptet: fizess {cards} kártyáért egy fajtából és korszakból, és tarts meg egyet. A már ismert kártya helyette ezt adja vissza: {refund}.',
       build:
-        'Gyártsd le: az árut a felső sávon kiválasztott készlet adja. A ritkább modell többe kerül, és a gyártás el is romolhat; ilyenkor az áru {pct}-a visszajön.',
+        'Gyártsd le: az árut a felső sávon látható készlet adja. A ritkább modell többe kerül, és a gyártás el is romolhat; ilyenkor az áru {pct}-a visszajön.',
       anyAge:
         'A receptek korszak szerint rendezettek, de bármelyiket bármikor húzhatod. A mozdonynak attól még kell az üzemanyaga vagy a vezetéke.',
       starters: '{roster}: {key} billentyű.',

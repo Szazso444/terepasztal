@@ -38,7 +38,7 @@ function pictureNode(p: GuidePicture, atlas: AtlasRegistry): Node | null {
     case 'works':
       return spriteImg(atlas, `structures/${p.id}`, 1, 'gd-img');
     case 'age':
-      return agePicture(p.id, agePictureUrl(p.id));
+      return agePicture(p.id, agePictureUrl(p.id), 64);
   }
 }
 
@@ -93,7 +93,7 @@ function drawBlock(b: GuideBlock, atlas: AtlasRegistry): HTMLElement {
         ...b.items.map((p) =>
           el(
             'figure',
-            { class: 'gd-pic' },
+            { class: p.of === 'age' ? 'gd-pic gd-pic-age' : 'gd-pic' },
             spriteSlot(pictureNode(p, atlas)),
             // an age's heading stands over its picture and names it
             p.of === 'age' ? null : el('figcaption', { text: p.caption }),
