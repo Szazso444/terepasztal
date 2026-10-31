@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { AGE_ORDER, STR } from '../strings';
 import { LAST_AGE } from '../sim/ages';
-import { SAVE_VERSION, type SlotMeta } from '../sim/save';
+import { SAVE_QUIET_VERSION, SAVE_VERSION, type SlotMeta } from '../sim/save';
 import { fmtMoney } from './dom';
 import {
   asksBeforeReplacing,
@@ -71,14 +71,22 @@ describe('what a save list says about one save', () => {
   it('marks only a save of another format, older and newer apart', () => {
     expect(slotText(meta(), NOW).format).toBeNull();
     expect(formatNote(SAVE_VERSION)).toBeNull();
-    const older = formatNote(SAVE_VERSION - 1);
+    const told = SAVE_QUIET_VERSION - 1;
+    const older = formatNote(told);
     const newer = formatNote(SAVE_VERSION + 1);
-    expect(older).toContain(String(SAVE_VERSION - 1));
+    expect(older).toContain(String(told));
     expect(newer).toContain(String(SAVE_VERSION + 1));
-    expect(older).not.toBe(newer?.replace(String(SAVE_VERSION + 1), String(SAVE_VERSION - 1)));
-    expect(slotText(meta({ version: SAVE_VERSION - 1 }), NOW).format).toBe(older);
+    expect(older).not.toBe(newer?.replace(String(SAVE_VERSION + 1), String(told)));
+    expect(slotText(meta({ version: told }), NOW).format).toBe(older);
     // a file without a version reads 0: older than any build
     expect(formatNote(0)).toBe(STR.saves.olderFormat(0));
+  });
+
+  it('says nothing of a format only quiet steps stand behind', () => {
+    for (let v = SAVE_QUIET_VERSION; v <= SAVE_VERSION; v++) {
+      expect(formatNote(v), String(v)).toBeNull();
+      expect(slotText(meta({ version: v }), NOW)).toEqual(slotText(meta(), NOW));
+    }
   });
 });
 
@@ -107,7 +115,7 @@ describe('what Continue says over a game being played', () => {
   });
 
   it('never marks a format: the game in memory has no file', () => {
-    expect(liveText(meta({ version: SAVE_VERSION - 1 }), NOW).format).toBeNull();
+    expect(liveText(meta({ version: SAVE_QUIET_VERSION - 1 }), NOW).format).toBeNull();
     expect(liveText(meta({ version: SAVE_VERSION + 1 }), NOW).format).toBeNull();
   });
 });
@@ -156,9 +164,11 @@ describe('what Continue says', () => {
 
   it('still marks a stored save of another format at boot, never the game in progress', () => {
     expect(stored().format).toBeNull();
-    expect(stored({ version: SAVE_VERSION - 1 }).format).toBe(formatNote(SAVE_VERSION - 1));
+    const older = SAVE_QUIET_VERSION - 1;
+    expect(stored({ version: older }).format).not.toBeNull();
+    expect(stored({ version: older }).format).toBe(formatNote(older));
     expect(stored({ version: SAVE_VERSION + 1 }).format).toBe(formatNote(SAVE_VERSION + 1));
-    expect(live({ version: SAVE_VERSION - 1 }).format).toBeNull();
+    expect(live({ version: older }).format).toBeNull();
   });
 });
 

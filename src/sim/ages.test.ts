@@ -78,25 +78,21 @@ describe('the six ages', () => {
 
   it('walks through the new ages as their goals are met', () => {
     const { e, entered } = electric();
-    const tickets = e.tickets;
     e.advanceAge(AT_ELECTRIC);
     expect(e.tier).toBe(2);
 
     e.advanceAge({ ...AT_ELECTRIC, substations: 1 });
     expect(e.tier).toBe(3);
-    expect(e.tickets).toBe(tickets + 5);
 
     e.advanceAge({ ...AT_ELECTRIC, substations: 1, earned: 149999 });
     expect(e.tier).toBe(3);
     e.advanceAge({ ...AT_ELECTRIC, substations: 1, earned: 150000 });
     expect(e.tier).toBe(4);
-    expect(e.tickets).toBe(tickets + 10);
 
     e.advanceAge({ ...AT_ELECTRIC, substations: 1, earned: 499999 });
     expect(e.tier).toBe(4);
     e.advanceAge({ ...AT_ELECTRIC, substations: 1, earned: 500000 });
     expect(e.tier).toBe(5);
-    expect(e.tickets).toBe(tickets + 15);
 
     // the last age has nowhere further to go
     e.advanceAge({
@@ -108,17 +104,14 @@ describe('the six ages', () => {
       chunks: 1e9,
     });
     expect(e.tier).toBe(LAST_AGE);
-    expect(e.tickets).toBe(tickets + 15);
     expect(entered).toEqual([3, 4, 5]);
   });
 
-  it('passes every age whose goals are met in one check, and each pays its tickets once', () => {
+  it('passes every age whose goals are met in one check', () => {
     const { e, entered } = electric();
-    const tickets = e.tickets;
     e.advanceAge({ ...AT_ELECTRIC, substations: 1, earned: 500000 });
     expect(e.tier).toBe(5);
     expect(entered).toEqual([3, 4, 5]);
-    expect(e.tickets).toBe(tickets + 15);
   });
 
   it('keeps the age a save was made in, the new ones too', () => {
@@ -127,11 +120,6 @@ describe('the six ages', () => {
     const back = new Economy();
     back.load(JSON.parse(JSON.stringify(e.toJSON())));
     expect(back.tier).toBe(LAST_AGE);
-    // tickets already paid for an age are not paid again
-    const tickets = back.tickets;
-    back.setAge(LAST_AGE);
-    back.advanceAge({ ...AT_ELECTRIC, substations: 1, earned: 500000 });
-    expect(back.tickets).toBe(tickets);
   });
 });
 

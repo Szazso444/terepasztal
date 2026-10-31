@@ -728,7 +728,7 @@ describe('the Levels screen', () => {
       track: [],
       stations: [],
       decor: [],
-      start: { money: 1, tickets: 0, tier: 0 },
+      start: { money: 1, tier: 0 },
     }) as unknown as LevelData;
 
   function levels(existing: LevelData[], answer = true, keeps = true) {
