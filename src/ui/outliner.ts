@@ -86,7 +86,8 @@ export interface OutlinerHost {
   onHover(t: Train | null): void;
   onStation(s: Station): void;
   onWorks(b: Building): void;
-  onContract(): void;
+  /** open the Contracts screen on that contract's card */
+  onContract(id: number): void;
 }
 
 /**
@@ -526,7 +527,7 @@ export class Outliner {
     row.title = STR.outliner.contractTip;
     row.addEventListener('click', () => {
       sfx('ui.click');
-      this.h.onContract();
+      this.h.onContract(r.id);
     });
     return row;
   }
