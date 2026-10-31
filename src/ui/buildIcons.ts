@@ -1,7 +1,8 @@
 /**
- * The icons of the build bar: its categories, its Q and E arrows, the lock, the Upgrade and
- * Downgrade arrows and the build card's close mark. They are the design mock's own, with the road
- * added in their style, in `currentColor` on a 24 px grid, in the manner of `ageIcon.ts`.
+ * The icons of the build bar (its categories, its Q and E arrows, the lock, the Upgrade and
+ * Downgrade arrows and the build card's close mark) and of the outliner and the train panel (their
+ * tabs, the status chips and the eye). They are the design mock's own, with the road added in their
+ * style, in `currentColor` on a 24 px grid, in the manner of `ageIcon.ts`.
  */
 import type { AtlasRegistry } from '../engine/atlas';
 import { el } from './dom';
@@ -20,7 +21,15 @@ export type BuildIcon =
   | 'up'
   | 'down'
   | 'lock'
-  | 'close';
+  | 'close'
+  | 'train'
+  | 'scroll'
+  | 'eye'
+  | 'clock'
+  | 'alert'
+  | 'play'
+  | 'cargo'
+  | 'fuel';
 
 /** The inside of each icon. */
 export const BUILD_ICON: Record<BuildIcon, string> = {
@@ -37,6 +46,16 @@ export const BUILD_ICON: Record<BuildIcon, string> = {
   down: '<path d="M12 4v15M6 13l6 6 6-6"/>',
   lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  train:
+    '<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10.5h14M8.5 21l2-4M15.5 21l-2-4"/><circle cx="9" cy="13.8" r=".6"/><circle cx="15" cy="13.8" r=".6"/>',
+  scroll:
+    '<path d="M7 3h11v14.5a3.5 3.5 0 0 1-3.5 3.5H7.5A3.5 3.5 0 0 1 4 17.5V17h10v.5a3.5 3.5 0 0 0 3.5 3.5M7 3a2.5 2.5 0 0 0-2.5 2.5V8H7M10 8h5M10 12h5"/>',
+  eye: '<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/>',
+  alert: '<path d="M12 3.5L21.5 20h-19zM12 10v4.5M12 17.2v.3"/>',
+  play: '<path d="M7 5l12 7-12 7z"/>',
+  cargo: '<path d="M3 7.5l9-4.5 9 4.5v9l-9 4.5-9-4.5z"/><path d="M3 7.5l9 4.5 9-4.5M12 12v9"/>',
+  fuel: '<path d="M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3.5 21h13M15 9h2a2 2 0 0 1 2 2v5.5a1.5 1.5 0 0 0 3 0V8l-3-3M7.5 7h5"/>',
 };
 
 /** An icon as SVG markup; DOM-free so it runs under Node. */

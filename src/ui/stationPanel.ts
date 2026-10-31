@@ -2,14 +2,14 @@ import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
 import { harvestBreakdown, weeklyOutput, type Station } from '../sim/stations';
 import type { Builder } from '../sim/build';
-import type { Commands } from '../sim/commands';
+import { STATION_NAME_MAX, type Commands } from '../sim/commands';
 import { cargoDef } from '../sim/cargo';
 import { inSupplyMode } from '../sim/supply';
 import type { ContractBoard } from '../sim/contracts';
 import type { GameClock } from '../sim/time';
 import { rules } from '../sim/rules';
 import type { Season } from '../sim/weather';
-import { fmtDuration } from './contractsScreen';
+import { fmtDuration } from './numberFormat';
 import { biomeAt } from '../sim/biomes';
 import type { TownRegistry, Town } from '../sim/towns';
 import { upgradeView } from './upgradeView';
@@ -17,6 +17,7 @@ import { upgradeRow } from './upgradeRow';
 import { groundRows } from './placingTooltip';
 import { blockText, type TipDoc } from './tooltipDoc';
 import type { TipContent } from './tooltip';
+import type { NamePrompt } from './namePrompt';
 
 /** How the panel draws its ground rows, and the season their yield is worked out for (#336). */
 export interface GroundView {
@@ -44,8 +45,6 @@ export class StationPanel {
   private groundSaid = '';
   private title = el('span');
   station: Station | null = null;
-  /** Ask for a station's new name in the game's dialog, null when it is dismissed; set by the UI root. */
-  askName: (current: string) => Promise<string | null> = () => Promise.resolve(null);
 
   constructor(
     private readonly builder: Builder,
@@ -57,6 +56,8 @@ export class StationPanel {
     private readonly commands: Commands,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
     private readonly view: GroundView,
+    /** the game's dialog, for a station's new name */
+    private readonly prompt: Pick<NamePrompt, 'ask'>,
   ) {
     this.body.append(this.head, this.ground, this.tail);
     this.root = el(
@@ -66,7 +67,7 @@ export class StationPanel {
         'div',
         { class: 'panel-title' },
         this.title,
-        btn('x', () => this.close(), 'small'),
+        btn('×', () => this.close(), 'small'),
       ),
       this.body,
     );
@@ -248,7 +249,12 @@ export class StationPanel {
           : btn(
               STR.station.rename,
               async () => {
-                const n = await this.askName(s.name);
+                const n = await this.prompt.ask(
+                  STR.station.renameTitle,
+                  STR.station.renameHint,
+                  s.name,
+                  STATION_NAME_MAX,
+                );
                 // cancelled, or left blank: nothing to rename
                 if (!n?.trim()) return;
                 const done = this.commands.renameStation(s, n);

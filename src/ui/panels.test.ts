@@ -123,6 +123,20 @@ describe('the toasts and the build dock', () => {
   });
 });
 
+describe('what closes the menu bar', () => {
+  const source = readFileSync(new URL('./panels.ts', import.meta.url), 'utf8');
+
+  it('closes the open menu when a screen opens or closes', () => {
+    expect(source).toMatch(/d\.screens\.onChange = \(sc\) => \{\s*hud\.menuBar\.close\(\);/);
+  });
+
+  it('spends the Escape that closes it, as the build controller reads it later in the frame', () => {
+    expect(source).toMatch(
+      /closeBarMenu: \(\) => \{[^}]*hud\.menuBar\.close\(\);[^}]*takeEscape\(\)/,
+    );
+  });
+});
+
 // ------------------------------------------------------------------ what each action is wired to
 //
 // The wiring in `createPlayUi` needs a DOM, so it is checked in the source: every call that
@@ -169,16 +183,23 @@ function ownerOf(n: ts.Node): { owner: string; action: string } {
   return { owner: '', action };
 }
 
-/** `e` past the parentheses and the `await` of a question to the in-game dialog. */
-function answered(e: ts.Expression): ts.Expression {
-  while (ts.isParenthesizedExpression(e) || ts.isAwaitExpression(e)) e = e.expression;
-  return e;
+/**
+ * The call under the `await` of a question to the in-game dialog, null with no `await`: a question
+ * not awaited is a Promise, always true, so it holds nothing back.
+ */
+function answered(e: ts.Expression): ts.Expression | null {
+  const bare = (x: ts.Expression) => {
+    while (ts.isParenthesizedExpression(x)) x = x.expression;
+    return x;
+  };
+  const awaited = bare(e);
+  return ts.isAwaitExpression(awaited) ? bare(awaited.expression) : null;
 }
 
 /** The kind of `confirmReplacement('<kind>', ..)`, null when `e` is not that call. */
 function confirmKind(e: ts.Expression, sf: ts.SourceFile): string | null {
   const call = answered(e);
-  if (!ts.isCallExpression(call) || call.expression.getText(sf) !== 'confirmReplacement')
+  if (!call || !ts.isCallExpression(call) || call.expression.getText(sf) !== 'confirmReplacement')
     return null;
   const kind = call.arguments[0];
   return kind && ts.isStringLiteral(kind) ? kind.text : '?';
@@ -375,6 +396,7 @@ describe('what each action that replaces or leaves a game is wired to', () => {
           if (ts.isIfStatement(p) && p.thenStatement === c) {
             const call = answered(p.expression);
             if (
+              call &&
               ts.isCallExpression(call) &&
               call.expression.getText(settings) === 'this.prompt.confirm' &&
               call.arguments[1]?.getText(settings) === 'STR.settings.confirmNew'
@@ -413,9 +435,15 @@ describe('what each action that replaces or leaves a game is wired to', () => {
       );
     expect(
       staged(
-        "if (!confirmReplacement('overwrite')) return; startNewGame(t, stageNewGameTuning, go);",
+        "if (!(await confirmReplacement('overwrite'))) return; startNewGame(t, stageNewGameTuning, go);",
       ),
     ).toEqual([{ file: 'sample.ts', id: 'MainMenu.newGame', guard: OVERWRITE }]);
+    // a question not awaited asks nothing: the Promise is always true
+    expect(
+      staged(
+        "if (!confirmReplacement('overwrite')) return; startNewGame(t, stageNewGameTuning, go);",
+      ),
+    ).toEqual([{ file: 'sample.ts', id: 'MainMenu.newGame', guard: { by: 'none' } }]);
     expect(
       staged("startNewGame(t, stageNewGameTuning, go); if (confirmReplacement('overwrite')) go();"),
     ).toEqual([{ file: 'sample.ts', id: 'MainMenu.newGame', guard: { by: 'none' } }]);
@@ -436,10 +464,11 @@ describe('what each action that replaces or leaves a game is wired to', () => {
       }
       function createPlayUi() {
         const m = new MainMenu({
-          newGame: (seed) => { if (confirmReplacement('overwrite')) host.newGame(seed); },
+          newGame: async (seed) => { if (await confirmReplacement('overwrite')) host.newGame(seed); },
           playLevel: (id) => host.playLevel(id),
-          editLevel: (id) => { if (confirmReplacement('overwrite')) host.editLevel(id); },
-          newLevel: (a) => { if (!confirmReplacement('leave')) return; host.newLevel(a); },
+          editLevel: async (id) => { if (await confirmReplacement('overwrite')) host.editLevel(id); },
+          newLevel: async (a) => { if (!(await confirmReplacement('leave'))) return; host.newLevel(a); },
+          importLevel: (a) => { if (confirmReplacement('leave')) host.loadSave(a); },
         });
         const s = new SettingsScreen({
           load: () => {
@@ -458,6 +487,7 @@ describe('what each action that replaces or leaves a game is wired to', () => {
       'MainMenu.playLevel -> host.playLevel': { by: 'none' },
       'MainMenu.editLevel -> host.editLevel': { by: 'if', kind: 'overwrite' },
       'MainMenu.newLevel -> host.newLevel': { by: 'if', kind: 'leave' },
+      'MainMenu.importLevel -> host.loadSave': { by: 'none' },
       'SettingsScreen.load -> host.loadSave': {
         by: 'ask',
         question: "asksBeforeReplacing('overwrite') ? STR.x : null",
@@ -468,8 +498,68 @@ describe('what each action that replaces or leaves a game is wired to', () => {
       const b = () => { const loaded = applyRulePreset(p.name); };
       const c = async () => { this.render(); if (!(await this.prompt.confirm(t, STR.tuning.confirmLoadPreset(p.name)))) return; applyRulePreset(p.name); };
       const d = async () => { if (!(await this.prompt.confirm(t, STR.tuning.confirmDeletePreset(p.name)))) return; applyRulePreset(p.name); };
-      const e = async () => { if (await this.prompt.confirm(t, STR.tuning.confirmLoadPreset(p.name))) applyRulePreset(p.name); };`;
-    expect(presetLoadsAsk(parse('sample.ts', presets))).toEqual([true, false, false, false, false]);
+      const e = async () => { if (await this.prompt.confirm(t, STR.tuning.confirmLoadPreset(p.name))) applyRulePreset(p.name); };
+      const f = () => { if (!this.prompt.confirm(t, STR.tuning.confirmLoadPreset(p.name))) return; applyRulePreset(p.name); };`;
+    expect(presetLoadsAsk(parse('sample.ts', presets))).toEqual([
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+  });
+});
+
+// -------------------------------------------------------- every question is waited for
+
+/** The dialog's own `.confirm`, and the helpers that hand on its answer. */
+const QUESTION = /(^|\.)confirm$|^confirmReplacement$|^confirmReplaceSave$/;
+
+/**
+ * Every question in `sf` that nothing waits for. It is a Promise, and always true: `await` it, go
+ * on in its `.then`, or `return` it to a caller for this same rule to hold of.
+ */
+function questionsNotWaitedFor(sf: ts.SourceFile): string[] {
+  const found: string[] = [];
+  const visit = (n: ts.Node) => {
+    if (ts.isCallExpression(n) && QUESTION.test(n.expression.getText(sf))) {
+      let p = n.parent;
+      while (ts.isParenthesizedExpression(p)) p = p.parent;
+      const waited =
+        ts.isAwaitExpression(p) ||
+        ts.isReturnStatement(p) ||
+        (ts.isPropertyAccessExpression(p) && p.name.text === 'then');
+      if (!waited) found.push(n.getText(sf));
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return found;
+}
+
+describe('the questions to the in-game dialog', () => {
+  it('are all waited for', () => {
+    const files = readdirSync(new URL('./', import.meta.url))
+      .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
+      .concat('../game.ts');
+    for (const f of files) expect(questionsNotWaitedFor(parse(f, source(f))), f).toEqual([]);
+  }, 30_000);
+
+  it('sees one left without an await, and leaves the three ways of waiting alone', () => {
+    const sample = `
+      async function a() { if (!(await this.prompt.confirm(t, q))) return; }
+      function b() { void prompt.confirm(t, q).then((ok) => ok && go()); }
+      async function c() { return d.namePrompt.confirm(t, q); }
+      async function e() { if (await confirmReplacement('leave', t, y)) go(); }
+      function f() { if (!this.prompt.confirm(t, q)) return; go(); }
+      function g() { if (confirmReplacement('leave', t, y)) go(); }
+      function h() { if (!confirmReplaceSave(prompt)) return; }`;
+    expect(questionsNotWaitedFor(parse('sample.ts', sample))).toEqual([
+      'this.prompt.confirm(t, q)',
+      "confirmReplacement('leave', t, y)",
+      'confirmReplaceSave(prompt)',
+    ]);
   });
 });
 
