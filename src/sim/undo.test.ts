@@ -60,6 +60,7 @@ function state(g: Game) {
         t.piece.rot,
         t.piece.cls,
         t.piece.cls2,
+        t.piece.wear.health,
       ]),
     ),
     stations: g.builder.stations.map((s) => s.toJSON()),
@@ -449,6 +450,52 @@ describe('demolishing', () => {
     g.history.undo();
     g.history.undo();
     expect(g.track.get(12, ROW)?.bridgeCapacity).toBeGreaterThan(0);
+  });
+});
+
+describe('a worn piece', () => {
+  /** Row 10 to 12 laid, the middle piece worn to `health`. */
+  function wornRun(health: number) {
+    const g = game();
+    run(g, 10, 12);
+    g.track.get(11, ROW)!.wear.health = health;
+    g.track.version++;
+    return g;
+  }
+
+  it('comes back as worn as it was after demolish and undo, and a redo lifts it again', () => {
+    const g = wornRun(0.4);
+    const before = state(g);
+    g.commands.act(() => g.builder.removeTrack(11, ROW));
+    expect(g.track.get(11, ROW)).toBeUndefined();
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.track.get(11, ROW)!.wear.health).toBe(0.4);
+    expect(state(g)).toEqual(before);
+    expect(g.history.redo()).toEqual({ ok: true });
+    expect(g.track.get(11, ROW)).toBeUndefined();
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.track.get(11, ROW)!.wear.health).toBe(0.4);
+  });
+
+  it('a failed piece comes back failed, closed to trains', () => {
+    const g = wornRun(0);
+    const key = g.track.key(11, ROW);
+    expect(g.builder.wear.unusable.has(key)).toBe(true);
+    g.commands.act(() => g.builder.removeTrack(11, ROW));
+    expect(g.builder.wear.unusable.has(key)).toBe(false);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.track.get(11, ROW)!.wear.health).toBe(0);
+    expect(g.builder.wear.unusable.has(key)).toBe(true);
+  });
+
+  it('keeps its health through an upgrade and its undo', () => {
+    const g = wornRun(0.4);
+    const before = state(g);
+    g.commands.act(() => g.builder.reclassTrack([{ x: 11, y: ROW }], 'up'));
+    expect(g.track.get(11, ROW)!.cls).toBe('main');
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.track.get(11, ROW)!.wear.health).toBe(0.4);
+    expect(state(g)).toEqual(before);
   });
 });
 

@@ -135,6 +135,18 @@ export class TrackWear {
       share * rules.trackRepairPrice * rules.buildCostMul * (hand ? rules.trackHandRepairMul : 1);
     return scaleCost(pieceCost(p.kind, p.cls, p.cls2), mul);
   }
+  /**
+   * Give the piece at (x, y) the health it had (an undo lays it back as it stood), and tell the
+   * trains if it closes.
+   */
+  setHealth(x: number, y: number, health: number): void {
+    const p = this.track.get(x, y);
+    if (!p || !Number.isFinite(health)) return;
+    const was = stateOf(p);
+    p.wear.health = Math.min(1, Math.max(0, health));
+    this.settle(x, y, p, was);
+    this.flush();
+  }
   /** Mend the piece at (x, y) by `share` of its HP, never past full, and tell the trains what opened. */
   restore(x: number, y: number, share: number): void {
     const p = this.track.get(x, y);

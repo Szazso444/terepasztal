@@ -45,8 +45,13 @@ export interface BuildWorld {
   clock: GameClock;
 }
 
-/** A track piece as `TrackGraph.place` lays it, without where. */
-export type PieceSpec = Pick<TrackPiece, 'kind' | 'rot' | 'cls' | 'cls2' | 'form'>;
+/**
+ * A track piece as `TrackGraph.place` lays it, without where. `health` is what a piece lifted or
+ * replaced had left: laid back, it is as worn as it was. A piece without it is laid new.
+ */
+export type PieceSpec = Pick<TrackPiece, 'kind' | 'rot' | 'cls' | 'cls2' | 'form'> & {
+  health?: number;
+};
 
 /** A station's level and the upgrade under way. */
 interface StationLevel {
@@ -147,7 +152,7 @@ function pieceSpec(p: PieceSpec): PieceSpec {
 }
 function pieceAt(track: TrackGraph, x: number, y: number): PieceSpec | null {
   const p = track.get(x, y);
-  return p ? pieceSpec(p) : null;
+  return p ? { ...pieceSpec(p), health: p.wear.health } : null;
 }
 const stationLevelOf = (s: Station): StationLevel => ({ level: s.level, work: s.work });
 const worksLevelOf = (b: Building): WorksLevel => ({ level: b.level, work: b.work });

@@ -1618,11 +1618,12 @@ export class Builder {
 
   /** Lay `piece` with its anchor at (x, y), over what stands there; null lifts what stands there. */
   setTrack(x: number, y: number, piece: PieceSpec | null) {
-    this.trackChanged(
-      piece
-        ? this.track.place(x, y, piece.kind, piece.rot, piece.cls, piece.cls2, piece.form ?? 'turn')
-        : this.track.removeAt(x, y),
-    );
+    const tiles = piece
+      ? this.track.place(x, y, piece.kind, piece.rot, piece.cls, piece.cls2, piece.form ?? 'turn')
+      : this.track.removeAt(x, y);
+    // a piece that comes back as it stood comes back as worn as it was
+    if (piece?.health !== undefined) this.wear.setHealth(x, y, piece.health);
+    this.trackChanged(tiles);
   }
   setSupply(x: number, y: number, kind: SupplyKind | null) {
     if (kind) this.catenary?.set(x, y, kind);
