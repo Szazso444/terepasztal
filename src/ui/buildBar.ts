@@ -585,11 +585,13 @@ export function controlsHint(item: ToolItem): string {
   const use =
     t.kind === 'track' && t.item.kind === 'straight'
       ? f.run
-      : t.kind === 'supply' || t.kind === 'road' || t.kind === 'reclass'
-        ? f.drag
-        : t.kind === 'terrain'
-          ? f.paint
-          : f.click;
+      : t.kind === 'reclass'
+        ? f.reclass
+        : t.kind === 'supply' || t.kind === 'road'
+          ? f.drag
+          : t.kind === 'terrain'
+            ? f.paint
+            : f.click;
   return [use, ...(toolRotations(t) > 1 ? [f.turn] : []), f.cancel].join(' · ');
 }
 

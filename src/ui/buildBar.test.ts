@@ -727,8 +727,15 @@ describe('the controls line of the build card', () => {
     );
     expect(key({ kind: 'road' })).toContain(STR.toolbar.foot.drag);
     expect(key({ kind: 'supply', supply: 'catenary' })).toContain(STR.toolbar.foot.drag);
-    expect(key({ kind: 'reclass', dir: 'up' })).toContain(STR.toolbar.foot.drag);
+    expect(key({ kind: 'terrain', terrain: 0 })).not.toContain(STR.toolbar.foot.drag);
     expect(key({ kind: 'terrain', terrain: 0 })).toContain(STR.toolbar.foot.paint);
+  });
+  it('does not say Upgrade and Downgrade lay anything: they move track that stands', () => {
+    for (const dir of ['up', 'down'] as const) {
+      const line = key({ kind: 'reclass', dir });
+      expect(line, dir).toContain(STR.toolbar.foot.reclass);
+      expect(line, dir).not.toMatch(/lay|place/i);
+    }
   });
   it('names R only for a tool that turns, and never undo', () => {
     expect(key({ kind: 'track', item: { kind: 'curve', cls: 'branch' } })).toContain(

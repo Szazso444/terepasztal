@@ -508,6 +508,8 @@ export const STR = {
     foot: {
       run: 'Drag: lay a run, with a curve where it turns',
       drag: 'Drag: lay a run',
+      /** Upgrade and Downgrade lay nothing: they work on track that stands */
+      reclass: 'Click: one piece · Drag: along the line',
       click: 'Click: place',
       paint: 'Drag: paint',
       turn: 'R: turn',
