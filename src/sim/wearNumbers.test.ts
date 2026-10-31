@@ -22,8 +22,8 @@ const TRAINS = 6;
 /** The longest run: 2 h at 1x. */
 const TWO_HOURS = 2 * 3600;
 /**
- * Game seconds per step. The game steps at 0.05; an hour at that takes about 10 s, and 0.25 gives
- * the same first-degraded minute to the second here, in a quarter of the time.
+ * Game seconds per step. The game steps at 0.05; an hour at that takes about 15 s, and 0.25 gives
+ * the same first-degraded minute to within 0.2 min here, in a fifth of the time.
  */
 const GDT = 0.25;
 
@@ -31,13 +31,14 @@ const locoDef = (id: string) => content.locomotives.find((d) => d.id === id)!;
 const wagonDef = (id: string) => content.wagons.find((d) => d.id === id)!;
 
 /**
- * A Main line of 30 tiles with a platform at x 14 and another at x 36, and six trains of 150 t
- * (a MAV 424, 90 t, and a gondola with 50 t of iron: a Destroyer, so Main is the line it may use)
- * shuttling between the two, all calling at the platform at x 14. They start spread along the line.
+ * A Branch line of 30 tiles (the only line the Steam age has) with a platform at x 14 and another at
+ * x 36, and six trains of the heaviest weight a Branch Steam engine may haul: a MAV 375 (40 t, hauls
+ * 70 t) and a gondola with 24.9 t of iron under that, 110 t in all. They shuttle between the two,
+ * all calling at the platform at x 14, and start spread along the line.
  */
 function busyNetwork() {
   const w = simWorld({ terrain: 'grass', size: 64 });
-  for (let x = WEST; x <= EAST; x++) w.track.place(x, ROW, 'straight', 1, 'main');
+  for (let x = WEST; x <= EAST; x++) w.track.place(x, ROW, 'straight', 1, 'branch');
   const platform = new Station('quarry', 14, ROW - 1);
   const far = new Station('quarry', 36, ROW - 1);
   w.builder.stations.push(platform, far);
@@ -51,18 +52,18 @@ function busyNetwork() {
   });
   const trains: Train[] = [];
   for (let i = 0; i < TRAINS; i++) {
-    const t = new Train([{ uid: 1 + i * 10, level: 0, def: locoDef('mav424') }]);
+    const t = new Train([{ uid: 1 + i * 10, level: 1, def: locoDef('mav375') }]);
     t.wagons = [
       {
         uid: 2 + i * 10,
         def: wagonDef('bathtub'),
-        level: 0,
+        level: 1,
         cargo: 'iron',
-        amount: 50 / 2.4,
+        amount: 24.9,
         origin: null,
       },
     ];
-    expect(t.mass).toBeCloseTo(150);
+    expect(t.mass).toBeCloseTo(109.76);
     expect(t.spawnAt(w.track, 22 + i * 3, ROW, i % 2 ? Dir.W : Dir.E)).toBe(true);
     t.schedule = [call(platform), call(far)];
     t.oil = t.oilCap;
