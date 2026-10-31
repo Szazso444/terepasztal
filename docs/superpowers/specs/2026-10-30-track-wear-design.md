@@ -194,7 +194,7 @@ piece and from any distance.
 - **Priority** extends the rank `Traffic` reads from `classRank`.
 - **Payment** is one function: the nearest store that can pay, with no reach limit, unlike building
   (`buildReach`). Train repair sums the fraction owed and pays whole units.
-- **Saves.** `SAVE_VERSION` 23. `TrackTuple` gains an optional HP, and a new top-level field holds
+- **Saves.** `SAVE_VERSION` 24. `TrackTuple` gains an optional HP, and a new top-level field holds
   the two once-per-game flags, in `KNOWN_SAVE_KEYS`. The migration step fills nothing: an old
   save's track is full.
 
@@ -248,7 +248,7 @@ Deterministic tests, headless:
   neighbouring tile; the train gives way on degraded track and goes first on unusable track; the
   mode is refused without a wagon.
 - Payment: reaches a store past `buildReach`; waits with a notice when none can pay.
-- Saves: a v22 save loads with full track; HP and the flags survive a round trip.
+- Saves: a v23 save loads with full track; HP and the flags survive a round trip.
 - Tuning: `trackWearMul` 0 leaves every piece full.
 - The numbers: the headless run of section 3 reports the first degraded piece on a six-train
   Steam network.

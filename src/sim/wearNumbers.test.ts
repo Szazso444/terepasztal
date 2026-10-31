@@ -15,7 +15,7 @@ import { stateOf } from './wear';
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
 const ROW = 20;
-/** The 30-tile line runs from x 10 to x 40. */
+/** The line runs from x 10 to x 40: 31 tiles. */
 const WEST = 10;
 const EAST = 40;
 const TRAINS = 6;
@@ -31,7 +31,7 @@ const locoDef = (id: string) => content.locomotives.find((d) => d.id === id)!;
 const wagonDef = (id: string) => content.wagons.find((d) => d.id === id)!;
 
 /**
- * A Branch line of 30 tiles (the only line the Steam age has) with a platform at x 14 and another at
+ * A Branch line of 31 tiles (the Steam age has no Main line) with a platform at x 14 and another at
  * x 36, and six trains of the heaviest weight a Branch Steam engine may haul: a MAV 375 (40 t, hauls
  * 70 t) and a gondola with 24.9 t of iron under that, 110 t in all. They shuttle between the two,
  * all calling at the platform at x 14, and start spread along the line.
@@ -79,9 +79,10 @@ function busyNetwork() {
 /**
  * Runs the game from its start and returns the game minute at which the first piece turns
  * degraded, or null if none does in `seconds`. The trains are ticked on their own, not through the
- * fleet: the fleet holds a single line to one train at a time (a line of this size has sidings and
- * signals), so this gives each train a free road. The passes an hour it counts are the most such a
- * network can make; a real one makes fewer and degrades later.
+ * fleet: its traffic control claims whole sections, so six trains on one plain line would jam, and a
+ * real network needs sidings or signals to run them. Ticked alone, each train has a free road. The
+ * passes an hour it counts are the most such a network can make; a real one makes fewer and
+ * degrades later.
  */
 function firstDegradedMinute(w: SimWorld, trains: Train[], seconds: number): number | null {
   const step = new SimStep(w);
