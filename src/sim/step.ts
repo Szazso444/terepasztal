@@ -268,6 +268,7 @@ export class SimStep {
     }
     if (clock.day !== this.lastDay) {
       this.lastDay = clock.day;
+      builder.wear.daily();
       if (contracts.completedToday > 0) {
         economy.tickets += DAILY_TICKETS;
         this.hooks.dailyTicket?.();

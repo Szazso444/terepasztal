@@ -23,6 +23,7 @@ import type { Station } from './stations';
 import { cargoDef, cargoClass } from './cargo';
 import { content } from '../data/content';
 import { rules, daySeconds, weekSeconds } from './rules';
+import { stateOf } from './wear';
 import { findRefugePath, findShuntPath, stateKey, statesReaching } from './recovery';
 import { ENGLISH } from '../strings';
 import {
@@ -640,6 +641,8 @@ export class Train {
   private pathPts: { x: number; y: number; seg: PathSegment; factor: number }[] = [];
   private pathCum: number[] = [];
   private pathPos = 0;
+  /** the piece whose wear the head last paid for (not saved): one hit per piece entered */
+  lastWornPiece: TrackPiece['wear'] | null = null;
   /** `pathPts` grouped by tile, built once per path (`pathTiles`) */
   private tilesOfPath: PathTiles | null = null;
   /** the last `pathAhead` list, kept while the head stays at the same path point */
@@ -2407,7 +2410,9 @@ export class Train {
     for (const s of this.pathAhead(12)) {
       const piece = ctx.track.get(s.x, s.y);
       if (!piece) continue;
-      const limit = lineSpeedCap(pieceClassFor(piece, s.in));
+      let limit = lineSpeedCap(pieceClassFor(piece, s.in));
+      if (stateOf(piece) === 'degraded')
+        limit = Math.min(limit, this.maxSpeed * rules.trackDegradedSpeed);
       if (limit === Infinity) continue;
       const d = s.arc - this.pathPos;
       if (d > 2 + (this.speed * this.speed) / (2 * DECEL)) break;
@@ -2501,6 +2506,7 @@ export class Train {
       this.trip.distance += step;
     }
     this.layTrail(from, this.pathPos);
+    this.wearTrack(ctx);
     this.updatePoses();
     if (this.pathTotal - this.pathPos < ARRIVE) {
       if (!this.path) {
@@ -2588,6 +2594,15 @@ export class Train {
     const y = a.y + (b.y - a.y) * t;
     const leaving = Math.max(Math.abs(x - a.seg.x), Math.abs(y - a.seg.y)) <= 0.5 + EDGE_SLACK;
     return { x, y, seg: leaving ? a.seg : b.seg };
+  }
+
+  /** The head ran onto a piece it was not on: one hit, however many tiles the piece spans. */
+  private wearTrack(ctx: TickCtx) {
+    const head = this.headSeg;
+    const piece = head && ctx.track.get(head.x, head.y);
+    if (!head || !piece || piece.wear === this.lastWornPiece) return;
+    this.lastWornPiece = piece.wear;
+    ctx.builder.wear.hit(head.x, head.y, head.in, this.mass);
   }
 
   /**

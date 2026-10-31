@@ -1,8 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Dir } from '../engine/iso';
 import { TrackGraph, makePiece, type TrackClass } from '../world/track';
-import { simWorld } from '../testing/simWorld';
-import { rules } from './rules';
+import { simWorld, type SimWorld } from '../testing/simWorld';
+import { content } from '../data/content';
+import { rules, DEFAULT_RULES, daySeconds } from './rules';
+import { SimStep } from './step';
+import { Station } from './stations';
+import { Train, type TickCtx } from './trains';
 import { TrackWear, lineWearMul, maxHp, stateOf, wearsAtAll } from './wear';
 
 describe('health on a piece', () => {
@@ -190,5 +194,158 @@ describe('the warnings kept in a save', () => {
     expect(again.builder.wear.toJSON()).toEqual({ degraded: true, unusable: false });
     again.builder.wear.fromJSON(undefined);
     expect(again.builder.wear.toJSON()).toEqual({ degraded: false, unusable: false });
+  });
+});
+
+beforeEach(() => Object.assign(rules, DEFAULT_RULES));
+
+/** A world with one Branch straight at (5, 5), and its wear. */
+function branchWorld() {
+  const w = simWorld({ terrain: 'grass', size: 32 });
+  w.track.place(5, 5, 'straight', 1, 'branch');
+  return { w, wear: w.builder.wear, piece: w.track.get(5, 5)! };
+}
+
+describe('wear from trains', () => {
+  it('a 150 t train takes 2.25 HP from Branch', () => {
+    const { wear, piece } = branchWorld();
+    wear.hit(5, 5, Dir.W, 150);
+    expect(piece.wear.health).toBeCloseTo(1 - 2.25 / 1000);
+  });
+
+  it('degraded track wears twice as fast', () => {
+    const { wear, piece } = branchWorld();
+    piece.wear.health = 0.2;
+    wear.hit(5, 5, Dir.W, 150);
+    expect(0.2 - piece.wear.health).toBeCloseTo(0.0045);
+  });
+
+  it('both axes of a crossing wear the same HP, each with its own multiplier', () => {
+    const w = simWorld({ terrain: 'grass', size: 32 });
+    w.track.place(5, 5, 'crossing', 0, 'branch', 'trunk');
+    const p = w.track.get(5, 5)!;
+    w.builder.wear.hit(5, 5, Dir.N, 150);
+    expect(1 - p.wear.health).toBeCloseTo((150 * 0.015 * 1.0) / 3500);
+    p.wear.health = 1;
+    w.builder.wear.hit(5, 5, Dir.E, 150);
+    expect(1 - p.wear.health).toBeCloseTo((150 * 0.015 * 1.6) / 3500);
+  });
+
+  it('a depot gate never loses health', () => {
+    const w = simWorld({ terrain: 'grass', size: 32 });
+    const depot = new Station('depot', 8, 8);
+    w.builder.stations.push(depot);
+    const gate = depot.gateTiles()[0];
+    w.track.place(gate.x, gate.y, 'straight', 1, 'branch');
+    w.track.place(gate.x + 4, gate.y, 'straight', 1, 'branch');
+    expect(w.builder.wear.exempt(gate.x, gate.y)).toBe(true);
+    expect(w.builder.wear.exempt(gate.x + 4, gate.y)).toBe(false);
+    w.builder.wear.hit(gate.x, gate.y, Dir.W, 150);
+    w.builder.wear.daily();
+    expect(w.track.get(gate.x, gate.y)!.wear.health).toBe(1);
+    expect(w.track.get(gate.x + 4, gate.y)!.wear.health).toBeLessThan(1);
+  });
+
+  it('a free builder wears nothing', () => {
+    const { w, wear, piece } = branchWorld();
+    w.builder.free = true;
+    wear.hit(5, 5, Dir.W, 150);
+    wear.daily();
+    expect(piece.wear.health).toBe(1);
+  });
+
+  it('Maglev and Hyperloop never wear', () => {
+    const w = simWorld({ terrain: 'grass', size: 32 });
+    w.track.place(5, 5, 'straight', 1, 'maglev');
+    w.track.place(7, 5, 'straight', 1, 'hyperloop');
+    for (const x of [5, 7]) {
+      w.builder.wear.hit(x, 5, Dir.W, 500);
+      w.builder.wear.daily();
+      expect(w.track.get(x, 5)!.wear.health).toBe(1);
+    }
+  });
+
+  it('daily takes 0.4 % and twice that once degraded, never below 0', () => {
+    const w = simWorld({ terrain: 'grass', size: 32 });
+    w.track.place(5, 5, 'straight', 1, 'branch');
+    w.track.place(7, 5, 'straight', 1, 'trunk');
+    w.track.place(9, 5, 'straight', 1, 'branch');
+    w.track.place(11, 5, 'straight', 1, 'branch');
+    w.track.get(9, 5)!.wear.health = 0.2;
+    w.track.get(11, 5)!.wear.health = 0.005;
+    w.builder.wear.daily();
+    // a share of max HP, whatever the line
+    expect(w.track.get(5, 5)!.wear.health).toBeCloseTo(0.996);
+    expect(w.track.get(7, 5)!.wear.health).toBeCloseTo(0.996);
+    expect(w.track.get(9, 5)!.wear.health).toBeCloseTo(0.192);
+    expect(w.track.get(11, 5)!.wear.health).toBe(0);
+    w.builder.wear.daily();
+    expect(w.track.get(11, 5)!.wear.health).toBe(0);
+  });
+
+  it('a multi-tile piece loses its time wear once a day', () => {
+    const w = simWorld({ terrain: 'grass', size: 32 });
+    w.track.place(10, 10, 'curve', 0, 'trunk');
+    w.builder.wear.daily();
+    expect(w.track.get(10, 10)!.wear.health).toBeCloseTo(0.996);
+  });
+
+  it('trackWearMul 0 leaves every piece full', () => {
+    const { wear, piece } = branchWorld();
+    rules.trackWearMul = 0;
+    wear.hit(5, 5, Dir.W, 150);
+    wear.daily();
+    expect(piece.wear.health).toBe(1);
+  });
+
+  it('SimStep takes the time wear once at each day change', () => {
+    const { w, piece } = branchWorld();
+    const step = new SimStep(w);
+    const ctx = { mode: 'play', weather: false } as const;
+    w.clock.time = daySeconds() * 1 + 1;
+    step.run(0.05, ctx);
+    expect(piece.wear.health).toBeCloseTo(0.996);
+    step.run(0.05, ctx);
+    expect(piece.wear.health).toBeCloseTo(0.996);
+    w.clock.time = daySeconds() * 2 + 1;
+    step.run(0.05, ctx);
+    expect(piece.wear.health).toBeCloseTo(0.992);
+  });
+});
+
+/** A lone f7 started on the track at (x, y) facing `dir`, bound for a quarry at (qx, qy). */
+function runner(w: SimWorld, [x, y]: [number, number], dir: Dir, [qx, qy]: [number, number]) {
+  const t = new Train([{ uid: 1, level: 0, def: content.locomotives.find((d) => d.id === 'f7')! }]);
+  t.spawnAt(w.track, x, y, dir);
+  const st = new Station('quarry', qx, qy);
+  w.builder.stations.push(st);
+  t.route = [st.id];
+  t.oil = t.oilCap;
+  w.fleet.trains.push(t);
+  expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
+  const ctx = (w.fleet as unknown as { ctx(n: number, s: number): TickCtx }).ctx(0, 1);
+  t.onPathReady(ctx);
+  return { t, ctx };
+}
+
+describe('a train on the track', () => {
+  it('one pass over a multi-tile curve is one hit', () => {
+    const w = simWorld({ terrain: 'grass', size: 48 });
+    // from the east along y = 13, round a 4 x 4 Trunk curve, and north up x = 10 to the quarry
+    for (let x = 14; x <= 40; x++) w.track.place(x, 13, 'straight', 1, 'trunk');
+    for (let y = 3; y <= 9; y++) w.track.place(10, y, 'straight', 0, 'trunk');
+    w.track.place(10, 10, 'curve', 0, 'trunk');
+    const { t, ctx } = runner(w, [38, 13], Dir.W, [10, 2]);
+    const curve = w.track.get(10, 10)!;
+    const before = w.track.get(30, 13)!;
+    const hits = vi.spyOn(w.builder.wear, 'hit');
+    for (let i = 0; i < 20 * 60 && t.state !== 'loading'; i++) t.tick(0.05, ctx);
+    expect(t.state).toBe('loading');
+    // the curve is one hit, however many tiles its path crosses
+    const onCurve = hits.mock.calls.filter(([x, y]) => w.track.get(x, y)!.wear === curve.wear);
+    expect(onCurve).toHaveLength(1);
+    const hit = (t.mass * rules.trackWearPerTonne * rules.trackWearTrunk) / 3500;
+    expect(1 - curve.wear.health).toBeCloseTo(hit, 8);
+    expect(1 - before.wear.health).toBeCloseTo(hit, 8);
   });
 });

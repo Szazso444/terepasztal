@@ -83,7 +83,7 @@ export interface Rules {
   trackWearBranch: number;
   trackWearMain: number;
   trackWearTrunk: number;
-  /** HP a train takes per 100 tonnes of its mass, before the line multiplier */
+  /** HP a train takes per tonne of its mass, before the line multiplier */
   trackWearPerTonne: number;
   /** share of its maximum HP a piece loses each game day, standing or not */
   trackTimeWear: number;
