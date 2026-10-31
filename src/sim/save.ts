@@ -16,6 +16,7 @@ import type { ChunkStore, MapGenerator } from '../world/chunks';
 import { CHUNK_TILES } from './expand';
 import { generatorOf, groundOf, lacksGround, worldWithinBound } from './ground';
 import { wrapRotation } from './rotation';
+import { alertSettingsFrom, defaultAlertSettings, type AlertSettings } from './alerts';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
@@ -189,6 +190,8 @@ export interface Settings {
   contractPolicyVersion?: number;
   /** v10: signalling level (auto keeps the claims only) */
   signalling?: SignalLevel;
+  /** what each kind of alert does; an older settings file gets the defaults (`settingsFrom`) */
+  alerts: AlertSettings;
 }
 /** Contract rarities, commonest first; `contracts.json` carries the numbers for each. */
 export const CONTRACT_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'] as const;
@@ -253,6 +256,7 @@ export const DEFAULT_SETTINGS: Settings = {
   advisor: true,
   contractPolicy: uniformContractPolicy(DEFAULT_CONTRACT_POLICY),
   contractPolicyVersion: CONTRACT_POLICY_VERSION,
+  alerts: defaultAlertSettings(),
 };
 
 /** One step of the migration chain: brings a save from `from` to `from + 1`. */
@@ -980,6 +984,7 @@ export function clearSave() {
 function settingsFrom(stored: Partial<Settings>): Settings {
   const s = { ...DEFAULT_SETTINGS, ...stored };
   if (s.contractPolicy) s.contractPolicy = { ...s.contractPolicy };
+  s.alerts = alertSettingsFrom(stored.alerts);
   return s;
 }
 export function readSettings(): Settings {
