@@ -22,6 +22,8 @@ vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 const PERCENT = { min: 0, max: 100, step: 1 };
 const DEAL = { min: 0, max: 5000, step: 10, bigStep: 100 };
 const STOP_TIME = { min: 0, max: 600, step: 15 };
+// a stop's time: any whole second, a press moves 15 and Shift+press 5
+const DWELL = { min: 0, max: 600, step: 15, bigStep: 5, free: true };
 
 describe('a slider and a number field keep to their range', () => {
   it('clamps at both ends', () => {
@@ -68,6 +70,19 @@ describe('a slider and a number field keep to their range', () => {
     expect(clampToRange(NaN, { min: 5, max: 9 })).toBe(5);
   });
 
+  it('keeps any whole number when the range says so, and steps from it by `step`', () => {
+    const whole = { ...DEAL, whole: true };
+    expect(clampToRange(25, whole)).toBe(25);
+    expect(clampToRange(25.4, whole)).toBe(25);
+    expect(clampToRange(-5, whole)).toBe(0);
+    expect(clampToRange(9999, whole)).toBe(5000);
+    // an odd amount is stepped on to the next stop, as a value between two steps always is
+    expect(stepNumber(25, 1, whole)).toBe(30);
+    expect(stepNumber(25, -1, whole)).toBe(20);
+    expect(stepNumber(30, 1, whole)).toBe(40);
+    expect(parseNumber('15', whole, 0)).toBe(15);
+  });
+
   it('steps by one press, and stops at the ends', () => {
     expect(stepNumber(45, 1, STOP_TIME)).toBe(60);
     expect(stepNumber(45, -1, STOP_TIME)).toBe(30);
@@ -102,6 +117,36 @@ describe('a slider and a number field keep to their range', () => {
     expect(meterPercent(-1)).toBe(0);
     expect(meterPercent(NaN)).toBe(0);
     expect(meterPercent(Infinity)).toBe(0);
+  });
+});
+
+describe('a free number field keeps every whole number', () => {
+  it('shows a stored value as it is, and keeps a typed one to the second', () => {
+    for (const v of [0, 1, 7, 12, 14, 16, 599, 600]) expect(clampToRange(v, DWELL)).toBe(v);
+    expect(parseNumber('7', DWELL, 30)).toBe(7);
+    expect(parseNumber(' 45 ', DWELL, 30)).toBe(45);
+  });
+
+  it('rounds a fraction to the second and holds the ends', () => {
+    expect(clampToRange(7.6, DWELL)).toBe(8);
+    expect(clampToRange(-4, DWELL)).toBe(0);
+    expect(clampToRange(9000, DWELL)).toBe(600);
+    expect(parseNumber('abc', DWELL, 30)).toBe(30);
+  });
+
+  it('moves by a step from wherever it stands, and by the big step with Shift', () => {
+    expect(stepNumber(7, 1, DWELL)).toBe(22);
+    expect(stepNumber(7, -1, DWELL)).toBe(0);
+    expect(stepNumber(7, 1, DWELL, true)).toBe(12);
+    expect(stepNumber(12, -1, DWELL, true)).toBe(7);
+    expect(stepNumber(590, 1, DWELL)).toBe(600);
+    expect(stepNumber(600, 1, DWELL)).toBe(600);
+    expect(stepNumber(0, -1, DWELL, true)).toBe(0);
+  });
+
+  it('leaves a range that is not free as it was', () => {
+    expect(clampToRange(7, STOP_TIME)).toBe(0);
+    expect(stepNumber(7, 1, STOP_TIME)).toBe(15);
   });
 });
 

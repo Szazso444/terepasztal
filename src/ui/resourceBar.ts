@@ -53,7 +53,7 @@ export class ResourceBar {
   private laidSupply: SupplyMode | null = null;
   private inStock = new Set<string>();
 
-  constructor(atlas: AtlasRegistry, tooltip: Tooltip, onClick: () => void) {
+  constructor(atlas: AtlasRegistry, tooltip: Tooltip, onClick: (resource: string) => void) {
     this.storeBtn.title = STR.res.nextStore;
     RESOURCE_GROUPS.forEach((ids, i) => {
       const group = el('div', { class: 'res-group' });
@@ -70,7 +70,7 @@ export class ResourceBar {
           cell,
           tipBuild(atlas, () => resourceTip(this.snapshot(id))),
         );
-        if (STOCKPILED.has(id)) term.addEventListener('click', onClick);
+        if (STOCKPILED.has(id)) term.addEventListener('click', () => onClick(id));
         this.values.set(id, v);
         this.cells.set(id, term);
         group.append(term);
