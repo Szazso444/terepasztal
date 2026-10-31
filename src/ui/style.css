@@ -2376,150 +2376,6 @@ input.text {
   letter-spacing: 1px;
 }
 
-/* ---- crafting ---- */
-.craft {
-  position: relative;
-}
-.craft-choice {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 4px 0;
-}
-.craft-choice .tb-label {
-  min-width: 36px;
-}
-.craft-pool {
-  margin-top: 6px;
-  line-height: 1.6;
-}
-.craft-pool .known {
-  color: var(--text);
-}
-.craft-price {
-  font-family: var(--font-mono);
-  color: var(--amber);
-  margin-top: 8px;
-}
-.craft-recipe {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  padding: 4px 6px;
-  margin: 3px 0;
-  border: 1px solid var(--border-dark);
-  background: var(--stone);
-}
-.craft-recipe.rarity-R {
-  border-color: var(--rarity-uncommon);
-}
-.craft-recipe.rarity-SR {
-  border-color: var(--rarity-rare);
-}
-.craft-recipe.rarity-SSR {
-  border-color: var(--rarity-epic);
-}
-.craft-recipe.rarity-L {
-  border-color: var(--rarity-legendary);
-}
-.craft-recipe .body {
-  flex: 1;
-  min-width: 0;
-}
-.craft-recipe .name {
-  font-weight: bold;
-}
-.craft-recipe .sub {
-  color: var(--text-dim);
-  font-size: 11px;
-}
-.craft-recipe .sub.short {
-  color: #e0a08c;
-}
-.craft-pick {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  background: rgba(10, 10, 12, 0.88);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 16px;
-}
-.craft-pick-title {
-  font-family: var(--font-title);
-  font-size: 22px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--amber);
-}
-.craft-cards {
-  display: flex;
-  gap: 14px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.craft-cards .gcard {
-  width: 200px;
-  height: 240px;
-}
-.craft-cards .gcard:hover .gcard-front {
-  border-color: var(--amber);
-  box-shadow: 0 0 0 2px var(--amber-dark);
-}
-.craft-cards .gcard-stats {
-  font-size: 11px;
-  color: var(--text-dim);
-  flex: 1;
-}
-.craft-cards .gcard-dupe.owned {
-  color: var(--amber);
-}
-
-/* ---- roster ---- */
-.roster-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  align-content: start;
-}
-.rcard {
-  border: 1px solid var(--border-dark);
-  background: var(--stone);
-  box-shadow: inset 1px 1px 0 var(--border-light);
-  padding: 6px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.rcard.rarity-R {
-  border-color: var(--rarity-uncommon);
-}
-.rcard.rarity-SR {
-  border-color: var(--rarity-rare);
-}
-.rcard.rarity-SSR {
-  border-color: var(--rarity-epic);
-}
-.rcard.rarity-L {
-  border-color: var(--rarity-legendary);
-}
-.rcard-head {
-  display: flex;
-  gap: 6px;
-  align-items: baseline;
-}
-.rcard-head .name {
-  flex: 1;
-  font-weight: bold;
-}
-.rcard {
-  color: var(--text);
-}
-
 /* ---- sprite previews ---- */
 .sprite-preview {
   image-rendering: pixelated;
@@ -2547,32 +2403,7 @@ input.text {
   background: var(--border-dark);
   border: 1px solid var(--border-dark);
 }
-.rcard-body {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-}
-.rcard-art {
-  width: 72px;
-  height: 64px;
-  flex: 0 0 72px;
-  object-fit: contain;
-  background: var(--border-dark);
-  border: 1px solid var(--border-dark);
-}
 /* the model image (public/assets/portraits): full card width, 3:2, era text below */
-.rcard-body-portrait {
-  flex-direction: column;
-  gap: 4px;
-}
-.rcard-portrait {
-  display: block;
-  width: 100%;
-  aspect-ratio: 3 / 2;
-  object-fit: cover;
-  background: #000;
-  border: 1px solid var(--border-dark);
-}
 .gacha-featured {
   padding: 6px 8px;
   border: 1px solid var(--border-dark);
@@ -2981,24 +2812,6 @@ select.text.small {
 .kv-bar {
   margin: 2px 0;
 }
-table.market {
-  width: 100%;
-  border-collapse: collapse;
-}
-table.market th {
-  text-align: left;
-  color: var(--text-dim);
-  font-weight: normal;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 2px 6px;
-  border-bottom: 1px solid var(--border-dark);
-}
-table.market td {
-  padding: 3px 6px;
-  border-bottom: 1px dotted var(--stone-light);
-}
 
 /* ---- towns ---- */
 #town-panel {
@@ -3095,38 +2908,6 @@ table.market td {
 .vehicle-preview-panel .panel-title {
   display: flex;
   justify-content: space-between;
-}
-.vehicle-turntable {
-  height: 270px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(ellipse at 50% 65%, #4a6152, #1b2c24 65%);
-  border-bottom: 1px solid #61775f;
-}
-.vehicle-turntable img {
-  max-width: 94%;
-  max-height: 235px;
-  image-rendering: pixelated;
-  cursor: grab;
-  touch-action: none;
-}
-.vehicle-preview-panel input[type='range'] {
-  width: 75%;
-}
-.craft-filters {
-  position: sticky;
-  top: 0;
-  background: var(--stone-dark);
-  padding: 6px 0;
-  z-index: 1;
-}
-.craft-recipe .item-art {
-  width: 100px;
-  height: 60px;
-  flex: 0 0 100px;
-  max-height: 75px;
-  object-fit: contain;
 }
 .gcard-art {
   object-fit: contain;
@@ -4369,6 +4150,488 @@ table.market td {
 /* a save's lines in a list row */
 .k-sub {
   display: block;
+}
+
+/* ---- the economy screens: Contracts, Market, Crafting, Roster, Inspect 3D ---- */
+.k-p.ec-warn,
+.k-note.ec-warn {
+  color: var(--amber);
+}
+.ec-grow {
+  flex: 1;
+  min-width: 0;
+}
+.k-note.ec-grow b {
+  color: var(--text);
+  font-weight: 600;
+}
+/* a resource's painted icon and a model's picture */
+.ec-res {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+/* a picture fills its slot whatever its own size: laid over it, since a percentage of a grid cell
+   that sizes itself to the picture gives nothing to measure */
+.k-spr:has(> .ec-portrait, > .ec-sprite) {
+  position: relative;
+}
+.ec-portrait,
+.ec-sprite {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.ec-portrait {
+  background: #000;
+}
+.ec-count {
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* the screens that hold a fixed head over a list that scrolls, and the ones split in two */
+.k-page.ec-fixed {
+  overflow: hidden;
+  padding: 2px 6px 0;
+}
+.ec-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+.k-page.ec-split {
+  flex-direction: row;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+.ec-side {
+  flex: none;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+.ec-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.k-well.ec-fill {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ec-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+.ec-draw {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* contracts */
+.ec-auto .k-row {
+  min-height: 36px;
+}
+.ec-rar {
+  display: inline-flex;
+  align-items: center;
+  font: 600 10px/1 var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ec-rar .rarity-star {
+  margin-right: 3px;
+}
+.ec-pay {
+  align-self: center;
+  color: var(--text-good);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ec-pay.lost {
+  color: var(--text-dim);
+  text-decoration: line-through;
+}
+.ec-route {
+  margin-left: auto;
+  padding-left: 8px;
+}
+.ec-ct .k-card-s b {
+  color: var(--text);
+  font-weight: 600;
+}
+.ec-ct .k-meter {
+  padding: 2px 0;
+}
+.ec-chip {
+  padding: 1px 8px;
+  border: 1px solid currentColor;
+  font: 600 10px/16px var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ec-chip.good {
+  color: var(--text-good);
+}
+.ec-chip.bad {
+  color: var(--text-bad);
+}
+.ec-chip.dim {
+  color: var(--text-dim);
+}
+
+/* market */
+.ec-funds {
+  color: var(--text);
+  font-family: var(--font-body);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ec-funds b {
+  color: var(--amber);
+}
+.ec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.ec-table th {
+  padding: 3px 10px;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.ec-table td {
+  padding: 2px 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.22);
+}
+.ec-table th.r,
+.ec-table td.r {
+  text-align: right;
+}
+.ec-table td.num {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.ec-table .acts {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.ec-table tr {
+  height: 28px;
+}
+.ec-table .bad,
+.ec-summary.bad {
+  color: var(--text-bad);
+}
+.ec-table .good,
+.ec-summary.good {
+  color: var(--text-good);
+}
+.ec-table .dim {
+  color: var(--text-dim);
+}
+.ec-table td.warn {
+  color: var(--amber);
+}
+.ec-table tr.on td {
+  background: color-mix(in srgb, var(--amber) 13%, transparent);
+}
+.ec-table tr.on td:first-child {
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+.ec-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.ec-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.ec-field > small {
+  min-width: 54px;
+  text-align: left;
+  font-size: 11px;
+}
+.ec-summary {
+  padding: 6px 10px 2px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* crafting */
+.k-seg.ec-held {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.k-seg .age-icon {
+  margin: 0;
+  vertical-align: -3px;
+}
+.ec-pool {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 10px 6px;
+  font-size: 11.5px;
+}
+.ec-poolrow {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 8px;
+  line-height: 1.5;
+}
+.ec-qual {
+  color: var(--rc);
+  font: 600 10px/17px var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ec-qual .rarity-star {
+  margin-right: 3px;
+}
+.ec-names .known {
+  color: var(--text);
+  font-weight: 600;
+}
+.ec-price {
+  padding: 6px 10px 0;
+  color: var(--amber);
+  font-family: var(--font-title);
+  font-size: 22px;
+  letter-spacing: 0.02em;
+}
+.ec-buy {
+  display: flex;
+  padding: 4px 10px 4px;
+}
+.ec-buy .btn {
+  flex: 1;
+  min-height: 30px;
+}
+.ec-rhead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px;
+}
+.ec-rhead .k-seg {
+  flex: 1;
+}
+.ec-recipe {
+  align-items: flex-start;
+}
+.ec-recipe .k-li-m > b {
+  font-size: 13px;
+}
+.ec-recipe .k-li-m > b > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ec-recipe .k-li-m > small {
+  overflow: visible;
+  white-space: normal;
+}
+.ec-recipe .k-li-a {
+  align-self: center;
+}
+.ec-recipe .k-spr {
+  width: 76px;
+  height: 48px;
+  cursor: pointer;
+}
+.ec-tag {
+  padding: 0 6px;
+  border: 1px solid var(--border-light);
+  color: var(--text-dim);
+  font: 600 9.5px/14px var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ec-cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+}
+.ec-c {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ec-c b {
+  color: var(--text);
+  font-weight: 600;
+}
+.ec-c.short b,
+.ec-short {
+  color: var(--text-bad);
+}
+.ec-badge {
+  padding: 3px 8px;
+  border: 1px solid currentColor;
+  font-size: 11px;
+}
+.ec-badge.new {
+  color: var(--text-good);
+}
+.ec-badge.known {
+  color: var(--amber);
+}
+.ec-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.ec-lines > div:first-child {
+  color: var(--text);
+}
+.ec-art {
+  cursor: pointer;
+}
+.ec-draw .k-card > .k-spr {
+  height: 120px;
+}
+
+/* roster */
+.ec-fhead {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px 4px 6px;
+}
+.ec-frow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+.ec-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 11.5px;
+}
+.ec-filter .k-seg > button {
+  padding: 2px 9px;
+}
+.ec-filter .rarity-star {
+  margin-right: 3px;
+}
+.ec-sw {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.ec-era {
+  color: var(--text-dim);
+  font-size: 11px;
+  font-style: italic;
+  line-height: 1.35;
+}
+.ec-where {
+  margin-top: 2px;
+  color: var(--text-dim);
+  font-size: 11.5px;
+}
+.ec-where.on {
+  color: var(--cyan);
+}
+.ec-fitted {
+  font-size: 11px;
+  white-space: nowrap;
+}
+.k-page.ec-fixed .k-card > .k-spr {
+  height: 96px;
+}
+.k-page.ec-fixed .k-card-f {
+  flex-wrap: wrap;
+}
+.k-page.ec-fixed .k-card .label-row {
+  margin: 0;
+}
+
+/* inspect 3d */
+.ec-turn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 250px;
+  margin: 2px 10px 4px;
+  background: var(--stone-dark);
+  border: 1px solid var(--border-dark);
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.ec-turn-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.ec-heading {
+  position: absolute;
+  right: 8px;
+  bottom: 5px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.ec-angle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.ec-angle > .k-sl {
+  grid-template-columns: minmax(0, 1fr) 46px;
+}
+.ec-eye {
+  padding: 1px 6px;
+}
+.ec-eye .k-ic {
+  margin: 0;
 }
 
 /* ---- the title screen, Saved games, Levels and New game (PR 12d) ---- */

@@ -75,7 +75,9 @@ import { CreditsScreen } from './creditsScreen';
 import { GachaScreen } from './gachaScreen';
 import { CraftingScreen } from './craftingScreen';
 import { RosterScreen } from './rosterScreen';
+import { InspectScreen } from './inspectScreen';
 import { ContractsScreen } from './contractsScreen';
+import { autoState } from './contractsView';
 import { Minimap } from './minimap';
 import { DebugPanel } from './debug';
 import { Toolbar, type Tool } from './toolbar';
@@ -382,6 +384,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.trade,
     () => d.clock.time,
     d.commands,
+    d.atlas,
   );
   d.trade.onSettled = (lines) =>
     d.toasts.push(
@@ -395,8 +398,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       ),
       'info',
     );
-  const resourceBar = new ResourceBar(d.atlas, d.tooltip, () => {
-    if (host.mode === 'play' && !menuOpen()) d.screens.toggle(marketScreen);
+  const resourceBar = new ResourceBar(d.atlas, d.tooltip, (resource) => {
+    if (host.mode !== 'play' || menuOpen()) return;
+    // the Market opens on the spot prices with that good's row picked out
+    marketScreen.pick(resource);
+    d.screens.toggle(marketScreen);
   });
   // the money is the bar's first cell; the tickets stay in the HUD's block at its end
   resourceBar.right.append(hud.funds);
@@ -485,11 +491,38 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     toast,
     d.atlas,
   );
-  const rosterScreen = new RosterScreen(d.inventory, d.fleet, d.commands, d.atlas, toast);
-  const contractsScreen = new ContractsScreen(d.contracts, d.builder, d.clock, toast, d.namePrompt);
+  const rosterScreen = new RosterScreen(
+    d.inventory,
+    d.fleet,
+    d.commands,
+    d.atlas,
+    toast,
+    d.namePrompt,
+  );
+  // Inspect 3D stands over the screen that asked for it, and Back returns
+  const inspectScreen = new InspectScreen(d.atlas);
+  const inspect = (defId: string) => {
+    inspectScreen.show(defId);
+    d.screens.push(inspectScreen);
+  };
+  craftingScreen.onInspect = inspect;
+  rosterScreen.onInspect = inspect;
+  const contractsScreen = new ContractsScreen(
+    d.contracts,
+    d.builder,
+    d.clock,
+    toast,
+    d.namePrompt,
+    d.atlas,
+  );
   contractsScreen.trainName = (id) => d.fleet.byId(id)?.name ?? null;
+  contractsScreen.redraw = () => d.screens.redraw();
+  contractsScreen.openPolicies = () => {
+    settingsScreen.showTab('contracts');
+    d.screens.push(settingsScreen);
+  };
   contractsScreen.autoAccept = {
-    get: () => CONTRACT_RARITIES.every((r) => contractPolicyFor(d.settings, r) === 'accept'),
+    state: () => autoState(CONTRACT_RARITIES.map((r) => contractPolicyFor(d.settings, r))),
     set: (v) => {
       d.settings.contractPolicy = uniformContractPolicy(v ? 'accept' : 'prompt');
       host.applySettings();
@@ -645,7 +678,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       d.build.selectDecor(null);
       d.build.selectBuilding(b);
     },
-    onContract: () => d.screens.open(contractsScreen),
+    onContract: (id) => {
+      // the screen opens on the card of that contract, lit and in view
+      contractsScreen.focusContract(id);
+      d.screens.open(contractsScreen);
+    },
   });
   const trainPanel = new TrainPanel({
     fleet: d.fleet,

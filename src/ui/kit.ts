@@ -19,6 +19,8 @@ export interface NumberRange {
   step?: number;
   /** what Shift+click on − or + moves by, `step` without it */
   bigStep?: number;
+  /** any whole number in the range stands; `step` is then only what − and + move by */
+  whole?: boolean;
 }
 
 /**
@@ -28,6 +30,7 @@ export interface NumberRange {
 export function clampToRange(v: number, r: NumberRange): number {
   if (Number.isNaN(v)) return r.min;
   const inside = Math.min(r.max, Math.max(r.min, v));
+  if (r.whole) return Math.round(inside);
   if (!r.step) return inside;
   const stepped = r.min + Math.round((inside - r.min) / r.step) * r.step;
   // 0.1 + 0.2 stays 0.3: no value here has six decimals
@@ -206,6 +209,11 @@ const ICONS = {
   undo: '<path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
   home: '<path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 9.5V20h13V9.5M10 20v-5.5h4V20"/>',
   chevl: '<path d="M15 5l-7 7 7 7"/>',
+  scroll:
+    '<path d="M7 3h11v14.5a3.5 3.5 0 0 1-3.5 3.5H7.5A3.5 3.5 0 0 1 4 17.5V17h10v.5a3.5 3.5 0 0 0 3.5 3.5M7 3a2.5 2.5 0 0 0-2.5 2.5V8H7M10 8h5M10 12h5"/>',
+  coin: '<circle cx="12" cy="12" r="8.5"/><path d="M14.8 9.2c-.6-.8-1.6-1.2-2.8-1.2-1.6 0-2.8.8-2.8 2s1.2 1.6 2.8 2 2.8.8 2.8 2-1.2 2-2.8 2c-1.2 0-2.2-.4-2.8-1.2M12 6.5V8M12 16v1.5"/>',
+  factory: '<path d="M3 21V10l5 3v-3l5 3V6h3l1-3h2l1 3v15zM3 21h18"/>',
+  eye: '<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   search: '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/>',
   export: '<path d="M12 15V3.5M7.5 8L12 3.5 16.5 8"/><path d="M5 13v7h14v-7"/>',
   import: '<path d="M12 3.5V15M7.5 10.5L12 15l4.5-4.5"/><path d="M5 13v7h14v-7"/>',
@@ -213,8 +221,6 @@ const ICONS = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   mountain: '<path d="M2 20l7-12 4 6.5 3-4 6 9.5z"/>',
   keys: '<rect x="3" y="7.5" width="18" height="9" rx="2"/><path d="M8 12h8"/>',
-  scroll:
-    '<path d="M7 3h11v14.5a3.5 3.5 0 0 1-3.5 3.5H7.5A3.5 3.5 0 0 1 4 17.5V17h10v.5a3.5 3.5 0 0 0 3.5 3.5M7 3a2.5 2.5 0 0 0-2.5 2.5V8H7M10 8h5M10 12h5"/>',
 };
 export type IconName = keyof typeof ICONS;
 
