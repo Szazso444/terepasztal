@@ -773,6 +773,7 @@ body {
   font-weight: 600;
   color: var(--text-dim);
 }
+/* a refusal is read whole: it wraps, and the bar grows up from its bottom edge */
 .tb-status {
   padding: 3px 8px;
   border-bottom: 1px solid var(--border-dark);
