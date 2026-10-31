@@ -11,7 +11,7 @@ export type HistoryWay = 'undo' | 'redo';
 /** The key each button names: Ctrl+Shift+Z redoes too, as `KEYMAP` has it. */
 const KEY: Record<HistoryWay, string> = { undo: 'Ctrl+Z', redo: 'Ctrl+Y' };
 
-/** The icons of the UI workshop's design, drawn for it, on a 24 px grid. */
+/** Lucide's `undo-2` and `redo-2` (ISC), as the UI workshop's design draws them, on a 24 px grid. */
 const ICON: Record<HistoryWay, string> = {
   undo: 'M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11',
   redo: 'M15 14l5-5-5-5M20 9H9.5a5.5 5.5 0 0 0 0 11H13',

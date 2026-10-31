@@ -624,7 +624,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   // ---------------------------------------------------------------- undo
   /** One step back or forward: then what was picked may have gone, and the panels may be stale. */
   const historyStep = (way: HistoryWay) => {
-    if (menuOpen() || !stepHistory(way, d.commands.history, toast)) return;
+    if (menuOpen() || host.recordingRoute) return;
+    if (!stepHistory(way, d.commands.history, toast)) return;
     d.build.dropGone();
     stationPanel.render();
     buildingPanel.render();

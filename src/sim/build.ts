@@ -187,6 +187,8 @@ export class Builder {
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
   onSupplyChanged: ((x: number, y: number) => void) | null = null;
+  /** fired when an undo gave a tile back the props track or a structure took off it */
+  onPropsBack: ((x: number, y: number) => void) | null = null;
   /** fired when a road is laid on or taken off a tile (`placeRoad`, `removeRoad`) */
   onRoadChanged: ((x: number, y: number) => void) | null = null;
   /** electrification overlay (set by the game) */
@@ -1576,12 +1578,12 @@ export class Builder {
     else this.roads.remove(x, y);
     this.onRoadChanged?.(x, y);
   }
-  /** A station back in the place it had in the list, its warning with it when it has no platform. */
-  standStation(s: Station, index: number) {
+  /** A station back in the place it had in the list; `warn`: it says so if it has no platform. */
+  standStation(s: Station, index: number, warn: boolean) {
     this.stations.splice(index, 0, s);
     this.refreshStationBoosts();
     this.stationChanged(s, false);
-    this.onStationOrphaned?.(s, this.isOrphaned(s));
+    if (warn) this.onStationOrphaned?.(s, this.isOrphaned(s));
   }
   dropStation(s: Station) {
     this.stations.splice(this.stations.indexOf(s), 1);

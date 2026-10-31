@@ -5,7 +5,7 @@ import { inSupplyMode } from './supply';
 import { locoDef, type Item } from '../gacha/items';
 import { PULL_COST, type Banner, type Gacha, type PullResult } from '../gacha/gacha';
 import type { Inventory } from '../gacha/inventory';
-import { BuildLog } from './buildLog';
+import { BuildLog, type BuildWorld } from './buildLog';
 import { History } from './history';
 import type { Fleet } from './fleet';
 import type { Builder, Decor } from './build';
@@ -14,6 +14,9 @@ import type { ResourceStore } from './stores';
 import type { TradeDesk } from './trade';
 import type { TownRegistry } from './towns';
 import type { HouseRegistry } from './houses';
+import type { ContractBoard } from './contracts';
+import type { ContractDispatcher } from './contractDispatch';
+import type { GameClock } from './time';
 import type { Station } from './stations';
 import type { Train, RouteMode, StopPlan } from './trains';
 
@@ -33,6 +36,9 @@ export interface CommandDeps {
   inventory: Inventory;
   towns: TownRegistry;
   houses: HouseRegistry;
+  contracts: ContractBoard;
+  contractJobs: ContractDispatcher;
+  clock: GameClock;
 }
 
 /** Longest station name, in characters. */
@@ -53,8 +59,8 @@ export class Commands {
   private readonly trade: TradeDesk;
   private readonly gacha: Gacha;
   private readonly inventory: Inventory;
-  private readonly towns: TownRegistry;
-  private readonly houses: HouseRegistry;
+  /** what an undo reads and changes */
+  private readonly buildWorld: BuildWorld;
   /** what the player can take back; belongs to this session and is never saved */
   readonly history = new History();
 
@@ -65,8 +71,7 @@ export class Commands {
     this.trade = deps.trade;
     this.gacha = deps.gacha;
     this.inventory = deps.inventory;
-    this.towns = deps.towns;
-    this.houses = deps.houses;
+    this.buildWorld = deps;
   }
 
   // ------------------------------------------------------------ undo
@@ -79,12 +84,7 @@ export class Commands {
   act<T>(fn: () => T, stroke?: number): T {
     const b = this.builder;
     if (b.free || b.log) return fn();
-    const log = new BuildLog({
-      builder: b,
-      fleet: this.fleet,
-      towns: this.towns,
-      houses: this.houses,
-    });
+    const log = new BuildLog(this.buildWorld);
     b.log = log;
     try {
       return fn();

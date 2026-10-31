@@ -1,14 +1,19 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Dir } from '../engine/iso';
-import { locoDef } from '../gacha/items';
+import { locoDef, wagonDef } from '../gacha/items';
 import { STR } from '../strings';
 import { line, simWorld, station, type SimWorldOptions } from '../testing/simWorld';
 import { layRun, planRun } from '../ui/autoCrossing';
 import { buildingToJSON } from './buildings';
 import { Commands } from './commands';
+import type { Contract } from './contracts';
 import { DEFAULT_RULES, rules } from './rules';
+import type { Station } from './stations';
 import { Train, defaultStop } from './trains';
+import type { PropInstance } from '../world/tiles';
 import type { TrackItem } from '../world/track';
+
+type Tile = { x: number; y: number };
 
 const ROW = 20;
 const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
@@ -1028,5 +1033,300 @@ describe('what a step is called', () => {
       ]),
     );
     expect(g.history.undoLabel).toBe('Built 1 tile of Branch Line');
+  });
+});
+
+describe('a contract on a station that leaves', () => {
+  /** A diesel with a hopper, full tanks and a program, standing on the row at `x`. */
+  function hauler(g: Game, x: number, stops: Station[]) {
+    const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+    t.wagons = [
+      { uid: 2, def: wagonDef('wood_hopper'), level: 1, cargo: null, amount: 0, origin: null },
+    ];
+    expect(t.spawnAt(g.track, x, ROW, Dir.W)).not.toBe(false);
+    t.oil = t.oilCap;
+    t.schedule = stops.map((s) => defaultStop(s.id));
+    g.fleet.trains.push(t);
+    return t;
+  }
+  /**
+   * Three farms along the row, a train running the two outer ones, and an active contract from
+   * the first farm to the middle one, handed to the train.
+   */
+  function scene() {
+    const g = game();
+    line(g, 10, ROW, 40);
+    const a = g.builder.placeStation(14, ROW - 1, 'farm')!;
+    const b = g.builder.placeStation(22, ROW - 1, 'farm')!;
+    const home = g.builder.placeStation(36, ROW - 1, 'farm')!;
+    const t = hauler(g, 18, [a, home]);
+    const c: Contract = {
+      id: 1,
+      templateId: 'haul',
+      name: 'Stone run',
+      rarity: 'common',
+      cargo: 'stone',
+      amount: 100,
+      delivered: 30,
+      originId: a.id,
+      destId: b.id,
+      payout: 500,
+      tickets: 0,
+      duration: 5000,
+      expires: g.clock.time + 5000,
+      acceptedAt: g.clock.time,
+      status: 'active',
+      trainId: null,
+    };
+    g.contracts.contracts.push(c);
+    expect(g.contractJobs.assign(c)).toBe(t);
+    return { g, a, b, home, t, c };
+  }
+  const jobs = (t: Train) => (t.job ? [t.job, ...t.jobs] : t.jobs).map((j) => j.contractId);
+  /** The train runs until `done` says so, or the test gives up on it. */
+  function runUntil(g: Game, done: () => boolean) {
+    for (let i = 0; i < 20000 && !done(); i++) {
+      g.clock.time += 0.1;
+      g.fleet.tick(0.1, g.clock.time);
+    }
+    expect(done()).toBe(true);
+  }
+
+  it('the contract lapsing lets go of the train, which goes back to its program', () => {
+    const { g, b, t, c } = scene();
+    // the job taken up: the train has set its program aside for the contract
+    runUntil(g, () => t.job !== null);
+    g.commands.act(() => g.builder.removeStation(b));
+    g.contracts.tick(g.clock.time);
+    expect(c.status).toBe('expired');
+    expect(jobs(t)).toEqual([]);
+    const program = t.program;
+    runUntil(g, () => t.schedule === program);
+  });
+
+  it('a lapse with no undo in sight lets go of a queued job too', () => {
+    const { g, b, t } = scene();
+    expect(jobs(t)).toEqual([1]);
+    g.builder.removeStation(b);
+    g.contracts.tick(g.clock.time);
+    expect(jobs(t)).toEqual([]);
+  });
+
+  it('an undo brings it back whole, with a train on it, its deadline and deliveries as they were', () => {
+    const { g, b, t, c } = scene();
+    const { expires } = c;
+    g.commands.act(() => g.builder.removeStation(b));
+    g.contracts.tick(g.clock.time);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.stationById(b.id)).toBe(b);
+    expect(c).toMatchObject({ status: 'active', trainId: t.id, delivered: 30, expires });
+    expect(jobs(t)).toEqual([1]);
+    // and the board goes on with it: the station it needs stands
+    g.contracts.tick(g.clock.time);
+    expect(c.status).toBe('active');
+  });
+
+  it('an undo before the board has looked finds nothing lapsed and adds no second job', () => {
+    const { g, b, t, c } = scene();
+    g.commands.act(() => g.builder.removeStation(b));
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(c.status).toBe('active');
+    expect(jobs(t)).toEqual([1]);
+  });
+
+  it('a train still at work when the undo comes takes up the job from the start', () => {
+    const { g, b, t, c } = scene();
+    runUntil(g, () => t.job !== null);
+    g.commands.act(() => g.builder.removeStation(b));
+    g.contracts.tick(g.clock.time);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(c.status).toBe('active');
+    runUntil(g, () => t.job?.contractId === c.id);
+  });
+
+  it('past its deadline the contract stays over, and the station still comes back', () => {
+    const { g, b, t, c } = scene();
+    g.commands.act(() => g.builder.removeStation(b));
+    g.contracts.tick(g.clock.time);
+    g.clock.time = c.expires + 1;
+    const money = g.economy.money;
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.stationById(b.id)).toBe(b);
+    expect(c.status).toBe('expired');
+    expect(jobs(t)).toEqual([]);
+    g.contracts.tick(g.clock.time);
+    expect(g.economy.money).toBe(money);
+  });
+
+  it('with no train to take it up the undo is refused, naming the contract', () => {
+    const { g, b, t, c } = scene();
+    g.commands.act(() => g.builder.removeStation(b));
+    g.contracts.tick(g.clock.time);
+    g.fleet.trains.pop();
+    expectRefused(g, 'undo', STR.history.contractNoTrain(c.name));
+    expect(c.status).toBe('expired');
+    g.fleet.trains.push(t);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(c.status).toBe('active');
+  });
+
+  it('one that never had a train comes back without one', () => {
+    const { g, b, t, c } = scene();
+    g.contractJobs.release(c);
+    c.trainId = null;
+    g.commands.act(() => g.builder.removeStation(b));
+    g.contracts.tick(g.clock.time);
+    g.fleet.trains.pop();
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(c).toMatchObject({ status: 'active', trainId: null });
+    expect(jobs(t)).toEqual([]);
+  });
+
+  it('an offer comes back an offer', () => {
+    const { g, b, c } = scene();
+    g.contractJobs.release(c);
+    c.status = 'offer';
+    g.commands.act(() => g.builder.removeStation(b));
+    g.contracts.tick(g.clock.time);
+    expect(c.status).toBe('expired');
+    g.history.undo();
+    expect(c.status).toBe('offer');
+  });
+
+  it('waits for its other end: with both ends gone the second undo brings it back', () => {
+    const { g, a, b, t, c } = scene();
+    g.commands.act(() => g.builder.removeStation(b));
+    g.commands.act(() => g.builder.removeStation(a));
+    g.contracts.tick(g.clock.time);
+    g.history.undo();
+    expect(c.status).toBe('expired');
+    g.history.undo();
+    expect(c.status).toBe('active');
+    expect(jobs(t)).toEqual([1]);
+  });
+
+  it('a contract pruned off the board in the meantime goes back on it', () => {
+    const { g, b, c } = scene();
+    g.commands.act(() => g.builder.removeStation(b));
+    g.contracts.tick(g.clock.time);
+    g.contracts.contracts = [];
+    g.history.undo();
+    expect(g.contracts.byId(c.id)).toBe(c);
+  });
+
+  it('an undone build a contract lapsed on comes back with the redo', () => {
+    const { g, c } = scene();
+    g.contractJobs.release(c);
+    c.trainId = null;
+    const late = g.commands.act(() => g.builder.placeStation(26, ROW - 1, 'farm'))!;
+    c.destId = late.id;
+    g.history.undo();
+    g.contracts.tick(g.clock.time);
+    expect(c.status).toBe('expired');
+    g.history.redo();
+    expect(c.status).toBe('active');
+  });
+});
+
+describe('what a step leaves around it', () => {
+  it('a house has grown since: the newcomers fill it no further than it holds', () => {
+    const g = game();
+    line(g, 10, ROW, 30);
+    g.builder.placeStation(15, ROW - 1, 'town');
+    g.builder.placeDecor(13, ROW - 3, 'townhouse', 0);
+    const h = g.houses.at(13, ROW - 3)!;
+    Object.assign(h, { progress: 1, residents: 1 });
+    g.commands.act(() => g.builder.placeBuilding(17, ROW - 4, 'windmill', 0));
+    g.history.undo();
+    const full = g.houses.capacity(h);
+    h.residents = full;
+    g.history.redo();
+    expect(h.residents).toBe(full);
+    // no newcomer came, so none leaves
+    g.history.undo();
+    expect(h.residents).toBe(full);
+  });
+
+  it('a house has emptied since: nobody leaves it, and nobody comes from nothing', () => {
+    const g = game();
+    line(g, 10, ROW, 30);
+    g.builder.placeStation(15, ROW - 1, 'town');
+    g.builder.placeDecor(13, ROW - 3, 'townhouse', 0);
+    const h = g.houses.at(13, ROW - 3)!;
+    Object.assign(h, { progress: 1, residents: 1 });
+    g.commands.act(() => g.builder.placeBuilding(17, ROW - 4, 'windmill', 0));
+    expect(h.residents).toBeGreaterThan(1);
+    h.residents = 0;
+    g.history.undo();
+    expect(h.residents).toBe(0);
+    g.history.redo();
+    expect(h.residents).toBe(0);
+  });
+
+  /** The warnings the builder raised and took down, as the game hears them. */
+  function warnings(g: Game) {
+    const heard: boolean[] = [];
+    g.builder.onStationOrphaned = (_s, orphaned) => heard.push(orphaned);
+    return heard;
+  }
+
+  it('a depot with no rails gets no warning from a redone build, as it got none when built', () => {
+    const g = game();
+    const heard = warnings(g);
+    g.commands.act(() => g.builder.placeStation(44, 40, 'narrow_depot'));
+    g.history.undo();
+    g.history.redo();
+    expect(heard).toEqual([]);
+  });
+
+  it('a station that left has its warning again from an undo', () => {
+    const g = game();
+    line(g, 40, 41, 46);
+    const far = station(g, 'farm', 44, 40);
+    g.builder.removeTrack(44, 41);
+    const heard = warnings(g);
+    g.commands.act(() => g.builder.removeStation(far));
+    g.history.undo();
+    expect(heard).toEqual([true]);
+  });
+
+  /** Laying track takes a tile's props off the map for good, as the renderer does. */
+  function clearsProps(g: Game) {
+    const told: Tile[] = [];
+    const tell = g.builder.onTrackChanged;
+    g.builder.onTrackChanged = (x, y) => {
+      tell?.(x, y);
+      if (g.track.get(x, y)) g.map.props.delete(y * g.map.w + x);
+    };
+    g.builder.onPropsBack = (x, y) => told.push({ x, y });
+    return told;
+  }
+
+  it('a deposit a curve cleared is back on the map, and the renderer is told', () => {
+    const g = game();
+    const told = clearsProps(g);
+    const k = ROW * g.map.w + 10;
+    g.map.props.set(k, [{ kind: 'oil', variant: 0, ox: 0, oy: 0 }]);
+    g.commands.act(() => g.builder.placeTrack(10, ROW, { kind: 'curve', cls: 'branch' }, 0));
+    expect(g.builder.hasDeposit(10, ROW, 'oil')).toBe(false);
+    g.history.undo();
+    expect(g.builder.hasDeposit(10, ROW, 'oil')).toBe(true);
+    expect(told).toContainEqual({ x: 10, y: ROW });
+    // and the redo clears it again, the way laying it did
+    g.history.redo();
+    expect(g.builder.hasDeposit(10, ROW, 'oil')).toBe(false);
+  });
+
+  it('trees pushed aside are back where they stood', () => {
+    const g = game();
+    const k = ROW * g.map.w + 10;
+    const tree = { kind: 'oak', variant: 0, ox: 0.1, oy: 0.2 } as PropInstance;
+    g.map.props.set(k, [tree]);
+    g.commands.act(() => {
+      g.builder.placeTrack(10, ROW, STRAIGHT, EW);
+      tree.oy = 0.4;
+    });
+    g.history.undo();
+    expect(g.map.props.get(k)).toEqual([{ kind: 'oak', variant: 0, ox: 0.1, oy: 0.2 }]);
   });
 });

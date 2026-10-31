@@ -24,6 +24,11 @@
       "name": "MIT License",
       "url": "https://opensource.org/license/mit",
       "required": true
+    },
+    "isc": {
+      "name": "ISC License",
+      "url": "https://opensource.org/license/isc-license-txt",
+      "required": true
     }
   },
   "credits": [
@@ -881,6 +886,13 @@
       "author": "Paweł Kuna",
       "url": "https://tabler.io/icons",
       "licence": "mit"
+    },
+    {
+      "kind": "Icons",
+      "title": "Lucide (the undo and redo icons)",
+      "author": "Lucide contributors",
+      "url": "https://lucide.dev",
+      "licence": "isc"
     }
   ]
 }

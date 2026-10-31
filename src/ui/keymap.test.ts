@@ -108,6 +108,8 @@ const historyCases = (way: 'undo' | 'redo'): Case[] => [
   // nothing is recorded in the level editor, and a screen stands in front of the world
   { state: { mode: 'editor' }, calls: [] },
   { state: { screenOpen: true }, calls: [] },
+  // a recording could hold a stop at a station the undo takes away
+  { state: { recording: true }, calls: [] },
 ];
 
 /** Every action, what it calls and what keeps it quiet. A new action without cases fails to compile. */
@@ -562,5 +564,28 @@ describe('undo and redo as the browser types them', () => {
 
   it('does nothing over a menu', () => {
     expect(press({ code: 'KeyZ', key: 'z', ctrlKey: true }, 'menu').calls).toEqual([]);
+  });
+
+  it('takes a second press with no key up between, as macOS sends none under Cmd', () => {
+    const { input, handlers } = browserInput();
+    const down = (repeat: boolean) => {
+      for (const fn of handlers.get('keydown') ?? [])
+        fn({
+          code: 'KeyZ',
+          key: 'z',
+          metaKey: true,
+          repeat,
+          target: null,
+          preventDefault() {},
+        });
+      const { host, calls } = fakeHost('play');
+      handlePlayKeys(input, host);
+      input.endFrame();
+      return calls;
+    };
+    expect(down(false)).toEqual(['undo']);
+    expect(down(false)).toEqual(['undo']);
+    // a key held down repeats, and that is no new press
+    expect(down(true)).toEqual([]);
   });
 });

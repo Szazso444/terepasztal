@@ -223,14 +223,22 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
     return false;
   },
   undo: (h) => {
-    if (h.mode === 'play' && !h.screenOpen) h.undo();
+    if (historyOpen(h)) h.undo();
     return false;
   },
   redo: (h) => {
-    if (h.mode === 'play' && !h.screenOpen) h.redo();
+    if (historyOpen(h)) h.redo();
     return false;
   },
 };
+
+/**
+ * Undo and redo work in a game, not in the level editor, with nothing in front of the world, and
+ * not during a route recording, which could hold a stop at a station an undo takes away.
+ */
+function historyOpen(h: KeyHost) {
+  return h.mode === 'play' && !h.screenOpen && !h.recording;
+}
 
 /** The letter keys open their screens in a game, not in the level editor. */
 function screen(h: KeyHost, s: KeyScreen) {

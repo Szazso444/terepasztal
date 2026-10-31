@@ -75,7 +75,8 @@ export class Input {
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
       const undo = undoName(e);
       if (undo) e.preventDefault();
-      if (!this.keys.has(e.code)) this.pressed.add(undo ?? pressName(e));
+      // macOS sends no key up for a key let go under Cmd, so the key's own repeat tells here
+      if (undo ? !e.repeat : !this.keys.has(e.code)) this.pressed.add(undo ?? pressName(e));
       this.keys.add(e.code);
       if (['Tab', 'Space'].includes(e.code)) e.preventDefault();
     });

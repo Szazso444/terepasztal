@@ -90,6 +90,7 @@ export const STR = {
     builtOver: 'Something else has been built there since.',
     trainOn: (train: string) => `${train} stands on the track.`,
     routedTo: (train: string, station: string) => `${train} is routed to ${station}.`,
+    contractNoTrain: (contract: string) => `No train can take up ${contract} again.`,
     short: (store: string, what: string) => `${store} is short of ${what}.`,
   },
   ages: {

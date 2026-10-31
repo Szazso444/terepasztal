@@ -1047,6 +1047,10 @@ export class Game implements UiHost {
         this.builder.decorAt(x, y)
       );
     this.world.roadAt = (x, y) => this.builder.roads.has(x, y);
+    // an undo gave the tile its props back; what stands on it keeps them out of sight
+    this.builder.onPropsBack = (x, y) => {
+      if (!this.world.occupied(x, y)) this.world.rebuildProps(x, y);
+    };
     this.builder.onRoadChanged = (x, y) => {
       this.world.roadChanged(x, y);
       // a road on a platform changes its span, and its neighbours' (#496); refreshed once a frame
@@ -1114,6 +1118,9 @@ export class Game implements UiHost {
       inventory: this.inventory,
       towns: this.towns,
       houses: this.houses,
+      contracts: this.contracts,
+      contractJobs: this.contractJobs,
+      clock: this.clock,
     });
     this.build.act = (fn, stroke) => this.commands.act(fn, stroke);
     // every panel, screen and menu, wired to this game; it also sets the build controller's
@@ -1423,6 +1430,7 @@ export class Game implements UiHost {
     if (removed) {
       this.world.removeStructure(id);
       this.signalAspect.delete(d.y * this.map.w + d.x);
+      this.semaphoreArms.delete(d.y * this.map.w + d.x);
       if (
         d.id !== 'signal' &&
         terrainAt(this.map, d.x, d.y) === Terrain.Hill &&

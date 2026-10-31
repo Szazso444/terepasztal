@@ -5,13 +5,17 @@ import { decorDef, type Builder, type Decor } from './build';
 import { buildingDef, buildingFootprint, buildingLevel, type Building } from './buildings';
 import type { SupplyKind } from './catenary';
 import type { CommandResult } from './commands';
+import type { ContractDispatcher } from './contractDispatch';
+import type { Contract, ContractBoard } from './contracts';
 import type { Fleet } from './fleet';
 import type { HistoryStep } from './history';
 import type { House, HouseRegistry } from './houses';
 import type { Station } from './stations';
 import { fmtCost, type GoodsMove, type Holdings } from './stores';
+import type { GameClock } from './time';
 import type { Town, TownRegistry } from './towns';
 import type { Work } from './upgrade';
+import type { PropInstance } from '../world/tiles';
 
 /**
  * Undo and redo of what the player builds. While a transaction is open (`Commands.act`) the builder
@@ -22,6 +26,10 @@ import type { Work } from './upgrade';
  * refused. Goods are not kept with the operations: an action's own costs, refunds and hand-overs to
  * an heir store all land in one difference of what each store holds, so a step gives back and takes
  * back exactly what happened, store by store, whatever a cap or a network did to it.
+ *
+ * A contract is not undoable, but one that lapses because its station left (`ContractBoard.tick`)
+ * comes back with the station while its deadline is ahead: whole, with a train, or the undo is
+ * refused until a train can take it. A deadline passed is the end of it either way.
  */
 
 type Tile = { x: number; y: number };
@@ -32,6 +40,9 @@ export interface BuildWorld {
   fleet: Fleet;
   towns: TownRegistry;
   houses: HouseRegistry;
+  contracts: ContractBoard;
+  contractJobs: ContractDispatcher;
+  clock: GameClock;
 }
 
 /** A track piece as `TrackGraph.place` lays it, without where. */
@@ -46,6 +57,12 @@ interface StationLevel {
 interface WorksLevel {
   level: number | undefined;
   work: Work | undefined;
+}
+
+/** A contract that hung on a station when it left, and what it was then. */
+interface HeldContract {
+  contract: Contract;
+  status: 'offer' | 'active';
 }
 
 /** A piece laid, replaced, lifted or moved to another line; `tiles` are all it covers. */
@@ -72,6 +89,7 @@ interface StationOp {
   work: Work | null;
   /** the town of a Townhouse, and its place in the registry's list */
   town: { town: Town; index: number } | null;
+  contracts: HeldContract[];
 }
 interface DecorOp {
   op: 'decor';
@@ -153,6 +171,8 @@ export class BuildLog {
   private readonly ops: BuildOp[] = [];
   /** each tile the action touches, as it stood before the first touch */
   private readonly before = new Map<number, string>();
+  /** the map's props on those tiles then: laying track takes them off the map for good */
+  private readonly props = new Map<number, PropInstance[] | undefined>();
   private readonly goods: Holdings;
   private readonly people = new Map<House, number>();
 
@@ -165,7 +185,12 @@ export class BuildLog {
     const b = this.w.builder;
     for (const t of tiles) {
       const k = t.y * b.map.w + t.x;
-      if (!this.before.has(k)) this.before.set(k, tileState(b, t.x, t.y));
+      if (this.before.has(k)) continue;
+      this.before.set(k, tileState(b, t.x, t.y));
+      this.props.set(
+        k,
+        b.map.props.get(k)?.map((p) => ({ ...p })),
+      );
     }
   }
 
@@ -203,6 +228,7 @@ export class BuildLog {
       index: this.w.builder.stations.length,
       work: null,
       town: null,
+      contracts: [],
     };
     if (!built) keepStation(this.w, op);
     this.ops.push(op);
@@ -251,7 +277,7 @@ export class BuildLog {
     for (const [h, was] of this.people)
       if (h.residents !== was) people.push({ x: h.x, y: h.y, n: h.residents - was });
     const goods = goodsMoved(this.goods, b.stores.holdings());
-    return new BuildStep(this.w, this.ops, this.before, after, goods, people, stroke);
+    return new BuildStep(this.w, this.ops, this.before, after, this.props, goods, people, stroke);
   }
 }
 
@@ -262,6 +288,12 @@ function keepStation(w: BuildWorld, op: StationOp) {
   op.index = w.builder.stations.indexOf(s);
   op.work = s.work;
   op.town = town ? { town, index: w.towns.towns.indexOf(town) } : null;
+  op.contracts = [];
+  for (const contract of w.contracts.contracts) {
+    const { status, originId, destId } = contract;
+    if ((status === 'offer' || status === 'active') && (originId === s.id || destId === s.id))
+      op.contracts.push({ contract, status });
+  }
 }
 /** Decor is leaving: a copy of its house, as the registry takes the work off the house itself. */
 function keepHouse(w: BuildWorld, op: DecorOp) {
@@ -277,6 +309,8 @@ export class BuildStep implements HistoryStep {
     /** the tiles it touches as they stood before it, and as it left them */
     private readonly before: Map<number, string>,
     private readonly after: Map<number, string>,
+    /** the map's props on those tiles before it */
+    private readonly props: Map<number, PropInstance[] | undefined>,
     private goods: GoodsMove[],
     private readonly people: PeopleMove[],
     /** what an action over many frames goes by (`Commands.act`) */
@@ -299,6 +333,7 @@ export class BuildStep implements HistoryStep {
     this.ops.push(...next.ops);
     for (const [k, v] of next.before) if (!this.before.has(k)) this.before.set(k, v);
     for (const [k, v] of next.after) this.after.set(k, v);
+    for (const [k, v] of next.props) if (!this.props.has(k)) this.props.set(k, v);
     this.people.push(...next.people);
     const sum = new Map(this.goods.map((m) => [`${m.key} ${m.id}`, { ...m }]));
     for (const m of next.goods) {
@@ -320,20 +355,64 @@ export class BuildStep implements HistoryStep {
     const takes = moves.filter((m) => m.n < 0).map((m) => ({ ...m, n: -m.n }));
     const why = this.refusal(forward, takes);
     if (why) return { ok: false, message: why };
-    const { builder, houses } = this.w;
+    const { builder, houses, contracts, contractJobs } = this.w;
     for (const m of takes) builder.stores.withdraw(m.key, m.id, m.n);
     for (const op of forward ? this.ops : [...this.ops].reverse()) this.apply(op, forward);
     for (const m of moves) if (m.n > 0) builder.stores.deposit(m.key, m.id, m.n);
     for (const p of this.people) {
       const h = houses.at(p.x, p.y);
-      if (h) h.residents = Math.max(0, h.residents + (forward ? p.n : -p.n));
+      if (!h) continue;
+      // what really moves: a house has grown or emptied since, and the way back is that much
+      p.n = Math.min(p.n, forward ? Math.max(0, houses.capacity(h) - h.residents) : h.residents);
+      h.residents += forward ? p.n : -p.n;
+    }
+    if (!forward) this.putPropsBack();
+    for (const { held } of this.lapsed(forward)) {
+      contracts.revive(held.contract, held.status);
+      if (held.status === 'active') contractJobs.assign(held.contract);
     }
     return { ok: true };
   }
 
+  /** The trees and deposits the action took off its tiles, which a redo takes off again. */
+  private putPropsBack() {
+    const { builder: b } = this.w;
+    for (const [k, list] of this.props) {
+      if (list)
+        b.map.props.set(
+          k,
+          list.map((p) => ({ ...p })),
+        );
+      else b.map.props.delete(k);
+      b.onPropsBack?.(k % b.map.w, Math.floor(k / b.map.w));
+    }
+  }
+
+  /**
+   * The contracts the stations coming back in this direction lapsed by leaving, that can take up
+   * again: their deadline is ahead and both their ends stand once this step has run.
+   */
+  private lapsed(forward: boolean) {
+    const { builder: b, clock } = this.w;
+    const back = this.ops
+      .filter((op): op is StationOp => op.op === 'station')
+      .filter((op) => op.built === forward);
+    const at = (id: number) =>
+      back.find((op) => op.station.id === id)?.station ?? b.stationById(id);
+    const out: { held: HeldContract; origin: Station; dest: Station }[] = [];
+    for (const op of back)
+      for (const held of op.contracts) {
+        const origin = at(held.contract.originId);
+        const dest = at(held.contract.destId);
+        const waiting = held.contract.status === 'expired' && clock.time < held.contract.expires;
+        if (waiting && origin && dest) out.push({ held, origin, dest });
+      }
+    return out;
+  }
+
   /** Why this step cannot go now, or null when it can. Changes nothing. */
   private refusal(forward: boolean, takes: readonly GoodsMove[]): string | null {
-    const { builder: b, fleet } = this.w;
+    const { builder: b, fleet, contractJobs } = this.w;
     for (const [k, state] of forward ? this.before : this.after)
       if (tileState(b, k % b.map.w, Math.floor(k / b.map.w)) !== state)
         return STR.history.builtOver;
@@ -349,6 +428,12 @@ export class BuildStep implements HistoryStep {
     if (train) return STR.history.trainOn(train.name);
     const short = b.stores.shortOf(takes);
     if (short) return STR.history.short(b.stores.label(short.store), fmtCost(short.missing));
+    // a contract that had a train comes back with one: not as work nobody will do, and a fine
+    for (const { held, origin, dest } of this.lapsed(forward)) {
+      const c = held.contract;
+      if (held.status === 'active' && c.trainId !== null && !contractJobs.canWork(c, origin, dest))
+        return STR.history.contractNoTrain(c.name);
+    }
     return null;
   }
 
@@ -368,7 +453,8 @@ export class BuildStep implements HistoryStep {
         if (op.built === forward) {
           op.station.work = op.work;
           if (op.town) towns.restore(op.town.town, op.town.index);
-          b.standStation(op.station, op.index);
+          // a station that left stands with its warning; one built anew has none, as placing it
+          b.standStation(op.station, op.index, !op.built);
         } else {
           keepStation(this.w, op);
           b.dropStation(op.station);
