@@ -62,7 +62,7 @@ describe('the end of a load', () => {
     expect(loadStoresGround(report(0, 5))).toBe(false);
   });
 
-  it('gives unreadable ground one notice and one toast with the count, and nothing else does', () => {
+  it('gives unreadable ground one notice with the count, and nothing else does', () => {
     let seen = 0;
     for (const ground of GROUNDS)
       for (const write of [null, ...WRITES]) {
@@ -81,7 +81,7 @@ describe('the end of a load', () => {
         expect(
           said.toasts.filter((t) => t.text === text),
           where,
-        ).toEqual([{ text, kind: 'warn' }]);
+        ).toEqual([]);
       }
     expect(seen).toBeGreaterThan(0);
   });

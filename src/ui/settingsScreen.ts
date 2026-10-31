@@ -36,6 +36,8 @@ export class SettingsScreen implements Screen {
   readonly root = el('div', { class: 'cols' });
   private left = el('div', { class: 'col-body' });
   private right = el('div', { class: 'col-body' });
+  /** the row that opens the Notifications screen */
+  onNotifications: (() => void) | null = null;
   /** autosave on or off and when the game was last stored; kept current while the screen is up */
   private autosaveLine = el('div', { class: 'kv' });
 
@@ -174,6 +176,12 @@ export class SettingsScreen implements Screen {
       this.toggle(STR.settings.smoke, 'smoke'),
       this.toggle(STR.settings.weather, 'weather'),
       this.toggle(STR.settings.showFps, 'showFps'),
+      el(
+        'div',
+        { class: 'kv' },
+        el('span', { class: 'k', text: STR.alerts.title }),
+        btn(STR.alerts.open, () => this.onNotifications?.(), 'small'),
+      ),
       el('div', {
         class: 'col-title',
         style: 'margin-top:10px',
