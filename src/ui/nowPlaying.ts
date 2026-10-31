@@ -51,6 +51,8 @@ export class NowPlaying {
   private toggleIcon: IconName = 'pause';
   /** what the widget shows now; it is written only where this changes, as it runs every frame */
   private shown: MusicView | null = null;
+  /** what each button is called now, as a change writes to the page */
+  private named = new Map<HTMLButtonElement, string>();
   readonly root: HTMLElement;
 
   /** `tip` builds a tooltip that says the text it reads when it opens. */
@@ -113,9 +115,10 @@ export class NowPlaying {
     return this.shown?.silent ? STR.nowPlaying.silentTip : STR.nowPlaying.forward;
   }
 
-  /** A button is only an icon: its title and its name for a screen reader say what it does. */
+  /** A button is only an icon: its name for a screen reader says what it does. */
   private name(b: HTMLButtonElement, text: string) {
-    if (b.getAttribute('aria-label') === text) return;
+    if (this.named.get(b) === text) return;
+    this.named.set(b, text);
     b.setAttribute('aria-label', text);
   }
 

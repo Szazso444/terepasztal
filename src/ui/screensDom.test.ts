@@ -1150,17 +1150,17 @@ describe('the now-playing widget', () => {
     expect(self).not.toHaveBeenCalled();
   });
 
-  it("names each button in its title and for a screen reader, in the tooltip's words", () => {
+  it("names each button for a screen reader in the tooltip's words, with no browser title beside the tooltip", () => {
     const d = deck();
     const { w, back, toggle, forward } = widget(d);
     const named = (b: FakeEl) => [b.title, b.attrs.get('aria-label')];
-    expect(named(back)).toEqual([STR.nowPlaying.noBack, STR.nowPlaying.noBack]);
-    expect(named(toggle)).toEqual([STR.nowPlaying.pause, STR.nowPlaying.pause]);
-    expect(named(forward)).toEqual([STR.nowPlaying.forward, STR.nowPlaying.forward]);
+    expect(named(back)).toEqual(['', STR.nowPlaying.noBack]);
+    expect(named(toggle)).toEqual(['', STR.nowPlaying.pause]);
+    expect(named(forward)).toEqual(['', STR.nowPlaying.forward]);
     Object.assign(d.state, { paused: true, canGoBack: true });
     w.update();
-    expect(named(back)).toEqual([STR.nowPlaying.back, STR.nowPlaying.back]);
-    expect(named(toggle)).toEqual([STR.nowPlaying.play, STR.nowPlaying.play]);
+    expect(named(back)).toEqual(['', STR.nowPlaying.back]);
+    expect(named(toggle)).toEqual(['', STR.nowPlaying.play]);
   });
 
   it('gives the keys back after a press: Enter finishes a route, and must not toggle the music', () => {
@@ -1181,7 +1181,7 @@ describe('the now-playing widget', () => {
     expect(root.find('np-title')!.className).toContain('paused');
     for (const b of [back, toggle, forward]) {
       expect(b.disabled).toBe(true);
-      expect(b.title).toBe(STR.nowPlaying.silentTip);
+      expect(b.attrs.get('aria-label')).toBe(STR.nowPlaying.silentTip);
     }
     expect(tips.slice(0, 3).map((t) => t())).toEqual(Array(3).fill(STR.nowPlaying.silentTip));
     // the tooltip still has the track, whose words the row gave up
@@ -1384,8 +1384,8 @@ describe('an old settings file', () => {
     expect(picked.map((e) => e.text())).toEqual([accept, prompt, deny, prompt, accept]);
   });
 
-  it('finds Settings without the two tabs that left', () => {
-    const { audio, gameplay, controls, saves } = STR.settings;
+  it('finds Settings without the three tabs that left', () => {
+    const { gameplay, controls, saves } = STR.settings;
     const screen = new SettingsScreen(
       stored(),
       () => undefined,
@@ -1393,6 +1393,6 @@ describe('an old settings file', () => {
       () => ({ seed: 1, savedAt: null, version: 'v24', warning: null, saveOff: false }),
       { confirm: () => Promise.resolve(true) },
     );
-    expect(screen.frameTabs().tabs.map((t) => t.label)).toEqual([audio, gameplay, controls, saves]);
+    expect(screen.frameTabs().tabs.map((t) => t.label)).toEqual([gameplay, controls, saves]);
   });
 });

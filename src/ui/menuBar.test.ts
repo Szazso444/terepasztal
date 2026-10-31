@@ -156,9 +156,9 @@ describe('the menu bar and the document', () => {
     expect(bar.isOpen).toBe(true);
   });
 
-  it('draws every shown entry with its icon and its label, the Guide kept out', () => {
+  it('draws every entry with its icon and its label', () => {
     const shown = element(bar.root).kids.filter((cell) => cell.style.display !== 'none');
-    expect(shown).toHaveLength(9);
+    expect(shown).toHaveLength(10);
     for (const cell of shown) expect(cell.kids[0].kids[0].className).toContain('k-ic');
     expect(entry('Save').kids[1].textContent).toBe('Save');
   });

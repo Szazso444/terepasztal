@@ -61,6 +61,7 @@ describe('the menu bar in a game', () => {
       'economy',
       'view',
       'notifications',
+      'guide',
     ]);
   });
 
@@ -199,7 +200,7 @@ describe('the keys the rows show', () => {
 
 describe('the menu bar in the level editor', () => {
   it('leaves out what the editor has closed, and a menu left empty with it', () => {
-    expect(ids('editor')).toEqual(['menu', 'fleet', 'view']);
+    expect(ids('editor')).toEqual(['menu', 'audio', 'fleet', 'view', 'guide']);
     expect(items('editor', 'fleet')).toEqual(['signals']);
     expect(items('editor', 'view')).toEqual(['overview', 'weather', 'dayNight', 'advisor']);
   });
@@ -209,7 +210,6 @@ describe('the menu bar in the level editor', () => {
     const gone = reachable('play').filter((a) => !editor.has(a));
     expect(gone.sort()).toEqual(
       [
-        'audio',
         'cheat',
         'contractSettings',
         'contracts',
@@ -332,7 +332,7 @@ describe('the rules in the level editor', () => {
   });
 
   it('does not run the entries it hides', () => {
-    for (const id of ['notifications', 'save', 'savedGames', 'settings', 'audio'] as const)
+    for (const id of ['notifications', 'save', 'savedGames', 'settings'] as const)
       expect(editor().click(id), id).toBeNull();
   });
 
@@ -414,7 +414,7 @@ describe('the labels that fold', () => {
   it('folds entries of the mode only, in the order', () => {
     expect(foldedEntries('play', 0)).toEqual([]);
     expect(foldedEntries('play', 3)).toEqual(['notifications', 'savedGames', 'settings']);
-    expect(foldedEntries('editor', 2)).toEqual(['menu', 'view']);
+    expect(foldedEntries('editor', 2)).toEqual(['audio', 'guide']);
   });
 });
 
