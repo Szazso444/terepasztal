@@ -59,8 +59,8 @@ describe('the alert rows', () => {
     expect(ALERT_TYPES).toHaveLength(14);
   });
 
-  it('starts every alert on the alert icon and the map pin, as the mock does', () => {
-    for (const t of ['nofuel', 'stuck', 'noroute', 'full', 'starved', 'contract', 'jam'] as const)
+  it('starts every alert on the alert icon and the map pin, and a critical pause says why', () => {
+    for (const t of ['noroute', 'full', 'starved', 'contract', 'jam'] as const)
       expect(on(t), t).toEqual(['icon', 'pin']);
     expect(on('ctfail')).toEqual(['icon', 'pin', 'toast']);
     expect(on('nofuel')).toEqual(['icon', 'pin', 'toast']);

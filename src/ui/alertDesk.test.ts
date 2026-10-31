@@ -160,6 +160,7 @@ describe('AlertDesk', () => {
     open = false;
     d.update(list);
     expect(clock.speedIndex).toBe(0);
-    expect(toasts).toHaveLength(1);
+    // the stuck train and the failed contract
+    expect(toasts).toHaveLength(2);
   });
 });
