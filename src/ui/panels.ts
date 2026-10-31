@@ -307,6 +307,8 @@ export interface PlayUi {
   readonly pauseMenu: PauseMenu;
   /** the title or the pause menu is up */
   readonly menuOpen: boolean;
+  /** a game is being played, a menu over it or not: at the title at boot there is none */
+  readonly gameInPlay: boolean;
   /**
    * The title screen at boot, over the stored game or a world not yet played: no game is being
    * played, so what replaces the stored game asks only when there is one. The pause menu opens it
@@ -1239,6 +1241,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     pauseMenu,
     get menuOpen() {
       return menuOpen();
+    },
+    get gameInPlay() {
+      return canSaveHere(savingSituation());
     },
     openMainMenu,
     openPauseMenu,

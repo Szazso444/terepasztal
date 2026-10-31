@@ -90,6 +90,14 @@ function barOn(categories: Category[], tier = 0) {
   return { bar, held };
 }
 
+describe('the terrain category', () => {
+  it('names each brush as its tile is named, not by its id', () => {
+    const items = catalog().find((c) => c.id === 'terrain')!.items;
+    expect(items.map((i) => i.name)).toContain(STR.tile.terrain.grass);
+    expect(items.every((i) => i.name && i.name[0] === i.name[0].toUpperCase())).toBe(true);
+  });
+});
+
 describe('the categories', () => {
   it('come in the order of their keys, with Terrain last', () => {
     expect(catalog().map((c) => c.id)).toEqual([

@@ -4,7 +4,6 @@
  * draws it. DOM-free, so Node tests read every rule.
  */
 import type { BuildingDef, Cost, DecorDef, StationDef, SupplyMode } from '../data/content';
-import { content } from '../data/content';
 import type { AgeStatus } from '../sim/ages';
 import { DECOR_DEFS } from '../sim/build';
 import { BUILDING_DEFS } from '../sim/buildings';
@@ -13,7 +12,7 @@ import { roadCost } from '../sim/roads';
 import { rules } from '../sim/rules';
 import { STATION_DEFS } from '../sim/stations';
 import { inSupplyMode } from '../sim/supply';
-import { LANGUAGE, STR } from '../strings';
+import { STR } from '../strings';
 import { nextLine, type ReclassDir } from '../world/reclass';
 import { Terrain, TERRAIN_NAMES } from '../world/tiles';
 import {
@@ -40,6 +39,7 @@ import {
 } from './tooltipDoc';
 import {
   TRACK_GROUPS,
+  pieceName,
   shortName,
   slotMate,
   stepGroup,
@@ -185,7 +185,7 @@ function ranked<T>(defs: T[], rank: (d: T) => number): T[] {
 export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
   const trackItem = (it: TrackItem): ToolItem => {
     const k = itemKey(it);
-    const base = content.track.pieces[it.kind]?.name ?? it.kind;
+    const base = pieceName(it.kind);
     const clsName =
       it.kind === 'crossing'
         ? `${STR.toolbar.trackClass[it.cls]} × ${STR.toolbar.trackClass[it.cls2 ?? it.cls]}`
@@ -340,7 +340,7 @@ export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
   ].map((t) => ({
     key: `terrain:${t}`,
     tool: { kind: 'terrain', terrain: t },
-    name: LANGUAGE === 'en' ? TERRAIN_NAMES[t] : STR.tile.terrain[TERRAIN_NAMES[t]],
+    name: STR.tile.terrain[TERRAIN_NAMES[t]],
     cost: {},
     frame:
       t === Terrain.Water ? 'terrain/water_0_f0' : `terrain/${TERRAIN_NAMES[t].toLowerCase()}_0`,

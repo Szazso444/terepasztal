@@ -140,6 +140,32 @@ export class BuildInfo {
     else cost.forEach(([k, v], i) => costs.append(this.amount(k, v, short[i])));
     const close = btn('', () => this.onClose?.(), 'panel-x');
     close.append(buildIcon('close', 14));
+    const body = el(
+      'div',
+      { class: 'panel-body bi-scroll' },
+      item.desc ? el('p', { class: 'bi-p', text: item.desc }) : '',
+      sectionHeader(STR.toolbar.secCost),
+      costs,
+      ...(item.recipe
+        ? [
+            sectionHeader(
+              STR.toolbar.secMakes,
+              STR.toolbar.batches(recipeBatches(item.recipe.perWeek)),
+            ),
+            this.recipeLine(item.recipe),
+          ]
+        : []),
+      ...(item.place
+        ? [sectionHeader(STR.toolbar.secWhere), el('p', { class: 'bi-p', text: item.place })]
+        : []),
+      pay ? el('p', { class: `bi-p ${pay.ok ? '' : 'red'}`, text: pay.text }) : '',
+      ...(run
+        ? [
+            sectionHeader(STR.toolbar.secRun, STR.toolbar.runSize(run.tiles, run.curves)),
+            el('div', { class: 'bi-line' }, ...this.amounts(run.cost)),
+          ]
+        : []),
+    );
     this.root.replaceChildren(
       el(
         'div',
@@ -149,34 +175,11 @@ export class BuildInfo {
         item.typeLabel ? el('span', { class: 'bi-type', text: item.typeLabel }) : '',
         close,
       ),
-      el(
-        'div',
-        { class: 'panel-body bi-scroll' },
-        item.desc ? el('p', { class: 'bi-p', text: item.desc }) : '',
-        sectionHeader(STR.toolbar.secCost),
-        costs,
-        ...(item.recipe
-          ? [
-              sectionHeader(
-                STR.toolbar.secMakes,
-                STR.toolbar.batches(recipeBatches(item.recipe.perWeek)),
-              ),
-              this.recipeLine(item.recipe),
-            ]
-          : []),
-        ...(item.place
-          ? [sectionHeader(STR.toolbar.secWhere), el('p', { class: 'bi-p', text: item.place })]
-          : []),
-        pay ? el('p', { class: `bi-p ${pay.ok ? '' : 'red'}`, text: pay.text }) : '',
-        ...(run
-          ? [
-              sectionHeader(STR.toolbar.secRun, STR.toolbar.runSize(run.tiles, run.curves)),
-              el('div', { class: 'bi-line' }, ...this.amounts(run.cost)),
-            ]
-          : []),
-      ),
+      body,
       el('div', { class: 'panel-foot', text: controlsHint(item) }),
     );
+    // the run being laid stands last, and nothing can scroll a card while the button is down
+    if (run) body.scrollTop = body.scrollHeight;
   }
   /**
    * Re-render affordability colours and the paying store as the stores and the pointer move. Not

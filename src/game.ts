@@ -172,6 +172,8 @@ import { handlePlayKeys } from './ui/keymap';
 /** Loop ticks per real second: one tick runs `clock.speed` steps of SIM_STEP game seconds. */
 const SIM_HZ = 1 / SIM_STEP;
 const EDGE_MARGIN = 14;
+/** Over the HUD only the very edge pans, so the top bar's buttons can be reached. */
+const EDGE_MARGIN_HUD = 2;
 const PAN_SPEED = 900; // screen px / s at zoom 1
 const TRANSITION_MS = 300;
 /** Relaid track pieces that start their shimmer in one frame; a long stroke's others follow. */
@@ -1222,7 +1224,8 @@ export class Game implements UiHost {
     );
     this.loop.start();
     window.addEventListener('beforeunload', () => {
-      if (this.settings.autosave && this.mode === 'play') this.save(true);
+      // the world under the title at boot is no game: a reload does not store it as one
+      if (this.settings.autosave && this.mode === 'play' && this.ui.gameInPlay) this.save(true);
     });
     await onProgress?.('renderer', 1);
   }
@@ -2753,10 +2756,11 @@ export class Game implements UiHost {
         // a pointer on the HUD at the edge of the screen does not take the camera off a train
         !(inp.overUi && this.follow.trainId !== null)
       ) {
-        if (inp.mouseX < EDGE_MARGIN) dx -= 1;
-        if (inp.mouseX > this.camera.viewW - EDGE_MARGIN) dx += 1;
-        if (inp.mouseY < EDGE_MARGIN) dy -= 1;
-        if (inp.mouseY > this.camera.viewH - EDGE_MARGIN) dy += 1;
+        const edge = inp.overUi ? EDGE_MARGIN_HUD : EDGE_MARGIN;
+        if (inp.mouseX < edge) dx -= 1;
+        if (inp.mouseX > this.camera.viewW - edge) dx += 1;
+        if (inp.mouseY < edge) dy -= 1;
+        if (inp.mouseY > this.camera.viewH - edge) dy += 1;
       }
       // a pan moves the map under the tooltips: they close
       if (dx || dy) {
