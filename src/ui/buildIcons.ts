@@ -1,7 +1,7 @@
 /**
  * The icons of the build bar: its categories, its Q and E arrows, the lock, the Upgrade and
- * Downgrade arrows and the build card's close mark. Drawn for the game in `currentColor` on a 24 px
- * grid, in the manner of `ageIcon.ts`; none comes from an icon set, so none has a credit.
+ * Downgrade arrows and the build card's close mark. They are the design mock's own, with the road
+ * added in their style, in `currentColor` on a 24 px grid, in the manner of `ageIcon.ts`.
  */
 import type { AtlasRegistry } from '../engine/atlas';
 import { el } from './dom';
