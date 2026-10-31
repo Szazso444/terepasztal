@@ -139,15 +139,13 @@ describe('the step from v23', () => {
   });
 
   it.each([
-    ['no tickets at all', undefined],
-    ['tickets of no number', 'many'],
-    ['tickets the file cannot hold', Infinity],
+    ['no tickets at all', ''],
+    ['tickets of no number', '"tickets":"many",'],
+    ['tickets the file cannot hold', '"tickets":1e999,'],
   ])('loads a file with %s: its value is gone either way', (_, tickets) => {
-    const j = v23();
-    const economy = j.economy as unknown as Record<string, unknown>;
-    if (tickets === undefined) delete economy.tickets;
-    else economy.tickets = tickets;
-    const read = readSaveText(text(j).replace('null', tickets === Infinity ? '1e999' : 'null'));
+    const raw = text(v23());
+    expect(raw).toContain('"tickets":17,');
+    const read = readSaveText(raw.replace('"tickets":17,', tickets));
     expect('save' in read && read.save.economy.money).toBe(12345);
   });
 
