@@ -265,8 +265,6 @@ export interface PlayUi {
   readonly debug: DebugPanel;
   readonly overviewBanner: HTMLElement;
   readonly toolbar: Toolbar;
-  /** the bar and the build card, which the overview hides together */
-  readonly buildDock: HTMLElement;
   readonly buildingPanel: BuildingPanel;
   readonly decorPanel: DecorPanel;
   readonly trainSide: TrainSide;
@@ -564,6 +562,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     () => d.build.run,
   );
   buildInfo.onClose = () => toolbar.select({ kind: 'none' });
+  toolbar.root.prepend(buildInfo.root);
   buildInfo.onTrainDetails = trainDetails;
   buildInfo.onTrainLocate = (t) => host.focusTrain(t);
   buildInfo.onTrainClose = () => host.selectFieldTrain(null);
@@ -629,9 +628,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     toolbar.setActive(t);
     buildInfo.show(toolbar.item(t));
   };
-
-  /** the build card over the bar: one root, as `input.ts` hit-tests the children of #ui-root */
-  const buildDock = el('div', { id: 'build-dock' }, buildInfo.root, toolbar.root);
 
   // ---------------------------------------------------------------- menus
   const menuOpen = () => mainMenu.visible || pauseMenu.visible;
@@ -837,7 +833,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     townPanel.root,
     d.namePrompt.root,
     el('div', { id: 'hint', text: STR.hints.camera }),
-    buildDock,
+    toolbar.root,
     stationPanel.root,
     buildingPanel.root,
     decorPanel.root,
@@ -933,7 +929,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     debug,
     overviewBanner,
     toolbar,
-    buildDock,
     buildingPanel,
     decorPanel,
     trainSide,

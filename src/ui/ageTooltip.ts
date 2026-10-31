@@ -6,7 +6,18 @@
 import { STR } from '../strings';
 import type { AgeStatus, GoalKind, GoalStatus } from '../sim/ages';
 import { fmtInt, fmtMoney } from './numberFormat';
-import { bad, dim, good, hint, num, quiet, row, title, type Block, type TipDoc } from './tooltipDoc';
+import {
+  bad,
+  dim,
+  good,
+  hint,
+  num,
+  quiet,
+  row,
+  title,
+  type Block,
+  type TipDoc,
+} from './tooltipDoc';
 
 /** Display name of an age by data id. */
 export function ageName(id: string) {

@@ -59,8 +59,14 @@ function lockMark(tier: number): HTMLElement {
  * panel.
  */
 export class Toolbar {
+  /**
+   * `#build-dock`, the root in `#ui-root` (`input.ts` hit-tests its children): the overview hides
+   * it, and with it the build card that `createPlayUi` stands in it over the bar.
+   */
   readonly root: HTMLElement;
   readonly bar: BuildBar;
+  /** the bar itself */
+  private panel: HTMLElement;
   private catTerms = new Map<CategoryId, HTMLElement>();
   private catButtons = new Map<CategoryId, HTMLButtonElement>();
   private catKeys = new Map<CategoryId, HTMLElement>();
@@ -109,7 +115,7 @@ export class Toolbar {
       this.term(this.removeBtn, () => demolishTip(refundPercent(this.bar.editor))),
     );
     this.layCategories();
-    this.root = el(
+    this.panel = el(
       'div',
       { id: 'toolbar', class: 'panel' },
       this.statusRow,
@@ -117,7 +123,8 @@ export class Toolbar {
       this.itemRow,
       catRow,
     );
-    this.tooltip.bindTerms(this.root);
+    this.root = el('div', { id: 'build-dock' }, this.panel);
+    this.tooltip.bindTerms(this.panel);
     this.paint(true);
   }
 
@@ -194,7 +201,7 @@ export class Toolbar {
 
   private renderRows() {
     // a tooltip resting on a button of these rows goes with it: no mouseleave will come
-    if (this.root.matches(':hover')) this.tooltip.stack.termLeave(-1);
+    if (this.panel.matches(':hover')) this.tooltip.stack.termLeave(-1);
     const bar = this.bar;
     const c = bar.open ? bar.category(bar.open) : null;
     if (!c && this.tiles.size) this.onHover?.(null);
@@ -203,11 +210,11 @@ export class Toolbar {
     this.itemRow.innerHTML = '';
     this.typeRow.style.display = c ? '' : 'none';
     this.itemRow.style.display = c ? '' : 'none';
-    this.root.classList.toggle('open', !!c);
+    this.panel.classList.toggle('open', !!c);
     if (!c) return;
     this.renderTypes(c);
     this.renderTiles();
-    this.tooltip.bindTerms(this.root);
+    this.tooltip.bindTerms(this.panel);
   }
 
   private renderTypes(c: Category) {
