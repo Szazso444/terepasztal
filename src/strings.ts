@@ -1904,6 +1904,8 @@ export const STR = {
     unlocks: (c: string) => `Next: ${c}`,
     demolish: 'Demolish',
     rename: 'Rename',
+    renameTitle: 'Rename station',
+    renameHint: 'The new name of this station.',
     nameEmpty: 'A station needs a name',
     noPlatform: 'No adjacent track!',
     orphaned: (n: string) => `${n} lost its platform track`,

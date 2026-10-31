@@ -614,6 +614,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       render: (doc) => renderTip(doc, d.atlas),
       bindTerms: (scope) => d.tooltip.bindTerms(scope),
     },
+    d.namePrompt,
   );
   const townPanel = new TownPanel(d.towns, d.houses, stores);
   townPanel.onGo = (t) => {

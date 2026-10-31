@@ -8,7 +8,12 @@ interface Question extends ConfirmOptions {
   title: string;
   text: string;
   name?: string;
+  /** the longest name it takes */
+  maxLength?: number;
 }
+
+/** The longest name `ask` takes unless it says otherwise. */
+const NAME_MAX = 20;
 
 /** What a yes reads as: any text, as `ask` answers with the name typed. */
 const YES = 'yes';
@@ -16,20 +21,25 @@ const YES = 'yes';
 /**
  * The in-game dialog, over the menus and the screens: a yes or no question, or a name to type. It
  * replaces the browser's own dialogs, which stall the game loop. Esc or a click beside it says no;
- * Enter presses the focused answer. No key press reaches the game or the menu underneath while it
- * is up (key releases still do, so a key held when it opened does not stay down).
+ * Enter presses the focused answer, and Space presses nothing. A question that destroys something
+ * opens on its no, so neither key can say yes by accident: Tab reaches the yes. No key press reaches
+ * the game or the menu underneath while it is up (key releases still do, so a key held when it
+ * opened does not stay down). When it closes, the focus goes back to what had it.
  */
 export class NamePrompt {
   readonly root = el('div', { id: 'name-prompt-root' });
   private frame = new ScreenFrame(() => this.flow.dismiss());
-  private input = el('input', { class: 'k-cf-in', type: 'text', maxlength: '20' });
+  private input = el('input', { class: 'k-cf-in', type: 'text' });
   private flow = new DialogFlow<Question, string | null>(
-    { show: (q) => this.draw(q), hide: () => (this.root.style.display = 'none') },
+    { show: (q) => this.draw(q), hide: () => this.hide() },
     null,
   );
+  /** what had the focus when the dialog opened */
+  private asker: HTMLElement | null = null;
 
   constructor() {
     this.input.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') return;
       if (e.key === 'Enter') this.answerName();
       else if (e.key === 'Escape') this.flow.dismiss();
       e.stopPropagation();
@@ -50,12 +60,20 @@ export class NamePrompt {
     return this.flow.open;
   }
   /** Ask for a name; resolves with the text, or null when dismissed. */
-  ask(title: string, hint: string, value: string): Promise<string | null> {
-    return this.flow.ask({ title, text: hint, name: value });
+  ask(title: string, hint: string, value: string, maxLength?: number): Promise<string | null> {
+    return this.flow.ask({ title, text: hint, name: value, maxLength });
   }
   /** A yes / no question. The answer names what it does; destroying something, it is red. */
   confirm(title: string, text: string, o: ConfirmOptions = {}): Promise<boolean> {
     return this.flow.ask({ ...o, title, text }).then((v) => v !== null);
+  }
+
+  private hide() {
+    this.root.style.display = 'none';
+    const back = this.asker;
+    this.asker = null;
+    // not when the answer took it away, as a deleted save's row
+    if (back?.isConnected) back.focus();
   }
 
   private answerName() {
@@ -64,6 +82,8 @@ export class NamePrompt {
 
   private draw(q: Question) {
     const naming = q.name !== undefined;
+    const focused = document.activeElement as HTMLElement | null;
+    this.asker = focused === document.body ? null : focused;
     const frameFooter = (): FootSpec => ({
       actions: [
         {
@@ -96,11 +116,15 @@ export class NamePrompt {
     this.frame.show(screen, { stacked: false, paused: false });
     this.root.style.display = 'flex';
     if (naming) {
+      this.input.maxLength = q.maxLength ?? NAME_MAX;
       this.input.value = q.name ?? '';
       setTimeout(() => {
         this.input.focus();
         this.input.select();
       }, 0);
-    } else setTimeout(() => this.frame.primaryButton?.focus(), 0);
+    } else {
+      const first = q.danger ? this.frame.cancelButton : this.frame.primaryButton;
+      setTimeout(() => first?.focus(), 0);
+    }
   }
 }

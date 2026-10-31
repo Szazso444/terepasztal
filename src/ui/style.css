@@ -3157,8 +3157,10 @@ table.market td {
   background: #c4463b;
   color: #fff4ec;
 }
-.btn:disabled,
-.btn:disabled:hover {
+.k-page .btn:disabled,
+.k-page .btn:disabled:hover,
+.k-foot .btn:disabled,
+.k-foot .btn:disabled:hover {
   background: var(--iron);
   opacity: 0.45;
   color: var(--text);
@@ -3640,6 +3642,10 @@ table.market td {
 }
 .k-field:focus-within {
   border-color: var(--amber);
+}
+.k-field > input:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 .k-field > .k-ic {
   color: var(--text-dim);
