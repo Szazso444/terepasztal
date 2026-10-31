@@ -969,8 +969,12 @@ export const STR = {
       `Your land supports ${n} active contract${n === 1 ? '' : 's'}. Finish one or buy land to take on more.`,
     completed: (n: string, pay: string) => `${n} delivered: ${pay}`,
     failedMsg: (n: string, fine: string) => `${n} failed: fined ${fine}`,
-    autoOn: 'Auto-accept: on',
-    autoOff: 'Auto-accept: off',
+    autoLabel: 'Auto-accept',
+    autoSubOn: 'On: offers are accepted as they come.',
+    autoSubOff: 'Off: offers wait here for you.',
+    seeOffers: 'See offers',
+    /** an order's size: units and cargo */
+    cargoAmount: (n: number, cargo: string) => `${n} u ${cargo}`,
     autoHint:
       'On: offers are accepted as they come, while your land has room for another active contract; the rest wait here. Off: offers wait here for you. Finer control per rarity is in Settings.',
     stats: (done: number, failed: number) => `${done} delivered · ${failed} failed`,
@@ -1025,7 +1029,6 @@ export const STR = {
     unlock: 'Unlock a recipe',
     kind: 'Kind',
     age: 'Age',
-    ages: ['Age of Steam', 'Diesel Era', 'Electric Line'] as string[],
     quality: {
       N: 'Common',
       R: 'Uncommon',
@@ -1033,7 +1036,6 @@ export const STR = {
       SSR: 'Epic',
       L: 'Legendary',
     } as Record<string, string>,
-    known: (have: number, total: number) => `${have} / ${total} recipes known`,
     noPool: 'No models of this kind in this age.',
     unlockHint: (n: number) =>
       `Pay once, choose one of ${n} recipe cards. A card you already know pays back in materials instead.`,
@@ -1059,7 +1061,6 @@ export const STR = {
       `${recipes} recipes · ${crafts} built · ${failures} failed`,
     /** the workshop's foot: the materials of the selected store, named */
     resources: (label: string) => `Materials at ${label}`,
-    filterLabel: 'Vehicle type',
     filter: {
       all: 'All railcraft',
       steam: 'Steam',
@@ -1073,6 +1074,23 @@ export const STR = {
     search: 'Find model…',
     searchLabel: 'Find model',
     inspect: 'Inspect 3D',
+    /** the filter's short labels, for the strip; the long ones above are their tooltips */
+    filterShort: {
+      all: 'All',
+      steam: 'Steam',
+      diesel: 'Diesel',
+      electric: 'Electric',
+      bulk: 'Bulk',
+      mineral: 'Mineral',
+      liquid: 'Tank',
+      people: 'Passenger',
+    } as Record<string, string>,
+    count: (n: number) => `${n} recipe${n === 1 ? '' : 's'}`,
+    countOf: (shown: number, all: number) => `${shown} of ${all} recipes`,
+    /** what the draw's head says: its kind and its age */
+    drawOf: (kind: string, age: string) => `${kind} · ${age}`,
+    heldHint: 'A draw is waiting: choose a card first',
+    recipesKnown: 'Recipes known',
   },
   vehicle: {
     body: (size: string, tiles: number, plan: string) =>
@@ -1092,6 +1110,12 @@ export const STR = {
       garratt: 'Garratt articulated',
       meyer: 'Meyer articulated',
     } as Record<string, string>,
+    quality: 'Quality',
+    kind: 'Kind',
+    preview: 'Preview',
+    properties: 'Properties',
+    degrees: (n: number) => `${n}°`,
+    note: (kind: string) => `Inspect 3D · ${kind}`,
     angle: 'Viewing angle',
     pause: 'Pause rotation',
     rotate: 'Rotate',
@@ -1127,11 +1151,17 @@ export const STR = {
     newest: 'Newest',
     freeOnly: 'Unassigned only',
     count: (n: number) => `${n} items`,
+    countOf: (n: number, all: number) => `${n} of ${all} items`,
     empty: 'Nothing matches.',
-    copies: (n: number) => `${n} copies`,
+    copies: (n: number) => `${n} ${n === 1 ? 'copy' : 'copies'}`,
     lv: (l: number) => `Lv ${l}`,
     levelUp: 'Level up',
     levelUpHint: 'Consumes one spare unassigned copy of this model',
+    levelUpNeedsSpare: 'Needs a spare unassigned copy of this model',
+    levelUpTitle: (name: string, from: number, to: number) =>
+      `Level up ${name}: Lv ${from} → Lv ${to}?`,
+    levelUpText: (loco: boolean, pct: number) =>
+      `It gains ${pct}% ${loco ? 'speed and power' : 'capacity'}. A spare copy is used up: two copies become one.`,
     leveled: (name: string, level: number) => `${name} is now Lv ${level}`,
     capacity: 'Capacity',
     crew: 'crew',
@@ -1691,6 +1721,9 @@ export const STR = {
     driftHint: 'Fuel prices (oil, diesel, crude) wander up to ±40 % on a slow weekly walk.',
     hint: 'Prices are per unit. A store holds up to its cap of each good.',
     deals: 'Standing deals',
+    spot: 'Spot prices',
+    goods: (n: number) => `${n} good${n === 1 ? '' : 's'}`,
+    noStore: 'No store is selected. Pick one on the top bar.',
     dealsHint: (d: number) =>
       `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the store's cap or when funds run out; selling takes what is on hand.`,
     dealBuy: 'Buy / cycle',

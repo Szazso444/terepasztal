@@ -73,6 +73,7 @@ import { CreditsScreen } from './creditsScreen';
 import { GachaScreen } from './gachaScreen';
 import { CraftingScreen } from './craftingScreen';
 import { RosterScreen } from './rosterScreen';
+import { InspectScreen } from './inspectScreen';
 import { ContractsScreen } from './contractsScreen';
 import { ContractsSide } from './contractsSide';
 import { Minimap } from './minimap';
@@ -361,6 +362,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.trade,
     () => d.clock.time,
     d.commands,
+    d.atlas,
   );
   d.trade.onSettled = (lines) =>
     d.toasts.push(
@@ -473,9 +475,30 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     toast,
     d.atlas,
   );
-  const rosterScreen = new RosterScreen(d.inventory, d.fleet, d.commands, d.atlas, toast);
-  const contractsScreen = new ContractsScreen(d.contracts, d.builder, d.clock, toast, d.namePrompt);
+  const rosterScreen = new RosterScreen(
+    d.inventory,
+    d.fleet,
+    d.commands,
+    d.atlas,
+    toast,
+    d.namePrompt,
+  );
+  // Inspect 3D stands over the screen that asked for it, and Back returns
+  const inspectScreen = new InspectScreen(d.atlas);
+  craftingScreen.onInspect = (defId) => {
+    inspectScreen.show(defId);
+    d.screens.push(inspectScreen);
+  };
+  const contractsScreen = new ContractsScreen(
+    d.contracts,
+    d.builder,
+    d.clock,
+    toast,
+    d.namePrompt,
+    d.atlas,
+  );
   contractsScreen.trainName = (id) => d.fleet.byId(id)?.name ?? null;
+  contractsScreen.redraw = () => d.screens.redraw();
   contractsScreen.autoAccept = {
     get: () => CONTRACT_RARITIES.every((r) => contractPolicyFor(d.settings, r) === 'accept'),
     set: (v) => {

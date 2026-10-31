@@ -1,10 +1,22 @@
-import { el, btn } from './dom';
+import { el } from './dom';
 import { STR } from '../strings';
 import { rules } from '../sim/rules';
+import {
+  actionButton,
+  card,
+  cardGrid,
+  emptyState,
+  note,
+  segmented,
+  toggleSwitch,
+  type SegOption,
+} from './kit';
 import type { Screen } from './modal';
+import type { Confirm } from './menu';
 import type { Inventory } from '../gacha/inventory';
 import {
   RARITIES,
+  STAT_PER_LEVEL,
   itemDef,
   levelMul,
   LEVEL_CAP,
@@ -19,24 +31,39 @@ import { rarityStars, vehicleLabels } from './labels';
 import type { Fleet } from '../sim/fleet';
 import type { Commands } from '../sim/commands';
 import type { AtlasRegistry } from '../engine/atlas';
-import { spriteImg, frameForItem } from './spritePreview';
-import { portraitImg } from './rosterPortraits';
+import { decorateSegmented, fragment, ScrollKeep, switchLine, vehicleArt } from './economyParts';
+import { rarityClass } from './rarityClass';
+import {
+  KIND_FILTERS,
+  SIZE_FILTERS,
+  SORT_KEYS,
+  filtered,
+  levelGainPercent,
+  levelUpState,
+  pickOf,
+  rosterItems,
+  type KindFilter,
+  type RosterEntry,
+  type RosterFilters,
+  type SortKey,
+} from './rosterView';
 
-type KindFilter = 'all' | 'loco' | 'wagon';
-type SortKey = 'rarity' | 'name' | 'level' | 'newest';
-
-/** Inventory browser with filters and sorting. */
+/** Inventory browser: filters and sorting up top, one card per copy owned under them. */
 export class RosterScreen implements Screen {
   readonly id = 'roster';
   readonly title = STR.roster.title;
-  readonly root = el('div', { class: 'cols', style: 'flex-direction:column' });
-  private bar = el('div', { class: 'col-foot', style: 'border:none;padding:0 0 6px 0' });
-  private list = el('div', { class: 'col-body roster-grid' });
+  readonly icon = 'list';
+  readonly root = el('div', { class: 'k-page ec-fixed' });
   private kind: KindFilter = 'all';
-  private rarity: string = 'all';
+  private rarity = 'all';
   private sort: SortKey = 'rarity';
   private freeOnly = false;
-  private size: string = 'all';
+  private size = 'all';
+  private count = el('b', { class: 'ec-count' });
+  private cards = el('div', { class: 'ec-scroll' });
+  private scroll = new ScrollKeep(this.cards);
+  /** what the cards were last built from: the same again builds nothing */
+  private shown = '';
 
   constructor(
     private readonly inventory: Inventory,
@@ -44,127 +71,185 @@ export class RosterScreen implements Screen {
     private readonly commands: Commands,
     private readonly atlas: AtlasRegistry,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void = () => {},
+    /** the game's dialog, for the question before a copy is used up to level another */
+    private readonly prompt: Confirm | null = null,
   ) {
-    this.root.append(this.bar, el('div', { class: 'col' }, this.list));
+    this.root.append(this.head(), this.cards);
   }
+
   onOpen() {
-    this.render();
+    this.render(true);
   }
   refresh() {
-    this.render();
+    this.scroll.restore();
+    this.render(false);
   }
 
-  private render() {
-    const b = this.bar;
-    b.innerHTML = '';
-    const group = (
-      label: string,
-      opts: { v: string; t: string; star?: string }[],
-      cur: string,
-      set: (v: string) => void,
-    ) => {
-      const g = el('div', { class: 'tb-group' }, el('span', { class: 'tb-label', text: label }));
-      for (const o of opts) {
-        const b = btn(
-          o.t,
-          () => {
-            set(o.v);
-            this.render();
-          },
-          `small ${cur === o.v ? 'active' : ''}`,
-        );
-        if (o.star) b.prepend(rarityStars(o.star, `rarity-${o.star}`));
-        g.append(b);
-      }
-      return g;
-    };
-    b.append(
-      group(
-        STR.roster.kind,
-        [
-          { v: 'all', t: STR.roster.all },
-          { v: 'loco', t: STR.gacha.loco },
-          { v: 'wagon', t: STR.gacha.wagon },
-        ],
-        this.kind,
-        (v) => (this.kind = v as KindFilter),
-      ),
-      group(
-        STR.roster.rarity,
-        [
-          { v: 'all', t: STR.roster.all },
-          ...RARITIES.map((r) => ({ v: r, t: STR.craft.quality[r] ?? r, star: r })),
-        ],
-        this.rarity,
-        (v) => (this.rarity = v),
-      ),
-      group(
-        STR.roster.sort,
-        [
-          { v: 'rarity', t: STR.roster.rarity },
-          { v: 'name', t: STR.roster.name },
-          { v: 'level', t: STR.roster.level },
-          { v: 'newest', t: STR.roster.newest },
-        ],
-        this.sort,
-        (v) => (this.sort = v as SortKey),
-      ),
-      group(
-        STR.roster.sizeLabel,
-        [
-          { v: 'all', t: STR.roster.all },
-          { v: 'small', t: STR.roster.sizes.small },
-          { v: 'medium', t: STR.roster.sizes.medium },
-          { v: 'large', t: STR.roster.sizes.large },
-        ],
-        this.size,
-        (v) => (this.size = v),
-      ),
-      group(
-        '',
-        [{ v: 'free', t: STR.roster.freeOnly }],
-        this.freeOnly ? 'free' : '',
-        () => (this.freeOnly = !this.freeOnly),
-      ),
-      el('span', {
-        class: 'dim',
-        style: 'margin-left:auto',
-        text: STR.roster.count(this.inventory.items.length),
-      }),
-    );
-    const items = this.inventory.items
-      .filter((i) => this.kind === 'all' || i.kind === this.kind)
-      .filter((i) => this.rarity === 'all' || itemDef(i.defId).rarity === this.rarity)
-      .filter((i) => this.size === 'all' || (itemDef(i.defId).size ?? 'small') === this.size)
-      .filter((i) => !this.freeOnly || i.assigned === null);
-    const rIdx = (i: Item) => RARITIES.indexOf(itemDef(i.defId).rarity);
-    items.sort((a, c) => {
-      switch (this.sort) {
-        case 'rarity':
-          return rIdx(c) - rIdx(a) || itemDef(a.defId).name.localeCompare(itemDef(c.defId).name);
-        case 'name':
-          return itemDef(a.defId).name.localeCompare(itemDef(c.defId).name);
-        case 'level':
-          return c.level - a.level || rIdx(c) - rIdx(a);
-        default:
-          return c.obtainedAt - a.obtainedAt || c.uid - a.uid;
-      }
+  // ---------------------------------------------------------------- the filters
+  /** A filter strip: picking one starts the list again at the top. */
+  private strip(
+    label: string,
+    options: SegOption[],
+    value: string,
+    set: (id: string) => void,
+    marks?: (Node | null)[],
+  ): HTMLElement {
+    const seg = segmented({
+      options,
+      value,
+      cls: 'small',
+      onChange: (id) => {
+        set(id);
+        this.scroll.top();
+        this.render(true);
+      },
     });
-    const l = this.list;
-    l.innerHTML = '';
-    if (!items.length) l.append(el('div', { class: 'dim', text: STR.roster.empty }));
-    for (const it of items) l.append(this.card(it));
+    if (marks) decorateSegmented(seg, marks);
+    return el('div', { class: 'ec-filter' }, el('span', { text: label }), seg);
   }
 
-  private card(it: Item) {
+  private head(): HTMLElement {
+    const kinds: SegOption[] = [
+      { id: 'all', label: STR.roster.all },
+      { id: 'loco', label: STR.gacha.loco },
+      { id: 'wagon', label: STR.gacha.wagon },
+    ];
+    const rarities: SegOption[] = [
+      { id: 'all', label: STR.roster.all },
+      ...RARITIES.map((r) => ({ id: r, label: STR.craft.quality[r] ?? r })),
+    ];
+    const sorts: SegOption[] = [
+      { id: 'rarity', label: STR.roster.rarity },
+      { id: 'name', label: STR.roster.name },
+      { id: 'level', label: STR.roster.level },
+      { id: 'newest', label: STR.roster.newest },
+    ];
+    const sizes: SegOption[] = [
+      { id: 'all', label: STR.roster.all },
+      { id: 'small', label: STR.roster.sizes.small },
+      { id: 'medium', label: STR.roster.sizes.medium },
+      { id: 'large', label: STR.roster.sizes.large },
+    ];
+    const free = toggleSwitch(
+      STR.roster.freeOnly,
+      () => this.freeOnly,
+      (v) => {
+        this.freeOnly = v;
+        this.scroll.top();
+        this.render(true);
+      },
+    );
+    return el(
+      'div',
+      { class: 'ec-fhead' },
+      el(
+        'div',
+        { class: 'ec-frow' },
+        this.strip(STR.roster.kind, kinds, this.kind, (id) => {
+          this.kind = pickOf(KIND_FILTERS, id, this.kind);
+        }),
+        this.strip(
+          STR.roster.rarity,
+          rarities,
+          this.rarity,
+          (id) => {
+            this.rarity = pickOf(['all', ...RARITIES], id, this.rarity);
+          },
+          [null, ...RARITIES.map((r) => rarityStars(r, `rarity-${r}`))],
+        ),
+        this.count,
+      ),
+      el(
+        'div',
+        { class: 'ec-frow' },
+        this.strip(STR.roster.sort, sorts, this.sort, (id) => {
+          this.sort = pickOf(SORT_KEYS, id, this.sort);
+        }),
+        this.strip(STR.roster.sizeLabel, sizes, this.size, (id) => {
+          this.size = pickOf(SIZE_FILTERS, id, this.size);
+        }),
+        switchLine(free, STR.roster.freeOnly),
+      ),
+    );
+  }
+
+  private filters(): RosterFilters {
+    return {
+      kind: this.kind,
+      rarity: this.rarity,
+      size: this.size,
+      freeOnly: this.freeOnly,
+      sort: this.sort,
+    };
+  }
+
+  // ---------------------------------------------------------------- the cards
+  private entry(it: Item): RosterEntry {
+    const d = itemDef(it.defId);
+    return {
+      uid: it.uid,
+      kind: it.kind,
+      rarity: d.rarity,
+      size: d.size,
+      name: d.name,
+      level: it.level,
+      assigned: it.assigned,
+      obtainedAt: it.obtainedAt,
+    };
+  }
+
+  private render(force: boolean) {
+    const f = this.filters();
+    const all = this.inventory.items;
+    const byUid = new Map(all.map((i) => [i.uid, i]));
+    const items = rosterItems(
+      all.map((i) => this.entry(i)),
+      f,
+    )
+      .map((e) => byUid.get(e.uid))
+      .filter((i): i is Item => !!i);
+    const count = filtered(f)
+      ? STR.roster.countOf(items.length, all.length)
+      : STR.roster.count(all.length);
+    if (this.count.textContent !== count) this.count.textContent = count;
+    // what a card shows besides the model: its level, where it serves, whether it can be fitted
+    const key = JSON.stringify([
+      f,
+      rules.inCabCost,
+      items.map((i) => [
+        i.uid,
+        i.level,
+        i.assigned === null ? null : (this.fleet.byId(i.assigned)?.name ?? '?'),
+        !!i.inCab,
+        this.inventory.spares(i).length > 0,
+        this.inventory.count(i.defId),
+      ]),
+    ]);
+    if (!force && key === this.shown) return;
+    this.shown = key;
+    this.scroll.around(() => {
+      if (!items.length) {
+        this.cards.replaceChildren(emptyState({ text: STR.roster.empty, icon: 'list' }));
+        return;
+      }
+      this.cards.replaceChildren(
+        note(STR.roster.help),
+        cardGrid(
+          items.map((i) => this.card(i)),
+          250,
+        ),
+      );
+    });
+  }
+
+  private card(it: Item): HTMLElement {
     const d = itemDef(it.defId);
     const m = levelMul(it.level);
     const stats: string[] = [];
     if (it.kind === 'loco') {
       const ld = d as LocoDef;
       stats.push(
-        `${STR.depot.speed} ${(ld.speed * m).toFixed(2)}`,
-        `${STR.depot.power} ${Math.round(ld.power * m)} t`,
+        `${STR.depot.speed} ${(ld.speed * m).toFixed(2)} · ${STR.depot.power} ${Math.round(ld.power * m)} t`,
         `${STR.depot.weight} ${ld.weight} t · ${STR.roster.crew} ${ld.crew}`,
         STR.roster.fuelLine(ld),
       );
@@ -172,8 +257,7 @@ export class RosterScreen implements Screen {
     } else {
       const wd = d as WagonDef;
       stats.push(
-        `${STR.roster.capacity} ${Math.round(wd.capacity * m)}`,
-        `${STR.depot.weight} ${wd.weight}t`,
+        `${STR.roster.capacity} ${Math.round(wd.capacity * m)} · ${STR.depot.weight} ${wd.weight} t`,
         (wd.accepts ?? []).map((c) => cargoDef(c).name).join(', '),
       );
       if (wd.service) stats.push(STR.roster.serviceLine(wd.service, wd.serviceCap ?? 0));
@@ -181,79 +265,83 @@ export class RosterScreen implements Screen {
     // its train class and the lines it may run on
     stats.push(runsOn(d as LocoDef | WagonDef));
     const train = it.assigned !== null ? this.fleet.byId(it.assigned) : null;
-    const spares = this.inventory.spares(it).length;
-    const lvl = el(
-      'div',
-      { class: 'sub dim', style: 'display:flex;gap:6px;align-items:center' },
+    const art = vehicleArt(this.atlas, it.defId, 2);
+    const foot: (Node | null)[] = [
       el('span', {
-        style: 'flex:1',
+        class: 'ec-grow dim',
         text:
           it.level >= LEVEL_CAP
             ? STR.roster.maxLevel
             : STR.roster.copies(this.inventory.count(it.defId)),
       }),
-    );
-    if (it.level < LEVEL_CAP && spares > 0) {
-      const up = btn(
-        STR.roster.levelUp,
-        () => {
-          if (this.inventory.consumeForLevel(it)) {
-            this.toast(STR.roster.leveled(d.name, it.level), 'good');
-            this.render();
-          }
-        },
-        'tiny',
-      );
-      up.title = STR.roster.levelUpHint;
-      lvl.append(up);
-    }
-    // in-cab signalling, fitted for money: with in-cab signals the train runs on the shorter headway
-    if (it.kind === 'loco' && !it.inCab && !locoDef(it.defId).inCab) {
-      const fit = btn(
-        STR.roster.fitInCab(rules.inCabCost),
-        () => {
-          const done = this.commands.fitInCab(it);
-          if (!done.ok) return this.toast(done.message, 'warn');
-          this.toast(STR.roster.fitted(d.name), 'good');
-          this.render();
-        },
-        'tiny',
-      );
-      fit.title = STR.roster.fitInCabHint;
-      lvl.append(fit);
-    } else if (it.kind === 'loco' && (it.inCab || locoDef(it.defId).inCab))
-      lvl.append(el('span', { class: 'dim', text: STR.roster.hasInCab }));
-    // the model image where there is one, the atlas sprite otherwise
-    const portrait = portraitImg(it.defId, 'rcard-portrait');
-    return el(
-      'div',
-      { class: `rcard rarity-${d.rarity}` },
-      el(
-        'div',
-        { class: 'rcard-head' },
-        el('span', { class: `name rarity-${d.rarity}`, text: d.name }),
-        el('span', { class: 'num', text: STR.roster.lv(it.level) }),
+      this.levelButton(it),
+      this.inCabPart(it),
+    ];
+    return card({
+      rarity: rarityClass(d.rarity),
+      title: d.name,
+      badge: STR.roster.lv(it.level),
+      sprite: art,
+      sub: vehicleLabels(d),
+      body: fragment(
+        el('div', { class: 'ec-era', text: d.era }),
+        el(
+          'div',
+          { class: 'ec-lines' },
+          ...stats.filter(Boolean).map((t) => el('div', { text: t })),
+        ),
+        el('div', {
+          class: `ec-where ${train ? 'on' : ''}`.trim(),
+          text: train ? STR.roster.assignedTo(train.name) : STR.roster.inDepot,
+        }),
       ),
-      vehicleLabels(d),
-      portrait
-        ? el(
-            'div',
-            { class: 'rcard-body rcard-body-portrait' },
-            portrait,
-            el('div', { class: 'gcard-era', text: d.era }),
-          )
-        : el(
-            'div',
-            { class: 'rcard-body' },
-            spriteImg(this.atlas, frameForItem(it.defId), 2, 'sprite-preview rcard-art'),
-            el('div', { class: 'gcard-era', text: d.era }),
-          ),
-      el('div', { class: 'sub' }, ...stats.map((s) => el('div', { text: s }))),
-      lvl,
-      el('div', {
-        class: `sub ${train ? 'cyan' : 'dim'}`,
-        text: train ? STR.roster.assignedTo(train.name) : STR.roster.inDepot,
-      }),
+      foot: fragment(...foot),
+    });
+  }
+
+  /** Level up, as its state says: ready, off for want of a spare copy, or at the top (none). */
+  private levelButton(it: Item): HTMLElement | null {
+    const state = levelUpState(it.level, LEVEL_CAP, this.inventory.spares(it).length);
+    if (state === 'max') return null;
+    return actionButton(STR.roster.levelUp, () => void this.levelUp(it), {
+      cls: 'small pri',
+      disabled: state === 'noSpare',
+      title: state === 'noSpare' ? STR.roster.levelUpNeedsSpare : STR.roster.levelUpHint,
+    });
+  }
+
+  private async levelUp(it: Item) {
+    const d = itemDef(it.defId);
+    // a spare copy is used up: it is asked first, as the other questions that cost something are
+    if (
+      this.prompt &&
+      !(await this.prompt.confirm(
+        STR.roster.levelUpTitle(d.name, it.level, it.level + 1),
+        STR.roster.levelUpText(it.kind === 'loco', levelGainPercent(STAT_PER_LEVEL)),
+        { yes: STR.roster.levelUp },
+      ))
+    )
+      return;
+    if (this.inventory.consumeForLevel(it)) {
+      this.toast(STR.roster.leveled(d.name, it.level), 'good');
+      this.render(true);
+    }
+  }
+
+  /** In-cab signalling, fitted for money: with it a train runs on the shorter headway. */
+  private inCabPart(it: Item): HTMLElement | null {
+    if (it.kind !== 'loco') return null;
+    if (it.inCab || locoDef(it.defId).inCab)
+      return el('span', { class: 'dim ec-fitted', text: STR.roster.hasInCab });
+    return actionButton(
+      STR.roster.fitInCab(rules.inCabCost),
+      () => {
+        const done = this.commands.fitInCab(it);
+        if (!done.ok) return this.toast(done.message, 'warn');
+        this.toast(STR.roster.fitted(itemDef(it.defId).name), 'good');
+        this.render(true);
+      },
+      { cls: 'small', title: STR.roster.fitInCabHint },
     );
   }
 }
