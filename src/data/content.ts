@@ -13,6 +13,9 @@
  * the next page load (the editor reloads for you).
  */
 import locoJson from './locomotives.json';
+import gearJson from './gear.json';
+import locoFitJson from './locoFit.json';
+import type { Gear } from '../sim/gear';
 import wagonJson from './wagons.json';
 import cargoJson from './cargo.json';
 import stationJson from './stations.json';
@@ -60,7 +63,38 @@ export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
 export type BogieStyle = string | Partial<Record<PartKind, string | string[]>>;
 export type Collector = 'shoe' | 'pantograph' | 'hv' | 'multi';
 
-export interface LocoDef {
+/**
+ * A vehicle drawn from a rendered 3D model (engines and wagons alike): its own running gear and
+ * length (src/data/gear.json, locoFit.json, keyed by the vehicle's id) replace the size's length and
+ * the plan's segments. Filled in at load, not written in locomotives.json / wagons.json.
+ */
+export interface RenderedModelFields {
+  gear?: Gear;
+  lengthTiles?: number;
+  /** its sprite is a rendered model: the generic bogies are not drawn under it */
+  spriteGear?: boolean;
+  /** trucks rendered as sprites of their own, by part (indices in the gear table) */
+  truckSprites?: Record<string, number[]>;
+  /** Sprite origin behind the measured axle-centre pivot, in tiles along its own heading. */
+  truckOffsets?: Record<string, number>;
+  /**
+   * Wheel layers that turn, by sprite set (`engine`, `engine-t0`, ...): frames per cycle and tiles
+   * of track per cycle. `integrated`: the set's own frames turn (`<set>_w<p>_f<n>`, body and
+   * wheels in one picture); `layer`: its wheels (and rods) are a sprite set of their own
+   * (`<layer>_w<p>_f<n>`, holding only what shows of them over the body), drawn right over it.
+   */
+  wheels?: Record<string, WheelFit>;
+  /** Number of directly rendered headings when a vehicle supplies a denser atlas. */
+  spriteFacings?: number;
+  /**
+   * The box each of its sprite sets fills (`engine`, `engine-t0`, ...), tiles from the set's anchor on
+   * the rail: rear end, front end, half width, height. Its pictures are swung between two facings as
+   * that box (body.ts swingMesh).
+   */
+  boxes?: Record<string, [number, number, number, number]>;
+}
+
+export interface LocoDef extends RenderedModelFields {
   id: string;
   name: string;
   rarity: Rarity;
@@ -84,6 +118,10 @@ export interface LocoDef {
   /** electric only: power units per tile */
   powerPerTile?: number;
   starter?: boolean;
+  /** where smoke leaves it: the part, tiles ahead of that part's centre, pixels above the rail */
+  smoke?: { part: PartKind; along: number; up: number }[];
+  /** its headlamps: the part, tiles ahead of and to the left of that part's centre, pixels above the rail */
+  lamps?: { part: PartKind; along: number; across: number; up: number }[];
   /**
    * Withdrawn from the game: no banner, starter kit or workshop hands out a new one. The entry
    * stays in the table so copies a player already owns keep loading and running.
@@ -121,7 +159,7 @@ export interface LocoDef {
   /** track gauge (default regular) */
   gauge?: Gauge;
 }
-export interface WagonDef {
+export interface WagonDef extends RenderedModelFields {
   id: string;
   name: string;
   rarity: Rarity;
@@ -1154,7 +1192,64 @@ function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport 
 }
 
 /** Fill derived fields (wagon accept lists from cargo classes). */
+/** A sprite set's turning wheels (LocoFit.wheels). */
+export interface WheelFit {
+  phases: number;
+  cycle: number;
+  integrated?: boolean;
+  layer?: string;
+}
+/** One vehicle's fit (engines and wagons): its length in tiles, whether its sprite is a rendered model, its smoke outlets. */
+export interface LocoFit {
+  tiles: number;
+  sprite?: boolean;
+  smoke?: { part: PartKind; along: number; up: number }[];
+  lamps?: { part: PartKind; along: number; across: number; up: number }[];
+  trucks?: Record<string, number[]>;
+  truckOffsets?: Record<string, number>;
+  wheels?: Record<string, WheelFit>;
+  spriteFacings?: number;
+  boxes?: Record<string, [number, number, number, number]>;
+}
+/**
+ * Fill each vehicle's rendered-model fields from the measured gear and fit tables (one table for
+ * engines and wagons, keyed by id; the validator keeps the two id sets disjoint). A vehicle needs
+ * both entries; without them it stays as its definition draws it (procedural sprite, size length).
+ */
+export function fillModels(
+  b: Pick<ContentBundle, 'locomotives' | 'wagons'>,
+  gears: Record<string, Gear>,
+  fits: Record<string, LocoFit>,
+) {
+  const fill = (d: RenderedModelFields & { id: string }) => {
+    const g = gears[d.id],
+      f = fits[d.id];
+    if (!g || !f) return null;
+    d.gear = g;
+    d.lengthTiles = f.tiles;
+    d.spriteGear = f.sprite === true;
+    d.truckSprites = f.trucks;
+    d.truckOffsets = f.truckOffsets;
+    d.wheels = f.wheels;
+    d.spriteFacings = f.spriteFacings;
+    d.boxes = f.boxes;
+    return f;
+  };
+  for (const d of b.locomotives) {
+    const f = fill(d);
+    if (!f) continue;
+    d.smoke = f.smoke;
+    d.lamps = f.lamps;
+  }
+  for (const w of b.wagons) fill(w);
+}
 function finalize(b: ContentBundle): ContentBundle {
+  // each vehicle's own running gear and length, where both are measured
+  fillModels(
+    b,
+    gearJson as unknown as Record<string, Gear>,
+    locoFitJson as unknown as Record<string, LocoFit>,
+  );
   for (const w of b.wagons)
     w.accepts = b.cargo.filter((c) => c.class === w.carries).map((c) => c.id);
   return b;

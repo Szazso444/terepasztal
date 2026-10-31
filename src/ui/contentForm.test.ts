@@ -270,8 +270,10 @@ function membersOf(type: ts.TypeNode | undefined, where: string): readonly ts.Ty
   if (type && ts.isTypeLiteralNode(type)) return type.members;
   if (type && ts.isTypeReferenceNode(type) && ts.isIdentifier(type.typeName)) {
     const decl = TYPES.get(type.typeName.text);
-    // only the interface's own members are read: one that extends another would hide fields
-    if (decl?.heritageClauses?.length)
+    // only the interface's own members are read: one that extends another would hide fields,
+    // except the fields a rendered model brings at load, which no form edits
+    const inherited = decl?.heritageClauses?.flatMap((h) => h.types) ?? [];
+    if (inherited.some((t) => t.expression.getText() !== 'RenderedModelFields'))
       throw new Error(`${where}: ${decl.name.text} extends another type, whose fields go unread`);
     if (decl) return decl.members;
   }
