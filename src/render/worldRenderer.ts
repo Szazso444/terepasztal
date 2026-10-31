@@ -58,8 +58,10 @@ import {
 } from './bridgeMeshes';
 import {
   bridgeJoins,
+  ACROSS,
   bridgePlan,
   deckSamples,
+  NARROW,
   roadDeckSamples,
   type BridgeCarries,
   type BridgeSite,
@@ -1326,7 +1328,8 @@ export class WorldRenderer {
    * the deck (`deck` world pixels up, 4 px thick), so none is longer than the drop it spans and
    * none sinks into the terrain. Straight spans (`axis` 0 along y, 1 along x) get a pair of
    * piers (stone) or a braced trestle (wood); curves and switches (`axis` null) a pier per
-   * corner. `material` null removes them; `water` stands them in the water under a raised deck.
+   * corner. `material` null removes them; `water` stands them in the water under a raised deck,
+   * and a `narrow` deck's pull in with it.
    */
   setBridgePiers(
     x: number,
@@ -1335,6 +1338,7 @@ export class WorldRenderer {
     axis: 0 | 1 | null = null,
     deck = 0,
     water = false,
+    narrow = false,
   ) {
     const k = idx(this.map, x, y);
     let g = this.pierGraphics.get(k);
@@ -1356,6 +1360,7 @@ export class WorldRenderer {
         (Math.min(255, Math.round(c[1] * f)) << 8) |
         Math.min(255, Math.round(c[2] * f)),
       top = deck - 4,
+      pull = narrow ? NARROW.deck / ACROSS.deck : 1,
       // (along, across) in the span's own axes -> tile offsets.
       at = (l: number, w: number) => (axis === 0 ? { dx: w, dy: l } : { dx: l, dy: w });
     const posts: { dx: number; dy: number; hx: number; hy: number }[] = [];
@@ -1366,11 +1371,13 @@ export class WorldRenderer {
     else if (stone)
       for (const l of [-0.38, 0.38]) {
         const o = at(l, 0);
-        posts.push({ ...o, hx: axis ? 0.07 : 0.3, hy: axis ? 0.3 : 0.07 });
+        const wide = 0.3 * pull;
+        posts.push({ ...o, hx: axis ? 0.07 : wide, hy: axis ? wide : 0.07 });
       }
     else
       for (const l of [-0.4, 0.4])
-        for (const w of [-0.26, 0.26]) posts.push({ ...at(l, w), hx: 0.035, hy: 0.035 });
+        for (const w of [-0.26 * pull, 0.26 * pull])
+          posts.push({ ...at(l, w), hx: 0.035, hy: 0.035 });
     // Far posts first, so nearer ones cover them.
     posts.sort((a, b) => a.dx + a.dy - (b.dx + b.dy));
     const screen = (tx: number, ty: number, z: number) => {
@@ -1707,7 +1714,8 @@ export class WorldRenderer {
    * to the ground (or into the water) under each one, timber braces between the posts, and over
    * water stone arches or timber trusses hung from both deck edges. `axis` 0 runs along y, 1
    * along x, null is a pad under a curve or switch; `deck` is the rail level in world px. A
-   * `raised` deck stands on piers or posts in the water too, and over land on the ground.
+   * `raised` deck stands on piers or posts in the water too, and over land on the ground. A
+   * `narrow` deck's supports pull in with it (`NARROW`).
    */
   setBridgeKit(
     x: number,
@@ -1717,6 +1725,7 @@ export class WorldRenderer {
     deck = 0,
     water = false,
     raised = false,
+    narrow = false,
   ) {
     const k = idx(this.map, x, y);
     this.kitParts.get(k)?.destroy({ children: true });
@@ -1725,7 +1734,8 @@ export class WorldRenderer {
     const c = new Container(),
       stone = material === 'stone',
       dir = axis === 1 ? 'x' : 'y',
-      slab = `${material}-${axis === null ? 'pad' : `deck-${dir}`}`,
+      slab = `${material}-${axis === null ? 'pad' : `deck-${dir}${narrow ? '-narrow' : ''}`}`,
+      pull = narrow ? NARROW.deck / ACROSS.deck : 1,
       underside = deck - BRIDGE_KIT[slab].thickness!,
       at = (l: number, w: number) => (axis === 0 ? { dx: w, dy: l } : { dx: l, dy: w }),
       screen = (tx: number, ty: number, z: number) => {
@@ -1741,7 +1751,9 @@ export class WorldRenderer {
         h = BRIDGE_KIT[key].height!;
       for (const far of [true, false]) {
         const s = new Sprite(f.texture),
-          o = far ? (axis === 1 ? { dx: 0, dy: -1 } : { dx: -1, dy: 0 }) : { dx: 0, dy: 0 },
+          // Drawn on the near tile edge: its own width off that edge, in by what a narrow deck pulls.
+          reach = (far ? -1 : 0) + ((far ? 1 : -1) * (1 - pull)) / 2,
+          o = axis === 1 ? { dx: 0, dy: reach } : { dx: reach, dy: 0 },
           // Tucked a few px up behind the deck, so no water shows between them.
           p = screen(x + o.dx, y + o.dy, underside - h + 4);
         s.anchor.set(f.anchorX, f.anchorY);
@@ -1757,7 +1769,7 @@ export class WorldRenderer {
     if (axis === null)
       for (const a of [-0.36, 0.36]) for (const b of [-0.36, 0.36]) spots.push({ dx: a, dy: b });
     else if (!water || !stone || raised)
-      for (const l of [-0.4, 0.4]) for (const w of [-0.3, 0.3]) spots.push(at(l, w));
+      for (const l of [-0.4, 0.4]) for (const w of [-0.3, 0.3]) spots.push(at(l, w * pull));
     spots.sort((a, b) => a.dx + a.dy - (b.dx + b.dy));
     const feet = new Map<string, number>();
     for (const o of spots) {
@@ -1779,7 +1791,7 @@ export class WorldRenderer {
       const key = `wood-brace-${dir}`,
         bf = this.atlas.get(`bridgekit/${key}`),
         bh = BRIDGE_KIT[key].height!;
-      for (const w of [-0.3, 0.3]) {
+      for (const w of [-0.3 * pull, 0.3 * pull]) {
         const a = at(-0.4, w),
           b = at(0.4, w),
           lo = Math.max(feet.get(`${a.dx},${a.dy}`) ?? 0, feet.get(`${b.dx},${b.dy}`) ?? 0),
