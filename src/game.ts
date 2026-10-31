@@ -93,7 +93,7 @@ import { decorOffset, type Decor } from './sim/build';
 import { wrapRotation } from './sim/rotation';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { Dir, DIRS, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
-import { audio, sfx } from './engine/audio';
+import { audio, sfx, silently } from './engine/audio';
 import {
   SAVE_VERSION,
   buildSave,
@@ -1865,7 +1865,7 @@ export class Game implements UiHost {
    * on the console that no site near the start could take one.
    */
   ensureDepot(defId = 'depot'): Station | null {
-    const d = ensureStartDepot(this.builder, defId);
+    const d = silently(() => ensureStartDepot(this.builder, defId));
     if (!d) console.warn(`[depot] no site near the start takes a ${defId} and its gate track`);
     return d;
   }
