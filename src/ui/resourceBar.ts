@@ -19,12 +19,11 @@ const STOCKPILED = new Set(RESOURCE_IDS);
  * Second row under the top bar: funds first, then the store it shows (a button that steps to the
  * next one) and what that store holds in its groups (`RESOURCE_GROUPS`), each cell a term whose
  * tooltip links the buildings that make and use it. A resource shows once its age has come or it is
- * in stock (`barGroups`); the famine warning and `right` (the tickets) end it.
+ * in stock (`barGroups`); the famine warning ends it.
  */
 export class ResourceBar {
   readonly root = el('div', { id: 'resbar', class: 'panel' });
-  readonly right = el('div', { class: 'res-right' });
-  /** the groups and the famine warning: it shrinks and clips so `right` stays on screen */
+  /** the groups and the famine warning: it shrinks and clips, so nothing leaves the screen */
   private cellsBox = el('div', { class: 'res-cells' });
   /** the name of the store shown; a click asks for the next one (`onNextStore`) */
   private storeBtn = btn('', () => this.onNextStore?.(), 'small res-store');
@@ -84,7 +83,7 @@ export class ResourceBar {
       this.groups.push({ root: group, sep });
     });
     this.cellsBox.append(this.famine);
-    this.root.append(this.cellsBox, this.right);
+    this.root.append(this.cellsBox);
     this.famine.style.display = 'none';
     tooltip.bindTerms(this.root);
     // a window resize changes the room

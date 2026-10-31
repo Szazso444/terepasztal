@@ -2697,7 +2697,7 @@ input[type='range'] {
   border-top: none;
   cursor: pointer;
 }
-/* the cells shrink and clip before they push the tickets off the right edge */
+/* the cells shrink and clip before they leave the screen */
 #resbar .res-cells {
   flex: 1 1 0;
   min-width: 0;
@@ -2712,36 +2712,6 @@ input[type='range'] {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-#resbar .res-right {
-  flex: none;
-  display: flex;
-  align-items: stretch;
-  margin-left: auto;
-}
-#resbar .funds {
-  display: flex;
-  align-items: stretch;
-}
-#resbar .funds .stat {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 10px;
-  border-left: 1px solid var(--border-dark);
-  box-shadow: -1px 0 0 var(--border-light);
-  white-space: nowrap;
-}
-#resbar .funds .stat .label {
-  color: var(--text-dim);
-  font-family: var(--font-body);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-#resbar .funds .stat .value {
-  font-family: var(--font-mono);
-  font-size: 12px;
 }
 #resbar .res-group {
   display: flex;
