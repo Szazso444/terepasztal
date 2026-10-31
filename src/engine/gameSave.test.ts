@@ -64,6 +64,7 @@ interface Toast {
 interface PushedNotice {
   key: string;
   kind: string;
+  type: string;
   text: string;
   target: unknown;
   ttl: number;
@@ -874,7 +875,14 @@ describe('the end of a load (Game.storeLoadedGround)', () => {
     const text = STR.saves.groundUnreadable(2);
     expect(g.toasts).toEqual([{ text, kind: 'warn' }]);
     expect(g.notices).toEqual([
-      { key: 'save:ground', kind: 'warn', text, target: null, ttl: UNREADABLE_NOTICE_TTL },
+      {
+        key: 'save:ground',
+        kind: 'warn',
+        type: 'note',
+        text,
+        target: null,
+        ttl: UNREADABLE_NOTICE_TTL,
+      },
     ]);
     expect(store.items.size).toBe(0);
     // with ground generated as well, the write is made and its refusal follows the notice's toast
@@ -921,7 +929,14 @@ describe('the end of a load (Game.storeLoadedGround)', () => {
     if (unreadable > 0) {
       const text = STR.saves.groundUnreadable(unreadable);
       toasts.push({ text, kind: 'warn' });
-      notices.push({ key: 'save:ground', kind: 'warn', text, target: null, ttl: 180 });
+      notices.push({
+        key: 'save:ground',
+        kind: 'warn',
+        type: 'note',
+        text,
+        target: null,
+        ttl: 180,
+      });
     }
     const added = (built?.added ?? 0) > 0;
     const writes = added && hold === 'none';

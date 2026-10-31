@@ -967,6 +967,7 @@ export class Game implements UiHost {
         {
           key: `j${a.id}`,
           kind: a.kind,
+          type: 'jam',
           text: STR.notice.junction(
             STR.notice.junctionLevel[a.level] ?? a.level,
             a.x,
@@ -1026,6 +1027,7 @@ export class Game implements UiHost {
           {
             key: `contract:${e.contract.id}`,
             kind: 'bad',
+            type: 'ctfail',
             text: STR.notice.contractFailed(e.contract.name),
             target: dest ? { kind: 'tile', x: dest.x, y: dest.y } : null,
           },
@@ -1252,7 +1254,10 @@ export class Game implements UiHost {
   private say(said: Said) {
     for (const t of said.toasts) this.toasts.push(t.text, t.kind);
     for (const n of said.notices)
-      this.notices.push({ key: n.key, kind: 'warn', text: n.text, target: null }, n.ttl);
+      this.notices.push(
+        { key: n.key, kind: 'warn', type: 'note', text: n.text, target: null },
+        n.ttl,
+      );
   }
 
   /**
@@ -1772,7 +1777,10 @@ export class Game implements UiHost {
       : STR.settings.olderSave(from, SAVE_VERSION, j.migrationNotes ?? []);
     this.deprecatedSave = text;
     this.toasts.push(newer ? STR.settings.newerToast(from) : STR.settings.olderToast(from), 'warn');
-    this.notices.push({ key: 'save:deprecated', kind: 'warn', text, target: null }, 180);
+    this.notices.push(
+      { key: 'save:deprecated', kind: 'warn', type: 'note', text, target: null },
+      180,
+    );
   }
   /** A save named content the game no longer has: say what went and what was refunded. */
   private warnPruned(report: PruneReport) {
@@ -1781,7 +1789,7 @@ export class Game implements UiHost {
     const money = report.money ? fmtMoney(report.money) : '';
     const text = STR.saves.pruned(list, STR.saves.refund(money, report.tickets));
     this.toasts.push(text, 'warn');
-    this.notices.push({ key: 'save:pruned', kind: 'warn', text, target: null }, 180);
+    this.notices.push({ key: 'save:pruned', kind: 'warn', type: 'note', text, target: null }, 180);
   }
   /** warning text for the settings screen while a converted save is in play */
   deprecatedSave: string | null = null;
@@ -1809,7 +1817,7 @@ export class Game implements UiHost {
     this.toolbar.refresh();
     const text = STR.hud.ageUp(tier);
     this.toasts.push(text, 'good');
-    this.notices?.push({ key: `age:${tier}`, kind: 'info', text, target: null }, 120);
+    this.notices?.push({ key: `age:${tier}`, kind: 'info', type: 'goal', text, target: null }, 120);
     sfx('tier.up');
     audio.setAge(ageDef(tier).id);
   }
@@ -1827,6 +1835,7 @@ export class Game implements UiHost {
       this.notices.push({
         key: `upgrade:${e.x},${e.y}`,
         kind: 'info',
+        type: 'note',
         text,
         target: { kind: 'tile', x: e.x, y: e.y },
       });
@@ -2375,6 +2384,7 @@ export class Game implements UiHost {
         builder: this.builder,
         power: this.power,
         stuck: this.traffic.stuckTrains(this.clock.time),
+        contracts: { board: this.contracts, now: this.clock.time },
       });
       this.noticePanel.render(this.notices.list);
       this.advisor.update(this.computeTips(), this.notices.list);
