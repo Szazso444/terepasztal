@@ -166,9 +166,14 @@ export function decorPlace(d: DecorDef): Place {
   return { category: 'buildings', group: d.residents ? 'town' : 'services' };
 }
 
+/**
+ * A works tied to what lies in the ground digs it out: a raw material. `deposit` says so of the Oil
+ * Derrick, `terrain` of the Colliery, which stands on hills and has no deposit of its own.
+ */
 export function workPlace(d: BuildingDef): Place {
   if (d.bridge) return { category: 'track', group: 'bridges' };
-  return { category: 'works', group: d.power || d.substation ? 'power' : 'processing' };
+  if (d.power || d.substation) return { category: 'works', group: 'power' };
+  return { category: 'works', group: d.deposit || d.terrain ? 'raw' : 'processing' };
 }
 
 /** `defs` in the order of `rank`, equal ranks in data order. */
@@ -391,7 +396,11 @@ export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
       label: STR.toolbar.works,
       icon: 'factory',
       items: [
-        ...stations('raw').map(stationItem),
+        // by age, stations first in each: what is open stands before what is locked
+        ...ranked(
+          [...stations('raw').map(stationItem), ...works('raw').map(workItem)],
+          (i) => i.tier,
+        ),
         ...works('processing').map(workItem),
         ...ranked(works('power'), powerRank).map(workItem),
       ],

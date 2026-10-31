@@ -192,6 +192,11 @@ describe('where a def is listed', () => {
       category: 'track',
       group: 'bridges',
     });
+    // tied to what lies in the ground: raw, whatever else it takes in
+    expect(of({ deposit: 'oil' })).toEqual({ category: 'works', group: 'raw' });
+    expect(of({ terrain: 'hill' })).toEqual({ category: 'works', group: 'raw' });
+    // what makes power is listed with power, wherever it stands
+    expect(of({ power: true, terrain: 'hill' })).toEqual({ category: 'works', group: 'power' });
   });
 });
 
@@ -256,8 +261,35 @@ describe('the full production chain', () => {
     setSupplyMode('full');
     const raw = names(cat('works'), 'raw');
     for (const d of stationsFull) expect(raw, d.id).toContain(d.name);
-    const all = [...names(cat('works'), 'processing'), ...names(cat('works'), 'power')];
+    const all = [...raw, ...names(cat('works'), 'processing'), ...names(cat('works'), 'power')];
     for (const d of buildingsFull) expect(all, d.id).toContain(d.name);
+  });
+  it('lists what digs a resource out of the ground with the raw materials', () => {
+    setSupplyMode('full');
+    expect(names(cat('works'), 'raw')).toEqual([
+      'Farm Halt',
+      'Lumber Yard',
+      'Quarry',
+      'Water Pump',
+      'Iron Mine',
+      'Sand Pit',
+      'Colliery',
+      'Oil Derrick',
+      'Copper Mine',
+    ]);
+    expect(names(cat('works'), 'processing')).toEqual([
+      'Windmill',
+      'Charcoal Kiln',
+      'Stone Grinder',
+      'Ironworks',
+      'Refinery',
+      'Wire Mill',
+    ]);
+  });
+  it('keeps the raw materials in the order of their ages, so what is open comes first', () => {
+    setSupplyMode('full');
+    const ages = shownItems(cat('works'), 'raw').map((i) => i.tier);
+    expect(ages).toEqual([...ages].sort((a, b) => a - b));
   });
   it('drops what only the simple chain has, and the simple chain drops the full one', () => {
     setSupplyMode('full');
