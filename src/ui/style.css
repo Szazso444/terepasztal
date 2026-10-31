@@ -1676,6 +1676,11 @@ input.text {
 .ol-chip .build-icon {
   display: inline-flex;
 }
+.ol-l1 > .build-icon {
+  flex: none;
+  display: inline-flex;
+  color: var(--amber);
+}
 .ol-l2 {
   display: flex;
   align-items: center;
@@ -1963,6 +1968,13 @@ input.text {
 }
 .tp-details {
   cursor: pointer;
+}
+/* the camera keys' hint would stand out from behind the panel */
+#train-panel.open ~ #hint {
+  visibility: hidden;
+}
+.tp-scroll .schedule-editor {
+  padding: 0 6px;
 }
 #build-info {
   display: flex;

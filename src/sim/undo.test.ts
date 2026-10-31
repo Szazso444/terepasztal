@@ -1408,15 +1408,25 @@ describe('a train renamed or recoloured, a step of its own', () => {
     expect(t.name).toHaveLength(TRAIN_NAME_MAX);
   });
 
-  it('a train recalled since refuses the undo and the redo, and stays where it is', () => {
+  it('a train recalled since does not stand in the way of the steps under it', () => {
     const g = game();
     run(g, 10, 22);
     const t = train(g, 12);
+    const built = g.history.undoLabel;
     g.commands.recolourTrain(t, 4);
     g.commands.renameTrain(t, 'Short lived');
     g.fleet.recall(t);
-    expectRefused(g, 'undo', STR.train.gone);
-    expect(t.name).toBe('Short lived');
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.history.undoLabel).toBe(built);
+    expect(g.history.undo()).toEqual({ ok: true });
+  });
+
+  it('a train recalled can no longer be renamed or recoloured', () => {
+    const g = game();
+    run(g, 10, 22);
+    const t = train(g, 12);
+    g.fleet.recall(t);
     expect(g.commands.renameTrain(t, 'Again')).toEqual({ ok: false, message: STR.train.gone });
     expect(g.commands.recolourTrain(t, 1)).toEqual({ ok: false, message: STR.train.gone });
   });

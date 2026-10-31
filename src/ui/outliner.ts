@@ -397,12 +397,18 @@ export class Outliner {
         ? null
         : el('span', { class: 'ol-route', text: r.from ? `${r.from} → ${r.to}` : `→ ${r.to}` });
     const row = this.shell(
-      `${r.detail ? 'exp' : ''} ${r.selected ? 'sel' : ''} ${r.following ? 'fol' : ''}`,
+      `${r.detail ? 'exp' : ''} ${r.selected ? 'sel' : ''}`,
       stripe,
       el(
         'div',
         { class: 'ol-main' },
-        el('div', { class: 'ol-l1' }, name, this.chip(r.chip)),
+        el(
+          'div',
+          { class: 'ol-l1' },
+          name,
+          r.following ? buildIcon('eye', 13) : null,
+          this.chip(r.chip),
+        ),
         el(
           'div',
           { class: 'ol-l2' },

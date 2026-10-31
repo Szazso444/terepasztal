@@ -111,7 +111,9 @@ export class TrainPanel {
     this.place();
   }
   private place() {
-    this.root.style.display = this.train && !this.overview ? '' : 'none';
+    const shown = !!this.train && !this.overview;
+    this.root.style.display = shown ? '' : 'none';
+    this.root.classList.toggle('open', shown);
   }
   private setTab(tab: TrainTab) {
     this.tab = tab;

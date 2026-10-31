@@ -2699,7 +2699,9 @@ export class Game implements UiHost {
         inp.mouseInside &&
         document.hasFocus() &&
         !inp.buttons.size &&
-        !this.screens.current
+        !this.screens.current &&
+        // a pointer on the HUD at the edge of the screen does not take the camera off a train
+        !(inp.overUi && this.follow.trainId !== null)
       ) {
         if (inp.mouseX < EDGE_MARGIN) dx -= 1;
         if (inp.mouseX > this.camera.viewW - EDGE_MARGIN) dx += 1;

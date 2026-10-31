@@ -134,8 +134,8 @@ export class Commands {
   }
   /**
    * Set something the player named or marked on a train: a step of its own in the history, named
-   * `label`, unless it changes nothing. The level editor records nothing, as `act` has it. A train
-   * since recalled refuses the step: it is no longer there to change.
+   * `label`, unless it changes nothing. The level editor records nothing, as `act` has it. Of a
+   * train recalled since nothing is left to see: its step passes, and the ones under it stay in reach.
    */
   private editTrain<T>(
     t: Train,
@@ -148,7 +148,6 @@ export class Commands {
     set(now);
     if (this.builder.free) return done();
     const apply = (v: T): CommandResult => {
-      if (!this.fleet.byId(t.id)) return refuse(STR.train.gone);
       set(v);
       return done();
     };

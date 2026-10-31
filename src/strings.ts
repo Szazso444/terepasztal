@@ -856,7 +856,8 @@ export const STR = {
     topSpeed: (speed: string) => `top speed ${speed}`,
     nextStop: 'Next stop',
     noStop: 'no stop',
-    arrival: (tiles: number, time: string) => `${tiles} tiles · ≈ ${time}`,
+    arrival: (tiles: number, time: string) =>
+      `${tiles} ${tiles === 1 ? 'tile' : 'tiles'} · ≈ ${time}`,
     cargo: 'Cargo',
     runningEmpty: 'Running empty.',
     supplies: 'Supplies',

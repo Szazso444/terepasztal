@@ -601,17 +601,24 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     selectedTrain: () => host.selectedTrain,
     followedTrain: () => host.follow.trainId,
     stuckFor: (id) => host.stuckFor(id),
-    onTrain: (t) => host.pickTrain(t),
+    onTrain: (t) => {
+      d.build.setTool({ kind: 'none' });
+      host.pickTrain(t);
+    },
     // off a row, the path of the train picked stays lit
     onHover: (t) => host.setHoverTrain(t ?? host.selectedTrain),
+    // a station, a works or a decor piece: one is picked at a time, as a click on the map has it
     onStation: (s) => {
       d.build.setTool({ kind: 'none' });
       lookAt(s.cx + 0.5, s.cy + 0.5);
+      d.build.selectDecor(null);
       d.build.select(s);
     },
     onWorks: (b) => {
       d.build.setTool({ kind: 'none' });
       lookAt(b.x + 0.5, b.y + 0.5);
+      d.build.select(null);
+      d.build.selectDecor(null);
       d.build.selectBuilding(b);
     },
     onContract: () => d.screens.open(contractsScreen),

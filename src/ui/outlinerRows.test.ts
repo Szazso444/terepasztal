@@ -150,6 +150,13 @@ describe('the Trains tab', () => {
     expect(row.chip.text).toBe(STR.outliner.status.moving);
   });
 
+  it('a load that rounds to nothing is no cargo yet', () => {
+    const t = train(1, 0, 300, 150, {
+      wagons: [{ cargo: 'coal', amount: 0.3, level: 1, def: { capacity: 20 } }],
+    });
+    expect(trainGroups([t], null, context()).rows[0].rows[0].cargo).toEqual([]);
+  });
+
   it('a route of one stop has no from, and none has neither', () => {
     const one = trainGroups([train(1, 0, 0, 0, { route: [2] })], null, context());
     expect(one.rows[0].rows[0]).toMatchObject({ from: null, to: 'Birch' });
