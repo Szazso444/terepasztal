@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ageName, ageProgress, ageTip, eraView } from './ageTooltip';
+import { ageName, ageProgress, ageTip, eraView, lockTip } from './ageTooltip';
 import { blockText, plain } from './tooltipDoc';
 import { STR } from '../strings';
 import { fmtMoney } from './numberFormat';
@@ -189,5 +189,37 @@ describe('ageName', () => {
   it('names an age by its data id, and an unknown id by itself', () => {
     expect(ageName('steam')).toBe(STR.ages.name.steam);
     expect(ageName('nowhere')).toBe('nowhere');
+  });
+});
+
+describe('lockTip', () => {
+  const AGES = [
+    age('steam', [], true, true),
+    age('diesel', [goal('depots', 1, 2), goal('population', 300, 300)], false, false),
+    age('electric', [goal('earned', 10, 100, 0), goal('wires', 3, 4, 0)], false, false),
+  ];
+
+  it('names the age it waits for, then the goals of that age with their progress', () => {
+    const lines = lockTip(AGES, 1).map(blockText);
+    expect(lines[0]).toBe(STR.ages.unlocksIn(ageName('diesel')));
+    expect(lines).toContain(`${STR.ages.goal.depots}: 1 / 2`);
+    expect(lines).toContain(`${STR.ages.goal.population}: 300 / 300`);
+  });
+  it('shows a met goal in the good tone, and one still open in none', () => {
+    const rows = lockTip(AGES, 1).filter((b) => b.kind === 'row');
+    expect(rows.map((b) => (b.kind === 'row' ? b.tone : null))).toEqual([undefined, 'good']);
+  });
+  it('lists the alternatives of a group under its line, indented', () => {
+    const doc = lockTip(AGES, 2);
+    expect(doc.map(blockText)).toContain(STR.ages.anyOf);
+    const rows = doc.filter((b) => b.kind === 'row');
+    expect(rows.map((b) => (b.kind === 'row' ? !!b.indent : null))).toEqual([true, true]);
+  });
+  it('says which age comes first when the one it waits for is not the next', () => {
+    expect(lockTip(AGES, 2).map(blockText)).toContain(STR.ages.reachFirst(ageName('diesel')));
+    expect(lockTip(AGES, 1).map(blockText)).not.toContain(STR.ages.reachFirst(ageName('steam')));
+  });
+  it('still says what it needs for an age the list does not hold', () => {
+    expect(lockTip([], 3).map(blockText)).toEqual([STR.build.tierLocked(3)]);
   });
 });

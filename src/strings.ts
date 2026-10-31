@@ -79,6 +79,9 @@ export const STR = {
     /** the same heading once one of its goals is met */
     anyOfMet: 'One of these: met',
     hint: 'An age begins once every goal listed for it is met; under "One of these", one goal is enough. Goals are checked every hour.',
+    /** a locked item of the build bar: the age that opens it, and the one to reach before that */
+    unlocksIn: (age: string) => `Locked. Unlocks in the ${age}`,
+    reachFirst: (age: string) => `Reach the ${age} first.`,
   },
   overview: {
     locked: 'UNCHARTED',
