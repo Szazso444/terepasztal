@@ -1884,6 +1884,7 @@ const EN = {
   kit: {
     esc: 'Esc',
     back: 'Back',
+    close: 'Close',
     done: 'Done',
     backHint: 'Back · Esc',
     /** The × of a screen, with the hotkey that closes it too. */

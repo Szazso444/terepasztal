@@ -9,6 +9,7 @@ import type { Train } from '../sim/trains';
 import { STR } from '../strings';
 import { buildIcon } from './buildIcons';
 import { btn, el } from './dom';
+import { sectionHeader } from './kit';
 import { vehicleLabels } from './labels';
 import { classBadge } from './lineBadge';
 import { renameField } from './renameField';
@@ -56,9 +57,9 @@ export interface TrainPanelHost {
  */
 export class TrainPanel {
   readonly root = el('div', { id: 'train-panel', class: 'panel' });
-  private readonly head = el('div', { class: 'tp-head' });
+  private readonly head = el('div', { class: 'panel-title' });
   private readonly tabs = new Map<TrainTab, HTMLButtonElement>();
-  private readonly scroll = el('div', { class: 'tp-scroll' });
+  private readonly scroll = el('div', { class: 'panel-body tp-scroll' });
   private readonly stops: TrainStops;
   private tab: TrainTab = 'overview';
   train: Train | null = null;
@@ -86,7 +87,7 @@ export class TrainPanel {
       this.scroll,
       el(
         'div',
-        { class: 'tp-foot' },
+        { class: 'panel-foot' },
         ttLabel(details, 'tp-details', 'tp-details', () => [ttDim(STR.trainPanel.details)]),
       ),
     );
@@ -186,7 +187,7 @@ export class TrainPanel {
       if (!did.ok) this.h.toast(did.message, 'warn');
       this.update(0, true);
     });
-    const name = el('span', { class: 'tp-name', text: t.name, title: STR.outliner.renameTip });
+    const name = el('span', { class: 'panel-name', text: t.name, title: STR.outliner.renameTip });
     name.addEventListener('dblclick', () => this.rename(t, name));
     const eye = ttLabel(buildIcon('eye', 15), `tp-eye ${following ? 'on' : ''}`, 'tp-eye', () => [
       ttDim(following ? P.following : P.follow),
@@ -195,7 +196,7 @@ export class TrainPanel {
       this.h.toggleFollow(t);
       this.update(0, true);
     });
-    const close = btn('', () => this.h.onClose(), 'small bi-x');
+    const close = btn('', () => this.h.onClose(), 'panel-x');
     close.title = P.close;
     close.append(buildIcon('close', 14));
     const tc = t.trainClass;
@@ -226,7 +227,7 @@ export class TrainPanel {
     return el('span', { class: `ol-meter ${cls}` }, el('i', { style: `width:${percent}%` }));
   }
   private section(title: string, right = '') {
-    return el('div', { class: 'bi-sec' }, title, right ? el('em', { text: right }) : '');
+    return sectionHeader(title, right);
   }
   private line(label: Node | string, value: string, cls = '') {
     return el(

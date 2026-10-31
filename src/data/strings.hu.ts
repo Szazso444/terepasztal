@@ -1688,6 +1688,7 @@ export const HU: Strings = {
   kit: {
     esc: 'Esc',
     back: 'Vissza',
+    close: 'Bezárás',
     done: 'Kész',
     backHint: 'Vissza · Esc',
     closeHint: (key: string | null) =>

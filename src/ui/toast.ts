@@ -5,7 +5,7 @@ import { el } from './dom';
 export class Toasts {
   readonly root = el('div', { id: 'toasts' });
   push(msg: string, kind: 'info' | 'warn' | 'good' = 'info') {
-    const t = el('div', { class: `toast ${kind}` }, ...withAgeIcons(msg));
+    const t = el('div', { class: `panel toast ${kind}` }, ...withAgeIcons(msg));
     this.root.append(t);
     setTimeout(() => t.classList.add('fade'), 2600);
     setTimeout(() => t.remove(), 3200);

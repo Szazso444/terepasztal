@@ -517,17 +517,17 @@ export function statusLine(
 
 /** How far the dock stands off the bottom of the window (`#build-dock` in style.css). */
 export const DOCK_BOTTOM = 8;
-/** The least the toasts stand off it: over the closed bar, and in the overview (`#toasts`). */
-export const TOAST_FLOOR = 110;
+/** The least the toasts stand off it, where the player's layout has them (`#toasts`). */
+export const TOAST_FLOOR = 80;
 const TOAST_GAP = 6;
 
 /**
- * How far off the bottom of the window the toasts stand: over the dock at the height it has now,
- * status line, tiles and card included, as no fixed height holds for every bar. `dockHeight` is 0
- * with the dock hidden.
+ * How far off the bottom of the window the toasts stand: over the bar at the height it has now,
+ * status line and tiles included, as no fixed height holds for every bar. The card stands left of
+ * them. `barHeight` is 0 with the dock hidden.
  */
-export function toastBottom(dockHeight: number): number {
-  return Math.max(TOAST_FLOOR, DOCK_BOTTOM + dockHeight + TOAST_GAP);
+export function toastBottom(barHeight: number): number {
+  return Math.max(TOAST_FLOOR, DOCK_BOTTOM + barHeight + TOAST_GAP);
 }
 
 // ---------------------------------------------------------------- tooltips

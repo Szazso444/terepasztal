@@ -145,6 +145,8 @@ export interface FrameState {
   stacked: boolean;
   /** a menu holds the clock with a game under it */
   paused: boolean;
+  /** one of the stack's screens: on its own, a footer with no way out gets a Close */
+  closable?: boolean;
 }
 
 /**
@@ -228,7 +230,12 @@ export class ScreenFrame {
           : []),
       );
     }
-    this.layout = footerLayout(s.frameFooter?.() ?? null, this.state.stacked, () => this.leave());
+    this.layout = footerLayout(
+      s.frameFooter?.() ?? null,
+      this.state.stacked,
+      () => this.leave(),
+      this.state.closable && !s.noClose,
+    );
     const foot = JSON.stringify(this.layout);
     if (foot !== this.drawnFoot) {
       this.drawnFoot = foot;
@@ -367,6 +374,11 @@ export class ScreenManager {
 
   private show(s: Screen | null) {
     this.root.style.display = s ? 'flex' : 'none';
-    if (s) this.frame.show(s, { stacked: this.stacked, paused: !!this.pausedUnder?.() });
+    if (s)
+      this.frame.show(s, {
+        stacked: this.stacked,
+        paused: !!this.pausedUnder?.(),
+        closable: true,
+      });
   }
 }
