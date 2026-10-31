@@ -49,6 +49,7 @@ import {
   trainRowText,
   wagonStats,
 } from './depotView';
+import { currentStopIndex } from './trainView';
 import type { Confirm } from './menu';
 
 type RouteChoice = 'auto' | 'custom' | RouteMode;
@@ -337,13 +338,15 @@ export class DepotScreen implements Screen {
       });
       set(name, t.name);
       set(consist, x.consist);
-      consist.title = x.consist;
+      if (consist.title !== x.consist) consist.title = x.consist;
       set(status, x.status);
       set(load, x.load);
       set(aboard, x.aboard);
-      aboard.title = x.aboard;
-      status.className = `dp-st ${x.tone}`.trim();
-      load.className = x.over ? 'k-bad' : '';
+      if (aboard.title !== x.aboard) aboard.title = x.aboard;
+      const tone = `dp-st ${x.tone}`.trim();
+      if (status.className !== tone) status.className = tone;
+      const over = x.over ? 'k-bad' : '';
+      if (load.className !== over) load.className = over;
       root.classList.toggle('on', this.editing === t);
     };
     return { root, update };
@@ -361,7 +364,6 @@ export class DepotScreen implements Screen {
         t.locos.map((l) => [l.def.id, l.level, l.mode]),
         t.wagons.map((w) => [w.def.id, w.level]),
         t.program.map((s) => [s.stationId, s.load, s.unload, s.depart, s.waitFull, s.refuel]),
-        t.program === t.schedule ? t.routeIndex % Math.max(1, t.schedule.length) : -1,
       ]);
     return JSON.stringify([
       this.inventory.free('loco').map((i) => i.uid),
@@ -496,7 +498,6 @@ export class DepotScreen implements Screen {
       );
     }
     const stops = t.program;
-    const current = t.program === t.schedule ? t.routeIndex % Math.max(1, t.schedule.length) : -1;
     d.body.replaceChildren(
       well(
         { title: STR.depot.consist, right: `${t.locos.length} + ${t.wagons.length}` },
@@ -508,32 +509,39 @@ export class DepotScreen implements Screen {
         labelValue(STR.train.routing, STR.train.mode[t.mode] ?? t.mode),
         note(STR.train.modeHint[t.mode] ?? ''),
         note(STR.depot.scheduleHint),
-        t.mode === 'schedule' ? this.stopsRead(stops, current) : note(STR.depot.dynamicPlans),
+        t.mode === 'schedule' ? this.stopsRead(t) : note(STR.depot.dynamicPlans),
       ),
     );
   }
 
-  /** A stop list to read: number, station and what the train does there; the next one marked. */
-  private stopsRead(stops: readonly StopPlan[], current: number): HTMLElement {
+  /**
+   * A stop list to read: number, station and what the train does there. The stop it heads for is
+   * marked, and the mark follows the train without the list being drawn again.
+   */
+  private stopsRead(t: Train): HTMLElement {
+    const current = () =>
+      currentStopIndex(t.program === t.schedule, t.routeIndex, t.schedule.length);
     return el(
       'div',
       { class: 'dp-stops' },
-      ...stops.map((s, i) => {
+      ...t.program.map((s, i) => {
         const st = this.builder.stationById(s.stationId);
         const sum = stopSummary(s).join(' · ') || STR.depot.stopSum.plain;
-        const name = el('span', { class: 'dp-sn', text: st?.name ?? '?' });
-        if (i === current) name.append(el('em', { class: 'dp-cur', text: `▸ ${STR.depot.next}` }));
-        return el(
+        const mark = el('em', { class: 'dp-cur', text: `▸ ${STR.depot.next}` });
+        const block = el(
           'div',
-          { class: `dp-stop ro ${i === current ? 'on' : ''}`.trim() },
+          { class: 'dp-stop ro' },
           el(
             'div',
             { class: 'dp-sh' },
             el('b', { class: 'dp-si', text: String(i + 1) }),
-            name,
+            el('span', { class: 'dp-sn', text: st?.name ?? '?' }, mark),
             el('small', { class: 'dp-ss', text: sum, title: sum }),
           ),
         );
+        this.live.toggle(block, 'on', () => current() === i);
+        this.live.add(() => (mark.hidden = current() !== i));
+        return block;
       }),
     );
   }

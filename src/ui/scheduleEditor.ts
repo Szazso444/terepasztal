@@ -34,6 +34,8 @@ export class ScheduleEditor {
   readonly root = el('div', { class: 'dp-editor' });
   private schedule: StopPlan[] = [];
   private current = -1;
+  /** each stop's block and the mark that says the train heads for it */
+  private blocks: { block: HTMLElement; mark: HTMLElement }[] = [];
   /** what the stops and the station list were drawn from */
   private drawn = '';
 
@@ -65,7 +67,11 @@ export class ScheduleEditor {
   /** The refresh: draw again only if something shown has changed. */
   sync(schedule: StopPlan[], current = -1) {
     const same = schedule === this.schedule;
-    if (same && editorSignature(schedule, current, this.stations()) === this.drawn) return;
+    if (same && editorSignature(schedule, this.stations()) === this.drawn) {
+      // the stop the train heads for moves on: the mark follows, nothing is drawn again
+      if (current !== this.current) this.setCurrent(current);
+      return;
+    }
     // a number being typed in stays as it is until the field is left
     const typing = document.activeElement;
     if (same && typing instanceof HTMLInputElement && this.root.contains(typing)) return;
@@ -74,7 +80,8 @@ export class ScheduleEditor {
 
   private draw() {
     const rows = this.stations();
-    this.drawn = editorSignature(this.schedule, this.current, rows);
+    this.drawn = editorSignature(this.schedule, rows);
+    this.blocks = [];
     const stops = el('div', { class: 'dp-stops' });
     if (!this.schedule.length) stops.append(note(STR.depot.noStops));
     this.schedule.forEach((s, i) => stops.append(this.stopBlock(i, s)));
@@ -82,12 +89,13 @@ export class ScheduleEditor {
     if (!rows.length) add.append(note(STR.depot.noStations));
     for (const r of rows) add.append(this.addRow(r));
     this.root.replaceChildren(stops, sectionHeader(STR.depot.addStop, String(rows.length)), add);
+    this.setCurrent(this.current);
   }
 
   /** An edit the controls already show: tell the owner and remember what is drawn. */
   private edited() {
     this.onChange();
-    this.drawn = editorSignature(this.schedule, this.current, this.stations());
+    this.drawn = editorSignature(this.schedule, this.stations());
   }
   /** An edit that changes the list: tell the owner and draw it again. */
   private restructured() {
@@ -184,12 +192,12 @@ export class ScheduleEditor {
 
   private stopBlock(i: number, stop: StopPlan): HTMLElement {
     const st = this.builder.stationById(stop.stationId);
-    const name = el('span', { class: 'dp-sn', text: st?.name ?? '?' });
-    if (i === this.current) name.append(el('em', { class: 'dp-cur', text: `▸ ${STR.depot.next}` }));
+    const mark = el('em', { class: 'dp-cur', text: `▸ ${STR.depot.next}` });
+    const name = el('span', { class: 'dp-sn', text: st?.name ?? '?' }, mark);
     const o = STR.depot;
-    return el(
+    const block = el(
       'div',
-      { class: `dp-stop ${i === this.current ? 'on' : ''}`.trim() },
+      { class: 'dp-stop' },
       el(
         'div',
         { class: 'dp-sh' },
@@ -276,5 +284,16 @@ export class ScheduleEditor {
         this.dwell(o.dwellMax, o.dwellMaxHint, stop.maxDwell ?? 0, (v) => (stop.maxDwell = v)),
       ),
     );
+    this.blocks.push({ block, mark });
+    return block;
+  }
+
+  /** The stop the train heads for (-1: none) is marked; nothing else is touched. */
+  private setCurrent(current: number) {
+    this.current = current;
+    this.blocks.forEach((b, i) => {
+      b.block.classList.toggle('on', i === current);
+      b.mark.hidden = i !== current;
+    });
   }
 }

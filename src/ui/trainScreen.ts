@@ -32,7 +32,7 @@ import {
   well,
   type FootSpec,
 } from './kit';
-import { Bindings, bindMeter, keepScroll } from './liveView';
+import { Bindings, bindMeter, keepPlace, keepScroll } from './liveView';
 import { vehicleRow, vehicleSprite } from './vehicleRow';
 import { haulShare, haulTone, stateText, stateTone, wagonStats } from './depotView';
 import {
@@ -77,6 +77,8 @@ export class TrainScreen implements Screen {
   private readonly live = new Bindings();
   /** what the tab was drawn from: when it changes, it is drawn again */
   private built = '';
+  /** the tab and the train on show: drawn again for the same ones, the scroll stays */
+  private shown = '';
   private readonly scheduleEditor: ScheduleEditor;
   /** the stops the editor works on: a copy of the train's own program, handed back on each edit */
   private stops: StopPlan[] = [];
@@ -98,6 +100,7 @@ export class TrainScreen implements Screen {
     this.tab = 'overview';
     this.picked = { kind: 'l', index: 0 };
     this.built = '';
+    this.shown = '';
   }
   onOpen() {
     this.render();
@@ -246,13 +249,14 @@ export class TrainScreen implements Screen {
   private render() {
     const t = this.inService();
     this.live.clear();
-    if (!t) {
-      this.built = 'gone';
-      this.root.replaceChildren(
-        el('div', { class: 'k-page' }, well(null, emptyState({ text: STR.train.gone }))),
-      );
-    } else {
-      this.built = this.signature(t);
+    const key = t ? `${this.tab}:${t.id}` : 'gone';
+    const draw = () => {
+      if (!t) {
+        this.root.replaceChildren(
+          el('div', { class: 'k-page' }, well(null, emptyState({ text: STR.train.gone }))),
+        );
+        return;
+      }
       this.root.replaceChildren(
         this.tab === 'overview'
           ? this.overview(t)
@@ -260,7 +264,12 @@ export class TrainScreen implements Screen {
             ? this.stopsPage(t)
             : this.consistPage(t),
       );
-    }
+    };
+    this.built = t ? this.signature(t) : 'gone';
+    // the same tab of the same train drawn again keeps its place; another starts at the top
+    if (key === this.shown) keepPlace(this.root, draw);
+    else draw();
+    this.shown = key;
     this.onRedraw?.();
   }
 

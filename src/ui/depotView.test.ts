@@ -322,17 +322,17 @@ describe('when the editor draws itself again', () => {
     }),
   ];
 
-  it('is the same for the same stops, the same next stop and the same stations', () => {
+  it('is the same for the same stops and the same stations', () => {
     const s = [defaultStop(1), defaultStop(2)];
-    expect(editorSignature(s, 0, rows)).toBe(editorSignature([{ ...s[0] }, { ...s[1] }], 0, rows));
+    expect(editorSignature(s, rows)).toBe(editorSignature([{ ...s[0] }, { ...s[1] }], rows));
   });
 
-  it('changes with a stop edited, the stop it heads for, or a station built', () => {
+  it('changes with a stop edited or a station built', () => {
     const s = [defaultStop(1), defaultStop(2)];
-    const base = editorSignature(s, 0, rows);
-    expect(editorSignature([{ ...s[0], minDwell: 15 }, s[1]], 0, rows)).not.toBe(base);
-    expect(editorSignature(s, 1, rows)).not.toBe(base);
-    expect(editorSignature(s, 0, [...rows, { ...rows[0], id: 2 }])).not.toBe(base);
-    expect(editorSignature(s, 0, [{ ...rows[0], hasPlatform: false }])).not.toBe(base);
+    const base = editorSignature(s, rows);
+    expect(editorSignature([{ ...s[0], minDwell: 15 }, s[1]], rows)).not.toBe(base);
+    expect(editorSignature(s, [...rows, { ...rows[0], id: 2 }])).not.toBe(base);
+    expect(editorSignature(s, [{ ...rows[0], hasPlatform: false }])).not.toBe(base);
+    expect(editorSignature(s.slice(0, 1), rows)).not.toBe(base);
   });
 });

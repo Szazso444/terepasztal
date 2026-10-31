@@ -86,6 +86,21 @@ export function bindMeter(live: Bindings, meter: HTMLElement, get: () => MeterSt
   return meter;
 }
 
+/** The parts of a screen that scroll: a page of wells, the body of a list or a detail. */
+const SCROLLING = '.k-page, .k-pane-b';
+
+/**
+ * Run `redraw`, which builds what stands in `root` again, and put each scrolling part's place back
+ * where it was, when the parts are the same ones in the same order.
+ */
+export function keepPlace(root: HTMLElement, redraw: () => void): void {
+  const tops = [...root.querySelectorAll<HTMLElement>(SCROLLING)].map((p) => p.scrollTop);
+  redraw();
+  root.querySelectorAll<HTMLElement>(SCROLLING).forEach((p, i) => {
+    if (tops[i]) p.scrollTop = tops[i];
+  });
+}
+
 /**
  * The scroll positions of a screen's scrolling parts, kept for the time its root is out of the
  * page (a screen over it covers it): the browser resets a scroll to 0 when the element is

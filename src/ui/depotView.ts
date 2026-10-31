@@ -255,12 +255,12 @@ export function stationRow(s: StationInput): StationRow {
 
 /**
  * What the editor drew its stops and its station list from. It is built again only when this
- * changes, so a refresh never rebuilds a field being typed in.
+ * changes, so a refresh never rebuilds a field being typed in. The stop the train heads for is not
+ * in it: that mark moves without a redraw.
  */
 export function editorSignature(
   stops: readonly StopPlan[],
-  current: number,
   stations: readonly StationRow[],
 ): string {
-  return JSON.stringify([stops, current, stations]);
+  return JSON.stringify([stops, stations]);
 }
