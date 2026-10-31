@@ -116,7 +116,7 @@ export class GuideScreen implements Screen {
   /** it is read, not used on the map: the tool in hand stays in hand while it is up */
   readonly keepsTool = true;
   readonly formKeys = true;
-  private readonly split = listDetail(250);
+  private readonly split = listDetail(280);
   readonly root = this.split.root;
   private pages: GuidePage[] = [];
   private pageId = 'first';
