@@ -44,6 +44,8 @@ export class StationPanel {
   private groundSaid = '';
   private title = el('span');
   station: Station | null = null;
+  /** Ask for a station's new name in the game's dialog, null when it is dismissed; set by the UI root. */
+  askName: (current: string) => Promise<string | null> = () => Promise.resolve(null);
 
   constructor(
     private readonly builder: Builder,
@@ -245,8 +247,8 @@ export class StationPanel {
           ? btn(STR.station.renameTown, () => this.onRenameTown(town), 'small')
           : btn(
               STR.station.rename,
-              () => {
-                const n = prompt(STR.station.rename, s.name);
+              async () => {
+                const n = await this.askName(s.name);
                 // cancelled, or left blank: nothing to rename
                 if (!n?.trim()) return;
                 const done = this.commands.renameStation(s, n);

@@ -273,12 +273,15 @@ describe('the game asks in its own dialog', () => {
     });
   }
 
-  /** The calls of the browser's own `confirm` and `alert` in `text`. */
+  /** The calls of the browser's own `confirm`, `alert` and `prompt` in `text`. */
   function nativeDialogs(file: string, text: string): string[] {
     const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
     const found: string[] = [];
     const visit = (n: ts.Node) => {
-      if (ts.isCallExpression(n) && /^(window\.)?(confirm|alert)$/.test(n.expression.getText(sf)))
+      if (
+        ts.isCallExpression(n) &&
+        /^(window\.)?(confirm|alert|prompt)$/.test(n.expression.getText(sf))
+      )
         found.push(`${file}: ${n.getText(sf)}`);
       ts.forEachChild(n, visit);
     };
@@ -286,7 +289,7 @@ describe('the game asks in its own dialog', () => {
     return found;
   }
 
-  it('has no native confirm() or alert() left in src', () => {
+  it('has no native confirm(), alert() or prompt() left in src', () => {
     const found = sources(new URL('../', import.meta.url)).flatMap((f) =>
       nativeDialogs(f.pathname, readFileSync(f, 'utf8')),
     );
@@ -295,7 +298,10 @@ describe('the game asks in its own dialog', () => {
 
   it('sees one, and not a method of the same name', () => {
     expect(
-      nativeDialogs('sample.ts', `confirm('a'); window.alert('b'); this.prompt.confirm('c', 'd');`),
-    ).toHaveLength(2);
+      nativeDialogs(
+        'sample.ts',
+        `confirm('a'); window.alert('b'); prompt('e'); this.prompt.confirm('c', 'd');`,
+      ),
+    ).toHaveLength(3);
   });
 });

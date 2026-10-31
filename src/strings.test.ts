@@ -86,8 +86,12 @@ describe('what the upgrade tool tells the player', () => {
   });
 
   it('lists the track keys among the controls', () => {
-    for (const key of ['Q / E', 'U', 'Shift+U', '1-5'])
-      expect(STR.settings.controlsText).toContain(key);
+    const shown = STR.settings.keyGroups.flatMap((g) => [
+      ...('short' in g ? g.short : []),
+      ...g.rows,
+    ]);
+    const keys = shown.flatMap((r) => [...r.keys]);
+    for (const key of ['Q', 'E', 'U', 'Shift+U', '1–5']) expect(keys).toContain(key);
   });
 });
 

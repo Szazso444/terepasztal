@@ -4,10 +4,27 @@ import { DialogFlow, note, page, well, type ConfirmOptions, type FootSpec } from
 import { ScreenFrame, type Screen } from './modal';
 
 /** A question for the dialog: a yes or no, or with `name` a text to type, starting from it. */
-interface Question extends ConfirmOptions {
+interface Question extends ConfirmOptions, NameOptions {
   title: string;
   text: string;
   name?: string;
+}
+
+/** What `ask` is told besides the question: how long the name may be, and whether it may be empty. */
+export interface NameOptions {
+  /** the most characters a name has; a town's by default */
+  max?: number;
+  /** an empty name is an answer too, not a dismissal: a seed left empty is a random one */
+  empty?: boolean;
+}
+
+/** The longest name by default: a town's. */
+const NAME_MAX = 20;
+
+/** What Enter answers with: the name typed, trimmed; an empty one only where that is an answer. */
+export function nameAnswer(typed: string, empty: boolean): string | null {
+  const text = typed.trim();
+  return text || (empty ? '' : null);
 }
 
 /** What a yes reads as: any text, as `ask` answers with the name typed. */
@@ -22,7 +39,9 @@ const YES = 'yes';
 export class NamePrompt {
   readonly root = el('div', { id: 'name-prompt-root' });
   private frame = new ScreenFrame(() => this.flow.dismiss());
-  private input = el('input', { class: 'k-cf-in', type: 'text', maxlength: '20' });
+  private input = el('input', { class: 'k-cf-in', type: 'text', maxlength: String(NAME_MAX) });
+  /** the question up takes an empty name as an answer */
+  private empty = false;
   private flow = new DialogFlow<Question, string | null>(
     { show: (q) => this.draw(q), hide: () => (this.root.style.display = 'none') },
     null,
@@ -50,8 +69,8 @@ export class NamePrompt {
     return this.flow.open;
   }
   /** Ask for a name; resolves with the text, or null when dismissed. */
-  ask(title: string, hint: string, value: string): Promise<string | null> {
-    return this.flow.ask({ title, text: hint, name: value });
+  ask(title: string, hint: string, value: string, o: NameOptions = {}): Promise<string | null> {
+    return this.flow.ask({ title, text: hint, name: value, ...o });
   }
   /** A yes / no question. The answer names what it does; destroying something, it is red. */
   confirm(title: string, text: string, o: ConfirmOptions = {}): Promise<boolean> {
@@ -59,7 +78,7 @@ export class NamePrompt {
   }
 
   private answerName() {
-    this.flow.answer(this.input.value.trim() || null);
+    this.flow.answer(nameAnswer(this.input.value, this.empty));
   }
 
   private draw(q: Question) {
@@ -95,7 +114,9 @@ export class NamePrompt {
     };
     this.frame.show(screen, { stacked: false, paused: false });
     this.root.style.display = 'flex';
+    this.empty = !!q.empty;
     if (naming) {
+      this.input.maxLength = q.max ?? NAME_MAX;
       this.input.value = q.name ?? '';
       setTimeout(() => {
         this.input.focus();

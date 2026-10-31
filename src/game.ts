@@ -811,9 +811,15 @@ export class Game implements UiHost {
         if (editor.save()) this.toasts.push(STR.editor.saved(editor.level.name), 'good');
         else this.toasts.push(STR.editor.saveFailed, 'warn');
       },
-      saveAs: () => {
-        const name = prompt(STR.editor.newName, editor.level.name);
-        if (name && name.trim() && editor.saveAs(name.trim().slice(0, 40))) {
+      saveAs: async () => {
+        // the in-game dialog: a browser prompt() stalls the loop and then lurches to catch up
+        const name = await this.namePrompt.ask(
+          STR.editor.saveAs,
+          STR.editor.newName,
+          editor.level.name,
+          { max: 40 },
+        );
+        if (name && editor.saveAs(name.trim().slice(0, 40))) {
           this.toasts.push(STR.editor.saved(editor.level.name), 'good');
           this.editorPanel?.render();
         }
@@ -850,8 +856,14 @@ export class Game implements UiHost {
         }
       },
       fill: (t) => editor.fillAll(t),
-      regenerate: () => {
-        const v = prompt(STR.settings.seedPlaceholder, String(this.map.seed));
+      regenerate: async () => {
+        // an empty seed is a random one, so it is an answer here
+        const v = await this.namePrompt.ask(
+          STR.editor.regenerate,
+          STR.settings.seedPlaceholder,
+          String(this.map.seed),
+          { max: 200, empty: true },
+        );
         if (v === null) return;
         const seed = this.parseSeed(v);
         const fresh = generateMapForEditor(

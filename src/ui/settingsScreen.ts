@@ -20,12 +20,11 @@ import {
 import { contractRarityLabel } from './labels';
 import { STR } from '../strings';
 import type { FrameTabs, Screen } from './modal';
-import { slotRows, type Confirm } from './menu';
+import { slotRows, type Confirm } from './saveRows';
 import { autosaveText } from './saveSlots';
 import {
   CONTRACT_RARITIES,
   contractPolicyFor,
-  hasSlot,
   uniformContractPolicy,
   type ContractPolicy,
   type Settings,
@@ -39,16 +38,17 @@ export interface SettingsActions {
   exportSave(): string | null;
   exportDiagnostics(): string;
   importSave(json: string): boolean;
-  saveAs(name: string): boolean;
+  /** open Saved games on its Save tab: a save is named there */
+  saveAs(): void;
   loadSlot(name: string): void;
   deleteSlot(name: string): void;
   /** the named saves, newest first */
   slots(): SlotMeta[];
 }
 
-type Tab = 'audio' | 'gameplay' | 'contracts' | 'signalling' | 'controls' | 'saves';
+export type SettingsTab = 'audio' | 'gameplay' | 'contracts' | 'signalling' | 'controls' | 'saves';
 
-const TABS: { id: Tab; label: string }[] = [
+const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'audio', label: STR.settings.audio },
   { id: 'gameplay', label: STR.settings.gameplay },
   { id: 'contracts', label: STR.settings.contractsTab },
@@ -92,7 +92,7 @@ export class SettingsScreen implements Screen {
   readonly root = el('div', { class: 'k-page' });
   /** the row that opens the Notifications screen */
   onNotifications: (() => void) | null = null;
-  private tab: Tab = 'audio';
+  private tab: SettingsTab = 'audio';
   /** how many named saves the Saves tab counts; storage is not read at every refresh */
   private slotCount = 0;
   /** autosave on or off and when the game was last stored; kept current while the screen is up */
@@ -104,11 +104,6 @@ export class SettingsScreen implements Screen {
     this.autosaveValue,
   );
   // the fields outlive a redraw of the tab: what is typed in them stays
-  private nameField = textField({
-    placeholder: STR.settings.slotName,
-    maxLength: 32,
-    onEnter: () => void this.saveAs(),
-  });
   private seedField = textField({ placeholder: STR.settings.seedPlaceholder });
   private transferBox = pasteBox({ placeholder: STR.settings.transferHint });
 
@@ -128,6 +123,10 @@ export class SettingsScreen implements Screen {
     private readonly prompt: Confirm,
   ) {}
 
+  /** Get ready to open on a tab: the title's Controls button opens it on the key table. */
+  show(tab: SettingsTab) {
+    this.tab = tab;
+  }
   onOpen() {
     this.render();
   }
@@ -139,7 +138,7 @@ export class SettingsScreen implements Screen {
       tabs: TABS.map((t) => (t.id === 'saves' ? { ...t, count: this.slotCount } : t)),
       current: this.tab,
       pick: (id) => {
-        this.tab = id as Tab;
+        this.tab = id as SettingsTab;
         this.render();
       },
     };
@@ -248,11 +247,12 @@ export class SettingsScreen implements Screen {
     const right = [
       well(
         { title: STR.settings.slots, right: String(this.slotCount) },
-        el(
-          'div',
-          { class: 'k-inrow' },
-          this.nameField.root,
-          actionButton(STR.settings.saveAs, () => void this.saveAs(), { ...off, icon: 'saveas' }),
+        buttonRow(
+          actionButton(STR.menu.saveAs, () => this.actions.saveAs(), {
+            ...off,
+            title: info.saveOff ? STR.settings.saveOff : STR.settings.saveAsOpens,
+            icon: 'saveas',
+          }),
         ),
         ...slotRows(this.actions, this.prompt, () => this.render(), STR.settings.noSlots),
       ),
@@ -291,25 +291,6 @@ export class SettingsScreen implements Screen {
       ),
     ];
     return columns(left, right);
-  }
-
-  private async saveAs() {
-    const f = this.nameField.input;
-    const n = f.value.trim();
-    if (!n) return;
-    // replacing a save is asked first; a no writes nothing and leaves the name to change
-    if (
-      hasSlot(n) &&
-      !(await this.prompt.confirm(STR.saves.overwriteTitle, STR.saves.confirmOverwrite(n), {
-        yes: STR.prompt.replace,
-        danger: true,
-      }))
-    )
-      return;
-    if (this.actions.saveAs(n)) {
-      f.value = '';
-      this.render();
-    }
   }
 
   private async newGame() {

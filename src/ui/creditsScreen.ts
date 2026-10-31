@@ -1,6 +1,7 @@
 import { content } from '../data/content';
 import { el } from './dom';
 import { STR } from '../strings';
+import type { FootSpec } from './kit';
 import type { Screen } from './modal';
 import {
   CREDITS,
@@ -78,7 +79,9 @@ function authorBlock(author: string, credits: Credit[]) {
 export class CreditsScreen implements Screen {
   readonly id = 'credits';
   readonly title = STR.credits.title;
-  readonly root = el('div', { class: 'credits' });
+  readonly frameSize = 'M';
+  readonly icon = 'scroll';
+  readonly root = el('div', { class: 'k-page credits' });
   private roll = el('div', { class: 'credits-roll' });
   private frame = 0;
   private startAt = 0;
@@ -142,6 +145,10 @@ export class CreditsScreen implements Screen {
         ),
       );
     r.append(el('div', { class: 'credits-spacer' }));
+  }
+
+  frameFooter(): FootSpec {
+    return { done: true };
   }
 
   onOpen() {
