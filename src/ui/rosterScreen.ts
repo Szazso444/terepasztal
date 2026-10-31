@@ -64,6 +64,8 @@ export class RosterScreen implements Screen {
   private scroll = new ScrollKeep(this.cards);
   /** what the cards were last built from: the same again builds nothing */
   private shown = '';
+  /** set by the game: show a model in the Inspect 3D screen over this one */
+  onInspect: ((defId: string) => void) | null = null;
 
   constructor(
     private readonly inventory: Inventory,
@@ -126,6 +128,7 @@ export class RosterScreen implements Screen {
     ];
     const sizes: SegOption[] = [
       { id: 'all', label: STR.roster.all },
+      { id: 'tiny', label: STR.roster.sizes.tiny },
       { id: 'small', label: STR.roster.sizes.small },
       { id: 'medium', label: STR.roster.sizes.medium },
       { id: 'large', label: STR.roster.sizes.large },
@@ -228,16 +231,15 @@ export class RosterScreen implements Screen {
     if (!force && key === this.shown) return;
     this.shown = key;
     this.scroll.around(() => {
-      if (!items.length) {
-        this.cards.replaceChildren(emptyState({ text: STR.roster.empty, icon: 'list' }));
-        return;
-      }
+      // the help stays when nothing matches: it is what explains Level up and the fitting
       this.cards.replaceChildren(
         note(STR.roster.help),
-        cardGrid(
-          items.map((i) => this.card(i)),
-          250,
-        ),
+        items.length
+          ? cardGrid(
+              items.map((i) => this.card(i)),
+              250,
+            )
+          : emptyState({ text: STR.roster.empty, icon: 'list' }),
       );
     });
   }
@@ -266,6 +268,14 @@ export class RosterScreen implements Screen {
     stats.push(runsOn(d as LocoDef | WagonDef));
     const train = it.assigned !== null ? this.fleet.byId(it.assigned) : null;
     const art = vehicleArt(this.atlas, it.defId, 2);
+    art.classList.add('ec-art');
+    art.addEventListener('click', () => this.onInspect?.(it.defId));
+    const eye = actionButton('', () => this.onInspect?.(it.defId), {
+      cls: 'small ec-eye',
+      icon: 'eye',
+      title: STR.craft.inspect,
+    });
+    eye.setAttribute('aria-label', STR.craft.inspect);
     const foot: (Node | null)[] = [
       el('span', {
         class: 'ec-grow dim',
@@ -274,6 +284,7 @@ export class RosterScreen implements Screen {
             ? STR.roster.maxLevel
             : STR.roster.copies(this.inventory.count(it.defId)),
       }),
+      eye,
       this.levelButton(it),
       this.inCabPart(it),
     ];
@@ -322,10 +333,11 @@ export class RosterScreen implements Screen {
       ))
     )
       return;
-    if (this.inventory.consumeForLevel(it)) {
+    if (this.inventory.consumeForLevel(it))
       this.toast(STR.roster.leveled(d.name, it.level), 'good');
-      this.render(true);
-    }
+    // the spare may have gone into a train while the question was up: say so, and show the stock
+    else this.toast(STR.roster.levelUpNeedsSpare, 'warn');
+    this.render(true);
   }
 
   /** In-cab signalling, fitted for money: with it a train runs on the shorter headway. */

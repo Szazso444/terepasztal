@@ -8,7 +8,7 @@ export type SortKey = 'rarity' | 'name' | 'level' | 'newest';
 
 export const KIND_FILTERS: readonly KindFilter[] = ['all', 'loco', 'wagon'];
 export const SORT_KEYS: readonly SortKey[] = ['rarity', 'name', 'level', 'newest'];
-export const SIZE_FILTERS = ['all', 'small', 'medium', 'large'] as const;
+export const SIZE_FILTERS = ['all', 'tiny', 'small', 'medium', 'large'] as const;
 
 /** Rarities from the commonest up: a copy's place in the order is its index. */
 export const RARITY_ORDER: readonly string[] = ['N', 'R', 'SR', 'SSR', 'L'];

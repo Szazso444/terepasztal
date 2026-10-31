@@ -92,3 +92,24 @@ export function statusTone(status: string): 'good' | 'bad' | 'dim' {
   if (status === 'done') return 'good';
   return status === 'failed' ? 'bad' : 'dim';
 }
+
+/** What the per-rarity offer policies add up to: every rarity one way, or a mix. */
+export type AutoState = 'accept' | 'prompt' | 'mixed';
+
+/**
+ * The Auto-accept switch's truth from the policy of each rarity. On means every rarity takes
+ * its offers, off every rarity leaves them; Auto-deny anywhere, or any other mix, is its own state:
+ * the switch cannot say that, and flipping it would replace each choice.
+ */
+export function autoState(policies: readonly string[]): AutoState {
+  if (!policies.length) return 'prompt';
+  if (policies.every((p) => p === 'accept')) return 'accept';
+  return policies.every((p) => p === 'prompt') ? 'prompt' : 'mixed';
+}
+
+/** The tab a contract is listed under, null for one no tab lists (an offer that has expired). */
+export function tabOfStatus(status: string): ContractTab | null {
+  if (status === 'offer') return 'offers';
+  if (status === 'active') return 'active';
+  return status === 'done' || status === 'failed' || status === 'cancelled' ? 'history' : null;
+}

@@ -61,6 +61,9 @@ export class ScrollKeep {
 
   constructor(private readonly box: HTMLElement) {
     box.addEventListener('scroll', () => (this.saved = box.scrollTop));
+    // put back in the page it is laid out again: the scroll comes back before it is painted
+    if (typeof ResizeObserver !== 'undefined')
+      new ResizeObserver(() => this.restore()).observe(box);
   }
   /** Back to the top: a filter or a tab starts its list again. */
   top() {

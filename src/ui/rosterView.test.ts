@@ -50,6 +50,11 @@ describe('the roster filters', () => {
     expect(names({ kind: 'wagon', rarity: 'N' })).toEqual(['Mine Tub']);
   });
 
+  it('keeps the tiny stock apart: it is neither small nor listed under it', () => {
+    expect(names({ size: 'tiny' })).toEqual(['Mine Tub']);
+    expect(names({ size: 'small' })).not.toContain('Mine Tub');
+  });
+
   it('counts a model with no size as small', () => {
     expect(names({ size: 'small' })).toEqual(['Battery Cart', 'Rocket']);
     expect(names({ size: 'large' })).toEqual(['Mallard']);
@@ -110,7 +115,7 @@ describe('the roster sorts', () => {
 describe('picking an option', () => {
   it('takes one of the options, and keeps what it had for any other', () => {
     expect(pickOf(SIZE_FILTERS, 'large', 'all')).toBe('large');
-    expect(pickOf(SIZE_FILTERS, 'tiny', 'small')).toBe('small');
+    expect(pickOf(SIZE_FILTERS, 'huge', 'small')).toBe('small');
   });
 });
 

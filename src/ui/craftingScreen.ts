@@ -240,7 +240,7 @@ export class CraftingScreen implements Screen {
     );
     if (held) {
       for (const seg of [kindSeg, ageSeg]) {
-        seg.classList.add('off');
+        seg.classList.add('ec-held');
         seg.title = STR.craft.heldHint;
       }
     }
@@ -285,6 +285,7 @@ export class CraftingScreen implements Screen {
         names.append(
           el('span', {
             class: this.crafting.knows(id) ? 'known' : 'dim',
+            title: this.crafting.knows(id) ? STR.craft.poolKnown : STR.craft.poolUnknown,
             text: itemDef(id).name + (i < g.ids.length - 1 ? ', ' : ''),
           }),
         ),

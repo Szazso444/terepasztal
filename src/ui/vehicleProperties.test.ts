@@ -3,7 +3,7 @@ import { LOCOS, WAGONS, type LocoDef, type WagonDef } from '../gacha/items';
 import { vehicleSpec } from '../sim/body';
 import { cargoName } from '../sim/cargo';
 import { STR } from '../strings';
-import { vehicleProperties } from './vehicleProperties';
+import { vehicleFacts, vehicleProperties } from './vehicleProperties';
 
 /** The values a vehicle's data stores that the player should only ever read as names. */
 function storedValues(d: LocoDef | WagonDef): string[] {
@@ -97,6 +97,32 @@ describe('the data sheet of a vehicle', () => {
       expect(what, d.id).toContain(
         'type' in d ? STR.roster.type[d.type] : STR.roster.carries[d.carries],
       );
+    }
+  });
+
+  it('is the same sheet as labelled facts: the lines, in order, each with a label to read', () => {
+    for (const d of vehicles) {
+      const facts = vehicleFacts(d.id);
+      expect(
+        facts.map((f) => f.line),
+        d.id,
+      ).toEqual(vehicleProperties(d.id));
+      expect(new Set(facts.map((f) => f.key)).size, `${d.id}: a key twice`).toBe(facts.length);
+      for (const f of facts) {
+        expect(STR.vehicle.fact[f.key], `${d.id}: no label for ${f.key}`).toBeTruthy();
+        expect(f.value.trim(), `${d.id}: an empty ${f.key}`).not.toBe('');
+      }
+      expect(facts[0].key, d.id).toBe('body');
+      expect(facts[facts.length - 1].key, d.id).toBe('track');
+    }
+  });
+
+  it('leaves the tank rows without the label their line starts with', () => {
+    for (const d of vehicles) {
+      for (const f of vehicleFacts(d.id)) {
+        if (f.key !== 'fuel' && f.key !== 'water') continue;
+        expect(f.line, d.id).toBe(`${STR.vehicle.fact[f.key]} ${f.value}`);
+      }
     }
   });
 });

@@ -3,6 +3,7 @@ import {
   HISTORY_LIMIT,
   LOW_TIME,
   activeByDeadline,
+  autoState,
   contractTabs,
   deliveredShare,
   emptyKind,
@@ -11,6 +12,7 @@ import {
   pickTab,
   recentContracts,
   statusTone,
+  tabOfStatus,
   timeIsLow,
 } from './contractsView';
 
@@ -107,5 +109,35 @@ describe('a duration as the game prints it', () => {
     expect(fmtDuration(240)).toBe('1.0d');
     expect(fmtDuration(240 * 0.5)).toBe('12h 00m');
     expect(fmtDuration(0)).toBe('0h 00m');
+  });
+});
+
+describe('the Auto-accept switch', () => {
+  it('is on only when every rarity accepts, and off only when every rarity asks', () => {
+    expect(autoState(['accept', 'accept', 'accept', 'accept', 'accept'])).toBe('accept');
+    expect(autoState(['prompt', 'prompt', 'prompt', 'prompt', 'prompt'])).toBe('prompt');
+  });
+
+  it('is mixed for any other set, Auto-deny included, so it never reads as off', () => {
+    expect(autoState(['accept', 'accept', 'prompt', 'accept', 'accept'])).toBe('mixed');
+    expect(autoState(['prompt', 'prompt', 'prompt', 'prompt', 'deny'])).toBe('mixed');
+    expect(autoState(['deny', 'deny', 'deny', 'deny', 'deny'])).toBe('mixed');
+  });
+
+  it('reads no rarities as off', () => {
+    expect(autoState([])).toBe('prompt');
+  });
+});
+
+describe('where a contract is listed', () => {
+  it('puts each status under its tab', () => {
+    expect(tabOfStatus('offer')).toBe('offers');
+    expect(tabOfStatus('active')).toBe('active');
+    for (const s of ['done', 'failed', 'cancelled']) expect(tabOfStatus(s)).toBe('history');
+  });
+
+  it('lists an expired offer nowhere', () => {
+    expect(tabOfStatus('expired')).toBeNull();
+    expect(tabOfStatus('nonsense')).toBeNull();
   });
 });

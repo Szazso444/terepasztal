@@ -35,6 +35,7 @@ import {
 /** One spot row: the cells the refresh sets again, and the buttons it switches on and off. */
 interface SpotRow {
   good: CargoDef;
+  tr: HTMLElement;
   have: HTMLElement;
   buy: HTMLElement;
   sell: HTMLElement;
@@ -45,8 +46,8 @@ interface SpotRow {
 /** One standing deal's row: the two fields are built again when the deal changes under them. */
 interface DealRow {
   good: CargoDef;
-  /** the deal the fields were built from */
-  built: number;
+  /** what each side's field was built to show; a side that no longer matches the deal is built anew */
+  shown: { buy: number; sell: number };
   buyCell: HTMLElement;
   sellCell: HTMLElement;
   buyAt: HTMLElement;
@@ -69,6 +70,9 @@ export class MarketScreen implements Screen {
   readonly formKeys = true;
   readonly root = page();
   private tab: MarketTab = 'spot';
+  /** the good whose row is picked out on the spot prices: the one clicked in the resource bar */
+  private picked: string | null = null;
+  private pickInView = false;
   private scroll = new ScrollKeep(this.root);
   private goodsShown = '';
   private spot: SpotRow[] = [];
@@ -92,6 +96,20 @@ export class MarketScreen implements Screen {
     this.build();
     // the cells are filled now, not at the next refresh
     this.update();
+  }
+  onClose() {
+    this.picked = null;
+  }
+  /** Pick a good's row out on the spot prices, which open. Open the screen after, or as it is. */
+  pick(resource: string) {
+    this.picked = resource;
+    this.pickInView = true;
+    this.tab = 'spot';
+    if (this.root.isConnected) {
+      this.scroll.top();
+      this.build();
+      this.update();
+    }
   }
   refresh() {
     this.scroll.restore();
@@ -135,6 +153,11 @@ export class MarketScreen implements Screen {
     this.scroll.around(() => {
       this.root.replaceChildren(this.tab === 'spot' ? this.spotWell(goods) : this.dealsWell(goods));
     });
+    const row = this.spot.find((r) => r.good.id === this.picked);
+    if (this.tab === 'spot' && this.pickInView && row) {
+      this.pickInView = false;
+      row.tr.scrollIntoView?.({ block: 'nearest' });
+    }
   }
 
   private fundsLabel(): HTMLElement {
@@ -174,8 +197,10 @@ export class MarketScreen implements Screen {
           buttons.push({ kind, n, button });
           cell.append(button);
         }
+      const tr = el('tr', { class: good.id === this.picked ? 'on' : '' });
       const row: SpotRow = {
         good,
+        tr,
         have: el('td', { class: 'r num' }),
         buy: el('td', { class: 'r num' }),
         sell: el('td', { class: 'r num' }),
@@ -183,18 +208,15 @@ export class MarketScreen implements Screen {
         buttons,
       };
       this.spot.push(row);
-      body.append(
-        el(
-          'tr',
-          {},
-          el('td', {}, this.nameCell(good)),
-          row.have,
-          row.buy,
-          row.sell,
-          row.trend,
-          el('td', { class: 'r' }, cell),
-        ),
+      tr.append(
+        el('td', {}, this.nameCell(good)),
+        row.have,
+        row.buy,
+        row.sell,
+        row.trend,
+        el('td', { class: 'r' }, cell),
       );
+      body.append(tr);
     }
     const table = el(
       'table',
@@ -223,7 +245,7 @@ export class MarketScreen implements Screen {
     for (const good of goods) {
       const row: DealRow = {
         good,
-        built: Number.NaN,
+        shown: { buy: Number.NaN, sell: Number.NaN },
         buyCell: el('td', { class: 'r' }),
         sellCell: el('td', { class: 'r' }),
         buyAt: el('small', { class: 'dim' }),
@@ -262,25 +284,23 @@ export class MarketScreen implements Screen {
     );
   }
 
-  /** A deal's two fields, made from the deal as it stands. */
-  private dealFields(row: DealRow, deal: number) {
-    const sides = dealSides(deal);
-    const field = (kind: TradeKind, label: string) =>
-      numberField({
-        min: 0,
-        max: DEAL_MAX,
-        step: DEAL_STEP,
-        bigStep: DEAL_BIG_STEP,
-        whole: true,
-        value: sides[kind],
-        label: `${row.good.name}: ${label}`,
-        unit: 'u',
-        cls: 'small',
-        onChange: (v) => this.setDeal(row, kind, v),
-      });
-    row.buyCell.replaceChildren(field('buy', STR.market.dealBuy));
-    row.sellCell.replaceChildren(field('sell', STR.market.dealSell));
-    row.built = deal;
+  /** One side of a deal's fields, made to show `value`. */
+  private dealField(row: DealRow, kind: TradeKind, value: number) {
+    const label = kind === 'buy' ? STR.market.dealBuy : STR.market.dealSell;
+    const field = numberField({
+      min: 0,
+      max: DEAL_MAX,
+      step: DEAL_STEP,
+      bigStep: DEAL_BIG_STEP,
+      whole: true,
+      value,
+      label: `${row.good.name}: ${label}`,
+      unit: 'u',
+      cls: 'small',
+      onChange: (v) => this.setDeal(row, kind, v),
+    });
+    (kind === 'buy' ? row.buyCell : row.sellCell).replaceChildren(field);
+    row.shown[kind] = value;
   }
 
   // ---------------------------------------------------------------- doing
@@ -298,7 +318,11 @@ export class MarketScreen implements Screen {
   private setDeal(row: DealRow, kind: TradeKind, amount: number) {
     // a deal set here settles with the store selected now, the others with it too
     this.trade.storeKey = this.stores.selected?.key ?? null;
-    this.trade.set(row.good.id, dealFrom(kind, amount));
+    const deal = dealFrom(kind, amount);
+    this.trade.set(row.good.id, deal);
+    // the field that was typed in shows it already, and is left as it is, with the focus and the
+    // press it may have under it; the other side is built anew, at nothing
+    row.shown[kind] = dealSides(deal)[kind];
     this.update();
   }
 
@@ -307,13 +331,14 @@ export class MarketScreen implements Screen {
     setText(this.funds, fmtMoney(this.economy.money));
     const store = this.stores.selected;
     if (this.tab === 'spot') {
-      this.storeLine.textContent = store
-        ? STR.market.store(this.stores.label(store))
-        : STR.market.noStore;
+      setText(
+        this.storeLine,
+        store ? STR.market.store(this.stores.label(store)) : STR.market.noStore,
+      );
       for (const row of this.spot) this.updateSpot(row, store);
     } else {
       const settles = this.trade.storeIn(this.stores);
-      this.dealsAt.textContent = settles ? STR.market.dealsAt(this.stores.label(settles)) : '';
+      setText(this.dealsAt, settles ? STR.market.dealsAt(this.stores.label(settles)) : '');
       this.dealsAt.hidden = !settles;
       for (const row of this.deals) this.updateDeal(row);
       const bal = this.trade.balancePerCycle();
@@ -338,6 +363,8 @@ export class MarketScreen implements Screen {
     const { buy, sell } = this.trade.spotQuote(id);
     const have = store ? store.get(id) : 0;
     setText(row.have, store ? `${Math.floor(have)} / ${store.cap(id)}` : '-');
+    // a store at its cap is the amber of a thing to know
+    row.have.className = `r num ${store && have >= store.cap(id) ? 'warn' : ''}`.trim();
     setText(row.buy, fmtMoney(buy));
     setText(row.sell, fmtMoney(sell));
     setText(
@@ -361,8 +388,11 @@ export class MarketScreen implements Screen {
   private updateDeal(row: DealRow) {
     const id = row.good.id;
     const cur = this.trade.get(id);
-    // the fields show the deal as it stands; one changed elsewhere (a load) is shown anew
-    if (cur !== row.built) this.dealFields(row, cur);
+    // each side shows the deal as it stands; one changed elsewhere (a load, the other side) is built
+    // anew, and the one being typed in never is
+    const sides = dealSides(cur);
+    for (const kind of ['buy', 'sell'] as const)
+      if (row.shown[kind] !== sides[kind]) this.dealField(row, kind, sides[kind]);
     const buyPrice = this.trade.buyPrice(id);
     const sellPrice = this.trade.sellPrice(id);
     setText(row.buyAt, ` @ ${fmtMoney(buyPrice)}`);

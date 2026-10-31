@@ -30,7 +30,9 @@ import {
   pickTab,
   recentContracts,
   statusTone,
+  tabOfStatus,
   timeIsLow,
+  type AutoState,
   type ContractTab,
 } from './contractsView';
 
@@ -42,8 +44,13 @@ export { fmtDuration };
  * move in place, so a button under the pointer is never swapped away between press and release.
  */
 export class ContractsScreen implements Screen {
-  /** read and set the auto-accept switch (all rarities accepted, or all prompted); set by the game */
-  autoAccept: { get: () => boolean; set: (v: boolean) => void } | null = null;
+  /**
+   * What the policies of the rarities add up to, and setting them all one way (accept, or ask);
+   * set by the game
+   */
+  autoAccept: { state: () => AutoState; set: (v: boolean) => void } | null = null;
+  /** set by the game: open Settings on its Contracts tab, over this screen */
+  openPolicies: (() => void) | null = null;
   readonly id = 'contracts';
   readonly title = STR.contracts.title;
   readonly icon = 'scroll';
@@ -53,6 +60,10 @@ export class ContractsScreen implements Screen {
   /** set by the game: draw the frame's tab strip now, after a tab changes from inside */
   redraw: (() => void) | null = null;
   private tab: ContractTab = 'offers';
+  /** the card picked out: the one a click in the outliner asked for */
+  private focused: number | null = null;
+  private focusEl: HTMLElement | null = null;
+  private scrollToFocus = false;
   private scroll = new ScrollKeep(this.root);
   /** what the tab on show was built from; the same again builds nothing */
   private shown = '';
@@ -71,6 +82,21 @@ export class ContractsScreen implements Screen {
 
   onOpen() {
     this.build(true);
+  }
+  onClose() {
+    this.focused = null;
+  }
+  /** Pick a contract out: its tab opens and its card is lit and in view. Open the screen after. */
+  focusContract(id: number) {
+    const c = this.board.byId(id);
+    const tab = c ? tabOfStatus(c.status) : null;
+    if (!c || !tab) return;
+    this.focused = id;
+    this.tab = tab;
+    this.scrollToFocus = true;
+    this.scroll.top();
+    this.build(true);
+    this.redraw?.();
   }
   refresh() {
     this.scroll.restore();
@@ -134,7 +160,8 @@ export class ContractsScreen implements Screen {
       this.board.activeFull(),
       this.board.limit(),
       list.length ? true : this.board.canGenerate(),
-      this.autoAccept?.get() ?? null,
+      this.autoAccept?.state() ?? null,
+      this.focused,
       list.map((c) => [
         c.id,
         c.status,
@@ -151,9 +178,14 @@ export class ContractsScreen implements Screen {
     if (!force && key === this.shown) return;
     this.shown = key;
     this.live = [];
+    this.focusEl = null;
     this.scroll.around(() => {
       this.root.replaceChildren(...this.draw(list));
     });
+    if (this.scrollToFocus && this.focusEl) {
+      this.scrollToFocus = false;
+      (this.focusEl as HTMLElement).scrollIntoView?.({ block: 'nearest' });
+    }
     for (const run of this.live) run();
   }
 
@@ -187,20 +219,26 @@ export class ContractsScreen implements Screen {
     const out: HTMLElement[] = [];
     const auto = this.autoAccept;
     if (auto) {
-      const on = auto.get();
+      const state = auto.state();
       const sw = toggleSwitch(
         STR.contracts.autoLabel,
-        () => auto.get(),
-        (v) => {
-          auto.set(v);
-          this.build(true);
-        },
+        () => auto.state() === 'accept',
+        (v) => void this.setAuto(auto, v),
       );
       sw.title = STR.contracts.autoHint;
+      const link = actionButton(STR.contracts.perRarity, () => this.openPolicies?.(), {
+        cls: 'small',
+        icon: 'gear',
+        title: STR.contracts.perRarityHint,
+      });
       const row = formRow(
         STR.contracts.autoLabel,
-        sw,
-        on ? STR.contracts.autoSubOn : STR.contracts.autoSubOff,
+        fragment(link, sw),
+        state === 'accept'
+          ? STR.contracts.autoSubOn
+          : state === 'prompt'
+            ? STR.contracts.autoSubOff
+            : STR.contracts.autoSubMixed,
       );
       row.title = STR.contracts.autoHint;
       out.push(el('div', { class: 'k-well ec-auto' }, row));
@@ -208,8 +246,27 @@ export class ContractsScreen implements Screen {
     // the land owned caps the active contracts: past it, Accept is refused and says why, once up
     // here since a disabled button's hover may never show
     if (hasOffers && this.board.activeFull())
-      out.push(note(STR.contracts.activeFull(this.board.limit()), 'warn'));
+      out.push(note(STR.contracts.activeFull(this.board.limit()), 'ec-warn'));
     return out;
+  }
+
+  /**
+   * Flip the switch. From a mix it would replace what the player chose for each rarity, so it asks
+   * first; an answer of no leaves every choice, and the switch back where it was.
+   */
+  private async setAuto(auto: NonNullable<ContractsScreen['autoAccept']>, on: boolean) {
+    if (
+      auto.state() === 'mixed' &&
+      !(await this.prompt.confirm(STR.contracts.autoAllTitle, STR.contracts.autoAllText, {
+        yes: STR.contracts.autoAllYes,
+        no: STR.contracts.keepContract,
+      }))
+    ) {
+      this.build(true);
+      return;
+    }
+    auto.set(on);
+    this.build(true);
   }
 
   // ---------------------------------------------------------------- one card
@@ -226,8 +283,10 @@ export class ContractsScreen implements Screen {
     if (c.status === 'offer') this.offerParts(c, body, foot);
     else if (c.status === 'active') this.activeParts(c, body, foot);
     else foot.push(this.statusChip(c));
-    return card({
+    const built = card({
       rarity: c.rarity,
+      on: this.focused === c.id,
+      cls: 'ec-ct',
       rarityLabel: el(
         'span',
         { class: `ec-rar crarity-${c.rarity}` },
@@ -244,6 +303,8 @@ export class ContractsScreen implements Screen {
       body: fragment(...body),
       foot: fragment(...foot),
     });
+    if (this.focused === c.id) this.focusEl = built;
+    return built;
   }
 
   private offerParts(c: Contract, body: HTMLElement[], foot: (HTMLElement | null)[]) {
@@ -309,7 +370,7 @@ export class ContractsScreen implements Screen {
             `${STR.contracts.train}: `,
             el('b', { text: train }),
           )
-        : el('span', { class: 'k-note ec-grow warn', text: STR.contracts.noTrain }),
+        : el('span', { class: 'k-note ec-grow ec-warn', text: STR.contracts.noTrain }),
       actionButton(
         STR.contracts.cancelFine(fmtMoney(this.board.cancelFine(c))),
         () => void this.cancel(c),

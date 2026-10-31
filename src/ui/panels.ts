@@ -75,6 +75,7 @@ import { CraftingScreen } from './craftingScreen';
 import { RosterScreen } from './rosterScreen';
 import { InspectScreen } from './inspectScreen';
 import { ContractsScreen } from './contractsScreen';
+import { autoState } from './contractsView';
 import { ContractsSide } from './contractsSide';
 import { Minimap } from './minimap';
 import { DebugPanel } from './debug';
@@ -377,8 +378,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       ),
       'info',
     );
-  const resourceBar = new ResourceBar(d.atlas, d.tooltip, () => {
-    if (host.mode === 'play' && !menuOpen()) d.screens.toggle(marketScreen);
+  const resourceBar = new ResourceBar(d.atlas, d.tooltip, (resource) => {
+    if (host.mode !== 'play' || menuOpen()) return;
+    // the Market opens on the spot prices with that good's row picked out
+    marketScreen.pick(resource);
+    d.screens.toggle(marketScreen);
   });
   // the money is the bar's first cell; the tickets stay in the HUD's block at its end
   resourceBar.right.append(hud.funds);
@@ -486,10 +490,12 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   );
   // Inspect 3D stands over the screen that asked for it, and Back returns
   const inspectScreen = new InspectScreen(d.atlas);
-  craftingScreen.onInspect = (defId) => {
+  const inspect = (defId: string) => {
     inspectScreen.show(defId);
     d.screens.push(inspectScreen);
   };
+  craftingScreen.onInspect = inspect;
+  rosterScreen.onInspect = inspect;
   const contractsScreen = new ContractsScreen(
     d.contracts,
     d.builder,
@@ -500,8 +506,12 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   );
   contractsScreen.trainName = (id) => d.fleet.byId(id)?.name ?? null;
   contractsScreen.redraw = () => d.screens.redraw();
+  contractsScreen.openPolicies = () => {
+    settingsScreen.showTab('contracts');
+    d.screens.push(settingsScreen);
+  };
   contractsScreen.autoAccept = {
-    get: () => CONTRACT_RARITIES.every((r) => contractPolicyFor(d.settings, r) === 'accept'),
+    state: () => autoState(CONTRACT_RARITIES.map((r) => contractPolicyFor(d.settings, r))),
     set: (v) => {
       d.settings.contractPolicy = uniformContractPolicy(v ? 'accept' : 'prompt');
       host.applySettings();

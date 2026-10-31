@@ -16,7 +16,7 @@ import {
 import { rarityStars } from './labels';
 import type { Screen } from './modal';
 import { frameForItem, spriteDataUrl } from './spritePreview';
-import { vehicleProperties } from './vehicleProperties';
+import { vehicleFacts } from './vehicleProperties';
 import { FACING_COUNT, FACING_STEP_MS, facingDegrees, nextFacing, turnedBy } from './inspectView';
 
 /**
@@ -76,6 +76,8 @@ export class InspectScreen implements Screen {
   onClose() {
     cancelAnimationFrame(this.raf);
     this.raf = 0;
+    // the pointer's capture ends with the picture, and no release comes: a drag is over
+    this.dragX = null;
   }
 
   // ---------------------------------------------------------------- turning
@@ -177,7 +179,7 @@ export class InspectScreen implements Screen {
               STR.vehicle.kind,
               itemKind(id) === 'loco' ? STR.gacha.loco : STR.gacha.wagon,
             ),
-            ...vehicleProperties(id).map((text) => el('div', { class: 'ec-prop', text })),
+            ...vehicleFacts(id).map((f) => labelValue(STR.vehicle.fact[f.key], f.value)),
           ),
         ],
       ),

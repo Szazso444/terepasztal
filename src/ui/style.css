@@ -3848,17 +3848,15 @@ select.text.small {
 }
 
 /* ---- the economy screens: Contracts, Market, Crafting, Roster, Inspect 3D ---- */
-.k-p.warn {
+.k-p.ec-warn,
+.k-note.ec-warn {
   color: var(--amber);
 }
 .ec-grow {
   flex: 1;
   min-width: 0;
 }
-.k-note.warn {
-  color: var(--amber);
-}
-.k-note b {
+.k-note.ec-grow b {
   color: var(--text);
   font-weight: 600;
 }
@@ -3871,7 +3869,7 @@ select.text.small {
 }
 /* a picture fills its slot whatever its own size: laid over it, since a percentage of a grid cell
    that sizes itself to the picture gives nothing to measure */
-.k-spr {
+.k-spr:has(> .ec-portrait, > .ec-sprite) {
   position: relative;
 }
 .ec-portrait,
@@ -3973,11 +3971,11 @@ select.text.small {
   margin-left: auto;
   padding-left: 8px;
 }
-.k-card-s b {
+.ec-ct .k-card-s b {
   color: var(--text);
   font-weight: 600;
 }
-.k-card .k-meter {
+.ec-ct .k-meter {
   padding: 2px 0;
 }
 .ec-chip {
@@ -4053,6 +4051,15 @@ select.text.small {
 .ec-table .dim {
   color: var(--text-dim);
 }
+.ec-table td.warn {
+  color: var(--amber);
+}
+.ec-table tr.on td {
+  background: color-mix(in srgb, var(--amber) 13%, transparent);
+}
+.ec-table tr.on td:first-child {
+  box-shadow: inset 3px 0 0 var(--amber);
+}
 .ec-name {
   display: inline-flex;
   align-items: center;
@@ -4076,7 +4083,7 @@ select.text.small {
 }
 
 /* crafting */
-.k-seg.off {
+.k-seg.ec-held {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -4315,9 +4322,9 @@ select.text.small {
 .ec-angle > .k-sl {
   grid-template-columns: minmax(0, 1fr) 46px;
 }
-.ec-prop {
-  padding: 4px 10px;
-  border-top: 1px solid rgba(0, 0, 0, 0.22);
-  font-size: 12px;
-  line-height: 1.4;
+.ec-eye {
+  padding: 1px 6px;
+}
+.ec-eye .k-ic {
+  margin: 0;
 }

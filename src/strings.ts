@@ -972,6 +972,13 @@ export const STR = {
     autoSubOn: 'On: offers are accepted as they come.',
     autoSubOff: 'Off: offers wait here for you.',
     seeOffers: 'See offers',
+    autoSubMixed: 'Each rarity follows its own setting.',
+    perRarity: 'Per rarity: Settings',
+    perRarityHint: 'Open the offer policy of each rarity in Settings.',
+    autoAllTitle: 'Auto-accept every rarity?',
+    autoAllText:
+      'Each rarity now follows its own setting. This sets all five to Auto-accept and replaces what you chose for each.',
+    autoAllYes: 'Set all five',
     /** an order's size: units and cargo */
     cargoAmount: (n: number, cargo: string) => `${n} u ${cargo}`,
     autoHint:
@@ -1073,6 +1080,8 @@ export const STR = {
     search: 'Find model…',
     searchLabel: 'Find model',
     inspect: 'Inspect 3D',
+    poolKnown: 'Recipe known',
+    poolUnknown: 'Not known yet',
     /** the filter's short labels, for the strip; the long ones above are their tooltips */
     filterShort: {
       all: 'All',
@@ -1101,6 +1110,20 @@ export const STR = {
     axles: '2 axles · 4 wheels',
     fuel: (cap: number, perTile?: number) => `Fuel ${cap} · ${perTile} per tile`,
     water: (cap: number, perTile?: number) => `Water ${cap} · ${perTile} per tile`,
+    /** what the fuel and water lines say after their label, for a row that has the label itself */
+    tank: (cap: number, perTile?: number) => `${cap} · ${perTile} per tile`,
+    /** the labels of the data sheet's rows, by what the row is */
+    fact: {
+      body: 'Body',
+      weight: 'Weight',
+      pulls: 'Pulls',
+      wheels: 'Wheels',
+      fuel: 'Fuel',
+      water: 'Water',
+      carries: 'Carries',
+      takes: 'Takes',
+      track: 'Track',
+    } as Record<string, string>,
     wagon: (carries: string, units: number) => `${carries} · ${units} units`,
     /** the body plans of `src/sim/body.ts`, by id */
     plan: {
@@ -1721,7 +1744,6 @@ export const STR = {
     hint: 'Prices are per unit. A store holds up to its cap of each good.',
     deals: 'Standing deals',
     spot: 'Spot prices',
-    goods: (n: number) => `${n} good${n === 1 ? '' : 's'}`,
     noStore: 'No store is selected. Pick one on the top bar.',
     dealsHint: (d: number) =>
       `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the store's cap or when funds run out; selling takes what is on hand.`,
