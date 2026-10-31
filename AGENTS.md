@@ -185,6 +185,15 @@ fails when someone adds a version and forgets the step, which is the actual fail
 standard for deterministic tests is `docs/process/verification.md`; the ownership test in
 `tools/agents/ownership.test.mjs` follows the same idea for the organisation itself.
 
+A script that opens the game in headless Chrome (a render, a screenshot, a measurement) runs it on
+the real GPU, never on SwiftShader. SwiftShader draws WebGL on the CPU: two such scripts held all
+16 threads of the author's machine at 100%, and the same WebGL test ran 28 times faster on the
+GPU. Playwright takes `args: ['--use-angle=d3d11', '--ignore-gpu-blocklist', '--enable-gpu']` and
+`ignoreDefaultArgs: ['--enable-unsafe-swiftshader', '--disable-gpu']`; do not pass
+`--use-gl=swiftshader` or `--enable-unsafe-swiftshader`. Read `UNMASKED_RENDERER_WEBGL` once to
+see the GPU's name, and close the browser when the shot is taken. A GPU render and a SwiftShader
+render can differ by a few pixels, so never compare one with the other.
+
 ## Conventions
 
 - TypeScript strict, ESM, Prettier (`singleQuote`, `printWidth` 100, trailing commas). Match the
