@@ -338,8 +338,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   d.screens.pausedUnder = () =>
     host.mode === 'play' && (pauseMenu.visible || (mainMenu.visible && titleOverGame));
   d.screens.onChange = (sc) => {
-    pauseMenu.setCovered(!!sc);
     hud.menuBar.close();
+    pauseMenu.setCovered(!!sc);
     if (sc && !sc.keepsTool) d.build.setTool({ kind: 'none' });
     if (!sc) {
       d.screens.root.classList.remove('peek');
