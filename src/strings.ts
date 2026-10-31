@@ -1248,7 +1248,7 @@ const EN = {
       legendary: 'Legendary',
     } as Record<string, string>,
   },
-  gacha: {
+  rollingStock: {
     loco: 'Locomotive',
     wagon: 'Wagon',
   },
@@ -1716,7 +1716,7 @@ const EN = {
     chain: 'Production chain',
   },
   menu: {
-    tagline: 'Rails, contracts and the luck of the draw',
+    tagline: 'Rails, contracts and industry',
     continue: 'Continue',
     newGame: 'New game',
     tuning: 'Game tuning',

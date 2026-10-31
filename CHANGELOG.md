@@ -102,6 +102,20 @@ is untouched. Evidence and commands: `scratchpad/README.md`.
 - The `stockpileCap` tuning is gone; the depot, warehouse and Townhouse caps are tuned on their own,
   and a change to a cap or a reach on the Tuning screen holds at once.
 
+### The gacha's leftovers go
+
+- Crafting replaced the gacha in v0.8.0; now the rest of it is gone: the Gacha screen, banners and
+  rates, pulls, the `gacha` content table and its Content editor tab.
+- Tickets are gone everywhere: the starting tickets and their tuning row, contract rewards, the
+  daily bonus, the age milestone, the debug panel's button, the level editor's field and the ticket
+  part of the refund for a save that held content the game no longer has. Nothing replaces them,
+  and contracts pay the same money. The Cheat row stays.
+- The title screen says "Rails, contracts and industry".
+- Saves are format v24. A v23 save loads without a note and lists as before: its gacha and tickets
+  are dropped and nothing refunds them. An older save is told only of its other steps.
+- A stored `gacha` table is passed over without a warning, a stored contracts edit keeps applying
+  without its ticket fields, and a level file with `start.tickets` loads and is written without it.
+
 ## v0.8.0
 
 Implements `docs/phase-spec-review.md` and the conflict resolutions; the choices left open are

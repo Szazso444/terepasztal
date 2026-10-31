@@ -1098,7 +1098,7 @@ export const HU: Strings = {
       legendary: 'Legendás',
     },
   },
-  gacha: {
+  rollingStock: {
     loco: 'Mozdony',
     wagon: 'Kocsi',
   },
@@ -1535,7 +1535,7 @@ export const HU: Strings = {
     chain: 'Termelési lánc',
   },
   menu: {
-    tagline: 'Sínek, szerződések és a húzás szerencséje',
+    tagline: 'Sínek, szerződések és ipar',
     continue: 'Folytatás',
     newGame: 'Új játék',
     tuning: 'Játékhangolás',
