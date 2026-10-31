@@ -1,5 +1,15 @@
-import { el, btn } from './dom';
+import { el } from './dom';
 import { STR } from '../strings';
+import {
+  actionButton,
+  buttonRow,
+  formRow,
+  labelValue,
+  textField,
+  toggleSwitch,
+  well,
+  type TextField,
+} from './kit';
 
 export interface DebugActions {
   giveMoney(): void;
@@ -11,15 +21,17 @@ export interface DebugActions {
   regenerate(): void;
 }
 
-/** Backtick-toggled debug panel. */
+/**
+ * Backtick-toggled debug panel. It stays a panel at the side, not a screen: the depth overlay and
+ * the camera readouts are looked at on the map, which a screen would dim.
+ */
 export class DebugPanel {
   readonly root: HTMLElement;
   private rows = new Map<string, HTMLElement>();
-  private seedInput: HTMLInputElement;
+  private seedField: TextField;
 
   constructor(seed: number, actions: DebugActions) {
-    const table = el('table');
-    for (const k of [
+    const readouts = [
       STR.debug.fps,
       STR.debug.seed,
       STR.debug.entities,
@@ -30,55 +42,50 @@ export class DebugPanel {
       STR.debug.recovery,
       STR.debug.junctions,
       STR.debug.tile,
-    ]) {
-      const v = el('td', { text: '-' });
-      table.append(el('tr', {}, el('td', { text: k }), v));
+    ].map((k) => {
+      const v = el('span', { text: '-' });
       this.rows.set(k, v);
-    }
-    this.seedInput = el('input', {
-      type: 'text',
-      value: String(seed),
-      class: 'num',
-      style: 'width:110px;background:#111;color:#d8cfb8;border:1px solid #000',
+      return labelValue(k, v);
     });
-    const depthBtn = btn(
-      STR.debug.depthOverlay,
-      () => depthBtn.classList.toggle('active', actions.toggleDepth()),
-      'small',
-    );
+    this.seedField = textField({ value: String(seed) });
+    let depthOn = false;
     this.root = el(
       'div',
       { id: 'debug', class: 'panel' },
       el('div', { class: 'panel-title', text: STR.debug.title }),
       el(
         'div',
-        { class: 'panel-body' },
-        table,
-        el(
-          'div',
-          { class: 'row' },
-          btn(STR.debug.giveMoney, actions.giveMoney, 'small'),
-          btn(STR.debug.giveTickets, actions.giveTickets, 'small'),
-          btn(STR.debug.nextAge, actions.nextAge, 'small'),
-        ),
-        el(
-          'div',
-          { class: 'row' },
-          btn(STR.debug.spawnContract, actions.spawnContract, 'small'),
-          btn(STR.debug.giveResources, actions.giveResources, 'small'),
-          depthBtn,
-        ),
-        el(
-          'div',
-          { class: 'row' },
-          this.seedInput,
-          btn(STR.debug.regenerate, actions.regenerate, 'small'),
+        { class: 'panel-body k-dbg' },
+        well(null, ...readouts),
+        well(
+          null,
+          buttonRow(
+            actionButton(STR.debug.giveMoney, actions.giveMoney, { cls: 'small' }),
+            actionButton(STR.debug.giveTickets, actions.giveTickets, { cls: 'small' }),
+            actionButton(STR.debug.nextAge, actions.nextAge, { cls: 'small' }),
+            actionButton(STR.debug.spawnContract, actions.spawnContract, { cls: 'small' }),
+            actionButton(STR.debug.giveResources, actions.giveResources, { cls: 'small' }),
+          ),
+          formRow(
+            STR.debug.depthOverlay,
+            toggleSwitch(
+              STR.debug.depthOverlay,
+              () => depthOn,
+              () => (depthOn = actions.toggleDepth()),
+            ),
+          ),
+          el(
+            'div',
+            { class: 'k-inrow' },
+            this.seedField.root,
+            actionButton(STR.debug.regenerate, actions.regenerate, { cls: 'small' }),
+          ),
         ),
       ),
     );
   }
   get seedValue() {
-    return this.seedInput.value;
+    return this.seedField.input.value;
   }
   toggle() {
     this.root.classList.toggle('open');

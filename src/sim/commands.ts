@@ -12,7 +12,7 @@ import type { Builder, Decor } from './build';
 import type { Economy } from './economy';
 import type { ResourceStore } from './stores';
 import type { TradeDesk } from './trade';
-import type { TownRegistry } from './towns';
+import type { Town, TownRegistry } from './towns';
 import type { HouseRegistry } from './houses';
 import type { ContractBoard } from './contracts';
 import type { ContractDispatcher } from './contractDispatch';
@@ -169,6 +169,33 @@ export class Commands {
     this.act(() => {
       this.builder.log?.name(s, n);
       s.name = n;
+    });
+    return done();
+  }
+  /**
+   * Rename a town, and with it the stations that carry its name: a step of its own in the history,
+   * as a station's. The level editor records nothing, as `act` has it.
+   */
+  renameTown(t: Town, name: string): CommandResult {
+    const towns = this.buildWorld.towns;
+    if (!towns.towns.includes(t)) return refuse(STR.town.gone);
+    if (!name.trim()) return refuse(STR.town.nameEmpty);
+    const was = { name: t.name, custom: t.custom };
+    towns.rename(t, name);
+    if (t.name === was.name) return done();
+    if (this.builder.free) return done();
+    const now = { name: t.name, custom: t.custom };
+    const set = (v: typeof was): CommandResult => {
+      t.name = v.name;
+      t.custom = v.custom;
+      towns.refresh();
+      return done();
+    };
+    this.history.push({
+      label: STR.history.renamed(was.name, now.name),
+      undo: () => set(was),
+      redo: () => set(now),
+      gone: () => !towns.towns.includes(t),
     });
     return done();
   }

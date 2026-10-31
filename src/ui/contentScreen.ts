@@ -1,8 +1,28 @@
-import { el, btn } from './dom';
+import { el } from './dom';
 import { STR } from '../strings';
-import type { Screen } from './modal';
+import {
+  actionButton,
+  note,
+  page,
+  pasteBox,
+  sectionHeader,
+  segmented,
+  textField,
+  toggleSwitch,
+  well,
+  type FootSpec,
+} from './kit';
+import type { FrameTabs, Screen } from './modal';
 import type { Confirm } from './menu';
 import { problemSummary, setAsideLines } from './contentReport';
+import {
+  TRANSFER,
+  applyState,
+  contentTabs,
+  entryName,
+  importBundle,
+  type ContentTab,
+} from './contentModel';
 import {
   TAB_FORMS,
   formFields,
@@ -15,7 +35,6 @@ import {
 } from './contentForm';
 import {
   content,
-  CONTENT_KEYS,
   validateContent,
   changedTables,
   writeContentOverrides,
@@ -35,92 +54,95 @@ function clone<T>(v: T): T {
  * differ from the shipped ones as the override set and reloads so every module reads the new
  * tables. Tabs running on a stored table are marked, and stored tables the load set aside are
  * listed with the reason. Forms are generated from the shipped entries and the optional fields
- * each table declares (`contentForm.ts`), so new fields in the JSON show up automatically.
+ * each table declares (`contentForm.ts`), so new fields in the JSON show up automatically. The
+ * last tab, Transfer, takes the whole bundle out as text and brings a pasted one in.
  */
 export class ContentScreen implements Screen {
   readonly id = 'content';
   readonly title = STR.content.title;
-  readonly root = el('div', { class: 'cols', style: 'flex-direction:column' });
-  private tabs = el('div', {
-    class: 'col-foot',
-    style: 'border:none;padding:0 0 6px 0;flex-wrap:wrap',
-  });
-  /** stored tables the load set aside, one line each; empty (and hidden) when there are none */
-  private aside = el('div', { class: 'content-aside' });
-  private body = el('div', { class: 'col-body' });
-  private foot = el('div', { class: 'col-foot' });
-  private problems = el('div', { class: 'sub red', style: 'flex:1' });
+  readonly icon = 'list';
+  readonly formKeys = true;
+  readonly root = page();
+  /** the footer is drawn again now: a field changed what Apply may do */
+  redraw: () => void = () => undefined;
   private draft: ContentBundle = clone(content);
-  private tab: ContentKey = 'locomotives';
+  private tab: ContentTab = 'locomotives';
+  /** what the draft is refused for, read when it changes: the footer reads this, not the draft */
+  private problems: string[] = [];
+  /** the boxes that hold a value the form refused: framed red, and not in the draft */
+  private refused = new Set<HTMLElement>();
   /** what became of the stored tables at load; fixed for the session */
   private readonly report = contentOverrideReport();
+  // the box outlives a redraw of the tab: what was exported or pasted stays
+  private box = pasteBox({ placeholder: STR.content.jsonHint });
+  private transferNote = note('');
 
   constructor(
     private readonly onReload: () => void,
     /** the game's dialog, for the question before custom content goes */
     private readonly prompt: Confirm,
-  ) {
-    this.root.append(this.tabs, this.aside, el('div', { class: 'col' }, this.body, this.foot));
-  }
+  ) {}
   onOpen() {
     this.draft = clone(content);
+    this.box.value = '';
+    this.validate();
     this.render();
   }
-
-  private render() {
-    const t = this.tabs;
-    t.innerHTML = '';
-    for (const k of CONTENT_KEYS) {
-      const custom = this.report.applied.includes(k);
-      const tab = btn(
-        STR.content.tabs[k],
-        () => {
-          this.tab = k;
-          this.render();
+  frameTabs(): FrameTabs {
+    return {
+      tabs: contentTabs(this.report.applied),
+      current: this.tab,
+      pick: (id) => {
+        this.tab = id as ContentTab;
+        this.render();
+      },
+    };
+  }
+  frameFooter(): FootSpec {
+    const state = applyState(this.problems, (p) => problemSummary(p, 4), this.refused.size);
+    return {
+      actions: [
+        {
+          label: STR.content.reset,
+          danger: true,
+          onClick: () => {
+            void this.prompt
+              .confirm(STR.content.resetTitle, STR.content.confirmReset, {
+                yes: STR.prompt.discard,
+                danger: true,
+              })
+              .then((ok) => {
+                if (!ok) return;
+                clearContentOverrides();
+                this.onReload();
+              });
+          },
         },
-        `small content-tab ${this.tab === k ? 'active' : ''} ${custom ? 'custom' : ''}`,
-      );
-      if (custom) tab.title = STR.content.customTab;
-      t.append(tab);
-    }
-    t.append(
-      el('span', { style: 'flex:1' }),
-      el('span', {
-        class: 'dim',
-        text: contentIsCustom() ? STR.content.customActive : STR.content.shipped,
-      }),
-    );
-    this.renderAside();
-    const b = this.body;
-    b.innerHTML = '';
-    for (const spec of TAB_FORMS[this.tab]) {
-      if (spec.title) b.append(el('div', { class: 'col-title', text: spec.title }));
-      const fields = formFields(spec);
-      const target = spec.pick(this.draft);
-      b.append(
-        spec.list
-          ? this.listEditor(target as Row[], fields, shippedRows(spec)[0])
-          : this.objectForm(target as Row, fields),
-      );
-    }
-    this.renderFoot();
+        {
+          label: STR.content.apply,
+          primary: true,
+          disabled: state.disabled,
+          title: state.disabled ? state.note : STR.content.applyNote,
+          onClick: () => this.apply(),
+        },
+      ],
+      note: state.note,
+    };
   }
 
-  private renderAside() {
-    const a = this.aside;
-    a.innerHTML = '';
-    const lines = setAsideLines(this.report);
-    if (!lines.length) return;
-    a.append(el('div', { class: 'dim', text: STR.content.setAsideTitle }));
-    for (const line of lines)
-      a.append(
-        el(
-          'div',
-          { class: `tip ${line.kind}` },
-          el('span', { class: 'dot' }),
-          el('span', { text: line.text }),
-        ),
-      );
+  private apply() {
+    if (this.validate().length) return;
+    const changed = changedTables(this.draft);
+    if (!Object.keys(changed).length) {
+      clearContentOverrides();
+      this.onReload();
+    } else if (writeContentOverrides(changed)) this.onReload();
+  }
+
+  private validate(): string[] {
+    this.problems = validateContent(this.draft);
+    this.redraw();
+    return this.problems;
   }
 
   /**
@@ -131,173 +153,210 @@ export class ContentScreen implements Screen {
     const kind = kindFor(row, f);
     const text = showField(row, f, kind);
     const placeholder = f.unset ?? '';
-    const set = (input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, v: string) => {
-      input.classList.toggle('bad', !readField(row, f, kind, v));
+    // a value the form refused stays in its box, framed red, until it is fixed
+    const set = (box: HTMLElement, v: string) => {
+      const ok = readField(row, f, kind, v);
+      box.classList.toggle('bad', !ok);
+      if (ok) this.refused.delete(box);
+      else this.refused.add(box);
       this.validate();
     };
-    if (kind === 'bool' && f.unset === undefined) {
-      const i = el('input', { type: 'checkbox' }) as HTMLInputElement;
-      i.checked = text === 'true';
-      i.addEventListener('change', () => set(i, String(i.checked)));
-      return i;
-    }
-    if (kind === 'bool') {
-      const s = el(
-        'select',
-        { class: 'text', style: 'width:90px' },
-        el('option', { value: '', text: placeholder }),
-        el('option', { value: 'true', text: STR.content.flagOn }),
-        el('option', { value: 'false', text: STR.content.flagOff }),
-      ) as HTMLSelectElement;
-      s.value = text;
-      s.addEventListener('change', () => set(s, s.value));
-      return s;
-    }
+    if (kind === 'bool' && f.unset === undefined)
+      return toggleSwitch(
+        f.key,
+        () => row[f.key] === true,
+        (v) => {
+          readField(row, f, kind, String(v));
+          this.validate();
+        },
+      );
+    if (kind === 'bool')
+      return segmented({
+        cls: 'small',
+        options: [
+          { id: '', label: placeholder },
+          { id: 'true', label: STR.content.flagOn },
+          { id: 'false', label: STR.content.flagOff },
+        ],
+        value: text,
+        onChange: (id) => {
+          readField(row, f, kind, id);
+          this.validate();
+        },
+      });
     if (kind === 'json') {
-      const area = el('textarea', {
-        class: 'text',
-        style: 'width:100%;min-height:36px;font-family:var(--font-mono);font-size:10px',
-        spellcheck: 'false',
-        placeholder,
-      }) as HTMLTextAreaElement;
+      const area = pasteBox({ placeholder });
+      area.classList.add('k-json');
       area.value = text;
       area.addEventListener('change', () => set(area, area.value));
       return area;
     }
-    const width = kind === 'number' ? 90 : kind === 'text' ? 180 : 260;
-    const i = el('input', {
-      class: 'text',
-      type: kind === 'number' ? 'number' : 'text',
-      value: text,
-      placeholder,
-      style: `width:${width}px`,
-    }) as HTMLInputElement;
-    if (kind === 'number') i.step = 'any';
-    i.addEventListener('change', () => set(i, i.value));
-    return i;
+    const field = textField({ value: text, placeholder });
+    field.input.addEventListener('change', () => set(field.root, field.input.value));
+    return field.root;
   }
 
   private objectForm(obj: Row, fields: FormField[]): HTMLElement {
-    const box = el('div', { class: 'content-form' });
-    for (const f of fields)
-      box.append(
+    return el(
+      'div',
+      { class: 'k-fgrid' },
+      ...fields.map((f) =>
         el(
-          'label',
-          { class: 'content-field' },
-          el('span', { class: 'k', text: f.key }),
+          'div',
+          { class: 'k-fld' },
+          el('span', { class: 'k-fk', text: f.key }),
           this.field(obj, f),
         ),
-      );
-    return box;
+      ),
+    );
   }
 
-  /** One form per entry; `template` is what "Add entry" copies into an empty list. */
-  private listEditor(list: Row[], fields: FormField[], template: Row): HTMLElement {
-    const box = el('div', { class: 'content-list' });
-    list.forEach((row, i) => {
-      const head = el(
+  /** One well per entry, with its Duplicate and Remove; `template` is what "Add entry" copies into an empty list. */
+  private listEditor(list: Row[], fields: FormField[], template: Row): HTMLElement[] {
+    const entries = list.map((row, i) =>
+      well(
+        {
+          title: entryName(row, i),
+          right: el(
+            'span',
+            { class: 'k-ha' },
+            actionButton(
+              STR.content.duplicate,
+              () => {
+                const c = clone(row);
+                if (typeof c.id === 'string') c.id = `${c.id}_copy`;
+                list.splice(i + 1, 0, c);
+                this.validate();
+                this.render(true);
+              },
+              { cls: 'small' },
+            ),
+            actionButton(
+              STR.content.remove,
+              () => {
+                list.splice(i, 1);
+                this.validate();
+                this.render(true);
+              },
+              { cls: 'small' },
+            ),
+          ),
+        },
+        this.objectForm(row, fields),
+      ),
+    );
+    return [
+      ...entries,
+      el(
         'div',
-        { class: 'content-head' },
-        el('span', { class: 'name', text: String(row.id ?? row.name ?? i) }),
-        btn(
-          STR.content.duplicate,
+        { class: 'k-btnrow' },
+        actionButton(
+          STR.content.add,
           () => {
-            const c = clone(row);
-            if (typeof c.id === 'string') c.id = `${c.id}_copy`;
-            list.splice(i + 1, 0, c);
-            this.render();
+            const c = clone(list[list.length - 1] ?? template);
+            if (typeof c.id === 'string') c.id = `new_${list.length + 1}`;
+            list.push(c);
+            this.validate();
+            this.render(true);
           },
-          'small',
+          { cls: 'small', icon: 'plus' },
         ),
-        btn(
-          STR.content.remove,
-          () => {
-            list.splice(i, 1);
-            this.render();
-          },
-          'small',
-        ),
-      );
-      box.append(el('div', { class: 'content-entry' }, head, this.objectForm(row, fields)));
-    });
-    box.append(
-      btn(
-        STR.content.add,
-        () => {
-          const c = clone(list[list.length - 1] ?? template);
-          if (typeof c.id === 'string') c.id = `new_${list.length + 1}`;
-          list.push(c);
-          this.render();
-        },
-        'small accent',
       ),
+    ];
+  }
+
+  /** Stored tables the load set aside, one line each; nothing when there are none. */
+  private aside(): HTMLElement | null {
+    const lines = setAsideLines(this.report);
+    if (!lines.length) return null;
+    return well(
+      null,
+      note(STR.content.setAsideTitle),
+      ...lines.map((l) => note(l.text, l.kind === 'bad' ? 'bad' : 'warn')),
     );
-    return box;
   }
 
-  private validate(): string[] {
-    const problems = validateContent(this.draft);
-    this.problems.textContent = problemSummary(problems, 4);
-    return problems;
+  private table(key: ContentKey): (HTMLElement | null)[] {
+    const out: (HTMLElement | null)[] = [
+      note(contentIsCustom() ? STR.content.customActive : STR.content.shipped),
+      this.aside(),
+    ];
+    for (const spec of TAB_FORMS[key]) {
+      if (spec.title) out.push(sectionHeader(spec.title));
+      const fields = formFields(spec);
+      const target = spec.pick(this.draft);
+      if (spec.list) out.push(...this.listEditor(target as Row[], fields, shippedRows(spec)[0]));
+      else out.push(well(null, this.objectForm(target as Row, fields)));
+    }
+    return out;
   }
 
-  private renderFoot() {
-    const f = this.foot;
-    f.innerHTML = '';
+  /** The bundle as text, and a pasted one back in: Export fills the box, Import reads it. */
+  private transfer(): HTMLElement[] {
+    return [
+      well(
+        STR.content.transfer,
+        el(
+          'div',
+          { class: 'k-xfer' },
+          this.box,
+          el(
+            'div',
+            { class: 'k-btncol' },
+            actionButton(
+              STR.content.export,
+              () => {
+                this.box.value = JSON.stringify(this.draft);
+                this.setTransfer(null);
+              },
+              { cls: 'small', icon: 'export' },
+            ),
+            actionButton(STR.content.import, () => this.importText(), {
+              cls: 'small',
+              icon: 'import',
+            }),
+          ),
+        ),
+        this.transferNote,
+      ),
+    ];
+  }
+
+  private importText() {
+    const read = importBundle(this.draft, this.box.value);
+    if (!read.ok) {
+      this.setTransfer(STR.content.badJson, 'bad');
+      return;
+    }
     this.validate();
-    const area = el('textarea', {
-      class: 'text',
-      style: 'width:220px;height:22px;font-family:var(--font-mono);font-size:9px',
-      placeholder: STR.content.jsonHint,
-      spellcheck: 'false',
-    }) as HTMLTextAreaElement;
-    f.append(
-      this.problems,
-      btn(STR.content.export, () => (area.value = JSON.stringify(this.draft)), 'small'),
-      btn(
-        STR.content.import,
-        () => {
-          try {
-            const j = JSON.parse(area.value) as Partial<ContentBundle>;
-            for (const k of CONTENT_KEYS)
-              if (j[k] !== undefined) (this.draft as unknown as Row)[k] = j[k];
-            this.render();
-          } catch {
-            this.problems.textContent = STR.content.badJson;
-          }
-        },
-        'small',
-      ),
-      area,
-      btn(
-        STR.content.reset,
-        () => {
-          void this.prompt
-            .confirm(STR.content.resetTitle, STR.content.confirmReset, {
-              yes: STR.prompt.discard,
-              danger: true,
-            })
-            .then((ok) => {
-              if (!ok) return;
-              clearContentOverrides();
-              this.onReload();
-            });
-        },
-        'small',
-      ),
-      btn(
-        STR.content.apply,
-        () => {
-          const problems = this.validate();
-          if (problems.length) return;
-          const changed = changedTables(this.draft);
-          if (!Object.keys(changed).length) {
-            clearContentOverrides();
-            this.onReload();
-          } else if (writeContentOverrides(changed)) this.onReload();
-        },
-        'accent',
-      ),
+    const left = read.skipped.length ? ` ${STR.content.skipped(read.skipped.length)}` : '';
+    this.setTransfer(
+      STR.content.imported(read.tables.length) + left,
+      read.skipped.length ? 'warn' : '',
     );
+  }
+
+  private setTransfer(text: string | null, cls = '') {
+    this.transferNote.textContent = text ?? '';
+    this.transferNote.className = `k-p ${cls}`.trim();
+    this.transferNote.style.display = text ? '' : 'none';
+  }
+
+  /** `keep`: the same tab drawn again (an entry added or removed) stays where it was. */
+  private render(keep = false) {
+    const at = keep ? this.root.scrollTop : 0;
+    if (this.tab === TRANSFER) this.setTransfer(null);
+    // what is on the screen is the draft again: a refused value was never in it
+    this.refused.clear();
+    let body: (HTMLElement | null)[];
+    try {
+      body = this.tab === TRANSFER ? this.transfer() : this.table(this.tab);
+    } catch {
+      // a table that is not in the shape the forms read (an import of nonsense): say so
+      body = [well(null, note(STR.content.badShape, 'bad'))];
+    }
+    this.root.replaceChildren(...body.filter((n): n is HTMLElement => n !== null));
+    this.redraw();
+    this.root.scrollTop = at;
   }
 }
