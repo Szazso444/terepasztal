@@ -1409,9 +1409,6 @@ export const STR = {
     autosave: 'Autosave',
     autosaveEvery: 'every minute',
     autosaveOff: 'off',
-    /** The autosave row when nothing has been stored yet. */
-    autosaveNone: 'Autosave on · not saved yet',
-    autosaveOffRow: 'Autosave is off',
     noNamedPick: 'No named saves yet: this one will be the first.',
     /** The footer's line and the Load buttons' tips: what a load does where it is picked. */
     loadNote: {
