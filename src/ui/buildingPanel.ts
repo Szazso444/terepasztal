@@ -2,6 +2,7 @@ import { bridgeCapacity, BRIDGE_SLOW_SHARE } from '../sim/bridges';
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Builder } from '../sim/build';
+import type { Commands } from '../sim/commands';
 import {
   buildingDef,
   buildingRecipe,
@@ -21,21 +22,22 @@ import type { WorksStatus } from './tooltipContent';
 export class BuildingPanel {
   readonly root: HTMLElement;
   private body = el('div', { class: 'panel-body' });
-  private title = el('span');
+  private title = el('span', { class: 'panel-name' });
   building: Building | null = null;
 
   constructor(
     private readonly builder: Builder,
     private readonly onClose: () => void,
+    private readonly commands: Commands,
   ) {
     this.root = el(
       'div',
-      { id: 'station-panel', class: 'panel' },
+      { id: 'building-panel', class: 'panel' },
       el(
         'div',
         { class: 'panel-title' },
         this.title,
-        btn('x', () => this.close(), 'small'),
+        btn('×', () => this.close(), 'panel-x'),
       ),
       this.body,
     );
@@ -155,7 +157,7 @@ export class BuildingPanel {
     });
     body.append(
       upgradeRow(view, () => {
-        this.builder.upgradeBuilding(b);
+        this.commands.act(() => this.builder.upgradeBuilding(b));
         this.render();
       }),
     );
@@ -167,7 +169,7 @@ export class BuildingPanel {
           STR.station.demolish,
           () => {
             const { x, y } = b;
-            this.builder.removeBuilding(x, y);
+            this.commands.act(() => this.builder.removeBuilding(x, y));
             this.close();
           },
           'small',

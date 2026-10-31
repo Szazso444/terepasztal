@@ -18,7 +18,14 @@ import {
 } from '../world/track';
 import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
-import { content, type DecorDef, type Cost, type Gauge, type StationDef } from '../data/content';
+import {
+  content,
+  dataName,
+  type DecorDef,
+  type Cost,
+  type Gauge,
+  type StationDef,
+} from '../data/content';
 import { rules } from './rules';
 import {
   Station,
@@ -48,6 +55,7 @@ import { biomeDef, biomeAt } from './biomes';
 import { inSupplyMode } from './supply';
 import { wrapRotation } from './rotation';
 import { STR } from '../strings';
+import { cargoWord } from './cargo';
 import { bridgeCapacity } from './bridges';
 import { climbAxes, supportedDeck } from '../world/railProfile';
 import { sfx } from '../engine/audio';
@@ -64,6 +72,8 @@ import {
   type RoadLinks,
 } from './roads';
 import { hasDoors, streetDoors, type Door, type PlaceAt } from './doors';
+import type { BuildLog, PieceSpec } from './buildLog';
+import type { Work } from './upgrade';
 
 const trackData = content.track;
 
@@ -173,6 +183,8 @@ export class Builder {
   readonly buildings: BuildingMap;
   /** editor mode: no costs, no region or tier locks */
   free = false;
+  /** the transaction open on this builder (`Commands.act`); outside one nothing is recorded */
+  log: BuildLog | null = null;
   onTrackChanged: ((x: number, y: number) => void) | null = null;
   /**
    * The rendered hill decides what its ground carries: `straight` rails climb at most one level
@@ -183,6 +195,8 @@ export class Builder {
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
   onSupplyChanged: ((x: number, y: number) => void) | null = null;
+  /** fired when an undo gave a tile back the props track or a structure took off it */
+  onPropsBack: ((x: number, y: number) => void) | null = null;
   /** fired when a road is laid on or taken off a tile (`placeRoad`, `removeRoad`) */
   onRoadChanged: ((x: number, y: number) => void) | null = null;
   /** electrification overlay (set by the game) */
@@ -290,7 +304,7 @@ export class Builder {
     const miss = this.stores.nearest(x, y)[0]?.missing(cost) ?? cost;
     const what = Object.entries(miss)
       .filter(([, v]) => v > 0)
-      .map(([k, v]) => `${v} ${k}`)
+      .map(([k, v]) => `${v} ${cargoWord(k)}`)
       .join(', ');
     return { ok: false, cost, reason: STR.build.noStoreInReach(rules.buildReach, what) };
   }
@@ -416,6 +430,7 @@ export class Builder {
     const c = this.canUpgradeBuilding(b);
     if (!c.ok || !this.pay(c, b.x, b.y)) return false;
     sfx('station.upgrade');
+    this.log?.worksLevel(b);
     const work = this.free ? null : startWork(buildingLevel(b) + 1);
     if (!work) {
       this.finishBuilding(b);
@@ -430,11 +445,7 @@ export class Builder {
     const def = buildingDef(b.id);
     b.level = Math.min(worksMaxLevel(b), buildingLevel(b) + 1);
     delete b.work;
-    if (def.bridge) {
-      this.refreshBridgeCapacity(b.x, b.y);
-      this.track.version++;
-    }
-    this.buildingChanged(b, false);
+    this.worksLevelChanged(b);
     this.onUpgraded?.({
       kind: 'works',
       x: b.x,
@@ -444,6 +455,14 @@ export class Builder {
       name: def.name,
       level: b.level,
     });
+  }
+  /** A works' level changed: a bridge carries another load now, and the change is reported. */
+  private worksLevelChanged(b: Building) {
+    if (buildingDef(b.id).bridge) {
+      this.refreshBridgeCapacity(b.x, b.y);
+      this.track.version++;
+    }
+    this.buildingChanged(b, false);
   }
   /** Power plants at work: one being upgraded gives no power. */
   plantCount() {
@@ -654,7 +673,11 @@ export class Builder {
   }
   /** Lay a piece its check let through, with everything that follows from it: no price, no sound. */
   private layTrack(x: number, y: number, item: TrackItem, rot: number) {
-    const tiles = this.track.place(x, y, item.kind, rot, item.cls, item.cls2);
+    this.log?.track(x, y, { ...item, rot });
+    this.trackChanged(this.track.place(x, y, item.kind, rot, item.cls, item.cls2));
+  }
+  /** The track on `tiles` was laid or lifted: everything that follows from it. */
+  private trackChanged(tiles: { x: number; y: number }[]) {
     for (const t of tiles) {
       this.refreshBridgeCapacity(t.x, t.y);
       this.onTrackChanged?.(t.x, t.y);
@@ -768,8 +791,10 @@ export class Builder {
     const at = tiles[0] ?? { x: 0, y: 0 };
     if (!c.ok || !this.pay(c, at.x, at.y)) return false;
     const laid: { x: number; y: number }[] = [];
-    for (const p of c.changes)
+    for (const p of c.changes) {
+      this.log?.track(p.x, p.y, p, dir);
       laid.push(...this.track.place(p.x, p.y, p.kind, p.rot, p.cls, p.cls2, p.form ?? 'turn'));
+    }
     for (const t of laid) {
       this.refreshBridgeCapacity(t.x, t.y);
       this.onTrackChanged?.(t.x, t.y);
@@ -797,11 +822,11 @@ export class Builder {
       if (dec && decorDef(dec.id).onTrack && !decorDef(dec.id).anyTile) this.removeDecor(t.x, t.y);
     }
     for (const t of tiles) if (this.catenary?.supplyAt(t.x, t.y)) this.removeSupply(t.x, t.y);
+    const anchor = this.track.anchorOf(x, y);
+    this.log?.track(anchor.x, anchor.y, null);
     this.track.removeAt(x, y);
     this.refund(pieceCost(p.kind, p.cls, p.cls2), x, y);
-    for (const t of tiles) this.onTrackChanged?.(t.x, t.y);
-    for (const t of this.track.refreshSwitchForms(tiles)) this.onTrackChanged?.(t.x, t.y);
-    for (const t of tiles) this.checkOrphans(t.x, t.y);
+    this.trackChanged(tiles);
     sfx('build.remove');
     return true;
   }
@@ -1002,10 +1027,11 @@ export class Builder {
       defId,
       x,
       y,
-      count ? `${stationDef(defId).name} ${count + 1}` : undefined,
+      count ? `${dataName(stationDef(defId))} ${count + 1}` : undefined,
     );
     s.rot = turn;
     s.terrainFactor = terrainFactorAt(this.map, x, y, defId);
+    this.log?.station(s, true);
     this.stations.push(s);
     this.refreshStationBoosts();
     this.stationChanged(s, false);
@@ -1017,6 +1043,7 @@ export class Builder {
   removeStation(s: Station): boolean {
     const i = this.stations.indexOf(s);
     if (i < 0) return false;
+    this.log?.station(s, false);
     this.stations.splice(i, 1);
     // removed during its upgrade, it is gone for good: no level rises later
     s.work = null;
@@ -1039,6 +1066,7 @@ export class Builder {
   /** Editor only: lower a station's level (an upgrade under way is dropped with it). */
   downgradeStation(s: Station): boolean {
     if (!this.free || s.level <= 1) return false;
+    this.log?.stationLevel(s);
     s.level--;
     s.work = null;
     this.stationChanged(s, false);
@@ -1054,6 +1082,7 @@ export class Builder {
     const c = this.canUpgrade(s);
     if (!c.ok || !this.pay(c, s.x, s.y)) return false;
     sfx('station.upgrade');
+    this.log?.stationLevel(s);
     const work = s.def.depot || this.free ? null : startWork(s.level + 1);
     if (!work) {
       this.finishStation(s);
@@ -1126,9 +1155,8 @@ export class Builder {
   }
   private addDecor(x: number, y: number, defId: string, rot: number): Decor {
     const d: Decor = { id: defId, x, y, rot: rot % decorDef(defId).rotations };
-    this.decor.set(this.key(x, y), d);
-    this.onDecorChanged?.(d, false);
-    this.refreshStationBoosts();
+    this.log?.decor(d, true);
+    this.standDecor(d);
     sfx('build.place');
     return d;
   }
@@ -1138,10 +1166,9 @@ export class Builder {
   removeDecor(x: number, y: number): boolean {
     const d = this.decorAt(x, y);
     if (!d) return false;
-    this.decor.delete(this.key(x, y));
+    this.log?.decor(d, false);
     this.refund(decorDef(d.id).cost, x, y);
-    this.onDecorChanged?.(d, true);
-    this.refreshStationBoosts();
+    this.dropDecor(d);
     sfx('build.remove');
     return true;
   }
@@ -1241,6 +1268,7 @@ export class Builder {
     if (!c.ok || !this.pay(c, x, y)) return false;
     const old = this.catenary.supplyAt(x, y);
     if (old) this.refund(SUPPLY_DEFS[old].cost, x, y);
+    this.log?.supply(x, y, kind);
     this.catenary.set(x, y, kind);
     this.onSupplyChanged?.(x, y);
     sfx('build.place');
@@ -1249,6 +1277,7 @@ export class Builder {
   removeSupply(x: number, y: number): boolean {
     const old = this.catenary?.supplyAt(x, y);
     if (!old || !this.catenary) return false;
+    this.log?.supply(x, y, null);
     this.catenary.remove(x, y);
     this.refund(SUPPLY_DEFS[old].cost, x, y);
     this.onSupplyChanged?.(x, y);
@@ -1271,8 +1300,8 @@ export class Builder {
   /** Raise a works or a platform its check let through: no price, no sound. */
   private layBuilding(x: number, y: number, defId: string, rot: number): Building {
     const b: Building = { id: defId, x, y, acc: 0, rot, active: false, rate: 0 };
-    this.buildings.set(this.key(x, y), b);
-    this.buildingChanged(b, false);
+    this.log?.building(b, true);
+    this.standBuilding(b);
     this.onIndustryPlaced?.(x, y);
     return b;
   }
@@ -1287,11 +1316,9 @@ export class Builder {
     // a platform goes only with nothing on it: its rail or its road comes off first
     if (!b || (buildingDef(b.id).bridge && (this.track.has(x, y) || this.roads.has(x, y))))
       return false;
-    this.buildings.delete(this.key(b.x, b.y));
-    // removed during its upgrade, it is gone for good: no level rises later
-    delete b.work;
+    this.log?.building(b, false);
     this.refund(buildingDef(b.id).cost, b.x, b.y);
-    this.buildingChanged(b, true);
+    this.dropBuilding(b);
     sfx('build.remove');
     return true;
   }
@@ -1355,6 +1382,7 @@ export class Builder {
       for (const [k, v] of Object.entries(this.priced(roadCost(), 1))) more[k] = (more[k] ?? 0) + v;
       if (!this.affordable(more, from.x, from.y).ok) continue;
       cost = more;
+      this.log?.road(t.x, t.y, true);
       this.roads.add(t.x, t.y);
       this.onRoadChanged?.(t.x, t.y);
       this.connectNear(t.x, t.y);
@@ -1377,7 +1405,9 @@ export class Builder {
    * like any other: it comes up the same way, for the same refund.
    */
   removeRoad(x: number, y: number): boolean {
-    if (!this.roads.remove(x, y)) return false;
+    if (!this.roads.has(x, y)) return false;
+    this.log?.road(x, y, false);
+    this.roads.remove(x, y);
     this.refund(roadCost(), x, y);
     this.onRoadChanged?.(x, y);
     sfx('build.remove');
@@ -1526,10 +1556,78 @@ export class Builder {
     }
     if (!tiles) return [];
     for (const t of tiles) {
+      this.log?.road(t.x, t.y, true, true);
       this.roads.add(t.x, t.y);
       this.onRoadChanged?.(t.x, t.y);
     }
     return tiles;
+  }
+
+  // ------------------------------------------------------------------ undo and redo
+  // What a step does to the world, piece by piece (src/sim/buildLog.ts): no rule is asked and
+  // nothing is paid, as the step has checked it and moves the goods itself, and every change is
+  // told the way placing and removing tell it, so all that is derived from the world follows.
+
+  /** Lay `piece` with its anchor at (x, y), over what stands there; null lifts what stands there. */
+  setTrack(x: number, y: number, piece: PieceSpec | null) {
+    this.trackChanged(
+      piece
+        ? this.track.place(x, y, piece.kind, piece.rot, piece.cls, piece.cls2, piece.form ?? 'turn')
+        : this.track.removeAt(x, y),
+    );
+  }
+  setSupply(x: number, y: number, kind: SupplyKind | null) {
+    if (kind) this.catenary?.set(x, y, kind);
+    else this.catenary?.remove(x, y);
+    this.onSupplyChanged?.(x, y);
+  }
+  setRoad(x: number, y: number, laid: boolean) {
+    if (laid) this.roads.add(x, y);
+    else this.roads.remove(x, y);
+    this.onRoadChanged?.(x, y);
+  }
+  /** A station back in the place it had in the list; `warn`: it says so if it has no platform. */
+  standStation(s: Station, index: number, warn: boolean) {
+    this.stations.splice(index, 0, s);
+    this.refreshStationBoosts();
+    this.stationChanged(s, false);
+    if (warn) this.onStationOrphaned?.(s, this.isOrphaned(s));
+  }
+  dropStation(s: Station) {
+    this.stations.splice(this.stations.indexOf(s), 1);
+    s.work = null;
+    this.stationChanged(s, true);
+  }
+  standDecor(d: Decor) {
+    this.decor.set(this.key(d.x, d.y), d);
+    this.onDecorChanged?.(d, false);
+    this.refreshStationBoosts();
+  }
+  dropDecor(d: Decor) {
+    this.decor.delete(this.key(d.x, d.y));
+    this.onDecorChanged?.(d, true);
+    this.refreshStationBoosts();
+  }
+  standBuilding(b: Building) {
+    this.buildings.set(this.key(b.x, b.y), b);
+    this.buildingChanged(b, false);
+  }
+  dropBuilding(b: Building) {
+    this.buildings.delete(this.key(b.x, b.y));
+    // removed during its upgrade, it is gone for good: no level rises later
+    delete b.work;
+    this.buildingChanged(b, true);
+  }
+  setStationLevel(s: Station, level: number, work: Work | null) {
+    s.level = level;
+    s.work = work;
+    this.stationChanged(s, false);
+  }
+  setWorksLevel(b: Building, level: number | undefined, work: Work | undefined) {
+    b.level = level;
+    if (work) b.work = work;
+    else delete b.work;
+    this.worksLevelChanged(b);
   }
 }
 

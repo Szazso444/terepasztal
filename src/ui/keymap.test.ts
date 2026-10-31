@@ -21,9 +21,11 @@ type StateKey =
   | 'screenOpen'
   | 'building'
   | 'categoryOpen'
+  | 'trainOpen'
   | 'recording'
   | 'overviewTrain'
-  | 'tooltipsOpen';
+  | 'tooltipsOpen'
+  | 'barMenuOpen';
 type State = { -readonly [K in StateKey]: KeyHost[K] };
 
 const CONTEXTS: KeyContext[] = ['menu', 'play', 'overview'];
@@ -46,16 +48,20 @@ function fakeHost(context: KeyContext, over: Partial<State> = {}) {
     screenOpen: false,
     building: false,
     categoryOpen: false,
+    trainOpen: false,
     recording: false,
     overviewTrain: false,
     tooltipsOpen: false,
+    barMenuOpen: false,
     ...over,
   };
   const host: KeyHost = {
     ...state,
     toggleDebug: log('toggleDebug'),
     closeTooltips: log('closeTooltips'),
+    closeBarMenu: log('closeBarMenu'),
     closeScreen: log('closeScreen'),
+    closeTrain: log('closeTrain'),
     closeMenus: log('closeMenus'),
     openPauseMenu: log('openPauseMenu'),
     toggleScreen: log('toggleScreen'),
@@ -75,6 +81,8 @@ function fakeHost(context: KeyContext, over: Partial<State> = {}) {
     cancelRecording: log('cancelRecording'),
     dropOverviewTrain: log('dropOverviewTrain'),
     leaveOverview: log('leaveOverview'),
+    undo: log('undo'),
+    redo: log('redo'),
   };
   return { host, calls };
 }
@@ -104,6 +112,15 @@ const STEP_KEYS: [string, 1 | -1][] = [
 ];
 const stepDir = (b: KeyBinding) => STEP_KEYS.find(([code]) => code === b.code)![1];
 
+const historyCases = (way: 'undo' | 'redo'): Case[] => [
+  { calls: [way] },
+  // nothing is recorded in the level editor, and a screen stands in front of the world
+  { state: { mode: 'editor' }, calls: [] },
+  { state: { screenOpen: true }, calls: [] },
+  // a recording could hold a stop at a station the undo takes away
+  { state: { recording: true }, calls: [] },
+];
+
 /** Every action, what it calls and what keeps it quiet. A new action without cases fails to compile. */
 const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
   debug: () => [{ calls: ['toggleDebug'] }],
@@ -124,6 +141,12 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
     // a category with no tool in hand, all its items locked: it closes, no pause menu
     { state: { categoryOpen: true }, calls: ['closeCategory'] },
     { state: { categoryOpen: true, screenOpen: true }, calls: ['closeScreen'] },
+    // the train panel closes before the pause menu, and after what stands over it
+    { state: { trainOpen: true }, calls: ['closeTrain'] },
+    { state: { trainOpen: true, screenOpen: true }, calls: ['closeScreen'] },
+    { state: { trainOpen: true, categoryOpen: true }, calls: ['closeCategory'] },
+    { state: { trainOpen: true, building: true }, calls: [] },
+    { state: { trainOpen: true, tooltipsOpen: true }, calls: ['closeTooltips'] },
     // ...unless a tooltip is open: it closes, and nothing else
     { state: { tooltipsOpen: true, building: true }, calls: ['closeTooltips'] },
     { state: { tooltipsOpen: true, screenOpen: true }, calls: ['closeTooltips'] },
@@ -140,7 +163,11 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
   crafting: () => screenCases('crafting'),
   roster: () => screenCases('roster'),
   market: () => screenCases('market'),
-  overview: () => [{ calls: ['toggleOverview'] }],
+  overview: () => [
+    { calls: ['toggleOverview'] },
+    // an open menu of the top bar closes as the other view comes up
+    { state: { barMenuOpen: true }, calls: ['closeBarMenu', 'toggleOverview'] },
+  ],
   nextTool: () => [{ state: { categoryOpen: true }, calls: ['cycleTool(1)'] }, { calls: [] }],
   prevTool: () => [{ state: { categoryOpen: true }, calls: ['cycleTool(-1)'] }, { calls: [] }],
   upgradeTrack: () => [
@@ -189,6 +216,8 @@ const CASES: Record<KeyAction, (b: KeyBinding) => Case[]> = {
     { calls: [] },
     { state: { recording: true, overviewSettled: false }, calls: [] },
   ],
+  undo: () => historyCases('undo'),
+  redo: () => historyCases('redo'),
 };
 
 const shiftsOf = (b: KeyBinding) => (b.shift === undefined ? SHIFT : [b.shift]);
@@ -408,6 +437,22 @@ describe('Escape and the tooltip stack, in every state the keys read', () => {
       }
   });
 
+  it('closes an open menu of the top bar and nothing else, whatever else is', () => {
+    for (const context of ['play', 'overview'] as const)
+      for (const s of states()) {
+        const { host, calls } = fakeHost(context, { ...s, barMenuOpen: true });
+        const at = `${context} ${JSON.stringify(s)}`;
+        expect(handlePlayKeys(keys(['Escape']), host), at).toBe(true);
+        expect(calls, at).toEqual(['closeBarMenu']);
+      }
+  });
+
+  it('closes the tooltips before a menu of the top bar', () => {
+    const both = fakeHost('play', { tooltipsOpen: true, barMenuOpen: true });
+    handlePlayKeys(keys(['Escape']), both.host);
+    expect(both.calls).toEqual(['closeTooltips']);
+  });
+
   it('leaves every other key, and Escape with no tooltip open, as they were', () => {
     for (const context of CONTEXTS)
       for (const s of states())
@@ -542,5 +587,106 @@ describe('+ and − as the browser types them', () => {
     expect(input.wasPressed('Char+')).toBe(false);
     fire('keyup', 'Digit3', '+', true);
     expect(input.isDown('Digit3')).toBe(false);
+  });
+});
+
+describe('undo and redo as the browser types them', () => {
+  /** A real `Input` on stand-ins for the window, the document and the canvas. */
+  function browserInput() {
+    const handlers = new Map<string, ((e: unknown) => void)[]>();
+    vi.stubGlobal('window', {
+      addEventListener: (type: string, fn: (e: unknown) => void) =>
+        handlers.set(type, [...(handlers.get(type) ?? []), fn]),
+    });
+    vi.stubGlobal('document', { addEventListener: () => {} });
+    const input = new Input({ addEventListener: () => {} } as unknown as HTMLElement);
+    return { input, handlers };
+  }
+  afterEach(() => vi.unstubAllGlobals());
+
+  interface Press {
+    code: string;
+    key: string;
+    ctrlKey?: boolean;
+    metaKey?: boolean;
+    shiftKey?: boolean;
+    altKey?: boolean;
+    /** the element with the focus */
+    target?: { tagName: string } | null;
+  }
+  /** What one key down calls in `context`, and whether the browser's own action was stopped. */
+  function press(e: Press, context: KeyContext = 'play', state = {}) {
+    const { input, handlers } = browserInput();
+    let stopped = false;
+    for (const fn of handlers.get('keydown') ?? [])
+      fn({ shiftKey: false, target: null, preventDefault: () => (stopped = true), ...e });
+    const { host, calls } = fakeHost(context, state);
+    handlePlayKeys(input, host);
+    return { calls, stopped };
+  }
+
+  // [layout, code, key, Shift held, what it does]
+  const KEYS: [string, string, string, boolean, 'undo' | 'redo'][] = [
+    ['US Ctrl+Z', 'KeyZ', 'z', false, 'undo'],
+    ['US Ctrl+Y', 'KeyY', 'y', false, 'redo'],
+    ['US Ctrl+Shift+Z', 'KeyZ', 'Z', true, 'redo'],
+    ['Hungarian Ctrl+Z, on the key that is Y elsewhere', 'KeyY', 'z', false, 'undo'],
+    ['Hungarian Ctrl+Y, on the key that is Z elsewhere', 'KeyZ', 'y', false, 'redo'],
+    ['Hungarian Ctrl+Shift+Z', 'KeyY', 'Z', true, 'redo'],
+    ['Caps Lock on', 'KeyZ', 'Z', false, 'undo'],
+  ];
+  it.each(KEYS)('%s (%s typing %s), in both views, Ctrl or Cmd', (_, code, key, shiftKey, call) => {
+    for (const context of ['play', 'overview'] as const)
+      for (const mod of [{ ctrlKey: true }, { metaKey: true }])
+        expect(press({ code, key, shiftKey, ...mod }, context)).toEqual({
+          calls: [call],
+          stopped: true,
+        });
+  });
+
+  it('stops the browser only for its own undo and redo', () => {
+    expect(press({ code: 'KeyZ', key: 'z' })).toEqual({ calls: [], stopped: false });
+    expect(press({ code: 'KeyS', key: 's', ctrlKey: true }).stopped).toBe(false);
+    expect(press({ code: 'KeyY', key: 'y', ctrlKey: true, shiftKey: true }).stopped).toBe(false);
+  });
+
+  it('is no undo with AltGr, which reports Ctrl and Alt and types', () => {
+    const z = { code: 'KeyZ', key: 'z', ctrlKey: true, altKey: true };
+    expect(press(z)).toEqual({ calls: [], stopped: false });
+  });
+
+  it('stays off while a text input has the focus, where the browser undoes the typing', () => {
+    for (const tagName of ['INPUT', 'TEXTAREA'])
+      expect(press({ code: 'KeyZ', key: 'z', ctrlKey: true, target: { tagName } })).toEqual({
+        calls: [],
+        stopped: false,
+      });
+  });
+
+  it('does nothing over a menu', () => {
+    expect(press({ code: 'KeyZ', key: 'z', ctrlKey: true }, 'menu').calls).toEqual([]);
+  });
+
+  it('takes a second press with no key up between, as macOS sends none under Cmd', () => {
+    const { input, handlers } = browserInput();
+    const down = (repeat: boolean) => {
+      for (const fn of handlers.get('keydown') ?? [])
+        fn({
+          code: 'KeyZ',
+          key: 'z',
+          metaKey: true,
+          repeat,
+          target: null,
+          preventDefault() {},
+        });
+      const { host, calls } = fakeHost('play');
+      handlePlayKeys(input, host);
+      input.endFrame();
+      return calls;
+    };
+    expect(down(false)).toEqual(['undo']);
+    expect(down(false)).toEqual(['undo']);
+    // a key held down repeats, and that is no new press
+    expect(down(true)).toEqual([]);
   });
 });

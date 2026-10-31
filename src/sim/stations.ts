@@ -1,4 +1,5 @@
-import { content, type StationDef, type Cost } from '../data/content';
+import { content, dataName, type StationDef, type Cost } from '../data/content';
+import { LANGUAGE } from '../strings';
 import type { LevelStation } from '../world/level';
 import { weekSeconds } from './rules';
 import { Terrain, inBounds, terrainAt, type GameMap } from '../world/tiles';
@@ -304,11 +305,43 @@ export function terrainFactorAt(map: GameMap, x: number, y: number, defId: strin
 /** The good a dock's cap is read for: ordinary goods all have the same cap. */
 const DOCK_PROBE = 'stone';
 
+/**
+ * A station's default name as the player reads it, from the name the world keeps: the English kind
+ * ("Farm Halt", "Farm Halt 2"), after the name of `town` inside one ("Kisvár Station"). Inside a
+ * name the kind goes in lower case, as a Hungarian station's does. Any other name is the player's
+ * own and stays as it is. A name the player typed in the very shape of a default ("Station 7") reads
+ * as that default, as `isDefaultName` has always taken it: a station keeps no flag to tell them apart.
+ */
+export function localStationName(stored: string, def: StationDef, town: string | null): string {
+  const kind = dataName(def);
+  if (kind === def.name) return stored;
+  const number = / \d+$/.exec(stored)?.[0] ?? '';
+  const name = stored.slice(0, stored.length - number.length);
+  if (name === kind) return def.name + number;
+  if (town !== null && name === `${town} ${kind}`)
+    return `${town} ${def.name[0].toLowerCase()}${def.name.slice(1)}${number}`;
+  return stored;
+}
+
 /** A placed station. Storage is a cargo -> units map (produced goods waiting for pickup). */
 export class Station {
   readonly id: number;
   readonly def: StationDef;
-  name: string;
+  /**
+   * The name the world and the save keep: a default one in the data's English, whatever the
+   * language on screen (`Towns.refresh`, `Builder.placeStation`).
+   */
+  storedName: string;
+  /** The town whose name a default name of this station starts with (`Towns.refresh`). */
+  townName: string | null = null;
+  /** The name the player reads. Setting it gives the station that name for good. */
+  get name() {
+    if (LANGUAGE === 'en') return this.storedName;
+    return localStationName(this.storedName, this.def, this.townName);
+  }
+  set name(name: string) {
+    this.storedName = name;
+  }
   level = 1;
   storage = new Map<string, number>();
   /**
@@ -393,7 +426,7 @@ export class Station {
     this.def = stationDef(defId);
     this.id = id ?? nextId++;
     if (id !== undefined) nextId = Math.max(nextId, id + 1);
-    this.name = name ?? this.def.name;
+    this.storedName = name ?? dataName(this.def);
   }
   /** footprint side in tiles */
   get size() {
@@ -627,7 +660,7 @@ export class Station {
     return {
       id: this.id,
       defId: this.def.id,
-      name: this.name,
+      name: this.storedName,
       x: this.x,
       y: this.y,
       level: this.level,
@@ -659,7 +692,7 @@ export class Station {
       x: this.x,
       y: this.y,
       level: this.level,
-      name: this.name,
+      name: this.storedName,
       ...(this.rot ? { rot: this.rot } : {}),
     };
   }

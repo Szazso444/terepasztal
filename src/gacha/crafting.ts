@@ -1,5 +1,6 @@
 import {
   content,
+  dataName,
   type Cost,
   type CraftKind,
   type CraftRarity,
@@ -97,7 +98,9 @@ export class Crafting {
       const ra = order.indexOf(craftRarity(a));
       const rb = order.indexOf(craftRarity(b));
       return (
-        ra - rb || craftTier(a) - craftTier(b) || itemDef(a).name.localeCompare(itemDef(b).name)
+        ra - rb ||
+        craftTier(a) - craftTier(b) ||
+        dataName(itemDef(a)).localeCompare(dataName(itemDef(b)))
       );
     });
   }

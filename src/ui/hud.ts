@@ -1,35 +1,39 @@
-import { el, btn, fmtInt } from './dom';
-import { STR } from '../strings';
+import { el, btn } from './dom';
+import { LANGUAGE, LANGUAGES, LANGUAGE_NAME, STR, type Language } from '../strings';
 import { SPEED_ORDER, type GameClock } from '../sim/time';
 import type { AgeStatus } from '../sim/ages';
 import type { AtlasRegistry } from '../engine/atlas';
 import { ttTerm, type Tooltip } from './tooltip';
 import { tipBuild } from './tooltipRender';
+import { title } from './tooltipDoc';
 import { ageTip, eraView } from './ageTooltip';
 import { ageIconSvg } from './ageIcon';
 import { compactLevel, topbarCompact, type CompactLevel } from './fit';
+import { historyIconSvg, historyTip, type HistoryWay } from './historyControls';
+import { segmented } from './kit';
+import { MenuBar } from './menuBar';
+import type { History } from '../sim/history';
 
 export interface HudModel {
-  tickets: number;
   /** current age index (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic, 5 hyper) */
   tier: number;
 }
 
+/** What the undo and redo buttons read of the history. */
+export type HistoryView = Pick<History, 'canUndo' | 'canRedo' | 'undoLabel' | 'redoLabel'>;
+
 /**
- * Top bar: title, menu and screen buttons on the left; on the right the weather/day toggles, the
+ * Top bar: title, the menu bar (`menuBar.ts`) and undo and redo on the left; on the right the
  * season, the era widget (the current age's icon and name, and a bar toward the next age; resting
- * on it lists every age with its goals), then day, clock and speed as the last block. Tickets live
- * in `funds`, which the game places at the right end of the resource row (the money itself is the
- * resource bar's first cell).
+ * on it lists every age with its goals), then day, clock and speed as the last block.
  *
  * When the bar is short of room (`fit`) it goes `compact` in two steps: first tighter spacing and
- * the weather words in the Weather toggle's tooltip; only if that is still not enough, the era
- * widget without the age's name as well (`compact-2`; its tooltip has the name). The era widget
- * and the date and speed never give way; past that, the screen buttons are cut.
+ * the weather words in the Weather row's tooltip; only if that is still not enough, the era widget
+ * without the age's name as well (`compact-2`; its tooltip has the name). The era widget and the
+ * date and speed never give way; past that, the menu bar is cut.
  */
 export class Hud {
   readonly root: HTMLElement;
-  private tickets = el('span', { class: 'value' });
   /** the era widget: the age's icon and name, the bar toward the next age and its percent */
   private eraIcon = el('span', { class: 'era-icon' });
   private eraName = el('span', { class: 'era-name' });
@@ -41,17 +45,19 @@ export class Hud {
   private day = el('span', { class: 'value' });
   private clockEl = el('span', { class: 'value' });
   private speedBtns: HTMLButtonElement[] = [];
-  readonly actions = el('div', { class: 'stat actions', style: 'gap:4px' });
-  readonly menuBtn = btn(STR.menu.menuButton, () => this.onMenu?.(), 'small');
-  /** the tickets block for the resource row */
-  readonly funds: HTMLElement;
-  /** slot for the advisor button and other top-right controls */
-  readonly rightActions = el('div', { class: 'stat', style: 'gap:4px' });
-  readonly weatherBtn = btn(STR.hud.weatherToggle, () => this.onToggleWeather?.(), 'small');
-  readonly dayBtn = btn(STR.hud.dayToggle, () => this.onToggleDay?.(), 'small');
-  onMenu: (() => void) | null = null;
-  onToggleWeather: (() => void) | null = null;
-  onToggleDay: (() => void) | null = null;
+  /** the menus: `createPlayUi` wires them and puts their pane in `#ui-root` */
+  readonly menuBar: MenuBar;
+  private undoBtn = this.historyBtn('undo');
+  private redoBtn = this.historyBtn('redo');
+  /** undo and redo right of the menus; the level editor records nothing and hides them */
+  private historyCell = el('div', { class: 'stat history' });
+  /** what the history can do now; its tooltips read it when they open */
+  private history: HistoryView | null = null;
+  /** EN | HU, right of the menus and of undo and redo */
+  private languageCell = el('div', { class: 'stat lang', title: STR.settings.language });
+  onHistory: ((way: HistoryWay) => void) | null = null;
+  /** the language control: it reloads the page, or `showLanguage` puts the control back */
+  onLanguage: ((language: Language) => void) | null = null;
   private locked = false;
   private fps = el('span', { class: 'value dim' });
   private weather = el('span', { class: 'value' });
@@ -66,8 +72,6 @@ export class Hud {
     atlas: AtlasRegistry,
     tooltip: Tooltip,
   ) {
-    const stat = (label: string, v: HTMLElement) =>
-      el('div', { class: 'stat' }, el('span', { class: 'label', text: label }), v);
     const time = el('div', { class: 'time' });
     // the buttons read in SPEED_ORDER; speedBtns stays by real index, as clock.speedIndex is
     for (const i of SPEED_ORDER) {
@@ -81,37 +85,69 @@ export class Hud {
       this.speedBtns[i] = b;
       time.append(b);
     }
-    this.weatherBtn.title = STR.hud.weatherToggleHint;
-    this.dayBtn.title = STR.hud.dayToggleHint;
-    this.funds = el('div', { class: 'funds' }, stat(STR.hud.tickets, this.tickets));
+    this.menuBar = new MenuBar((text) => tipBuild(atlas, () => [title(text)]));
     // the whole widget is the term: resting on it opens the ages tooltip
     const era = ttTerm(
-      el('div', { class: 'stat era' }, this.eraIcon, this.eraName, this.eraBar, this.eraPct),
+      el('div', { class: 'panel stat era' }, this.eraIcon, this.eraName, this.eraBar, this.eraPct),
       tipBuild(atlas, () => ageTip(this.ages())),
     );
+    // a term around the button: a disabled button still says what it would do
+    const undoTip = tipBuild(atlas, () => historyTip('undo', this.history?.undoLabel ?? null));
+    const redoTip = tipBuild(atlas, () => historyTip('redo', this.history?.redoLabel ?? null));
+    this.historyCell.append(ttTerm(this.undoBtn, undoTip), ttTerm(this.redoBtn, redoTip));
+    this.showLanguage();
     this.root = el(
       'div',
-      { id: 'topbar', class: 'panel' },
+      { id: 'topbar', class: 'strip' },
       el('div', { class: 'title', text: STR.title }),
-      el('div', { class: 'stat' }, this.menuBtn),
-      this.actions,
+      this.menuBar.root,
+      this.historyCell,
+      this.languageCell,
       el('div', { class: 'spacer' }),
       el('div', { class: 'stat' }, this.fps),
-      this.rightActions,
-      el('div', { class: 'stat toggles' }, this.weatherBtn, this.dayBtn),
       el('div', { class: 'stat weather' }, this.weather),
       era,
       // one block at the right end, the era widget just before it
-      el('div', { class: 'stat datespeed' }, this.day, this.clockEl, time),
+      el('div', { class: 'panel stat datespeed' }, this.day, this.clockEl, time),
     );
     tooltip.bindTerms(this.root);
     // a window resize, or a cell that grows or shrinks (an age, the weather, the advisor's badge, the
-    // editor hiding the screen buttons), changes the room; the observer fires on a change only
+    // editor hiding entries of the menu bar), changes the room; the observer fires on a change only
     if (typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver(() => this.queueFit());
       ro.observe(this.root);
       for (const cell of this.root.children) ro.observe(cell);
     }
+  }
+
+  private historyBtn(way: HistoryWay) {
+    const b = btn('', () => this.onHistory?.(way), 'small');
+    // fixed markup from historyControls.ts, never from data
+    b.innerHTML = historyIconSvg(way, 14);
+    b.disabled = true;
+    return b;
+  }
+  /** The language control, on the language of this page load. */
+  showLanguage() {
+    this.languageCell.replaceChildren(
+      segmented({
+        options: LANGUAGES.map((id) => ({
+          id,
+          label: id.toUpperCase(),
+          title: LANGUAGE_NAME[id],
+        })),
+        value: LANGUAGE,
+        onChange: (id) => this.onLanguage?.(id as Language),
+        cls: 'small',
+      }),
+    );
+  }
+
+  /** Undo and redo follow the history: a button with nothing to do is disabled. */
+  setHistory(h: HistoryView) {
+    this.history = h;
+    this.undoBtn.disabled = !h.canUndo;
+    this.redoBtn.disabled = !h.canRedo;
   }
 
   /**
@@ -129,18 +165,19 @@ export class Hud {
 
   /**
    * The loosest spacing at which everything fits (`compactLevel`): normal, then `compact`, then
-   * `compact-2`, each laid out on its own and measured for overflow or a cut in the screen buttons
-   * or the weather text (`topbarCompact`). So the answer does not depend on the last one, and the
-   * classes and the tooltip are written only when it changed.
+   * `compact-2`, each laid out on its own and measured for overflow or a cut in the menu bar or the
+   * weather text (`topbarCompact`). So the answer does not depend on the last one, and the classes
+   * and the tooltip are written only when it changed. An open menu follows its entry.
    */
   private fit() {
     const bar = this.root;
     const level =
       compactLevel((at) => {
         this.setLevelClasses(at);
-        return topbarCompact(bar, [this.actions, this.weather]);
+        return topbarCompact(bar, [this.menuBar.root, this.weather]);
       }) ?? this.compact; // a hidden bar has no answer: keep the last one
     this.setLevelClasses(level);
+    this.menuBar.place();
     if (level === this.compact) return;
     this.compact = level;
     this.titleWeather();
@@ -151,21 +188,24 @@ export class Hud {
     this.root.classList.toggle('compact-2', level >= 2);
   }
 
-  /** The Weather toggle's tooltip: in compact, the weather words the bar no longer shows. */
+  /** The Weather row's tooltip: in compact, the weather words the bar no longer shows. */
   private titleWeather() {
     const now = this.weather.textContent ?? '';
-    this.weatherBtn.title =
-      this.compact >= 1 && now ? STR.hud.weatherToggleHintNow(now) : STR.hud.weatherToggleHint;
+    this.menuBar.setHint(
+      'weather',
+      this.compact >= 1 && now ? STR.hud.weatherToggleHintNow(now) : STR.hud.weatherToggleHint,
+    );
   }
 
   setToggles(weather: boolean, day: boolean) {
-    this.weatherBtn.classList.toggle('active', weather);
-    this.dayBtn.classList.toggle('active', day);
+    this.menuBar.setOn('weather', weather);
+    this.menuBar.setOn('dayNight', day);
   }
 
   /** Editor: hide the game screens and freeze the clock controls. */
   setEditor(on: boolean) {
-    this.actions.style.display = on ? 'none' : '';
+    this.menuBar.setMode(on ? 'editor' : 'play');
+    this.historyCell.style.display = on ? 'none' : '';
     this.locked = on;
     for (const b of this.speedBtns) b.disabled = on;
   }
@@ -206,7 +246,6 @@ export class Hud {
   }
 
   update(m: HudModel) {
-    this.tickets.textContent = fmtInt(m.tickets);
     this.updateEra(m.tier);
     this.day.textContent = STR.hud.day(this.clock.day);
     this.clockEl.textContent = this.clock.formatClock();

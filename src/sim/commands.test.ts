@@ -11,6 +11,12 @@ import { Economy } from './economy';
 import { Station, resetStationIds } from './stations';
 import { Train, defaultStop, resetTrainIds, type RouteMode } from './trains';
 import { Fleet } from './fleet';
+import { ContractBoard } from './contracts';
+import { ContractDispatcher } from './contractDispatch';
+import { HouseRegistry } from './houses';
+import { Notices } from './notices';
+import { GameClock } from './time';
+import { TownRegistry } from './towns';
 import { TradeDesk, BUY_MUL, SELL_MUL, DRIFTING } from './trade';
 import { CARGO, cargoDef } from './cargo';
 import { setSupplyMode, inSupplyMode, DEFAULT_SUPPLY } from './supply';
@@ -51,8 +57,36 @@ function world() {
   const fleet = new Fleet(track, builder, map, inventory, economy);
   const gacha = new Gacha(new Rng(7), inventory);
   for (let x = 2; x < 90; x++) track.place(x, ROW, 'straight', 1);
-  const commands = new Commands({ fleet, builder, economy, trade, gacha, inventory });
-  const w = { map, track, economy, inventory, trade, builder, fleet, gacha, commands, cap: 1000 };
+  const towns = new TownRegistry(builder);
+  const houses = new HouseRegistry(builder, towns);
+  const contracts = new ContractBoard(new Rng(9), builder, economy);
+  const contractJobs = new ContractDispatcher(fleet, contracts, builder, track, new Notices());
+  const commands = new Commands({
+    fleet,
+    builder,
+    economy,
+    trade,
+    gacha,
+    inventory,
+    towns,
+    houses,
+    contracts,
+    contractJobs,
+    clock: new GameClock(),
+  });
+  const w = {
+    map,
+    track,
+    economy,
+    inventory,
+    trade,
+    builder,
+    fleet,
+    gacha,
+    towns,
+    commands,
+    cap: 1000,
+  };
   const stock = new Store('st:0', 'depot', { x: 0, y: 0 }, () => w.cap);
   return Object.assign(w, { stock });
 }
@@ -312,6 +346,55 @@ describe('setFuelPreference', () => {
     expect(t.fuelPreference).toBe('wood');
     expect(w.commands.setFuelPreference(t, 'coal')).toEqual({ ok: true });
     expect(t.fuelPreference).toBe('coal');
+  });
+});
+
+describe('renameTown', () => {
+  /** A Townhouse with its town, in a running game: the world starts in the editor's mode. */
+  function founded() {
+    const w = world();
+    const hall = station(w, 'town', 40);
+    const t = w.towns.found(hall);
+    w.builder.free = false;
+    return { w, t, hall };
+  }
+
+  it('renames the town and its Townhouse, as one step that goes back and comes again', () => {
+    const { w, t, hall } = founded();
+    const was = { town: t.name, hall: hall.name, custom: t.custom };
+    expect(w.commands.renameTown(t, '  Pécs  ')).toEqual({ ok: true });
+    expect(t.name).toBe('Pécs');
+    expect(t.custom).toBe(true);
+    const named = hall.name;
+    expect(w.commands.history.undoLabel).toBe(STR.history.renamed(was.town, 'Pécs'));
+    expect(w.commands.history.undo()).toEqual({ ok: true });
+    expect({ town: t.name, hall: hall.name, custom: t.custom }).toEqual(was);
+    expect(w.commands.history.redo()).toEqual({ ok: true });
+    expect(t.name).toBe('Pécs');
+    expect(t.custom).toBe(true);
+    expect(hall.name).toBe(named);
+  });
+  it('makes no step of a name it already has', () => {
+    const { w, t } = founded();
+    expect(w.commands.renameTown(t, t.name)).toEqual({ ok: true });
+    expect(w.commands.history.undoLabel).toBeNull();
+  });
+  it('refuses a blank name and a town that is gone, and changes nothing', () => {
+    const { w, t, hall } = founded();
+    const was = t.name;
+    expect(w.commands.renameTown(t, '   ')).toEqual({ ok: false, message: STR.town.nameEmpty });
+    expect(t.name).toBe(was);
+    w.builder.removeStation(hall);
+    w.towns.refresh();
+    expect(w.commands.renameTown(t, 'Pécs')).toEqual({ ok: false, message: STR.town.gone });
+    expect(t.name).toBe(was);
+  });
+  it('records nothing in the level editor', () => {
+    const { w, t } = founded();
+    w.builder.free = true;
+    expect(w.commands.renameTown(t, 'Pécs')).toEqual({ ok: true });
+    expect(t.name).toBe('Pécs');
+    expect(w.commands.history.undoLabel).toBeNull();
   });
 });
 

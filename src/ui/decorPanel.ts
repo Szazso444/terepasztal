@@ -12,7 +12,7 @@ import { upgradeRow } from './upgradeRow';
 export class DecorPanel {
   readonly root: HTMLElement;
   private body = el('div', { class: 'panel-body' });
-  private title = el('span');
+  private title = el('span', { class: 'panel-name' });
   decor: Decor | null = null;
   /** set by the game: townhouse state for house entries */
   houses: HouseRegistry | null = null;
@@ -28,12 +28,12 @@ export class DecorPanel {
   ) {
     this.root = el(
       'div',
-      { id: 'station-panel', class: 'panel' },
+      { id: 'decor-panel', class: 'panel' },
       el(
         'div',
         { class: 'panel-title' },
         this.title,
-        btn('x', () => this.close(), 'small'),
+        btn('×', () => this.close(), 'panel-x'),
       ),
       this.body,
     );
@@ -176,7 +176,7 @@ export class DecorPanel {
         btn(
           STR.station.demolish,
           () => {
-            this.builder.removeDecor(d.x, d.y);
+            this.commands.act(() => this.builder.removeDecor(d.x, d.y));
             this.close();
           },
           'small',

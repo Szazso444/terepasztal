@@ -29,16 +29,24 @@ export interface KeyHost {
   readonly building: boolean;
   /** a toolbar category is open */
   readonly categoryOpen: boolean;
+  /** the train panel is open: Escape closes it before the pause menu */
+  readonly trainOpen: boolean;
   /** a route is being recorded in the overview */
   readonly recording: boolean;
   /** a train is picked in the overview */
   readonly overviewTrain: boolean;
   /** a tooltip is open: Escape closes the stack and does nothing else */
   readonly tooltipsOpen: boolean;
+  /** a menu of the top bar is open: Escape closes it and does nothing else */
+  readonly barMenuOpen: boolean;
   toggleDebug(): void;
   /** close every tooltip */
   closeTooltips(): void;
+  /** close the open menu of the top bar */
+  closeBarMenu(): void;
   closeScreen(): void;
+  /** close the train panel */
+  closeTrain(): void;
   closeMenus(): void;
   openPauseMenu(): void;
   toggleScreen(screen: KeyScreen): void;
@@ -71,6 +79,9 @@ export interface KeyHost {
   dropOverviewTrain(): void;
   /** back to the field view where the camera stands */
   leaveOverview(): void;
+  /** take back the player's last building action, or do it again */
+  undo(): void;
+  redo(): void;
 }
 
 /** The input the keymap reads: a key pressed this frame, a key held. */
@@ -97,12 +108,14 @@ export type KeyAction =
   | 'pieceOrCategory'
   | 'speedStep'
   | 'record'
-  | 'finishRoute';
+  | 'finishRoute'
+  | 'undo'
+  | 'redo';
 
 export interface KeyBinding {
   /**
-   * `KeyboardEvent.code`, or `Char+` / `Char-` for the keys bound by the character they type
-   * (`Input`)
+   * `KeyboardEvent.code`, or for the keys bound by the character they type `Char+`, `Char-`,
+   * `Ctrl+Z`, `Ctrl+Y` and `Ctrl+Shift+Z` (`Input`)
    */
   readonly code: string;
   /** true: only with Shift held; false: only without; absent: either */
@@ -130,7 +143,7 @@ const SPEED_STEP_KEYS = [...SPEED_STEP.keys()];
 /**
  * Each action returns true when the rest of the frame's input is left alone: Escape opened or
  * closed something. In every context Escape closes an open tooltip stack first, and then nothing
- * else.
+ * else; after that, in the same way, an open menu of the top bar.
  */
 const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
   debug: (h) => {
@@ -148,9 +161,11 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
   // opens. A category whose items are all locked holds no tool for the build controller to drop
   pauseOrClose: (h) => {
     if (h.tooltipsOpen) h.closeTooltips();
+    else if (h.barMenuOpen) h.closeBarMenu();
     else if (h.screenOpen) h.closeScreen();
     else if (h.building) return false;
     else if (h.categoryOpen) h.closeCategory();
+    else if (h.trainOpen) h.closeTrain();
     else h.openPauseMenu();
     return true;
   },
@@ -158,6 +173,10 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
   overviewBack: (h) => {
     if (h.tooltipsOpen) {
       h.closeTooltips();
+      return true;
+    }
+    if (h.barMenuOpen) {
+      h.closeBarMenu();
       return true;
     }
     if (h.screenOpen) {
@@ -174,7 +193,9 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
   crafting: (h) => screen(h, 'crafting'),
   roster: (h) => screen(h, 'roster'),
   market: (h) => screen(h, 'market'),
+  // the other view comes up: an open menu of the top bar does not stay over it
   overview: (h) => {
+    if (h.barMenuOpen) h.closeBarMenu();
     h.toggleOverview();
     return false;
   },
@@ -239,7 +260,23 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
     if (h.overviewSettled && h.recording) h.finishRecording();
     return false;
   },
+  undo: (h) => {
+    if (historyOpen(h)) h.undo();
+    return false;
+  },
+  redo: (h) => {
+    if (historyOpen(h)) h.redo();
+    return false;
+  },
 };
+
+/**
+ * Undo and redo work in a game, not in the level editor, with nothing in front of the world, and
+ * not during a route recording, which could hold a stop at a station an undo takes away.
+ */
+function historyOpen(h: KeyHost) {
+  return h.mode === 'play' && !h.screenOpen && !h.recording;
+}
 
 /** The letter keys open their screens in a game, not in the level editor. */
 function screen(h: KeyHost, s: KeyScreen) {
@@ -255,6 +292,17 @@ const SCREEN_KEYS: [string, KeyScreen][] = [
   ['KeyK', 'market'],
 ];
 const digits = (n: number) => Array.from({ length: n }, (_, i) => `Digit${i + 1}`);
+const UNDO_KEYS: [string, 'undo' | 'redo'][] = [
+  ['Ctrl+Z', 'undo'],
+  ['Ctrl+Y', 'redo'],
+  ['Ctrl+Shift+Z', 'redo'],
+];
+
+/** The letter that opens the screen `id`, for its header; null for a screen without one. */
+export function screenKey(id: string): string | null {
+  const bound = SCREEN_KEYS.find(([, screen]) => screen === id);
+  return bound ? bound[0].slice('Key'.length) : null;
+}
 
 /** Every hotkey, in the order a frame runs them. */
 export const KEYMAP: readonly KeyBinding[] = [
@@ -286,6 +334,7 @@ export const KEYMAP: readonly KeyBinding[] = [
     context: 'play' as const,
     action: 'speedStep' as const,
   })),
+  ...UNDO_KEYS.map(([code, action]) => ({ code, context: 'play' as const, action })),
 
   { code: 'Backquote', context: 'overview', action: 'debug' },
   ...SCREEN_KEYS.map(([code, action]) => ({ code, context: 'overview' as const, action })),
@@ -297,6 +346,7 @@ export const KEYMAP: readonly KeyBinding[] = [
     context: 'overview' as const,
     action: 'speedStep' as const,
   })),
+  ...UNDO_KEYS.map(([code, action]) => ({ code, context: 'overview' as const, action })),
   { code: 'KeyR', context: 'overview', action: 'record' },
   { code: 'Enter', context: 'overview', action: 'finishRoute' },
 ];

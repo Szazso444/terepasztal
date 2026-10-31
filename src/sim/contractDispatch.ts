@@ -1,4 +1,4 @@
-import type { Contract, ContractBoard, ContractEvent } from './contracts';
+import { contractTitle, type Contract, type ContractBoard, type ContractEvent } from './contracts';
 import { Fleet } from './fleet';
 import type { Train } from './trains';
 import type { Station } from './stations';
@@ -46,7 +46,12 @@ export class ContractDispatcher {
   onEvent(e: ContractEvent) {
     const c = e.contract;
     if (e.kind === 'accepted') this.assign(c);
-    else if (e.kind === 'completed' || e.kind === 'failed' || e.kind === 'cancelled')
+    else if (
+      e.kind === 'completed' ||
+      e.kind === 'failed' ||
+      e.kind === 'cancelled' ||
+      e.kind === 'expired'
+    )
       this.release(c);
   }
 
@@ -60,6 +65,10 @@ export class ContractDispatcher {
     return j ? (this.builder.stationById(j.destId) ?? null) : null;
   }
 
+  /** Whether some train could work the contract between these two stations as things stand. */
+  canWork(c: Contract, origin: Station, dest: Station) {
+    return this.fleet.trains.some((t) => this.evaluate(t, c, origin, dest));
+  }
   /** Score every train and queue the contract on the best one. Returns it, or null. */
   assign(c: Contract): Train | null {
     if (c.status !== 'active') return null;
@@ -77,7 +86,8 @@ export class ContractDispatcher {
         {
           key: `contract:${c.id}:train`,
           kind: 'warn',
-          text: STR.notice.contractNoTrain(c.name),
+          type: 'contract',
+          text: STR.notice.contractNoTrain(contractTitle(c.name)),
           target: { kind: 'tile', x: dest.x, y: dest.y },
         },
         60,

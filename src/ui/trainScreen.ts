@@ -1,39 +1,111 @@
-import { el, btn, fmtMoney } from './dom';
+import { el, fmtMoney } from './dom';
 import { STR } from '../strings';
-import { vehicleLabels } from './labels';
-import type { Screen } from './modal';
+import { noteText } from './noteText';
+import { rarityLabel } from './labels';
+import type { FrameTabs, Screen } from './modal';
 import {
   DYNAMIC_MODES,
   serviceLocoType,
   type RouteMode,
-  type StopPlan,
   type Train,
+  type TripStats,
 } from '../sim/trains';
 import type { Fleet } from '../sim/fleet';
 import type { Commands, CommandResult } from '../sim/commands';
 import type { Builder } from '../sim/build';
-import { cargoDef, cargoName } from '../sim/cargo';
+import { cargoDef, cargoName, cargoWord } from '../sim/cargo';
 import { levelMul } from '../gacha/items';
 import type { AtlasRegistry } from '../engine/atlas';
-import { spriteImg, frameForItem } from './spritePreview';
-import { ScheduleEditor } from './scheduleEditor';
+import { spriteImg } from './spritePreview';
+import { TrainStops } from './scheduleEditor';
+import {
+  actionButton,
+  columns,
+  emptyState,
+  formRow,
+  labelValue,
+  listDetail,
+  meter,
+  note,
+  sectionHeader,
+  segmented,
+  well,
+  type FootSpec,
+} from './kit';
+import { Bindings, bindMeter, keepPlace, keepScroll } from './liveView';
+import { vehicleRow, vehicleSprite } from './vehicleRow';
+import {
+  haulShare,
+  haulTone,
+  serviceResource,
+  stateText,
+  stateTone,
+  wagonStats,
+} from './depotView';
+import {
+  cargoAboard,
+  emergencyState,
+  levelGain,
+  perTileText,
+  rangeText,
+  recordText,
+  splitFuel,
+  tankRows,
+  tankShare,
+  tankValue,
+  type TankRow,
+} from './trainScreenView';
+
+/** Fill a train from its supplier at twice the cost, and say what came of it. */
+export function emergencyRefuel(
+  fleet: Fleet,
+  t: Train,
+  toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
+) {
+  const taken = fleet.emergencyRefuel(t);
+  const got = Object.entries(taken)
+    .map(([k, v]) => `${Math.round(v)} ${cargoWord(k)}`)
+    .join(', ');
+  toast(
+    got
+      ? STR.train.emergencyDone(got)
+      : fleet.supplierOf(t)
+        ? STR.train.emergencyNone
+        : STR.train.emergencyNoStore,
+    got ? 'good' : 'warn',
+  );
+}
 
 /** The routing buttons: the stop list, then every dynamic mode the simulation offers. */
 const ROUTE_BUTTONS: readonly RouteMode[] = ['schedule', ...DYNAMIC_MODES];
+
+type Tab = 'overview' | 'stops' | 'consist';
+type Wagon = Train['wagons'][number];
+interface Picked {
+  kind: 'l' | 'w';
+  index: number;
+}
 
 /** One train in detail: engines, tanks, weight, wagons, schedule and the last loop's statistics. */
 export class TrainScreen implements Screen {
   readonly id = 'train';
   title: string = STR.train.title;
-  readonly root = el('div', { class: 'cols' });
-  private left = el('div', { class: 'col-body' });
-  private right = el('div', { class: 'col-body' });
-  private foot = el('div', { class: 'col-foot' });
+  readonly icon = 'train';
+  /** one tab's page at a time stands in it */
+  readonly root = el('div', { class: 'dp-tab' });
   train: Train | null = null;
   onLocate: ((t: Train) => void) | null = null;
-  private scheduleEditor: ScheduleEditor;
-  /** the stops the editor works on: a copy of the train's own program, handed back on each edit */
-  private stops: StopPlan[] = [];
+  /** the frame's strip or footer changed: it is drawn now, not at the next refresh */
+  onRedraw: (() => void) | null = null;
+  private tab: Tab = 'overview';
+  private picked: Picked = { kind: 'l', index: 0 };
+  /** what follows the train on the tab drawn */
+  private readonly live = new Bindings();
+  /** what the tab was drawn from: when it changes, it is drawn again */
+  private built = '';
+  /** the tab and the train on show: drawn again for the same ones, the scroll stays */
+  private shown = '';
+  private readonly stops: TrainStops;
 
   constructor(
     private readonly fleet: Fleet,
@@ -42,32 +114,75 @@ export class TrainScreen implements Screen {
     private readonly atlas: AtlasRegistry,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
   ) {
-    this.scheduleEditor = new ScheduleEditor(builder, () => this.applyStops());
-    this.root.append(
-      el(
-        'div',
-        { class: 'col' },
-        el('div', { class: 'col-title', text: STR.train.consist }),
-        this.left,
-        this.foot,
-      ),
-      el(
-        'div',
-        { class: 'col' },
-        el('div', { class: 'col-title', text: STR.train.tripStats }),
-        this.right,
-      ),
-    );
+    this.stops = new TrainStops(builder, commands, toast);
+    keepScroll(this.root);
   }
+
   open(t: Train) {
     this.train = t;
     this.title = `${STR.train.title}: ${t.name}`;
+    this.tab = 'overview';
+    this.picked = { kind: 'l', index: 0 };
+    this.built = '';
+    this.shown = '';
   }
   onOpen() {
     this.render();
   }
   refresh() {
-    this.render();
+    const t = this.inService();
+    if (!t) {
+      if (this.built !== 'gone') this.render();
+      return;
+    }
+    this.title = `${STR.train.title}: ${t.name}`;
+    if (this.signature(t) !== this.built) {
+      this.render();
+      return;
+    }
+    this.live.run();
+    if (this.tab === 'stops') this.stops.sync(t);
+  }
+
+  frameTabs(): FrameTabs | null {
+    const t = this.inService();
+    if (!t) return null;
+    return {
+      tabs: [
+        { id: 'overview', label: STR.train.overview },
+        { id: 'stops', label: STR.depot.stops, count: t.program.length },
+        { id: 'consist', label: STR.depot.consist, count: t.locos.length + t.wagons.length },
+      ],
+      current: this.tab,
+      pick: (id) => {
+        this.tab = id as Tab;
+        this.render();
+      },
+    };
+  }
+
+  frameFooter(): FootSpec | null {
+    const t = this.inService();
+    if (!t) return null;
+    const e = emergencyState(this.tankInput(t));
+    return {
+      actions: [
+        {
+          label: STR.train.emergency,
+          icon: 'fuel',
+          disabled: e.disabled,
+          title: e.title,
+          onClick: () => this.refuelNow(t),
+        },
+        { label: STR.depot.locate, icon: 'eye', onClick: () => this.onLocate?.(t) },
+      ],
+    };
+  }
+
+  /** The train on show while it is in service; null once it is not. */
+  private inService(): Train | null {
+    const t = this.train;
+    return t && this.fleet.byId(t.id) ? t : null;
   }
 
   /** Say why a command was refused; true when it went through. */
@@ -76,337 +191,525 @@ export class TrainScreen implements Screen {
     return r.ok;
   }
 
-  /** The stop being run, when the train runs its own program rather than a contract job. */
-  private currentStop(t: Train) {
-    return t.program === t.schedule ? t.routeIndex % Math.max(1, t.schedule.length) : -1;
+  private refuelNow(t: Train) {
+    emergencyRefuel(this.fleet, t, this.toast);
+    this.live.run();
+    this.onRedraw?.();
   }
 
-  /**
-   * Hand the edited stops to the train as its own program, which it then follows on schedule
-   * (`Commands.setSchedule`). A refused list (fewer than two stops) leaves the train as it was, and
-   * the editor shows the train's stops again.
-   */
-  private applyStops() {
-    const t = this.train;
-    if (!t) return;
-    if (this.accepted(this.commands.setSchedule(t, this.stops.map(copyStop)))) return;
-    // the same array the editor holds, so its own redraw shows the train's stops
-    this.stops.splice(0, this.stops.length, ...t.program.map(copyStop));
-    this.scheduleEditor.render(this.stops, this.currentStop(t));
-  }
+  // ---------------------------------------------------------------- what is drawn
 
-  private bar(label: string, value: number, max: number, cls = '') {
-    return el(
-      'div',
-      { class: 'kv-bar' },
-      el(
-        'div',
-        { class: 'kv' },
-        el('span', { class: 'k', text: label }),
-        el('span', { class: 'v', text: `${Math.round(value)} / ${Math.round(max)}` }),
-      ),
-      el(
-        'div',
-        { class: `meter ${cls}` },
-        el('div', { style: `width:${max > 0 ? Math.min(100, (value / max) * 100) : 0}%` }),
-      ),
-    );
+  /** What a tab's structure depends on; the numbers on it are bound and follow by themselves. */
+  private signature(t: Train): string {
+    const common = [this.tab, t.id];
+    switch (this.tab) {
+      case 'overview':
+        return JSON.stringify([
+          ...common,
+          t.hasSteam,
+          t.hasDiesel,
+          t.hasElectric,
+          t.batteryCap > 0,
+          t.fuelKind,
+          t.oilKind,
+          !!(t.job ?? t.jobs[0]),
+          !!t.lastMessage,
+          t.hungry,
+          !!t.lastTrip,
+          t.locos.map((l) => l.def.id),
+          t.wagons.map((w) => [w.def.id, w.cargo]),
+        ]);
+      case 'stops':
+        return JSON.stringify([...common, t.hasSteam, t.mode]);
+      case 'consist':
+        return JSON.stringify([
+          ...common,
+          this.picked,
+          t.locos.map((l) => [l.def.id, l.level, l.mode]),
+          t.wagons.map((w) => [w.def.id, w.level, w.cargo, t.cartMatched(w)]),
+        ]);
+    }
   }
 
   private render() {
-    const t = this.train;
-    const l = this.left;
-    const r = this.right;
-    l.innerHTML = '';
-    r.innerHTML = '';
-    this.foot.innerHTML = '';
-    if (!t || !this.fleet.byId(t.id)) {
-      l.append(el('div', { class: 'dim', text: STR.train.gone }));
-      return;
-    }
-    const row = (k: string, v: string, cls = '') =>
-      el(
-        'div',
-        { class: 'kv' },
-        el('span', { class: 'k', text: k }),
-        el('span', { class: `v ${cls}`, text: v }),
-      );
-    const next = this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)]);
-    l.append(
-      row(
-        STR.train.state,
-        `${t.blocked && t.state === 'moving' ? STR.depot.state.held : (STR.depot.state[t.state] ?? t.state)}${next ? ` → ${next.name}` : ''}`,
-        `state-${t.state}`,
-      ),
-    );
-    if (t.lastMessage) l.append(row(STR.train.note, t.lastMessage));
-    if (t.hungry) l.append(row(STR.train.note, STR.train.hungry, 'red'));
-    const job = t.job ?? t.jobs[0];
-    if (job) {
-      const queued = t.jobs.length - (t.job ? 0 : 1);
-      l.append(
-        row(
-          STR.contracts.train,
-          `${STR.trainSide.onContract(job.name, this.builder.stationById(job.destId)?.name ?? '?')}${queued > 0 ? ` · ${STR.trainSide.queuedContracts(queued)}` : ''}`,
-          'amber',
-        ),
-      );
-    }
-    const ph = t.physics;
-    l.append(row(STR.train.speed, `${ph.vMax.toFixed(2)} tiles/s`));
-    l.append(
-      row(
-        STR.train.effort,
-        `${Math.round(ph.effort)} · ${STR.train.pulling(ph.engaged)}${ph.doubleHeaded ? ` · ${STR.modes.doubleHeaded}` : ''}`,
-      ),
-    );
-    l.append(row(STR.train.mass, `${Math.round(ph.mass)} t`));
-    l.append(row(STR.train.acceleration, `${ph.acceleration.toFixed(2)} tiles/s²`));
-    l.append(row(STR.train.crew, String(t.crew)));
-    l.append(this.bar(STR.train.haul, t.weight, t.power, t.weight > t.power ? 'over' : ''));
-    // engines and tanks
-    l.append(el('div', { class: 'col-title', text: STR.train.engines }));
-    t.locos.forEach((lo, i) => {
-      const modeText =
-        STR.modes[lo.mode] +
-        (lo.mode === 'standby' && lo.engaged
-          ? ` (${STR.modes.rescuing})`
-          : lo.mode !== 'standby' && !lo.engaged
-            ? ` (${STR.modes.dormant})`
-            : '');
-      const item = el(
-        'div',
-        { class: 'item', style: 'cursor:default' },
-        spriteImg(this.atlas, frameForItem(lo.def.id), 1, 'sprite-preview item-art'),
-        el(
-          'div',
-          { style: 'flex:1' },
-          el('div', {
-            class: `name rarity-${lo.def.rarity}`,
-            text: STR.train.locoLevel(lo.def.name, lo.level),
-          }),
-          vehicleLabels(lo.def),
-          el('div', {
-            class: 'sub',
-            text: `${STR.roster.type[lo.def.type]} · ${Math.round(lo.def.power * levelMul(lo.level))} t · ${STR.roster.fuelLine(lo.def)}`,
-          }),
-          el('div', {
-            class: `sub ${lo.engaged ? '' : 'dim'}`,
-            text: `${modeText}${lo.def.controlClass ? ` · ${STR.depot.controlClass(lo.def.controlClass)}` : ''}`,
-          }),
-        ),
-      );
-      if (i > 0) {
-        const standby = lo.mode === 'standby';
-        const b = btn(
-          standby ? STR.train.engage : STR.train.standby,
-          () => {
-            t.setStandby(i, !standby);
-            this.render();
-          },
-          'small',
+    const t = this.inService();
+    this.live.clear();
+    const key = t ? `${this.tab}:${t.id}` : 'gone';
+    const draw = () => {
+      if (!t) {
+        this.root.replaceChildren(
+          el('div', { class: 'k-page' }, well(null, emptyState({ text: STR.train.gone }))),
         );
-        b.title = STR.modes.hint;
-        item.append(b);
+        return;
       }
-      l.append(item);
-    });
-    if (t.hasSteam) {
-      l.append(
-        this.bar(
-          `${STR.train.fuel} (${t.fuelKind})`,
-          t.coal,
-          t.coalCap,
-          t.coal < t.coalRate * 5 ? 'over' : '',
-        ),
+      this.root.replaceChildren(
+        this.tab === 'overview'
+          ? this.overview(t)
+          : this.tab === 'stops'
+            ? this.stopsPage(t)
+            : this.consistPage(t),
       );
-      l.append(
-        this.bar(STR.train.water, t.water, t.waterCap, t.water < t.waterRate * 5 ? 'over' : ''),
-      );
-    }
-    if (t.hasDiesel)
-      l.append(
-        this.bar(cargoName(t.oilKind), t.oil, t.oilCap, t.oil < t.oilRate * 5 ? 'over' : ''),
-      );
-    if (t.hasElectric) {
-      const grid = Math.floor(this.builder.stores.grid.get('power'));
-      l.append(
-        row(STR.train.power, `${t.powerRate.toFixed(2)} / tile · ${STR.train.stockPower(grid)}`),
-      );
-    }
-    if (t.batteryCap > 0)
-      l.append(
-        this.bar(
-          STR.train.battery,
-          t.battery,
-          t.batteryCap,
-          t.battery < t.powerRate * 5 ? 'over' : '',
-        ),
-      );
-    const rate = [
-      t.coalRate > 0 ? `${t.coalRate.toFixed(2)} ${t.fuelKind}` : '',
-      t.waterRate > 0 ? `${t.waterRate.toFixed(2)} water` : '',
-      t.oilRate > 0 ? `${t.oilRate.toFixed(2)} ${t.oilKind}` : '',
-      t.powerRate > 0 ? `${t.powerRate.toFixed(2)} power` : '',
-    ].filter(Boolean);
-    l.append(row(STR.train.perTile, rate.join(', ') || '-'));
-    l.append(
-      row(
-        STR.train.range,
-        t.rangeTiles === Infinity ? '∞' : `${Math.floor(t.rangeTiles)} ${STR.train.tiles}`,
-      ),
-    );
-    l.append(
-      el(
-        'div',
-        { class: 'row' },
-        el('span', { class: 'dim', text: STR.train.routing }),
-        ...ROUTE_BUTTONS.map((m) =>
-          btn(
-            STR.train.mode[m],
-            () => {
-              this.accepted(this.commands.setTrainMode(t, m));
-              this.render();
-            },
-            `small ${t.mode === m ? 'active' : ''}`,
-          ),
-        ),
-      ),
-    );
-    l.append(el('div', { class: 'sub dim', text: STR.train.modeHint[t.mode] }));
-    if (t.hasSteam) {
-      l.append(
-        el(
-          'div',
-          { class: 'row' },
-          el('span', { class: 'dim', text: STR.train.prefer }),
-          btn(
-            STR.train.coal,
-            () => {
-              this.accepted(this.commands.setFuelPreference(t, 'coal'));
-              this.render();
-            },
-            `small ${t.fuelPreference === 'coal' ? 'active' : ''}`,
-          ),
-          btn(
-            STR.train.wood,
-            () => {
-              this.accepted(this.commands.setFuelPreference(t, 'wood'));
-              this.render();
-            },
-            `small ${t.fuelPreference === 'wood' ? 'active' : ''}`,
-          ),
-        ),
-      );
-    }
-    // wagons
-    l.append(el('div', { class: 'col-title', text: STR.depot.wagons }));
-    for (const w of t.wagons) {
-      const cap = w.def.capacity * levelMul(w.level);
-      l.append(
-        el(
-          'div',
-          { class: 'item', style: 'cursor:default' },
-          spriteImg(this.atlas, frameForItem(w.def.id), 1, 'sprite-preview item-art'),
-          el(
-            'div',
-            { style: 'flex:1' },
-            el('div', { class: `name rarity-${w.def.rarity}`, text: w.def.name }),
-            vehicleLabels(w.def),
-            el('div', {
-              class: 'sub',
-              text: w.cargo
-                ? `${cargoDef(w.cargo).name} ${Math.round(w.amount)}/${Math.round(cap)} · ${(w.def.weight + w.amount * cargoDef(w.cargo).weight).toFixed(1)} t`
-                : `${STR.depot.empty} · ${cap} u · ${w.def.weight} t`,
-            }),
-            w.def.service && !t.cartMatched(w)
-              ? el('div', {
-                  class: 'sub red',
-                  text: STR.depot.deadWeight(STR.roster.type[serviceLocoType(w.def.service)]),
-                })
-              : null,
-          ),
-        ),
-      );
-    }
-    // trip stats
-    const fmtRec = (rec: Record<string, number>) =>
-      Object.entries(rec)
-        .filter(([, v]) => v >= 0.05)
-        .map(([k, v]) => `${Math.round(v * 10) / 10} ${k.replace('refuel_', '+')}`)
-        .join(', ') || '-';
-    const tripBlock = (title: string, tr: typeof t.trip | null) => {
-      const box = el(
-        'div',
-        { class: 'content-entry' },
-        el('div', { class: 'content-head' }, el('span', { class: 'name', text: title })),
-      );
-      if (!tr) {
-        box.append(el('div', { class: 'dim', text: STR.train.noTrip }));
-        return box;
-      }
-      box.append(
-        row(STR.train.distance, `${Math.round(tr.distance)} ${STR.train.tiles}`),
-        row(
-          STR.train.fuelUsed,
-          fmtRec(
-            Object.fromEntries(Object.entries(tr.fuel).filter(([k]) => !k.startsWith('refuel_'))),
-          ),
-        ),
-        row(
-          STR.train.refuelled,
-          fmtRec(
-            Object.fromEntries(Object.entries(tr.fuel).filter(([k]) => k.startsWith('refuel_'))),
-          ),
-        ),
-        row(STR.train.gathered, fmtRec(tr.loaded)),
-        row(STR.train.delivered, fmtRec(tr.delivered)),
-        row(STR.train.income, fmtMoney(tr.income)),
-      );
-      return box;
     };
-    r.append(tripBlock(STR.train.lastLoop, t.lastTrip), tripBlock(STR.train.currentLoop, t.trip));
-    r.append(el('div', { class: 'col-title', text: STR.depot.stops }));
-    // the train's own program, also while a contract job runs its two stops
-    this.stops = t.program.map(copyStop);
-    this.scheduleEditor.render(this.stops, this.currentStop(t));
-    r.append(
-      this.scheduleEditor.root,
-      el('div', { class: 'dim', text: STR.depot.scheduleLiveHint }),
-    );
-    // footer actions
-    const needsFuel =
-      (t.hasSteam && (t.coal < t.coalCap * 0.999 || t.water < t.waterCap * 0.999)) ||
-      (t.hasDiesel && t.oil < t.oilCap * 0.999);
-    const eb = btn(
-      STR.train.emergency,
-      () => {
-        const taken = this.fleet.emergencyRefuel(t);
-        const got = Object.entries(taken)
-          .map(([k, v]) => `${Math.round(v)} ${k}`)
-          .join(', ');
-        this.toast(
-          got
-            ? STR.train.emergencyDone(got)
-            : this.fleet.supplierOf(t)
-              ? STR.train.emergencyNone
-              : STR.train.emergencyNoStore,
-          got ? 'good' : 'warn',
-        );
-        this.render();
-      },
-      'small',
-    );
-    eb.disabled = !needsFuel;
-    eb.title = STR.train.emergencyHint;
-    this.foot.append(
-      eb,
-      btn(STR.depot.locate, () => this.onLocate?.(t), 'small'),
+    this.built = t ? this.signature(t) : 'gone';
+    // the same tab of the same train drawn again keeps its place; another starts at the top
+    if (key === this.shown) keepPlace(this.root, draw);
+    else draw();
+    this.shown = key;
+    this.onRedraw?.();
+  }
+
+  // ---- bound rows
+
+  /** A label and a value that follows `get`; `tone` colours it. */
+  private kv(label: string, get: () => string, tone?: () => string): HTMLElement {
+    const row = labelValue(label, '');
+    this.live.text(row.lastElementChild as HTMLElement, get);
+    if (tone) this.live.tone(row, ['bad', 'good', 'warn'], tone);
+    return row;
+  }
+
+  /** A resource's atlas icon at the size of a line of text. */
+  private resIcon(res: string): HTMLElement {
+    return spriteImg(this.atlas, `icons/${res}`, 1, 'sprite-preview res-icon');
+  }
+
+  private tankInput(t: Train) {
+    return {
+      steam: t.hasSteam,
+      diesel: t.hasDiesel,
+      electric: t.hasElectric,
+      fuelKind: t.fuelKind,
+      oilKind: t.oilKind,
+      coal: t.coal,
+      coalCap: t.coalCap,
+      coalRate: t.coalRate,
+      water: t.water,
+      waterCap: t.waterCap,
+      waterRate: t.waterRate,
+      oil: t.oil,
+      oilCap: t.oilCap,
+      oilRate: t.oilRate,
+      battery: t.battery,
+      batteryCap: t.batteryCap,
+      powerRate: t.powerRate,
+    };
+  }
+
+  // ---- Overview
+
+  private overview(t: Train): HTMLElement {
+    const next = () =>
+      this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)])?.name;
+    const status: HTMLElement[] = [
+      this.kv(
+        STR.train.state,
+        () => `${stateText(t.state, t.blocked)}${next() ? ` → ${next()}` : ''}`,
+        () => (stateTone(t.state, t.blocked) === 'bad' ? 'bad' : ''),
+      ),
+    ];
+    if (t.lastMessage) status.push(this.kv(STR.train.note, () => noteText(t.lastMessage)));
+    if (t.hungry)
+      status.push(
+        this.kv(
+          STR.train.note,
+          () => STR.train.hungry,
+          () => 'bad',
+        ),
+      );
+    if (t.job ?? t.jobs[0])
+      status.push(
+        this.kv(
+          STR.contracts.train,
+          () => {
+            const j = t.job ?? t.jobs[0];
+            if (!j) return '';
+            const queued = t.jobs.length - (t.job ? 0 : 1);
+            const dest = this.builder.stationById(j.destId)?.name ?? '?';
+            return `${STR.trainSide.onContract(j.name, dest)}${queued > 0 ? ` · ${STR.trainSide.queuedContracts(queued)}` : ''}`;
+          },
+          () => 'warn',
+        ),
+      );
+    const haul = bindMeter(this.live, meter(STR.train.haul, '', 0), () => ({
+      value: STR.train.weightPower(Math.round(t.weight), Math.round(t.power)),
+      share: haulShare(t.weight, t.power),
+      tone: haulTone(t.weight, t.power),
+    }));
+    const left = [
+      well(STR.train.status, ...status),
+      well(
+        STR.train.performance,
+        this.kv(STR.train.speed, () => `${t.physics.vMax.toFixed(2)} ${STR.train.tilesPerSecond}`),
+        this.kv(STR.train.effort, () => {
+          const p = t.physics;
+          return `${Math.round(p.effort)} · ${STR.train.pulling(p.engaged)}${p.doubleHeaded ? ` · ${STR.modes.doubleHeaded}` : ''}`;
+        }),
+        this.kv(STR.train.mass, () => `${Math.round(t.physics.mass)} t`),
+        this.kv(
+          STR.train.acceleration,
+          () => `${t.physics.acceleration.toFixed(2)} ${STR.train.tilesPerSecondSq}`,
+        ),
+        this.kv(STR.train.crew, () => String(t.crew)),
+        haul,
+      ),
+      this.loopWell(STR.train.lastLoop, () => t.lastTrip),
+    ];
+    const right = [
+      this.tanksWell(t),
+      this.consistWell(t),
+      this.loopWell(STR.train.currentLoop, () => t.trip),
+    ];
+    return el('div', { class: 'k-page' }, columns(left, right));
+  }
+
+  /** A loop's record: distance, consumed, refuelled, gathered, delivered, income. */
+  private loopWell(title: string, get: () => TripStats | null): HTMLElement {
+    if (!get()) return well(title, note(STR.train.noTrip));
+    const fuel = () => splitFuel(get()?.fuel ?? {});
+    return well(
+      title,
+      this.kv(STR.train.distance, () => `${Math.round(get()?.distance ?? 0)} ${STR.train.tiles}`),
+      this.kv(STR.train.fuelUsed, () => recordText(fuel().used)),
+      this.kv(STR.train.refuelled, () => recordText(fuel().refuelled)),
+      this.kv(STR.train.gathered, () => recordText(get()?.loaded ?? {})),
+      this.kv(STR.train.delivered, () => recordText(get()?.delivered ?? {})),
+      this.kv(STR.train.income, () => fmtMoney(get()?.income ?? 0)),
     );
   }
-}
 
-/** A stop of its own, so an edit never reaches a stop the train holds. */
-function copyStop(s: StopPlan): StopPlan {
-  return { ...s };
+  private tanksWell(t: Train): HTMLElement {
+    // one reading of the tanks per run, shared by the meters
+    let now: TankRow[] = [];
+    this.live.add(() => (now = tankRows(this.tankInput(t), cargoName(t.oilKind))));
+    const shown = [...now];
+    // the power an electric engine draws from the wire is a row, ahead of the battery carts
+    const power = t.hasElectric
+      ? this.kv(
+          STR.train.power,
+          () =>
+            `${t.powerRate.toFixed(2)} / ${STR.train.tile} · ${STR.train.stockPower(Math.floor(this.builder.stores.grid.get('power')))}`,
+        )
+      : null;
+    const parts: HTMLElement[] = [];
+    for (const r of shown) {
+      if (power && r.key === 'battery') parts.push(power);
+      const m = meter(r.label, '', 0);
+      m.firstElementChild?.prepend(this.resIcon(r.icon));
+      bindMeter(this.live, m, () => {
+        const x = now.find((k) => k.key === r.key) ?? r;
+        return { value: tankValue(x), share: tankShare(x), tone: x.tone };
+      });
+      parts.push(m);
+    }
+    if (power && !parts.includes(power)) parts.push(power);
+    return well(
+      STR.train.tanks,
+      ...parts,
+      this.kv(STR.train.perTile, () => perTileText(t)),
+      this.kv(
+        STR.train.range,
+        () => rangeText(t.rangeTiles),
+        () => (t.rangeTiles < 10 ? 'bad' : ''),
+      ),
+    );
+  }
+
+  /** The consist as a strip of vehicles, each opening the Consist tab, and the cargo aboard. */
+  private consistWell(t: Train): HTMLElement {
+    const veh = (kind: 'l' | 'w', index: number, defId: string, name: string, cap: HTMLElement) => {
+      const b = el(
+        'button',
+        { type: 'button', class: 'dp-veh', title: name },
+        vehicleSprite(this.atlas, defId),
+        cap,
+      );
+      b.addEventListener('click', () => {
+        this.picked = { kind, index };
+        this.tab = 'consist';
+        this.render();
+      });
+      return b;
+    };
+    const strip = el('div', { class: 'dp-strip' });
+    t.locos.forEach((l) => {
+      const cap = el('small');
+      this.live.text(cap, () => STR.modes[l.mode]);
+      strip.append(veh('l', t.locos.indexOf(l), l.def.id, l.def.name, cap));
+    });
+    t.wagons.forEach((w, i) => {
+      const cap = el('small');
+      if (w.cargo) cap.append(this.resIcon(w.cargo));
+      const text = el('span');
+      cap.append(text);
+      this.live.text(text, () =>
+        w.def.service
+          ? `+${w.def.serviceCap ?? 0}`
+          : w.cargo
+            ? String(Math.round(w.amount))
+            : STR.depot.empty.toLowerCase(),
+      );
+      strip.append(veh('w', i, w.def.id, w.def.name, cap));
+    });
+    const aboard = cargoAboard(t.wagons);
+    const chips = aboard.length
+      ? el(
+          'div',
+          { class: 'dp-cargo' },
+          ...aboard.map(([res]) => {
+            const amount = el('b');
+            this.live.text(
+              amount,
+              () => `${Math.round(cargoAboard(t.wagons).find(([r]) => r === res)?.[1] ?? 0)}`,
+            );
+            return el('span', { class: 'dp-chip' }, this.resIcon(res), cargoDef(res).name, amount);
+          }),
+        )
+      : note(STR.train.runningEmpty);
+    const total = el('span', { class: 'dp-total' });
+    this.live.text(total, () => STR.depot.cargo(Math.round(t.totalCargo())));
+    return well({ title: STR.depot.consist, right: total }, strip, chips);
+  }
+
+  // ---- Stops
+
+  private stopsPage(t: Train): HTMLElement {
+    const dyn = t.mode !== 'schedule';
+    const modes = el(
+      'div',
+      { class: 'k-inrow dp-modes' },
+      segmented({
+        options: ROUTE_BUTTONS.map((m) => ({ id: m, label: STR.train.mode[m] })),
+        value: t.mode,
+        onChange: (id) => {
+          this.accepted(this.commands.setTrainMode(t, id as RouteMode));
+          this.render();
+        },
+      }),
+    );
+    if (t.hasSteam)
+      modes.append(
+        el('small', { text: STR.train.prefer }),
+        segmented({
+          options: [
+            { id: 'coal', label: STR.train.coal },
+            { id: 'wood', label: STR.train.wood },
+          ],
+          value: t.fuelPreference,
+          onChange: (id) => {
+            this.accepted(this.commands.setFuelPreference(t, id as 'coal' | 'wood'));
+            this.render();
+          },
+        }),
+      );
+    // the train's own program, also while a contract job runs its two stops
+    this.stops.show(t);
+    const count = el('span');
+    this.live.text(count, () => String(t.program.length));
+    return el(
+      'div',
+      { class: 'k-page' },
+      well(
+        { title: STR.train.routing, right: dyn ? STR.depot.dynamicTag : STR.train.staticTag },
+        modes,
+        note(STR.train.modeHint[t.mode] ?? ''),
+        dyn ? note(STR.depot.dynamicPlans) : null,
+      ),
+      well(
+        { title: STR.depot.stops, right: count },
+        note(STR.depot.scheduleLiveHint),
+        this.stops.root,
+      ),
+    );
+  }
+
+  // ---- Consist
+
+  private consistPage(t: Train): HTMLElement {
+    const ld = listDetail(400);
+    const at = this.pickedIn(t);
+    const standby = (i: number) => {
+      const off = t.locos[i].mode === 'standby';
+      return actionButton(
+        off ? STR.train.engage : STR.train.standby,
+        () => {
+          t.setStandby(i, !off);
+          this.render();
+        },
+        { cls: 'small', title: STR.modes.hint },
+      );
+    };
+    const engines = t.locos.map((l, i) => {
+      const mode = el('span');
+      this.live.text(mode, () => this.modeText(t.locos[i] ?? l));
+      this.live.toggle(mode, 'dp-mode', () => (t.locos[i] ?? l).engaged);
+      return vehicleRow(this.atlas, {
+        def: l.def,
+        level: l.level,
+        sub: [
+          `${STR.roster.type[l.def.type]} · ${Math.round(l.def.power * levelMul(l.level))} t`,
+          mode,
+        ],
+        on: at.kind === 'l' && at.index === i,
+        onClick: () => this.pickVehicle('l', i),
+        right: i > 0 ? [standby(i)] : undefined,
+      });
+    });
+    const wagons = t.wagons.map((w, i) => {
+      const sub = el('span');
+      this.live.text(sub, () => this.wagonNow(t.wagons[i] ?? w));
+      return vehicleRow(this.atlas, {
+        def: w.def,
+        level: w.level,
+        sub: [sub],
+        warn: this.deadWeight(t, w),
+        on: at.kind === 'w' && at.index === i,
+        onClick: () => this.pickVehicle('w', i),
+      });
+    });
+    ld.list.body.append(
+      well({ title: STR.train.engines, right: STR.train.pulling(t.physics.engaged) }, ...engines),
+      well({ title: STR.depot.wagons, right: String(t.wagons.length) }, ...wagons),
+    );
+    ld.detail.body.append(
+      ...(at.kind === 'l'
+        ? this.engineDetail(t, at.index, standby)
+        : this.wagonDetail(t, at.index)),
+      well(STR.train.engineModes, note(STR.modes.hint)),
+    );
+    return ld.root;
+  }
+
+  /** The picked vehicle, kept inside the train's own consist. */
+  private pickedIn(t: Train): Picked {
+    const { kind, index } = this.picked;
+    if (kind === 'w' && t.wagons[index]) return this.picked;
+    if (kind === 'l' && t.locos[index]) return this.picked;
+    return { kind: 'l', index: 0 };
+  }
+
+  private pickVehicle(kind: 'l' | 'w', index: number) {
+    this.picked = { kind, index };
+    this.render();
+  }
+
+  /** An engine's mode, and what has become of it: stepped in, or without usable power. */
+  private modeText(l: Train['locos'][number]): string {
+    const text =
+      STR.modes[l.mode] +
+      (l.mode === 'standby' && l.engaged
+        ? ` (${STR.modes.rescuing})`
+        : l.mode !== 'standby' && !l.engaged
+          ? ` (${STR.modes.dormant})`
+          : '');
+    return `${text}${l.def.controlClass ? ` · ${STR.depot.controlClass(l.def.controlClass)}` : ''}`;
+  }
+
+  private deadWeight(t: Train, w: Wagon): string | null {
+    return w.def.service && !t.cartMatched(w)
+      ? STR.depot.deadWeight(STR.roster.type[serviceLocoType(w.def.service)])
+      : null;
+  }
+
+  /** A wagon's line: its cargo against its capacity and the weight, or empty. */
+  private wagonNow(w: Wagon): string {
+    const cap = w.def.capacity * levelMul(w.level);
+    if (w.def.service) return wagonStats(w.def, levelMul(w.level));
+    return w.cargo
+      ? `${cargoDef(w.cargo).name} ${Math.round(w.amount)}/${Math.round(cap)} · ${(w.def.weight + w.amount * cargoDef(w.cargo).weight).toFixed(1)} t`
+      : `${STR.depot.empty} · ${Math.round(cap)} u · ${w.def.weight} t`;
+  }
+
+  private rarityRow(rarity: string): HTMLElement {
+    const name = STR.craft.quality[rarity] ?? rarity;
+    return labelValue(
+      STR.roster.rarity,
+      el(
+        'span',
+        {},
+        rarityLabel(rarity),
+        ' ',
+        el('span', { class: `rarity-${rarity}`, text: name }),
+      ),
+    );
+  }
+
+  private engineDetail(t: Train, i: number, standby: (i: number) => HTMLElement): HTMLElement[] {
+    const l = t.locos[i];
+    const m = levelMul(l.level);
+    const modeText = el('b');
+    this.live.text(modeText, () => STR.modes[(t.locos[i] ?? l).mode]);
+    return [
+      well(
+        null,
+        sectionHeader(l.def.name, STR.train.engineOf(i + 1, t.locos.length)),
+        el('div', { class: 'dp-big' }, vehicleSprite(this.atlas, l.def.id, 2)),
+        this.rarityRow(l.def.rarity),
+        labelValue(STR.roster.level, levelGain(l.level, m, STR.train.speedAndPower)),
+        labelValue(
+          STR.train.type,
+          `${STR.roster.type[l.def.type]} · ${STR.roster.size[l.def.size ?? 'small']}`,
+        ),
+        labelValue(STR.depot.speed, `${(l.def.speed * m).toFixed(2)} ${STR.train.tilesPerSecond}`),
+        labelValue(STR.depot.power, `${Math.round(l.def.power * m)} t`),
+        labelValue(STR.depot.weight, `${l.def.weight} t`),
+        labelValue(STR.train.crew, String(l.def.crew)),
+        labelValue(STR.train.tanks, STR.roster.fuelLine(l.def)),
+        l.def.controlClass
+          ? labelValue(STR.train.controlClassLabel, l.def.controlClass.toUpperCase())
+          : null,
+        formRow(
+          STR.train.engineMode,
+          el('span', { class: 'dp-modectl' }, modeText, i > 0 ? standby(i) : null),
+        ),
+      ),
+    ];
+  }
+
+  private wagonDetail(t: Train, i: number): HTMLElement[] {
+    const w = t.wagons[i];
+    const m = levelMul(w.level);
+    const cap = Math.round(w.def.capacity * m);
+    const cart = w.def.service;
+    const parts: (HTMLElement | null)[] = [
+      sectionHeader(w.def.name, STR.train.wagonOf(i + 1, t.wagons.length)),
+      el('div', { class: 'dp-big' }, vehicleSprite(this.atlas, w.def.id, 2)),
+      this.rarityRow(w.def.rarity),
+      cart ? null : labelValue(STR.roster.level, levelGain(w.level, m, STR.train.capacity)),
+      labelValue(STR.train.carries, STR.roster.carries[w.def.carries] ?? w.def.carries),
+      labelValue(STR.train.size, STR.roster.size[w.def.size ?? 'small']),
+    ];
+    if (cart)
+      parts.push(
+        labelValue(STR.train.refuelCart, `+${w.def.serviceCap ?? 0} ${serviceResource(cart)}`),
+      );
+    else {
+      parts.push(labelValue(STR.roster.capacity, `${cap} u`));
+      parts.push(
+        bindMeter(this.live, meter(STR.train.cargoAboard, '', 0), () => {
+          const cur = t.wagons[i] ?? w;
+          return {
+            value: cur.cargo
+              ? `${cargoDef(cur.cargo).name} ${Math.round(cur.amount)} / ${cap} u`
+              : STR.depot.empty,
+            share: cap > 0 ? Math.min(1, cur.amount / cap) : 0,
+            tone: '',
+          };
+        }),
+      );
+    }
+    parts.push(
+      this.kv(STR.depot.weight, () => {
+        const cur = t.wagons[i] ?? w;
+        return `${(cur.def.weight + (cur.cargo ? cur.amount * cargoDef(cur.cargo).weight : 0)).toFixed(1)} t`;
+      }),
+    );
+    const dead = this.deadWeight(t, w);
+    if (dead) parts.push(note(dead, 'bad'));
+    const out = [well(null, ...parts)];
+    if (cart)
+      out.push(
+        well(STR.train.refuelCart, note(STR.roster.serviceLine(cart, w.def.serviceCap ?? 0))),
+      );
+    return out;
+  }
 }

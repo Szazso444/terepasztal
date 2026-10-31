@@ -24,7 +24,7 @@ import { cargoDef, cargoClass } from './cargo';
 import { content } from '../data/content';
 import { rules, daySeconds, weekSeconds } from './rules';
 import { findRefugePath, findShuntPath, stateKey, statesReaching } from './recovery';
-import { STR } from '../strings';
+import { ENGLISH } from '../strings';
 import {
   Polyline,
   poseVehicle,
@@ -37,6 +37,7 @@ import {
   type BodyFields,
 } from './body';
 import { dieselFuelId, sandPerTile } from './supply';
+import { savedTrainColour } from './trainColours';
 
 const trackData = content.track;
 import { sfx } from '../engine/audio';
@@ -434,11 +435,11 @@ const REROUTE_AFTER = 6;
 const RETRY_EVERY = 20;
 /** notes about a yield, dropped when the train sets off from it */
 const YIELD_NOTES: readonly string[] = [
-  STR.traffic.pullingAside,
-  STR.traffic.keptBack,
-  STR.traffic.replan,
-  STR.traffic.noWayOn,
-  STR.traffic.jammed,
+  ENGLISH.traffic.pullingAside,
+  ENGLISH.traffic.keptBack,
+  ENGLISH.traffic.replan,
+  ENGLISH.traffic.noWayOn,
+  ENGLISH.traffic.jammed,
 ];
 /** tank fraction below which the economy mode kicks in */
 const ECO_BELOW = 0.3;
@@ -589,6 +590,8 @@ export function resetTrainIds(v = 1) {
 export class Train {
   readonly id: number;
   name: string;
+  /** the player's colour code, an index into `TRAIN_COLOURS`: the outliner groups trains by it */
+  colour = 0;
   locos: LocoSlot[];
   wagons: WagonSlot[] = [];
   schedule: StopPlan[] = [];
@@ -776,7 +779,7 @@ export class Train {
     this.setPath(best.route, ctx.map, ctx.track);
     this.trackVersion = ctx.track.version;
     this.setState('moving');
-    this.lastMessage = 'Heading to nearby fuel / water service';
+    this.lastMessage = ENGLISH.trainNote.service;
     return true;
   }
   /**
@@ -944,7 +947,7 @@ export class Train {
     this.schedule = [jobStop(j.originId, 'origin'), jobStop(j.destId, 'dest')];
     this.routeIndex = 0;
     this.detour = null;
-    this.lastMessage = `on contract: ${j.name}`;
+    this.lastMessage = ENGLISH.trainNote.onContract(j.name);
   }
   /**
    * Back to the standing program. A schedule train rejoins at the stop after the one it left
@@ -959,7 +962,7 @@ export class Train {
     this.schedule = s.schedule;
     const n = Math.max(1, s.schedule.length);
     this.routeIndex = advance ? (s.routeIndex + 1) % n : s.routeIndex % n;
-    this.lastMessage = 'back on the regular run';
+    this.lastMessage = ENGLISH.trainNote.regularRun;
   }
   /**
    * The job closed with the train away from its stops: under way, or standing with no route to
@@ -990,7 +993,7 @@ export class Train {
       } else if (wasReversed !== this.reversed) this.updatePoses();
     } else if (this.dynamic && !this.job) {
       this.badTargets.set(this.route[this.routeIndex % this.route.length], ctx.now + 240);
-      this.idle('no track to the chosen stop');
+      this.idle(ENGLISH.trainNote.noTrackToStop);
     } else if (moving) this.setState('noRoute');
     else this.stateTime = 0;
   }
@@ -1732,7 +1735,7 @@ export class Train {
     if (!target) return false;
     const plat = builder.platformTiles(target);
     if (!plat.length) {
-      this.lastMessage = `${target.name} has no platform`;
+      this.lastMessage = ENGLISH.trainNote.noPlatform(target.storedName);
       return false;
     }
     const targetSet = new Set(plat.map((p) => p.y * track.w + p.x));
@@ -2120,7 +2123,7 @@ export class Train {
             this.badTargets.set(this.route[this.routeIndex % this.route.length], ctx.now + 240);
             this.yieldWait = 0;
             this.atStation = null;
-            this.idle('parked: no way to the chosen stop');
+            this.idle(ENGLISH.trainNote.parked);
           }
         }
         break;
@@ -2181,8 +2184,8 @@ export class Train {
       this.pathTo(ctx.track, { x: head.x, y: head.y, in: head.out }, isTarget, 100000);
     this.wantTiles = path ? path.map((s) => ({ x: s.x, y: s.y })) : null;
     // with no track on at all it is not waiting for traffic: say so rather than stand silent
-    if (!path) this.lastMessage = STR.traffic.noWayOn;
-    else if (this.lastMessage === STR.traffic.noWayOn) this.lastMessage = '';
+    if (!path) this.lastMessage = ENGLISH.traffic.noWayOn;
+    else if (this.lastMessage === ENGLISH.traffic.noWayOn) this.lastMessage = '';
     let by: number | null = null;
     if (path)
       for (const s of path) {
@@ -2235,7 +2238,7 @@ export class Train {
   /** Why the consist can run on no track at all: narrow and regular stock coupled together. */
   get consistProblem(): string | null {
     const defs = [...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)];
-    return consistGauge(defs) === 'mixed' ? STR.fleet.mixedGaugeTrain : null;
+    return consistGauge(defs) === 'mixed' ? ENGLISH.fleet.mixedGaugeTrain : null;
   }
 
   /** After dispatch(): either start moving or handle "already at target". */
@@ -2327,7 +2330,7 @@ export class Train {
           ctx.occupied(x, y, this.id) || ctx.reservedBy(x, y, this.id) === oncoming;
         const wasReversed = this.reversed;
         if (this.dispatch(ctx.track, ctx.builder, ctx.map, avoid, 'forward')) {
-          this.lastMessage = 'detouring around an oncoming train';
+          this.lastMessage = ENGLISH.trainNote.detouring;
           if (!this.path) {
             this.pathPts = [];
             this.pathCum = [];
@@ -2347,7 +2350,7 @@ export class Train {
         const avoid = (x: number, y: number) => ctx.occupied(x, y, this.id);
         const wasReversed = this.reversed;
         if (this.dispatch(ctx.track, ctx.builder, ctx.map, avoid)) {
-          this.lastMessage = 'rerouted around traffic';
+          this.lastMessage = ENGLISH.trainNote.rerouted;
           if (!this.path) {
             // the head already stands on the target's platform: arrive instead of walking a stale path
             this.pathPts = [];
@@ -2435,7 +2438,7 @@ export class Train {
     if (step > 0 && problem) {
       this.speed = 0;
       this.setState(problem);
-      this.lastMessage = 'Out of fuel or water';
+      this.lastMessage = ENGLISH.trainNote.ranDry;
       return;
     }
     const from = this.pathPos;
@@ -2446,7 +2449,8 @@ export class Train {
       if (problem) {
         this.speed = 0;
         this.setState(problem);
-        this.lastMessage = problem === 'noFuel' ? 'out of fuel or water' : 'no power on this line';
+        this.lastMessage =
+          problem === 'noFuel' ? ENGLISH.trainNote.outOfFuel : ENGLISH.trainNote.noPower;
         return;
       }
       const burn = step * ecoMul;
@@ -2532,11 +2536,11 @@ export class Train {
         if (this.aside) {
           // made way: it waits here for something worth hauling, not to go back where it stood
           this.aside = false;
-          this.idle(STR.traffic.madeWay);
+          this.idle(ENGLISH.traffic.madeWay);
           return;
         }
         this.setState('yielding');
-        if (this.kept) this.lastMessage = STR.traffic.keptBack;
+        if (this.kept) this.lastMessage = ENGLISH.traffic.keptBack;
         this.kept = false;
         return;
       }
@@ -2896,7 +2900,7 @@ export class Train {
     }
     if (this.weight > this.power + 1e-6) {
       this.setState('overweight');
-      this.lastMessage = 'too heavy for the engines';
+      this.lastMessage = ENGLISH.trainNote.tooHeavy;
       return;
     }
     sfx('train.whistle');
@@ -2916,7 +2920,7 @@ export class Train {
       // a roaming train remembers the station it could not reach and picks another one soon
       this.badTargets.set(this.route[this.routeIndex % this.route.length], ctx.now + 240);
       this.atStation = st;
-      this.idle('no track to the chosen stop');
+      this.idle(ENGLISH.trainNote.noTrackToStop);
     } else this.setState('noRoute');
   }
 
@@ -3130,7 +3134,7 @@ export class Train {
     this.yieldCount++;
     this.yieldUntil = ctx.now + 30;
     this.clearHold();
-    this.lastMessage = this.aside ? STR.traffic.makingWay : STR.traffic.pullingAside;
+    this.lastMessage = this.aside ? ENGLISH.traffic.makingWay : ENGLISH.traffic.pullingAside;
     this.setState('moving');
     return true;
   }
@@ -3138,7 +3142,7 @@ export class Train {
    * Note that the escape a working train has just set off along in a jam (`retreat`) gives way to
    * train `other`. True when the last escape it gave way on in a jam was for that train too and it
    * has reached no stop since (`gaveWayTo`, which `arrive` clears): the line keeps the two from
-   * passing, and where the escape ends the train says it is kept back (`STR.traffic.keptBack`).
+   * passing, and where the escape ends the train says it is kept back (`ENGLISH.traffic.keptBack`).
    * Making way while idle counts for nothing here, though it adds to `yieldCount`. Always false for
    * a train with no stop, or making way.
    */
@@ -3179,11 +3183,11 @@ export class Train {
     if (this.aside) {
       // making way: it stops where it is and idles; the fleet moves it on if still in the way
       this.aside = false;
-      if (this.state === 'moving') this.idle(STR.traffic.replan);
+      if (this.state === 'moving') this.idle(ENGLISH.traffic.replan);
       return;
     }
     if (this.state === 'moving' || this.state === 'yielding') {
-      this.lastMessage = STR.traffic.replan;
+      this.lastMessage = ENGLISH.traffic.replan;
       this.setState('yielding');
     }
   }
@@ -3412,6 +3416,7 @@ export class Train {
     return {
       id: this.id,
       name: this.name,
+      colour: this.colour,
       locos: this.locos.map((l) => ({
         uid: l.uid,
         defId: l.def.id,
@@ -3517,6 +3522,7 @@ export class Train {
       j.name,
       j.id,
     );
+    t.colour = savedTrainColour(j.colour);
     t.wagons = j.wagons.map((w) => ({
       uid: w.uid,
       def: wagonDef(w.defId),
@@ -3580,7 +3586,7 @@ export class Train {
     t.loaded = { station: j.station, retreat: j.retreat, way: j.way };
     // the note it showed, but that it is jammed: the fleet says so again while the jam lasts, and
     // keeps what it would say after only while it runs (`Fleet.keepJamNotes`)
-    t.lastMessage = j.note === STR.traffic.jammed ? '' : j.note;
+    t.lastMessage = j.note === ENGLISH.traffic.jammed ? '' : j.note;
     if (t.consistProblem) t.lastMessage = t.consistProblem;
     return t;
   }

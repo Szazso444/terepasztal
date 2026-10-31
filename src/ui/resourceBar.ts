@@ -19,12 +19,11 @@ const STOCKPILED = new Set(RESOURCE_IDS);
  * Second row under the top bar: funds first, then the store it shows (a button that steps to the
  * next one) and what that store holds in its groups (`RESOURCE_GROUPS`), each cell a term whose
  * tooltip links the buildings that make and use it. A resource shows once its age has come or it is
- * in stock (`barGroups`); the famine warning and `right` (the tickets) end it.
+ * in stock (`barGroups`); the famine warning ends it.
  */
 export class ResourceBar {
-  readonly root = el('div', { id: 'resbar', class: 'panel' });
-  readonly right = el('div', { class: 'res-right' });
-  /** the groups and the famine warning: it shrinks and clips so `right` stays on screen */
+  readonly root = el('div', { id: 'resbar', class: 'strip' });
+  /** the groups and the famine warning: it shrinks and clips, so nothing leaves the screen */
   private cellsBox = el('div', { class: 'res-cells' });
   /** the name of the store shown; a click asks for the next one (`onNextStore`) */
   private storeBtn = btn('', () => this.onNextStore?.(), 'small res-store');
@@ -54,7 +53,7 @@ export class ResourceBar {
   private laidSupply: SupplyMode | null = null;
   private inStock = new Set<string>();
 
-  constructor(atlas: AtlasRegistry, tooltip: Tooltip, onClick: () => void) {
+  constructor(atlas: AtlasRegistry, tooltip: Tooltip, onClick: (resource: string) => void) {
     this.storeBtn.title = STR.res.nextStore;
     RESOURCE_GROUPS.forEach((ids, i) => {
       const group = el('div', { class: 'res-group' });
@@ -71,7 +70,7 @@ export class ResourceBar {
           cell,
           tipBuild(atlas, () => resourceTip(this.snapshot(id))),
         );
-        if (STOCKPILED.has(id)) term.addEventListener('click', onClick);
+        if (STOCKPILED.has(id)) term.addEventListener('click', () => onClick(id));
         this.values.set(id, v);
         this.cells.set(id, term);
         group.append(term);
@@ -84,7 +83,7 @@ export class ResourceBar {
       this.groups.push({ root: group, sep });
     });
     this.cellsBox.append(this.famine);
-    this.root.append(this.cellsBox, this.right);
+    this.root.append(this.cellsBox);
     this.famine.style.display = 'none';
     tooltip.bindTerms(this.root);
     // a window resize changes the room

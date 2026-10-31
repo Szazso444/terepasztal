@@ -63,7 +63,7 @@ import {
 } from './ui/tooltipContent';
 import { tileTip, type TileSnapshot } from './ui/tileTooltip';
 import { STR } from './strings';
-import { content } from './data/content';
+import { content, sourceContent } from './data/content';
 import { TrackGraph, liftLegacyTrack } from './world/track';
 import { Builder } from './sim/build';
 import { Economy } from './sim/economy';
@@ -72,10 +72,11 @@ import { Toasts } from './ui/toast';
 import { Inventory } from './gacha/inventory';
 import { Fleet } from './sim/fleet';
 import { TrainRenderer } from './render/trainRenderer';
+import { FollowCamera } from './ui/followCamera';
 import { ScreenManager } from './ui/modal';
 import type { Train } from './sim/trains';
 import { defaultStop as defaultStopFor } from './sim/trains';
-import { ContractBoard } from './sim/contracts';
+import { ContractBoard, contractTitle } from './sim/contracts';
 import { Rng } from './engine/rng';
 import { DayNight, Glows, Smoke, GroundLights, Rain, Fog, nightness } from './render/fx';
 import {
@@ -150,6 +151,7 @@ import type { ReclassDir } from './world/reclass';
 import { PowerLines } from './render/powerLines';
 import { buildingDef as buildingDefOf } from './sim/buildings';
 import { Notices, type Notice } from './sim/notices';
+import { alertOn } from './sim/alerts';
 import type { Tip } from './ui/advisor';
 import { locoFrame, structureFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
@@ -170,10 +172,14 @@ import { handlePlayKeys } from './ui/keymap';
 /** Loop ticks per real second: one tick runs `clock.speed` steps of SIM_STEP game seconds. */
 const SIM_HZ = 1 / SIM_STEP;
 const EDGE_MARGIN = 14;
+/** Over the HUD only the very edge pans, so the top bar's buttons can be reached. */
+const EDGE_MARGIN_HUD = 2;
 const PAN_SPEED = 900; // screen px / s at zoom 1
 const TRANSITION_MS = 300;
 /** Relaid track pieces that start their shimmer in one frame; a long stroke's others follow. */
 const PIECE_HALOS_PER_FRAME = 12;
+/** real seconds a "train arrived" notice lasts, for the player who turned that row on */
+const ARRIVAL_NOTICE_TTL = 15;
 
 /** What the pointer is on, for the tooltip stack: its target, and its content made when asked. */
 interface HoverTip {
@@ -190,7 +196,7 @@ const LIVE_TIPS: ReadonlySet<TipTarget['kind']> = new Set(['station', 'works', '
 export class Game implements UiHost {
   app!: Application;
   /** generated groups come from the cache this build and content bundle drew them into last boot */
-  atlas = new AtlasRegistry(undefined, undefined, browserAtlasCache(content));
+  atlas = new AtlasRegistry(undefined, undefined, browserAtlasCache(sourceContent));
   /** The sound bus, reachable from `window.game` for the debug panel and the art/audio scripts. */
   readonly audio = audio;
   input!: Input;
@@ -253,6 +259,10 @@ export class Game implements UiHost {
   /** train under the cursor in the field view, and the one picked with a click */
   private fieldHover: Train | null = null;
   private fieldSelected: Train | null = null;
+  /** the train the camera stays on */
+  readonly follow = new FollowCamera();
+  /** the seconds each stuck train has stood, as the last look at the notices found them */
+  private stuckNow = new Map<number, number>();
   private spawnMarkTimer = 0;
   private pathHighlight: { x: number; y: number }[][] = [];
   private pathTimer = 0;
@@ -287,6 +297,8 @@ export class Game implements UiHost {
   private aspectTimer = 0;
   private bobTime = 0;
   private panelRefresh = 0;
+  /** the tile an alert panned the overview to; null while it shows the whole map */
+  private overviewFocus: { x: number; y: number } | null = null;
   /** 0 = RTS view, 1 = overview. Animated. */
   viewBlend = 0;
   viewTarget: 0 | 1 = 0;
@@ -362,7 +374,7 @@ export class Game implements UiHost {
           flip: !DRAWN_FACINGS.has(t.facingOf(0, t.poses[0])),
         })),
     markers: () =>
-      this.notices.list
+      this.pinnedNotices()
         .map((n) => {
           const p = this.noticePos(n);
           return p ? { x: p.x, y: p.y, kind: n.kind } : null;
@@ -435,9 +447,6 @@ export class Game implements UiHost {
   get depot() {
     return this.ui.depot;
   }
-  get trainScreen() {
-    return this.ui.trainScreen;
-  }
   get marketScreen() {
     return this.ui.marketScreen;
   }
@@ -465,23 +474,23 @@ export class Game implements UiHost {
   get contractsScreen() {
     return this.ui.contractsScreen;
   }
-  get contractsSide() {
-    return this.ui.contractsSide;
-  }
   get buildingPanel() {
     return this.ui.buildingPanel;
   }
   get decorPanel() {
     return this.ui.decorPanel;
   }
-  get trainSide() {
-    return this.ui.trainSide;
+  get outliner() {
+    return this.ui.outliner;
+  }
+  get trainPanel() {
+    return this.ui.trainPanel;
   }
   get buildInfo() {
     return this.ui.buildInfo;
   }
-  get noticePanel() {
-    return this.ui.noticePanel;
+  get alerts() {
+    return this.ui.alerts;
   }
   get advisor() {
     return this.ui.advisor;
@@ -517,6 +526,7 @@ export class Game implements UiHost {
 
   /** Starting economy for a brand-new game, from the rules (or a level's start block). */
   startFresh(start?: LevelData['start']) {
+    this.commands.history.clear();
     // a new game begins at noon in the player's current season
     setSeasonOffset(seasonFromDate());
     this.clock.time = daySeconds() * 0.5;
@@ -759,8 +769,8 @@ export class Game implements UiHost {
     try {
       const l = JSON.parse(json) as LevelRecord;
       if (!isLevel(l)) return false;
-      saveLevel(l);
-      return true;
+      // false when storage would not keep it, as when the text is no level
+      return saveLevel(l);
     } catch {
       return false;
     }
@@ -773,6 +783,20 @@ export class Game implements UiHost {
   }
   reloadToMenu() {
     setIntentAndReload({ action: 'menu' });
+  }
+  /**
+   * The page again in the language just stored: a game just stored comes back as Continue brings
+   * it, the level editor on its level, the title as the title.
+   */
+  reloadInLanguage(playing: boolean) {
+    const level = this.editor?.level.id;
+    if (level) setIntentAndReload({ action: 'edit', levelId: level });
+    else if (playing) this.reloadIntoStoredSave();
+    else {
+      // the world under the title is no game: the way out does not store it as one
+      this.keepStoredSave = true;
+      this.reloadToMenu();
+    }
   }
   /**
    * The debug panel's Regenerate: a new game on its seed text (a number, other text hashed, empty
@@ -808,15 +832,21 @@ export class Game implements UiHost {
         if (editor.save()) this.toasts.push(STR.editor.saved(editor.level.name), 'good');
         else this.toasts.push(STR.editor.saveFailed, 'warn');
       },
-      saveAs: () => {
-        const name = prompt(STR.editor.newName, editor.level.name);
-        if (name && name.trim() && editor.saveAs(name.trim().slice(0, 40))) {
+      saveAs: async () => {
+        // the in-game dialog: a browser prompt() stalls the loop and then lurches to catch up
+        const name = await this.namePrompt.ask(
+          STR.editor.saveAs,
+          STR.editor.newName,
+          editor.level.name,
+          40,
+        );
+        if (name && editor.saveAs(name.trim().slice(0, 40))) {
           this.toasts.push(STR.editor.saved(editor.level.name), 'good');
           this.editorPanel?.render();
         }
       },
-      playTest: () => {
-        if (!confirmReplaceSave()) return;
+      playTest: async () => {
+        if (!(await confirmReplaceSave(this.namePrompt))) return;
         if (!editor.save()) {
           this.toasts.push(STR.editor.saveFailed, 'warn');
           return;
@@ -825,8 +855,14 @@ export class Game implements UiHost {
         setTestingLevel(editor.level.id);
         setIntentAndReload({ action: 'play', levelId: editor.level.id, testing: true });
       },
-      exit: () => {
-        if (!editor.dirty || confirm(STR.editor.unsaved)) setIntentAndReload({ action: 'menu' });
+      exit: async () => {
+        const leave =
+          !editor.dirty ||
+          (await this.namePrompt.confirm(STR.editor.unsavedTitle, STR.editor.unsaved, {
+            yes: STR.prompt.leave,
+            danger: true,
+          }));
+        if (leave) setIntentAndReload({ action: 'menu' });
       },
       exportJson: () => JSON.stringify(editor.collect()),
       importJson: (json) => {
@@ -841,8 +877,15 @@ export class Game implements UiHost {
         }
       },
       fill: (t) => editor.fillAll(t),
-      regenerate: () => {
-        const v = prompt(STR.settings.seedPlaceholder, String(this.map.seed));
+      regenerate: async () => {
+        // an empty seed is a random one, so it is an answer here
+        const v = await this.namePrompt.ask(
+          STR.editor.regenerate,
+          STR.settings.seedPlaceholder,
+          String(this.map.seed),
+          200,
+          true,
+        );
         if (v === null) return;
         const seed = this.parseSeed(v);
         const fresh = generateMapForEditor(
@@ -961,12 +1004,16 @@ export class Game implements UiHost {
     this.fleet.gridDraw = (x, y, u) => this.catenary.addDraw(x, y, u);
     this.fleet.gridBegin = () => this.catenary.beginTick();
     this.fleet.signals.level = this.settings.signalling ?? 'auto';
-    this.fleet.onArrive = (_t, s) => this.houses.arrival(s, this.clock.time);
+    this.fleet.onArrive = (t, s) => {
+      this.houses.arrival(s, this.clock.time);
+      this.noteArrival(t, s);
+    };
     this.fleet.junctions.onAlert = (a) =>
       this.notices.push(
         {
           key: `j${a.id}`,
           kind: a.kind,
+          type: 'jam',
           text: STR.notice.junction(
             STR.notice.junctionLevel[a.level] ?? a.level,
             a.x,
@@ -1002,36 +1049,44 @@ export class Game implements UiHost {
         if (policy === 'accept') this.contracts.accept(e.contract, this.clock.time);
         else if (policy === 'deny') this.contracts.decline(e.contract);
       }
+      const dest = this.builder.stationById(e.contract.destId);
       if (e.kind === 'completed') {
-        this.toasts.push(
-          STR.contracts.completed(e.contract.name, fmtMoney(e.contract.payout)),
-          'good',
-        );
+        this.notices.push({
+          key: `contract:${e.contract.id}:done`,
+          kind: 'info',
+          type: 'done',
+          text: STR.notice.contractDone(contractTitle(e.contract.name)),
+          toast: STR.contracts.completed(
+            contractTitle(e.contract.name),
+            fmtMoney(e.contract.payout),
+          ),
+          target: dest ? { kind: 'tile', x: dest.x, y: dest.y } : null,
+        });
         sfx('contract.done');
       } else if (e.kind === 'cancelled') {
         this.toasts.push(
           STR.contracts.cancelledMsg(
-            e.contract.name,
+            contractTitle(e.contract.name),
             fmtMoney(this.contracts.cancelFine(e.contract)),
           ),
           'warn',
         );
       } else if (e.kind === 'failed') {
-        this.toasts.push(
-          STR.contracts.failedMsg(e.contract.name, fmtMoney(this.contracts.failFine(e.contract))),
-          'warn',
-        );
-        const dest = this.builder.stationById(e.contract.destId);
         this.notices.push(
           {
             key: `contract:${e.contract.id}`,
             kind: 'bad',
-            text: STR.notice.contractFailed(e.contract.name),
+            type: 'ctfail',
+            text: STR.notice.contractFailed(contractTitle(e.contract.name)),
+            toast: STR.contracts.failedMsg(
+              contractTitle(e.contract.name),
+              fmtMoney(this.contracts.failFine(e.contract)),
+            ),
             target: dest ? { kind: 'tile', x: dest.x, y: dest.y } : null,
           },
           60,
         );
-        this.lastFailedContract = e.contract.name;
+        this.lastFailedContract = contractTitle(e.contract.name);
         sfx('contract.fail');
       } else if (e.kind === 'accepted') sfx('contract.accept');
     };
@@ -1046,6 +1101,10 @@ export class Game implements UiHost {
         this.builder.decorAt(x, y)
       );
     this.world.roadAt = (x, y) => this.builder.roads.has(x, y);
+    // an undo gave the tile its props back; what stands on it keeps them out of sight
+    this.builder.onPropsBack = (x, y) => {
+      if (!this.world.occupied(x, y)) this.world.rebuildProps(x, y);
+    };
     this.builder.onRoadChanged = (x, y) => {
       this.world.roadChanged(x, y);
       // a road on a platform changes its span, and its neighbours' (#496); refreshed once a frame
@@ -1111,7 +1170,13 @@ export class Game implements UiHost {
       trade: this.trade,
       gacha: this.gacha,
       inventory: this.inventory,
+      towns: this.towns,
+      houses: this.houses,
+      contracts: this.contracts,
+      contractJobs: this.contractJobs,
+      clock: this.clock,
     });
+    this.build.act = (fn, stroke) => this.commands.act(fn, stroke);
     // every panel, screen and menu, wired to this game; it also sets the build controller's
     // selection and status callbacks
     this.ui = createPlayUi(this, {
@@ -1159,7 +1224,8 @@ export class Game implements UiHost {
     );
     this.loop.start();
     window.addEventListener('beforeunload', () => {
-      if (this.settings.autosave && this.mode === 'play') this.save(true);
+      // the world under the title at boot is no game: a reload does not store it as one
+      if (this.settings.autosave && this.mode === 'play' && this.ui.gameInPlay) this.save(true);
     });
     await onProgress?.('renderer', 1);
   }
@@ -1252,7 +1318,10 @@ export class Game implements UiHost {
   private say(said: Said) {
     for (const t of said.toasts) this.toasts.push(t.text, t.kind);
     for (const n of said.notices)
-      this.notices.push({ key: n.key, kind: 'warn', text: n.text, target: null }, n.ttl);
+      this.notices.push(
+        { key: n.key, kind: 'warn', type: 'note', text: n.text, target: null },
+        n.ttl,
+      );
   }
 
   /**
@@ -1267,6 +1336,7 @@ export class Game implements UiHost {
   }
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
+    this.commands.history.clear();
     // content the game no longer defines goes first, before anything looks it up
     const pruned = pruneUnknownContent(j);
     // nothing the game held before the load stays in its stores
@@ -1418,6 +1488,7 @@ export class Game implements UiHost {
     if (removed) {
       this.world.removeStructure(id);
       this.signalAspect.delete(d.y * this.map.w + d.x);
+      this.semaphoreArms.delete(d.y * this.map.w + d.x);
       if (
         d.id !== 'signal' &&
         terrainAt(this.map, d.x, d.y) === Terrain.Hill &&
@@ -1771,8 +1842,11 @@ export class Game implements UiHost {
       ? STR.settings.newerSave(from, SAVE_VERSION)
       : STR.settings.olderSave(from, SAVE_VERSION, j.migrationNotes ?? []);
     this.deprecatedSave = text;
-    this.toasts.push(newer ? STR.settings.newerToast(from) : STR.settings.olderToast(from), 'warn');
-    this.notices.push({ key: 'save:deprecated', kind: 'warn', text, target: null }, 180);
+    const toast = newer ? STR.settings.newerToast(from) : STR.settings.olderToast(from);
+    this.notices.push(
+      { key: 'save:deprecated', kind: 'warn', type: 'note', text, toast, target: null },
+      180,
+    );
   }
   /** A save named content the game no longer has: say what went and what was refunded. */
   private warnPruned(report: PruneReport) {
@@ -1780,8 +1854,7 @@ export class Game implements UiHost {
     // `saves.refund` takes the money already formatted, and empty when none was refunded
     const money = report.money ? fmtMoney(report.money) : '';
     const text = STR.saves.pruned(list, STR.saves.refund(money, report.tickets));
-    this.toasts.push(text, 'warn');
-    this.notices.push({ key: 'save:pruned', kind: 'warn', text, target: null }, 180);
+    this.notices.push({ key: 'save:pruned', kind: 'warn', type: 'note', text, target: null }, 180);
   }
   /** warning text for the settings screen while a converted save is in play */
   deprecatedSave: string | null = null;
@@ -1789,7 +1862,15 @@ export class Game implements UiHost {
   async renameTown(t: Town, fresh = false) {
     const n = await this.namePrompt.ask(STR.town.namePrompt, STR.town.nameHint, t.name);
     if (n && n !== t.name) {
-      this.towns.rename(t, n);
+      // a town just founded is named as part of placing it: that step takes the name back
+      if (fresh) this.towns.rename(t, n);
+      else {
+        const did = this.commands.renameTown(t, n);
+        if (!did.ok) {
+          this.toasts.push(did.message, 'warn');
+          return;
+        }
+      }
       this.townPanel.render(true);
       if (!fresh) this.toasts.push(STR.town.renamed(n), 'info');
     }
@@ -1808,8 +1889,7 @@ export class Game implements UiHost {
   private onAgeUp(tier: number) {
     this.toolbar.refresh();
     const text = STR.hud.ageUp(tier);
-    this.toasts.push(text, 'good');
-    this.notices?.push({ key: `age:${tier}`, kind: 'info', text, target: null }, 120);
+    this.notices?.push({ key: `age:${tier}`, kind: 'info', type: 'goal', text, target: null }, 120);
     sfx('tier.up');
     audio.setAge(ageDef(tier).id);
   }
@@ -1827,7 +1907,9 @@ export class Game implements UiHost {
       this.notices.push({
         key: `upgrade:${e.x},${e.y}`,
         kind: 'info',
+        type: 'note',
         text,
+        toast: null,
         target: { kind: 'tile', x: e.x, y: e.y },
       });
   }
@@ -1867,7 +1949,9 @@ export class Game implements UiHost {
     if (!confirmed) {
       // an in-game dialog: a browser confirm() stalls the loop and then lurches to catch up
       void this.namePrompt
-        .confirm(STR.overview.buyTitle, STR.overview.buyConfirm(fmtMoney(price)))
+        .confirm(STR.overview.buyTitle, STR.overview.buyConfirm(fmtMoney(price)), {
+          yes: STR.prompt.buy,
+        })
         .then((ok) => {
           if (ok) this.buyChunk(i, true);
         });
@@ -1973,18 +2057,37 @@ export class Game implements UiHost {
     const p = t?.poses[0];
     return p ? { x: p.x, y: p.y } : null;
   }
+  /** Look at a notice's object: the overview pans to it and stays, the field view goes there. */
   focusNotice(n: Notice) {
     const p = this.noticePos(n);
     if (!p) return;
-    if (n.target?.kind === 'train') {
-      const t = this.fleet.byId(n.target.id);
-      if (t) {
-        this.trainScreen.open(t);
-        this.screens.open(this.trainScreen);
-      }
-    } else if (n.target?.kind === 'junction')
+    this.follow.note('alert');
+    if (n.target?.kind === 'junction')
       this.flashJunction(this.fleet.junctions.contributingTiles(n.target.id) ?? n.target.tiles);
-    this.returnToRts(p.x, p.y);
+    if (this.viewTarget === 1) {
+      this.overviewFocus = p;
+      // leaving the overview lands on it too
+      const w = tileToWorld(p.x, p.y);
+      this.centerCamera(w.x, w.y);
+    } else this.returnToRts(p.x, p.y);
+  }
+  /** What the Map pin cells let through. */
+  private pinnedNotices() {
+    return this.notices.list.filter((n) => alertOn(this.settings.alerts, n.type, 'pin'));
+  }
+  /** A train reached a station: routine, so a notice only if the player turned its row on. */
+  private noteArrival(t: Train, s: Station) {
+    if (!Object.values(this.settings.alerts.channels.arrived).some(Boolean)) return;
+    this.notices.push(
+      {
+        key: `arrived:${t.id}:${this.clock.time}`,
+        kind: 'info',
+        type: 'arrived',
+        text: STR.notice.arrived(t.name, s.name),
+        target: { kind: 'train', id: t.id },
+      },
+      ARRIVAL_NOTICE_TTL,
+    );
   }
   /** Tint the tiles of a contended junction for a few seconds. */
   private junctionFlash: { tiles: { x: number; y: number }[]; until: number } | null = null;
@@ -2009,7 +2112,7 @@ export class Game implements UiHost {
   /** Keep one world marker per notice with a target. */
   private syncNoticeMarkers() {
     const live = new Set<string>();
-    for (const n of this.notices.list) {
+    for (const n of this.pinnedNotices()) {
       const p = this.noticePos(n);
       if (!p) continue;
       const id = `notice:${n.key}`;
@@ -2121,22 +2224,10 @@ export class Game implements UiHost {
     return tips.slice(0, 8);
   }
 
-  /** Trains whose head is inside the camera view (field) or all of them (overview). */
-  private updateTrainSide(dt: number) {
-    const all = this.viewTarget === 1;
-    let list: Train[];
-    if (all) list = this.fleet.trains;
-    else {
-      const r = this.camera.viewRect();
-      list = this.fleet.trains.filter((t) => {
-        const p = t.poses[0];
-        if (!p) return false;
-        const w = tileToWorld(p.x, p.y);
-        return w.x >= r.x - 40 && w.x <= r.x + r.w + 40 && w.y >= r.y - 40 && w.y <= r.y + r.h + 40;
-      });
-    }
-    this.trainSide.update(list, all);
-    if (all) this.townPanel.render();
+  /** The outliner, the overview's town list, the depot's gate mark and the traced train path. */
+  private updateTrainMarks(dt: number) {
+    this.outliner.update(dt);
+    if (this.viewTarget === 1) this.townPanel.render();
     if (this.spawnMarkTimer > 0) {
       this.spawnMarkTimer -= dt;
       const sp = this.world.getStructure('spawn-preview');
@@ -2177,12 +2268,14 @@ export class Game implements UiHost {
       }
     return best;
   }
-  /** Pick a train in the field view: its path lights up and the card above the survey map follows it. */
+  /** Pick a train in the field view: its path lights up, its panel opens, the camera follows it. */
   selectFieldTrain(t: Train | null) {
+    if (t) this.follow.start(t.id);
+    else this.follow.stop();
     if (this.fieldSelected === t) return;
     this.fieldSelected = t;
     this.trainRenderer.selectedId = t ? t.id : null;
-    this.buildInfo.showTrain(t);
+    this.trainPanel.show(t);
     if (t) {
       this.build.select(null);
       this.build.selectBuilding(null);
@@ -2190,7 +2283,7 @@ export class Game implements UiHost {
     }
     this.setHoverTrain(t);
   }
-  private updateFieldTrains(active: boolean) {
+  private updateFieldTrains(active: boolean, dt: number) {
     if (this.fieldSelected && !this.fleet.byId(this.fieldSelected.id)) this.selectFieldTrain(null);
     const canPick = active && this.build.tool.kind === 'none';
     const hover = canPick ? this.trainUnderMouse() : null;
@@ -2209,7 +2302,38 @@ export class Game implements UiHost {
         } else if (this.fieldSelected) this.selectFieldTrain(null);
       }
     }
-    if (this.fieldSelected) this.buildInfo.refreshTrain();
+    if (this.fieldSelected) this.trainPanel.update(dt);
+  }
+  get selectedTrain() {
+    return this.fieldSelected;
+  }
+  /** Pick a train from the outliner: from the overview, the camera lands on it first. */
+  pickTrain(t: Train) {
+    if (this.viewTarget === 1) this.focusTrain(t);
+    this.selectFieldTrain(t);
+  }
+  /** What the camera shows, in world pixels; null in the overview, which shows everything. */
+  viewRect() {
+    return this.viewTarget === 1 ? null : this.camera.viewRect();
+  }
+  /** Where a tile point is drawn, its ground's height included, in world pixels. */
+  tilePoint(x: number, y: number) {
+    const w = tileToWorld(x, y);
+    return { x: w.x, y: w.y + this.world.elevationOf(Math.floor(x + 0.5), Math.floor(y + 0.5)) };
+  }
+  stuckFor(id: number) {
+    return this.stuckNow.get(id) ?? null;
+  }
+  /** Keep the camera on the train followed; a train gone ends the following. */
+  private followTrain(dt: number) {
+    const find = (id: number) => {
+      const t = this.fleet.byId(id);
+      if (!t) return undefined;
+      const p = t.poses[0];
+      return p ? this.tilePoint(p.x, p.y) : null;
+    };
+    const to = this.follow.step(this.camera, find, dt);
+    if (to) this.camera.centerOn(to.x, to.y);
   }
   private applyPathHighlight(legs: { x: number; y: number }[][]) {
     for (const leg of this.pathHighlight)
@@ -2225,11 +2349,14 @@ export class Game implements UiHost {
   focusTrain(t: Train) {
     const p = t.poses[0];
     if (!p) return;
+    const following = this.follow.trainId === t.id;
     this.screens.close();
     this.returnToRts(p.x, p.y);
+    if (following) this.follow.start(t.id);
   }
   /** Look at a depot behind the dimmed screen and mark the gate a train would leave by. */
   peekDepot(depot: Station, gate: { x: number; y: number } | null) {
+    this.follow.note('jump');
     const p = tileToWorld(depot.cx + 0.5, depot.cy + 0.5);
     this.camera.zoomIndex = 2;
     this.camera.zoom = ZOOM_STEPS[2];
@@ -2249,6 +2376,7 @@ export class Game implements UiHost {
   centerCamera(wx: number, wy: number) {
     // a pan from the minimap closes the tooltips as the field's own pans do
     this.tooltip.stack.closeAll();
+    this.follow.note('pan');
     this.camera.centerOn(wx, wy);
   }
 
@@ -2281,6 +2409,7 @@ export class Game implements UiHost {
     this.camera.viewH = this.app.screen.height;
     this.handleInput(dt);
     this.closeTipsOnChange();
+    this.followTrain(dt);
     this.camera.update(dt);
     this.updateViewBlend(dt);
     if (this.railsDirty) this.refreshRails();
@@ -2334,7 +2463,7 @@ export class Game implements UiHost {
       !this.input.overUi &&
       !this.screens.current &&
       !this.menuOpen;
-    this.updateFieldTrains(fieldActive);
+    this.updateFieldTrains(fieldActive, dt);
     this.build.update(fieldActive);
     this.world.harvest.follow(
       fieldActive ? this.hoverTile : null,
@@ -2363,20 +2492,22 @@ export class Game implements UiHost {
       if (this.stationPanel.station) this.stationPanel.render();
       if (this.buildingPanel.building) this.buildingPanel.render();
       if (this.decorPanel.decor) this.decorPanel.render();
-      this.contractsSide.update();
       this.screens.refresh();
       this.buildInfo.refresh();
     }
     this.noticeTimer += dt;
     if (this.noticeTimer > 0.5) {
       this.noticeTimer = 0;
+      const stuck = this.traffic.stuckTrains(this.clock.time);
+      this.stuckNow = new Map(stuck.map((s) => [s.id, s.since]));
       this.notices.refresh({
         trains: this.fleet.trains,
         builder: this.builder,
         power: this.power,
-        stuck: this.traffic.stuckTrains(this.clock.time),
+        stuck,
+        contracts: { board: this.contracts, now: this.clock.time },
       });
-      this.noticePanel.render(this.notices.list);
+      this.alerts.update(this.notices.list);
       this.advisor.update(this.computeTips(), this.notices.list);
       this.syncNoticeMarkers();
       this.syncContractMarker();
@@ -2389,7 +2520,7 @@ export class Game implements UiHost {
     this.halos.update(dt);
     this.workBars.sync([...this.builder.works(), ...this.houses.works()]);
     this.powerLines.update(dt);
-    this.updateTrainSide(dt);
+    this.updateTrainMarks(dt);
     this.minimap.draw(this.minimapMarks());
     if (this.debug.open) this.updateDebug();
   }
@@ -2596,7 +2727,10 @@ export class Game implements UiHost {
         else {
           // a zoom moves the map under the tooltips: they close
           this.tooltip.stack.closeAll();
-          this.camera.zoomBy(dir, inp.mouseX, inp.mouseY);
+          // a train followed stays in the middle: the zoom is about it, not about the pointer
+          if (this.follow.trainId !== null) this.camera.zoomBy(dir);
+          else this.camera.zoomBy(dir, inp.mouseX, inp.mouseY);
+          this.follow.note('zoom');
         }
       } else if (dir > 0) {
         const t = this.overviewTileAt(inp.mouseX, inp.mouseY);
@@ -2618,22 +2752,27 @@ export class Game implements UiHost {
         inp.mouseInside &&
         document.hasFocus() &&
         !inp.buttons.size &&
-        !this.screens.current
+        !this.screens.current &&
+        // a pointer on the HUD at the edge of the screen does not take the camera off a train
+        !(inp.overUi && this.follow.trainId !== null)
       ) {
-        if (inp.mouseX < EDGE_MARGIN) dx -= 1;
-        if (inp.mouseX > this.camera.viewW - EDGE_MARGIN) dx += 1;
-        if (inp.mouseY < EDGE_MARGIN) dy -= 1;
-        if (inp.mouseY > this.camera.viewH - EDGE_MARGIN) dy += 1;
+        const edge = inp.overUi ? EDGE_MARGIN_HUD : EDGE_MARGIN;
+        if (inp.mouseX < edge) dx -= 1;
+        if (inp.mouseX > this.camera.viewW - edge) dx += 1;
+        if (inp.mouseY < edge) dy -= 1;
+        if (inp.mouseY > this.camera.viewH - edge) dy += 1;
       }
       // a pan moves the map under the tooltips: they close
       if (dx || dy) {
         const l = Math.hypot(dx, dy);
         this.tooltip.stack.closeAll();
+        this.follow.note('pan');
         this.camera.pan((dx / l) * PAN_SPEED * dt, (dy / l) * PAN_SPEED * dt);
       }
       // middle-drag
       if (inp.buttons.has(1) && (inp.dragDX || inp.dragDY)) {
         this.tooltip.stack.closeAll();
+        this.follow.note('pan');
         this.camera.pan(-inp.dragDX, -inp.dragDY);
       }
     } else if (this.viewBlend > 0.99) {
@@ -2757,12 +2896,18 @@ export class Game implements UiHost {
   setView(v: 0 | 1) {
     if (this.viewTarget === v) return;
     this.viewTarget = v;
+    // kept on the way out, so the view blends from where the overview stood
+    if (v === 1) this.overviewFocus = null;
     // the map and the overview do not share their tooltips
     this.tooltip.stack.closeAll();
     this.overviewBanner.classList.toggle('show', v === 1);
     this.toolbar.root.style.display = v === 1 ? 'none' : '';
     this.townPanel.show(v === 1);
-    if (v === 1) this.build.setTool({ kind: 'none' });
+    this.trainPanel.setOverview(v === 1);
+    if (v === 1) {
+      this.follow.note('overview');
+      this.build.setTool({ kind: 'none' });
+    }
     if (v === 0) {
       this.overview.hover = null;
       this.ovSelected = null;
@@ -2772,6 +2917,7 @@ export class Game implements UiHost {
     }
   }
   returnToRts(tx: number, ty: number) {
+    this.follow.note('jump');
     const p = tileToWorld(tx, ty);
     this.camera.zoomIndex = 1;
     this.camera.zoom = ZOOM_STEPS[1];
@@ -2805,8 +2951,11 @@ export class Game implements UiHost {
     const fit = Math.min((vw - 300) / ob.w, (vh - 90) / ob.h);
     const camTile = worldToTileInt(this.camera.x, this.camera.y);
     const s = fit * (1.6 - 0.6 * e);
-    const centerX = lerp((camTile.x + 0.5) * OV_UNIT, ob.x + ob.w / 2, e);
-    const centerY = lerp((camTile.y + 0.5) * OV_UNIT, ob.y + ob.h / 2, e);
+    const focus = this.overviewFocus;
+    const endX = focus ? (focus.x + 0.5) * OV_UNIT : ob.x + ob.w / 2;
+    const endY = focus ? (focus.y + 0.5) * OV_UNIT : ob.y + ob.h / 2;
+    const centerX = lerp((camTile.x + 0.5) * OV_UNIT, endX, e);
+    const centerY = lerp((camTile.y + 0.5) * OV_UNIT, endY, e);
     o.scale.set(s);
     o.position.set(vw / 2 - centerX * s, vh / 2 + 18 - centerY * s);
     if (o.visible) this.overview.refresh();

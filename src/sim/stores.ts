@@ -6,7 +6,7 @@ import { supplyMode, type SupplyMode } from './supply';
 import { needsStore, type Building } from './buildings';
 import type { Station } from './stations';
 import type { TownRegistry } from './towns';
-import { CARGO } from './cargo';
+import { CARGO, cargoWord } from './cargo';
 import { STR } from '../strings';
 
 /** Resource ids that can be kept: every cargo plus stored power. */
@@ -19,7 +19,7 @@ export const RESOURCE_IDS: string[] = [
 export function fmtCost(cost: Cost, mul = 1): string {
   const parts = Object.entries(cost)
     .filter(([, v]) => v > 0)
-    .map(([k, v]) => `${Math.ceil(v * mul)} ${k}`);
+    .map(([k, v]) => `${Math.ceil(v * mul)} ${cargoWord(k)}`);
   return parts.length ? parts.join(', ') : STR.build.free;
 }
 export function scaleCost(cost: Cost, mul: number): Cost {
@@ -69,6 +69,16 @@ export interface ResourceStore {
   spend(cost: Cost, mul?: number): boolean;
   /** Give back floor(v * mul) of each good, capped; what does not fit is lost. */
   refund(cost: Cost, mul?: number): void;
+}
+
+/** What every store holds, store by store: `StoreRegistry.holdings`. */
+export type Holdings = Map<string, Map<string, number>>;
+
+/** Goods that moved into (`n` above zero) or out of one store, by its key. */
+export interface GoodsMove {
+  key: string;
+  id: string;
+  n: number;
 }
 
 /** Units received and spent over the last seven days. */
@@ -351,6 +361,9 @@ export function previewOf(r: ResourceStore): Store {
   for (const [id, n] of r.held()) copy.amounts.set(id, n);
   return copy;
 }
+
+/** So little of a good that a store counts as holding what is asked (`shortOf`). */
+const GOODS_DUST = 1e-6;
 
 /** Game seconds the eaters at a store may go short before its famine is declared. */
 const FAMINE_AFTER = 10;
@@ -823,6 +836,56 @@ export class StoreRegistry {
     for (const s of this.stores.values()) s.clearFlows();
     this.clock.time = 0;
     this.clock.tracking = true;
+  }
+
+  /** What every store holds now; two of these show what an action moved (`BuildLog`). */
+  holdings(): Holdings {
+    return new Map([...this.stores].map(([key, s]) => [key, new Map(s.amounts)]));
+  }
+  /**
+   * The place that cannot give what `takes` ask of it, with what it is short of, or null when every
+   * one can. A rail network is one place (`networkPool`): goods may have moved inside it since, so
+   * what is asked of its stores is added up and held against all it has.
+   */
+  shortOf(takes: readonly GoodsMove[]): { store: ResourceStore; missing: Cost } | null {
+    const asked = new Map<ResourceStore, Cost>();
+    for (const t of takes) {
+      const s = this.stores.get(t.key);
+      if (!s) continue;
+      const place = this.networkPool(this.poolOf(s));
+      const cost = asked.get(place) ?? {};
+      cost[t.id] = (cost[t.id] ?? 0) + t.n;
+      asked.set(place, cost);
+    }
+    for (const [store, cost] of asked) {
+      const missing: Cost = {};
+      for (const [id, n] of Object.entries(cost))
+        if (store.get(id) + GOODS_DUST < n) missing[id] = Math.ceil(n - store.get(id));
+      if (Object.keys(missing).length) return { store, missing };
+    }
+    return null;
+  }
+  /**
+   * Take goods back off a store for an undo or a redo: off the store, then the rest of its network
+   * (`poolOf`). As with goods handed to an heir, no flow counts them.
+   */
+  withdraw(key: string, id: string, n: number) {
+    const s = this.stores.get(key);
+    if (!s) return;
+    let left = n;
+    for (const m of membersOf(this.poolOf(s))) {
+      const got = Math.min(left, m.get(id));
+      m.amounts.set(id, m.get(id) - got);
+      left -= got;
+    }
+  }
+  /**
+   * Put goods back into the store they came from for an undo or a redo, past its cap too, as they
+   * were paid; no flow counts them. A store gone by then is followed by its heir (`heirAt`).
+   */
+  deposit(key: string, id: string, n: number) {
+    const s = this.stores.get(key) ?? this.heirAt(this.placeOf(key));
+    s?.amounts.set(id, s.get(id) + n);
   }
 
   /** Goods in every store together. */

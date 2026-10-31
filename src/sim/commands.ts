@@ -5,13 +5,21 @@ import { inSupplyMode } from './supply';
 import { locoDef, type Item } from '../gacha/items';
 import { PULL_COST, type Banner, type Gacha, type PullResult } from '../gacha/gacha';
 import type { Inventory } from '../gacha/inventory';
+import { BuildLog, type BuildWorld } from './buildLog';
+import { History } from './history';
 import type { Fleet } from './fleet';
 import type { Builder, Decor } from './build';
 import type { Economy } from './economy';
 import type { ResourceStore } from './stores';
 import type { TradeDesk } from './trade';
+import type { Town, TownRegistry } from './towns';
+import type { HouseRegistry } from './houses';
+import type { ContractBoard } from './contracts';
+import type { ContractDispatcher } from './contractDispatch';
+import type { GameClock } from './time';
 import type { Station } from './stations';
 import type { Train, RouteMode, StopPlan } from './trains';
+import { isTrainColour } from './trainColours';
 
 /** What a command did: applied, or refused with the reason to show the player. */
 export type CommandResult = { ok: true } | { ok: false; message: string };
@@ -27,10 +35,17 @@ export interface CommandDeps {
   trade: TradeDesk;
   gacha: Gacha;
   inventory: Inventory;
+  towns: TownRegistry;
+  houses: HouseRegistry;
+  contracts: ContractBoard;
+  contractJobs: ContractDispatcher;
+  clock: GameClock;
 }
 
 /** Longest station name, in characters. */
 export const STATION_NAME_MAX = 24;
+/** Longest train name, in characters. */
+export const TRAIN_NAME_MAX = 32;
 
 const done = (): CommandResult => ({ ok: true });
 const refuse = (message: string) => ({ ok: false as const, message });
@@ -47,6 +62,10 @@ export class Commands {
   private readonly trade: TradeDesk;
   private readonly gacha: Gacha;
   private readonly inventory: Inventory;
+  /** what an undo reads and changes */
+  private readonly buildWorld: BuildWorld;
+  /** what the player can take back; belongs to this session and is never saved */
+  readonly history = new History();
 
   constructor(deps: CommandDeps) {
     this.fleet = deps.fleet;
@@ -55,6 +74,28 @@ export class Commands {
     this.trade = deps.trade;
     this.gacha = deps.gacha;
     this.inventory = deps.inventory;
+    this.buildWorld = deps;
+  }
+
+  // ------------------------------------------------------------ undo
+  /**
+   * One player action: all `fn` does through the builder is recorded (`BuildLog`) and, when it did
+   * anything, becomes one step of the history, named after what was done. An action already open
+   * takes it in. The level editor records nothing. An action that runs over many frames (an Upgrade
+   * drag) calls this frame by frame with one `stroke` number, and its parts make one step.
+   */
+  act<T>(fn: () => T, stroke?: number): T {
+    const b = this.builder;
+    if (b.free || b.log) return fn();
+    const log = new BuildLog(this.buildWorld);
+    b.log = log;
+    try {
+      return fn();
+    } finally {
+      b.log = null;
+      const step = log.close(stroke);
+      if (step) this.history.push(step);
+    }
   }
 
   // ------------------------------------------------------------ trains
@@ -77,6 +118,47 @@ export class Commands {
     t.fuelPreference = pref;
     return done();
   }
+  /** Rename a train: trimmed and cut to `TRAIN_NAME_MAX` characters; never empty. */
+  renameTrain(t: Train, name: string): CommandResult {
+    if (!this.fleet.byId(t.id)) return refuse(STR.train.gone);
+    const n = name.trim().slice(0, TRAIN_NAME_MAX);
+    if (!n) return refuse(STR.train.nameEmpty);
+    return this.editTrain(t, STR.history.renamed(t.name, n), t.name, n, (v) => (t.name = v));
+  }
+  /** Give a train a colour code (`TRAIN_COLOURS`). */
+  recolourTrain(t: Train, colour: number): CommandResult {
+    if (!this.fleet.byId(t.id)) return refuse(STR.train.gone);
+    if (!isTrainColour(colour)) return refuse(STR.train.noColour);
+    const label = STR.history.recoloured(t.name, STR.train.colour[colour]);
+    return this.editTrain(t, label, t.colour, colour, (v) => (t.colour = v));
+  }
+  /**
+   * Set something the player named or marked on a train: a step of its own in the history, named
+   * `label`, unless it changes nothing. The level editor records nothing, as `act` has it. A train
+   * recalled since is gone for good, and its steps with it (`HistoryStep.gone`).
+   */
+  private editTrain<T>(
+    t: Train,
+    label: string,
+    was: T,
+    now: T,
+    set: (v: T) => void,
+  ): CommandResult {
+    if (was === now) return done();
+    set(now);
+    if (this.builder.free) return done();
+    const apply = (v: T): CommandResult => {
+      set(v);
+      return done();
+    };
+    this.history.push({
+      label,
+      undo: () => apply(was),
+      redo: () => apply(now),
+      gone: () => !this.fleet.byId(t.id),
+    });
+    return done();
+  }
 
   // ------------------------------------------------------------ stations and signals
   /** Rename a station: trimmed and cut to `STATION_NAME_MAX` characters; never empty. */
@@ -84,7 +166,39 @@ export class Commands {
     if (!this.builder.stations.includes(s)) return refuse(STR.fleet.missingStation);
     const n = name.trim().slice(0, STATION_NAME_MAX);
     if (!n) return refuse(STR.station.nameEmpty);
-    s.name = n;
+    // the name on screen typed again: a default name stays the default it is
+    if (n === s.name) return done();
+    this.act(() => {
+      this.builder.log?.name(s, n);
+      s.name = n;
+    });
+    return done();
+  }
+  /**
+   * Rename a town, and with it the stations that carry its name: a step of its own in the history,
+   * as a station's. The level editor records nothing, as `act` has it.
+   */
+  renameTown(t: Town, name: string): CommandResult {
+    const towns = this.buildWorld.towns;
+    if (!towns.towns.includes(t)) return refuse(STR.town.gone);
+    if (!name.trim()) return refuse(STR.town.nameEmpty);
+    const was = { name: t.name, custom: t.custom };
+    towns.rename(t, name);
+    if (t.name === was.name) return done();
+    if (this.builder.free) return done();
+    const now = { name: t.name, custom: t.custom };
+    const set = (v: typeof was): CommandResult => {
+      t.name = v.name;
+      t.custom = v.custom;
+      towns.refresh();
+      return done();
+    };
+    this.history.push({
+      label: STR.history.renamed(was.name, now.name),
+      undo: () => set(was),
+      redo: () => set(now),
+      gone: () => !towns.towns.includes(t),
+    });
     return done();
   }
   /** Turn a signal to govern the next direction of travel: north, east, south, west in turn. */

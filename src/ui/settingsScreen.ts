@@ -1,14 +1,30 @@
 import { SIGNAL_LEVELS } from '../sim/signals';
-import { el, btn } from './dom';
+import { el } from './dom';
+import {
+  actionButton,
+  buttonRow,
+  choiceRows,
+  columns,
+  formRow,
+  keyBadge,
+  labelValue,
+  note,
+  pasteBox,
+  segmented,
+  slider,
+  textField,
+  toggleSwitch,
+  well,
+  type FootSpec,
+} from './kit';
 import { contractRarityLabel } from './labels';
-import { STR } from '../strings';
-import type { Screen } from './modal';
-import { confirmDeleteSlot, slotLines, type Confirm } from './menu';
+import { LANGUAGE, LANGUAGES, LANGUAGE_NAME, STR, type Language } from '../strings';
+import type { FrameTabs, Screen } from './modal';
+import { slotRows, type Confirm } from './saveRows';
 import { autosaveText } from './saveSlots';
 import {
   CONTRACT_RARITIES,
   contractPolicyFor,
-  hasSlot,
   uniformContractPolicy,
   type ContractPolicy,
   type Settings,
@@ -22,22 +38,76 @@ export interface SettingsActions {
   exportSave(): string | null;
   exportDiagnostics(): string;
   importSave(json: string): boolean;
-  saveAs(name: string): boolean;
+  /** open Saved games on its Save tab: a save is named there */
+  saveAs(): void;
   loadSlot(name: string): void;
   deleteSlot(name: string): void;
   /** the named saves, newest first */
   slots(): SlotMeta[];
 }
 
-/** Settings and save management. */
+export type SettingsTab = 'audio' | 'gameplay' | 'contracts' | 'signalling' | 'controls' | 'saves';
+
+const TABS: { id: SettingsTab; label: string }[] = [
+  { id: 'audio', label: STR.settings.audio },
+  { id: 'gameplay', label: STR.settings.gameplay },
+  { id: 'contracts', label: STR.settings.contractsTab },
+  { id: 'signalling', label: STR.settings.signalling },
+  { id: 'controls', label: STR.settings.controls },
+  { id: 'saves', label: STR.settings.saves },
+];
+
+interface KeyRow {
+  keys: readonly string[];
+  text: string;
+}
+
+/** One line of the key table: its keys, what they do. */
+function keyRow(r: KeyRow): HTMLElement {
+  return el(
+    'div',
+    { class: 'k-krow' },
+    el('span', {}, ...r.keys.map((k) => keyBadge(k, ''))),
+    el('span', { text: r.text }),
+  );
+}
+
+/** One group of the key table: the short rows two to a line, then the others. */
+function keyWell(g: (typeof STR.settings.keyGroups)[number]): HTMLElement {
+  const short = 'short' in g ? g.short : undefined;
+  return well(
+    { title: g.title, cls: 'k-keys' },
+    short ? el('div', { class: 'k-kgrid' }, ...short.map(keyRow)) : null,
+    ...g.rows.map(keyRow),
+  );
+}
+
+/** Settings and save management: the category tabs over form columns. */
 export class SettingsScreen implements Screen {
   readonly id = 'settings';
   readonly title = STR.settings.title;
-  readonly root = el('div', { class: 'cols' });
-  private left = el('div', { class: 'col-body' });
-  private right = el('div', { class: 'col-body' });
+  readonly frameSize = 'M';
+  readonly icon = 'gear';
+  readonly formKeys = true;
+  readonly root = el('div', { class: 'k-page' });
+  /** the row that opens the Notifications screen */
+  onNotifications: (() => void) | null = null;
+  /** the language control: it reloads the page, or the control goes back (`render`) */
+  onLanguage: ((language: Language) => void) | null = null;
+  private tab: SettingsTab = 'audio';
+  /** how many named saves the Saves tab counts; storage is not read at every refresh */
+  private slotCount = 0;
   /** autosave on or off and when the game was last stored; kept current while the screen is up */
-  private autosaveLine = el('div', { class: 'kv' });
+  private autosaveValue = el('b');
+  private autosaveLine = el(
+    'div',
+    { class: 'k-kv' },
+    el('span', { text: STR.saves.autosave }),
+    this.autosaveValue,
+  );
+  // the fields outlive a redraw of the tab: what is typed in them stays
+  private seedField = textField({ placeholder: STR.settings.seedPlaceholder });
+  private transferBox = pasteBox({ placeholder: STR.settings.transferHint });
 
   constructor(
     private readonly settings: Settings,
@@ -48,307 +118,287 @@ export class SettingsScreen implements Screen {
       savedAt: number | null;
       version: string;
       warning: string | null;
+      /** there is no game to save: the title screen at boot, the level editor */
+      saveOff: boolean;
+      /** why, as the buttons' tip; the title's reason without it */
+      saveOffWhy?: string;
     },
     /** the game's dialog, for overwrite, delete and import questions */
     private readonly prompt: Confirm,
-  ) {
-    this.root.append(
-      el(
-        'div',
-        { class: 'col' },
-        el('div', { class: 'col-title', text: STR.settings.options }),
-        this.left,
-      ),
-      el(
-        'div',
-        { class: 'col' },
-        el('div', { class: 'col-title', text: STR.settings.saves }),
-        this.right,
-      ),
-    );
+  ) {}
+
+  /** Get ready to open on a tab: the title's Controls button opens it on the key table. */
+  show(tab: SettingsTab) {
+    this.tab = tab;
   }
   onOpen() {
     this.render();
   }
+  /** Stand on a tab when it opens: a screen that sends the player here says which. */
+  showTab(id: string) {
+    if (TABS.some((t) => t.id === id)) this.tab = id as SettingsTab;
+  }
   refresh() {
-    this.showAutosave();
+    if (this.tab === 'saves') this.showAutosave();
+  }
+  frameTabs(): FrameTabs {
+    return {
+      tabs: TABS.map((t) => (t.id === 'saves' ? { ...t, count: this.slotCount } : t)),
+      current: this.tab,
+      pick: (id) => {
+        this.tab = id as SettingsTab;
+        this.render();
+      },
+    };
+  }
+  frameFooter(): FootSpec {
+    return { note: STR.settings.appliesAtOnce, done: true };
   }
 
   /** The autosave line: whether it is on, how long ago the game was stored, the date as title. */
   private showAutosave() {
     const savedAt = this.info().savedAt;
     const text = autosaveText(!!this.settings.autosave, savedAt, Date.now());
-    if (this.autosaveLine.textContent !== text) {
-      this.autosaveLine.textContent = '';
-      this.autosaveLine.append(el('span', { class: 'k', text }));
-    }
+    if (this.autosaveValue.textContent !== text) this.autosaveValue.textContent = text;
     this.autosaveLine.title = savedAt ? new Date(savedAt).toLocaleString() : '';
   }
 
-  private slider(label: string, key: 'master' | 'sfx' | 'music' | 'ambient') {
-    const input = el('input', {
-      type: 'range',
-      min: '0',
-      max: '100',
-      value: String(Math.round((this.settings[key] ?? 0.35) * 100)),
-    }) as HTMLInputElement;
-    const val = el('span', {
-      class: 'num',
-      text: `${Math.round((this.settings[key] ?? 0.35) * 100)}%`,
-    });
-    input.addEventListener('input', () => {
-      this.settings[key] = Number(input.value) / 100;
-      val.textContent = `${input.value}%`;
-      this.onChange();
-    });
-    return el(
-      'div',
-      { class: 'kv' },
-      el('span', { class: 'k', text: label }),
-      el('span', {}, input, ' ', val),
+  private volume(label: string, key: 'master' | 'sfx' | 'music' | 'ambient') {
+    return formRow(
+      label,
+      slider({
+        label,
+        value: Math.round((this.settings[key] ?? 0.35) * 100),
+        onInput: (v) => {
+          this.settings[key] = v / 100;
+          this.onChange();
+        },
+      }),
     );
   }
-  /** One row per contract rarity: what happens to a new offer of that rarity. */
-  private contractPolicyRows(): HTMLElement[] {
-    const POLICIES: ContractPolicy[] = ['accept', 'prompt', 'deny'];
-    return CONTRACT_RARITIES.map((r) => {
-      const current = contractPolicyFor(this.settings, r);
-      const buttons = POLICIES.map((p) =>
-        btn(
-          STR.settings.policy[p],
-          () => {
-            if (!this.settings.contractPolicy)
-              this.settings.contractPolicy = uniformContractPolicy(current);
-            this.settings.contractPolicy[r] = p;
-            this.onChange();
-            this.render();
-          },
-          `tiny ${current === p ? 'active' : ''}`,
-        ),
-      );
-      return el(
-        'div',
-        { class: 'kv' },
-        el(
-          'span',
-          { class: `k crarity-${r}` },
-          contractRarityLabel(r),
-          STR.contracts.rarity[r] ?? r,
-        ),
-        el('span', { class: 'row', style: 'margin:0;gap:3px' }, ...buttons),
-      );
-    });
-  }
-  private toggle(
+
+  private switchRow(
     label: string,
     key: 'edgeScroll' | 'autosave' | 'dayNight' | 'smoke' | 'showFps' | 'weather',
   ) {
-    const b = btn(
-      this.settings[key] ? STR.settings.on : STR.settings.off,
-      () => {
-        this.settings[key] = !this.settings[key];
-        b.textContent = this.settings[key] ? STR.settings.on : STR.settings.off;
-        b.classList.toggle('active', this.settings[key]);
-        this.onChange();
-        if (key === 'autosave') this.showAutosave();
-      },
-      `small ${this.settings[key] ? 'active' : ''}`,
+    return formRow(
+      label,
+      toggleSwitch(
+        label,
+        () => !!this.settings[key],
+        (v) => {
+          this.settings[key] = v;
+          this.onChange();
+        },
+      ),
     );
-    return el('div', { class: 'kv' }, el('span', { class: 'k', text: label }), b);
   }
 
-  render() {
-    const l = this.left;
-    l.innerHTML = '';
-    l.append(
-      el('div', { class: 'col-title', text: STR.settings.audio }),
-      this.slider(STR.settings.master, 'master'),
-      this.slider(STR.settings.sfx, 'sfx'),
-      this.slider(STR.settings.music, 'music'),
-      this.slider(STR.settings.ambient, 'ambient'),
-      el('div', { class: 'sub dim', style: 'margin:4px 0 10px', text: STR.settings.audioNote }),
-      el('div', { class: 'col-title', text: STR.settings.gameplay }),
-      this.toggle(STR.settings.edgeScroll, 'edgeScroll'),
-      this.toggle(STR.settings.autosave, 'autosave'),
-      this.toggle(STR.settings.dayNight, 'dayNight'),
-      this.toggle(STR.settings.smoke, 'smoke'),
-      this.toggle(STR.settings.weather, 'weather'),
-      this.toggle(STR.settings.showFps, 'showFps'),
-      el('div', {
-        class: 'col-title',
-        style: 'margin-top:10px',
-        text: STR.settings.contractPolicy,
-      }),
-      ...this.contractPolicyRows(),
-      el('div', { class: 'sub dim', text: STR.settings.contractPolicyHint }),
-      el('div', { class: 'col-title', style: 'margin-top:10px', text: STR.settings.signalling }),
-      el(
-        'div',
-        { class: 'row', style: 'gap:3px;flex-wrap:wrap' },
-        ...SIGNAL_LEVELS.map((lv) =>
-          btn(
-            STR.settings.signalLevel[lv],
-            () => {
-              this.settings.signalling = lv;
-              this.onChange();
-              this.render();
-            },
-            `tiny ${(this.settings.signalling ?? 'auto') === lv ? 'active' : ''}`,
-          ),
-        ),
-      ),
-      el('div', { class: 'sub dim', text: STR.settings.signallingHint }),
-      el('div', { class: 'col-title', style: 'margin-top:10px', text: STR.settings.controls }),
-      el('div', { class: 'sub', text: STR.settings.controlsText }),
-    );
-    const r = this.right;
-    r.innerHTML = '';
-    const info = this.info();
-    this.showAutosave();
-    r.append(
-      el(
-        'div',
-        { class: 'kv' },
-        el('span', { class: 'k', text: STR.debug.seed }),
-        el('span', { class: 'v', text: String(info.seed) }),
-      ),
-      this.autosaveLine,
-      el(
-        'div',
-        { class: 'kv' },
-        el('span', { class: 'k', text: STR.settings.version }),
-        el('span', { class: 'v', text: info.version }),
-      ),
-      el(
-        'div',
-        { class: 'row' },
-        btn(
-          STR.settings.save,
-          () => {
-            this.actions.save();
-            this.render();
+  /** One row per contract rarity: what happens to a new offer of that rarity. */
+  private contractPolicyRows(): HTMLElement[] {
+    const POLICIES: ContractPolicy[] = ['accept', 'prompt', 'deny'];
+    return CONTRACT_RARITIES.map((r) =>
+      formRow(
+        el('span', { class: `crarity-${r}` }, contractRarityLabel(r), STR.contracts.rarity[r] ?? r),
+        segmented({
+          options: POLICIES.map((p) => ({ id: p, label: STR.settings.policy[p] })),
+          value: contractPolicyFor(this.settings, r),
+          onChange: (id) => {
+            if (!this.settings.contractPolicy)
+              this.settings.contractPolicy = uniformContractPolicy(
+                contractPolicyFor(this.settings, r),
+              );
+            this.settings.contractPolicy[r] = id as ContractPolicy;
+            this.onChange();
           },
-          'accent',
-        ),
-        btn(STR.settings.load, () => this.actions.load()),
-      ),
-    );
-    // named slots
-    const nameInput = el('input', {
-      class: 'text',
-      type: 'text',
-      placeholder: STR.settings.slotName,
-      maxlength: '32',
-      style: 'width:160px',
-    }) as HTMLInputElement;
-    nameInput.addEventListener('keydown', (e) => e.stopPropagation());
-    const slotList = el('div', { class: 'slots' });
-    const slots = this.actions.slots();
-    const now = Date.now();
-    if (!slots.length) slotList.append(el('div', { class: 'dim', text: STR.settings.noSlots }));
-    for (const sl of slots)
-      slotList.append(
-        el(
-          'div',
-          { class: 'kv save-row' },
-          el('div', {}, el('div', { text: sl.name }), ...slotLines(sl, now, 'sub dim')),
-          el(
-            'span',
-            { class: 'row' },
-            btn(STR.settings.loadSlot, () => this.actions.loadSlot(sl.name), 'small'),
-            btn(
-              STR.settings.deleteSlot,
-              () => confirmDeleteSlot(this.prompt, this.actions, sl.name, () => this.render()),
-              'small',
-            ),
-          ),
-        ),
-      );
-    const saveAs = async () => {
-      const n = nameInput.value.trim();
-      if (!n) return;
-      // replacing a save is asked first; a no writes nothing and leaves the name to change
-      if (
-        hasSlot(n) &&
-        !(await this.prompt.confirm(STR.saves.overwriteTitle, STR.saves.confirmOverwrite(n)))
-      )
-        return;
-      if (this.actions.saveAs(n)) {
-        nameInput.value = '';
-        this.render();
-      }
-    };
-    r.append(
-      el('div', { class: 'col-title', style: 'margin-top:12px', text: STR.settings.slots }),
-      el(
-        'div',
-        { class: 'row' },
-        nameInput,
-        btn(STR.settings.saveAs, () => void saveAs(), 'accent'),
-      ),
-      slotList,
-    );
-    const seedInput = el('input', {
-      class: 'text',
-      type: 'text',
-      placeholder: STR.settings.seedPlaceholder,
-      style: 'width:160px',
-    }) as HTMLInputElement;
-    r.append(
-      el('div', { class: 'col-title', style: 'margin-top:12px', text: STR.settings.newGame }),
-      el('div', { class: 'sub dim', text: STR.settings.newGameNote }),
-      el(
-        'div',
-        { class: 'row' },
-        seedInput,
-        btn(STR.settings.newGame, () => {
-          if (confirm(STR.settings.confirmNew)) this.actions.newGame(seedInput.value.trim());
         }),
       ),
     );
-    r.append(el('div', { class: 'sub dim', text: STR.settings.formatNote }));
-    if (info.warning) r.append(el('div', { class: 'sub red', text: info.warning }));
-    const area = el('textarea', {
-      class: 'text',
-      style: 'width:100%;height:120px;font-family:var(--font-mono);font-size:10px',
-      spellcheck: 'false',
-    }) as HTMLTextAreaElement;
-    r.append(
-      el('div', { class: 'col-title', style: 'margin-top:12px', text: STR.settings.transfer }),
-      area,
-      el(
-        'div',
-        { class: 'row' },
-        btn(
-          STR.settings.exportSave,
-          () => {
-            const j = this.actions.exportSave();
-            area.value = j ?? '';
-          },
-          'small',
+  }
+
+  private saveTab(): HTMLElement {
+    const info = this.info();
+    this.showAutosave();
+    const why = info.saveOffWhy ?? STR.settings.saveOff;
+    const off = { disabled: info.saveOff, title: info.saveOff ? why : undefined };
+    const left = [
+      well(
+        STR.settings.thisGame,
+        labelValue(STR.debug.seed, String(info.seed)),
+        this.autosaveLine,
+        labelValue(STR.settings.version, info.version),
+        info.warning ? note(info.warning, 'bad') : null,
+        buttonRow(
+          actionButton(
+            STR.settings.save,
+            () => {
+              this.actions.save();
+              this.render();
+            },
+            { ...off, icon: 'save' },
+          ),
+          actionButton(STR.settings.load, () => this.actions.load(), { icon: 'folder' }),
         ),
-        btn(
-          STR.settings.importSave,
-          () => {
-            const text = area.value.trim();
-            if (!text) return;
-            void this.prompt
-              .confirm(STR.saves.importTitle, STR.settings.confirmImport)
-              .then((ok) => ok && this.actions.importSave(text));
-          },
-          'small',
-        ),
-        btn(
-          STR.settings.diagnostics,
-          () => {
-            area.value = this.actions.exportDiagnostics();
-            area.select();
-            void navigator.clipboard?.writeText(area.value).catch(() => undefined);
-          },
-          'small',
+        note(STR.settings.formatNote),
+      ),
+      well(
+        STR.settings.newGame,
+        note(STR.settings.newGameNote),
+        el(
+          'div',
+          { class: 'k-inrow' },
+          this.seedField.root,
+          actionButton(STR.settings.newGame, () => void this.newGame(), { cls: 'danger' }),
         ),
       ),
-      el('div', { class: 'sub dim', text: STR.settings.diagnosticsHint }),
-    );
+    ];
+    const area = this.transferBox;
+    const right = [
+      well(
+        { title: STR.settings.slots, right: String(this.slotCount) },
+        buttonRow(
+          actionButton(STR.menu.saveAs, () => this.actions.saveAs(), {
+            ...off,
+            title: info.saveOff ? why : STR.settings.saveAsOpens,
+            icon: 'saveas',
+          }),
+        ),
+        ...slotRows(this.actions, this.prompt, () => this.render(), STR.settings.noSlots),
+      ),
+      well(
+        STR.settings.transfer,
+        el(
+          'div',
+          { class: 'k-xfer' },
+          area,
+          el(
+            'div',
+            { class: 'k-btncol' },
+            actionButton(
+              STR.settings.exportSave,
+              () => {
+                area.value = this.actions.exportSave() ?? '';
+              },
+              { cls: 'small', icon: 'export' },
+            ),
+            actionButton(STR.settings.importSave, () => void this.importSave(), {
+              cls: 'small',
+              icon: 'import',
+            }),
+            actionButton(
+              STR.settings.diagnostics,
+              () => {
+                area.value = this.actions.exportDiagnostics();
+                area.select();
+                void navigator.clipboard?.writeText(area.value).catch(() => undefined);
+              },
+              { cls: 'small', icon: 'copy' },
+            ),
+          ),
+        ),
+        note(STR.settings.diagnosticsHint),
+      ),
+    ];
+    return columns(left, right);
+  }
+
+  private async newGame() {
+    if (
+      await this.prompt.confirm(STR.settings.newGame, STR.settings.confirmNew, {
+        yes: STR.prompt.start,
+        danger: true,
+      })
+    )
+      this.actions.newGame(this.seedField.input.value.trim());
+  }
+
+  private async importSave() {
+    const text = this.transferBox.value.trim();
+    if (!text) return;
+    if (
+      await this.prompt.confirm(STR.saves.importTitle, STR.settings.confirmImport, {
+        yes: STR.prompt.import,
+      })
+    )
+      this.actions.importSave(text);
+  }
+
+  private drawTab(): (HTMLElement | null)[] {
+    switch (this.tab) {
+      case 'audio':
+        return [
+          well(
+            STR.settings.audio,
+            this.volume(STR.settings.master, 'master'),
+            this.volume(STR.settings.sfx, 'sfx'),
+            this.volume(STR.settings.music, 'music'),
+            this.volume(STR.settings.ambient, 'ambient'),
+            note(STR.settings.audioNote),
+          ),
+        ];
+      case 'gameplay':
+        return [
+          well(
+            STR.settings.gameplay,
+            formRow(
+              STR.settings.language,
+              segmented({
+                options: LANGUAGES.map((id) => ({ id, label: LANGUAGE_NAME[id] })),
+                value: LANGUAGE,
+                onChange: (id) => this.onLanguage?.(id as Language),
+              }),
+              STR.settings.languageNote,
+            ),
+            this.switchRow(STR.settings.edgeScroll, 'edgeScroll'),
+            this.switchRow(STR.settings.autosave, 'autosave'),
+            this.switchRow(STR.settings.dayNight, 'dayNight'),
+            this.switchRow(STR.settings.smoke, 'smoke'),
+            this.switchRow(STR.settings.weather, 'weather'),
+            this.switchRow(STR.settings.showFps, 'showFps'),
+            formRow(
+              STR.alerts.title,
+              actionButton(STR.alerts.open, () => this.onNotifications?.(), { cls: 'small' }),
+            ),
+          ),
+        ];
+      case 'contracts':
+        return [
+          well(
+            STR.settings.contractPolicy,
+            ...this.contractPolicyRows(),
+            note(STR.settings.contractPolicyHint),
+          ),
+        ];
+      case 'signalling':
+        return [
+          well(
+            STR.settings.signalling,
+            choiceRows({
+              options: SIGNAL_LEVELS.map((lv) => ({
+                id: lv,
+                label: STR.settings.signalLevel[lv],
+                hint: STR.settings.signalHint[lv],
+              })),
+              value: this.settings.signalling ?? 'auto',
+              onChange: (id) => {
+                this.settings.signalling = id as (typeof SIGNAL_LEVELS)[number];
+                this.onChange();
+              },
+            }),
+            note(STR.settings.signallingNote),
+          ),
+        ];
+      case 'controls': {
+        const groups = STR.settings.keyGroups;
+        return [columns(groups.slice(0, 3).map(keyWell), groups.slice(3).map(keyWell))];
+      }
+      case 'saves':
+        return [this.saveTab()];
+    }
+  }
+
+  render() {
+    this.slotCount = this.actions.slots().length;
+    this.root.replaceChildren(...this.drawTab().filter((n) => n !== null));
   }
 }

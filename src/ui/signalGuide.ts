@@ -1,29 +1,37 @@
-import { el, btn } from './dom';
+import { el } from './dom';
 import { STR } from '../strings';
+import { note, page, well, type FootSpec } from './kit';
+import type { Screen } from './modal';
 
-export function showSignalGuide() {
-  const S = STR.signals;
-  const root = el('div', { class: 'vehicle-preview-overlay' });
-  const close = () => root.remove();
-  root.append(
-    el(
-      'div',
-      { class: 'panel vehicle-preview-panel' },
-      el('div', { class: 'panel-title' }, S.guideTitle, btn('×', close, 'small')),
-      el(
-        'div',
-        { class: 'panel-body' },
-        el('p', { text: S.guidePlace }),
+/**
+ * The semaphore guide: how signals and track blocks work, as a screen in the frame, so Esc, the ×
+ * and Done close it and a letter key does not reach the game behind it.
+ */
+export class SignalGuideScreen implements Screen {
+  readonly id = 'signals';
+  readonly title = STR.signals.guideTitle;
+  readonly frameSize = 'M';
+  readonly icon = 'scroll';
+  /** it is read, not used on the map: the tool in hand stays in hand while it is up */
+  readonly keepsTool = true;
+  readonly root = page();
+
+  constructor() {
+    const S = STR.signals;
+    this.root.append(
+      well(
+        null,
+        note(S.guidePlace, 'k-guide'),
         el('pre', { class: 'signal-diagram', text: S.guideDiagram }),
-        el('p', { text: S.guideAspects }),
-        el('p', { text: S.guideFence }),
-        el('p', { text: S.guideJunction }),
-        el('p', { text: S.guideSingleLine }),
+        note(S.guideAspects, 'k-guide'),
+        note(S.guideFence, 'k-guide'),
+        note(S.guideJunction, 'k-guide'),
+        note(S.guideSingleLine, 'k-guide'),
       ),
-    ),
-  );
-  root.onmousedown = (e) => {
-    if (e.target === root) close();
-  };
-  document.body.append(root);
+    );
+  }
+
+  frameFooter(): FootSpec {
+    return { done: true };
+  }
 }

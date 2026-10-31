@@ -4,7 +4,6 @@
  * draws it. DOM-free, so Node tests read every rule.
  */
 import type { BuildingDef, Cost, DecorDef, StationDef, SupplyMode } from '../data/content';
-import { content } from '../data/content';
 import type { AgeStatus } from '../sim/ages';
 import { DECOR_DEFS } from '../sim/build';
 import { BUILDING_DEFS } from '../sim/buildings';
@@ -40,6 +39,7 @@ import {
 } from './tooltipDoc';
 import {
   TRACK_GROUPS,
+  pieceName,
   shortName,
   slotMate,
   stepGroup,
@@ -185,7 +185,7 @@ function ranked<T>(defs: T[], rank: (d: T) => number): T[] {
 export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
   const trackItem = (it: TrackItem): ToolItem => {
     const k = itemKey(it);
-    const base = content.track.pieces[it.kind]?.name ?? it.kind;
+    const base = pieceName(it.kind);
     const clsName =
       it.kind === 'crossing'
         ? `${STR.toolbar.trackClass[it.cls]} × ${STR.toolbar.trackClass[it.cls2 ?? it.cls]}`
@@ -340,7 +340,7 @@ export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
   ].map((t) => ({
     key: `terrain:${t}`,
     tool: { kind: 'terrain', terrain: t },
-    name: TERRAIN_NAMES[t],
+    name: STR.tile.terrain[TERRAIN_NAMES[t]],
     cost: {},
     frame:
       t === Terrain.Water ? 'terrain/water_0_f0' : `terrain/${TERRAIN_NAMES[t].toLowerCase()}_0`,
@@ -517,17 +517,17 @@ export function statusLine(
 
 /** How far the dock stands off the bottom of the window (`#build-dock` in style.css). */
 export const DOCK_BOTTOM = 8;
-/** The least the toasts stand off it: over the closed bar, and in the overview (`#toasts`). */
-export const TOAST_FLOOR = 110;
+/** The least the toasts stand off it, where the player's layout has them (`#toasts`). */
+export const TOAST_FLOOR = 80;
 const TOAST_GAP = 6;
 
 /**
- * How far off the bottom of the window the toasts stand: over the dock at the height it has now,
- * status line, tiles and card included, as no fixed height holds for every bar. `dockHeight` is 0
- * with the dock hidden.
+ * How far off the bottom of the window the toasts stand: over the bar at the height it has now,
+ * status line and tiles included, as no fixed height holds for every bar. The card stands left of
+ * them. `barHeight` is 0 with the dock hidden.
  */
-export function toastBottom(dockHeight: number): number {
-  return Math.max(TOAST_FLOOR, DOCK_BOTTOM + dockHeight + TOAST_GAP);
+export function toastBottom(barHeight: number): number {
+  return Math.max(TOAST_FLOOR, DOCK_BOTTOM + barHeight + TOAST_GAP);
 }
 
 // ---------------------------------------------------------------- tooltips

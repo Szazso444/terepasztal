@@ -1,3 +1,31 @@
+import { HU } from './data/strings.hu';
+
+/** The languages of the game. English is the default; the setting lives with the settings. */
+export const LANGUAGES = ['en', 'hu'] as const;
+export type Language = (typeof LANGUAGES)[number];
+/** Each language under its own name, as the language control shows it. */
+export const LANGUAGE_NAME: Record<Language, string> = { en: 'English', hu: 'Magyar' };
+/** A stored value as a language: anything else, an older settings file's nothing, is English. */
+export function languageOf(v: unknown): Language {
+  return LANGUAGES.find((l) => l === v) ?? 'en';
+}
+/** Where the settings are stored (`readSettings`); read here for the one field the strings need. */
+export const SETTINGS_KEY = 'terepasztal.settings';
+function storedLanguage(): Language {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    return raw ? languageOf((JSON.parse(raw) as { language?: unknown } | null)?.language) : 'en';
+  } catch {
+    return 'en';
+  }
+}
+/**
+ * The language of this page load. The strings are chosen once, here, before any module reads them,
+ * so changing the language reloads the page (`Game.switchLanguage`). Nothing in the world or the
+ * save depends on it: what the simulation keeps is in English, in `ENGLISH` and the data's names.
+ */
+export const LANGUAGE: Language = storedLanguage();
+
 /**
  * Age names by index (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic, 5 hyper); ids match
  * `src/data/ages.json`.
@@ -15,9 +43,20 @@ function ageLabel(t: number) {
   return AGE_NAMES[AGE_ORDER[t]] ?? `age ${t}`;
 }
 
-/** All user-facing strings. Keep flat so a Hungarian table can mirror this file later. */
-export const STR = {
+/**
+ * All user-facing strings, in English. `data/strings.hu.ts` mirrors this table: the same keys and the
+ * same functions (`Strings`). Read them through `STR`, in the language of the page load.
+ */
+const EN = {
   title: 'Terepasztal',
+  /** how numbers read in this language (`src/ui/numberFormat.ts`) */
+  format: {
+    decimalMark: '.',
+    thousandsMark: ',',
+    money: (amount: string) => `$${amount}`,
+    days: (days: string) => `${days}d`,
+    hoursMinutes: (hours: number, minutes: string) => `${hours}h ${minutes}m`,
+  },
   /** the loading screen (`src/ui/loadingScreen.ts`): one tip is shown, picked at random */
   loadingScreen: {
     /** names the progress bar for a screen reader */
@@ -49,15 +88,51 @@ export const STR = {
     speedKey: (label: string, key: string) => `${label} speed (${key})`,
     pause: 'Pause (Space)',
     resume: 'Resume (Space)',
+    /** the weather words of the top bar, by `WeatherKind` */
+    sky: { clear: 'Clear', rain: 'Rain', fog: 'Fog' } as Record<string, string>,
     weatherToggle: 'Weather',
     weatherToggleHint: 'Toggle rain, fog and seasons',
     /** the same, in a narrow top bar: the season and weather it no longer shows come first */
     weatherToggleHintNow: (now: string) => `${now}\nToggle rain, fog and seasons`,
-    dayToggle: 'Day/night',
+    dayToggle: 'Day / night',
     dayToggleHint: 'Toggle the day and night cycle',
     ageUp: (t: number) =>
       `The ${ageLabel(t)} begins. New works, stations and rolling stock unlocked.`,
-    signalGuide: 'Signals?',
+  },
+  history: {
+    undo: 'Undo',
+    redo: 'Redo',
+    /** the buttons' tooltips: the way, what it takes back, and the key */
+    tip: (way: string, what: string, key: string) => `${way}: ${what} · ${key}`,
+    idleTip: (what: string, key: string) => `${what} · ${key}`,
+    undone: (what: string) => `Undone: ${what}`,
+    redone: (what: string) => `Redone: ${what}`,
+    nothingToUndo: 'Nothing to undo',
+    nothingToRedo: 'Nothing to redo',
+    /** what a step did, in the words its tooltip and toasts use */
+    built: (what: string) => `Built ${what}`,
+    demolished: (what: string) => `Demolished ${what}`,
+    builtTiles: (n: number, what: string) => `Built ${n} ${n === 1 ? 'tile' : 'tiles'} of ${what}`,
+    demolishedTiles: (n: number, what: string) =>
+      `Demolished ${n} ${n === 1 ? 'tile' : 'tiles'} of ${what}`,
+    upgradedTiles: (n: number, line: string) =>
+      `Upgraded ${n} ${n === 1 ? 'tile' : 'tiles'} to ${line}`,
+    downgradedTiles: (n: number, line: string) =>
+      `Downgraded ${n} ${n === 1 ? 'tile' : 'tiles'} to ${line}`,
+    upgradedTrack: 'Upgraded track',
+    downgradedTrack: 'Downgraded track',
+    track: 'track',
+    road: 'road',
+    upgradedTo: (name: string, level: number) => `Upgraded ${name} to level ${level}`,
+    downgradedTo: (name: string, level: number) => `Downgraded ${name} to level ${level}`,
+    renamed: (was: string, now: string) => `Renamed ${was} to ${now}`,
+    recoloured: (train: string, colour: string) => `Marked ${train} ${colour}`,
+    /** why an undo or a redo cannot be done */
+    builtOver: 'Something else has been built there since.',
+    trainOn: (train: string) => `${train} stands on the track.`,
+    routedTo: (train: string, station: string) => `${train} is routed to ${station}.`,
+    contractNoTrain: (contract: string) => `No train can take up ${contract} again.`,
+    short: (store: string, what: string) => `${store} is short of ${what}.`,
   },
   ages: {
     title: 'Ages',
@@ -286,6 +361,25 @@ export const STR = {
     /** toast when the painted landscape fails for the session and the per-tile ground stands in */
     landscapeLost:
       'The detailed terrain could not load, so simple ground is shown for this session. The browser console has details.',
+  },
+  /**
+   * A train's note where it is not one of `traffic`'s: the simulation keeps a note in English, and
+   * the save holds it; `noteText` (src/ui/noteText.ts) puts it in the language on screen.
+   */
+  trainNote: {
+    service: 'Heading to nearby fuel / water service',
+    onContract: (name: string) => `on contract: ${name}`,
+    regularRun: 'back on the regular run',
+    noTrackToStop: 'no track to the chosen stop',
+    noPlatform: (name: string) => `${name} has no platform`,
+    parked: 'parked: no way to the chosen stop',
+    detouring: 'detouring around an oncoming train',
+    rerouted: 'rerouted around traffic',
+    ranDry: 'Out of fuel or water',
+    outOfFuel: 'out of fuel or water',
+    noPower: 'no power on this line',
+    tooHeavy: 'too heavy for the engines',
+    movingAway: 'moving out of the way',
   },
   traffic: {
     pullingAside: 'Pulling aside on a reserved escape route',
@@ -651,8 +745,6 @@ export const STR = {
     done: (name: string, level: number) => `${name} is now level ${level}`,
   },
   notice: {
-    title: 'Notices',
-    none: 'All quiet.',
     more: (n: number) => `+${n} more`,
     outOfFuel: (n: string) => `${n}: out of fuel or water`,
     noPower: (n: string) => `${n}: no power on this line`,
@@ -674,10 +766,58 @@ export const STR = {
     starved: (n: string, r: string) => `${n}: waiting for ${r}`,
     noStore: (n: string, range: number) => `${n}: no store within ${range} tiles`,
     full: (n: string) => `${n}: store full, output stopped`,
+    storeFull: (n: string, goods: string) => `${n}: store full of ${goods}`,
     contractFailed: (n: string) => `Contract failed: ${n}`,
     contractDone: (n: string) => `Contract completed: ${n}`,
+    contractAtRisk: (n: string) => `Contract running out of time: ${n}`,
+    contractOffered: (n: string) => `New contract offered: ${n}`,
+    arrived: (train: string, station: string) => `${train} arrived at ${station}`,
     contractNoTrain: (n: string) => `No train can work "${n}": wrong wagons, no rails or no range`,
     famine: 'Crews are out of food',
+  },
+  alerts: {
+    title: 'Notifications',
+    open: 'Open',
+    matrix: 'Alerts and notices',
+    defaults: 'Defaults',
+    defaultsHint: 'Back to the starting channels and switches',
+    close: 'Close',
+    goTo: 'Go to',
+    criticalPause: 'Always pause on a critical alert',
+    group: 'Group the same alert from many trains into one icon',
+    /** a click cycling through the instances: what one says and its place among them */
+    cycle: (text: string, at: number, of: number) => `${text} (${at}/${of})`,
+    hidden: (n: number) => `${n} more`,
+    plus: (n: number) => `+${n}`,
+    type: {
+      nofuel: 'Out of fuel or power',
+      stuck: 'Train stuck',
+      ctfail: 'Contract failed',
+      noroute: 'No route',
+      full: 'Storage full',
+      starved: 'Works short of input',
+      contract: 'Contract at risk',
+      jam: 'Junction congested',
+      slow: 'Train running slow',
+      note: 'Note',
+      done: 'Contract completed',
+      offer: 'New contract offered',
+      goal: 'Age goal reached',
+      arrived: 'Train arrived',
+    },
+    severity: {
+      critical: 'Critical',
+      problem: 'Problem',
+      attention: 'Needs attention',
+      info: 'Info',
+    },
+    channel: {
+      popup: 'Popup',
+      pause: 'Pause',
+      icon: 'Alert icon',
+      pin: 'Map pin',
+      toast: 'Toast',
+    },
   },
   advisor: {
     button: 'Advisor',
@@ -713,7 +853,7 @@ export const STR = {
         `${n} needs powered rails: build a Power Plant and Power Line poles along its route.`,
       chunk: (v: string) =>
         `You can afford a new chunk (${v}). Press M and click an Uncharted chunk to expand.`,
-      offers: (n: number) => `${n} contract offer(s) are waiting on the Contract Board (C).`,
+      offers: (n: number) => `${n} contract offer(s) are waiting in Contracts (C).`,
       failed: (n: string) =>
         `Contract "${n}" failed. Accept only contracts your trains already pass through, and watch the deadline.`,
       capFull: (r: string, store: string) =>
@@ -722,24 +862,163 @@ export const STR = {
         `${n} is stuck behind another train. Add a passing loop with switches or a second track.`,
     },
   },
+  outliner: {
+    tab: { trains: 'Trains', stations: 'Stations', contracts: 'Contracts', works: 'Works' },
+    scopeView: 'In view',
+    scopeAll: 'All',
+    inView: (n: number) => `${n} in view`,
+    inAll: (n: number) => `${n} in all`,
+    nothingInView: 'Nothing here in view. Pan the map or switch to All.',
+    noTrains: 'No trains in service.',
+    noStations: 'No stations yet.',
+    noWorks: 'No works yet.',
+    ungrouped: 'Ungrouped',
+    colourGroup: (colour: string) => `${colour[0].toUpperCase()}${colour.slice(1)}`,
+    stripeTip: 'Colour code: click to change',
+    renameTip: 'Double-click to rename',
+    contractTip: 'Open it in Contracts (C)',
+    empty: 'empty',
+    storage: 'Storage',
+    load: 'Load',
+    nextStop: 'Next stop',
+    perWeek: (amount: string) => `${amount} / wk`,
+    level: (n: number) => `Lv ${n}`,
+    /** a status in a word or two, where `depot.state` has the sentence */
+    status: {
+      moving: 'En route',
+      loading: 'Loading',
+      waiting: 'Waiting',
+      yielding: 'Giving way',
+      idle: 'Idle',
+      held: 'Held',
+      noRoute: 'No route',
+      stranded: 'Stranded',
+      noFuel: 'Out of fuel',
+      noPower: 'No power',
+      overweight: 'Overweight',
+    },
+    stuck: 'Stuck',
+    atRisk: 'At risk',
+    closed: 'Closed',
+    full: 'Full',
+    noInput: 'No input',
+    noStore: 'No store',
+  },
+  trainPanel: {
+    tab: { overview: 'Overview', stops: 'Stops', consist: 'Consist' },
+    follow: 'Follow with the camera',
+    following: 'Following: the camera stays on this train until you move it. Click to stop.',
+    close: 'Close',
+    details: 'Open the Train screen; Esc comes back here',
+    topSpeed: (speed: string) => `top speed ${speed}`,
+    nextStop: 'Next stop',
+    noStop: 'no stop',
+    arrival: (tiles: number, time: string) =>
+      `${tiles} ${tiles === 1 ? 'tile' : 'tiles'} · ≈ ${time}`,
+    cargo: 'Cargo',
+    runningEmpty: 'Running empty.',
+    supplies: 'Supplies',
+    tilesLeft: (n: number) => `≈ ${n} tiles left`,
+    range: 'Range',
+    unlimited: '∞',
+    tiles: (n: number) => `${n} tiles`,
+    electric: 'Power',
+    week: 'A week, by the last loop',
+    income: 'Income',
+    afterFirstLoop: 'after the first loop',
+    stops: 'Stops',
+    repeats: 'repeats',
+    engine: 'Engine',
+    pulls: 'Pulls',
+    train: 'Train',
+    wagons: 'Wagons',
+    length: 'Length',
+    weight: 'Weight',
+    noWagons: 'no wagons',
+    tons: (n: number) => `${n} t`,
+    climb: (speed: string) => `On a climb it slows to ${speed}.`,
+    openDepot: 'Open the Depot',
+    editStops: 'Edit stops',
+    problem: {
+      noFuel: 'Its tanks ran dry on the line.',
+      noPower: 'No power reaches the line under it.',
+      noRoute: 'No track leads to the next stop.',
+      stranded: 'The track under it is gone. Lay it again and the train runs on.',
+      overweight: 'Its load is more than the engines can pull.',
+      stuck: 'It has not moved for a long time.',
+      stuckFor: (hours: number) => `Stuck for ${hours} h`,
+      hungry: 'Crew hungry',
+    },
+  },
+  stationPanel: {
+    tab: {
+      overview: 'Overview',
+      cargo: 'Cargo',
+      trains: 'Trains',
+      expansion: 'Expansion',
+      timetable: 'Timetable',
+    },
+    picture: (name: string, level: string, season: string) => `${name} · ${level} · ${season}`,
+    stored: (stored: string, cap: string) => `${stored} / ${cap}`,
+    /** a store's cap is per good: what the fullest good holds of it */
+    storedAGood: (stored: string, cap: string) => `${stored} / ${cap} a good`,
+    crew: 'Crew',
+    /** whose week's ledger it is: a store's, never one station's */
+    storeWeek: (store: string) => `${store}, this week`,
+    townStore: (town: string) => `${town} town store`,
+    ownStore: 'This store',
+    networkStore: 'Rail network store',
+    nothingMoved: 'Nothing yet',
+    production: 'Production in reach',
+    perWeek: 'per week',
+    tilesAway: (n: number) => `${n} ${n === 1 ? 'tile' : 'tiles'}`,
+    residents: 'Residents in reach',
+    waitingNow: 'Waiting now',
+    nothingWaiting: 'Nothing is waiting.',
+    cargoHere: 'Cargo at this station',
+    thisWeek: 'this week',
+    waiting: 'Waiting',
+    inWeek: 'In',
+    outWeek: 'Out',
+    noCargo: 'No goods here yet.',
+    carriedTo: (place: string) => `Its workers carry what it makes to the store of ${place}.`,
+    accepts: 'Takes',
+    calling: 'Trains calling here',
+    noTrains: 'No train calls here yet.',
+    atPlatform: 'At the platform',
+    queued: 'Waiting for a platform',
+    arrives: (time: string) => `Arrives in ≈ ${time}`,
+    onItsWay: 'On its way here',
+    boundFor: (stop: string) => `Now bound for ${stop}`,
+    onItsRoute: 'On its route',
+    nextLevel: (level: number) => `Next: level ${level}`,
+    topLevel: 'Top level',
+    levels: 'Levels',
+    levelShort: 'Lv',
+    loadPerSec: 'Loading / s',
+    makesAWeek: 'Makes a week',
+    makesShort: 'Makes / wk',
+    /** a passenger station's: the people around it can hold it lower */
+    atMostAWeek: 'At most a week',
+    atMostShort: 'At most / wk',
+    adds: (goods: string) => `Adds ${goods}`,
+    arrivals: 'Arrivals',
+    noArrivals: 'No train is on its way here.',
+    now: 'Now',
+    inQueue: 'Queued',
+    inAbout: (time: string) => `≈ ${time}`,
+    leavesFor: (stop: string) => `then ${stop}`,
+    platformUse: 'Platform use',
+    inUse: 'In use',
+    waitingForOne: 'Waiting for one',
+  },
   trainSide: {
-    title: 'Trains in view',
-    titleAll: 'All trains',
-    none: 'No trains in service.',
-    noneVisible: 'No trains on screen.',
     tilesPerSec: 'tiles/s',
     speed: 'Speed',
-    capacity: 'Capacity',
-    tanks: 'Tanks',
-    fuel: 'Fuel',
-    engines: 'Engines',
     perTile: '/ tile',
-    perWeek: 'Per week',
     consumes: 'Consumes',
     collects: 'Collects',
     delivers: 'Delivers',
-    noData: 'after first loop',
-    hoverHint: 'Hover a train to trace its path',
     onContract: (n: string, dest: string) => `on contract: ${n} → ${dest}`,
     queuedContracts: (n: number) => `+${n} queued`,
     refuelAll: 'Refuel all · 2×',
@@ -810,7 +1089,54 @@ export const STR = {
     needTwoStops: 'Route needs at least two stops',
     routeApplied: (n: string) => `${n}: route updated`,
     dispatched: (n: string) => `${n} dispatched`,
-    editingConsist: (n: string) => `Editing route of ${n}. Recall it to change its consist.`,
+    inService: (n: string) => `${n} is in service: recall it to change its consist.`,
+    wagonsCount: (n: number) => `${n} wagon${n === 1 ? '' : 's'}`,
+    routeTab: 'Route',
+    recallTitle: 'Recall train',
+    confirmRecall: (n: string) => `Recall "${n}" to the depot?`,
+    recallDetail: (units: number) =>
+      `It leaves the line; its locomotives and wagons go back to the free stock. ${
+        units > 0 ? `The cargo aboard (${units} u) is salvaged for money.` : 'Nothing is aboard.'
+      }`,
+    recallHint: 'Back to the depot; the cargo aboard is salvaged for money',
+    locateHint: 'Close the Depot and follow the train on the map',
+    detailsHint: 'Open the Train screen over the Depot; Back returns here',
+    showHint: 'Look at the depot behind the screen and mark the gate the train would leave by',
+    nameHint: 'Train name, 24 characters. Left empty, the game names it.',
+    cartLine: (resource: string, cap: number) => `Refuelling cart · +${cap} ${resource}`,
+    dynamicPlans: 'It plans its own stops; the list applies under Schedule.',
+    stopSum: {
+      loadNone: 'loads nothing',
+      unloadAll: 'unloads all',
+      unloadNone: 'unloads nothing',
+      waitFull: 'waits for full wagons',
+      refuel: 'refuels',
+      pass: 'passes through',
+      departForward: 'leaves forward',
+      departReverse: 'leaves in reverse',
+      atLeast: (s: number) => `at least ${s} s`,
+      leaveAfter: (s: number) => `leaves after ${s} s`,
+      plain: 'stops, loads, unloads',
+    },
+    next: 'next',
+    moveUp: 'Move up',
+    firstStop: 'Already the first stop',
+    removeStop: 'Remove the stop',
+    add: 'Add',
+    noPlatformHint: (n: string) => `${n} has no platform track`,
+    stopLoad: 'Load',
+    stopUnload: 'Unload',
+    stopDepart: 'Depart',
+    auto: 'Auto',
+    nothing: 'Nothing',
+    all: 'All',
+    forward: 'Forward',
+    reverse: 'Reverse',
+    dwellMin: 'Stay at least',
+    dwellMax: 'Leave after',
+    dwellUnit: 's',
+    dwellMinHint: 'Stay at least this many seconds, 0 to 600',
+    dwellMaxHint: 'Leave after this many seconds at the latest, 0 to 600; 0: the usual limit',
     cargo: (n: number) => `${n}u aboard`,
     fuelHint: (v: string) => `Running cost per tile from ${v}`,
     details: 'Details',
@@ -867,8 +1193,7 @@ export const STR = {
     hint: 'Multiple: same control class as the leader, full effort. Double-headed: 82% of the summed effort. Standby: dead weight until the pulling units lose fuel or the wire.',
   } as Record<string, string>,
   contracts: {
-    title: 'Contract Board',
-    sideTitle: 'Contracts',
+    title: 'Contracts',
     offers: 'Offers',
     active: 'Active',
     history: 'Recent',
@@ -889,8 +1214,19 @@ export const STR = {
       `Your land supports ${n} active contract${n === 1 ? '' : 's'}. Finish one or buy land to take on more.`,
     completed: (n: string, pay: string) => `${n} delivered: ${pay}`,
     failedMsg: (n: string, fine: string) => `${n} failed: fined ${fine}`,
-    autoOn: 'Auto-accept: on',
-    autoOff: 'Auto-accept: off',
+    autoLabel: 'Auto-accept',
+    autoSubOn: 'On: offers are accepted as they come.',
+    autoSubOff: 'Off: offers wait here for you.',
+    seeOffers: 'See offers',
+    autoSubMixed: 'Each rarity follows its own setting.',
+    perRarity: 'Per rarity: Settings',
+    perRarityHint: 'Open the offer policy of each rarity in Settings.',
+    autoAllTitle: 'Auto-accept every rarity?',
+    autoAllText:
+      'Each rarity now follows its own setting. This sets all five to Auto-accept and replaces what you chose for each.',
+    autoAllYes: 'Set all five',
+    /** an order's size: units and cargo */
+    cargoAmount: (n: number, cargo: string) => `${n} u ${cargo}`,
     autoHint:
       'On: offers are accepted as they come, while your land has room for another active contract; the rest wait here. Off: offers wait here for you. Finer control per rarity is in Settings.',
     stats: (done: number, failed: number) => `${done} delivered · ${failed} failed`,
@@ -901,7 +1237,10 @@ export const STR = {
     cancelFine: (fine: string) => `Cancel (fine ${fine})`,
     cancelled: 'Cancelled',
     cancelledMsg: (n: string, fine: string) => `${n} cancelled: fined ${fine}`,
+    cancelTitle: 'Cancel contract',
     confirmCancel: (n: string, fine: string) => `Cancel "${n}"? The fine is ${fine}.`,
+    /** The no of that question: the contract stays. */
+    keepContract: 'Keep',
     train: 'Train',
     noTrain: 'No train can work this',
     rarity: {
@@ -937,12 +1276,11 @@ export const STR = {
     featuredBadge: 'featured',
   },
   craft: {
-    title: 'Rolling Stock Works',
+    title: 'Crafting',
     recipes: 'Recipes',
     unlock: 'Unlock a recipe',
     kind: 'Kind',
     age: 'Age',
-    ages: ['Age of Steam', 'Diesel Era', 'Electric Line'] as string[],
     quality: {
       N: 'Common',
       R: 'Uncommon',
@@ -950,7 +1288,6 @@ export const STR = {
       SSR: 'Epic',
       L: 'Legendary',
     } as Record<string, string>,
-    known: (have: number, total: number) => `${have} / ${total} recipes known`,
     noPool: 'No models of this kind in this age.',
     unlockHint: (n: number) =>
       `Pay once, choose one of ${n} recipe cards. A card you already know pays back in materials instead.`,
@@ -976,7 +1313,6 @@ export const STR = {
       `${recipes} recipes · ${crafts} built · ${failures} failed`,
     /** the workshop's foot: the materials of the selected store, named */
     resources: (label: string) => `Materials at ${label}`,
-    filterLabel: 'Vehicle type',
     filter: {
       all: 'All railcraft',
       steam: 'Steam',
@@ -990,6 +1326,25 @@ export const STR = {
     search: 'Find model…',
     searchLabel: 'Find model',
     inspect: 'Inspect 3D',
+    poolKnown: 'Recipe known',
+    poolUnknown: 'Not known yet',
+    /** the filter's short labels, for the strip; the long ones above are their tooltips */
+    filterShort: {
+      all: 'All',
+      steam: 'Steam',
+      diesel: 'Diesel',
+      electric: 'Electric',
+      bulk: 'Bulk',
+      mineral: 'Mineral',
+      liquid: 'Tank',
+      people: 'Passenger',
+    } as Record<string, string>,
+    count: (n: number) => `${n} recipe${n === 1 ? '' : 's'}`,
+    countOf: (shown: number, all: number) => `${shown} of ${all} recipes`,
+    /** what the draw's head says: its kind and its age */
+    drawOf: (kind: string, age: string) => `${kind} · ${age}`,
+    heldHint: 'A draw is waiting: choose a card first',
+    recipesKnown: 'Recipes known',
   },
   vehicle: {
     body: (size: string, tiles: number, plan: string) =>
@@ -1001,6 +1356,20 @@ export const STR = {
     axles: '2 axles · 4 wheels',
     fuel: (cap: number, perTile?: number) => `Fuel ${cap} · ${perTile} per tile`,
     water: (cap: number, perTile?: number) => `Water ${cap} · ${perTile} per tile`,
+    /** what the fuel and water lines say after their label, for a row that has the label itself */
+    tank: (cap: number, perTile?: number) => `${cap} · ${perTile} per tile`,
+    /** the labels of the data sheet's rows, by what the row is */
+    fact: {
+      body: 'Body',
+      weight: 'Weight',
+      pulls: 'Pulls',
+      wheels: 'Wheels',
+      fuel: 'Fuel',
+      water: 'Water',
+      carries: 'Carries',
+      takes: 'Takes',
+      track: 'Track',
+    } as Record<string, string>,
     wagon: (carries: string, units: number) => `${carries} · ${units} units`,
     /** the body plans of `src/sim/body.ts`, by id */
     plan: {
@@ -1009,6 +1378,12 @@ export const STR = {
       garratt: 'Garratt articulated',
       meyer: 'Meyer articulated',
     } as Record<string, string>,
+    quality: 'Quality',
+    kind: 'Kind',
+    preview: 'Preview',
+    properties: 'Properties',
+    degrees: (n: number) => `${n}°`,
+    note: (kind: string) => `Inspect 3D · ${kind}`,
     angle: 'Viewing angle',
     pause: 'Pause rotation',
     rotate: 'Rotate',
@@ -1044,11 +1419,17 @@ export const STR = {
     newest: 'Newest',
     freeOnly: 'Unassigned only',
     count: (n: number) => `${n} items`,
+    countOf: (n: number, all: number) => `${n} of ${all} items`,
     empty: 'Nothing matches.',
-    copies: (n: number) => `${n} copies`,
+    copies: (n: number) => `${n} ${n === 1 ? 'copy' : 'copies'}`,
     lv: (l: number) => `Lv ${l}`,
     levelUp: 'Level up',
     levelUpHint: 'Consumes one spare unassigned copy of this model',
+    levelUpNeedsSpare: 'Needs a spare unassigned copy of this model',
+    levelUpTitle: (name: string, from: number, to: number) =>
+      `Level up ${name}: Lv ${from} → Lv ${to}?`,
+    levelUpText: (loco: boolean, pct: number) =>
+      `It gains ${pct}% ${loco ? 'speed and power' : 'capacity'}. A spare copy is used up: two copies become one.`,
     leveled: (name: string, level: number) => `${name} is now Lv ${level}`,
     capacity: 'Capacity',
     crew: 'crew',
@@ -1088,11 +1469,21 @@ export const STR = {
       ctc: 'CTC',
       in_cab: 'In-cab',
     } as Record<string, string>,
-    signallingHint:
-      'Automatic keeps trains apart as before. Token: one train per plain section, whichever way it runs. Absolute block: semaphores hold trains out of an occupied block and trains keep 10 tiles apart; CTC 6; In-cab 3 (equipped stock only). Semaphores work under every level above Token.',
+    signalHint: {
+      auto: 'Keeps trains apart as before.',
+      token: 'One train per plain section, whichever way it runs.',
+      absolute_block:
+        'Semaphores hold trains out of an occupied block; trains keep 10 tiles apart.',
+      ctc: 'Trains keep 6 tiles apart.',
+      in_cab: 'Trains keep 3 tiles apart; equipped stock only.',
+    } as Record<string, string>,
+    signallingNote: 'Semaphores work under every level above Token.',
     title: 'Settings',
-    options: 'Options',
     saves: 'Saves',
+    /** The tab of the contract offers; the well in it says the rest. */
+    contractsTab: 'Contracts',
+    appliesAtOnce: 'Settings apply at once.',
+    thisGame: 'This game',
     audio: 'Audio',
     master: 'Master volume',
     sfx: 'Effects',
@@ -1101,30 +1492,88 @@ export const STR = {
     audioNote:
       'Pastoral Pulse opens each session, then its four arrangements play in shuffled order. Nature sounds follow the weather and time of day.',
     gameplay: 'Gameplay',
+    language: 'Language',
+    languageNote: 'Changing the language reloads the page; a game in play is saved first.',
+    /** the game or the setting could not be stored, so nothing changed */
+    languageHeld: 'The language stays as it is: the game or the setting could not be saved.',
     edgeScroll: 'Edge scrolling',
     autosave: 'Autosave (every minute)',
     dayNight: 'Day / night cycle',
     smoke: 'Locomotive smoke',
     weather: 'Weather and seasons',
     showFps: 'Show FPS',
-    on: 'On',
-    off: 'Off',
     controls: 'Controls',
-    controlsText:
-      'WASD / arrows / middle-drag pan · wheel zoom · M overview · 1-5 build category, then 1-9 item · Tab next item · Q / E type · Shift+Q / E category · R rotate · U upgrade track, Shift+U downgrade · X demolish · Right-click / Delete remove · Esc cancel · Space pause · + / − speed · F depot · C contracts · G craft · V roster · K market · ` debug',
+    /**
+     * The key table of the Controls tab, by group. `short` rows take half a line. Every key of the
+     * keymap has its place here (`settingsKeys.test.ts`).
+     */
+    keyGroups: [
+      {
+        title: 'Camera',
+        rows: [
+          { keys: ['W A S D'], text: 'Pan the map; the arrow keys too' },
+          { keys: ['Middle-drag'], text: 'Pan the map' },
+          { keys: ['Wheel'], text: 'Zoom in and out' },
+          { keys: ['M'], text: 'Overview map, and back' },
+          { keys: ['R', 'Enter'], text: 'Overview: record stops for the picked train, finish' },
+        ],
+      },
+      {
+        title: 'Time',
+        rows: [
+          { keys: ['Space'], text: 'Pause and resume' },
+          { keys: ['+', '−'], text: 'Faster, slower' },
+        ],
+      },
+      {
+        title: 'Screens',
+        short: [
+          { keys: ['F'], text: 'Depot' },
+          { keys: ['C'], text: 'Contracts' },
+          { keys: ['G'], text: 'Crafting' },
+          { keys: ['V'], text: 'Roster' },
+          { keys: ['K'], text: 'Market' },
+          { keys: ['`'], text: 'Debug panel' },
+        ],
+        rows: [
+          { keys: ['Esc'], text: 'Close the top screen or panel; with nothing open, the Menu' },
+        ],
+      },
+      {
+        title: 'Building',
+        rows: [
+          { keys: ['1–5'], text: 'Open a build category' },
+          { keys: ['1–9'], text: 'Pick an item of the open category' },
+          { keys: ['Tab'], text: 'Next item; Shift+Tab the previous' },
+          { keys: ['Q', 'E'], text: 'Previous and next type' },
+          { keys: ['Shift+Q', 'Shift+E'], text: 'Previous and next category' },
+          { keys: ['R'], text: 'Turn the piece' },
+          { keys: ['U', 'Shift+U'], text: 'Upgrade and downgrade track' },
+          { keys: ['X'], text: 'Demolish' },
+          { keys: ['Right-click', 'Delete'], text: 'Remove' },
+          { keys: ['Esc'], text: 'Close the tool' },
+        ],
+      },
+      {
+        title: 'Undo',
+        rows: [
+          { keys: ['Ctrl+Z'], text: 'Undo the last step' },
+          { keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], text: 'Redo it' },
+        ],
+      },
+    ],
     contractPolicy: 'Contract offers by rarity',
     contractPolicyHint:
       'Auto-accept takes the offer at once while your land has room for another active contract, and otherwise leaves it on the board; Ask leaves it on the board; Auto-deny drops it (free).',
     policy: { accept: 'Auto-accept', prompt: 'Ask', deny: 'Auto-deny' } as Record<string, string>,
     slots: 'Named saves',
-    slotName: 'Save name',
-    saveAs: 'Save as',
     loadSlot: 'Load',
     deleteSlot: 'Delete',
-    noSlots: 'No named saves yet. Type a name and press Save as.',
+    noSlots: 'No named saves yet. Use Save as... to make one.',
+    saveAsOpens: 'Name this save in Saved games (32 characters)',
     slotSaved: (n: string) => `Saved as "${n}"`,
-    saveAsTitle: 'Save game as',
-    saveAsHint: 'Name for this save. An existing save with the same name is replaced.',
+    /** Why Save now and Save as are off at the title screen with no game under it. */
+    saveOff: 'No game is being played yet: Continue or start a new game, then save.',
     diagnostics: 'Copy diagnostics',
     diagnosticsHint:
       'Diagnostics = this save plus the traffic log (stuck episodes, blocked time, junctions). Paste it into a bug report.',
@@ -1140,6 +1589,8 @@ export const STR = {
     confirmNew: 'Start a new game? The current save will be replaced on the next autosave.',
     supply: 'Production chain',
     transfer: 'Transfer',
+    transferHint:
+      'Export, Import and Copy diagnostics share this box: paste a save here to import it.',
     exportSave: 'Export to text',
     formatNote:
       'Every save carries a format version. Older saves are upgraded step by step on load; newer ones load as they are. Fields this build does not know are kept and written back.',
@@ -1195,11 +1646,7 @@ export const STR = {
     inProgress: (ago: string | null) =>
       ago ? `in progress · last autosave ${ago}` : 'in progress',
     autosaveStatus: (on: boolean, ago: string | null) =>
-      !on
-        ? 'Autosave off'
-        : ago
-          ? `Autosave on · last saved ${ago}`
-          : 'Autosave on · not saved yet',
+      !on ? 'off' : ago ? `on · last saved ${ago}` : 'on · not saved yet',
     confirmOverwrite: (n: string) => `A save named "${n}" already exists. Replace it?`,
     /** Titles of the in-game dialog that asks before a save is replaced, deleted or loaded. */
     overwriteTitle: 'Replace save',
@@ -1243,6 +1690,60 @@ export const STR = {
     groundRefused: (n: number) =>
       `Storage is full or blocked: ${n} saved game${n === 1 ? '' : 's'} could not store the ground of ${n === 1 ? 'its' : 'their'} map. ${n === 1 ? 'It gets' : 'Each gets'} it when loaded.`,
   },
+  /** The Saved games screen: one place to save under a name and to load. */
+  savedGames: {
+    title: 'Saved games',
+    save: 'Save',
+    load: 'Load',
+    saveOff: 'No game is being played yet: Continue or start a new game, then save.',
+    saveOffEditor: 'The level editor has no game to save: save the level from its own panel.',
+    saveAsWell: 'Save as',
+    nameField: 'Save name',
+    nameHint:
+      'Click and type: 32 characters at most. Enter ends the typing, Esc gives the default back.',
+    nameNote: 'Name for this save. An existing save with the same name is replaced.',
+    clashNote: (n: string) => `Replaces the save "${n}" (asks first).`,
+    pickNote: 'Click a save to use its name.',
+    saveAsAction: 'Save as',
+    saveAsHint: 'Save this game under the name',
+    saveAsClash: 'Replace that save with this game; asks first',
+    saveAsNoName: 'Type a name first',
+    named: 'Named saves',
+    autosave: 'Autosave',
+    autosaveEvery: 'every minute',
+    autosaveOff: 'off',
+    noNamedPick: 'No named saves yet: this one will be the first.',
+    /** The footer's line and the Load buttons' tips: what a load does where it is picked. */
+    loadNote: {
+      game: 'Loading replaces the game in progress (asks first).',
+      stored:
+        'Loading a named save replaces the saved game that Continue goes back to (asks first).',
+      none: 'Loading starts the game at once.',
+    },
+    loadTip: {
+      game: 'it replaces the game in progress, so it asks first',
+      stored: 'it replaces the saved game that Continue goes back to, so it asks first',
+      none: 'it starts the game at once',
+    },
+    loadThis: (effect: string) => `Load this save; ${effect}`,
+    loadLastNone: 'No save found',
+    loadLastStored: 'Load the autosave and play: what Continue loads',
+    loadLastOver: 'Load the last save; it replaces the game in progress, so it asks first',
+    deleteHint: 'Delete this save; asks first',
+  },
+  /** The New game screen. */
+  newGameScreen: {
+    title: 'New game',
+    map: 'Map',
+    seed: 'Seed',
+    seedNote: 'Generates a fresh map. Leave the seed empty for a random one.',
+    seedHint: 'Click and type: a number, or any text. Enter ends the typing.',
+    start: 'Start',
+    startHint: 'Start the new game',
+    startAsks: 'Start the new game; it replaces the saved game, so it asks first',
+    startAsksOver: 'Start the new game; it replaces the game in progress, so it asks first',
+    chain: 'Production chain',
+  },
   menu: {
     tagline: 'Rails, contracts and the luck of the draw',
     continue: 'Continue',
@@ -1250,19 +1751,60 @@ export const STR = {
     tuning: 'Game tuning',
     content: 'Content editor',
     credits: 'Credits',
+    /** The title screen's button that opens Settings on its Controls tab. */
+    controls: 'Controls',
+    controlsHint: 'The keys, in Settings',
+    newGameHint: 'A fresh map: a seed, the production chain',
+    savedGamesHint: 'Load the autosave or a named save; delete named saves',
+    levelsHint: 'Hand-made maps: play, edit, create or import one',
+    /** The Continue button's tips: at boot, over a game in play, and with no save. */
+    continueStored: 'Load the saved game and play on, at 1×',
+    continueLive: 'Back to the game in progress, as you left it: the same speed, paused or running',
+    continueNone: 'No save found. Start a new game, or load a saved one.',
+    noSaveLine: 'No save found',
     modified: '(modified)',
     levels: 'Levels',
     noLevels: 'No saved levels yet. Create one below or import a level.',
-    levelStations: (n: number) => `${n} stations`,
+    levelStations: (n: number) => `${n} station${n === 1 ? '' : 's'}`,
     play: 'Play',
     edit: 'Edit',
     delete: 'Delete',
+    deleteLevelTitle: 'Delete level',
     confirmDelete: (n: string) => `Delete level "${n}"?`,
+    playLevelTitle: 'Play level',
+    editLevelTitle: 'Edit level',
+    /** The editor's play test: its question replaces the stored game. */
+    playTestTitle: 'Play test',
     newLevel: 'New level',
     blank: 'Blank',
     generated: 'Generated',
     importLevel: 'Import level',
     importHint: 'Paste a level JSON here',
+    /** The Import level well's tooltip, for the box. */
+    importBoxHint:
+      'A level exported from the level editor; a level with the same id is replaced. Click, then paste (Ctrl+V) or type. Enter ends the typing.',
+    importButtonHint: 'Add the level to the list',
+    importEmptyHint: 'Paste a level JSON first',
+    /** Asked before a pasted level takes the place of one of the same id. */
+    replaceLevelTitle: 'Replace level',
+    confirmReplaceLevel: (n: string) =>
+      `A level with this id is already in the list ("${n}"). Replace it?`,
+    /** The import could not be kept: storage is full or blocked. */
+    importFailed: 'Could not keep the level (storage full or blocked)',
+    levelSize: 'Size',
+    levelMap: 'Map',
+    levelBlankNote: 'A blank map of grass to paint and build on in the level editor.',
+    levelGeneratedNote: 'A generated map from the seed, to change in the level editor.',
+    newLevelHint: 'Open the level editor on the new map',
+    playLevelHint: 'Play this level',
+    playLevelAsks: 'Play this level; it replaces the saved game, so it asks first',
+    playLevelOver: 'Play this level; it replaces the game in progress, so it asks first',
+    editLevelHint: 'Open it in the level editor',
+    deleteLevelHint: 'Delete this level; asks first',
+    /** A new level's name until it is given one; `date` as the browser writes it. */
+    levelDefaultName: (date: string) => `Level ${date}`,
+    /** The Map choice of New level: size is "64 x 64", as the list's "64x64" is the game's own. */
+    levelSizeOption: (n: number) => `${n} x ${n}`,
     paused: 'Paused',
     resume: 'Resume',
     saveAs: 'Save as...',
@@ -1290,6 +1832,7 @@ export const STR = {
     confirmLeaveGame:
       'This leaves the game in progress. Progress that is not saved or autosaved is lost. Continue?',
     menuButton: 'Menu',
+    menuKeyHint: 'Esc opens and closes the menu when no tool is in hand',
     supply: 'Production chain',
     /** The New game block's choice of the rules the game starts with, shown once a tuning is saved. */
     newGameTuning: 'Tuning',
@@ -1318,12 +1861,38 @@ export const STR = {
     usedFor: (names: string) => `In the game: ${names}`,
     source: 'Source',
     licence: 'Licence',
+    /** a credit's kind, as `src/data/credits.json` names it */
+    kind: { '3D model': '3D model', Music: 'Music', Icons: 'Icons' } as Record<string, string>,
   },
   prompt: {
     ok: 'OK',
     keep: 'Keep',
     yes: 'Yes',
     no: 'No',
+    /** The answers of the dialog name what they do. */
+    delete: 'Delete',
+    load: 'Load',
+    replace: 'Replace',
+    import: 'Import',
+    start: 'Start',
+    play: 'Play',
+    edit: 'Edit',
+    leave: 'Leave',
+    discard: 'Discard',
+    buy: 'Buy',
+  },
+  kit: {
+    esc: 'Esc',
+    back: 'Back',
+    close: 'Close',
+    done: 'Done',
+    backHint: 'Back · Esc',
+    /** The × of a screen, with the hotkey that closes it too. */
+    closeHint: (key: string | null) =>
+      key && key !== 'Esc' ? `Close · Esc or ${key}` : 'Close · Esc',
+    hotkey: (key: string) => `Hotkey: ${key}`,
+    pausedHint: 'The clock stands still while a menu is open.',
+    clear: 'Clear',
   },
   editor: {
     terrainDesc: 'Paint this terrain. Anything built on the tile is cleared.',
@@ -1347,6 +1916,7 @@ export const STR = {
     saveFailed: 'Could not save the level (storage full?)',
     badLevel: 'That is not a level file',
     unsaved: 'Unsaved changes will be lost. Continue?',
+    unsavedTitle: 'Unsaved changes',
     hint: 'Editor: free building, all regions open, clock stopped. Esc for the menu.',
     terrain: 'Terrain',
     levelDown: 'Level -',
@@ -1366,10 +1936,13 @@ export const STR = {
     loadPreset: 'Load',
     deletePreset: 'Delete',
     noPresets: 'No presets yet. Save the current rules under a name to keep them.',
+    overwritePresetTitle: 'Replace preset',
     confirmOverwritePreset: (n: string) => `A preset named "${n}" already exists. Replace it?`,
+    deletePresetTitle: 'Delete preset',
     confirmDeletePreset: (n: string) => `Delete the preset "${n}"?`,
     presetSaved: (n: string) => `Preset "${n}" saved`,
     presetSaveFailed: (n: string) => `Could not save the preset "${n}" (storage full or blocked)`,
+    loadPresetTitle: 'Load preset',
     confirmLoadPreset: (n: string) =>
       `Load the preset "${n}"? It replaces the tuning of the game in play and changes nothing for new games.`,
     presetLoaded: (n: string) => `Preset "${n}" loaded`,
@@ -1411,20 +1984,64 @@ export const STR = {
     /** an optional flag set on the entry */
     flagOn: 'yes',
     flagOff: 'no',
+    transfer: 'Transfer',
+    /** After Import JSON: how many of the bundle's tables came in; Apply keeps them. */
+    imported: (n: number) =>
+      `${n} table${n === 1 ? '' : 's'} imported into the editor. Apply keeps them.`,
     export: 'Export JSON',
     import: 'Import JSON',
     jsonHint: 'bundle JSON',
     badJson: 'Invalid JSON',
     reset: 'Reset to shipped data',
+    resetTitle: 'Discard custom content',
     confirmReset: 'Discard all custom content and reload?',
     apply: 'Apply and reload',
-    applyNote: 'Applying reloads the page; the current game is saved first.',
+    /** The footer's line while nothing is wrong: what Apply does. */
+    applyNote: 'Applying reloads the page; a game in play is saved first.',
+    /** Apply waits: `n` boxes hold a value the form could not read, framed red. */
+    refusedValues: (n: number) =>
+      `${n} value${n === 1 ? '' : 's'} could not be read (the red box${n === 1 ? '' : 'es'}): fix ${n === 1 ? 'it' : 'them'} first`,
+    /** After Import JSON: tables whose shape the editor cannot read were left out. */
+    skipped: (n: number) =>
+      `${n} table${n === 1 ? '' : 's'} left out: not in the shape the editor reads.`,
+    /** In place of a table the editor cannot draw. */
+    badShape:
+      'This table is not in the shape the editor reads. Reset to shipped data, or import a corrected one.',
   },
   train: {
     title: 'Train',
     consist: 'Consist and tanks',
     tripStats: 'Loop statistics',
     gone: 'This train is no longer in service.',
+    overview: 'Overview',
+    performance: 'Performance',
+    status: 'Status',
+    tanks: 'Tanks',
+    tilesPerSecond: 'tiles/s',
+    tilesPerSecondSq: 'tiles/s²',
+    tile: 'tile',
+    staticTag: 'static',
+    engineModes: 'Engine modes',
+    engineMode: 'Mode',
+    engineOf: (i: number, n: number) => `engine ${i} of ${n}`,
+    wagonOf: (i: number, n: number) => `wagon ${i} of ${n}`,
+    speedAndPower: 'speed and power',
+    capacity: 'capacity',
+    type: 'Type',
+    carries: 'Carries',
+    size: 'Size',
+    refuelCart: 'Refuelling cart',
+    cargoAboard: 'Cargo aboard',
+    runningEmpty: 'Running empty.',
+    controlClassLabel: 'Control class',
+    levelBase: 'Lv 1 · the model as built',
+    levelGain: (level: number, pct: number, what: string) => `Lv ${level} · +${pct} % ${what}`,
+    noTanks: 'No fuel or water tanks: an electric train runs on the wire.',
+    tanksFull: 'The tanks are full.',
+    nameEmpty: 'A train needs a name.',
+    noColour: 'That is not one of the colour codes.',
+    /** the colour codes, in the order of `TRAIN_COLOURS` */
+    colour: ['grey', 'red', 'amber', 'green', 'blue', 'violet'],
     state: 'State',
     note: 'Note',
     speed: 'Top speed',
@@ -1507,6 +2124,8 @@ export const STR = {
     driftHint: 'Fuel prices (oil, diesel, crude) wander up to ±40 % on a slow weekly walk.',
     hint: 'Prices are per unit. A store holds up to its cap of each good.',
     deals: 'Standing deals',
+    spot: 'Spot prices',
+    noStore: 'No store is selected. Pick one on the top bar.',
     dealsHint: (d: number) =>
       `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the store's cap or when funds run out; selling takes what is on hand.`,
     dealBuy: 'Buy / cycle',
@@ -1632,12 +2251,23 @@ export const STR = {
     cannotPlace: 'Could not place train',
   },
   topbar: {
+    /** the menu bar's entries (src/ui/menuBarModel.ts) */
+    menuTip: 'Menu · Esc',
+    game: 'Game',
+    fleet: 'Fleet',
+    economy: 'Economy',
+    view: 'View',
+    /** their rows */
+    save: 'Save',
+    quit: 'Quit to title',
     depot: 'Depot',
+    signals: 'Signals',
     contracts: 'Contracts',
     gacha: 'Gacha',
-    craft: 'Craft',
+    crafting: 'Crafting',
     roster: 'Roster',
     market: 'Market',
+    overview: 'Overview map',
     settings: 'Settings',
     cheat: 'Cheat',
     cheated: '+$10,000 and every resource topped up',
@@ -1653,6 +2283,8 @@ export const STR = {
   },
   town: {
     title: 'Towns',
+    gone: 'That town is gone',
+    nameEmpty: 'A town needs a name',
     none: 'No towns yet. Place a Townhouse, then a House and a warehouse within 7 tiles of it.',
     people: 'people',
     summary: (st: number, works: number, houses: number) =>
@@ -1709,23 +2341,20 @@ export const STR = {
     town: 'Town',
     level: (l: number) => `Level ${l}`,
     biome: 'Biome',
-    produces: 'Produces',
-    accepts: 'Accepts',
     storage: 'Storage',
     platforms: 'Platforms',
     loadRate: 'Loading',
     perWeek: (v: number) => `${v} / week`,
     perSec: (v: number) => `${v} / s`,
     maxed: 'Max level',
-    unlocks: (c: string) => `Next: ${c}`,
     demolish: 'Demolish',
     rename: 'Rename',
+    renameTitle: 'Rename station',
+    renameHint: 'The new name of this station.',
     nameEmpty: 'A station needs a name',
     noPlatform: 'No adjacent track!',
     orphaned: (n: string) => `${n} lost its platform track`,
     boost: (pct: number) => `Water tower: loading +${pct}%`,
-    market: 'Spot market',
-    marketHint: 'Paid for cargo without a contract. Demand recovers over a week.',
     contracts: 'Contracts here',
     /**
      * A harvesting station's kind in the plural, by `StationDef.id`: written out, because adding
@@ -1752,3 +2381,23 @@ export const STR = {
     makesAnywhere: 'Makes {res}: {amount} a week at level {level}.',
   },
 } as const;
+
+/**
+ * The strings the simulation keeps in its state, which reach the save, and compares: a train's
+ * note. The screen shows them through `noteText`. Everything else reads `STR`.
+ */
+export const ENGLISH = EN;
+
+/** A literal's type as what it is: a text that a translation may word its own way. */
+type Widen<T> = T extends string
+  ? string
+  : T extends (...args: infer A) => infer R
+    ? (...args: A) => Widen<R>
+    : T extends object
+      ? { readonly [K in keyof T]: Widen<T[K]> }
+      : T;
+/** The shape of a translation: every key of the English table, each function with its arguments. */
+export type Strings = Widen<typeof EN>;
+
+/** All user-facing strings, in the language of this page load. */
+export const STR: typeof EN = LANGUAGE === 'hu' ? (HU as unknown as typeof EN) : EN;

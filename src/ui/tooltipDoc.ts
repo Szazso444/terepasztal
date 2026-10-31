@@ -120,11 +120,12 @@ function asParts(p: Inline | Parts): Parts {
 // ---------------------------------------------------------------- numbers in text
 
 /**
- * A number token in a sentence: an optional sign, $, ×, then digits with thousands commas and a
- * decimal part, then an optional % or ×. Not after a letter or a digit, so "Mk2" is a name. The
- * words around it (the "h" of "9 h", the "u" of "12u") stay out.
+ * A number token in a sentence: an optional sign, $, ×, then digits with thousands apart (a comma,
+ * or the space Hungarian writes), a decimal part (a point or a comma), then an optional %, × or
+ * the $ after a Hungarian amount. Not after a letter or a digit, so "Mk2" is a name. The words
+ * around it (the "h" of "9 h", the "u" of "12u") stay out.
  */
-const NUMBER = /(?<![\p{L}\d])[+−]?\$?×?\d+(?:,\d{3})*(?:\.\d+)?[%×]?/gu;
+const NUMBER = /(?<![\p{L}\d])[+−]?\$?×?\d+(?:[,\u00a0]\d{3})*(?:[.,]\d+)?(?:\u00a0\$)?[%×]?/gu;
 
 /** Plain text with each number token made a bold one. */
 export function richText(s: string): Inline[] {

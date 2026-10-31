@@ -11,6 +11,8 @@ import { resetStationIds } from '../sim/stations';
 import { resetTrainIds } from '../sim/trains';
 import { CHUNK_TILES, expandSave, ownsBorderChunk } from '../sim/expand';
 import { unbuildable } from '../sim/build';
+import { Commands } from '../sim/commands';
+import type { HistoryStep } from '../sim/history';
 import { INTENT_KEY, type Intent } from '../intent';
 import { bootPlan } from './boot';
 import { MAX_WORLD_CHUNKS } from '../sim/ground';
@@ -64,6 +66,7 @@ interface Toast {
 interface PushedNotice {
   key: string;
   kind: string;
+  type: string;
   text: string;
   target: unknown;
   ttl: number;
@@ -867,22 +870,29 @@ describe('the end of a load (Game.storeLoadedGround)', () => {
     }
   });
 
-  it('gives stored ground it could not read one toast and one notice, and no write', () => {
+  it("gives stored ground it could not read one notice, its toast its row's, and no write", () => {
     const g = standIn();
     g.host.ground = ground(0, 2);
     settle(g);
     const text = STR.saves.groundUnreadable(2);
-    expect(g.toasts).toEqual([{ text, kind: 'warn' }]);
+    expect(g.toasts).toEqual([]);
     expect(g.notices).toEqual([
-      { key: 'save:ground', kind: 'warn', text, target: null, ttl: UNREADABLE_NOTICE_TTL },
+      {
+        key: 'save:ground',
+        kind: 'warn',
+        type: 'note',
+        text,
+        target: null,
+        ttl: UNREADABLE_NOTICE_TTL,
+      },
     ]);
     expect(store.items.size).toBe(0);
-    // with ground generated as well, the write is made and its refusal follows the notice's toast
+    // with ground generated as well, the write is made and its refusal is still a toast
     const h = standIn();
     h.host.ground = ground(1, 2);
     store.refuses = true;
     settle(h);
-    expect(h.toasts).toEqual([{ text, kind: 'warn' }, unsaved]);
+    expect(h.toasts).toEqual([unsaved]);
     expect(h.notices).toHaveLength(1);
   });
 
@@ -920,8 +930,14 @@ describe('the end of a load (Game.storeLoadedGround)', () => {
     const unreadable = built?.unreadable ?? 0;
     if (unreadable > 0) {
       const text = STR.saves.groundUnreadable(unreadable);
-      toasts.push({ text, kind: 'warn' });
-      notices.push({ key: 'save:ground', kind: 'warn', text, target: null, ttl: 180 });
+      notices.push({
+        key: 'save:ground',
+        kind: 'warn',
+        type: 'note',
+        text,
+        target: null,
+        ttl: 180,
+      });
     }
     const added = (built?.added ?? 0) > 0;
     const writes = added && hold === 'none';
@@ -1102,6 +1118,7 @@ function gameOn(w: SimWorld): Game {
     trade: w.trade,
     clock: w.clock,
     notices: w.notices,
+    commands: new Commands(w),
     camera: { x: 640, y: 320, zoomIndex: 2, zoom: 1, centerOn() {} },
     sim: { lastDay: 0 },
     settings: { weather: false },
@@ -1500,6 +1517,38 @@ describe('stores through Game.snapshot and Game.applySave', () => {
     over.stores.grid.famine = true;
     gameOn(over).applySave(structuredClone(saved));
     expect(over.stores.toJSON()).toEqual(w.stores.toJSON());
+  });
+
+  /** A step of the game before: taking it back in the game after would be a mistake. */
+  const stale: HistoryStep = {
+    label: 'a step of the game before',
+    undo: () => {
+      throw new Error('undone across a load');
+    },
+    redo: () => {
+      throw new Error('redone across a load');
+    },
+  };
+
+  it('a load leaves nothing to undo or redo', () => {
+    const saved = gameOn(scene().w).snapshot();
+    const game = gameOn(fresh());
+    const { history } = game.commands;
+    history.push(stale);
+    history.push({ label: 'and another', undo: () => ({ ok: true }), redo: () => ({ ok: true }) });
+    history.undo();
+    game.applySave(structuredClone(saved));
+    expect(history.canUndo).toBe(false);
+    expect(history.canRedo).toBe(false);
+    expect(history.undo().ok).toBe(false);
+  });
+
+  it('a new game leaves nothing to undo', () => {
+    const game = gameOn(fresh());
+    game.commands.history.push(stale);
+    game.startFresh();
+    expect(game.commands.history.canUndo).toBe(false);
+    expect(game.commands.history.undo().ok).toBe(false);
   });
 
   it('a new game puts the start stock in the start depot', () => {

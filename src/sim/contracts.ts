@@ -1,4 +1,4 @@
-import { content, type ContractTemplate, type ContractRarityDef } from '../data/content';
+import { content, dataName, type ContractTemplate, type ContractRarityDef } from '../data/content';
 import { rules, daySeconds, type Rules } from './rules';
 import { Rng } from '../engine/rng';
 import type { Station } from './stations';
@@ -44,6 +44,14 @@ export interface ContractEvent {
 const contractData = content.contracts;
 const TEMPLATES: ContractTemplate[] = contractData.templates;
 const RARITIES: ContractRarityDef[] = contractData.rarities;
+const TITLES = new Map(TEMPLATES.map((t) => [dataName(t), t.name]));
+/**
+ * A contract's name as the player reads it. A contract keeps the name the data gives its template,
+ * in English whatever the language on screen; the save holds that one.
+ */
+export function contractTitle(name: string): string {
+  return TITLES.get(name) ?? name;
+}
 
 /** Numbers behind a rarity (Common when the data lacks it). */
 export function rarityDef(id: ContractRarity): ContractRarityDef {
@@ -196,7 +204,7 @@ export class ContractBoard {
     const c: Contract = {
       id: this.nextId++,
       templateId: tpl.id,
-      name: tpl.name,
+      name: dataName(tpl),
       rarity: rar.id as ContractRarity,
       cargo: pair.cargo,
       amount,
@@ -230,6 +238,15 @@ export class ContractBoard {
   decline(c: Contract) {
     if (c.status !== 'offer') return;
     c.status = 'expired';
+  }
+
+  /**
+   * The station a contract lapsed for is back (an undo): it stands as it did, its deadline as it
+   * was, in the list again if the list has pruned it.
+   */
+  revive(c: Contract, status: 'offer' | 'active') {
+    c.status = status;
+    if (!this.contracts.includes(c)) this.contracts.push(c);
   }
 
   /** Fine for cancelling an active contract. */

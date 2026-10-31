@@ -71,7 +71,7 @@ tanks. Normal service has the ordinary resource cost.
 
 Choose **Utility → Semaphore** and place a post on track. Rotate with **R** before placement,
 or select it afterwards and use **Rotate direction**. The panel names the governed travel
-direction and highlights the protected stretch. The header's **Signals?** button opens the
+direction and highlights the protected stretch. **Signals** in the top bar's Fleet menu opens the
 same practical guidance inside the game.
 
 ```text

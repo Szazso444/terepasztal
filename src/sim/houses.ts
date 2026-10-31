@@ -130,6 +130,10 @@ export class HouseRegistry {
     if (!this.houses.has(k))
       this.houses.set(k, { x: d.x, y: d.y, level: 1, residents: 0, progress: 0, grow: 0, full: 0 });
   }
+  /** A house back with its decor piece (an undo): `sync` then finds it standing, as it was. */
+  restore(h: House) {
+    this.houses.set(this.key(h.x, h.y), h);
+  }
   /** Pre-built houses (a level's content) stand finished with their first residents. */
   finishAll() {
     for (const h of this.houses.values())
