@@ -90,6 +90,8 @@ export class MarketScreen implements Screen {
 
   onOpen() {
     this.build();
+    // the cells are filled now, not at the next refresh
+    this.update();
   }
   refresh() {
     this.scroll.restore();
