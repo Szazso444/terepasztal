@@ -32,7 +32,7 @@ export class BuildingPanel {
   ) {
     this.root = el(
       'div',
-      { id: 'station-panel', class: 'panel' },
+      { id: 'building-panel', class: 'panel' },
       el(
         'div',
         { class: 'panel-title' },
