@@ -136,6 +136,22 @@ export class TrackWear {
     }
     return this.failed;
   }
+  /** Every unusable piece once, by tile order: its anchor tile and all its tiles. */
+  failedPieces(): { x: number; y: number; tiles: { x: number; y: number }[] }[] {
+    const { track } = this;
+    const out: { x: number; y: number; tiles: { x: number; y: number }[] }[] = [];
+    // a curve's tiles share one wear, so the first tile met stands for the piece
+    const seen = new Set<object>();
+    for (const k of [...this.unusable].sort((a, b) => a - b)) {
+      const p = track.pieces.get(k);
+      if (!p || seen.has(p.wear)) continue;
+      seen.add(p.wear);
+      const x = k % track.w;
+      const y = Math.floor(k / track.w);
+      out.push({ ...track.anchorOf(x, y), tiles: track.unitTiles(x, y) });
+    }
+    return out;
+  }
   /**
    * Tell the trains what closed or opened since the last call: one rise of `track.version`, however
    * many pieces, so a batch of failures costs one round of path checks.

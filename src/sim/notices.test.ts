@@ -15,7 +15,7 @@ vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
 /** The wear of a world with no track, for a case that builds its builder by hand. */
-const NO_WEAR = { unusable: new Set<number>(), track: { pieces: new Map(), w: 1 } } as never;
+const NO_WEAR = { failedPieces: () => [] } as never;
 
 /** The train fields `Notices.refresh` reads; each case below sets what makes it report. */
 function train(state: string, more: Partial<Train> = {}): Train {

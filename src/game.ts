@@ -147,6 +147,7 @@ import { BuildingPanel } from './ui/buildingPanel';
 import { Floaters } from './render/floaters';
 import { Halos } from './render/halo';
 import { WorkBars } from './render/workBars';
+import { TrackWarnings } from './render/trackWarnings';
 import { hoursLeft, type Upgraded } from './sim/upgrade';
 import type { ReclassDir } from './world/reclass';
 import { PowerLines } from './render/powerLines';
@@ -275,6 +276,10 @@ export class Game implements UiHost {
   halos!: Halos;
   /** a bar over each building being upgraded */
   workBars!: WorkBars;
+  /** the warning triangles on track closed for wear */
+  private trackWarnings!: TrackWarnings;
+  /** the track version they were last made for */
+  private warnedFor = -1;
   /** relaid pieces (their footprints) waiting for their shimmer to start */
   private pieceHalos: { x: number; y: number; w: number; h: number }[] = [];
   private autosaveTimer = 0;
@@ -1150,6 +1155,9 @@ export class Game implements UiHost {
     );
     this.halos = new Halos(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
     this.workBars = new WorkBars(this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
+    this.trackWarnings = new TrackWarnings(this.world.overlay, (x, y) =>
+      this.world.surfacePoint(x, y),
+    );
     this.powerLines = new PowerLines((n) => {
       const p = this.world.surfacePoint(n.x, n.y);
       if (n.plant) return { x: p.x - 12, y: p.y - 42 };
@@ -2352,10 +2360,19 @@ export class Game implements UiHost {
       );
       return;
     }
+    // only a pause this window took is its to end: a menu or popup may hold one already
+    const took = !this.paused;
+    const resume = () => {
+      // a menu that opened over the window paused first and closed it after: the menu's close ends it
+      if (!this.ui.menuOpen) this.resumeGame();
+    };
     this.pauseGame();
     this.lookAtTile({ x, y });
     const screen = this.ui.wearAlert;
-    screen.onDismiss = () => this.resumeGame();
+    screen.onDismiss = () => {
+      screen.onDismiss = null;
+      if (took) queueMicrotask(resume);
+    };
     screen.show(x, y);
   }
   /** Keep the camera on the train followed; a train gone ends the following. */
@@ -2554,12 +2571,27 @@ export class Game implements UiHost {
     this.startPieceHalos();
     this.halos.update(dt);
     this.workBars.sync([...this.builder.works(), ...this.houses.works()]);
+    this.syncTrackWarnings();
     this.powerLines.update(dt);
     this.updateTrainMarks(dt);
     this.minimap.draw(this.minimapMarks());
     if (this.debug.open) this.updateDebug();
   }
 
+  /**
+   * A triangle on each unusable piece, at its centre. Made again only when the track version has
+   * moved, which a closure, a repair, a demolition and a load all do.
+   */
+  private syncTrackWarnings() {
+    if (this.warnedFor === this.track.version) return;
+    this.warnedFor = this.track.version;
+    this.trackWarnings.sync(
+      this.builder.wear.failedPieces().map(({ tiles }) => ({
+        x: tiles.reduce((s, t) => s + t.x, 0) / tiles.length,
+        y: tiles.reduce((s, t) => s + t.y, 0) / tiles.length,
+      })),
+    );
+  }
   /** The track tiles the minimap marks, listed again only when the track changes. */
   private minimapTrack: {
     track: TrackGraph;

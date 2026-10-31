@@ -71,3 +71,24 @@ describe('notices for unusable track', () => {
     expect(ALERT_DEFS.trackworn).toMatchObject({ severity: 'attention', start: ['icon', 'pin'] });
   });
 });
+
+describe('the unusable pieces', () => {
+  it('are listed once each, with their anchor and every tile', () => {
+    const w = simWorld({ terrain: 'grass', size: 32 });
+    w.track.place(2, 2, 'straight', 1, 'branch');
+    const curve = w.track.place(8, 8, 'curve', 0, 'main');
+    w.track.get(2, 2)!.wear.health = 0;
+    w.track.get(curve[0].x, curve[0].y)!.wear.health = 0;
+    const list = w.builder.wear.failedPieces();
+    expect(list).toHaveLength(2);
+    const straight = list.find((p) => p.tiles.length === 1)!;
+    expect(straight).toMatchObject({ x: 2, y: 2 });
+    const turn = list.find((p) => p.tiles.length > 1)!;
+    expect(turn.tiles).toHaveLength(curve.length);
+    expect(w.track.get(turn.x, turn.y)!.unit).toMatchObject({ ax: turn.x, ay: turn.y });
+  });
+
+  it('are none when every piece is sound', () => {
+    expect(failed(0).builder.wear.failedPieces()).toEqual([]);
+  });
+});

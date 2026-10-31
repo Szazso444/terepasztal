@@ -55,17 +55,7 @@ export class Notices {
 
   /** A notice for each unusable piece, or one with a count when there are many. */
   private brokenTrack(wear: TrackWear, out: Notice[]) {
-    const { track } = wear;
-    const keys = [...wear.unusable].sort((a, b) => a - b);
-    // one entry for each piece: a curve's tiles share one wear
-    const seen = new Set<object>();
-    const at: { x: number; y: number }[] = [];
-    for (const k of keys) {
-      const p = track.pieces.get(k);
-      if (!p || seen.has(p.wear)) continue;
-      seen.add(p.wear);
-      at.push(track.anchorOf(k % track.w, Math.floor(k / track.w)));
-    }
+    const at = wear.failedPieces();
     if (!at.length) return;
     const notice = (key: string, text: string, t: { x: number; y: number }): Notice => ({
       key,
