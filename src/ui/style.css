@@ -2250,6 +2250,10 @@ html[lang='hu'] .btn.tp-tab {
   font-size: 10.5px;
   color: var(--text-dim);
 }
+/* its title wraps: a track piece's name, type and all, is longer than the head in any language */
+#build-info .panel-name {
+  white-space: normal;
+}
 #build-info {
   display: flex;
   flex-direction: column;
