@@ -64,10 +64,11 @@ export const AUTHOR_SCALE: Record<string, number> = {
   fuel_stop: 1.25,
 };
 /**
- * Families drawn from their 3D model's render at its real size, measured against the walker
- * (the author, 2026-10-27; assets/source/models-2026-10-27, tools/illustrated-sprites.mjs): the
- * frame is packed at the size it is drawn, so its scale is 1 and neither the references above
- * nor the author's pick apply to it. Every level of a family shows the same picture.
+ * Families drawn from their 3D model, painted, at its real size measured against the walker and
+ * fitted to its tiles (the author, 2026-10-27 and 10-29; assets/source/models,
+ * tools/illustrated-sprites.mjs): the frame is packed at the size it is drawn, so its scale is 1
+ * and neither the references above nor the author's pick apply to it. Every level of a family
+ * shows the same picture.
  */
 export const MODEL_FAMILIES: ReadonlySet<string> = new Set([
   'farm',

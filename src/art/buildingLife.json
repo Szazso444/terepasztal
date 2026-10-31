@@ -1,21 +1,21 @@
 {
   "pots": {
-    "structures/farm_1": [{ "dx": 8.62, "dy": -55.35, "work": false }],
-    "structures/farm_2": [{ "dx": 8.62, "dy": -55.35, "work": false }],
-    "structures/farm_3": [{ "dx": 8.62, "dy": -55.35, "work": false }],
-    "structures/farm_4": [{ "dx": 8.62, "dy": -55.35, "work": false }],
-    "structures/farm_5": [{ "dx": 8.62, "dy": -55.35, "work": false }],
-    "structures/lumber_1": [{ "dx": 14.2, "dy": -38.47, "work": true }],
-    "structures/lumber_2": [{ "dx": 14.2, "dy": -38.47, "work": true }],
-    "structures/lumber_3": [{ "dx": 14.2, "dy": -38.47, "work": true }],
+    "structures/farm_1": [{ "dx": 7.15, "dy": -46.85, "work": false }],
+    "structures/farm_2": [{ "dx": 7.15, "dy": -46.85, "work": false }],
+    "structures/farm_3": [{ "dx": 7.15, "dy": -46.85, "work": false }],
+    "structures/farm_4": [{ "dx": 7.15, "dy": -46.85, "work": false }],
+    "structures/farm_5": [{ "dx": 7.15, "dy": -46.85, "work": false }],
+    "structures/lumber_1": [{ "dx": 14.11, "dy": -42.41, "work": true }],
+    "structures/lumber_2": [{ "dx": 14.11, "dy": -42.41, "work": true }],
+    "structures/lumber_3": [{ "dx": 14.11, "dy": -42.41, "work": true }],
     "structures/lumber_3_r1": [{ "dx": 3.5, "dy": -44, "work": true }],
     "structures/lumber_3_r2": [{ "dx": -3.5, "dy": -44, "work": true }],
     "structures/lumber_3_r3": [{ "dx": 3.5, "dy": -44, "work": true }],
-    "structures/lumber_4": [{ "dx": 14.2, "dy": -38.47, "work": true }],
+    "structures/lumber_4": [{ "dx": 14.11, "dy": -42.41, "work": true }],
     "structures/lumber_4_r1": [{ "dx": 4, "dy": -44, "work": true }],
     "structures/lumber_4_r2": [{ "dx": -4, "dy": -44, "work": true }],
     "structures/lumber_4_r3": [{ "dx": 4, "dy": -44, "work": true }],
-    "structures/lumber_5": [{ "dx": 14.2, "dy": -38.47, "work": true }],
+    "structures/lumber_5": [{ "dx": 14.11, "dy": -42.41, "work": true }],
     "structures/lumber_5_r1": [{ "dx": 4, "dy": -44, "work": true }],
     "structures/lumber_5_r2": [{ "dx": -4, "dy": -44, "work": true }],
     "structures/lumber_5_r3": [{ "dx": 4, "dy": -44, "work": true }],
@@ -39,33 +39,33 @@
     "structures/pump_5_r1": [{ "dx": 0.5, "dy": -41, "work": true }],
     "structures/pump_5_r2": [{ "dx": -0.5, "dy": -41, "work": true }],
     "structures/pump_5_r3": [{ "dx": 0.5, "dy": -41, "work": true }],
-    "structures/station_1": [{ "dx": 6.69, "dy": -47.29, "work": false }],
-    "structures/station_2": [{ "dx": 6.69, "dy": -47.29, "work": false }],
+    "structures/station_1": [{ "dx": 4.91, "dy": -42.06, "work": false }],
+    "structures/station_2": [{ "dx": 4.91, "dy": -42.06, "work": false }],
     "structures/station_2_r1": [{ "dx": 1.5, "dy": -48, "work": false }],
     "structures/station_2_r2": [{ "dx": -1.5, "dy": -48, "work": false }],
     "structures/station_2_r3": [{ "dx": 1.5, "dy": -48, "work": false }],
-    "structures/station_3": [{ "dx": 6.69, "dy": -47.29, "work": false }],
-    "structures/station_4": [{ "dx": 6.69, "dy": -47.29, "work": false }],
-    "structures/station_5": [{ "dx": 6.69, "dy": -47.29, "work": false }],
+    "structures/station_3": [{ "dx": 4.91, "dy": -42.06, "work": false }],
+    "structures/station_4": [{ "dx": 4.91, "dy": -42.06, "work": false }],
+    "structures/station_5": [{ "dx": 4.91, "dy": -42.06, "work": false }],
     "structures/town_1": [
-      { "dx": -22.77, "dy": -84.78, "work": false },
-      { "dx": 34.23, "dy": -56.28, "work": false }
+      { "dx": -19.32, "dy": -72.38, "work": false },
+      { "dx": 29.18, "dy": -48.38, "work": false }
     ],
     "structures/town_2": [
-      { "dx": -22.77, "dy": -84.78, "work": false },
-      { "dx": 34.23, "dy": -56.28, "work": false }
+      { "dx": -19.32, "dy": -72.38, "work": false },
+      { "dx": 29.18, "dy": -48.38, "work": false }
     ],
     "structures/town_3": [
-      { "dx": -22.77, "dy": -84.78, "work": false },
-      { "dx": 34.23, "dy": -56.28, "work": false }
+      { "dx": -19.32, "dy": -72.38, "work": false },
+      { "dx": 29.18, "dy": -48.38, "work": false }
     ],
     "structures/town_4": [
-      { "dx": -22.77, "dy": -84.78, "work": false },
-      { "dx": 34.23, "dy": -56.28, "work": false }
+      { "dx": -19.32, "dy": -72.38, "work": false },
+      { "dx": 29.18, "dy": -48.38, "work": false }
     ],
     "structures/town_5": [
-      { "dx": -22.77, "dy": -84.78, "work": false },
-      { "dx": 34.23, "dy": -56.28, "work": false }
+      { "dx": -19.32, "dy": -72.38, "work": false },
+      { "dx": 29.18, "dy": -48.38, "work": false }
     ],
     "structures/townhouse": [{ "dx": 15.1, "dy": -49.25, "work": false }],
     "structures/townhouse_2": [{ "dx": 15.1, "dy": -49.25, "work": false }],
@@ -75,24 +75,24 @@
     "structures/townhouse_s1": [{ "dx": 10.4, "dy": -39, "work": false }],
     "structures/townhouse_s2": [{ "dx": 10.4, "dy": -39, "work": false }],
     "structures/warehouse_1": [
-      { "dx": -31.92, "dy": -63.19, "work": false },
-      { "dx": 24.39, "dy": -38.44, "work": false }
+      { "dx": -26.31, "dy": -52.9, "work": false },
+      { "dx": 23.82, "dy": -31.91, "work": false }
     ],
     "structures/warehouse_2": [
-      { "dx": -31.92, "dy": -63.19, "work": false },
-      { "dx": 24.39, "dy": -38.44, "work": false }
+      { "dx": -26.31, "dy": -52.9, "work": false },
+      { "dx": 23.82, "dy": -31.91, "work": false }
     ],
     "structures/warehouse_3": [
-      { "dx": -31.92, "dy": -63.19, "work": false },
-      { "dx": 24.39, "dy": -38.44, "work": false }
+      { "dx": -26.31, "dy": -52.9, "work": false },
+      { "dx": 23.82, "dy": -31.91, "work": false }
     ],
     "structures/warehouse_4": [
-      { "dx": -31.92, "dy": -63.19, "work": false },
-      { "dx": 24.39, "dy": -38.44, "work": false }
+      { "dx": -26.31, "dy": -52.9, "work": false },
+      { "dx": 23.82, "dy": -31.91, "work": false }
     ],
     "structures/warehouse_5": [
-      { "dx": -31.92, "dy": -63.19, "work": false },
-      { "dx": 24.39, "dy": -38.44, "work": false }
+      { "dx": -26.31, "dy": -52.9, "work": false },
+      { "dx": 23.82, "dy": -31.91, "work": false }
     ]
   },
   "cranes": {}
