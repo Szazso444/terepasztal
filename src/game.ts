@@ -66,6 +66,7 @@ import { STR } from './strings';
 import { content, sourceContent } from './data/content';
 import { TrackGraph, liftLegacyTrack } from './world/track';
 import { Builder } from './sim/build';
+import { stateOf, wearsAtAll } from './sim/wear';
 import { Economy } from './sim/economy';
 import { BuildController } from './ui/buildController';
 import { Toasts } from './ui/toast';
@@ -1026,6 +1027,7 @@ export class Game implements UiHost {
         120,
       );
     this.fleet.junctions.onClear = (id) => this.notices.drop(`j${id}`);
+    this.builder.wear.onFirst = (kind, x, y) => this.onFirstWear(kind, x, y);
     this.fleet.onFlow = (x, y, r, d) => this.floaters.spawn(x, y, r, d);
     this.fleet.onPassengers = (st, n, b) =>
       b ? this.people.board(st, n) : this.people.alight(st, n);
@@ -1094,6 +1096,12 @@ export class Game implements UiHost {
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
     await this.world.loadBridgeSurfaces();
     this.world.onBridgeStyle = () => this.refreshBridges();
+    // worn track is tinted as it is drawn, and again when its state changes
+    this.world.trackWearAt = (i) => {
+      const p = this.track.get(i % this.map.w, Math.floor(i / this.map.w));
+      return p ? stateOf(p) : 'healthy';
+    };
+    this.builder.wear.onChange = (tiles) => this.world.retintTracks(tiles);
     this.world.occupied = (x, y) =>
       !!(
         this.builder.stationAt(x, y) ||
@@ -2059,9 +2067,13 @@ export class Game implements UiHost {
   focusNotice(n: Notice) {
     const p = this.noticePos(n);
     if (!p) return;
-    this.follow.note('alert');
     if (n.target?.kind === 'junction')
       this.flashJunction(this.fleet.junctions.contributingTiles(n.target.id) ?? n.target.tiles);
+    this.lookAtTile(p);
+  }
+  /** Pan to a tile: the overview pans and stays, the field view goes there. */
+  private lookAtTile(p: { x: number; y: number }) {
+    this.follow.note('alert');
     if (this.viewTarget === 1) {
       this.overviewFocus = p;
       // leaving the overview lands on it too
@@ -2322,6 +2334,30 @@ export class Game implements UiHost {
   stuckFor(id: number) {
     return this.stuckNow.get(id) ?? null;
   }
+  /**
+   * The first worn piece is a notice with a target and the game runs on; the first piece to fail
+   * stops the game, shows it and opens the window, which resumes at the earlier speed on closing.
+   */
+  private onFirstWear(kind: 'degraded' | 'unusable', x: number, y: number) {
+    if (kind === 'degraded') {
+      this.notices.push(
+        {
+          key: 'track:wearing',
+          kind: 'warn',
+          type: 'trackworn',
+          text: STR.notice.trackWearing,
+          target: { kind: 'tile', x, y },
+        },
+        180,
+      );
+      return;
+    }
+    this.pauseGame();
+    this.lookAtTile({ x, y });
+    const screen = this.ui.wearAlert;
+    screen.onDismiss = () => this.resumeGame();
+    screen.show(x, y);
+  }
   /** Keep the camera on the train followed; a train gone ends the following. */
   private followTrain(dt: number) {
     const find = (id: number) => {
@@ -2502,6 +2538,7 @@ export class Game implements UiHost {
         trains: this.fleet.trains,
         builder: this.builder,
         power: this.power,
+        wear: this.builder.wear,
         stuck,
         contracts: { board: this.contracts, now: this.clock.time },
       });
@@ -2528,16 +2565,22 @@ export class Game implements UiHost {
     track: TrackGraph;
     version: number;
     tiles: { x: number; y: number }[];
+    broken: { x: number; y: number }[];
   } | null = null;
   private minimapMarks() {
     let kept = this.minimapTrack;
     if (kept?.track !== this.track || kept.version !== this.track.version) {
       const tiles: { x: number; y: number }[] = [];
       for (const t of this.track.tiles()) tiles.push({ x: t.x, y: t.y });
-      kept = this.minimapTrack = { track: this.track, version: this.track.version, tiles };
+      const broken = [...this.builder.wear.unusable].map((k) => ({
+        x: k % this.map.w,
+        y: Math.floor(k / this.map.w),
+      }));
+      kept = this.minimapTrack = { track: this.track, version: this.track.version, tiles, broken };
     }
     return {
       track: kept.tiles,
+      broken: kept.broken,
       stations: this.builder.stations.map((s) => ({ x: s.x, y: s.y })),
       trains: this.fleet.trains
         .filter((t) => t.poses.length)
@@ -2672,6 +2715,13 @@ export class Game implements UiHost {
     const line = p.cls2 && p.cls2 !== p.cls ? `${L[p.cls]} × ${L[p.cls2]}` : L[p.cls];
     return `${content.track.pieces[p.kind]?.name ?? p.kind} (${line})`;
   }
+  /** The health and state of the track on a tile, for its tooltip; none where nothing wears. */
+  private wearAt(x: number, y: number): TileSnapshot['wear'] {
+    const p = this.track.get(x, y);
+    if (!p || !wearsAtAll(p)) return null;
+    const health = p.wear.health;
+    return { percent: health > 0 ? Math.max(1, Math.round(health * 100)) : 0, state: stateOf(p) };
+  }
   private tileSnap(x: number, y: number): TileSnapshot {
     const dec = this.builder.decorAt(x, y);
     return {
@@ -2680,6 +2730,7 @@ export class Game implements UiHost {
       y,
       charted: this.regions.isTileUnlocked(x, y),
       track: this.trackName(x, y),
+      wear: this.wearAt(x, y),
       decor: dec
         ? {
             name: decorDefOf(dec.id).name,

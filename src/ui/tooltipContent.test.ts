@@ -368,6 +368,7 @@ describe('the tile tooltip', () => {
     y,
     charted: true,
     track: null,
+    wear: null,
     decor: null,
     props: [],
     powered: false,
@@ -542,6 +543,19 @@ describe('the tile tooltip', () => {
       STR.tile.biome,
       STR.tile.elevationRow,
       STR.tile.snowLine,
+    ]);
+  });
+
+  it('gives the health and state of the track right after its name', () => {
+    const map = grid();
+    const doc = tileTip({
+      ...bare(map, 5, 5),
+      track: 'straight',
+      wear: { percent: 24, state: 'degraded' },
+    });
+    expect(extras(doc)).toEqual([
+      STR.tile.track('straight'),
+      STR.tile.wear(24, STR.wear.state.degraded),
     ]);
   });
 
@@ -791,6 +805,7 @@ describe('the station tooltip a biome opens', () => {
       y: 0,
       charted: true,
       track: null,
+      wear: null,
       decor: null,
       props: [],
       powered: false,

@@ -349,3 +349,72 @@ describe('a train on the track', () => {
     expect(1 - before.wear.health).toBeCloseTo(hit, 8);
   });
 });
+
+describe('the first-time warnings', () => {
+  type First = ['degraded' | 'unusable', number, number];
+  /** A world with one Branch straight at (5, 5) that records what `onFirst` is told. */
+  function watched() {
+    const { wear, piece } = branchWorld();
+    const told: First[] = [];
+    wear.onFirst = (kind, x, y) => told.push([kind, x, y]);
+    return { wear, piece, told };
+  }
+
+  it('the first degraded and first unusable piece fire once each', () => {
+    const { wear, piece, told } = watched();
+    piece.wear.health = 0.3001;
+    wear.hit(5, 5, Dir.W, 150);
+    expect(told).toEqual([['degraded', 5, 5]]);
+    // a second step down the same piece, and the next piece to turn, are not news
+    wear.hit(5, 5, Dir.W, 150);
+    expect(told).toHaveLength(1);
+    piece.wear.health = 1e-9;
+    wear.hit(5, 5, Dir.W, 150);
+    expect(told).toEqual([
+      ['degraded', 5, 5],
+      ['unusable', 5, 5],
+    ]);
+    piece.wear.health = 1;
+    wear.daily();
+    piece.wear.health = 1e-9;
+    wear.hit(5, 5, Dir.W, 150);
+    expect(told).toHaveLength(2);
+    expect(wear.toJSON()).toEqual({ degraded: true, unusable: true });
+  });
+
+  it('the daily scan fires them too', () => {
+    const { wear, piece, told } = watched();
+    piece.wear.health = 0.3001;
+    wear.daily();
+    expect(told.map((t) => t[0])).toEqual(['degraded']);
+  });
+
+  it('a piece that goes straight to unusable fires only that', () => {
+    const { wear, piece, told } = watched();
+    piece.wear.health = 1e-9;
+    wear.hit(5, 5, Dir.W, 150);
+    expect(told).toEqual([['unusable', 5, 5]]);
+    expect(wear.toJSON()).toEqual({ degraded: false, unusable: true });
+  });
+
+  it('flags from a save keep them from firing again', () => {
+    const { wear, piece, told } = watched();
+    wear.fromJSON({ degraded: true, unusable: true });
+    piece.wear.health = 0.3001;
+    wear.hit(5, 5, Dir.W, 150);
+    piece.wear.health = 1e-9;
+    wear.hit(5, 5, Dir.W, 150);
+    expect(told).toEqual([]);
+    expect(stateOf(piece)).toBe('unusable');
+  });
+
+  it('a loaded worn track fires nothing: only a change of state does', () => {
+    const w = simWorld({ terrain: 'grass', size: 32 });
+    const told: First[] = [];
+    w.builder.wear.onFirst = (kind, x, y) => told.push([kind, x, y]);
+    w.track.placeTuple([5, 5, 'straight', 1, 'branch', undefined, 0]);
+    w.track.placeTuple([7, 5, 'straight', 1, 'branch', undefined, 0.1]);
+    expect(w.builder.wear.unusable.size).toBe(1);
+    expect(told).toEqual([]);
+  });
+});

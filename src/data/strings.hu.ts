@@ -203,6 +203,7 @@ export const HU: Strings = {
     track: (k: string) => `Sín: ${k}`,
     powered: 'Feszültség alatti sín',
     noTrack: 'Ide nem lehet sínt fektetni',
+    wear: (percent: number, state: string) => `Sín állapota: ${percent}% (${state})`,
     trackCost: (m: number) => `Sínköltség ×${comma(m)}`,
     water: 'Csak híd; a szivattyúk innen merítenek.',
     biome: 'Biom',
@@ -630,6 +631,22 @@ export const HU: Strings = {
     contractNoTrain: (n: string) =>
       `„${n}”: egyik vonat sem tudja teljesíteni (rossz kocsik, nincs sín vagy nincs hatótáv)`,
     famine: 'Elfogyott a személyzet élelme',
+    trackWearing: 'Kopik a sín. Javítsd kézzel, vagy küldj karbantartó kocsit a Fűtőházból.',
+    trackBroken: (x: number, y: number) =>
+      `Tönkrement a sín (${x},${y}), a vonatok nem járhatnak rajta`,
+    trackBrokenMany: (n: number) => `${n} sínelem tönkrement, a vonatok nem járhatnak rajtuk`,
+  },
+  wear: {
+    state: { healthy: 'ép', degraded: 'kopott', unusable: 'tönkrement' },
+    title: 'Tönkrement a sín',
+    what: 'Egy sínszakasz elkopott, és lezárták.',
+    traffic:
+      'A rajta álló vonatok lassan lemennek róla. A többiek másik utat keresnek, vagy az utolsó ép szakaszon várnak a javításig.',
+    help: 'Javítsd kézzel, vagy küldj karbantartó kocsit a Fűtőházból.',
+    repair: 'Javítás',
+    repairHint: 'Válaszd a Javítás eszközt, és javítsd meg kézzel',
+    depot: 'Fűtőház',
+    depotHint: 'Nyisd meg a Fűtőházat, és küldj karbantartó kocsit',
   },
   alerts: {
     title: 'Értesítések',
@@ -649,10 +666,12 @@ export const HU: Strings = {
       stuck: 'Elakadt vonat',
       ctfail: 'Nem teljesült szerződés',
       noroute: 'Nincs útvonal',
+      trackbroken: 'Tönkrement a sín',
       full: 'Megtelt a készlet',
       starved: 'Az üzemnek nincs alapanyaga',
       contract: 'Veszélyben egy szerződés',
       jam: 'Torlódik egy csomópont',
+      trackworn: 'Kopik a sín',
       slow: 'Lassan halad egy vonat',
       note: 'Megjegyzés',
       done: 'Teljesült a szerződés',

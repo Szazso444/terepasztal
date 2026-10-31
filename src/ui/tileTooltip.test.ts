@@ -32,6 +32,7 @@ const bare = (map: GameMap, x: number, y: number): TileSnapshot => ({
   y,
   charted: true,
   track: null,
+  wear: null,
   decor: null,
   props: [],
   powered: false,

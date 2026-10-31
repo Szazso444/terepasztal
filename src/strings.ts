@@ -236,6 +236,8 @@ const EN = {
     powered: 'Powered rails',
     noTrack: 'No track can be laid here',
     trackCost: (m: number) => `Track costs ×${m}`,
+    /** a worn piece: its health in percent and its state (`STR.wear.state`) */
+    wear: (percent: number, state: string) => `Track health: ${percent}% (${state})`,
     water: 'Bridges only; pumps draw from it.',
     /** the row that names the tile's biome; its value is the biome as a term (`STR.biome`) */
     biome: 'Biome',
@@ -774,6 +776,23 @@ const EN = {
     arrived: (train: string, station: string) => `${train} arrived at ${station}`,
     contractNoTrain: (n: string) => `No train can work "${n}": wrong wagons, no rails or no range`,
     famine: 'Crews are out of food',
+    trackWearing:
+      'Track is wearing out. Repair it by hand, or send a maintenance wagon from the depot.',
+    trackBroken: (x: number, y: number) => `Track at ${x},${y} is broken and closed to trains`,
+    trackBrokenMany: (n: number) => `${n} track pieces are broken and closed to trains`,
+  },
+  /** track wear: the states and the window of the first piece to fail */
+  wear: {
+    state: { healthy: 'sound', degraded: 'worn', unusable: 'broken' } as Record<string, string>,
+    title: 'Track has failed',
+    what: 'A piece of track has worn out and is closed.',
+    traffic:
+      'Trains on it crawl off. Others look for another way, or wait on the last sound piece until it is repaired.',
+    help: 'Repair it by hand, or send a maintenance wagon from the depot.',
+    repair: 'Repair',
+    repairHint: 'Pick the Repair tool and mend it by hand',
+    depot: 'Depot',
+    depotHint: 'Open the depot to send a maintenance wagon',
   },
   alerts: {
     title: 'Notifications',
@@ -794,10 +813,12 @@ const EN = {
       stuck: 'Train stuck',
       ctfail: 'Contract failed',
       noroute: 'No route',
+      trackbroken: 'Track broken',
       full: 'Storage full',
       starved: 'Works short of input',
       contract: 'Contract at risk',
       jam: 'Junction congested',
+      trackworn: 'Track wearing out',
       slow: 'Train running slow',
       note: 'Note',
       done: 'Contract completed',

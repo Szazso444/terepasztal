@@ -79,6 +79,8 @@ export class TrackWear {
   unusableShown = false;
   /** told the tiles of a piece whose state changed */
   onChange: ((tiles: { x: number; y: number }[]) => void) | null = null;
+  /** told once per game, at a tile of the piece, when the first one turns degraded or unusable */
+  onFirst: ((kind: 'degraded' | 'unusable', x: number, y: number) => void) | null = null;
   /** what `unusable` hands out, and the track version it was built for */
   private failed = new Set<number>();
   private failedFor = -1;
@@ -167,6 +169,13 @@ export class TrackWear {
       }
     }
     this.onChange?.(tiles);
+    if (now === 'degraded' && was === 'healthy' && !this.degradedShown) {
+      this.degradedShown = true;
+      this.onFirst?.('degraded', x, y);
+    } else if (now === 'unusable' && !this.unusableShown) {
+      this.unusableShown = true;
+      this.onFirst?.('unusable', x, y);
+    }
   }
   toJSON(): WearJSON {
     return { degraded: this.degradedShown, unusable: this.unusableShown };

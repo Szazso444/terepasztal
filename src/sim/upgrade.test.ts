@@ -409,7 +409,7 @@ describe('a building being upgraded', () => {
     expect([w.builder.plantCount(), w.power.plants]).toEqual([0, 0]);
     expect(w.power.isPowered(10, 10)).toBe(false);
     expect(w.catenary.isLive(11, 12)).toBe(false);
-    w.notices.refresh({ trains: [], builder: w.builder, power: w.power });
+    w.notices.refresh({ trains: [], builder: w.builder, power: w.power, wear: w.builder.wear });
     expect(w.notices.list.filter((n) => n.key.startsWith('b10,10'))).toEqual([]);
     w.builder.tickWorks(upgradeSeconds(2));
     expect([w.builder.plantCount(), w.power.plants]).toEqual([1, 1]);

@@ -88,6 +88,7 @@ import { DecorPanel } from './decorPanel';
 import { AlertBar } from './alertBar';
 import { AlertDesk } from './alertDesk';
 import { AlertPopup } from './alertPopup';
+import { WearAlertScreen } from './wearAlert';
 import { NotificationsScreen } from './notificationsScreen';
 import { Advisor } from './advisor';
 import { BuildInfo } from './buildInfo';
@@ -299,6 +300,8 @@ export interface PlayUi {
   readonly outliner: Outliner;
   readonly trainPanel: TrainPanel;
   readonly alerts: AlertDesk;
+  /** the window of the first track piece to wear out; the game opens it */
+  readonly wearAlert: WearAlertScreen;
   readonly advisor: Advisor;
   readonly buildInfo: BuildInfo;
   readonly stationPanel: StationPanel;
@@ -640,6 +643,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     // a toast fired under the loading screen would never be read
     live: () => host.mode === 'play' && !menuOpen() && !document.getElementById('loading-screen'),
   });
+  const wearAlert = new WearAlertScreen(d.screens);
+  // the Depot button opens the depot (the maintenance wagon's tab comes with the wagons)
+  wearAlert.onDepot = () => d.screens.open(depot);
   const advisor = new Advisor(d.settings.advisor === false);
   advisor.onSilence = (v) => {
     d.settings.advisor = !v;
@@ -1234,6 +1240,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     trainPanel,
     alerts,
     advisor,
+    wearAlert,
     buildInfo,
     stationPanel,
     townPanel,
