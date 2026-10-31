@@ -611,10 +611,15 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     b ? buildingPanel.open(b) : buildingPanel.building && buildingPanel.close();
   d.build.onSelectDecor = (dec) =>
     dec ? decorPanel.open(dec) : decorPanel.decor && decorPanel.close();
+  /** the run the build card showed at the last status */
+  let runShown = false;
   d.build.onStatus = (t) => {
     toolbar.setStatus(t);
-    // the card follows a drag from frame to frame, not at the panels' half-second refresh
-    if (d.build.run) buildInfo.refresh();
+    // the card follows a drag from frame to frame, not at the panels' half-second refresh, and
+    // drops the run the frame it ends
+    const run = !!d.build.run;
+    if (run || runShown) buildInfo.refresh();
+    runShown = run;
   };
   // a harvest station's tool: the placing tooltip is the stack's root, the label floats over the tile
   const yieldLabel = new YieldLabel();

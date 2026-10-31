@@ -255,8 +255,12 @@ export class BuildInfo {
       el('div', { class: 'bi-foot', text: controlsHint(item) }),
     );
   }
-  /** Re-render affordability colours and the paying store as the stores and the pointer move. */
+  /**
+   * Re-render affordability colours and the paying store as the stores and the pointer move. Not
+   * under the pointer: the card stands on its bottom edge, so losing the payment line as the pointer
+   * comes off the field would move the close mark from under it.
+   */
   refresh() {
-    if (this.shown) this.renderItem(this.shown, false);
+    if (this.shown && !this.root.matches(':hover')) this.renderItem(this.shown, false);
   }
 }
