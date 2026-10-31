@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { compactLevel, needsCompact, topbarCompact, type CompactLevel } from './fit';
+import {
+  NOW_PLAYING_WIDTH,
+  compactLevel,
+  foldCount,
+  needsCompact,
+  topbarCompact,
+  type CompactLevel,
+} from './fit';
+import { foldedEntries, type MenuId } from './menuBarModel';
 
 const box = (scrollWidth: number, clientWidth: number) => ({ scrollWidth, clientWidth });
 
@@ -89,5 +97,107 @@ describe('compactLevel', () => {
     widths[0].bar = [1366, 1280];
     widths[2].bar = [1230, 1280];
     expect(compactLevel(at)).toBe(2);
+  });
+});
+
+describe('foldCount', () => {
+  it('folds nothing when the bar fits with every label', () => {
+    const asked: number[] = [];
+    expect(
+      foldCount(9, (n) => {
+        asked.push(n);
+        return false;
+      }),
+    ).toBe(0);
+    expect(asked).toEqual([0]);
+  });
+  it('folds as few as fit, measuring no further', () => {
+    const asked: number[] = [];
+    expect(
+      foldCount(9, (n) => {
+        asked.push(n);
+        return n < 4;
+      }),
+    ).toBe(4);
+    expect(asked).toEqual([0, 1, 2, 3, 4]);
+  });
+  it('folds all of them when nothing fits: the menu bar is cut from there', () => {
+    expect(foldCount(9, () => true)).toBe(9);
+  });
+  it('has no answer while the bar is not laid out', () => {
+    expect(foldCount(9, () => null)).toBeNull();
+    expect(foldCount(9, (n) => (n === 0 ? true : null))).toBeNull();
+  });
+  it('gives the same answer for the same room, whatever came before', () => {
+    const at = (room: number) => foldCount(9, (n) => n * 40 < room);
+    expect(at(90)).toBe(at(90));
+    expect(at(90)).toBe(3);
+  });
+  it('keeps room for the now-playing widget', () => {
+    expect(NOW_PLAYING_WIDTH).toBe(190);
+  });
+});
+
+describe('which labels fold at which width', () => {
+  /**
+   * The bar as measured in a game at `compact-2`, the now-playing room kept: all it holds but the
+   * labels (the same in both languages, to a third of a pixel), and each label with its gap.
+   */
+  const REST = 1100.3;
+  const LABEL: Record<'en' | 'hu', Partial<Record<MenuId, number>>> = {
+    en: {
+      menu: 33.8,
+      save: 31,
+      savedGames: 78.2,
+      settings: 49.3,
+      audio: 35,
+      fleet: 30.8,
+      economy: 54.1,
+      view: 30.1,
+      notifications: 72.2,
+    },
+    hu: {
+      menu: 33.8,
+      save: 43.4,
+      savedGames: 91.1,
+      settings: 63.6,
+      audio: 32.7,
+      fleet: 35.3,
+      economy: 57.5,
+      view: 35.4,
+      notifications: 65,
+    },
+  };
+  const folded = (width: number, language: 'en' | 'hu') => {
+    const label = LABEL[language];
+    const all = Object.values(label).reduce((a, b) => a + b, 0);
+    const widthWithout = (ids: readonly MenuId[]) =>
+      REST + all - ids.reduce((a, id) => a + (label[id] ?? 0), 0);
+    const count = foldCount(
+      foldedEntries('play', Infinity).length,
+      (n) => widthWithout(foldedEntries('play', n)) > width,
+    );
+    return foldedEntries('play', count ?? 0);
+  };
+
+  it('keeps every label at 1920 and 1600', () => {
+    for (const language of ['en', 'hu'] as const) {
+      expect(folded(1920, language)).toEqual([]);
+      expect(folded(1600, language)).toEqual([]);
+    }
+  });
+  it('folds Notifications and Saved Games at 1366 in English, and Settings too in Hungarian', () => {
+    expect(folded(1366, 'en')).toEqual(['notifications', 'savedGames']);
+    expect(folded(1366, 'hu')).toEqual(['notifications', 'savedGames', 'settings']);
+  });
+  it('folds Audio as well at 1280, and Save too in Hungarian; the menus keep their names', () => {
+    expect(folded(1280, 'en')).toEqual(['notifications', 'savedGames', 'settings', 'audio']);
+    expect(folded(1280, 'hu')).toEqual([
+      'notifications',
+      'savedGames',
+      'settings',
+      'audio',
+      'save',
+    ]);
   });
 });

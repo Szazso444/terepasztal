@@ -64,7 +64,7 @@ interface DealRow {
 export class MarketScreen implements Screen {
   readonly id = 'market';
   readonly title = STR.market.title;
-  readonly icon = 'coin';
+  readonly icon = 'scale';
   readonly frameSize = 'M';
   /** the deal fields are typed in, and Tab goes round them */
   readonly formKeys = true;

@@ -948,6 +948,12 @@ describe('the resource tooltips', () => {
     const funds = lines(resourceTip({ id: 'money', have: 25000, cap: Infinity, tier: 0 }));
     expect(funds.join('\n')).not.toContain('All stores');
   });
+  it('a resource tooltip names the store the bar shows, which the bar itself no longer does', () => {
+    const tip = (store?: string) =>
+      lines(resourceTip({ id: 'wheat', have: 30, cap: 100, store, tier: 0 }));
+    expect(tip('Narrow Depot')).toContain(STR.res.shownStore('Narrow Depot'));
+    expect(tip().join('\n')).not.toContain(STR.res.shownStore(''));
+  });
   it('a building tooltip from a resource says what it costs and when it unlocks', () => {
     const ref = makersOf('oil')[0];
     const lines = buildingDefTip(ref, 0).map(blockText);

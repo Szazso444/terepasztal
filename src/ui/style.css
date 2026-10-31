@@ -464,6 +464,10 @@ html[lang='hu'] .panel-name {
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
+}
+.btn.mb-entry .k-ic {
+  margin: 0;
 }
 .mb-entry .badge {
   margin-left: 0;
@@ -473,14 +477,17 @@ html[lang='hu'] .panel-name {
   font-size: 9px;
   opacity: 0.6;
 }
-.mb-icon {
-  display: flex;
+/* the bar is short of room (Hud.fit): the icon alone, and the tooltip names it */
+.mb-entry.folded .mb-label {
+  display: none;
 }
 /* the open menu: over the whole HUD, under the tooltips, the menus and the modal screens */
 #menu-pane {
   position: absolute;
   top: 30px;
   min-width: 190px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   padding: 3px;
@@ -491,9 +498,8 @@ html[lang='hu'] .panel-name {
 }
 .btn.mb-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 18px;
+  gap: 7px;
   padding: 5px 9px;
   background: none;
   border: none;
@@ -504,16 +510,44 @@ html[lang='hu'] .panel-name {
 .btn.mb-item:hover {
   background: var(--stone);
 }
+.btn.mb-item .k-ic {
+  margin: 0;
+}
 .btn.mb-item kbd {
+  margin-left: auto;
+  padding-left: 18px;
   color: var(--text-dim);
   font: inherit;
   font-size: 11px;
+}
+.btn.mb-item .badge {
+  margin-left: auto;
 }
 .btn.mb-item.on {
   color: var(--cyan);
 }
 .btn.mb-item.on::after {
   content: '✓';
+  margin-left: auto;
+  padding-left: 18px;
+}
+/* the depots under Fleet's Depot row: set in, with the gauge and the trains after the name */
+.mb-depots {
+  display: flex;
+  flex-direction: column;
+}
+.btn.mb-item.mb-depot {
+  padding-left: 30px;
+}
+.btn.mb-item.mb-depot small {
+  margin-left: auto;
+  padding-left: 18px;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+.btn.mb-item.mb-depot.on::after {
+  margin-left: 0;
+  padding-left: 0;
 }
 .btn.mb-item.mb-cheat {
   color: var(--text-dim);
@@ -524,7 +558,8 @@ html[lang='hu'] .panel-name {
   padding: 0 6px;
 }
 #topbar .datespeed,
-#topbar > .tt-term {
+#topbar > .tt-term,
+#topbar .now-playing {
   flex: none;
 }
 /* short of room (Hud.fit): tighter cells and buttons and no weather text; if still short, compact-2 */
@@ -665,6 +700,11 @@ html[lang='hu'] .panel-name {
   letter-spacing: 0.03em;
   /* room for the ring */
   padding-right: 22px;
+}
+/* a menu entry's line icon before its name */
+.tt-title .k-ic {
+  margin-right: 5px;
+  vertical-align: -2px;
 }
 .tt-row {
   display: flex;
@@ -2326,14 +2366,6 @@ input[type='range'] {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-/* the store the bar shows; a click steps to the next */
-#resbar .res-store {
-  flex: none;
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 #resbar .res-group {
   display: flex;

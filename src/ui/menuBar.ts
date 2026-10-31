@@ -1,18 +1,21 @@
-import { alertIconSvg } from './alertView';
 import { btn, el } from './dom';
+import { lineIcon } from './kit';
 import {
   MENU_BAR,
   MenuBarState,
+  depotRows,
+  entryTip,
+  foldedEntries,
+  type DepotFacts,
   type MenuAction,
   type MenuEntry,
   type MenuId,
   type MenuItem,
   type MenuMode,
 } from './menuBarModel';
+import { STR } from '../strings';
 import { ttTerm, type TipBuild } from './tooltip';
-
-/** The three lines of the Menu entry, on a 24 px grid: the workshop mock's. */
-const MENU_ICON = '<path d="M4 6h16M4 12h16M4 18h16"/>';
+import type { TipDoc } from './tooltipDoc';
 
 /** Is this event on the map: anything not under `#ui-root`, as the input sees it. */
 const onMap = (e: Event) => !(e.target as Element | null)?.closest?.('#ui-root');
@@ -21,26 +24,37 @@ const onMap = (e: Event) => !(e.target as Element | null)?.closest?.('#ui-root')
  * The menu bar of the top bar. `root` is its cell in the bar; `pane`, the open menu, stands in
  * `#ui-root` on its own: the cell clips when the bar runs short of room, and the input takes
  * anything under `#ui-root` for UI. The rows are made once and only shown and hidden, so one under
- * the pointer never goes while it is being clicked. The rules are `MenuBarState`'s.
+ * the pointer never goes while it is being clicked; the depots' are made as the Fleet menu opens.
+ * The rules are `MenuBarState`'s.
  */
 export class MenuBar {
   readonly root = el('div', { class: 'stat menus' });
   readonly pane = el('div', { id: 'menu-pane', class: 'panel', role: 'menu' });
   /** what each entry and row does; a `Record`, so a new action cannot go unwired */
   actions: Record<MenuAction, () => void> | null = null;
+  /** the depots as they stand: read as the Fleet menu opens */
+  depots: (() => readonly DepotFacts[]) | null = null;
+  /** a depot's row was picked */
+  onDepot: ((id: number) => void) | null = null;
   private state = new MenuBarState();
   private entries = new Map<MenuId, HTMLButtonElement>();
-  /** what stands in the bar for each entry: the button, or the term around it */
+  /** what stands in the bar for each entry: the term around the button */
   private cells = new Map<MenuId, HTMLElement>();
   private rows = new Map<MenuAction, HTMLButtonElement>();
   /** where a row's count shows: on the row and on its entry */
   private badges = new Map<MenuAction, HTMLElement[]>();
+  /** the depots' rows, under the Depot row */
+  private depotBox = el('div', { class: 'mb-depots' });
 
-  /** `tip` builds a tooltip that says the text it is given. */
-  constructor(tip: (text: string) => TipBuild) {
+  /** `tip` builds a tooltip from a document made as it opens. */
+  constructor(tip: (doc: () => TipDoc) => TipBuild) {
     for (const entry of MENU_BAR) {
       const button = this.entryButton(entry);
-      const cell = entry.tip ? ttTerm(button, tip(entry.tip)) : button;
+      // with its own menu open the entry has nothing to add, and a tooltip would cover the rows
+      const cell = ttTerm(
+        button,
+        tip(() => (this.state.open === entry.id ? [] : entryTip(entry))),
+      );
       this.entries.set(entry.id, button);
       this.cells.set(entry.id, cell);
       this.root.append(cell);
@@ -48,6 +62,7 @@ export class MenuBar {
         const row = this.row(item);
         this.rows.set(item.action, row);
         this.pane.append(row);
+        if (item.action === 'depot') this.pane.append(this.depotBox);
         if (item.badge) {
           const both = [el('span', { class: 'badge' }), el('span', { class: 'badge' })];
           row.append(both[0]);
@@ -57,6 +72,7 @@ export class MenuBar {
       }
     }
     this.pane.style.display = 'none';
+    this.showEntries();
     // in the capture phase: a panel that keeps its clicks to itself still closes the menu
     document.addEventListener('mousedown', this.onMouseDown, true);
     document.addEventListener('wheel', this.onWheel, { capture: true, passive: true });
@@ -64,13 +80,9 @@ export class MenuBar {
 
   private entryButton(entry: MenuEntry) {
     const cls = entry.run ? 'small mb-entry' : 'small mb-entry mb-menu';
-    const b = btn(entry.label, () => this.clicked(entry.id), cls);
-    if (entry.id === 'menu') {
-      // fixed markup, never from data
-      const icon = el('span', { class: 'mb-icon' });
-      icon.innerHTML = alertIconSvg(MENU_ICON, 13);
-      b.prepend(icon);
-    }
+    const b = btn('', () => this.clicked(entry.id), cls);
+    b.setAttribute('aria-label', entry.label);
+    b.append(lineIcon(entry.icon), el('span', { class: 'mb-label', text: entry.label }));
     if (!entry.run) {
       b.setAttribute('aria-haspopup', 'menu');
       b.setAttribute('aria-expanded', 'false');
@@ -84,9 +96,23 @@ export class MenuBar {
   private row(item: MenuItem) {
     const b = btn(item.label, () => this.picked(item.action), `mb-item mb-${item.action}`);
     b.setAttribute('role', 'menuitem');
+    b.prepend(lineIcon(item.icon));
     if (item.hint) b.title = item.hint;
     if (item.key) b.append(el('kbd', { text: item.key }));
     return b;
+  }
+
+  /** The depots' rows as they stand now, each with its gauge and its trains. */
+  private drawDepots() {
+    const rows = depotRows(this.state.mode, this.depots?.() ?? []).map((d) => {
+      const b = btn(d.label, () => this.pickedDepot(d.id), 'mb-item mb-depot');
+      b.setAttribute('role', 'menuitem');
+      b.title = STR.topbar.depotHint;
+      b.classList.toggle('on', d.on);
+      b.append(el('small', { text: d.detail }));
+      return b;
+    });
+    this.depotBox.replaceChildren(...rows);
   }
 
   private clicked(id: MenuId) {
@@ -99,6 +125,12 @@ export class MenuBar {
     const run = this.state.pick(action, performance.now());
     this.draw();
     if (run) this.actions?.[run]();
+  }
+
+  private pickedDepot(id: number) {
+    const go = this.state.pickDepot(performance.now());
+    this.draw();
+    if (go) this.onDepot?.(id);
   }
 
   /**
@@ -126,6 +158,8 @@ export class MenuBar {
     }
     const shown = new Set(this.state.items.map((i) => i.action));
     for (const [action, row] of this.rows) row.style.display = shown.has(action) ? '' : 'none';
+    if (open === 'fleet') this.drawDepots();
+    this.depotBox.style.display = open === 'fleet' ? '' : 'none';
     this.pane.style.display = open ? '' : 'none';
     this.place();
   }
@@ -144,12 +178,27 @@ export class MenuBar {
     if (this.state.close()) this.draw();
   }
 
+  private showEntries() {
+    const shown = new Set(this.state.entries.map((e) => e.id));
+    for (const [id, cell] of this.cells) cell.style.display = shown.has(id) ? '' : 'none';
+  }
+
   /** The entries of a mode, and a menu that was open goes. */
   setMode(mode: MenuMode) {
     this.state.setMode(mode);
-    const shown = new Set(this.state.entries.map((e) => e.id));
-    for (const [id, cell] of this.cells) cell.style.display = shown.has(id) ? '' : 'none';
+    this.showEntries();
     this.draw();
+  }
+
+  /** How many labels can go, in this mode: `Hud.fit` asks for no more than that. */
+  get foldable() {
+    return foldedEntries(this.state.mode, Infinity).length;
+  }
+
+  /** The first `count` entries of `FOLD_ORDER` show their icon alone. */
+  setFolded(count: number) {
+    const folded = new Set(foldedEntries(this.state.mode, count));
+    for (const [id, b] of this.entries) b.classList.toggle('folded', folded.has(id));
   }
 
   /** A switch's row: ticked while it is on. */

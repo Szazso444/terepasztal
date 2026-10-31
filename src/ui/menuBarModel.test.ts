@@ -1,11 +1,18 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { STR } from '../strings';
 import { KEYMAP, type KeyAction } from './keymap';
 import {
+  FOLD_ORDER,
+  GUIDE_READY,
   MENU_BAR,
   MenuBarState,
   PICK_GRACE_MS,
+  depotRows,
   entriesFor,
+  entryTip,
+  foldedEntries,
+  type DepotFacts,
   type MenuAction,
   type MenuId,
   type MenuMode,
@@ -26,11 +33,12 @@ const EVERY_ACTION: Record<MenuAction, true> = {
   save: true,
   savedGames: true,
   settings: true,
-  quit: true,
+  audio: true,
   depot: true,
   roster: true,
   signals: true,
   contracts: true,
+  contractSettings: true,
   market: true,
   crafting: true,
   cheat: true,
@@ -39,18 +47,78 @@ const EVERY_ACTION: Record<MenuAction, true> = {
   dayNight: true,
   advisor: true,
   notifications: true,
+  guide: true,
 };
 
 describe('the menu bar in a game', () => {
-  it('reads Menu, Game, Fleet, Economy, View, Notifications', () => {
-    expect(ids('play')).toEqual(['menu', 'game', 'fleet', 'economy', 'view', 'notifications']);
+  it('reads Menu, Save, Saved Games, Settings, Audio, Fleet, Economy, View, Notifications', () => {
+    expect(ids('play')).toEqual([
+      'menu',
+      'save',
+      'savedGames',
+      'settings',
+      'audio',
+      'fleet',
+      'economy',
+      'view',
+      'notifications',
+    ]);
+  });
+
+  it('has no Game entry and no Quit to title: the pause menu has Main menu', () => {
+    const read = MENU_BAR.flatMap((e) => [e.label, ...e.items.map((i) => i.label)]);
+    expect(read).not.toContain('Game');
+    expect(read).not.toContain('Quit to title');
   });
 
   it('holds what each menu holds, in order', () => {
-    expect(items('play', 'game')).toEqual(['save', 'savedGames', 'settings', 'quit']);
     expect(items('play', 'fleet')).toEqual(['depot', 'roster', 'signals']);
-    expect(items('play', 'economy')).toEqual(['contracts', 'market', 'crafting', 'cheat']);
+    expect(items('play', 'economy')).toEqual([
+      'contracts',
+      'contractSettings',
+      'market',
+      'crafting',
+      'cheat',
+    ]);
     expect(items('play', 'view')).toEqual(['overview', 'weather', 'dayNight', 'advisor']);
+  });
+
+  it('gives every entry and every row an icon, the ones asked for by name', () => {
+    for (const e of MENU_BAR) {
+      expect(e.icon, e.id).toBeTruthy();
+      for (const i of e.items) expect(i.icon, i.action).toBeTruthy();
+    }
+    expect(Object.fromEntries(MENU_BAR.map((e) => [e.id, e.icon]))).toEqual({
+      menu: 'menu',
+      save: 'save',
+      savedGames: 'saves',
+      settings: 'gear',
+      audio: 'speaker',
+      fleet: 'train',
+      economy: 'coin',
+      view: 'eye',
+      notifications: 'bell',
+      guide: 'book',
+    });
+    const rows = MENU_BAR.flatMap((e) => e.items);
+    expect(rows.find((i) => i.action === 'market')?.icon).toBe('scale');
+  });
+
+  it('shows the icon in the tooltip too, and the name, whatever the label is doing', () => {
+    const save = MENU_BAR.find((e) => e.id === 'save')!;
+    expect(entryTip(save)).toEqual([
+      { kind: 'title', parts: [{ glyph: 'save' }, STR.topbar.save] },
+    ]);
+    expect(entryTip(MENU_BAR[0])).toEqual([
+      { kind: 'title', parts: [{ glyph: 'menu' }, STR.topbar.menuTip] },
+    ]);
+  });
+
+  it('keeps the Guide entry out until its screen is there', () => {
+    expect(GUIDE_READY).toBe(false);
+    expect(MENU_BAR[MENU_BAR.length - 1].id).toBe('guide');
+    expect(ids('play')).not.toContain('guide');
+    expect(new MenuBarState().click('guide')).toBeNull();
   });
 
   it('keeps every button the top bar had', () => {
@@ -77,14 +145,20 @@ describe('the menu bar in a game', () => {
   });
 
   it('reaches every action exactly once', () => {
-    expect(reachable('play').sort()).toEqual(Object.keys(EVERY_ACTION).sort());
+    const everyAction = Object.keys(EVERY_ACTION).filter((a) => GUIDE_READY || a !== 'guide');
+    expect(reachable('play').sort()).toEqual(everyAction.sort());
   });
 
-  it('opens the pause menu and the Notifications screen from the bar itself, with no pane', () => {
+  it('runs at once from the bar itself, with no pane, whatever is no menu', () => {
     const direct = MENU_BAR.filter((e) => e.run);
     expect(direct.map((e) => [e.id, e.run, e.items.length])).toEqual([
       ['menu', 'pause', 0],
+      ['save', 'save', 0],
+      ['savedGames', 'savedGames', 0],
+      ['settings', 'settings', 0],
+      ['audio', 'audio', 0],
       ['notifications', 'notifications', 0],
+      ['guide', 'guide', 0],
     ]);
   });
 
@@ -133,8 +207,7 @@ describe('the keys the rows show', () => {
 
 describe('the menu bar in the level editor', () => {
   it('leaves out what the editor has closed, and a menu left empty with it', () => {
-    expect(ids('editor')).toEqual(['menu', 'game', 'fleet', 'view']);
-    expect(items('editor', 'game')).toEqual(['quit']);
+    expect(ids('editor')).toEqual(['menu', 'fleet', 'view']);
     expect(items('editor', 'fleet')).toEqual(['signals']);
     expect(items('editor', 'view')).toEqual(['overview', 'weather', 'dayNight', 'advisor']);
   });
@@ -144,7 +217,9 @@ describe('the menu bar in the level editor', () => {
     const gone = reachable('play').filter((a) => !editor.has(a));
     expect(gone.sort()).toEqual(
       [
+        'audio',
         'cheat',
+        'contractSettings',
         'contracts',
         'crafting',
         'depot',
@@ -174,9 +249,9 @@ describe('opening and closing a menu', () => {
 
   it('opens on a click and shows the rows of that menu', () => {
     const s = new MenuBarState();
-    expect(s.click('game')).toBeNull();
-    expect(s.open).toBe('game');
-    expect(s.items.map((i) => i.action)).toEqual(['save', 'savedGames', 'settings', 'quit']);
+    expect(s.click('fleet')).toBeNull();
+    expect(s.open).toBe('fleet');
+    expect(s.items.map((i) => i.action)).toEqual(['depot', 'roster', 'signals']);
   });
 
   it('closes on a second click on its entry', () => {
@@ -215,9 +290,13 @@ describe('opening and closing a menu', () => {
   it('does what an entry with no menu does, closing the open menu', () => {
     for (const [id, run] of [
       ['menu', 'pause'],
+      ['save', 'save'],
+      ['savedGames', 'savedGames'],
+      ['settings', 'settings'],
+      ['audio', 'audio'],
       ['notifications', 'notifications'],
     ] as const) {
-      const s = opened('game');
+      const s = opened('view');
       expect(s.click(id)).toBe(run);
       expect(s.open).toBeNull();
       expect(new MenuBarState().click(id)).toBe(run);
@@ -229,7 +308,7 @@ describe('opening and closing a menu', () => {
     expect(closed.hover('fleet')).toBe(false);
     expect(closed.open).toBeNull();
 
-    const s = opened('game');
+    const s = opened('view');
     expect(s.hover('fleet')).toBe(true);
     expect(s.open).toBe('fleet');
     expect(s.hover('fleet')).toBe(false);
@@ -239,6 +318,7 @@ describe('opening and closing a menu', () => {
     const s = opened('view');
     expect(s.hover('notifications')).toBe(false);
     expect(s.hover('menu')).toBe(false);
+    expect(s.hover('save')).toBe(false);
     expect(s.open).toBe('view');
   });
 });
@@ -254,13 +334,14 @@ describe('the rules in the level editor', () => {
     const s = editor();
     expect(s.click('economy')).toBeNull();
     expect(s.open).toBeNull();
-    s.click('game');
+    s.click('view');
     expect(s.hover('economy')).toBe(false);
-    expect(s.open).toBe('game');
+    expect(s.open).toBe('view');
   });
 
-  it('does not run the Notifications entry it hides', () => {
-    expect(editor().click('notifications')).toBeNull();
+  it('does not run the entries it hides', () => {
+    for (const id of ['notifications', 'save', 'savedGames', 'settings', 'audio'] as const)
+      expect(editor().click(id), id).toBeNull();
   });
 
   it('shows the rows of the mode, and picks only those', () => {
@@ -275,6 +356,78 @@ describe('the rules in the level editor', () => {
     s.click('economy');
     s.setMode('editor');
     expect(s.open).toBeNull();
+  });
+});
+
+describe('the depots in the Fleet menu', () => {
+  const depot = (over: Partial<DepotFacts> = {}): DepotFacts => ({
+    id: 1,
+    name: 'Depot',
+    gauge: 'regular',
+    trains: 0,
+    shown: false,
+    ...over,
+  });
+
+  it('lists every depot by name, with its gauge and its trains', () => {
+    const rows = depotRows('play', [
+      depot({ id: 1, name: 'Eastgate', trains: 3, shown: true }),
+      depot({ id: 7, name: 'Narrow Depot', gauge: 'narrow', trains: 1 }),
+    ]);
+    expect(rows).toEqual([
+      { id: 1, label: 'Eastgate', detail: STR.topbar.depotDetail('regular', 3), on: true },
+      { id: 7, label: 'Narrow Depot', detail: STR.topbar.depotDetail('narrow', 1), on: false },
+    ]);
+  });
+
+  it('counts one train and none as English has them', () => {
+    expect(STR.topbar.depotDetail('narrow', 1)).toBe('Narrow · 1 train');
+    expect(STR.topbar.depotDetail('regular', 0)).toBe('Standard · 0 trains');
+  });
+
+  it('has one row with one depot, and none with none', () => {
+    expect(depotRows('play', [depot()])).toHaveLength(1);
+    expect(depotRows('play', [])).toEqual([]);
+  });
+
+  it('lists none in the editor, where the Depot is closed', () => {
+    expect(depotRows('editor', [depot()])).toEqual([]);
+  });
+
+  it('runs a pick like a row: the menu closes, and the double-click grace starts', () => {
+    const s = new MenuBarState();
+    s.click('fleet');
+    expect(s.pickDepot(1000)).toBe(true);
+    expect(s.open).toBeNull();
+    expect(s.keepsPress(0, 1000 + PICK_GRACE_MS - 1)).toBe(true);
+  });
+
+  it('runs nothing for a depot row with the Fleet menu not open', () => {
+    const s = new MenuBarState();
+    s.click('view');
+    expect(s.pickDepot(1000)).toBe(false);
+    expect(s.keepsPress(0, 1000)).toBe(false);
+  });
+});
+
+describe('the labels that fold', () => {
+  it('names every entry once', () => {
+    expect([...FOLD_ORDER].sort()).toEqual(MENU_BAR.map((e) => e.id).sort());
+  });
+
+  it('keeps the three menus to the last: what is behind them is not on the bar', () => {
+    expect(FOLD_ORDER.slice(-3)).toEqual(['view', 'economy', 'fleet']);
+  });
+
+  it('folds entries of the mode only, in the order', () => {
+    expect(foldedEntries('play', 0)).toEqual([]);
+    expect(foldedEntries('play', 3)).toEqual(['notifications', 'savedGames', 'settings']);
+    expect(foldedEntries('editor', 2)).toEqual(['menu', 'view']);
+  });
+
+  it('skips the entry that stands hidden', () => {
+    expect(foldedEntries('play', Infinity)).not.toContain('guide');
+    expect(foldedEntries('play', Infinity)).toHaveLength(ids('play').length);
   });
 });
 

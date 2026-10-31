@@ -419,14 +419,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     const crews = d.builder.crewTotal() + d.fleet.crewTotal();
     return { residents, foodPerWeek: (residents + crews) * rules.wheatPerCrew };
   };
-  // the bar steps through the stores in label order, from the one it shows
-  resourceBar.onNextStore = () => {
-    const all = stores.choices();
-    if (!all.length) return;
-    const now = stores.selected;
-    const at = now ? all.findIndex((c) => c.key === now.key) : -1;
-    stores.selected = all[(at + 1) % all.length];
-  };
   const tuningScreen = new TuningScreen(
     () => {
       host.applySeason(true);
@@ -527,11 +519,19 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       openSaved('load');
     },
     settings: () => d.screens.toggle(settingsScreen),
-    quit: quitToTitle,
+    // the audio PR gives this its own screen
+    audio: () => {
+      settingsScreen.show('audio');
+      d.screens.toggle(settingsScreen);
+    },
     depot: () => d.screens.toggle(depot),
     roster: () => d.screens.toggle(rosterScreen),
     signals: () => d.screens.toggle(signalGuide),
     contracts: () => d.screens.toggle(contractsScreen),
+    contractSettings: () => {
+      contractsScreen.show('settings');
+      d.screens.open(contractsScreen);
+    },
     market: () => d.screens.toggle(marketScreen),
     crafting: () => d.screens.toggle(craftingScreen),
     cheat: () => host.cheat(),
@@ -546,6 +546,27 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     },
     advisor: () => advisor.toggle(),
     notifications: () => notificationsScreen.openFrom(null),
+    // the entry stands hidden (`GUIDE_READY`) until the guide PR gives it its screen
+    guide: () => undefined,
+  };
+  hud.menuBar.depots = () =>
+    d.builder.depots().map((s) => {
+      const store = stores.dockOf(s);
+      return {
+        id: s.id,
+        name: s.name,
+        gauge: s.def.gauge ?? 'regular',
+        trains: s.occupants.size,
+        shown: !!store && stores.networkPool(store).key === stores.selected?.key,
+      };
+    });
+  // a depot picked in Fleet: the Depot opens on it, and the bar shows its store
+  hud.menuBar.onDepot = (id) => {
+    const st = d.builder.stationById(id);
+    const store = st && stores.dockOf(st);
+    if (store) stores.selected = store;
+    depot.openOn(id);
+    d.screens.open(depot);
   };
   // the game applied its settings before this UI existed
   hud.setToggles(d.settings.weather, d.settings.dayNight);

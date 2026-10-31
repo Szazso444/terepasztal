@@ -5,10 +5,15 @@ import type { AgeStatus } from '../sim/ages';
 import type { AtlasRegistry } from '../engine/atlas';
 import { ttTerm, type Tooltip } from './tooltip';
 import { tipBuild } from './tooltipRender';
-import { title } from './tooltipDoc';
 import { ageTip, eraView } from './ageTooltip';
 import { ageIconSvg } from './ageIcon';
-import { compactLevel, topbarCompact, type CompactLevel } from './fit';
+import {
+  NOW_PLAYING_WIDTH,
+  compactLevel,
+  foldCount,
+  topbarCompact,
+  type CompactLevel,
+} from './fit';
 import { historyIconSvg, historyTip, type HistoryWay } from './historyControls';
 import { segmented } from './kit';
 import { MenuBar } from './menuBar';
@@ -29,8 +34,9 @@ export type HistoryView = Pick<History, 'canUndo' | 'canRedo' | 'undoLabel' | 'r
  *
  * When the bar is short of room (`fit`) it goes `compact` in two steps: first tighter spacing and
  * the weather words in the Weather row's tooltip; only if that is still not enough, the era widget
- * without the age's name as well (`compact-2`; its tooltip has the name). The era widget and the
- * date and speed never give way; past that, the menu bar is cut.
+ * without the age's name as well (`compact-2`; its tooltip has the name). Then the menu entries
+ * lose their labels one by one (`FOLD_ORDER`), the icon staying and the tooltip naming it. The era
+ * widget and the date and speed never give way; past that, the menu bar is cut.
  */
 export class Hud {
   readonly root: HTMLElement;
@@ -61,8 +67,14 @@ export class Hud {
   private locked = false;
   private fps = el('span', { class: 'value dim' });
   private weather = el('span', { class: 'value' });
-  /** the spacing the bar has now (`fit`), and a fit waiting for the next frame */
+  /** left of the weather: the now-playing widget's place, kept empty until it comes */
+  readonly nowPlaying = el('div', {
+    class: 'now-playing',
+    style: `width:${NOW_PLAYING_WIDTH}px`,
+  });
+  /** the spacing the bar has now, the labels it has folded (`fit`), a fit waiting for the next frame */
   private compact: CompactLevel = 0;
+  private folded = 0;
   private fitQueued = false;
 
   constructor(
@@ -85,7 +97,7 @@ export class Hud {
       this.speedBtns[i] = b;
       time.append(b);
     }
-    this.menuBar = new MenuBar((text) => tipBuild(atlas, () => [title(text)]));
+    this.menuBar = new MenuBar((doc) => tipBuild(atlas, doc));
     // the whole widget is the term: resting on it opens the ages tooltip
     const era = ttTerm(
       el('div', { class: 'panel stat era' }, this.eraIcon, this.eraName, this.eraBar, this.eraPct),
@@ -105,6 +117,7 @@ export class Hud {
       this.languageCell,
       el('div', { class: 'spacer' }),
       el('div', { class: 'stat' }, this.fps),
+      this.nowPlaying,
       el('div', { class: 'stat weather' }, this.weather),
       era,
       // one block at the right end, the era widget just before it
@@ -166,17 +179,25 @@ export class Hud {
   /**
    * The loosest spacing at which everything fits (`compactLevel`): normal, then `compact`, then
    * `compact-2`, each laid out on its own and measured for overflow or a cut in the menu bar or the
-   * weather text (`topbarCompact`). So the answer does not depend on the last one, and the classes
-   * and the tooltip are written only when it changed. An open menu follows its entry.
+   * weather text (`topbarCompact`). At the last level, as few labels gone as fit (`foldCount`). So
+   * the answer does not depend on the last one, and the classes and the tooltip are written only
+   * when it changed. An open menu follows its entry.
    */
   private fit() {
-    const bar = this.root;
+    const short = () => topbarCompact(this.root, [this.menuBar.root, this.weather]);
+    this.menuBar.setFolded(0);
     const level =
       compactLevel((at) => {
         this.setLevelClasses(at);
-        return topbarCompact(bar, [this.menuBar.root, this.weather]);
+        return short();
       }) ?? this.compact; // a hidden bar has no answer: keep the last one
     this.setLevelClasses(level);
+    this.folded =
+      foldCount(this.menuBar.foldable, (count) => {
+        this.menuBar.setFolded(count);
+        return short();
+      }) ?? this.folded;
+    this.menuBar.setFolded(this.folded);
     this.menuBar.place();
     if (level === this.compact) return;
     this.compact = level;

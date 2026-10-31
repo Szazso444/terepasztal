@@ -5,6 +5,7 @@
  * Node tests read a tooltip's rows, tones and terms.
  */
 import { cargoName } from '../sim/cargo';
+import type { IconName } from './kit';
 import { NO_CHANGE, signedPercent } from './tooltipFormat';
 
 /** A number token, shown whole in bold (its sign, % and × belong to it). */
@@ -22,6 +23,10 @@ export interface IconPart {
   /** the resource id (`money` and `population` too), which names the icon `icons/<id>` */
   readonly icon: string;
 }
+/** One of the kit's line icons, in the text's colour: what a menu entry shows. */
+export interface GlyphPart {
+  readonly glyph: IconName;
+}
 /** A word that opens a nested tooltip with `tip`'s document. */
 export interface TermPart {
   readonly term: string;
@@ -31,8 +36,8 @@ export interface TermPart {
 export interface DimPart {
   readonly dim: string;
 }
-/** A piece of a line: plain text, or one of the five above. */
-export type Inline = string | NumPart | ResPart | IconPart | TermPart | DimPart;
+/** A piece of a line: plain text, or one of the six above. */
+export type Inline = string | NumPart | ResPart | IconPart | GlyphPart | TermPart | DimPart;
 export type Parts = readonly Inline[];
 
 /** green (good), red (bad) or amber (accent: the one that stands out, such as the current age) */
@@ -73,6 +78,10 @@ export function res(cargo: string): ResPart {
 /** The icon `icons/<id>` with no name; plain text reads it as nothing. */
 export function icon(id: string): IconPart {
   return { icon: id };
+}
+/** A line icon of the kit; plain text reads it as nothing. */
+export function glyph(name: IconName): GlyphPart {
+  return { glyph: name };
 }
 export function term(label: string, tip: () => TipDoc): TermPart {
   return { term: label, tip };
@@ -174,7 +183,7 @@ export function plain(parts: Parts): string {
           ? p.num
           : 'res' in p
             ? p.name.toLowerCase()
-            : 'icon' in p
+            : 'icon' in p || 'glyph' in p
               ? ''
               : 'dim' in p
                 ? p.dim

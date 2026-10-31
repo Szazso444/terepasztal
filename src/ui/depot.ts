@@ -224,6 +224,13 @@ export class DepotScreen implements Screen {
 
   // ---------------------------------------------------------------- the actions
 
+  /** Stand on a depot: its new train is on show, rolling out of it. Open the screen after. */
+  openOn(depotId: number) {
+    this.depotId = depotId;
+    this.checkCache = null;
+    this.showDraft();
+  }
+
   /** New train: the train picked is let go, and the draft stands as it was left. */
   private showDraft() {
     this.editing = null;

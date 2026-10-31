@@ -2084,7 +2084,7 @@ const EN = {
     nothingToBuy: 'Nothing to buy',
     nothingToSell: 'None in the store to sell',
     /** the market's head: the store it buys into and sells from (the selected one) */
-    store: (label: string) => `Trading at ${label}. Pick another store on the top bar.`,
+    store: (label: string) => `Trading at ${label}. Pick another store in Fleet or on the map.`,
     /** the store the standing deals settle with (`TradeDesk.storeKey`) */
     dealsAt: (label: string) => `Deals settle at ${label}`,
     trend: 'Trend',
@@ -2093,7 +2093,7 @@ const EN = {
     hint: 'Prices are per unit. A store holds up to its cap of each good.',
     deals: 'Standing deals',
     spot: 'Spot prices',
-    noStore: 'No store is selected. Pick one on the top bar.',
+    noStore: 'No store is selected. Pick one in Fleet or on the map.',
     dealsHint: (d: number) =>
       `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the store's cap or when funds run out; selling takes what is on hand.`,
     dealBuy: 'Buy / cycle',
@@ -2119,8 +2119,8 @@ const EN = {
     have: 'In store / cap',
     /** the top bar's card: the good in every store together */
     allStores: (n: number) => `All stores: ${n}`,
-    /** the top bar's store button: what a click does */
-    nextStore: 'The store the bar shows. Click: the next store',
+    /** the same card: whose stock the bar shows, which Fleet picks */
+    shownStore: (name: string) => `The bar shows: ${name}`,
     producedDay: 'Received / last week',
     consumedDay: 'Spent / last week',
     /** the resource tooltip's links: what makes it, what uses it, where trains take it */
@@ -2221,16 +2221,21 @@ const EN = {
   topbar: {
     /** the menu bar's entries (src/ui/menuBarModel.ts) */
     menuTip: 'Menu · Esc',
-    game: 'Game',
+    audio: 'Audio',
     fleet: 'Fleet',
     economy: 'Economy',
     view: 'View',
+    guide: 'Guide',
     /** their rows */
     save: 'Save',
-    quit: 'Quit to title',
     depot: 'Depot',
+    /** the Fleet menu's line of a depot, right of its name */
+    depotDetail: (gauge: 'regular' | 'narrow', trains: number) =>
+      `${gauge === 'narrow' ? 'Narrow' : 'Standard'} · ${trains} ${trains === 1 ? 'train' : 'trains'}`,
+    depotHint: 'Open the Depot on this one and show its store on the resource bar',
     signals: 'Signals',
     contracts: 'Contracts',
+    contractSettings: 'Contract settings',
     crafting: 'Crafting',
     roster: 'Roster',
     market: 'Market',
