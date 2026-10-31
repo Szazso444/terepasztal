@@ -141,9 +141,10 @@ describe('foldCount', () => {
 describe('which labels fold at which width', () => {
   /**
    * The bar as measured in a game at `compact-2`, the now-playing room kept: all it holds but the
-   * labels (the same in both languages, to a third of a pixel), and each label with its gap.
+   * labels (the same in both languages, to a third of a pixel), and each label with its gap. The
+   * fourth fold in English at 1280 lands within a pixel of the edge, as in the game.
    */
-  const REST = 1100.3;
+  const REST = 1100;
   const LABEL: Record<'en' | 'hu', Partial<Record<MenuId, number>>> = {
     en: {
       menu: 33.8,
