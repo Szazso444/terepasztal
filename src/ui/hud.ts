@@ -8,6 +8,8 @@ import { tipBuild } from './tooltipRender';
 import { ageTip, eraView } from './ageTooltip';
 import { ageIconSvg } from './ageIcon';
 import { compactLevel, topbarCompact, type CompactLevel } from './fit';
+import { historyIconSvg, historyTip, type HistoryWay } from './historyControls';
+import type { History } from '../sim/history';
 
 export interface HudModel {
   tickets: number;
@@ -15,12 +17,15 @@ export interface HudModel {
   tier: number;
 }
 
+/** What the undo and redo buttons read of the history. */
+export type HistoryView = Pick<History, 'canUndo' | 'canRedo' | 'undoLabel' | 'redoLabel'>;
+
 /**
- * Top bar: title, menu and screen buttons on the left; on the right the weather/day toggles, the
- * season, the era widget (the current age's icon and name, and a bar toward the next age; resting
- * on it lists every age with its goals), then day, clock and speed as the last block. Tickets live
- * in `funds`, which the game places at the right end of the resource row (the money itself is the
- * resource bar's first cell).
+ * Top bar: title, undo and redo, menu and screen buttons on the left; on the right the weather/day
+ * toggles, the season, the era widget (the current age's icon and name, and a bar toward the next
+ * age; resting on it lists every age with its goals), then day, clock and speed as the last block.
+ * Tickets live in `funds`, which the game places at the right end of the resource row (the money
+ * itself is the resource bar's first cell).
  *
  * When the bar is short of room (`fit`) it goes `compact` in two steps: first tighter spacing and
  * the weather words in the Weather toggle's tooltip; only if that is still not enough, the era
@@ -43,6 +48,12 @@ export class Hud {
   private speedBtns: HTMLButtonElement[] = [];
   readonly actions = el('div', { class: 'stat actions', style: 'gap:4px' });
   readonly menuBtn = btn(STR.menu.menuButton, () => this.onMenu?.(), 'small');
+  private undoBtn = this.historyBtn('undo');
+  private redoBtn = this.historyBtn('redo');
+  /** undo and redo beside the title; the level editor records nothing and hides them */
+  private historyCell = el('div', { class: 'stat history' });
+  /** what the history can do now; its tooltips read it when they open */
+  private history: HistoryView | null = null;
   /** the tickets block for the resource row */
   readonly funds: HTMLElement;
   /** slot for the advisor button and other top-right controls */
@@ -50,6 +61,7 @@ export class Hud {
   readonly weatherBtn = btn(STR.hud.weatherToggle, () => this.onToggleWeather?.(), 'small');
   readonly dayBtn = btn(STR.hud.dayToggle, () => this.onToggleDay?.(), 'small');
   onMenu: (() => void) | null = null;
+  onHistory: ((way: HistoryWay) => void) | null = null;
   onToggleWeather: (() => void) | null = null;
   onToggleDay: (() => void) | null = null;
   private locked = false;
@@ -89,10 +101,15 @@ export class Hud {
       el('div', { class: 'stat era' }, this.eraIcon, this.eraName, this.eraBar, this.eraPct),
       tipBuild(atlas, () => ageTip(this.ages())),
     );
+    // a term around the button: a disabled button still says what it would do
+    const undoTip = tipBuild(atlas, () => historyTip('undo', this.history?.undoLabel ?? null));
+    const redoTip = tipBuild(atlas, () => historyTip('redo', this.history?.redoLabel ?? null));
+    this.historyCell.append(ttTerm(this.undoBtn, undoTip), ttTerm(this.redoBtn, redoTip));
     this.root = el(
       'div',
       { id: 'topbar', class: 'panel' },
       el('div', { class: 'title', text: STR.title }),
+      this.historyCell,
       el('div', { class: 'stat' }, this.menuBtn),
       this.actions,
       el('div', { class: 'spacer' }),
@@ -112,6 +129,20 @@ export class Hud {
       ro.observe(this.root);
       for (const cell of this.root.children) ro.observe(cell);
     }
+  }
+
+  private historyBtn(way: HistoryWay) {
+    const b = btn('', () => this.onHistory?.(way), 'small');
+    // fixed markup from historyControls.ts, never from data
+    b.innerHTML = historyIconSvg(way, 14);
+    b.disabled = true;
+    return b;
+  }
+  /** Undo and redo follow the history: a button with nothing to do is disabled. */
+  setHistory(h: HistoryView) {
+    this.history = h;
+    this.undoBtn.disabled = !h.canUndo;
+    this.redoBtn.disabled = !h.canRedo;
   }
 
   /**
@@ -166,6 +197,7 @@ export class Hud {
   /** Editor: hide the game screens and freeze the clock controls. */
   setEditor(on: boolean) {
     this.actions.style.display = on ? 'none' : '';
+    this.historyCell.style.display = on ? 'none' : '';
     this.locked = on;
     for (const b of this.speedBtns) b.disabled = on;
   }

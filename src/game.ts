@@ -519,6 +519,7 @@ export class Game implements UiHost {
 
   /** Starting economy for a brand-new game, from the rules (or a level's start block). */
   startFresh(start?: LevelData['start']) {
+    this.commands.history.clear();
     // a new game begins at noon in the player's current season
     setSeasonOffset(seasonFromDate());
     this.clock.time = daySeconds() * 0.5;
@@ -1057,6 +1058,10 @@ export class Game implements UiHost {
         this.builder.decorAt(x, y)
       );
     this.world.roadAt = (x, y) => this.builder.roads.has(x, y);
+    // an undo gave the tile its props back; what stands on it keeps them out of sight
+    this.builder.onPropsBack = (x, y) => {
+      if (!this.world.occupied(x, y)) this.world.rebuildProps(x, y);
+    };
     this.builder.onRoadChanged = (x, y) => {
       this.world.roadChanged(x, y);
       // a road on a platform changes its span, and its neighbours' (#496); refreshed once a frame
@@ -1122,7 +1127,13 @@ export class Game implements UiHost {
       trade: this.trade,
       gacha: this.gacha,
       inventory: this.inventory,
+      towns: this.towns,
+      houses: this.houses,
+      contracts: this.contracts,
+      contractJobs: this.contractJobs,
+      clock: this.clock,
     });
+    this.build.act = (fn, stroke) => this.commands.act(fn, stroke);
     // every panel, screen and menu, wired to this game; it also sets the build controller's
     // selection and status callbacks
     this.ui = createPlayUi(this, {
@@ -1281,6 +1292,7 @@ export class Game implements UiHost {
   }
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
+    this.commands.history.clear();
     // content the game no longer defines goes first, before anything looks it up
     const pruned = pruneUnknownContent(j);
     // nothing the game held before the load stays in its stores
@@ -1432,6 +1444,7 @@ export class Game implements UiHost {
     if (removed) {
       this.world.removeStructure(id);
       this.signalAspect.delete(d.y * this.map.w + d.x);
+      this.semaphoreArms.delete(d.y * this.map.w + d.x);
       if (
         d.id !== 'signal' &&
         terrainAt(this.map, d.x, d.y) === Terrain.Hill &&

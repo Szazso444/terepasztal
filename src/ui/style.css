@@ -252,6 +252,19 @@ body {
 #topbar .datespeed .time {
   padding: 0 10px 0 4px;
 }
+/* undo and redo beside the title: a disabled button lets the pointer through to its tooltip */
+#topbar .history {
+  gap: 2px;
+  padding: 0 6px;
+}
+#topbar .history .btn {
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+}
+#topbar .history .btn:disabled {
+  pointer-events: none;
+}
 /* the era widget, just before the date: a term drawn as a cell, not as a link */
 #topbar .tt-term {
   display: flex;

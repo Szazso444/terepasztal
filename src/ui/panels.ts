@@ -60,6 +60,7 @@ import {
   type SlotActions,
 } from './menu';
 import { Hud } from './hud';
+import { stepHistory, type HistoryWay } from './historyControls';
 import { DepotScreen } from './depot';
 import { TrainScreen } from './trainScreen';
 import { MarketScreen } from './marketScreen';
@@ -526,6 +527,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const buildingPanel = new BuildingPanel(
     d.builder,
     () => d.build.selectedBuilding && d.build.selectBuilding(null),
+    d.commands,
   );
   const decorPanel = new DecorPanel(d.builder, d.power, d.commands, toast, () => {
     if (d.build.selectedDecor) d.build.selectDecor(null);
@@ -655,6 +657,22 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     buildInfo.show(toolbar.item(t));
   };
 
+  // ---------------------------------------------------------------- undo
+  /** One step back or forward: then what was picked may have gone, and the panels may be stale. */
+  const historyStep = (way: HistoryWay) => {
+    if (menuOpen() || host.recordingRoute) return;
+    if (!stepHistory(way, d.commands.history, toast)) return;
+    // a tooltip open now tells of the world before the step
+    d.tooltip.stack.closeAll();
+    d.build.dropGone();
+    stationPanel.render();
+    buildingPanel.render();
+    decorPanel.render();
+  };
+  hud.onHistory = historyStep;
+  d.commands.history.onChange = () => hud.setHistory(d.commands.history);
+  hud.setHistory(d.commands.history);
+
   // ---------------------------------------------------------------- menus
   const menuOpen = () => mainMenu.visible || pauseMenu.visible;
   /**
@@ -684,6 +702,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   }
   /** The title screen over the paused game; `overGame` when the pause menu opened it. */
   function showMainMenu(overGame: boolean) {
+    // what was done in the game being left is no longer the player's to take back
+    d.commands.history.clear();
     titleOverGame = overGame;
     host.pauseGame();
     d.screens.close();
@@ -942,6 +962,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     cancelRecording: () => host.cancelRecording(),
     dropOverviewTrain: () => host.dropOverviewTrain(),
     leaveOverview: () => host.setView(0),
+    undo: () => historyStep('undo'),
+    redo: () => historyStep('redo'),
   };
 
   return {

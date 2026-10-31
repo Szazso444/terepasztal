@@ -29,10 +29,21 @@ const pressName = (
     ? `Char${e.key}`
     : e.code;
 
+/**
+ * Undo and redo, bound by the character too: a Hungarian keyboard swaps Y and Z, so its Ctrl+Z is
+ * `KeyY`. Ctrl stands for Cmd on a Mac, and with Alt held it is AltGr, which types.
+ */
+function undoName(e: Pick<KeyboardEvent, 'key' | 'shiftKey' | 'ctrlKey' | 'metaKey' | 'altKey'>) {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return null;
+  const key = e.key.toLowerCase();
+  if (key === 'z') return e.shiftKey ? 'Ctrl+Shift+Z' : 'Ctrl+Z';
+  return key === 'y' && !e.shiftKey ? 'Ctrl+Y' : null;
+}
+
 export class Input {
   /** keys held down, by `KeyboardEvent.code`, so letting a key go clears it whatever it typed */
   readonly keys = new Set<string>();
-  /** keys pressed this frame, by `pressName` */
+  /** keys pressed this frame, by `undoName`, else `pressName` */
   readonly pressed = new Set<string>();
   mouseX = 0;
   mouseY = 0;
@@ -62,7 +73,10 @@ export class Input {
     window.addEventListener('keydown', (e) => {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
-      if (!this.keys.has(e.code)) this.pressed.add(pressName(e));
+      const undo = undoName(e);
+      if (undo) e.preventDefault();
+      // macOS sends no key up for a key let go under Cmd, so the key's own repeat tells here
+      if (undo ? !e.repeat : !this.keys.has(e.code)) this.pressed.add(undo ?? pressName(e));
       this.keys.add(e.code);
       if (['Tab', 'Space'].includes(e.code)) e.preventDefault();
     });

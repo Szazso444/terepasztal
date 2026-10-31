@@ -641,6 +641,20 @@ export class Fleet {
   postAspects() {
     return this.signals.postAspects(this.occ);
   }
+  /** The train standing on one of `tiles`, read from the cars as they stand now. */
+  trainOn(tiles: readonly { x: number; y: number }[]): Train | undefined {
+    const keys = new Set(tiles.map((t) => t.y * this.map.w + t.x));
+    return this.trains.find((t) => t.occupancyKeys(this.map.w).some((k) => keys.has(k)));
+  }
+  /** The train that needs a station: one at its platforms, or with a stop or a job there. */
+  trainBoundFor(s: Station): Train | undefined {
+    return this.trains.find(
+      (t) =>
+        s.occupants.has(t.id) ||
+        [...t.schedule, ...t.program].some((p) => p.stationId === s.id) ||
+        (t.job ? [t.job, ...t.jobs] : t.jobs).some((j) => j.originId === s.id || j.destId === s.id),
+    );
+  }
   /** Is `tile` under any train other than `self`? Rebuilt each tick from car poses. */
   occupied(x: number, y: number, self: number) {
     const list = this.occ.get(y * this.map.w + x);
