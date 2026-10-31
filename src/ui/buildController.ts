@@ -25,6 +25,7 @@ import { rules } from '../sim/rules';
 import { HarvestCells, harvestBreakdown, weeklyOutput } from '../sim/stations';
 import type { Season } from '../sim/weather';
 import { nextToolRotation, stationGhostFrame, toolRotations } from './toolRotation';
+import { pieceName } from './trackGroups';
 import { placingTip, yieldLabel } from './placingTooltip';
 import type { TipDoc } from './tooltipDoc';
 import { tipKey, type Point, type TooltipStack } from './tooltipStack';
@@ -420,7 +421,7 @@ export class BuildController {
         ? STR.build.standsAlready
         : check.ok
           ? replacing
-            ? STR.build.replace(existing!.kind, fmtCost(check.cost))
+            ? STR.build.replace(pieceName(existing!.kind), fmtCost(check.cost))
             : STR.build.cost(fmtCost(check.cost))
           : (check.reason ?? ''),
       step?.crossing && check.ok && !step.stands ? STR.build.autoCrossings(1) : '',
@@ -473,7 +474,7 @@ export class BuildController {
   /** A run's status: its pieces and price, the crossings it lays by itself, and where it stops. */
   private runStatus(plan: RunPlan, item: TrackItem) {
     const parts = [
-      `${STR.build.runPieces(plan.straights, item.kind)}${plan.curves ? ` ${STR.build.runCurves(plan.curves)}` : ''}: ${fmtCost(plan.cost)}`,
+      `${STR.build.runPieces(plan.straights, pieceName(item.kind))}${plan.curves ? ` ${STR.build.runCurves(plan.curves)}` : ''}: ${fmtCost(plan.cost)}`,
     ];
     if (plan.crossings) parts.push(STR.build.autoCrossings(plan.crossings));
     if (plan.reason) parts.push(plan.reason);

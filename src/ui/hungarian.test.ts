@@ -133,6 +133,14 @@ describe('the Hungarian table has the shape of the English one', () => {
 });
 
 describe('the names of the data', () => {
+  it('names a track piece in the language of the page, as the status line says it', async () => {
+    const hu = await loaded('hu', () => import('./trackGroups'));
+    expect(hu.pieceName('straight')).toBe('Egyenes');
+    expect(hu.pieceName('curve')).not.toBe('curve');
+    const en = await loaded('en', () => import('./trackGroups'));
+    expect(en.pieceName('straight')).toBe('Straight');
+  });
+
   const ids = (rows: { id: string }[]) => rows.map((r) => r.id).sort();
   const covers = (texts: object, rows: { id: string }[], fields: string[]) => {
     expect(Object.keys(texts).sort()).toEqual(ids(rows));
