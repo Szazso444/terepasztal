@@ -1197,8 +1197,8 @@ body {
   left: 8px;
   top: 62px;
   width: 300px;
-  /* clear of the build dock, as the train and the station panel are */
-  max-height: calc(100% - 78px - var(--dock-height, 0px));
+  /* clear of the camera keys' hint and of the build dock, whichever stands higher */
+  max-height: min(calc(100% - 170px), calc(100% - 78px - var(--dock-height, 0px)));
   display: flex;
   flex-direction: column;
 }
@@ -2937,10 +2937,15 @@ input[type='range'] {
   flex-direction: column;
   z-index: 20;
 }
-/* the alert bar stands in the middle: a narrower window puts the advisor under it */
+/* the alert bar stands in the middle: a narrower window puts the advisor under it, and the words on
+   the overview between the advisor and the Town list */
 @media (max-width: 1639px) {
   #advisor {
     top: 110px;
+  }
+  #overview-banner {
+    left: calc(50% - 184px);
+    width: 360px;
   }
 }
 .badge {
@@ -3030,7 +3035,7 @@ table.market td {
   left: 8px;
   top: 62px;
   width: 260px;
-  max-height: calc(100% - 78px - var(--dock-height, 0px));
+  max-height: min(calc(100% - 170px), calc(100% - 78px - var(--dock-height, 0px)));
   display: flex;
   flex-direction: column;
   z-index: 5;
