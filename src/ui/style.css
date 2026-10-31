@@ -4207,8 +4207,8 @@ table.market td {
 .dp-li .k-li-m > small {
   white-space: nowrap;
 }
-/* a train's third line: what is aboard and its note wrap rather than lose their end */
-.dp-li .k-li-m > small:has(> .dp-aboard) {
+/* a train's third line runs longer in Hungarian: it wraps rather than lose its end */
+html[lang='hu'] .dp-li .k-li-m > small:has(> .dp-aboard) {
   white-space: normal;
 }
 .dp-li .k-li-m > small .k-bad {
