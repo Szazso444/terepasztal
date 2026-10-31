@@ -395,7 +395,7 @@ describe('a v13 save', () => {
       savedAt: 0,
       seed: 4242,
       clock: { time: timeOf(i), speedIndex: 1 },
-      economy: { money: 0, tickets: 0, tier: 0, granted: [] },
+      economy: { money: 0, tier: 0 },
       track: [],
       stations: [],
       trains: j.trains,

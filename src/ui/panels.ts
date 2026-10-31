@@ -235,7 +235,7 @@ export interface UiHost {
   applySeason(force?: boolean): void;
   /** ask for a town's name; `fresh` marks a just-founded town (its default name is offered) */
   renameTown(t: Town, fresh?: boolean): void;
-  /** money, tickets and the selected store filled, for testing */
+  /** money and the selected store filled, for testing */
   cheat(): void;
 
   // ------------------------------------------------------------ storage and reloads
@@ -559,7 +559,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const minimap = new Minimap(d.map, d.regions, d.camera, (wx, wy) => host.centerCamera(wx, wy));
   const debug = new DebugPanel(host.seed, {
     giveMoney: () => (d.economy.money += 10000),
-    giveTickets: () => (d.economy.tickets += 10),
     nextAge: () => d.economy.setAge(d.economy.tier + 1),
     giveResources: () => {
       const store = stores.selected;

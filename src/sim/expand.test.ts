@@ -34,7 +34,7 @@ function partsOf(world: SaveParts['world']): SaveParts {
   return {
     seed: world.seed,
     clock: { time: 900, speedIndex: 1 },
-    economy: { money: 5000, tickets: 2, tier: 1, granted: [0], earned: 100 },
+    economy: { money: 5000, tier: 1, earned: 100 },
     track: [[3, 4, 'straight', 1, 'branch', 'branch']],
     stations: [],
     trains: [],

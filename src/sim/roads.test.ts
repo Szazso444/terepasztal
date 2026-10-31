@@ -1313,7 +1313,7 @@ function oldSave(version: number): SaveGame {
     savedAt: 1,
     seed: 5,
     clock: { time: 0, speedIndex: 1 },
-    economy: { money: 0, tickets: 0, tier: 0, granted: [] },
+    economy: { money: 0, tier: 0 },
     track: [],
     stations: [],
     trains: [],

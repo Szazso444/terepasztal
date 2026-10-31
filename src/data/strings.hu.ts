@@ -68,7 +68,6 @@ export const HU: Strings = {
   hud: {
     money: 'Pénz',
     weather: (season: string, weather: string) => `${season} · ${weather}`,
-    tickets: 'Jegyek',
     agePercent: (pct: number) => `${pct}%`,
     day: (d: number) => `${d}. nap`,
     speed: ['❚❚', '1x', '2x', '3x', '½x'],
@@ -280,7 +279,6 @@ export const HU: Strings = {
     seed: 'Mag',
     entities: 'Entitások',
     giveMoney: '+10 000 pénz',
-    giveTickets: '+10 jegy',
     nextAge: 'Következő korszak',
     giveResources: '+200 nyersanyag',
     spawnContract: 'Szerződés létrehozása',
@@ -1084,7 +1082,6 @@ export const HU: Strings = {
     offersBadge: (n: number) => `${n} új`,
     sideEmpty: 'Nincs aktív szerződés.',
     sideEmptyOffers: 'Ajánlatok várnak a táblán.',
-    dailyTicket: 'Napi bónusz: +1 jegy a tegnapi szállításokért',
     cancelFine: (fine: string) => `Felmondás (bírság: ${fine})`,
     cancelled: 'Felmondva',
     cancelledMsg: (n: string, fine: string) => `${n} felmondva: ${fine} bírság`,
@@ -1476,11 +1473,6 @@ export const HU: Strings = {
     },
     pruned: (list: string, refund: string) =>
       `Ez a mentés olyat tartalmazott, ami már nincs a játékban. Eltávolítva: ${list}.${refund ? ` Visszatérítve: ${refund}.` : ''}`,
-    refund: (money: string, tickets: number) => {
-      const t = `${tickets} jegy`;
-      if (tickets <= 0) return money;
-      return money ? `${money} és ${t}` : t;
-    },
     groundUnreadable: (n: number) =>
       `A térkép ${n} chunkjának tárolt talaja nem olvasható. Azt a földet ebben a játékban újragenerálta a játék, így eltérhet attól, amire építettél; a tárolt talaj megmarad.`,
     groundUnsaved:

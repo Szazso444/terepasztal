@@ -8,8 +8,9 @@
  * it that is today's shipped table or any past shipped version of it (`PAST_SHIPPED`) is an
  * untouched copy and is dropped without a word; only a table the player edited is converted:
  * stamped with today's table, checked like any other and stored in the per-table format, which is
- * how the conversion runs once. Overrides are applied once, here, at module load so every
- * consumer sees one consistent bundle for the session. Editing content therefore takes effect on
+ * how the conversion runs once. A stored contracts table made while contracts paid tickets loses
+ * its ticket fields and applies (`TICKETED_CONTRACTS`). Overrides are applied once, here, at module
+ * load so every consumer sees one consistent bundle for the session. Editing content therefore takes effect on
  * the next page load (the editor reloads for you).
  */
 import locoJson from './locomotives.json';
@@ -307,7 +308,6 @@ export interface ContractTemplate {
   baseDays: number;
   daysPerTile: number;
   payoutMul: number;
-  tickets: number;
   /** the rarity's deadline multiplier applies (rush orders get tighter with rarity) */
   rarityDeadline?: boolean;
 }
@@ -318,8 +318,6 @@ export interface ContractRarityDef {
   weight: number;
   /** payout multiplier */
   rewardMul: number;
-  /** ticket multiplier */
-  ticketMul: number;
   /** amount multiplier: higher rarities ask for more */
   amountMul: number;
   /** deadline multiplier for templates flagged `rarityDeadline` */
@@ -582,6 +580,32 @@ function isUntouchedCopy(key: ContentKey, data: unknown) {
   return sameAsShipped(key, data) || PAST_SHIPPED[key].includes(tableHash(key, data));
 }
 
+/**
+ * The stamp the contracts table shipped under while contracts paid tickets. That table differs
+ * from today's by its ticket fields alone, so a table stored with this stamp is an edit of today's
+ * table once they are gone (`withoutTicketFields`), and is not stale.
+ */
+const TICKETED_CONTRACTS = '39fa427f';
+
+/** A contracts table without the ticket fields of its templates and rarities. */
+function withoutTicketFields(data: unknown): unknown {
+  if (!isObj(data)) return data;
+  const without = (list: unknown, field: string): unknown =>
+    Array.isArray(list)
+      ? list.map((row: unknown) => {
+          if (!isObj(row)) return row;
+          const rest = { ...row };
+          delete rest[field];
+          return rest;
+        })
+      : list;
+  return {
+    ...data,
+    templates: without(data.templates, 'tickets'),
+    rarities: without(data.rarities, 'ticketMul'),
+  };
+}
+
 /** The tables of `b` that differ from the shipped ones (derived fields aside). */
 export function changedTables(b: ContentBundle): Partial<ContentBundle> {
   const out: Partial<Record<ContentKey, unknown>> = {};
@@ -672,7 +696,7 @@ const PER_LEVEL = [
   'spriteByLevel',
   'crew',
 ] as const;
-const RARITY_NUMBERS = ['weight', 'rewardMul', 'ticketMul', 'amountMul', 'deadlineMul'] as const;
+const RARITY_NUMBERS = ['weight', 'rewardMul', 'amountMul', 'deadlineMul'] as const;
 
 function isCost(c: unknown) {
   return isObj(c) && Object.values(c).every((v) => typeof v === 'number' && v >= 0);
@@ -979,8 +1003,9 @@ function rewriteLegacy(edited: Map<ContentKey, unknown>, untouched: ContentKey[]
  * is first told apart by its hash: an untouched copy of the shipped table or of a past shipped
  * version (`PAST_SHIPPED`) is dropped, and only an edited table counts as stamped with today's
  * table. The stored value is then rewritten in the per-table format, with the edited tables
- * alone. Everything else is set aside, with a warning, and stays in storage until the editor
- * next writes or resets.
+ * alone. A stored table of no table the bundle has (the gacha's) is passed over without a word.
+ * Everything else is set aside, with a warning, and stays in storage until the editor next writes
+ * or resets.
  */
 function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport } {
   const base = clone(DEFAULT_CONTENT);
@@ -1004,13 +1029,18 @@ function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport 
     notes.set(key, why);
   };
   const candidates = new Map<ContentKey, unknown>();
+  /** A table stored while contracts paid tickets: one that only changed those is no edit now. */
+  const fromTicketedBuild = (k: ContentKey, data: unknown) => {
+    const table = k === 'contracts' ? withoutTicketFields(data) : data;
+    if (!sameAsShipped(k, table)) candidates.set(k, table);
+  };
   // The old whole-bundle format holds every table the editor saved, edited or not; only the
   // edited ones are candidates, the untouched copies of shipped tables are dropped.
   const legacy =
     stored.format === undefined ? CONTENT_KEYS.filter((k) => stored[k] !== undefined) : [];
   const untouched = legacy.filter((k) => isUntouchedCopy(k, stored[k]));
   if (stored.format === undefined) {
-    for (const k of legacy) if (!untouched.includes(k)) candidates.set(k, stored[k]);
+    for (const k of legacy) if (!untouched.includes(k)) fromTicketedBuild(k, stored[k]);
   } else if (stored.format !== CONTENT_FORMAT) {
     const tables = isObj(stored.tables) ? stored.tables : {};
     const problem = `unknown storage format ${JSON.stringify(stored.format)}`;
@@ -1029,7 +1059,8 @@ function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport 
       if (!isObj(e) || typeof e.stamp !== 'string' || e.data === undefined) {
         const problem = `${k}: stored entry needs a stamp and data`;
         setAside(k, 'invalid', [problem], problem);
-      } else if (e.stamp !== STAMP[k])
+      } else if (k === 'contracts' && e.stamp === TICKETED_CONTRACTS) fromTicketedBuild(k, e.data);
+      else if (e.stamp !== STAMP[k])
         setAside(k, 'stale', [], `made for shipped table ${e.stamp}, which is now ${STAMP[k]}`);
       else candidates.set(k, e.data);
     }

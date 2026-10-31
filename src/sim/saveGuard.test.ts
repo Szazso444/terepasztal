@@ -756,13 +756,16 @@ function positionsOf(file: Record<string, unknown>): Position[] {
   add(['clock', 'time']);
   add(['clock', 'speedIndex']);
   add(['economy', 'money']);
-  add(['economy', 'tickets']);
+  // the step from v23 drops the tickets and the book of the ones an age paid
+  add(['economy', 'tickets'], (from) => from > 23);
   // the step from v8 makes the tier an age from 0 to 2, and drops the reputation
   add(['economy', 'tier'], (from) => from > 8);
   const economy = file.economy as Record<string, unknown>;
   if ('reputation' in economy) add(['economy', 'reputation'], (from) => from > 8);
   if ('earned' in economy) add(['economy', 'earned']);
-  (economy.granted as unknown[]).forEach((_, i) => add(['economy', 'granted', i]));
+  (economy.granted as unknown[]).forEach((_, i) =>
+    add(['economy', 'granted', i], (from) => from > 23),
+  );
   for (const k of ['x', 'y', 'zoomIndex']) add(['camera', k]);
   add(['lastDay']);
   (file.track as unknown[]).forEach((_, i) => {

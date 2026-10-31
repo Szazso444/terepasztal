@@ -527,7 +527,7 @@ describe('a pump a save holds where it may no longer be placed', () => {
       savedAt: 1700000000000,
       seed: 12345,
       clock: { time: 0, speedIndex: 1 },
-      economy: { money: 1000, tickets: 0, tier: 0, granted: [] },
+      economy: { money: 1000, tier: 0 },
       track: [[X - 1, Y, 'straight', 1, 'branch', 'branch']],
       stations: [
         { id: 1, defId: 'pump', name: 'Water Pump', x: X, y: Y, level: 2, storage: { water: 5 } },

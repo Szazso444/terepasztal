@@ -207,7 +207,6 @@ export class Game implements UiHost {
   readonly sim = new SimStep(this, {
     refreshCity: () => this.refreshCity(),
     season: () => this.applySeason(),
-    dailyTicket: () => this.toasts.push(STR.contracts.dailyTicket, 'good'),
   });
   map!: GameMap;
   regions!: RegionState;
@@ -526,7 +525,6 @@ export class Game implements UiHost {
     this.clock.time = daySeconds() * 0.5;
     this.applySeason(true);
     this.economy.money = start ? start.money : rules.startMoney;
-    this.economy.tickets = start ? start.tickets : rules.startTickets;
     if (!start) {
       // the starter engines are narrow gauge, so the first depot is too (unless tuning bars it)
       const d = this.ensureDepot(startDepotKind());
@@ -1839,9 +1837,7 @@ export class Game implements UiHost {
   /** A save named content the game no longer has: say what went and what was refunded. */
   private warnPruned(report: PruneReport) {
     const list = report.dropped.map((d) => `${d.id} ×${d.count}`).join(', ');
-    // `saves.refund` takes the money already formatted, and empty when none was refunded
-    const money = report.money ? fmtMoney(report.money) : '';
-    const text = STR.saves.pruned(list, STR.saves.refund(money, report.tickets));
+    const text = STR.saves.pruned(list, report.money ? fmtMoney(report.money) : '');
     this.notices.push({ key: 'save:pruned', kind: 'warn', type: 'note', text, target: null }, 180);
   }
   /** warning text for the settings screen while a converted save is in play */
@@ -2026,7 +2022,6 @@ export class Game implements UiHost {
   /** Debug aid requested for testing: money, and the selected store and the grid filled. */
   cheat() {
     this.economy.money += 10000;
-    this.economy.tickets += 10;
     const store = this.stores.selected;
     if (store) for (const id of RESOURCE_IDS) this.stores.withGrid(store).add(id, 1e9);
     this.toasts.push(STR.topbar.cheated, 'info');

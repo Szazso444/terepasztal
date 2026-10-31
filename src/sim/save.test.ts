@@ -79,7 +79,8 @@ function oldestSave(): SaveGame {
     savedAt: 1700000000000,
     seed: 12345,
     clock: { time: 0, speedIndex: 1 },
-    economy: { money: 1000, tickets: 0, tier: 0, granted: [] },
+    // the fields of a file that old: the step from v23 drops them and the gacha below
+    economy: { money: 1000, tickets: 0, tier: 0, granted: [] } as SaveGame['economy'],
     track: [],
     stations: [],
     trains: [],
@@ -99,7 +100,7 @@ function fullParts(): SaveParts {
   return {
     seed: 777,
     clock: { time: 1234.5, speedIndex: 2 },
-    economy: { money: 12345, tickets: 3, tier: 2, granted: [0, 1, 2], earned: 9000 },
+    economy: { money: 12345, tier: 2, earned: 9000 },
     track: [
       [4, 8, 'straight', 1, 'branch', 'branch'],
       [12, 8, 'crossing', 0, 'narrow', 'branch'],
@@ -663,7 +664,7 @@ describe('v8 to v9', () => {
     return {
       ...oldestSave(),
       version: 8,
-      economy: { money: 5, tickets: 0, tier: 7, granted: [], reputation: 300 },
+      economy: { money: 5, tier: 7, reputation: 300 },
       contracts: { contracts: [{ id: 'c1', reputation: 12 }] },
       decor: [
         [3, 4, 'townhouse', 0],
@@ -685,9 +686,7 @@ describe('v8 to v9', () => {
     expect(j.economy.tier).toBe(2);
     expect(j.economy.earned).toBe(0);
     expect(j.economy.reputation).toBeUndefined();
-    expect(
-      migrate(v8({ economy: { money: 0, tickets: 0, tier: 1, granted: [] } })).economy.tier,
-    ).toBe(1);
+    expect(migrate(v8({ economy: { money: 0, tier: 1 } })).economy.tier).toBe(1);
   });
 
   it('turns every townhouse in the decor into a level 1 house', () => {
@@ -925,7 +924,6 @@ const CORE_PATHS: { path: string[]; kind: 'number' | 'array' }[] = [
     ['clock', 'time'],
     ['clock', 'speedIndex'],
     ['economy', 'money'],
-    ['economy', 'tickets'],
     ['economy', 'tier'],
     ['camera', 'x'],
     ['camera', 'y'],
@@ -2737,7 +2735,7 @@ describe('storage', () => {
     const v8 = {
       ...oldestSave(),
       version: 8,
-      economy: { money: 50, tickets: 0, tier: 7, granted: [] },
+      economy: { money: 50, tier: 7 },
     };
     store.items.set(SLOTS_KEY, JSON.stringify({ old: JSON.stringify(v8) }));
     expect(listSlots()[0]).toMatchObject({ name: 'old', version: 8, age: 2, money: 50 });
@@ -3249,7 +3247,7 @@ function verdictOf(raw: string): SaveRefusal | 'save' {
     isObject(block) && keys.every((k) => typeof block[k] === 'number');
   const whole =
     numbers(j.clock, ['time', 'speedIndex']) &&
-    numbers(j.economy, ['money', 'tickets', 'tier']) &&
+    numbers(j.economy, ['money', 'tier']) &&
     numbers(j.camera, ['x', 'y', 'zoomIndex']) &&
     Array.isArray(j.track) &&
     Array.isArray(j.stations) &&
@@ -3369,9 +3367,10 @@ describe('a file with one field every version has taken out or retyped', () => {
         // before v9 the tier was a reputation tier, and becomes the age it reached (at most 2)
         expect(save.economy).toMatchObject({
           money: economy.money,
-          tickets: economy.tickets,
           tier: from < 9 ? Math.min(2, economy.tier) : economy.tier,
         });
+        // what the file held of tickets is gone, whatever the version it came from
+        if (from < SAVE_VERSION) expect(save.economy).not.toHaveProperty('tickets');
         for (const key of ['track', 'stations', 'trains'] as const)
           expect(save[key], key).toHaveLength((file[key] as unknown[]).length);
 

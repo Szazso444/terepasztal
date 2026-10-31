@@ -5,18 +5,9 @@ import { describe, it, expect } from 'vitest';
 /**
  * Fields of a train, station, signal, roster item or the purse that a panel changes only through
  * `Commands` (`src/sim/commands.ts`): routing mode, signal direction, name, in-cab fitting, fuel
- * preference, stop list, money and tickets.
+ * preference, stop list and money.
  */
-const COMMANDED = new Set([
-  'mode',
-  'rot',
-  'name',
-  'inCab',
-  'fuelPreference',
-  'schedule',
-  'money',
-  'tickets',
-]);
+const COMMANDED = new Set(['mode', 'rot', 'name', 'inCab', 'fuelPreference', 'schedule', 'money']);
 /**
  * Calls that change the purse, a store or a stop list past the commands: spending, earning,
  * store moves, and a train's stops handed to the fleet as they are.
@@ -100,7 +91,7 @@ describe('what the panels change', () => {
     const panel = [
       'train.mode = m;',
       'signal.rot = (signal.rot + 1) % 4;',
-      'this.economy.tickets -= cost;',
+      'this.economy.money -= cost;',
       'it.inCab ??= true;',
       'station.name = n;',
       'economy.money++;',
@@ -115,7 +106,7 @@ describe('what the panels change', () => {
     expect(directWrites('panel.ts', panel)).toEqual([
       'panel.ts:1: train.mode = m',
       'panel.ts:2: signal.rot = (signal.rot + 1) % 4',
-      'panel.ts:3: this.economy.tickets -= cost',
+      'panel.ts:3: this.economy.money -= cost',
       'panel.ts:4: it.inCab ??= true',
       'panel.ts:5: station.name = n',
       'panel.ts:6: economy.money++',

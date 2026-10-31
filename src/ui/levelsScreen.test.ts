@@ -20,7 +20,7 @@ const level = (over: Partial<LevelData> = {}): LevelData => ({
   track: [],
   stations: [],
   decor: [],
-  start: { money: 40000, tickets: 0, tier: 0 },
+  start: { money: 40000, tier: 0 },
   ...over,
 });
 

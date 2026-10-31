@@ -208,7 +208,7 @@ describe('a save from before rotations', () => {
       savedAt: 1700000000000,
       seed: 99,
       clock: { time: 10, speedIndex: 1 },
-      economy: { money: 500, tickets: 0, tier: 0, granted: [] },
+      economy: { money: 500, tier: 0 },
       track: [],
       stations: [asStored(depot) as StationJSON],
       trains: [],

@@ -64,9 +64,7 @@ export interface SaveParts {
   /** v9: `tier` is the age index; `earned` the lifetime income (reputation dropped) */
   economy: {
     money: number;
-    tickets: number;
     tier: number;
-    granted: number[];
     earned?: number;
     /** pre-v9 field, ignored */
     reputation?: number;
@@ -672,10 +670,22 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 23,
-    note: 'the gacha left the game, crafting having replaced it: its section is dropped',
+    note: 'the gacha and its tickets left the game, crafting having replaced them: what the file held of them is dropped and refunded by nothing',
     quiet: true,
     run: (j) => {
       delete j.gacha;
+      const economy: Record<string, unknown> = j.economy;
+      delete economy.tickets;
+      delete economy.granted;
+      if (isRecord(j.contracts)) {
+        delete j.contracts.completedToday;
+        if (Array.isArray(j.contracts.contracts))
+          for (const c of j.contracts.contracts as unknown[]) if (isRecord(c)) delete c.tickets;
+      }
+      if (isRecord(j.rules)) delete (j.rules as Record<string, unknown>).startTickets;
+      const world: unknown = j.world;
+      if (isRecord(world) && isRecord(world.level) && isRecord(world.level.start))
+        delete world.level.start.tickets;
     },
   },
 ];
@@ -808,7 +818,7 @@ export function firstNonFinite(value: unknown): string | null {
 /** The numbers inside the blocks every version since v1 has, checked before migrating. */
 const CORE_NUMBERS: Record<string, readonly string[]> = {
   clock: ['time', 'speedIndex'],
-  economy: ['money', 'tickets', 'tier'],
+  economy: ['money', 'tier'],
   camera: ['x', 'y', 'zoomIndex'],
 };
 /** The lists every version since v1 has. */
