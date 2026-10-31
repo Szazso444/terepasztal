@@ -3,8 +3,6 @@
  * contracts a tab lists and in what order, what a card says about time and delivery, and the words
  * an empty tab shows. DOM-free, so it runs under Node.
  */
-import { daySeconds } from '../sim/rules';
-
 export type ContractTab = 'offers' | 'active' | 'history';
 
 /** The last contracts the Recent tab keeps. */
@@ -12,15 +10,6 @@ export const HISTORY_LIMIT = 12;
 
 /** Under this share of its deadline an active contract is running out of time. */
 export const LOW_TIME = 0.25;
-
-/** A duration in game seconds as the game prints it: `1.5d`, or `3h 20m` under a day. */
-export function fmtDuration(sec: number) {
-  const days = sec / daySeconds();
-  if (days >= 1) return `${days.toFixed(1)}d`;
-  const h = Math.floor(days * 24);
-  const m = Math.floor(((days * 24) % 1) * 60);
-  return `${h}h ${String(m).padStart(2, '0')}m`;
-}
 
 /** The finished contracts Recent lists: the last `limit` of them, the newest first. */
 export function recentContracts<T extends { status: string }>(

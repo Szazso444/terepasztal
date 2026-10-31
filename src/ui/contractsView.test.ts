@@ -7,7 +7,6 @@ import {
   contractTabs,
   deliveredShare,
   emptyKind,
-  fmtDuration,
   payoutLost,
   pickTab,
   recentContracts,
@@ -99,16 +98,6 @@ describe('an empty tab', () => {
     expect(emptyKind('offers', false)).toBe('needStations');
     expect(emptyKind('active', true)).toBe('noActive');
     expect(emptyKind('history', false)).toBe('noHistory');
-  });
-});
-
-describe('a duration as the game prints it', () => {
-  it('is in days from a day up, and hours and minutes under it', () => {
-    // a day is 240 s in the default rules
-    expect(fmtDuration(240 * 4.1)).toBe('4.1d');
-    expect(fmtDuration(240)).toBe('1.0d');
-    expect(fmtDuration(240 * 0.5)).toBe('12h 00m');
-    expect(fmtDuration(0)).toBe('0h 00m');
   });
 });
 

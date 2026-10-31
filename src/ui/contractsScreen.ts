@@ -19,13 +19,13 @@ import type { Builder } from '../sim/build';
 import type { GameClock } from '../sim/time';
 import type { AtlasRegistry } from '../engine/atlas';
 import { cargoDef } from '../sim/cargo';
+import { fmtDuration } from './numberFormat';
 import { fragment, liveMeter, resIcon, ScrollKeep, setText } from './economyParts';
 import {
   activeByDeadline,
   contractTabs,
   deliveredShare,
   emptyKind,
-  fmtDuration,
   payoutLost,
   pickTab,
   recentContracts,
@@ -35,8 +35,6 @@ import {
   type AutoState,
   type ContractTab,
 } from './contractsView';
-
-export { fmtDuration };
 
 /**
  * Contracts: the offers to accept, the ones being worked and the last ones finished, one tab each.

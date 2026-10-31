@@ -29,6 +29,8 @@ export interface KeyHost {
   readonly building: boolean;
   /** a toolbar category is open */
   readonly categoryOpen: boolean;
+  /** the train panel is open: Escape closes it before the pause menu */
+  readonly trainOpen: boolean;
   /** a route is being recorded in the overview */
   readonly recording: boolean;
   /** a train is picked in the overview */
@@ -43,6 +45,8 @@ export interface KeyHost {
   /** close the open menu of the top bar */
   closeBarMenu(): void;
   closeScreen(): void;
+  /** close the train panel */
+  closeTrain(): void;
   closeMenus(): void;
   openPauseMenu(): void;
   toggleScreen(screen: KeyScreen): void;
@@ -161,6 +165,7 @@ const ACTIONS: Record<KeyAction, (h: KeyHost, b: KeyBinding) => boolean> = {
     else if (h.screenOpen) h.closeScreen();
     else if (h.building) return false;
     else if (h.categoryOpen) h.closeCategory();
+    else if (h.trainOpen) h.closeTrain();
     else h.openPauseMenu();
     return true;
   },

@@ -2,13 +2,7 @@ import { el, btn, fmtMoney } from './dom';
 import { STR } from '../strings';
 import { vehicleLabels } from './labels';
 import type { Screen } from './modal';
-import {
-  DYNAMIC_MODES,
-  serviceLocoType,
-  type RouteMode,
-  type StopPlan,
-  type Train,
-} from '../sim/trains';
+import { DYNAMIC_MODES, serviceLocoType, type RouteMode, type Train } from '../sim/trains';
 import type { Fleet } from '../sim/fleet';
 import type { Commands, CommandResult } from '../sim/commands';
 import type { Builder } from '../sim/build';
@@ -16,10 +10,30 @@ import { cargoDef, cargoName } from '../sim/cargo';
 import { levelMul } from '../gacha/items';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg, frameForItem } from './spritePreview';
-import { ScheduleEditor } from './scheduleEditor';
+import { TrainStops } from './scheduleEditor';
 
 /** The routing buttons: the stop list, then every dynamic mode the simulation offers. */
 const ROUTE_BUTTONS: readonly RouteMode[] = ['schedule', ...DYNAMIC_MODES];
+
+/** Fill a train from its supplier at twice the cost, and say what came of it. */
+export function emergencyRefuel(
+  fleet: Fleet,
+  t: Train,
+  toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
+) {
+  const taken = fleet.emergencyRefuel(t);
+  const got = Object.entries(taken)
+    .map(([k, v]) => `${Math.round(v)} ${k}`)
+    .join(', ');
+  toast(
+    got
+      ? STR.train.emergencyDone(got)
+      : fleet.supplierOf(t)
+        ? STR.train.emergencyNone
+        : STR.train.emergencyNoStore,
+    got ? 'good' : 'warn',
+  );
+}
 
 /** One train in detail: engines, tanks, weight, wagons, schedule and the last loop's statistics. */
 export class TrainScreen implements Screen {
@@ -31,9 +45,7 @@ export class TrainScreen implements Screen {
   private foot = el('div', { class: 'col-foot' });
   train: Train | null = null;
   onLocate: ((t: Train) => void) | null = null;
-  private scheduleEditor: ScheduleEditor;
-  /** the stops the editor works on: a copy of the train's own program, handed back on each edit */
-  private stops: StopPlan[] = [];
+  private stops: TrainStops;
 
   constructor(
     private readonly fleet: Fleet,
@@ -42,7 +54,7 @@ export class TrainScreen implements Screen {
     private readonly atlas: AtlasRegistry,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
   ) {
-    this.scheduleEditor = new ScheduleEditor(builder, () => this.applyStops());
+    this.stops = new TrainStops(builder, commands, toast);
     this.root.append(
       el(
         'div',
@@ -74,25 +86,6 @@ export class TrainScreen implements Screen {
   private accepted(r: CommandResult) {
     if (!r.ok) this.toast(r.message, 'warn');
     return r.ok;
-  }
-
-  /** The stop being run, when the train runs its own program rather than a contract job. */
-  private currentStop(t: Train) {
-    return t.program === t.schedule ? t.routeIndex % Math.max(1, t.schedule.length) : -1;
-  }
-
-  /**
-   * Hand the edited stops to the train as its own program, which it then follows on schedule
-   * (`Commands.setSchedule`). A refused list (fewer than two stops) leaves the train as it was, and
-   * the editor shows the train's stops again.
-   */
-  private applyStops() {
-    const t = this.train;
-    if (!t) return;
-    if (this.accepted(this.commands.setSchedule(t, this.stops.map(copyStop)))) return;
-    // the same array the editor holds, so its own redraw shows the train's stops
-    this.stops.splice(0, this.stops.length, ...t.program.map(copyStop));
-    this.scheduleEditor.render(this.stops, this.currentStop(t));
   }
 
   private bar(label: string, value: number, max: number, cls = '') {
@@ -367,13 +360,8 @@ export class TrainScreen implements Screen {
     };
     r.append(tripBlock(STR.train.lastLoop, t.lastTrip), tripBlock(STR.train.currentLoop, t.trip));
     r.append(el('div', { class: 'col-title', text: STR.depot.stops }));
-    // the train's own program, also while a contract job runs its two stops
-    this.stops = t.program.map(copyStop);
-    this.scheduleEditor.render(this.stops, this.currentStop(t));
-    r.append(
-      this.scheduleEditor.root,
-      el('div', { class: 'dim', text: STR.depot.scheduleLiveHint }),
-    );
+    this.stops.show(t);
+    r.append(this.stops.root, el('div', { class: 'dim', text: STR.depot.scheduleLiveHint }));
     // footer actions
     const needsFuel =
       (t.hasSteam && (t.coal < t.coalCap * 0.999 || t.water < t.waterCap * 0.999)) ||
@@ -381,18 +369,7 @@ export class TrainScreen implements Screen {
     const eb = btn(
       STR.train.emergency,
       () => {
-        const taken = this.fleet.emergencyRefuel(t);
-        const got = Object.entries(taken)
-          .map(([k, v]) => `${Math.round(v)} ${k}`)
-          .join(', ');
-        this.toast(
-          got
-            ? STR.train.emergencyDone(got)
-            : this.fleet.supplierOf(t)
-              ? STR.train.emergencyNone
-              : STR.train.emergencyNoStore,
-          got ? 'good' : 'warn',
-        );
+        emergencyRefuel(this.fleet, t, this.toast);
         this.render();
       },
       'small',
@@ -404,9 +381,4 @@ export class TrainScreen implements Screen {
       btn(STR.depot.locate, () => this.onLocate?.(t), 'small'),
     );
   }
-}
-
-/** A stop of its own, so an edit never reaches a stop the train holds. */
-function copyStop(s: StopPlan): StopPlan {
-  return { ...s };
 }
