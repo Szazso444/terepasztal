@@ -817,8 +817,8 @@ export class Game implements UiHost {
           this.editorPanel?.render();
         }
       },
-      playTest: () => {
-        if (!confirmReplaceSave()) return;
+      playTest: async () => {
+        if (!(await confirmReplaceSave(this.namePrompt))) return;
         if (!editor.save()) {
           this.toasts.push(STR.editor.saveFailed, 'warn');
           return;
@@ -827,8 +827,14 @@ export class Game implements UiHost {
         setTestingLevel(editor.level.id);
         setIntentAndReload({ action: 'play', levelId: editor.level.id, testing: true });
       },
-      exit: () => {
-        if (!editor.dirty || confirm(STR.editor.unsaved)) setIntentAndReload({ action: 'menu' });
+      exit: async () => {
+        const leave =
+          !editor.dirty ||
+          (await this.namePrompt.confirm(STR.editor.unsavedTitle, STR.editor.unsaved, {
+            yes: STR.prompt.leave,
+            danger: true,
+          }));
+        if (leave) setIntentAndReload({ action: 'menu' });
       },
       exportJson: () => JSON.stringify(editor.collect()),
       importJson: (json) => {
@@ -1884,7 +1890,9 @@ export class Game implements UiHost {
     if (!confirmed) {
       // an in-game dialog: a browser confirm() stalls the loop and then lurches to catch up
       void this.namePrompt
-        .confirm(STR.overview.buyTitle, STR.overview.buyConfirm(fmtMoney(price)))
+        .confirm(STR.overview.buyTitle, STR.overview.buyConfirm(fmtMoney(price)), {
+          yes: STR.prompt.buy,
+        })
         .then((ok) => {
           if (ok) this.buyChunk(i, true);
         });

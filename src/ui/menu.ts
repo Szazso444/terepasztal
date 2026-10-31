@@ -1,5 +1,16 @@
 import { withAgeIcons } from './ageIcon';
 import { el, btn } from './dom';
+import {
+  actionButton,
+  emptyState,
+  formRow,
+  listRow,
+  page,
+  slider,
+  well,
+  type IconName,
+} from './kit';
+import { ScreenFrame, type Screen } from './modal';
 import { STR } from '../strings';
 import type { LevelData } from '../world/level';
 import { SUPPLY_MODES, DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
@@ -79,14 +90,50 @@ function textLines(t: SlotText, cls: string): HTMLElement[] {
 export function confirmDeleteSlot(
   prompt: Confirm,
   actions: Pick<SlotActions, 'deleteSlot'>,
-  name: string,
+  meta: SlotMeta,
   onDeleted: () => void,
 ) {
-  void prompt.confirm(STR.saves.deleteTitle, STR.settings.confirmDelete(name)).then((ok) => {
-    if (!ok) return;
-    actions.deleteSlot(name);
-    onDeleted();
-  });
+  const { detail, saved } = slotText(meta, Date.now());
+  void prompt
+    .confirm(STR.saves.deleteTitle, STR.settings.confirmDelete(meta.name), {
+      yes: STR.prompt.delete,
+      danger: true,
+      detail: saved ? `${detail} · ${saved}` : detail,
+    })
+    .then((ok) => {
+      if (!ok) return;
+      actions.deleteSlot(meta.name);
+      onDeleted();
+    });
+}
+
+/**
+ * The named saves as kit rows in the order `slots()` gives them (newest first): the pause menu's
+ * and the Saves tab's one list. `empty` says there are none.
+ */
+export function slotRows(
+  actions: SlotActions,
+  prompt: Confirm,
+  onDeleted: () => void,
+  empty: string,
+): HTMLElement[] {
+  const slots = actions.slots();
+  if (!slots.length) return [emptyState({ text: empty })];
+  const now = Date.now();
+  return slots.map((sl) =>
+    listRow({
+      title: sl.name,
+      sub: [el('span', {}, ...slotLines(sl, now, 'k-sub'))],
+      right: [
+        actionButton(STR.settings.loadSlot, () => actions.loadSlot(sl.name), { cls: 'small' }),
+        actionButton(
+          STR.settings.deleteSlot,
+          () => confirmDeleteSlot(prompt, actions, sl, onDeleted),
+          { cls: 'small danger' },
+        ),
+      ],
+    }),
+  );
 }
 
 /** The named saves in the order `slots()` gives them (newest first), with load and delete. */
@@ -107,7 +154,7 @@ function slotList(actions: SlotActions, prompt: Confirm, onDeleted: () => void) 
           btn(STR.settings.loadSlot, () => actions.loadSlot(sl.name), 'small accent'),
           btn(
             STR.settings.deleteSlot,
-            () => confirmDeleteSlot(prompt, actions, sl.name, onDeleted),
+            () => confirmDeleteSlot(prompt, actions, sl, onDeleted),
             'small',
           ),
         ),
@@ -307,7 +354,12 @@ export class MainMenu {
             btn(
               STR.menu.delete,
               () => {
-                if (confirm(STR.menu.confirmDelete(lv.name))) this.actions.deleteLevel(lv.id);
+                void this.prompt
+                  .confirm(STR.menu.deleteLevelTitle, STR.menu.confirmDelete(lv.name), {
+                    yes: STR.prompt.delete,
+                    danger: true,
+                  })
+                  .then((ok) => ok && this.actions.deleteLevel(lv.id));
               },
               'small',
             ),
@@ -351,6 +403,8 @@ export class MainMenu {
       placeholder: STR.menu.importHint,
       spellcheck: 'false',
     }) as HTMLTextAreaElement;
+    // a refused text says so here: the title screen has nothing else to answer with
+    const importError = el('div', { class: 'sub red' });
     r.append(
       area,
       el(
@@ -359,11 +413,12 @@ export class MainMenu {
         btn(
           STR.menu.importLevel,
           () => {
-            if (area.value.trim() && !this.actions.importLevel(area.value.trim()))
-              alert(STR.editor.badLevel);
+            const refused = !!area.value.trim() && !this.actions.importLevel(area.value.trim());
+            importError.textContent = refused ? STR.editor.badLevel : '';
           },
           'small',
         ),
+        importError,
       ),
     );
   }
@@ -380,16 +435,16 @@ export interface PauseMenuActions extends SlotActions, AudioActions {
   mainMenu(): void;
 }
 
-/** In-game menu (Esc / Menu button). */
+/** In-game menu (Esc / Menu button): an S frame of its own, under the screens opened from it. */
 export class PauseMenu {
   readonly root = el('div', { id: 'pause-root', class: 'menu-root' });
-  private box = el('div', { class: 'menu-frame panel small' });
+  private frame = new ScreenFrame(() => this.actions.resume());
   visible = false;
   constructor(
     private readonly actions: PauseMenuActions,
     private readonly prompt: Confirm,
   ) {
-    this.root.append(this.box);
+    this.root.append(this.frame.root);
     this.root.style.display = 'none';
     this.root.addEventListener('mousedown', (e) => {
       if (e.target === this.root) this.actions.resume();
@@ -399,42 +454,73 @@ export class PauseMenu {
   show(opts: { testing: boolean; editor: boolean }, slotsOpen = false) {
     this.visible = true;
     this.root.style.display = 'flex';
-    const b = this.box;
-    b.innerHTML = '';
-    b.append(
-      el('div', {
-        class: 'menu-title-main',
-        style: 'font-size:22px',
-        text: opts.editor ? STR.editor.title : STR.menu.paused,
-      }),
+    const item = (icon: IconName, label: string, run: () => void, cls = '', extra?: string) =>
+      actionButton(label, run, { icon, cls, extra });
+    const stack = el(
+      'div',
+      { class: 'k-stack' },
+      item('play', STR.menu.resume, () => this.actions.resume(), 'pri', 'Esc'),
     );
-    b.append(btn(STR.menu.resume, () => this.actions.resume(), 'menu-btn accent'));
     if (!opts.editor) {
-      b.append(btn(STR.settings.save, () => this.actions.save(), 'menu-btn'));
-      b.append(btn(STR.menu.saveAs, () => this.actions.saveAs(), 'menu-btn'));
       // "Load game" unfolds the named saves under the button
-      const list = slotList(this.actions, this.prompt, () => this.show(opts, true));
-      list.style.display = slotsOpen ? 'flex' : 'none';
-      list.classList.add('menu-slots');
-      b.append(
-        btn(
+      const list = el(
+        'div',
+        { class: 'k-slots' },
+        ...slotRows(this.actions, this.prompt, () => this.show(opts, true), STR.menu.noSaves),
+      );
+      list.style.display = slotsOpen ? '' : 'none';
+      stack.append(
+        item('save', STR.settings.save, () => this.actions.save()),
+        item('saveas', STR.menu.saveAs, () => this.actions.saveAs()),
+        item(
+          'folder',
           STR.menu.loadGame,
-          () => (list.style.display = list.style.display === 'none' ? 'flex' : 'none'),
-          'menu-btn',
+          () => (list.style.display = list.style.display === 'none' ? '' : 'none'),
+          '',
+          String(this.actions.slots().length),
         ),
         list,
       );
     }
-    b.append(btn(STR.topbar.settings, () => this.actions.settings(), 'menu-btn'));
-    b.append(audioRows(this.actions));
-    b.append(btn(STR.menu.tuning, () => this.actions.tuning(), 'menu-btn'));
-    b.append(btn(STR.menu.content, () => this.actions.content(), 'menu-btn'));
+    stack.append(
+      item('gear', STR.topbar.settings, () => this.actions.settings()),
+      item('slider', STR.menu.tuning, () => this.actions.tuning()),
+      item('list', STR.menu.content, () => this.actions.content()),
+    );
     if (opts.testing)
-      b.append(btn(STR.menu.backToEditor, () => this.actions.backToEditor(), 'menu-btn'));
-    b.append(btn(STR.menu.mainMenu, () => this.actions.mainMenu(), 'menu-btn'));
+      stack.append(item('undo', STR.menu.backToEditor, () => this.actions.backToEditor()));
+    stack.append(item('home', STR.menu.mainMenu, () => this.actions.mainMenu()));
+    const screen: Screen = {
+      id: 'pause',
+      title: opts.editor ? STR.editor.title : STR.menu.menuButton,
+      frameSize: 'S',
+      hotkey: 'Esc',
+      hotkeyHint: STR.menu.menuKeyHint,
+      formKeys: true,
+      root: page(well(null, stack), this.audio()),
+    };
+    this.frame.show(screen, { stacked: false, paused: !opts.editor });
   }
   hide() {
     this.visible = false;
     this.root.style.display = 'none';
+  }
+  /** A screen over the menu takes the view and the scrim: the map dims once. */
+  setCovered(covered: boolean) {
+    this.root.style.visibility = covered ? 'hidden' : '';
+  }
+
+  /** The two volumes of the menu, wired straight to the live audio bus. */
+  private audio() {
+    const row = (key: 'music' | 'sfx', label: string) =>
+      formRow(
+        label,
+        slider({
+          label,
+          value: Math.round(this.actions.volume(key) * 100),
+          onInput: (v) => this.actions.setVolume(key, v / 100),
+        }),
+      );
+    return well(STR.settings.audio, row('music', STR.settings.music), row('sfx', STR.settings.sfx));
   }
 }

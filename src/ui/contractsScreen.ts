@@ -2,6 +2,7 @@ import { el, btn, fmtMoney } from './dom';
 import { contractRarityLabel } from './labels';
 import { STR } from '../strings';
 import type { Screen } from './modal';
+import type { Confirm } from './menu';
 import type { ContractBoard, Contract } from '../sim/contracts';
 import type { Builder } from '../sim/build';
 import type { GameClock } from '../sim/time';
@@ -51,6 +52,8 @@ export class ContractsScreen implements Screen {
     private readonly builder: Builder,
     private readonly clock: GameClock,
     private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
+    /** the game's dialog, for the question before a contract is cancelled */
+    private readonly prompt: Confirm,
   ) {
     this.root.append(
       el(
@@ -214,10 +217,18 @@ export class ContractsScreen implements Screen {
           btn(
             STR.contracts.cancelFine(fine),
             () => {
-              if (!confirm(STR.contracts.confirmCancel(c.name, fine))) return;
-              if (this.board.cancel(c))
-                this.toast(STR.contracts.cancelledMsg(c.name, fine), 'warn');
-              this.render();
+              void this.prompt
+                .confirm(STR.contracts.cancelTitle, STR.contracts.confirmCancel(c.name, fine), {
+                  yes: STR.contracts.cancelTitle,
+                  no: STR.contracts.keepContract,
+                  danger: true,
+                })
+                .then((ok) => {
+                  if (!ok) return;
+                  if (this.board.cancel(c))
+                    this.toast(STR.contracts.cancelledMsg(c.name, fine), 'warn');
+                  this.render();
+                });
             },
             'small',
           ),

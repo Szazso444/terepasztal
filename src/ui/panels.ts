@@ -56,6 +56,7 @@ import {
   MainMenu,
   PauseMenu,
   type AudioActions,
+  type Confirm,
   type ContinueTarget,
   type SlotActions,
 } from './menu';
@@ -298,14 +299,18 @@ export interface PlayUi {
  * The editor's play test replaces the stored game, and no game is being played in the editor: ask
  * first when a stored game exists (`asksBeforeReplacing`).
  */
-export function confirmReplaceSave() {
+export async function confirmReplaceSave(prompt: Confirm) {
   const asks = asksBeforeReplacing('overwrite', {
     mode: 'editor',
     titleShown: false,
     titleOverGame: false,
     stored: !!readSave(),
   });
-  return !asks || confirm(STR.menu.confirmReplace);
+  if (!asks) return true;
+  return prompt.confirm(STR.menu.playTestTitle, STR.menu.confirmReplace, {
+    yes: STR.prompt.play,
+    danger: true,
+  });
 }
 
 /** Build every panel, screen and menu of a game, wire them and put them in the UI root. */
@@ -328,7 +333,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     host.peekDepot(dep, gate);
     d.screens.root.classList.add('peek');
   };
+  d.screens.menuUnder = () => menuOpen();
+  d.screens.pausedUnder = () =>
+    host.mode === 'play' && (pauseMenu.visible || (mainMenu.visible && titleOverGame));
   d.screens.onChange = (sc) => {
+    pauseMenu.setCovered(!!sc);
     if (sc && !sc.keepsTool) d.build.setTool({ kind: 'none' });
     if (!sc) {
       d.screens.root.classList.remove('peek');
@@ -396,11 +405,12 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     },
     // a tuning saved or deleted there changes the title screen's New game choice, in place
     () => mainMenu.refreshTunings(),
+    d.namePrompt,
   );
   const contentScreen = new ContentScreen(() => {
     if (host.mode === 'play' && !menuOpen()) host.save(true);
     host.reloadToMenu();
-  });
+  }, d.namePrompt);
   const creditsScreen = new CreditsScreen();
   const settingsScreen = new SettingsScreen(
     d.settings,
@@ -440,6 +450,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       savedAt: host.savedAt,
       version: `v${SAVE_VERSION}`,
       warning: host.deprecatedSave,
+      saveOff: mainMenu.visible && !titleOverGame,
     }),
     d.namePrompt,
   );
@@ -462,7 +473,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     d.atlas,
   );
   const rosterScreen = new RosterScreen(d.inventory, d.fleet, d.commands, d.atlas, toast);
-  const contractsScreen = new ContractsScreen(d.contracts, d.builder, d.clock, toast);
+  const contractsScreen = new ContractsScreen(d.contracts, d.builder, d.clock, toast, d.namePrompt);
   contractsScreen.trainName = (id) => d.fleet.byId(id)?.name ?? null;
   contractsScreen.autoAccept = {
     get: () => CONTRACT_RARITIES.every((r) => contractPolicyFor(d.settings, r) === 'accept'),
@@ -716,12 +727,14 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     };
   }
   /**
-   * The browser question before starting something over the game in progress or the stored game
-   * (`replaceQuestion`); false when the player says no, so the caller changes nothing.
+   * The dialog's question before starting something over the game in progress or the stored game
+   * (`replaceQuestion`), under `title` and answered `yes`; false when the player says no, so the
+   * caller changes nothing. What overwrites a game is the red answer.
    */
-  function confirmReplacement(kind: Replacement): boolean {
+  async function confirmReplacement(kind: Replacement, title: string, yes: string) {
     const question = replaceQuestion(kind, replaceSituation());
-    return question === null || confirm(question);
+    if (question === null) return true;
+    return d.namePrompt.confirm(title, question, { yes, danger: kind === 'overwrite' });
   }
   /**
    * Run `load`; with a `question` only once the player says yes to it in the game's own dialog.
@@ -729,7 +742,10 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
    */
   function askBeforeLoad(question: string | null, load: () => void) {
     if (question === null) load();
-    else void d.namePrompt.confirm(STR.saves.loadTitle, question).then((ok) => ok && load());
+    else
+      void d.namePrompt
+        .confirm(STR.saves.loadTitle, question, { yes: STR.prompt.load })
+        .then((ok) => ok && load());
   }
   /** Named-save actions shared by the menus and the settings screen. */
   function slotActions(): SlotActions {
@@ -775,7 +791,10 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     const n = name.slice(0, 32).trim();
     if (
       hasSlot(n) &&
-      !(await d.namePrompt.confirm(STR.saves.overwriteTitle, STR.saves.confirmOverwrite(n)))
+      !(await d.namePrompt.confirm(STR.saves.overwriteTitle, STR.saves.confirmOverwrite(n), {
+        yes: STR.prompt.replace,
+        danger: true,
+      }))
     )
       return;
     if (host.saveSlot(n)) closeMenus();
@@ -787,19 +806,22 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       continue: () => closeMenus(),
       tunings: () => listRulePresets(),
       // the pick is staged only once every question is answered yes, and a refused staging starts nothing
-      newGame: (seed, supply, tuning) => {
-        if (!confirmReplacement('overwrite')) return;
+      newGame: async (seed, supply, tuning) => {
+        if (!(await confirmReplacement('overwrite', STR.menu.newGame, STR.prompt.start))) return;
         const unusable = startNewGame(tuning, stageNewGameTuning, () => host.newGame(seed, supply));
         if (unusable) d.toasts.push(unusable, 'warn');
       },
-      playLevel: (id) => {
-        if (confirmReplacement('overwrite')) host.playLevel(id);
+      playLevel: async (id) => {
+        if (await confirmReplacement('overwrite', STR.menu.playLevelTitle, STR.prompt.play))
+          host.playLevel(id);
       },
-      editLevel: (id) => {
-        if (confirmReplacement('leave')) host.editLevel(id);
+      editLevel: async (id) => {
+        if (await confirmReplacement('leave', STR.menu.editLevelTitle, STR.prompt.edit))
+          host.editLevel(id);
       },
-      newLevel: (size, generated, seedText) => {
-        if (confirmReplacement('leave')) host.newLevel(size, generated, seedText);
+      newLevel: async (size, generated, seedText) => {
+        if (await confirmReplacement('leave', STR.menu.newLevel, STR.menu.newLevel))
+          host.newLevel(size, generated, seedText);
       },
       // the title screen is drawn again over the same game it was opened over
       deleteLevel: (id) => {
@@ -834,9 +856,15 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       content: () => d.screens.open(contentScreen),
       backToEditor: () => host.backToEditor(),
       mainMenu: () => {
-        if (host.mode === 'editor') {
-          if (!host.editor?.dirty || confirm(STR.editor.unsaved)) host.reloadToMenu();
-        } else showMainMenu(true);
+        if (host.mode !== 'editor') showMainMenu(true);
+        else if (!host.editor?.dirty) host.reloadToMenu();
+        else
+          void d.namePrompt
+            .confirm(STR.editor.unsavedTitle, STR.editor.unsaved, {
+              yes: STR.prompt.leave,
+              danger: true,
+            })
+            .then((ok) => ok && host.reloadToMenu());
       },
     },
     d.namePrompt,
@@ -922,7 +950,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       // the build controller reads Escape later in the same frame: this one is spent
       if (d.tooltip.stack.escape()) d.build.takeEscape();
     },
-    closeScreen: () => d.screens.close(),
+    closeScreen: () => d.screens.back(),
     closeMenus,
     openPauseMenu,
     toggleScreen: (s) => d.screens.toggle(keyScreens[s]),
