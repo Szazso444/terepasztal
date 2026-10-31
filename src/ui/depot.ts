@@ -782,9 +782,7 @@ export class DepotScreen implements Screen {
     if (c && c.key === key && now - c.at < c.value.lifetime) return c.value;
     const asked = this.fleet.dispatchCheck(this.locoUids, this.wagonUids, stops, this.depotId);
     // with no engine yet nothing can be checked, but the dock still says where a train would appear
-    const seen = this.locoUids.length
-      ? asked
-      : { ...this.fleet.previewSpawn([], stops, this.depotId), reason: asked.reason };
+    const seen = this.locoUids.length ? asked : this.fleet.previewSpawn([], stops, this.depotId);
     const depot = seen.depot ?? this.syncDepot() ?? null;
     const auto = this.fleet.autoSchedule(depot ?? undefined);
     const first = this.builder.stationById(seen.stops[0]?.stationId);
@@ -794,7 +792,7 @@ export class DepotScreen implements Screen {
             text: STR.depot.gateAt(seen.depot.name, seen.gate.x, seen.gate.y, first?.name ?? '?'),
             ok: true,
           }
-        : { text: this.locoUids.length ? (asked.reason ?? '') : (seen.reason ?? ''), ok: false };
+        : { text: seen.reason ?? '', ok: false };
     const value: Check = {
       reason: asked.reason,
       dock,
