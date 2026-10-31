@@ -1540,6 +1540,7 @@ export class WorldRenderer {
           site.axis,
           site.water,
           site.raised,
+          site.narrow,
           site.level,
           site.open,
           j,
