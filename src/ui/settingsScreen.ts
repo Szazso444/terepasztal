@@ -9,7 +9,6 @@ import {
   note,
   pasteBox,
   segmented,
-  slider,
   textField,
   toggleSwitch,
   well,
@@ -36,10 +35,9 @@ export interface SettingsActions {
   slots(): SlotMeta[];
 }
 
-export type SettingsTab = 'audio' | 'gameplay' | 'controls' | 'saves';
+export type SettingsTab = 'gameplay' | 'controls' | 'saves';
 
 const TABS: { id: SettingsTab; label: string }[] = [
-  { id: 'audio', label: STR.settings.audio },
   { id: 'gameplay', label: STR.settings.gameplay },
   { id: 'controls', label: STR.settings.controls },
   { id: 'saves', label: STR.settings.saves },
@@ -82,7 +80,7 @@ export class SettingsScreen implements Screen {
   onNotifications: (() => void) | null = null;
   /** the language control: it reloads the page, or the control goes back (`render`) */
   onLanguage: ((language: Language) => void) | null = null;
-  private tab: SettingsTab = 'audio';
+  private tab: SettingsTab = 'gameplay';
   /** how many named saves the Saves tab counts; storage is not read at every refresh */
   private slotCount = 0;
   /** autosave on or off and when the game was last stored; kept current while the screen is up */
@@ -145,20 +143,6 @@ export class SettingsScreen implements Screen {
     const text = autosaveText(!!this.settings.autosave, savedAt, Date.now());
     if (this.autosaveValue.textContent !== text) this.autosaveValue.textContent = text;
     this.autosaveLine.title = savedAt ? new Date(savedAt).toLocaleString() : '';
-  }
-
-  private volume(label: string, key: 'master' | 'sfx' | 'music' | 'ambient') {
-    return formRow(
-      label,
-      slider({
-        label,
-        value: Math.round((this.settings[key] ?? 0.35) * 100),
-        onInput: (v) => {
-          this.settings[key] = v / 100;
-          this.onChange();
-        },
-      }),
-    );
   }
 
   private switchRow(
@@ -287,17 +271,6 @@ export class SettingsScreen implements Screen {
 
   private drawTab(): (HTMLElement | null)[] {
     switch (this.tab) {
-      case 'audio':
-        return [
-          well(
-            STR.settings.audio,
-            this.volume(STR.settings.master, 'master'),
-            this.volume(STR.settings.sfx, 'sfx'),
-            this.volume(STR.settings.music, 'music'),
-            this.volume(STR.settings.ambient, 'ambient'),
-            note(STR.settings.audioNote),
-          ),
-        ];
       case 'gameplay':
         return [
           well(

@@ -6,6 +6,9 @@ import { ContractsScreen } from './contractsScreen';
 import { ScreenFrame, ScreenManager, type Screen } from './modal';
 import { NamePrompt } from './namePrompt';
 import { SettingsScreen, type SettingsActions } from './settingsScreen';
+import { AudioScreen } from './audioScreen';
+import { NowPlaying, type MusicDeck } from './nowPlaying';
+import { DEFAULT_VOLUMES, heardVolumes, type Volumes } from '../engine/audioGroups';
 import { numberField, slider, textField, type ConfirmOptions } from './kit';
 import { LevelsScreen, type LevelsActions } from './levelsScreen';
 import { MainMenu, PauseMenu, type MainMenuActions, type PauseMenuActions } from './menu';
@@ -47,8 +50,15 @@ class FakeEl {
   disabled = false;
   maxLength = -1;
   innerHTML = '';
+  offsetWidth = 0;
+  clientWidth = 0;
   attrs = new Map<string, string>();
-  style = { display: '', visibility: '', setProperty() {} };
+  props = new Map<string, string>();
+  style = {
+    display: '',
+    visibility: '',
+    setProperty: (k: string, v: string) => void this.props.set(k, v),
+  };
   parent: FakeEl | null = null;
   children: (FakeEl | string)[] = [];
   private listeners = new Map<string, Listener[]>();
@@ -812,8 +822,6 @@ describe('the title screen', () => {
     const actions = {
       slots,
       levels,
-      volume: () => 0.5,
-      setVolume: () => undefined,
       tunings: () => [],
       asks: () => null,
       deleteLevel: () => undefined,
@@ -887,11 +895,313 @@ describe('the title screen', () => {
   it('gives the pause menu the focus on Resume as well', () => {
     const menu = new PauseMenu({
       slots: () => [],
-      volume: () => 0.5,
-      setVolume: () => undefined,
     } as unknown as PauseMenuActions);
     menu.show({ testing: false, editor: false });
     expect(fake(page.activeElement).text()).toContain(STR.menu.resume);
+  });
+});
+
+describe('Audio as a row of its own', () => {
+  const menuActions = (audio: () => void) =>
+    ({
+      slots: () => [],
+      levels: () => [],
+      tunings: () => [],
+      asks: () => null,
+      audio,
+    }) as unknown as MainMenuActions & PauseMenuActions;
+  /** The labels of the buttons of the frame's stack, top to bottom. */
+  const stack = (root: unknown) =>
+    fake(root)
+      .find('k-stack')!
+      .all.filter((e) => e.tagName === 'BUTTON')
+      .map((b) => b.text());
+  const follows = (labels: string[]) => labels[labels.indexOf(STR.topbar.settings) + 1];
+
+  it('stands directly under Settings on the title, and opens the screen', () => {
+    const audio = vi.fn();
+    const menu = new MainMenu(
+      menuActions(audio),
+      { confirm: () => Promise.resolve(true) },
+      { open: () => undefined },
+    );
+    menu.show(null, { content: false });
+    expect(follows(stack(menu.root))).toBe(STR.settings.audio);
+    fake(menu.root).button(STR.settings.audio).fire('click');
+    expect(audio).toHaveBeenCalledTimes(1);
+  });
+
+  it('stands directly under Settings in the pause menu, and opens the screen', () => {
+    const audio = vi.fn();
+    const menu = new PauseMenu(menuActions(audio));
+    menu.show({ testing: false, editor: false });
+    expect(follows(stack(menu.root))).toBe(STR.settings.audio);
+    fake(menu.root).button(STR.settings.audio).fire('click');
+    expect(audio).toHaveBeenCalledTimes(1);
+  });
+
+  it('is gone from the tabs of Settings, which opens on Gameplay', () => {
+    const screen = new SettingsScreen(
+      { autosave: true } as Settings,
+      () => undefined,
+      { slots: () => [] } as unknown as SettingsActions,
+      () => ({ seed: 1, savedAt: null, version: 'v22', warning: null, saveOff: false }),
+      { confirm: () => Promise.resolve(true) },
+    );
+    const tabs = screen.frameTabs();
+    expect(tabs.tabs.map((t) => t.id)).not.toContain('audio');
+    expect(tabs.current).toBe('gameplay');
+  });
+});
+
+describe('the Audio screen', () => {
+  function open() {
+    const volumes: Volumes = {
+      ...DEFAULT_VOLUMES,
+      soundGroups: { ...DEFAULT_VOLUMES.soundGroups },
+      soundOff: {},
+    };
+    const onChange = vi.fn();
+    const screen = new AudioScreen(volumes, onChange);
+    screen.onOpen();
+    const root = fake(screen.root);
+    const rows = root.all.filter((e) => e.className.split(' ').includes('k-row'));
+    const row = (label: string) => rows.find((r) => r.find('k-lab')?.text().startsWith(label))!;
+    const sliderOf = (label: string) => row(label).all.find((e) => e.tagName === 'INPUT')!;
+    const switchOf = (label: string) => row(label).find('k-sw')!;
+    const drag = (label: string, value: number) => {
+      const input = sliderOf(label);
+      input.value = String(value);
+      input.fire('input');
+    };
+    return { volumes, onChange, screen, rows, row, sliderOf, switchOf, drag };
+  }
+  const G = STR.settings.soundGroups;
+
+  it('lists one group under another, each with a slider and a switch', () => {
+    const { rows } = open();
+    const says = rows.map((r) => r.find('k-lab')!.all[0].text());
+    expect(says).toEqual([
+      STR.settings.master,
+      STR.settings.music,
+      STR.settings.sfx,
+      G.weather.label,
+      G.environment.label,
+      G.ui.label,
+      G.building.label,
+      G.trains.label,
+      G.events.label,
+    ]);
+    const depths = rows.map((r) => /au-depth(\d)/.exec(r.className)?.[1]);
+    expect(depths).toEqual(['0', '1', '1', '2', '2', '2', '2', '2', '2']);
+    for (const r of rows) {
+      expect(r.all.filter((e) => e.tagName === 'INPUT')).toHaveLength(1);
+      expect(r.find('k-sw')).toBeDefined();
+    }
+  });
+
+  it('is an M frame, with a way out and the words that it applies at once', () => {
+    const { screen } = open();
+    expect(screen.frameSize).toBe('M');
+    expect(screen.frameFooter()).toEqual({ note: STR.settings.appliesAtOnce, done: true });
+  });
+
+  it('writes a level where it belongs, and tells the game', () => {
+    const { volumes, onChange, drag } = open();
+    drag(STR.settings.master, 50);
+    drag(STR.settings.sfx, 40);
+    drag(G.trains.label, 30);
+    expect(volumes.master).toBe(0.5);
+    expect(volumes.sfx).toBe(0.4);
+    expect(volumes.soundGroups.trains).toBe(0.3);
+    expect(onChange).toHaveBeenCalledTimes(3);
+  });
+
+  it('turns a group off without losing its level, and back on', () => {
+    const { volumes, onChange, switchOf, sliderOf } = open();
+    expect(sliderOf(G.ui.label).value).toBe('100');
+    switchOf(G.ui.label).fire('click');
+    expect(heardVolumes(volumes).groups.ui).toBe(0);
+    expect(volumes.soundGroups.ui).toBe(1);
+    expect(sliderOf(G.ui.label).value).toBe('100');
+    switchOf(G.ui.label).fire('click');
+    expect(heardVolumes(volumes).groups.ui).toBe(1);
+    expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  it('marks what a row switched off silences, and nothing else', () => {
+    const { row, switchOf } = open();
+    const silenced = (label: string) => row(label).className.includes('au-silenced');
+    switchOf(STR.settings.sfx).fire('click');
+    expect(silenced(STR.settings.sfx)).toBe(false);
+    expect(silenced(G.trains.label)).toBe(true);
+    expect(silenced(STR.settings.music)).toBe(false);
+    switchOf(STR.settings.sfx).fire('click');
+    expect(silenced(G.trains.label)).toBe(false);
+    switchOf(STR.settings.master).fire('click');
+    expect(silenced(STR.settings.music)).toBe(true);
+    expect(silenced(G.events.label)).toBe(true);
+  });
+
+  it('shows a level rounded, and keeps the exact one until it is moved', () => {
+    const { volumes, sliderOf } = open();
+    expect(sliderOf(G.weather.label).value).toBe('44');
+    expect(volumes.soundGroups.weather).toBe(DEFAULT_VOLUMES.soundGroups.weather);
+  });
+});
+
+describe('the now-playing widget', () => {
+  /** A deck as the bus is one: `view` is a new reading each time. */
+  function deck(over: Partial<MusicDeck['view']> = {}) {
+    const state: MusicDeck['view'] = {
+      title: 'Pastoral Pulse',
+      paused: false,
+      silent: false,
+      held: false,
+      canGoBack: false,
+      canGoForward: true,
+      ...over,
+    };
+    return {
+      state,
+      get view() {
+        return { ...state };
+      },
+      togglePause: vi.fn(),
+      back: vi.fn(),
+      forward: vi.fn(),
+    };
+  }
+  function widget(d: ReturnType<typeof deck>) {
+    const tips: (() => string)[] = [];
+    const w = new NowPlaying(d, (text) => {
+      tips.push(text);
+      return () => null as never;
+    });
+    w.update();
+    const root = fake(w.root);
+    const [back, toggle, forward] = root.all.filter((e) => e.tagName === 'BUTTON');
+    return { w, root, back, toggle, forward, tips };
+  }
+
+  it('shows the title, and works the three buttons', () => {
+    const d = deck({ canGoBack: true });
+    const { root, back, toggle, forward } = widget(d);
+    expect(root.find('np-text')!.textContent).toBe('Pastoral Pulse');
+    back.fire('click');
+    toggle.fire('click');
+    forward.fire('click');
+    expect([d.back, d.togglePause, d.forward].map((f) => f.mock.calls.length)).toEqual([1, 1, 1]);
+  });
+
+  it('says each button in its tooltip, the full title too, and why Back is off', () => {
+    const { tips, back } = widget(deck());
+    expect(back.disabled).toBe(true);
+    expect(tips.map((t) => t())).toEqual([
+      STR.nowPlaying.noBack,
+      STR.nowPlaying.pause,
+      STR.nowPlaying.forward,
+      'Pastoral Pulse',
+    ]);
+  });
+
+  it('follows the music: a new title, Back on, and play in place of pause', () => {
+    const d = deck();
+    const { w, root, back, tips } = widget(d);
+    Object.assign(d.state, { title: 'Sparse Pulse', canGoBack: true, paused: true });
+    w.update();
+    expect(root.find('np-text')!.textContent).toBe('Sparse Pulse');
+    expect(back.disabled).toBe(false);
+    expect(tips[0]()).toBe(STR.nowPlaying.back);
+    expect(tips[1]()).toBe(STR.nowPlaying.play);
+    expect(root.find('np-title')!.className).toContain('paused');
+  });
+
+  it('says what plays when no file is left, and offers nothing to skip to', () => {
+    const { root, forward, tips } = widget(deck({ title: null, canGoForward: false }));
+    expect(root.find('np-text')!.textContent).toBe(STR.nowPlaying.noTrack);
+    expect(forward.disabled).toBe(true);
+    expect(tips[3]()).toBe(STR.nowPlaying.noTrack);
+  });
+
+  it('rolls a title wider than its room, and lets one that fits stand', () => {
+    const d = deck();
+    const { w, root } = widget(d);
+    const box = root.find('np-title')!;
+    const text = root.find('np-text')!;
+    box.clientWidth = 100;
+    text.offsetWidth = 160;
+    d.state.title = 'Pastoral Pulse (Liquid DnB)';
+    w.update();
+    expect(box.className).toContain('roll');
+    expect(text.props.get('--np-shift')).toBe('-60px');
+    text.offsetWidth = 90;
+    d.state.title = 'Sparse Pulse';
+    w.update();
+    expect(box.className).not.toContain('roll');
+  });
+
+  it('writes nothing while nothing changes, as it runs every frame', () => {
+    const { w, root } = widget(deck());
+    const box = vi.spyOn(root.find('np-title')!.classList, 'toggle');
+    const self = vi.spyOn(root.classList, 'toggle');
+    for (let i = 0; i < 5; i++) w.update();
+    expect(box).not.toHaveBeenCalled();
+    expect(self).not.toHaveBeenCalled();
+  });
+
+  it("names each button in its title and for a screen reader, in the tooltip's words", () => {
+    const d = deck();
+    const { w, back, toggle, forward } = widget(d);
+    const named = (b: FakeEl) => [b.title, b.attrs.get('aria-label')];
+    expect(named(back)).toEqual([STR.nowPlaying.noBack, STR.nowPlaying.noBack]);
+    expect(named(toggle)).toEqual([STR.nowPlaying.pause, STR.nowPlaying.pause]);
+    expect(named(forward)).toEqual([STR.nowPlaying.forward, STR.nowPlaying.forward]);
+    Object.assign(d.state, { paused: true, canGoBack: true });
+    w.update();
+    expect(named(back)).toEqual([STR.nowPlaying.back, STR.nowPlaying.back]);
+    expect(named(toggle)).toEqual([STR.nowPlaying.play, STR.nowPlaying.play]);
+  });
+
+  it('gives the keys back after a press: Enter finishes a route, and must not toggle the music', () => {
+    const d = deck({ canGoBack: true });
+    const { back, toggle, forward } = widget(d);
+    for (const b of [back, toggle, forward]) {
+      b.focus();
+      expect(page.activeElement).toBe(b);
+      b.fire('click');
+      expect(page.activeElement).not.toBe(b);
+    }
+  });
+
+  it('says plainly that nothing can be heard, with its buttons off and saying why', () => {
+    const d = deck({ silent: true, canGoBack: true });
+    const { w, root, back, toggle, forward, tips } = widget(d);
+    expect(root.find('np-text')!.textContent).toBe(STR.nowPlaying.silent);
+    expect(root.find('np-title')!.className).toContain('paused');
+    for (const b of [back, toggle, forward]) {
+      expect(b.disabled).toBe(true);
+      expect(b.title).toBe(STR.nowPlaying.silentTip);
+    }
+    expect(tips.slice(0, 3).map((t) => t())).toEqual(Array(3).fill(STR.nowPlaying.silentTip));
+    // the tooltip still has the track, whose words the row gave up
+    expect(tips[3]()).toBe('Pastoral Pulse');
+    const off = toggle.find('k-ic')!.innerHTML;
+    d.state.silent = false;
+    w.update();
+    expect(root.find('np-text')!.textContent).toBe('Pastoral Pulse');
+    expect(root.find('np-title')!.className).not.toContain('paused');
+    expect(toggle.find('k-ic')!.innerHTML).not.toBe(off);
+    expect([back, toggle, forward].map((b) => b.disabled)).toEqual([false, false, false]);
+  });
+
+  it('marks the music held, for the title to leave it out', () => {
+    const d = deck({ held: true });
+    const { w, root } = widget(d);
+    expect(root.className).toContain('held');
+    d.state.held = false;
+    w.update();
+    expect(root.className).not.toContain('held');
   });
 });
 

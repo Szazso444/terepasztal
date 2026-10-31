@@ -98,6 +98,21 @@ const EN = {
     ageUp: (t: number) =>
       `The ${ageLabel(t)} begins. New works, stations and rolling stock unlocked.`,
   },
+  /** the now-playing widget of the top bar (src/ui/nowPlaying.ts) */
+  nowPlaying: {
+    pause: 'Pause the music',
+    play: 'Play the music',
+    back: 'Previous track',
+    /** the first track: there is nothing to go back to */
+    noBack: 'No track played before this one',
+    forward: 'Next track',
+    /** no music file could be played, and the game's own loop plays */
+    noTrack: 'Game loop',
+    /** in the title's place: Music is off or at 0, or Master is */
+    silent: 'Music off',
+    /** the buttons say it while they are off */
+    silentTip: 'Nothing to hear: Music or Master is off in Audio',
+  },
   history: {
     undo: 'Undo',
     redo: 'Redo',
@@ -1463,9 +1478,17 @@ const EN = {
     master: 'Master volume',
     sfx: 'Effects',
     music: 'Music',
-    ambient: 'Nature and weather',
+    /** the rows under Effects, each with what it covers */
+    soundGroups: {
+      weather: { label: 'Weather', covers: 'The wind' },
+      environment: { label: 'Environment', covers: 'Birds and crickets' },
+      ui: { label: 'UI', covers: 'Buttons and screens' },
+      building: { label: 'Building', covers: 'Laying and removing' },
+      trains: { label: 'Trains', covers: 'Departures, whistles, arrivals' },
+      events: { label: 'Events', covers: 'Contracts, ages, upgrades, crafting' },
+    },
     audioNote:
-      'Pastoral Pulse opens each session, then its four arrangements play in shuffled order. Nature sounds follow the weather and time of day.',
+      'Pastoral Pulse opens the game, then all eight tracks play in shuffled rounds. A row switched off keeps its level.',
     gameplay: 'Gameplay',
     language: 'Language',
     languageNote: 'Changing the language reloads the page; a game in play is saved first.',

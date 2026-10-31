@@ -111,13 +111,11 @@ export const MENU_BAR: readonly MenuEntry[] = [
     playOnly: true,
     items: [],
   },
-  // Settings on its Audio tab until the audio PR gives it a screen: as closed in the editor
   {
     id: 'audio',
     label: STR.topbar.audio,
     icon: 'speaker',
     run: 'audio',
-    playOnly: true,
     items: [],
   },
   {

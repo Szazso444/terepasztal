@@ -1,6 +1,6 @@
 import { el, fmtMoney } from './dom';
 import { LANGUAGE, STR, type Language } from '../strings';
-import { sfx } from '../engine/audio';
+import { audio, sfx } from '../engine/audio';
 import type { AtlasRegistry } from '../engine/atlas';
 import type { Camera } from '../engine/camera';
 import { testingLevel } from '../intent';
@@ -53,14 +53,7 @@ import { seasonOf, type Season } from '../sim/weather';
 import type { NamePrompt } from './namePrompt';
 import type { BuildController } from './buildController';
 import type { KeyHost, KeyScreen } from './keymap';
-import {
-  MainMenu,
-  PauseMenu,
-  type AudioActions,
-  type Confirm,
-  type ContinueTarget,
-  type SlotActions,
-} from './menu';
+import { MainMenu, PauseMenu, type Confirm, type ContinueTarget, type SlotActions } from './menu';
 import { Hud } from './hud';
 import { stepHistory, type HistoryWay } from './historyControls';
 import { DepotScreen } from './depot';
@@ -70,6 +63,7 @@ import { ResourceBar } from './resourceBar';
 import { TuningScreen } from './tuningScreen';
 import { ContentScreen } from './contentScreen';
 import { SettingsScreen } from './settingsScreen';
+import { AudioScreen } from './audioScreen';
 import { SavedGamesScreen, type SavedTab } from './savedGamesScreen';
 import { CreditsScreen } from './creditsScreen';
 import { CraftingScreen } from './craftingScreen';
@@ -315,6 +309,8 @@ export interface PlayUi {
   openPauseMenu(): void;
   /** both menus down; the clock runs again */
   closeMenus(): void;
+  /** open the Audio screen, or close it when it is on top: the title, both menus and the top bar */
+  toggleAudio(): void;
   /** what `handlePlayKeys` reads and calls */
   readonly keys: KeyHost;
 }
@@ -349,7 +345,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
 
   /** progress towards every age: the era widget's, and what the build bar's locks wait for */
   const ages = () => ageStatus(d.economy.tier, host.ageSnapshot());
-  const hud = new Hud(d.clock, ages, d.atlas, d.tooltip);
+  const hud = new Hud(d.clock, ages, d.atlas, d.tooltip, audio);
   const depot = new DepotScreen(d.inventory, d.fleet, d.builder, toast, d.atlas, d.namePrompt);
   depot.onFocusTrain = (t) => host.focusTrain(t);
   depot.onRedraw = () => d.screens.redraw();
@@ -468,6 +464,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     }),
     d.namePrompt,
   );
+  const audioScreen = new AudioScreen(d.settings, () => host.applySettings());
+  const toggleAudio = () => d.screens.toggle(audioScreen);
   const craftingScreen = new CraftingScreen(
     d.crafting,
     d.economy,
@@ -519,11 +517,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       openSaved('load');
     },
     settings: () => d.screens.toggle(settingsScreen),
-    // the audio PR gives this its own screen
-    audio: () => {
-      settingsScreen.show('audio');
-      d.screens.toggle(settingsScreen);
-    },
+    audio: toggleAudio,
     depot: () => d.screens.toggle(depot),
     roster: () => d.screens.toggle(rosterScreen),
     signals: () => d.screens.toggle(signalGuide),
@@ -970,16 +964,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       },
     };
   }
-  /** Music and effects volume for the menus: same settings the Settings screen edits. */
-  function audioActions(): AudioActions {
-    return {
-      volume: (key) => d.settings[key],
-      setVolume: (key, v) => {
-        d.settings[key] = v;
-        host.applySettings();
-      },
-    };
-  }
   /**
    * Load the stored game, the autosave Continue goes back to. It loads that game itself and
    * replaces none, so it asks only over a game in play.
@@ -1036,7 +1020,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const mainMenu = new MainMenu(
     {
       ...slotActions(),
-      ...audioActions(),
       continue: () => closeMenus(),
       tunings: () => listRulePresets(),
       levels: () => listLevels(),
@@ -1067,6 +1050,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       tuning: () => d.screens.open(tuningScreen),
       content: () => d.screens.open(contentScreen),
       settings: () => d.screens.open(settingsScreen),
+      audio: toggleAudio,
       controls: () => {
         settingsScreen.show('controls');
         d.screens.open(settingsScreen);
@@ -1078,7 +1062,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   );
   const pauseMenu = new PauseMenu({
     ...slotActions(),
-    ...audioActions(),
     resume: () => closeMenus(),
     save: () => {
       host.save();
@@ -1087,6 +1070,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     saveAs: () => openSaved('save'),
     loadGame: () => openSaved('load'),
     settings: () => d.screens.open(settingsScreen),
+    audio: toggleAudio,
     tuning: () => d.screens.open(tuningScreen),
     content: () => d.screens.open(contentScreen),
     backToEditor: () => host.backToEditor(),
@@ -1251,6 +1235,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     openMainMenu,
     openPauseMenu,
     closeMenus,
+    toggleAudio,
     keys,
   };
 }

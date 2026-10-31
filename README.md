@@ -144,15 +144,17 @@ light, broad colour clusters and selective contours. Sound effects are synthesiz
 Audio synthesizer in `src/engine/synth.ts`. Nothing is taken from other games. Sprites and
 individual sound effects can be overridden file by file (see below).
 
-Music is one melody, Pastoral Pulse, arranged differently for each age. The default set is the
-original and three variations in `public/assets/audio/music`; each of the six ages can have its
-own set in `public/assets/audio/music/<age id>/`. For now only the steam age has one, four
-placeholder tracks, so the other ages play the default. A set opens on its first track and then plays all its tracks in shuffled rounds; entering
-an age with a different set fades the current track out and starts that set. If every file of an
-age's set fails to play, the default set takes over, and if those fail too, the synthesized
-ambient loop in `src/engine/synth.ts` plays, so a build without any music file still has music.
-Music and effects volume are on sliders in the title screen, the pause menu and the settings
-screen.
+Music is the default set of eight tracks in `public/assets/audio/music`, their titles in
+`src/engine/musicPlaylist.ts`. Pastoral Pulse opens the game once a tab, as `sessionStorage`
+remembers; after that they play in shuffled rounds. Each of the six ages can have its own set in
+`public/assets/audio/music/<age id>/`, and none has one yet. A set opens on its first track and
+then plays all its tracks in shuffled rounds; entering an age with a different set fades the
+current track out and starts that set. If every file of an age's set fails to play, the default
+set takes over, and if those fail too, the synthesized ambient loop in `src/engine/synth.ts`
+plays, so a build without any music file still has music. The top bar shows what plays, with back,
+pause and forward. The Audio screen sets the volumes, Master over Music and Effects and Effects
+over Weather, Environment, UI, Building, Trains and Events, each row with a slider and a switch
+(`src/engine/audioGroups.ts`).
 
 ## Replacing placeholder art
 

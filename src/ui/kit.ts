@@ -253,6 +253,11 @@ const ICONS = {
   cloud: '<path d="M7 18.5a4.5 4.5 0 0 1-.6-9 6 6 0 0 1 11.6 1.2 4 4 0 0 1-.5 7.8z"/>',
   moon: '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 7 7 0 0 0 20 14.5z"/>',
   bulb: '<path d="M9.5 16.5c0-.9-.4-1.6-1-2.1a6 6 0 1 1 7 0c-.6.5-1 1.2-1 2.1z"/><path d="M9.5 19.5h5M10.5 21.8h3"/>',
+  speakeroff:
+    '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9.5l5 5M20.5 9.5l-5 5"/>',
+  pause: '<path d="M8.5 5v14M15.5 5v14"/>',
+  trackback: '<path d="M18.5 5l-9 7 9 7z"/><path d="M5.5 5v14"/>',
+  trackforward: '<path d="M5.5 5l9 7-9 7z"/><path d="M18.5 5v14"/>',
 };
 export type IconName = keyof typeof ICONS;
 

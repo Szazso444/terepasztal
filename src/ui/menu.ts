@@ -1,5 +1,5 @@
 import { el } from './dom';
-import { actionButton, formRow, lineIcon, note, page, slider, well, type IconName } from './kit';
+import { actionButton, lineIcon, note, page, well, type IconName } from './kit';
 import { ScreenFrame, type Screen, type ScreenManager } from './modal';
 import { STR } from '../strings';
 import type { LevelData } from '../world/level';
@@ -14,26 +14,6 @@ import { titleEntries, type TitleEntry } from './titleModel';
 export { slotRows, confirmDeleteSlot, slotLines } from './saveRows';
 export type { Confirm, SlotActions } from './saveRows';
 
-/** Shared by both menus: music and effects volume, so the player can set them from the menu. */
-export interface AudioActions {
-  volume(key: 'music' | 'sfx'): number;
-  setVolume(key: 'music' | 'sfx', v: number): void;
-}
-
-/** The two volumes of a menu, wired straight to the live audio bus. */
-function audioWell(actions: AudioActions) {
-  const row = (key: 'music' | 'sfx', label: string) =>
-    formRow(
-      label,
-      slider({
-        label,
-        value: Math.round(actions.volume(key) * 100),
-        onInput: (v) => actions.setVolume(key, v / 100),
-      }),
-    );
-  return well(STR.settings.audio, row('music', STR.settings.music), row('sfx', STR.settings.sfx));
-}
-
 /**
  * What Continue goes back to, described like a save: the stored save (`continueMeta()`), or with
  * `live` the game being played under the title screen, which it was opened over.
@@ -43,7 +23,7 @@ export interface ContinueTarget {
   live: boolean;
 }
 
-export interface MainMenuActions extends SlotActions, AudioActions {
+export interface MainMenuActions extends SlotActions {
   continue(): void;
   /** `tuning` is the saved tuning picked under New game, null for the shipped rules */
   newGame(seed: string, supply: SupplyMode, tuning: string | null): void;
@@ -64,6 +44,7 @@ export interface MainMenuActions extends SlotActions, AudioActions {
   tuning(): void;
   content(): void;
   settings(): void;
+  audio(): void;
   /** Settings, on its Controls tab */
   controls(): void;
   credits(): void;
@@ -163,6 +144,8 @@ export class MainMenu {
         return this.screens.open(this.levelsScreen);
       case 'settings':
         return a.settings();
+      case 'audio':
+        return a.audio();
       case 'controls':
         return a.controls();
       case 'tuning':
@@ -220,7 +203,6 @@ export class MainMenu {
       root: page(
         note(STR.menu.tagline, 'k-tag'),
         well(null, el('div', { class: 'k-stack' }, ...buttons)),
-        audioWell(this.actions),
       ),
     };
     this.frame.show(screen, { stacked: false, paused: !!save?.live });
@@ -230,7 +212,7 @@ export class MainMenu {
   }
 }
 
-export interface PauseMenuActions extends SlotActions, AudioActions {
+export interface PauseMenuActions extends SlotActions {
   resume(): void;
   save(): void;
   /** Saved games, on its Save tab */
@@ -238,6 +220,7 @@ export interface PauseMenuActions extends SlotActions, AudioActions {
   /** Saved games, on its Load tab */
   loadGame(): void;
   settings(): void;
+  audio(): void;
   tuning(): void;
   content(): void;
   backToEditor(): void;
@@ -280,6 +263,7 @@ export class PauseMenu {
       );
     stack.append(
       item('gear', STR.topbar.settings, () => this.actions.settings()),
+      item('speaker', STR.settings.audio, () => this.actions.audio()),
       item('slider', STR.menu.tuning, () => this.actions.tuning()),
       item('list', STR.menu.content, () => this.actions.content()),
     );
@@ -293,7 +277,7 @@ export class PauseMenu {
       hotkey: STR.kit.esc,
       hotkeyHint: STR.menu.menuKeyHint,
       formKeys: true,
-      root: page(well(null, stack), audioWell(this.actions)),
+      root: page(well(null, stack)),
     };
     this.frame.show(screen, { stacked: false, paused: !opts.editor });
     resume.focus();
