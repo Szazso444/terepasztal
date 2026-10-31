@@ -6,6 +6,7 @@ import {
   FACING_COUNT,
   FACING_DEGREES,
   facingDegrees,
+  framesToForget,
   nextFacing,
   turnedBy,
 } from './inspectView';
@@ -54,5 +55,39 @@ describe('a rarity as the kit names it', () => {
   it('is common for anything else', () => {
     expect(rarityClass('')).toBe('common');
     expect(rarityClass('SSS')).toBe('common');
+  });
+});
+
+describe('the frames Inspect 3D lets go of', () => {
+  const keys = [
+    'vehicle/mav490_f0@3',
+    'vehicle/mav490_f47@3',
+    'vehicle/mav490_f0@1',
+    'vehicle/mav490b_f0@3',
+    'vehicle/rocket_f0@3',
+    'icons/coal@3',
+  ];
+
+  it('are every heading of that model at that scale', () => {
+    expect(framesToForget(keys, 'mav490', 3)).toEqual([
+      'vehicle/mav490_f0@3',
+      'vehicle/mav490_f47@3',
+    ]);
+  });
+
+  it('leave a thumbnail, a model with a longer name, another model and an icon', () => {
+    const gone = framesToForget(keys, 'mav490', 3);
+    for (const k of [
+      'vehicle/mav490_f0@1',
+      'vehicle/mav490b_f0@3',
+      'vehicle/rocket_f0@3',
+      'icons/coal@3',
+    ])
+      expect(gone).not.toContain(k);
+  });
+
+  it('are none for a model that was not drawn', () => {
+    expect(framesToForget(keys, 'bigboy', 3)).toEqual([]);
+    expect(framesToForget([], 'mav490', 3)).toEqual([]);
   });
 });

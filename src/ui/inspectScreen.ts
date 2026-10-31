@@ -15,9 +15,12 @@ import {
 } from './kit';
 import { rarityStars } from './labels';
 import type { Screen } from './modal';
-import { frameForItem, spriteDataUrl } from './spritePreview';
+import { forgetFrames, frameForItem, spriteDataUrl } from './spritePreview';
 import { vehicleFacts } from './vehicleProperties';
 import { FACING_COUNT, FACING_STEP_MS, facingDegrees, nextFacing, turnedBy } from './inspectView';
+
+/** How large a heading is drawn: it is cut down to the slot, which keeps it sharp. */
+const TURN_SCALE = 3;
 
 /**
  * Inspect 3D: a model turning on its own, from every one of its headings, over the screen that
@@ -78,6 +81,8 @@ export class InspectScreen implements Screen {
     this.raf = 0;
     // the pointer's capture ends with the picture, and no release comes: a drag is over
     this.dragX = null;
+    // the 48 headings drawn for it are not kept for the session
+    if (this.defId) forgetFrames(this.atlas, this.defId, TURN_SCALE);
   }
 
   // ---------------------------------------------------------------- turning
@@ -114,7 +119,8 @@ export class InspectScreen implements Screen {
 
   private paint() {
     if (!this.defId) return;
-    this.img.src = spriteDataUrl(this.atlas, frameForItem(this.defId, this.facing), 3) ?? '';
+    this.img.src =
+      spriteDataUrl(this.atlas, frameForItem(this.defId, this.facing), TURN_SCALE) ?? '';
     this.heading.textContent = STR.vehicle.degrees(facingDegrees(this.facing));
     const input = this.angle?.querySelector('input');
     if (input) {

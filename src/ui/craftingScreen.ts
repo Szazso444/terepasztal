@@ -119,6 +119,8 @@ export class CraftingScreen implements Screen {
   private listIds = '';
   private rows = new Map<string, RecipeRow>();
   private stats = el('em');
+  /** the same stats in the head of the draw, while it stands in place of the recipes */
+  private drawStats = el('span');
 
   constructor(
     private readonly crafting: Crafting,
@@ -205,6 +207,7 @@ export class CraftingScreen implements Screen {
       }
     }
     if (!pending) this.drawList(false);
+    else this.showStats();
   }
 
   // ---------------------------------------------------------------- the unlock side
@@ -326,7 +329,10 @@ export class CraftingScreen implements Screen {
     return well(
       {
         title: STR.craft.pickTitle,
-        right: STR.craft.drawOf(kindName, STR.ages.name[AGE_ORDER[tier]] ?? ''),
+        right: fragment(
+          `${STR.craft.drawOf(kindName, STR.ages.name[AGE_ORDER[tier]] ?? '')} · `,
+          this.drawStats,
+        ),
         cls: 'ec-fill',
       },
       note(STR.craft.pickHint),
@@ -429,8 +435,7 @@ export class CraftingScreen implements Screen {
     const count =
       ids.length === total ? STR.craft.count(total) : STR.craft.countOf(ids.length, total);
     setText(this.count, count);
-    const s = this.crafting.stats;
-    setText(this.stats, STR.craft.stats(total, s.crafts, s.failures));
+    this.showStats();
     const idsKey = ids.join(',');
     if (force || idsKey !== this.listIds) {
       this.listIds = idsKey;
@@ -455,6 +460,14 @@ export class CraftingScreen implements Screen {
       const cost = this.crafting.instanceCost(id);
       row.update(cost, this.stock.missing(cost));
     }
+  }
+
+  /** The workshop's stats, in the head of the recipes and of a draw. */
+  private showStats() {
+    const s = this.crafting.stats;
+    const text = STR.craft.stats(this.crafting.recipes.size, s.crafts, s.failures);
+    setText(this.stats, text);
+    setText(this.drawStats, text);
   }
 
   private recipeRow(id: string): RecipeRow {

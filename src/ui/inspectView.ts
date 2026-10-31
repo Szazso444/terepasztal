@@ -26,3 +26,13 @@ export function facingDegrees(facing: number): number {
 export function turnedBy(dx: number): number {
   return Math.trunc(dx / DRAG_PX_PER_FACING);
 }
+
+/**
+ * The cached frames of one model drawn at one scale, out of every key of the cache (`vehicle/<id>_f<n>@<scale>`):
+ * its turntable's headings, which are let go of once it is closed. Another model, or the same one
+ * at another scale (a recipe row's thumbnail), is left.
+ */
+export function framesToForget(keys: Iterable<string>, defId: string, scale: number): string[] {
+  const own = `vehicle/${defId}_f`;
+  return [...keys].filter((k) => k.startsWith(own) && k.endsWith(`@${scale}`));
+}
