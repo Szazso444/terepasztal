@@ -68,14 +68,16 @@ describe('a slider and a number field keep to their range', () => {
     expect(clampToRange(NaN, { min: 5, max: 9 })).toBe(5);
   });
 
-  it('keeps any whole number when the range says so, and steps by `step` from it', () => {
+  it('keeps any whole number when the range says so, and steps from it by `step`', () => {
     const whole = { ...DEAL, whole: true };
     expect(clampToRange(25, whole)).toBe(25);
     expect(clampToRange(25.4, whole)).toBe(25);
     expect(clampToRange(-5, whole)).toBe(0);
     expect(clampToRange(9999, whole)).toBe(5000);
-    expect(stepNumber(25, 1, whole)).toBe(35);
-    expect(stepNumber(25, 1, whole, true)).toBe(125);
+    // an odd amount is stepped on to the next stop, as a value between two steps always is
+    expect(stepNumber(25, 1, whole)).toBe(30);
+    expect(stepNumber(25, -1, whole)).toBe(20);
+    expect(stepNumber(30, 1, whole)).toBe(40);
     expect(parseNumber('15', whole, 0)).toBe(15);
   });
 
