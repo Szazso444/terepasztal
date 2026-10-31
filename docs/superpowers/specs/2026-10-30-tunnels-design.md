@@ -83,8 +83,13 @@ and four things that lean on it stay as they are or follow it:
 
 ## 3a. Generated mountains
 
-Status: the shape is the author's pick from the review page, section "Hegyek". What follows holds for every
-option.
+Shapes are on the review page, section "Hegyek". The author picked A as the common one, B now and
+then, and D rarely; C is not used.
+
+**The mix.** About 70% of mountains are A, the model-railway hill: a gentle wooded foot and a steep
+rocky core. About 20% are B, long ridges. About 10% are D, rock towers. The shares are a tuning
+value. A low-frequency noise over world coordinates picks the shape, so a mountain keeps its shape
+across chunks and the map grows the same way whatever order chunks are made in.
 
 **The limit goes.** Today a level comes from terrain and the one-level rule, and rock fields are too
 small to rise: generated mountain tiles stand at levels 1 to 3. So generation decides levels itself
@@ -241,4 +246,4 @@ Each visual ships through a review page of in-game renders before it is locked.
 - Generated mountains lose their limit and may be steep, with variety. (author, 2026-10-31)
 - The snow line sits near the top. (author, 2026-10-31)
 - Floors and ores as shown are approved for step 2. (author, 2026-10-31)
-- Which mountain shape generation uses. (open, the author picks from the review page)
+- Mountain shapes: A most often, B sometimes, D rarely, no C. (author, 2026-10-31)
