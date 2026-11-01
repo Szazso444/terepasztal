@@ -5,7 +5,7 @@
  * so they come back with a save and end with the train.
  */
 import { DIR_DX, DIR_DY, DIRS, opposite } from '../engine/iso';
-import type { PathSegment } from '../world/pathfinding';
+import type { PathSegment, PathStart } from '../world/pathfinding';
 import type { TrackGraph, TrackPiece } from '../world/track';
 import type { Builder } from './build';
 import { rules } from './rules';
@@ -47,22 +47,29 @@ export class MaintenanceBoard {
     private readonly trains: () => readonly Train[],
     private readonly builder: Builder,
   ) {}
-  /** The train's next job, claimed for it, and the way there; null with nothing left it can reach. */
-  pick(t: Train, track: TrackGraph): { job: MaintJob; path: PathSegment[] } | null {
+  /**
+   * The train's next job, claimed for it, and the way there; null with nothing left it can reach.
+   * With `ahead`, for a train under way, it looks past its head only: it does not turn at speed.
+   */
+  pick(t: Train, track: TrackGraph, ahead = false): { job: MaintJob; path: PathSegment[] } | null {
     this.release(t);
-    const found = this.nearest(t, track);
+    const found = this.nearest(t, track, ahead ? t.pathEnds().slice(0, 1) : t.pathEnds());
     if (found) t.maint = found.job;
     return found;
   }
   /** The job `pick` would give a train standing where it stands, claiming nothing. */
   peek(t: Train, track: TrackGraph): MaintJob | null {
-    return this.nearest(t, track)?.job ?? null;
+    return this.nearest(t, track, t.pathEnds())?.job ?? null;
   }
-  /** One search per tier, stopping at the first that reaches a job. */
-  private nearest(t: Train, track: TrackGraph): { job: MaintJob; path: PathSegment[] } | null {
+  /** One search per tier, from the ends given, stopping at the first that reaches a job. */
+  private nearest(
+    t: Train,
+    track: TrackGraph,
+    ends: PathStart[],
+  ): { job: MaintJob; path: PathSegment[] } | null {
     for (const jobs of this.openJobs(track)) {
       if (!jobs.size) continue;
-      const path = this.search(t, track, (x, y) => jobs.has(track.key(x, y)));
+      const path = this.search(t, track, (x, y) => jobs.has(track.key(x, y)), ends);
       if (!path) continue;
       const end = path[path.length - 1];
       return { job: jobs.get(track.key(end.x, end.y))!, path };
@@ -72,6 +79,7 @@ export class MaintenanceBoard {
   /** The train gives its job up: the piece is on the board again. */
   release(t: Train): void {
     t.maint = null;
+    t.repairUnpaid = false;
   }
   /**
    * Where a train with no work waits, and the way there; null with no depot in reach. It heads for
@@ -148,15 +156,16 @@ export class MaintenanceBoard {
     return tiles;
   }
   /**
-   * The way to the nearest target from either end of the train, one search whichever it turns out
-   * to be. A train with an end on a target already has a way of that one tile.
+   * The way to the nearest target from the ends given, by default either end of the train, one
+   * search whichever it turns out to be. A train with an end on a target already has a way of that
+   * one tile.
    */
   private search(
     t: Train,
     track: TrackGraph,
     isTarget: (x: number, y: number) => boolean,
+    ends = t.pathEnds(),
   ): PathSegment[] | null {
-    const ends = t.pathEnds();
     const there = ends.find((e) => isTarget(e.x, e.y));
     if (there) return [{ ...there, out: there.in }];
     return ends.length ? t.pathTo(track, ends, isTarget) : null;

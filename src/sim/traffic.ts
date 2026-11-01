@@ -6,7 +6,7 @@ import type { JunctionStats } from './junctions';
 import type { PathSegment } from '../world/pathfinding';
 import { blockingGroups, RecoveryReservations, turnIndex } from './recovery';
 import { STR } from '../strings';
-import { classRank } from './compat';
+import { trafficRank } from './compat';
 
 /** How far ahead (tiles) a moving train claims track beyond the section it is entering. */
 const HORIZON = 6;
@@ -137,9 +137,9 @@ function isJunctionUnit(p: TrackPiece) {
  * the same direction may enter behind it. Trains stop short of the first tile they could not
  * claim ("claim limit"), which the fleet uses to park waiting trains off the holder's path.
  *
- * Priority: a bigger train class goes first (`classRank`). It is served before smaller trains,
- * and it takes over a stretch a smaller train has claimed but not yet reached when that train
- * can still stop short of it (`giveWay`).
+ * Priority: a bigger train class goes first, and a maintenance train by its job (`trafficRank`).
+ * It is served before smaller trains, and it takes over a stretch a smaller train has claimed but
+ * not yet reached when that train can still stop short of it (`giveWay`).
  *
  * Statistics: per-train blocked time, yields, stuck episodes, overlaps; an episode log; a
  * report for the debug panel and the console.
@@ -400,7 +400,7 @@ export class Traffic {
     const order = [...trains].sort(
       (a, b) =>
         Number(this.recoveries.active.has(b.id)) - Number(this.recoveries.active.has(a.id)) ||
-        classRank(b.trainClass) - classRank(a.trainClass) ||
+        trafficRank(b) - trafficRank(a) ||
         (this.stats.get(a.id)?.lastMoveAt ?? now) - (this.stats.get(b.id)?.lastMoveAt ?? now) ||
         b.yieldCount - a.yieldCount ||
         b.weight - a.weight ||
@@ -493,9 +493,9 @@ export class Traffic {
   }
 
   /**
-   * May `t` take tiles `from`..`to` of its path from the smaller trains that claimed them? Only
-   * when every holder is a smaller class on the standard network, has no escape leased, stands
-   * neither on that stretch nor anywhere on `t`'s path, and can still stop before the claim group
+   * May `t` take tiles `from`..`to` of its path from the lower ranked trains that claimed them? Only
+   * when every holder ranks below it (`trafficRank`), has no escape leased, stands neither on that
+   * stretch nor anywhere on `t`'s path, and can still stop before the claim group
    * of its own the stretch falls in. On success the holders' claims from that group on are
    * dropped, so they claim again behind `t` (they come later in the order).
    */
@@ -508,8 +508,8 @@ export class Traffic {
     byId: Map<number, Train>,
     occupied: Map<number, number>,
   ) {
-    const rank = classRank(t.trainClass);
-    if (rank <= 1 || this.recoveries.active.has(t.id)) return false;
+    const rank = trafficRank(t);
+    if (rank <= 0 || this.recoveries.active.has(t.id)) return false;
     const contested = new Set<number>();
     const holders = new Set<number>();
     for (let j = from; j < to; j++) {
@@ -519,8 +519,7 @@ export class Traffic {
       if (h === undefined || h === t.id) continue;
       if (occupied.get(key) === h) return false;
       const other = byId.get(h);
-      if (!other || this.recoveries.active.has(h) || classRank(other.trainClass) >= rank)
-        return false;
+      if (!other || this.recoveries.active.has(h) || trafficRank(other) >= rank) return false;
       contested.add(key);
       holders.add(h);
     }

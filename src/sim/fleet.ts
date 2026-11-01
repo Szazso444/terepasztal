@@ -4,6 +4,7 @@ import {
   Train,
   defaultStop,
   newTrip,
+  type AsideSpots,
   type DeliveryEvent,
   type TickCtx,
   type StopPlan,
@@ -45,7 +46,7 @@ import type { Station } from './stations';
 import { sfx } from '../engine/audio';
 import { ENGLISH, STR } from '../strings';
 import { biomeDef, biomeAt } from './biomes';
-import { daySeconds } from './rules';
+import { daySeconds, rules } from './rules';
 import { MaintenanceBoard } from './maintenance';
 import { Traffic } from './traffic';
 import { Junctions } from './junctions';
@@ -1123,6 +1124,7 @@ export class Fleet {
     // group's chosen train owns its escape corridor before any other group can plan a move.
     this.rebuildOccupancy();
     this.makeWay(ctx, now, gdt);
+    this.yieldWork(ctx, now);
     const groups = blockingGroups(this.trains).sort(
       (a, b) => Math.max(...b.map((t) => t.blockedTime)) - Math.max(...a.map((t) => t.blockedTime)),
     );
@@ -1133,10 +1135,12 @@ export class Fleet {
       const ids = group.map((t) => t.id);
       const parked = (t: Train) =>
         t.state === 'idle' || t.state === 'waiting' || (t.state === 'loading' && t.waitingForCargo);
-      // Don't interrupt useful platform work or a train making progress at the front of a queue.
+      // Don't interrupt useful platform work, a repair (a train leaves that by `yieldWork`, or not
+      // at all) or a train making progress at the front of a queue.
       const blockedIds = new Set(group.filter((t) => t.blocked).map((t) => t.id));
       const tail = group.find((t) => !blockedIds.has(t.id) && t.claimBlocker === null);
-      if (tail && !parked(tail) && (tail.state === 'moving' || tail.state === 'loading')) continue;
+      if (tail && !parked(tail) && ['moving', 'loading', 'repairing'].includes(tail.state))
+        continue;
       const order = [...group].sort(
         (a, b) =>
           Number(parked(b)) - Number(parked(a)) ||
@@ -1162,6 +1166,7 @@ export class Fleet {
       const cycle = blockingCycles(group);
       candidates.sort(
         (a, b) =>
+          backOffOrder(a.train) - backOffOrder(b.train) ||
           Number(cycle.has(b.train.id)) - Number(cycle.has(a.train.id)) ||
           a.train.yieldCount - b.train.yieldCount ||
           a.plan.distance - b.plan.distance ||
@@ -1269,24 +1274,10 @@ export class Fleet {
       // one would have
       if (t.asideRetry > now) continue;
       t.asideRetry = now + ASIDE_RETRY;
-      // off every other train's route, and off the platforms of every station another train
-      // is bound for
-      const theirs = new Set<number>();
-      const stops = new Set<number>();
-      for (const o of this.trains) {
-        if (o === t) continue;
-        for (const k of routes.get(o.id)!) theirs.add(k);
-        for (const s of [...o.schedule, ...o.program]) stops.add(s.stationId);
-        for (const j of o.job ? [o.job, ...o.jobs] : o.jobs) stops.add(j.originId).add(j.destId);
-      }
-      const bound = new Set<number>();
-      for (const id of stops) {
-        const s = this.builder.stationById(id);
-        if (s) for (const p of this.builder.platformTiles(s)) bound.add(p.y * w + p.x);
-      }
       sidings ??= this.sidingTiles();
+      const spots = this.asideSpots(t, routes, sidings);
       const ids = group.map((o) => o.id);
-      const plan = t.planAside(ctx, ids, { theirs, bound, sidings });
+      const plan = t.planAside(ctx, ids, spots);
       if (plan && t.retreat(ctx, ids, plan)) {
         this.traffic.yielded(t, ids[0], now);
         this.rebuildOccupancy();
@@ -1297,13 +1288,57 @@ export class Fleet {
       // the way out is taken by the trains it is in the way of, or there is none. The way it would
       // take were they to back off ends off their lines too: not under them, nor on the line
       // behind them, which they would back over and cross again
-      const lines = new Set(theirs);
+      const lines = new Set(spots.theirs);
       for (const o of group)
         for (const k of [...o.occupancyKeys(w), ...o.lineBehind(this.track)]) lines.add(k);
-      const wanted = t.planAside(ctx, ids, { theirs: lines, bound, sidings }, true);
+      const wanted = t.planAside(ctx, ids, { ...spots, theirs: lines }, true);
       t.wantAside(wanted?.path ?? null);
       routes.set(t.id, t.pathTileKeys(w));
       t.lastMessage = wanted ? ENGLISH.traffic.waitAside : ENGLISH.traffic.noWayAside;
+    }
+  }
+  /**
+   * Where `t` may stand out of the way (`Train.planAside`): off every other train's route, and off
+   * the platforms of every station another train is bound for.
+   */
+  private asideSpots(t: Train, routes: Map<number, Set<number>>, sidings: Set<number>): AsideSpots {
+    const w = this.map.w;
+    const theirs = new Set<number>();
+    const stops = new Set<number>();
+    for (const o of this.trains) {
+      if (o === t) continue;
+      for (const k of routes.get(o.id)!) theirs.add(k);
+      for (const s of [...o.schedule, ...o.program]) stops.add(s.stationId);
+      for (const j of o.job ? [o.job, ...o.jobs] : o.jobs) stops.add(j.originId).add(j.destId);
+    }
+    const bound = new Set<number>();
+    for (const id of stops) {
+      const s = this.builder.stationById(id);
+      if (s) for (const p of this.builder.platformTiles(s)) bound.add(p.y * w + p.x);
+    }
+    return { theirs, bound, sidings };
+  }
+  /**
+   * A train at work on a piece that is not unusable gives way (spec, section 6): once a train has
+   * been held by it for `trackYieldSeconds` it lets the job go, its health as it stands, and pulls
+   * aside as an idle train does (`makeWay`). Where the way ends it idles, and looks for work again.
+   * With no way aside it works on, and looks again every ASIDE_RETRY seconds.
+   */
+  private yieldWork(ctx: TickCtx, now: number) {
+    for (const t of this.trains) {
+      if (t.state !== 'repairing' || !t.maint || t.maint.tier === 0 || t.asideRetry > now) continue;
+      const ids = this.trains
+        .filter((o) => o.blockedBy === t.id && o.blockedTime > rules.trackYieldSeconds)
+        .map((o) => o.id);
+      if (!ids.length) continue;
+      t.asideRetry = now + ASIDE_RETRY;
+      const routes = new Map(this.trains.map((o) => [o.id, o.pathTileKeys(this.map.w)]));
+      const plan = t.planAside(ctx, ids, this.asideSpots(t, routes, this.sidingTiles()));
+      if (!plan || !t.retreat(ctx, ids, plan)) continue;
+      this.maintenance.release(t);
+      this.traffic.yielded(t, ids[0], now);
+      this.rebuildOccupancy();
+      this.rebuildReservations();
     }
   }
   /**
@@ -1356,6 +1391,14 @@ export class Fleet {
   }
 }
 const MUTUAL_GRACE = 4;
+/**
+ * Which train a jam backs off first: one on a job on a piece trains still run over, then the rest,
+ * and only with nobody else able to one bound for an unusable piece.
+ */
+function backOffOrder(t: Train) {
+  if (!t.maint) return 1;
+  return t.maint.tier === 0 ? 2 : 0;
+}
 /** tiles a jammed train's head moves before its note no longer says it is jammed */
 const JAM_MOVED = 0.5;
 /** seconds an idle train in another train's way waits before looking again for a way aside */

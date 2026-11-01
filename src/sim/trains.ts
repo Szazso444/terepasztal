@@ -2349,7 +2349,7 @@ export class Train {
   tickMaintenance(gdt: number, ctx: TickCtx): void {
     if (this.state === 'moving') {
       this.stateTime = 0;
-      this.takeJob(ctx);
+      this.takeJob(ctx, true);
       return;
     }
     if (this.state === 'idle') {
@@ -2404,9 +2404,9 @@ export class Train {
       this.stateTime >= rules.trackLookSeconds
     );
   }
-  /** Take the next job, if there is one it can reach. */
-  private takeJob(ctx: TickCtx): boolean {
-    const found = ctx.maintenance.pick(this, ctx.track);
+  /** Take the next job, if there is one it can reach; `ahead`, past its head (`pick`). */
+  private takeJob(ctx: TickCtx, ahead = false): boolean {
+    const found = ctx.maintenance.pick(this, ctx.track, ahead);
     if (!found) return false;
     this.parkAt = null;
     if (!this.setOff(found.path, ctx)) this.startWork();
@@ -3314,8 +3314,9 @@ export class Train {
   }
 
   /**
-   * Where an idle train can go to get out of the way of `group`, the trains whose route crosses
-   * the tiles it stands on: the nearest place that holds the whole consist off every route in
+   * Where an idle train, or one at work on a piece (`Fleet.yieldWork`), can go to get out of the way
+   * of `group`, the trains whose route crosses the tiles it stands on: the nearest place that holds
+   * the whole consist off every route in
    * `spots.theirs`, in a siding when one is free, else on plain track, a platform or a depot gate
    * no other train is bound for. The way there crosses no other train, no other escape and no
    * claim of a train outside the group; the group's claims give way to the move. With `through`
@@ -3330,7 +3331,8 @@ export class Train {
     through = false,
     shunt = false,
   ): RetreatPlan | null {
-    if (this.state !== 'idle' || this.holding || !this.trail.length) return null;
+    if (this.state !== 'idle' && this.state !== 'repairing') return null;
+    if (this.holding || !this.trail.length) return null;
     const members = [...new Set([this.id, ...group])];
     const past = through ? new Set(group) : undefined;
     const plan = (only?: Set<number>, turn = false) =>
@@ -3478,15 +3480,19 @@ export class Train {
 
   /**
    * Pull aside along a plan (from `planRetreat`, or `planAside` for an idle train), reserved before
-   * anything changes, both legs of a shunt with it. An idle train, or one standing with no stop at
-   * all, makes way and idles where the way ends; any other waits there to go on (`yielding`).
+   * anything changes, both legs of a shunt with it. An idle train, one at work on a piece, or one
+   * standing with no stop at all, makes way and idles where the way ends; any other waits there to
+   * go on (`yielding`).
    */
   retreat(ctx: TickCtx, group: number[] = [], plan = this.planRetreat(ctx, group)): boolean {
     if (!plan) return false;
     const way = plan.back ? [...plan.path, ...plan.back] : plan.path;
     if (!ctx.reserveRecovery(this, way, plan.group)) return false;
     // The complete plan is reserved before changing direction or leaving the platform.
-    this.aside = this.state === 'idle' || (this.state === 'noRoute' && !this.route.length);
+    this.aside =
+      this.state === 'idle' ||
+      this.state === 'repairing' ||
+      (this.state === 'noRoute' && !this.route.length);
     this.serviceStop = null;
     if (plan.flip) this.reverseConsist();
     if (this.atStation) this.atStation.occupants.delete(this.id);

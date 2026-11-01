@@ -5,7 +5,7 @@ import { STR } from '../strings';
 import { depotWith } from '../testing/storeFixtures';
 import { line, simWorld, station, type SimWorld } from '../testing/simWorld';
 import { findPath } from '../world/pathfinding';
-import { consistAccess, consistGauge, gaugeOf } from './compat';
+import { classRank, consistAccess, consistGauge, gaugeOf, trafficRank } from './compat';
 import type { Contract } from './contracts';
 import { DEFAULT_RULES, rules } from './rules';
 import { SimStep, startStock, type StepContext } from './step';
@@ -730,14 +730,37 @@ describe('a maintenance train at work', () => {
     const t = maintTrain(w, stops);
     until(w, () => healthAt(w, 80) >= 1, 900);
     until(w, () => t.state === 'moving' && t.parkAt !== null);
-    wearDown(w, 85, 0.2);
+    wearDown(w, 15, 0.2);
     const looks = vi.spyOn(w.fleet.maintenance, 'pick');
     const from = w.clock.time;
-    until(w, () => t.maint?.ax === 85, 31);
+    until(w, () => t.maint?.ax === 15, 31);
     expect(t.parkAt).toBeNull();
     expect(looks.mock.calls.length).toBeLessThanOrEqual(2);
     expect(w.clock.time - from).toBeGreaterThan(0);
     until(w, repairing(t));
+    expect(t.headTile).toEqual({ x: 15, y: 30 });
+  });
+
+  it('on the way it looks past its head only: work behind it waits until it stands', () => {
+    const { w, stops } = workLine();
+    wearDown(w, 80, 0.2);
+    const t = maintTrain(w, stops);
+    until(w, () => healthAt(w, 80) >= 1, 900);
+    until(w, () => t.state === 'moving' && t.parkAt !== null);
+    wearDown(w, 85, 0.2);
+    const facing = t.reversed;
+    until(
+      w,
+      () => {
+        expect(t.maint).toBeNull();
+        expect(t.reversed).toBe(facing);
+        return t.state === 'idle';
+      },
+      900,
+    );
+    expect(t.headTile).toEqual(t.parkAt);
+    until(w, () => t.maint?.ax === 85, 31);
+    until(w, repairing(t), 900);
     expect(t.headTile).toEqual({ x: 85, y: 30 });
   });
 
@@ -837,5 +860,208 @@ describe('a maintenance train at work', () => {
     expect(w.contractJobs.canWork(c, a, b)).toBe(false);
     t.mode = 'freight';
     expect(w.contractJobs.canWork(c, a, b)).toBe(true);
+  });
+});
+
+/**
+ * A depot at the west end of a Branch line with a stop `near` on x 39 and 40 and a stop further out
+ * each way. With `sidings`, two dead ends running south: under x 36, from a switch just short of
+ * `near`, which a train heading west turns into and leaves heading east, and under x 47, which a
+ * train heading east turns into and leaves heading west.
+ */
+function sidedLine(sidings = true) {
+  rules.trackWearMul = 0;
+  const w = simWorld({ terrain: 'grass', size: 96 });
+  depotWith(w, { ...startStock(), wood: 1000, stone: 1000, iron: 1000 }, { x: 4, y: 30 });
+  line(w, 6, 30, 90);
+  if (sidings) {
+    for (const x of [36, 37, 46, 47]) w.track.remove(x, 30);
+    w.track.place(36, 30, 'switch', 1, 'branch');
+    w.track.place(46, 30, 'switch', 7, 'branch');
+    for (let y = 32; y <= 42; y++) {
+      w.track.place(36, y, 'straight', 0, 'branch');
+      w.track.place(47, y, 'straight', 0, 'branch');
+    }
+  }
+  return {
+    w,
+    west: station(w, 'warehouse', 12, 29).id,
+    near: station(w, 'warehouse', 39, 29).id,
+    east: station(w, 'warehouse', 70, 29).id,
+  };
+}
+/** A train that stands at the stop `from` until `release`, then goes on to `to`. */
+function heldAt(w: SimWorld, from: number, to: number) {
+  const stay: StopPlan = { ...defaultStop(from), unload: 'none', waitFull: true };
+  const loco = w.inventory.add('adler', 0).uid;
+  const t = w.fleet.create([loco], [w.inventory.add('flatbed', 0).uid], [stay, defaultStop(to)]);
+  if (typeof t === 'string') throw new Error(t);
+  until(w, () => t.atStation?.id === from, 120);
+  return {
+    t,
+    release: () => {
+      t.schedule[0].waitFull = false;
+    },
+  };
+}
+/** Steps the world for `seconds` game seconds, `each` run after every step. */
+function run(w: SimWorld, seconds: number, each: () => void) {
+  const end = w.clock.time + seconds;
+  until(
+    w,
+    () => {
+      each();
+      return w.clock.time >= end;
+    },
+    seconds + 1,
+  );
+}
+
+describe('a maintenance train in traffic', () => {
+  const job = (tier: 0 | 1 | 2) => ({ ax: 40, ay: 30, tier, x: 40, y: 30 });
+
+  it('ranks above every class on an unusable piece, and below every class on any other', () => {
+    const t = onlooker();
+    expect(trafficRank(t)).toBe(classRank(t.trainClass));
+    t.maint = job(0);
+    expect(trafficRank(t)).toBe(4);
+    t.maint = job(1);
+    expect(trafficRank(t)).toBe(0);
+    t.maint = job(2);
+    expect(trafficRank(t)).toBe(0);
+    t.maint = null;
+    t.parkAt = { x: 8, y: 30 };
+    expect(trafficRank(t)).toBe(classRank(t.trainClass));
+  });
+
+  it('a train heading for an unusable piece goes first', () => {
+    const { w, west, near } = sidedLine();
+    const other = heldAt(w, near, west);
+    wearDown(w, 60, 0);
+    const t = maintTrain(w, []);
+    expect(t.maint?.ax).toBe(60);
+    until(w, () => t.blockedBy === other.t.id, 120);
+    other.release();
+    until(w, repairing(t), 120);
+    expect(t.yieldCount).toBe(0);
+    expect(other.t.yieldCount).toBeGreaterThan(0);
+  });
+
+  it('at work on an unusable piece it is not backed off', () => {
+    const { w, west, near } = sidedLine();
+    rules.trackRepairSeconds = 200;
+    wearDown(w, 42, 0);
+    const t = maintTrain(w, []);
+    until(w, repairing(t));
+    const at = t.headTile;
+    const other = maintTrain(w, [near, west], 'schedule');
+    until(w, () => other.blockedBy === t.id, 120);
+    run(w, 20, () => {
+      expect(t.state).toBe('repairing');
+      expect(t.maint?.ax).toBe(42);
+    });
+    expect(t.headTile).toEqual(at);
+    expect(t.yieldCount).toBe(0);
+    expect(other.blockedBy).toBe(t.id);
+  });
+
+  it('heading for an unusable piece it backs off only for a train that has no way aside', () => {
+    const { w, west, near } = sidedLine(false);
+    wearDown(w, 42, 0);
+    const other = heldAt(w, near, west);
+    const t = maintTrain(w, []);
+    until(w, () => t.blockedBy === other.t.id, 120);
+    // the failed piece at its back, and this train before it: the other could only stand there
+    other.release();
+    until(w, () => other.t.atStation?.id === west, 120);
+    expect(t.yieldCount).toBeGreaterThan(0);
+    expect(other.t.yieldCount).toBe(0);
+    expect(t.maint?.ax).toBe(42);
+  });
+
+  it('on degraded track it gives way, and a train held 5 s by it makes it pull aside', () => {
+    const { w, west, near } = sidedLine();
+    rules.trackRepairSeconds = 200;
+    wearDown(w, 41, 0.2);
+    const t = maintTrain(w, []);
+    until(w, repairing(t));
+    const other = maintTrain(w, [near, west], 'schedule');
+    until(w, () => other.blockedBy === t.id, 120);
+    let held = 0;
+    until(
+      w,
+      () => {
+        if (t.state === 'repairing') held = other.blockedTime;
+        return t.state !== 'repairing';
+      },
+      20,
+    );
+    expect(held).toBeCloseTo(rules.trackYieldSeconds, 0);
+    // the job stays claimed by nobody, partial health stays
+    expect(t.maint).toBeNull();
+    const left = healthAt(w, 41);
+    expect(left).toBeGreaterThan(0.2);
+    expect(w.fleet.maintenance.peek(t, w.track)?.ax).toBe(41);
+    until(w, () => t.state === 'idle', 60);
+    // in a siding, off the line
+    expect(t.headTile!.x).toBe(47);
+    expect(t.headTile!.y).toBeGreaterThan(31);
+    expect(healthAt(w, 41)).toBe(left);
+    // it picks again after
+    until(w, repairing(t), 120);
+    expect(t.maint?.ax).toBe(41);
+    expect(t.headTile).toEqual({ x: 41, y: 30 });
+  });
+
+  it('with no way aside it works on to the end', () => {
+    rules.trackWearMul = 0;
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    depotWith(w, { ...startStock(), wood: 1000, stone: 1000, iron: 1000 }, { x: 4, y: 30 });
+    line(w, 6, 30, 40);
+    const west = station(w, 'warehouse', 12, 29).id;
+    const near = station(w, 'warehouse', 36, 29).id;
+    rules.trackRepairSeconds = 60;
+    wearDown(w, 34, 0.2);
+    const t = maintTrain(w, []);
+    until(w, repairing(t));
+    const other = maintTrain(w, [near, west], 'schedule');
+    until(w, () => other.blockedBy === t.id, 120);
+    until(w, () => healthAt(w, 34) >= 1, 80);
+    expect(t.yieldCount).toBe(0);
+  });
+
+  it('a degraded job finishes when traffic lets it', () => {
+    const { w, west, near } = sidedLine();
+    rules.trackRepairSeconds = 200;
+    wearDown(w, 41, 0.2);
+    const t = maintTrain(w, []);
+    until(w, () => t.headTile!.x > 20);
+    const other = heldAt(w, west, near);
+    until(w, repairing(t), 120);
+    other.release();
+    until(w, () => t.maint === null, 120);
+    expect(healthAt(w, 41)).toBeLessThan(rules.trackCloseAt);
+    // one trip, and the other train stands at its stop again
+    other.t.schedule[0].waitFull = true;
+    until(w, () => healthAt(w, 41) >= 1, 400);
+    expect(t.yieldCount).toBe(1);
+  });
+
+  it('a train shuttling over the line does not keep it off the piece', () => {
+    const { w, west, east } = sidedLine();
+    const other = maintTrain(w, [west, east], 'schedule');
+    until(w, () => other.atStation?.id === east, 200);
+    wearDown(w, 41, 0.2);
+    maintTrain(w, []);
+    until(w, () => healthAt(w, 41) >= rules.trackCloseAt, 100);
+  });
+
+  it('a job let go takes its unpaid note with it', () => {
+    const { w, stops } = workLine();
+    wearDown(w, 40, 0.2);
+    const t = maintTrain(w, stops);
+    t.repairUnpaid = true;
+    w.fleet.maintenance.release(t);
+    expect(t.repairUnpaid).toBe(false);
   });
 });

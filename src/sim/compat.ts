@@ -22,6 +22,7 @@ import {
 import { Polyline, poseVehicle, vehicleSpec, TOL, type VehicleSpec } from './body';
 import { STR } from '../strings';
 import { rules } from './rules';
+import type { Train } from './trains';
 
 export interface Verdict {
   ok: boolean;
@@ -155,6 +156,15 @@ export function classRank(tc: TrainClass | null): number {
   if (!tc) return 1;
   const own = LINES[CLASS_LINE[tc]];
   return own.network === 'standard' ? own.tier : 1;
+}
+
+/**
+ * Priority rank of a train where trains contest track: its class's, except on a maintenance job.
+ * Bound for or at an unusable piece it goes before every class, on any other piece after them all.
+ */
+export function trafficRank(t: Train): number {
+  if (t.maint) return t.maint.tier === 0 ? 4 : 0;
+  return classRank(t.trainClass);
 }
 
 /**

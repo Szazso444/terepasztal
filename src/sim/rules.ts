@@ -103,6 +103,8 @@ export interface Rules {
   trackRepairSeconds: number;
   /** game seconds between two looks for work of a maintenance train with none */
   trackLookSeconds: number;
+  /** game seconds a maintenance train at work on a piece may hold another train up */
+  trackYieldSeconds: number;
   /** what a hand repair costs, as a multiple of the train price */
   trackHandRepairMul: number;
   /** price of fitting in-cab signalling equipment to one locomotive */
@@ -188,6 +190,7 @@ export const DEFAULT_RULES: Rules = {
   trackRepairPrice: 0.4,
   trackRepairSeconds: 25,
   trackLookSeconds: 30,
+  trackYieldSeconds: 5,
   trackHandRepairMul: 2,
   inCabCost: 6000,
   startingResourceScale: 3,
@@ -701,6 +704,15 @@ export const RULE_META: RuleMeta[] = [
     max: 300,
     step: 5,
     hint: 'how often a train with no work looks again',
+  },
+  {
+    key: 'trackYieldSeconds',
+    label: 'Maintenance train gives way after (game seconds)',
+    group: 'Track wear',
+    min: 1,
+    max: 20,
+    step: 1,
+    hint: 'how long it may hold a train up, on any piece but an unusable one',
   },
   {
     key: 'trackHandRepairMul',
