@@ -111,6 +111,28 @@ describe('a map grown past what stands near its old edge', () => {
     expect(save.groundTerrain).toEqual([[40 + CHUNK_TILES, 41 + CHUNK_TILES, Terrain.Rock]]);
   });
 
+  it('reads as a map generated at the larger size, past what the player changed', () => {
+    const { save, map } = worldSave(42, 96);
+    const size = 96 + 2 * CHUNK_TILES;
+    save.track = [[48, 48, 'straight', 0, 'branch', undefined]];
+    // raised ground in the middle of the old map, and a dug tile there
+    const levels = tileLevels(map);
+    save.groundLevel = [[48, 48, levels[48 * 96 + 48] + 1]];
+    growHolding(save, () => levels);
+    const at = tileLevels(loaded(save));
+    const fresh: GeneratedWorld = {
+      kind: 'generated',
+      seed: 42,
+      params: { ...(save.world as GeneratedWorld).params },
+    };
+    const same = tileLevels(groundOf(fresh, generatorOf('simple')).map);
+    let differ = 0;
+    for (let i = 0; i < at.length; i++) if (at[i] !== same[i]) differ++;
+    // the one raised tile, and no more than the slope round it
+    expect(differ).toBeLessThanOrEqual(9);
+    expect(at[(48 + CHUNK_TILES) * size + 48 + CHUNK_TILES]).toBe(levels[48 * 96 + 48] + 1);
+  });
+
   it('asks for no map when nothing stands near the edge', () => {
     const { save } = worldSave(42, 96);
     save.track = [[48, 48, 'straight', 0, 'branch', undefined]];
