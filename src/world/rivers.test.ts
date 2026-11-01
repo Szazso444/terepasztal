@@ -890,6 +890,25 @@ describe('the drainage', () => {
     expect(levelSteps(s, 0.7)).toBeCloseTo(3.5);
   });
 
+  it('sets the step above the hill line by the hill slider, to the default rock line', () => {
+    // the formula before the rock slider left the river scale, with rockLevel at its default
+    const old = (s: { waterLevel: number; hillLevel: number }, e: number) => {
+      const hill = Math.max(s.hillLevel, s.waterLevel + 3 * 0.01);
+      const rock = Math.max(DEFAULT_MAP_PARAMS.rockLevel, hill + 0.01);
+      const below = 3 / (hill - s.waterLevel);
+      const above = 1 / (rock - hill);
+      return e < hill ? (e - s.waterLevel) * below : 3 + (e - hill) * above;
+    };
+    for (const hillLevel of [0.4, 0.5, 0.64, 0.7, 0.75, 0.9]) {
+      const s = { waterLevel: 0.36, hillLevel };
+      for (let e = 0.3; e <= 1.6; e += 0.01) expect(levelSteps(s, e)).toBe(old(s, e));
+    }
+    // hill 0.5 keeps its step of 0.26, not the default 0.12
+    expect(levelSteps({ waterLevel: 0.36, hillLevel: 0.5 }, 0.76)).toBeCloseTo(4);
+    // sliders out of order are still read at MIN_STEP at least
+    expect(levelSteps({ waterLevel: 0.36, hillLevel: 0.9 }, 0.91)).toBeCloseTo(4);
+  });
+
   it('fills a basin on low ground to a lake that overflows into a river to the edge', () => {
     // a bowl at 0.40 rising gently to 0.43 and more at the edge: its rim is below a level step
     const p = planes(24, (x, y) => 0.4 + 0.0005 * ((x - 12) ** 2 + (y - 12) ** 2));
