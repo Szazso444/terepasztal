@@ -1555,11 +1555,17 @@ export class Game implements UiHost {
           open = water && !raised,
           piece = this.track.get(b.x, b.y),
           straight = !piece || climbAxes(piece.links).length > 0,
-          land = open
-            ? null
-            : straight
-              ? `structures/landspan_${s.material}_${s.axis}`
-              : `structures/landpad_${s.material}`;
+          // a bridge is as wide as its track: narrow gauge alone pulls it in, a crossing of two
+          // lines stays wide
+          narrow = piece?.cls === 'narrow' && (piece.cls2 ?? 'narrow') === 'narrow',
+          pulled = narrow && straight,
+          land = pulled
+            ? `structures/narrowspan_${s.material}_${s.axis}`
+            : open
+              ? null
+              : straight
+                ? `structures/landspan_${s.material}_${s.axis}`
+                : `structures/landpad_${s.material}`;
         if (raised) raisedDecks.push({ x: b.x, y: b.y, top: deck });
         const id = 'bridge:' + b.x + ',' + b.y;
         if (mode === 'textured') {
@@ -1582,6 +1588,7 @@ export class Game implements UiHost {
             level: b.level ?? 1,
             height: b.deck,
             raised,
+            narrow,
           });
           continue;
         }
@@ -1591,13 +1598,22 @@ export class Game implements UiHost {
           this.world.setPlatform(
             b.x,
             b.y,
-            `bridgekit/${s.material}-${straight ? `deck-${dir}` : 'pad'}`,
+            `bridgekit/${s.material}-${straight ? `deck-${dir}${pulled ? '-narrow' : ''}` : 'pad'}`,
             0,
             false,
             deck,
           );
+          // the near railing moves in with a narrow deck (0.2 tile across the span)
           if (straight)
-            this.world.setStructure(id, b.x, b.y, `bridgekit/${s.material}-rail-${dir}`, 35, dy);
+            this.world.setStructure(
+              id,
+              b.x,
+              b.y,
+              `bridgekit/${s.material}-rail-${dir}`,
+              35,
+              pulled ? dy - 3.2 : dy,
+              pulled ? (s.axis ? 6.4 : -6.4) : 0,
+            );
           else this.world.removeStructure(id);
           this.world.setBridgeKit(
             b.x,
@@ -1607,6 +1623,7 @@ export class Game implements UiHost {
             deck,
             water,
             raised,
+            pulled,
           );
         } else {
           this.world.setPlatform(
@@ -1614,7 +1631,7 @@ export class Game implements UiHost {
             b.y,
             land && !straight ? land : (land ?? key) + '_deck',
             0,
-            open,
+            open && !pulled,
             deck,
           );
           if (land && !straight) this.world.removeStructure(id);
@@ -1622,10 +1639,11 @@ export class Game implements UiHost {
           this.world.setBridgePiers(
             b.x,
             b.y,
-            open ? null : s.material,
+            open && !pulled ? null : s.material,
             straight ? (s.axis as 0 | 1) : null,
             deck,
             water,
+            pulled,
           );
         }
         const detail = `structures/bridge_detail_${s.material}_${s.axis}_${b.level ?? 1}`;
