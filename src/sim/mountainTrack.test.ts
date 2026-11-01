@@ -1010,12 +1010,10 @@ describe('track inside', () => {
     /** A townhouse with a road near its door, with its door's tile dug or left open. */
     const spur = (dug: boolean) => {
       const w = ground(() => 0);
-      w.builder.free = false;
       const probe = ground(() => 0);
       const d = probe.builder.placeDecor(20, ROW, 'townhouse', 0)!;
       const [{ reach }] = streetDoors(decorPlace(d));
       if (dug) w.under.dig(reach.x, reach.y, 0);
-      w.builder.free = true;
       // a run of road a tile off the door's tile, out along the way it looks
       const dx = reach.x - 20,
         dy = reach.y - ROW;
