@@ -54,15 +54,16 @@ workers need no change).
 **Raise and Lower.** Two arrows in the build menu, Utility group. A click or a drag acts tile by
 tile, one level a step.
 
-| Rule          | Value                                                                                                                                                                           |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Where         | Any land tile with nothing built on it. Water, track, roads, buildings and deposits refuse.                                                                                     |
-| Top           | Level 16 (`MAX_LEVEL`).                                                                                                                                                         |
-| Bottom        | Level 0, sea level, for now.                                                                                                                                                    |
-| Over a tunnel | Ground over a dug tile stays at rail level + 3 or higher; refused tiles show red.                                                                                               |
-| Beside water  | Lower refuses a tile touching water, on a side or a corner, so a raised lake cannot run out.                                                                                    |
-| Slopes        | Neighbours differ by at most one level, so a raise lifts the tiles around it and a lower takes them down. The ghost shows every tile that moves and the price before the click. |
-| Price         | Money, per tile per level, the same both ways: `$100` placeholder, a tuning slider.                                                                                             |
+| Rule          | Value                                                                                                                                                                                                                                                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Where         | Any land tile with nothing built on it. Water, track, roads, buildings and deposits refuse.                                                                                                                                                                                                                              |
+| Top           | Level 16 (`MAX_LEVEL`).                                                                                                                                                                                                                                                                                                  |
+| Bottom        | Level 0, sea level, for now.                                                                                                                                                                                                                                                                                             |
+| Over a tunnel | Ground over a dug tile stays at rail level + 3 or higher; refused tiles show red.                                                                                                                                                                                                                                        |
+| Beside water  | Lower refuses a tile touching water, on a side or a corner, so a raised lake cannot run out.                                                                                                                                                                                                                             |
+| Beside pieces | A tile whose level would change refuses when a side holds a piece that needs level ground: a works, station, depot, house, curve, switch or crossing. Straights, roads and platforms need no such refusal, nor does rail on a platform or on a dug or cut tile. An undo or redo that would move such a tile refuses too. |
+| Slopes        | Neighbours differ by at most one level, so a raise lifts the tiles around it and a lower takes them down. The ghost shows every tile that moves and the price before the click.                                                                                                                                          |
+| Price         | Money, per tile per level, the same both ways: `$100` placeholder, a tuning slider.                                                                                                                                                                                                                                      |
 
 A refusal covers the whole action: nothing moves if any tile it would move refuses.
 
@@ -99,8 +100,13 @@ chunks they hold.
 
 **Steeper than one level.** Generated neighbours may differ by up to 4. `tileLevels` and `levelAt`
 stop clamping generated ground; Raise and Lower keep their one level a tile. Rail still takes one
-level a tile, so a link across an edge with a bigger step refuses, unless a tile of that edge is dug
-or cut. Rail may run along a cliff.
+level a tile, so a link across an edge with a bigger step refuses. A dug or cut tile counts at its
+bed, not the ground over it. Rail may run along a cliff.
+
+**A viaduct edge.** A link across a bigger step goes through when the lower tile of the edge has a
+bridge platform: the deck carries the rail level off the top of the cliff. A platform on the top with
+bare ground at the foot stays refused, as the rail would have to drop from the deck to the foot
+across one tile. An edge that is the wall of a dug tile keeps its own rule, section 5.
 
 **Softer slopes.** Above level 3 a bank runs the whole tile, not half of it, so a tall slope is a
 slope and not a staircase. Level 2 and under keep the approved terraces. `terraceHeight` picks the
@@ -120,6 +126,25 @@ mountains rise. A river keeps to water levels 0 to 4, so the ground falling away
 valley into the mountain, up to the river's head. Rivers above level 4 and springs drawn as such are
 left out. (author, 2026-10-31)
 
+## 3b. The edge strip
+
+The ground of the next ring shows past the map's edge: a dark silhouette at its true height, white
+lines along the tile sides, water in blue, terrain only, fading out over 12 tiles. A worker builds it
+once from the seed and the stored chunks, the build a load of the grown map would run, and hands
+flat arrays to the page; nothing of it is stored, nothing is worked out per frame. It reads the
+grown map's levels, not the player's plane.
+
+It lies in two layers. What lies past the two upper edges lies under the ground. What lies past the
+two lower edges stands over the map, so a mountain before the map stands in front of it, as it will
+when the map grows. A block of tiles shows while the edge region beside it does.
+
+**See-through over the map.** Every map tile stays in sight. The worker cuts the fills of the front
+layer along the map's outline at level 0: past it, where nothing lies under them, they stay solid,
+and over the map only the lines go on, at 0.8 of the alpha they have past the edge, so they read
+and are no brighter. Night tints the front layer as it does the objects. With no fill left over the
+map to paint out the blocks behind, the lines there are hidden over the whole layer; past the edge
+each block works out its own, as a block before it may not show. (author, 2026-11-01)
+
 ## 4. The Drill
 
 A tool in the Track menu, from the Diesel Age, for Narrow Gauge, Branch Line, Main Line and Trunk
@@ -133,20 +158,31 @@ outline. Dug tiles show as rooms with a floor and see-through walls along their 
 **Digging.** A drag digs tiles at floor 0. The dug tiles live in a store of their own,
 `Underground`, in `src/sim`, by tile, with the floor (0 in this step) and saved with the game.
 
-| Rule          | Value                                                                                                                                                                        |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Low ground    | A tile under rail + 3 between dug tiles is raised by Raise's rules, at Raise's price, shown in the ghost. So a tunnel crosses a low saddle, and the ridge it makes is Rock. A tile that leads down to open ground is a cut. |
-| Water         | A tile touching water, on a side or a corner, refuses. No digging under water.                                                                                               |
-| Above         | A dug tile takes no track, road or building on the surface.                                                                                                                  |
-| Stone         | Each dug tile adds stone to the stock: `2` placeholder.                                                                                                                      |
-| Price         | Money per tile: `$500` placeholder, a tuning slider.                                                                                                                         |
-| Back-fill     | Remove fills a dug tile with no track and refunds half.                                                                                                                      |
-| Track removed | A tile stays dug when its track goes.                                                                                                                                        |
+| Rule          | Value                                                                                                                                                                                                                                                                                                   |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Low ground    | A tile under rail + 3 between dug tiles is raised by Raise's rules, at Raise's price, shown in the ghost. So a tunnel crosses a low saddle, and the ridge it makes is Rock. A tile that leads down to open ground is a cut. A tile beside a piece that needs level ground does not rise, as with Raise. |
+| Water         | A tile touching water, on a side or a corner, refuses. No digging under water.                                                                                                                                                                                                                          |
+| Map edge      | A tile on the map's last row refuses: the ring a map grows by lies beside it, and may bring water there.                                                                                                                                                                                                |
+| Above         | A dug tile takes no track, road or building on the surface.                                                                                                                                                                                                                                             |
+| Stone         | Each dug tile adds stone to the stock: `2` placeholder.                                                                                                                                                                                                                                                 |
+| Price         | Money per tile: `$500` placeholder, a tuning slider.                                                                                                                                                                                                                                                    |
+| Back-fill     | Remove fills a dug tile with no track and refunds half. Filling a cut takes the portal that looks at it, with its refund.                                                                                                                                                                               |
+| Remove        | Reaches a dug tile, its track and what stands on it only with the Drill on. Off, the pointer is on the hill. A cut lies open and takes Remove either way.                                                                                                                                               |
+| Track removed | A tile stays dug when its track goes.                                                                                                                                                                                                                                                                   |
 
-**Track inside.** With the Drill on, the track tools lay on dug tiles only, at rail level 0:
-straight, curve, switch, crossing, signal. A piece needs its whole footprint dug, member tiles
-without a rail included. So walls never cut through a curve or a switch (proved). Stations, depots
-and buildings are refused inside. Inside the mountain the rail is level.
+**Track inside.** With the Drill on, the track tools lay on dug tiles at rail level 0: straight,
+curve, switch, crossing, signal. A piece needs its whole footprint dug, member tiles without a rail
+included, or stands wholly outside. So walls never cut through a curve or a switch (proved). Stations,
+depots and buildings are refused inside. Inside the mountain the rail is level, and a first piece
+need not continue a line: the rule for track on stone does not apply on a dug or cut tile.
+
+**A cut.** A cut takes straights and signals only, with the Drill on or off: no curves, switches or
+crossings, as the relief carves a band along one axis. So a tunnel mouth is straight. Nothing else
+stands on a cut.
+
+**In the save.** The dug tiles and portals go in the save part `underground`, the levels in
+`groundLevel`. Terrain the tools changed goes in `groundTerrain`, a sparse list of tile and terrain,
+as chunks hold it as generated: a lowered mountain's Grass and a tunnel's ridge of Rock.
 
 **Rail height.** A dug tile's rail bed is a flat bed with `bridge: true` in `railProfile`, the
 inverse of a bridge deck: the ground keeps its own shape over it (proved). Unit pieces get the same
@@ -158,6 +194,12 @@ A portal makes itself when a dug line breaks out onto a slope, and goes when the
 
 - **Where.** On the first tile at rail + 3 or higher going in from the open side. A portal is free of
   the tile count and costs `$2,000`, a placeholder.
+- **The only way in.** An edge between a dug tile and a tile not dug links only through a portal on
+  exactly that face, at the floor. Elsewhere it is the wall of the tunnel, whatever the levels, so a
+  train never enters bare rock. A platform does not change this.
+- **What it looks at.** The open tile a portal faces takes rail and signals only, as a portal must be
+  able to carry a line out for as long as it stands. Anything else there refuses the dig, and Raise
+  and Lower leave that tile alone. A portal stands on a dug tile, never on a cut.
 - **Cutting.** From the portal out to the foot of the bank the rail runs in a cutting: a flat bed
   without `bridge`. The relief carves the ground under it with no new code (proved). `railProfile`
   reads a cut or dug tile at its bed level, so the line does not start climbing on the first tile
@@ -200,6 +242,7 @@ Masks apply only to cars within about four tiles of a portal, so batching is bro
 | `Builder`                          | Gameplay  | rules and prices for Raise, Lower, Drill, track inside           |
 | `src/sim/save.ts`                  | Gameplay  | migration, `underground` and the level plane                     |
 | Portal, mask and glass renderers   | Rendering | sections 4 and 5, new files beside `worldRenderer`               |
+| Edge strip                         | Rendering | section 3b, `edgeStripMesh.ts` in a worker, `edgeStripView.ts`   |
 | Toolbar, ghost, refusals           | UI/UX     | arrows, Drill toggle, strings                                    |
 | Placeholder art                    | Art       | a generator in `src/art`, then Codex (`specs/codex-tunnels.txt`) |
 
@@ -224,11 +267,22 @@ Deterministic tests, on invariants:
 - Stored levels: `tileLevels` and `levelAt` agree; generated neighbours differ by at most 4, and
   the player's tools never step more than one.
 - Golden hashes move once, for the new generation, and no generated water stands above 4.
-- A raise or a lower that would break any rule moves nothing and charges nothing.
+- A raise or a lower that would break any rule moves nothing and charges nothing, and lists every
+  tile that refused. A tile beside a piece that needs level ground is one: a works and a one-tile
+  curve at (20,20) refuse a raise of (19,20), and an undo moves no ground beside them either.
+- A viaduct: ground 4 to x = 19, 0 from 20 to 24, 4 from 25, platforms on 20 to 24 or on 18 to 26,
+  rail on 19: the link to 20 passes and the rail reads level. A platform on the cliff top alone
+  refuses.
+- An edge of a dug tile links only through a portal on that face. A cut takes straights and signals
+  only. The Drill refuses the map's last row.
 - Ground over a dug tile never drops under rail + 3, whatever order the tools run in.
 - A piece lays inside only on a whole dug footprint; no dug tile touches water.
 - Save round trip with both new stores, and the migration step.
-- A train crosses a tunnel on the same path and time as the same line on flat ground.
+- A train crosses a tunnel on the same path and time as the same line on flat ground: inside, no
+  biome speed and no hill cap apply.
+- Save round trip of `groundTerrain`. Remove leaves a dug tile alone with the Drill off.
+- The edge strip: no solid fill of the front layer lies on the map's ground, what lies past it stays
+  whole, and its lines part at the map's outline.
 
 Each visual ships through a review page of in-game renders before it is locked.
 
@@ -259,3 +313,5 @@ Each visual ships through a review page of in-game renders before it is locked.
 - The snow line sits near the top. (author, 2026-10-31)
 - Floors and ores as shown are approved for step 2. (author, 2026-10-31)
 - Mountain shapes: A most often, B sometimes, D rarely, no C. (author, 2026-10-31)
+- The front edge strip goes to lines over the map's tiles; a viaduct crosses a cliff from platforms
+  on the lower side; Raise and Lower refuse beside level pieces. (author, 2026-11-01)
