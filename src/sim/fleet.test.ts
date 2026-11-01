@@ -23,9 +23,13 @@ import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { Inventory } from '../gacha/inventory';
 import { locoDef, wagonDef } from '../gacha/items';
+import { sceneLengths } from '../testing/modelFixtures';
 import { STR } from '../strings';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { storeWith } from '../testing/storeFixtures';
+
+// a scene laid out tile by tile: see sceneLengths
+sceneLengths();
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 

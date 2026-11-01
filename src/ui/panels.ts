@@ -1,6 +1,6 @@
 import { el, fmtMoney } from './dom';
 import { LANGUAGE, STR, type Language } from '../strings';
-import { sfx } from '../engine/audio';
+import { audio, sfx } from '../engine/audio';
 import type { AtlasRegistry } from '../engine/atlas';
 import type { Camera } from '../engine/camera';
 import { testingLevel } from '../intent';
@@ -53,14 +53,7 @@ import { seasonOf, type Season } from '../sim/weather';
 import type { NamePrompt } from './namePrompt';
 import type { BuildController } from './buildController';
 import type { KeyHost, KeyScreen } from './keymap';
-import {
-  MainMenu,
-  PauseMenu,
-  type AudioActions,
-  type Confirm,
-  type ContinueTarget,
-  type SlotActions,
-} from './menu';
+import { MainMenu, PauseMenu, type Confirm, type ContinueTarget, type SlotActions } from './menu';
 import { Hud } from './hud';
 import { stepHistory, type HistoryWay } from './historyControls';
 import { DepotScreen } from './depot';
@@ -70,13 +63,16 @@ import { ResourceBar } from './resourceBar';
 import { TuningScreen } from './tuningScreen';
 import { ContentScreen } from './contentScreen';
 import { SettingsScreen } from './settingsScreen';
+import { AudioScreen } from './audioScreen';
 import { SavedGamesScreen, type SavedTab } from './savedGamesScreen';
 import { CreditsScreen } from './creditsScreen';
+import { GuideScreen } from './guideScreen';
 import { CraftingScreen } from './craftingScreen';
 import { RosterScreen } from './rosterScreen';
 import { InspectScreen } from './inspectScreen';
 import { ContractsScreen } from './contractsScreen';
 import { autoState } from './contractsView';
+import { fleetDepots } from './menuBarModel';
 import { Minimap } from './minimap';
 import { DebugPanel } from './debug';
 import { Toolbar, type Tool } from './toolbar';
@@ -318,6 +314,10 @@ export interface PlayUi {
   openPauseMenu(): void;
   /** both menus down; the clock runs again */
   closeMenus(): void;
+  /** open the Audio screen, or close it when it is on top: the title, both menus and the top bar */
+  toggleAudio(): void;
+  /** open the Guide, or close it when it is up */
+  openGuide(): void;
   /** what `handlePlayKeys` reads and calls */
   readonly keys: KeyHost;
 }
@@ -352,10 +352,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
 
   /** progress towards every age: the era widget's, and what the build bar's locks wait for */
   const ages = () => ageStatus(d.economy.tier, host.ageSnapshot());
-  const hud = new Hud(d.clock, ages, d.atlas, d.tooltip);
-  const depot = new DepotScreen(d.inventory, d.fleet, d.builder, toast, d.atlas, d.namePrompt);
+  const hud = new Hud(d.clock, ages, d.atlas, d.tooltip, audio);
+  const depot = new DepotScreen(d.inventory, d.fleet, d.builder, d.atlas, d.namePrompt);
   depot.onFocusTrain = (t) => host.focusTrain(t);
   depot.onRedraw = () => d.screens.redraw();
+  depot.stuckFor = (id) => host.stuckFor(id);
   depot.onFocusDepot = (dep, gate) => {
     // peek at the shed behind the dimmed screen and mark the gate the train would take
     host.peekDepot(dep, gate);
@@ -422,14 +423,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     const crews = d.builder.crewTotal() + d.fleet.crewTotal();
     return { residents, foodPerWeek: (residents + crews) * rules.wheatPerCrew };
   };
-  // the bar steps through the stores in label order, from the one it shows
-  resourceBar.onNextStore = () => {
-    const all = stores.choices();
-    if (!all.length) return;
-    const now = stores.selected;
-    const at = now ? all.findIndex((c) => c.key === now.key) : -1;
-    stores.selected = all[(at + 1) % all.length];
-  };
   const tuningScreen = new TuningScreen(
     () => {
       host.applySeason(true);
@@ -448,6 +441,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   }, d.namePrompt);
   contentScreen.redraw = () => d.screens.redraw();
   const creditsScreen = new CreditsScreen();
+  const guideScreen = new GuideScreen(d.atlas);
   const settingsScreen = new SettingsScreen(
     d.settings,
     () => host.applySettings(),
@@ -479,6 +473,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     }),
     d.namePrompt,
   );
+  const audioScreen = new AudioScreen(d.settings, () => host.applySettings());
+  const toggleAudio = () => d.screens.toggle(audioScreen);
   const craftingScreen = new CraftingScreen(
     d.crafting,
     d.economy,
@@ -504,6 +500,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   };
   craftingScreen.onInspect = inspect;
   rosterScreen.onInspect = inspect;
+  // the Roster over the Depot, on that vehicle: Back returns with the draft as it was
+  depot.onRoster = (uid) => {
+    rosterScreen.showCopy(uid);
+    d.screens.push(rosterScreen);
+  };
   const contractsScreen = new ContractsScreen(
     d.contracts,
     d.builder,
@@ -514,10 +515,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   );
   contractsScreen.trainName = (id) => d.fleet.byId(id)?.name ?? null;
   contractsScreen.redraw = () => d.screens.redraw();
-  contractsScreen.openPolicies = () => {
-    settingsScreen.showTab('contracts');
-    d.screens.push(settingsScreen);
-  };
+  contractsScreen.policy = { settings: d.settings, onChange: () => host.applySettings() };
   contractsScreen.autoAccept = {
     state: () => autoState(CONTRACT_RARITIES.map((r) => contractPolicyFor(d.settings, r))),
     set: (v) => {
@@ -533,11 +531,15 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       openSaved('load');
     },
     settings: () => d.screens.toggle(settingsScreen),
-    quit: quitToTitle,
+    audio: toggleAudio,
     depot: () => d.screens.toggle(depot),
     roster: () => d.screens.toggle(rosterScreen),
     signals: () => d.screens.toggle(signalGuide),
     contracts: () => d.screens.toggle(contractsScreen),
+    contractSettings: () => {
+      contractsScreen.show('settings');
+      d.screens.open(contractsScreen);
+    },
     market: () => d.screens.toggle(marketScreen),
     crafting: () => d.screens.toggle(craftingScreen),
     cheat: () => host.cheat(),
@@ -552,6 +554,20 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     },
     advisor: () => advisor.toggle(),
     notifications: () => notificationsScreen.openFrom(null),
+    guide: openGuide,
+  };
+  hud.menuBar.depots = () => fleetDepots(d.fleet, d.builder.depots(), stores);
+  // a depot picked in Fleet or on the Depot: the bar shows its store
+  const showDepotStore = (id: number) => {
+    const st = d.builder.stationById(id);
+    const store = st && stores.dockOf(st);
+    if (store) stores.selected = store;
+  };
+  depot.onChooseDepot = showDepotStore;
+  hud.menuBar.onDepot = (id) => {
+    showDepotStore(id);
+    depot.openOn(id);
+    d.screens.open(depot);
   };
   // the game applied its settings before this UI existed
   hud.setToggles(d.settings.weather, d.settings.dayNight);
@@ -606,7 +622,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     if (d.build.selectedDecor) d.build.selectDecor(null);
   });
   decorPanel.houses = d.houses;
-  const signalGuide = new SignalGuideScreen();
+  const signalGuide = new SignalGuideScreen(d.settings, () => host.applySettings());
   decorPanel.onSignalGuide = () => d.screens.toggle(signalGuide);
   decorPanel.onSignalBlock = (dec) => host.highlightSignalBlock(dec);
   const alertBar = new AlertBar(d.atlas, d.tooltip, d.toasts);
@@ -630,8 +646,12 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     live: () => host.mode === 'play' && !menuOpen() && !document.getElementById('loading-screen'),
   });
   const wearAlert = new WearAlertScreen(d.screens);
-  // the Depot button opens the depot (the maintenance wagon's tab comes with the wagons)
-  wearAlert.onDepot = () => d.screens.open(depot);
+  // the Depot button opens the nearest depot of the piece's gauge on the maintenance wagon
+  wearAlert.onDepot = (x, y) => {
+    const near = d.builder.depotForTrack(x, y);
+    if (near) depot.showMaintenance(near);
+    d.screens.open(depot);
+  };
   // the Repair button takes up the Repair tool, and keeps it when it is in hand already
   wearAlert.onRepair = () => toolbar.select({ kind: 'repair' });
   const advisor = new Advisor(d.settings.advisor === false);
@@ -698,7 +718,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     stuckFor: (id) => host.stuckFor(id),
     onClose: () => host.selectFieldTrain(null),
     onDetails: trainDetails,
-    onDepot: () => d.screens.open(depot),
+    onDepot: () => {
+      // the panel asks about the train it shows: the Depot opens on that train
+      if (trainPanel.train) depot.showTrain(trainPanel.train);
+      d.screens.open(depot);
+    },
   });
   const buildInfo = new BuildInfo(
     d.atlas,
@@ -867,6 +891,9 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
         })
         .then((ok) => ok && host.reloadToMenu());
   }
+  function openGuide() {
+    d.screens.toggle(guideScreen);
+  }
   function closeMenus() {
     pauseMenu.hide();
     mainMenu.hide();
@@ -960,16 +987,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       },
     };
   }
-  /** Music and effects volume for the menus: same settings the Settings screen edits. */
-  function audioActions(): AudioActions {
-    return {
-      volume: (key) => d.settings[key],
-      setVolume: (key, v) => {
-        d.settings[key] = v;
-        host.applySettings();
-      },
-    };
-  }
   /**
    * Load the stored game, the autosave Continue goes back to. It loads that game itself and
    * replaces none, so it asks only over a game in play.
@@ -1026,7 +1043,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const mainMenu = new MainMenu(
     {
       ...slotActions(),
-      ...audioActions(),
       continue: () => closeMenus(),
       tunings: () => listRulePresets(),
       levels: () => listLevels(),
@@ -1057,6 +1073,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       tuning: () => d.screens.open(tuningScreen),
       content: () => d.screens.open(contentScreen),
       settings: () => d.screens.open(settingsScreen),
+      audio: toggleAudio,
       controls: () => {
         settingsScreen.show('controls');
         d.screens.open(settingsScreen);
@@ -1068,7 +1085,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   );
   const pauseMenu = new PauseMenu({
     ...slotActions(),
-    ...audioActions(),
     resume: () => closeMenus(),
     save: () => {
       host.save();
@@ -1077,6 +1093,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     saveAs: () => openSaved('save'),
     loadGame: () => openSaved('load'),
     settings: () => d.screens.open(settingsScreen),
+    audio: toggleAudio,
     tuning: () => d.screens.open(tuningScreen),
     content: () => d.screens.open(contentScreen),
     backToEditor: () => host.backToEditor(),
@@ -1242,6 +1259,8 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     openMainMenu,
     openPauseMenu,
     closeMenus,
+    toggleAudio,
+    openGuide,
     keys,
   };
 }

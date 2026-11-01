@@ -102,9 +102,8 @@ export class Commands {
    */
   setSchedule(t: Train, stops: readonly StopPlan[]): CommandResult {
     if (stops.length < 2) return refuse(STR.fleet.needTwoStops);
-    t.mode = 'schedule';
     t.setProgram([...stops]);
-    return done();
+    return this.fleet.setMode(t, 'schedule');
   }
   /** Which solid fuel a steam train takes first. */
   setFuelPreference(t: Train, pref: 'coal' | 'wood'): CommandResult {

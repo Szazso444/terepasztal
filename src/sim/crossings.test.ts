@@ -115,6 +115,7 @@ const ROUTED: Record<TrainState, boolean> = {
   waiting: false,
   idle: false,
   yielding: false,
+  repairing: false,
   noRoute: false,
   stranded: false,
 };
@@ -2072,6 +2073,7 @@ const DRY: Record<TrainState, boolean> = {
   waiting: false,
   idle: false,
   yielding: false,
+  repairing: false,
   noRoute: false,
   stranded: false,
 };

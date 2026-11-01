@@ -34,6 +34,9 @@ class FakeView implements TipView<string> {
   at: Point[] = [];
   /** what `refresh` says: whether the term the pointer is on is still there */
   keepsTerm = true;
+  empty(content: string) {
+    return content === '';
+  }
   open(level: number, content: string, anchor: Point) {
     expect(level, 'a tooltip opens right above the top one').toBe(this.shown.length);
     this.log.push(`open ${level} ${content}`);
@@ -447,6 +450,56 @@ describe('a term in a panel', () => {
     stack.termEnter(-1, {}, () => ({ x: 300, y: 40 }), build('panel'));
     wait(SHOW_MS);
     expect(view.take()).toEqual(['close 0', 'open 0 panel']);
+  });
+});
+
+describe('a tooltip with nothing to say', () => {
+  const term = {};
+  const anchor = () => ({ x: 300, y: 40 });
+
+  it('opens nothing, so Escape has nothing to close', () => {
+    stack.termEnter(-1, term, anchor, build(''));
+    wait(SHOW_MS);
+    expect(stack.open).toBe(false);
+    expect(view.take()).toEqual([]);
+    expect(stack.escape()).toBe(false);
+  });
+
+  it('opens at the next rest on the term, once it has something to say', () => {
+    stack.termEnter(-1, term, anchor, build(''));
+    wait(SHOW_MS);
+    stack.termLeave(-1);
+    stack.termEnter(-1, term, anchor, build('Fleet'));
+    wait(SHOW_MS);
+    expect(view.shown).toEqual(['Fleet']);
+  });
+
+  it('takes down what stood at its level, as any term there does', () => {
+    lockedRoot();
+    openTerm(0, 'biome');
+    view.take();
+    stack.termLeave(0);
+    stack.termEnter(0, {}, anchor, build(''));
+    wait(SHOW_MS);
+    expect(view.shown).toEqual([TILE_A]);
+  });
+
+  it('opens nothing over the field, and is not asked again until the pointer moves', () => {
+    rest(TILE_A, ROOT_DELAY_MS * 3, 100, 100, '');
+    expect(stack.open).toBe(false);
+    expect(built('')).toBe(1);
+    rest(TILE_A, ROOT_DELAY_MS + FRAME, 101, 100, TILE_A);
+    expect(view.shown).toEqual([TILE_A]);
+  });
+
+  it('closes a root whose content ran out, which leaves Escape free', () => {
+    rest(TILE_A, ROOT_DELAY_MS);
+    view.take();
+    wait(UPDATE_MS);
+    expect(stack.update(TILE_A, build(''))).toBe(true);
+    expect(stack.open).toBe(false);
+    expect(view.take()).toEqual(['close 0']);
+    expect(stack.escape()).toBe(false);
   });
 });
 
@@ -969,6 +1022,10 @@ class StepClock implements TipClock {
 class Trace implements TipView<Content> {
   readonly clock = new StepClock((fn) => this.fire(fn));
   readonly stack = new TooltipStack<Content>(this, this.clock);
+  /** the pointer traces are about what opens: every build here has something to say */
+  empty() {
+    return false;
+  }
   readonly ops: Op[] = [];
   private readonly up: Inst[] = [];
   private readonly insts: Inst[] = [];
@@ -1770,6 +1827,7 @@ describe('the stack over seeded pointer traces', () => {
 describe('update, over seeded call times', () => {
   /** A view that draws nothing: the builders are what is counted. */
   const blank: TipView<string> = {
+    empty: () => false,
     open() {},
     move() {},
     refresh: () => true,

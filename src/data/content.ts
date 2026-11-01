@@ -187,6 +187,8 @@ export interface WagonDef extends RenderedModelFields {
   service?: 'coal' | 'fuel' | 'battery';
   /** refuelling wagons: units of that fuel (or power) the cart adds to the consist's tanks */
   serviceCap?: number;
+  /** a maintenance wagon: a train hauling one may take the Maintenance routing mode */
+  maintenance?: boolean;
   /** train class: the smallest line it runs on (missing: Corvette on narrow gauge, else Frigate) */
   class?: TrainClass;
   /** track gauge (default regular) */
@@ -564,13 +566,28 @@ function fnv1a(s: string): string {
   return (h >>> 0).toString(16).padStart(8, '0');
 }
 
-/** A table without the fields `finalize` derives at load (wagon accept lists). */
+/** The fields `fillModels` lays on a vehicle from gear.json and locoFit.json, never stored in its table. */
+const MODEL_FIELDS: (keyof RenderedModelFields)[] = [
+  'gear',
+  'lengthTiles',
+  'spriteGear',
+  'truckSprites',
+  'truckOffsets',
+  'wheels',
+  'spriteFacings',
+  'boxes',
+  'smoke',
+  'lamps',
+];
+
+/** A table without the fields `finalize` derives at load (wagon accept lists, rendered models). */
 function withoutDerived(key: ContentKey, data: unknown): unknown {
-  if (key !== 'wagons' || !Array.isArray(data)) return data;
-  return data.map((w: unknown) => {
-    if (!isObj(w)) return w;
-    const rest = { ...w };
-    delete rest.accepts;
+  if ((key !== 'wagons' && key !== 'locomotives') || !Array.isArray(data)) return data;
+  return data.map((v: unknown) => {
+    if (!isObj(v)) return v;
+    const rest = { ...v };
+    for (const f of MODEL_FIELDS) delete rest[f];
+    if (key === 'wagons') delete rest.accepts;
     return rest;
   });
 }
@@ -1200,6 +1217,14 @@ export function fillModels(
   gears: Record<string, Gear>,
   fits: Record<string, LocoFit>,
 ) {
+  // a fit that leaves a field out leaves no key behind: a row stays the same through JSON
+  const set = <K extends keyof RenderedModelFields>(
+    d: RenderedModelFields,
+    field: K,
+    value: RenderedModelFields[K],
+  ) => {
+    if (value !== undefined) d[field] = value;
+  };
   const fill = (d: RenderedModelFields & { id: string }) => {
     const g = gears[d.id],
       f = fits[d.id];
@@ -1207,18 +1232,18 @@ export function fillModels(
     d.gear = g;
     d.lengthTiles = f.tiles;
     d.spriteGear = f.sprite === true;
-    d.truckSprites = f.trucks;
-    d.truckOffsets = f.truckOffsets;
-    d.wheels = f.wheels;
-    d.spriteFacings = f.spriteFacings;
-    d.boxes = f.boxes;
+    set(d, 'truckSprites', f.trucks);
+    set(d, 'truckOffsets', f.truckOffsets);
+    set(d, 'wheels', f.wheels);
+    set(d, 'spriteFacings', f.spriteFacings);
+    set(d, 'boxes', f.boxes);
     return f;
   };
   for (const d of b.locomotives) {
     const f = fill(d);
     if (!f) continue;
-    d.smoke = f.smoke;
-    d.lamps = f.lamps;
+    set(d, 'smoke', f.smoke);
+    set(d, 'lamps', f.lamps);
   }
   for (const w of b.wagons) fill(w);
 }

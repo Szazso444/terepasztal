@@ -40,6 +40,10 @@ export interface ContractEvent {
   contract: Contract;
 }
 
+/** What each age up to the last rail age adds to a contract's amount, and to its pay. */
+export const AMOUNT_PER_AGE = 0.25;
+export const PAY_PER_AGE = 0.15;
+
 const contractData = content.contracts;
 const TEMPLATES: ContractTemplate[] = contractData.templates;
 const RARITIES: ContractRarityDef[] = contractData.rarities;
@@ -182,7 +186,7 @@ export class ContractBoard {
     )
       return null;
     const rar = this.rollRarity();
-    const scale = 1 + tier * 0.25;
+    const scale = 1 + tier * AMOUNT_PER_AGE;
     const amount = Math.round(this.rng.int(tpl.amount[0], tpl.amount[1]) * scale * rar.amountMul);
     const dist = Math.abs(pair.from.x - pair.to.x) + Math.abs(pair.from.y - pair.to.y);
     const durationDays =
@@ -195,7 +199,7 @@ export class ContractBoard {
         price *
         tpl.payoutMul *
         (1 + dist / 80) *
-        (1 + tier * 0.15) *
+        (1 + tier * PAY_PER_AGE) *
         rar.rewardMul,
     );
     const c: Contract = {

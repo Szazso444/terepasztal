@@ -352,5 +352,37 @@
     "tier": 0,
     "size": "small",
     "gauge": "narrow"
+  },
+  {
+    "id": "maint_wagon_narrow",
+    "class": "corvette",
+    "name": "Narrow Maintenance Wagon",
+    "rarity": "N",
+    "era": "Ballast, sleepers and a repair crew in a yellow hopper. Keeps the narrow gauge in shape.",
+    "body": "hopper",
+    "paint": "yellow",
+    "carries": "bulk",
+    "capacity": 0,
+    "weight": 8,
+    "starter": true,
+    "tier": 0,
+    "size": "small",
+    "gauge": "narrow",
+    "maintenance": true
+  },
+  {
+    "id": "maint_wagon_branch",
+    "class": "frigate",
+    "name": "Maintenance Wagon",
+    "rarity": "N",
+    "era": "A yellow ballast hopper with a repair crew. Mends worn track from Branch up to Trunk Line.",
+    "body": "hopper",
+    "paint": "yellow",
+    "carries": "bulk",
+    "capacity": 0,
+    "weight": 8,
+    "tier": 0,
+    "size": "small",
+    "maintenance": true
   }
 ]

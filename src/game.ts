@@ -49,6 +49,7 @@ import { GameClock, SIM_STEP } from './sim/time';
 import { Tooltip, type TipBuild } from './ui/tooltip';
 import { tipKey, type TipTarget } from './ui/tooltipStack';
 import { tipBuild } from './ui/tooltipRender';
+import { nextStopId } from './ui/trainView';
 import type { TipDoc } from './ui/tooltipDoc';
 import {
   chunkTip,
@@ -95,6 +96,7 @@ import { wrapRotation } from './sim/rotation';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { Dir, DIRS, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
 import { audio, sfx, silently } from './engine/audio';
+import { heardVolumes } from './engine/audioGroups';
 import {
   SAVE_VERSION,
   buildSave,
@@ -1242,10 +1244,7 @@ export class Game implements UiHost {
 
   // ---------------------------------------------------------------- settings / save
   applySettings() {
-    audio.master = this.settings.master;
-    audio.sfx = this.settings.sfx;
-    audio.music = this.settings.music;
-    audio.ambient = this.settings.ambient ?? 0.35;
+    Object.assign(audio, heardVolumes(this.settings));
     writeSettings(this.settings);
     audio.applyMusic();
     if (!this.settings.weather && this.weather) this.weather.visible = 0;
@@ -1402,6 +1401,7 @@ export class Game implements UiHost {
       const t = TrainClass.fromJSON(tj, this.track);
       this.fleet.trains.push(t);
     }
+    this.fleet.settleHomes();
     this.contractJobs.reconcile();
     for (const [x, y, id, rot] of j.decor ?? []) {
       const d: Decor = { id, x, y, rot: wrapRotation(rot) };
@@ -1779,6 +1779,7 @@ export class Game implements UiHost {
       st.productionMul = productionMul(st.def.id, s) * this.biomeProduction(st);
   }
   private onStationChanged(s: Station, removed: boolean) {
+    if (s.def.depot) this.fleet.settleHomes();
     const id = `station:${s.id}`;
     if (removed) {
       this.onStationOrphaned(s, false);
@@ -2724,7 +2725,8 @@ export class Game implements UiHost {
     };
   }
   private trainSnap(t: Train): TrainSnapshot {
-    const next = this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)]);
+    const stop = nextStopId(t);
+    const next = stop === null ? undefined : this.builder.stationById(stop);
     return {
       name: t.name,
       state: t.state,

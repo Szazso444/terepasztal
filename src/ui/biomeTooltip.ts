@@ -19,6 +19,7 @@ import {
   text,
   title,
   type Block,
+  type Inline,
   type TermPart,
   type TipDoc,
 } from './tooltipDoc';
@@ -63,15 +64,20 @@ export function biomeTip(b: Biome, weeklyAtLevel1: number): TipDoc {
   return out;
 }
 
-/** `[icon] wheat from farm halts` and its percent; a station id the data does not know stays plain. */
-function productionRow(stationId: string, m: number, weeklyAtLevel1: number): Block {
+/** `[icon] wheat from farm halts`; a station id the data does not know stays plain. */
+export function productionLabel(stationId: string, weeklyAtLevel1: number): Inline[] {
   const kind = STATION_DEFS.find((d) => d.id === stationId);
   const cargo = kind?.produces[0]?.cargo;
   const plural = STR.station.plural[stationId] ?? stationId;
-  const label = fill(STR.biome.production, {
+  return fill(STR.biome.production, {
     res: cargo ? res(cargo) : stationId,
     station: kind ? term(plural, () => stationKindTip(stationId, weeklyAtLevel1)) : plural,
   });
+}
+
+/** A production entry of a biome: its label and its percent. */
+function productionRow(stationId: string, m: number, weeklyAtLevel1: number): Block {
+  const label = productionLabel(stationId, weeklyAtLevel1);
   return row(label, percent(m), m === 1 ? {} : { tone: m > 1 ? 'good' : 'bad' });
 }
 

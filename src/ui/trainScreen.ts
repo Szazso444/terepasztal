@@ -17,6 +17,7 @@ import { cargoDef, cargoName, cargoWord } from '../sim/cargo';
 import { levelMul } from '../gacha/items';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
+import { vehicleArt } from './economyParts';
 import { TrainStops } from './scheduleEditor';
 import {
   actionButton,
@@ -29,11 +30,14 @@ import {
   note,
   sectionHeader,
   segmented,
+  spriteSlot,
   well,
   type FootSpec,
 } from './kit';
 import { Bindings, bindMeter, keepPlace, keepScroll } from './liveView';
-import { vehicleRow, vehicleSprite } from './vehicleRow';
+import { nextStopId } from './trainView';
+import { modesHint } from './ruleText';
+import { copyTip, vehicleRow } from './vehicleRow';
 import {
   haulShare,
   haulTone,
@@ -76,8 +80,11 @@ export function emergencyRefuel(
   );
 }
 
-/** The routing buttons: the stop list, then every dynamic mode the simulation offers. */
-const ROUTE_BUTTONS: readonly RouteMode[] = ['schedule', ...DYNAMIC_MODES];
+/**
+ * The routing buttons: the stop list, every dynamic mode the simulation offers, then Maintenance,
+ * which a train takes only with a maintenance wagon.
+ */
+const ROUTE_BUTTONS: readonly RouteMode[] = ['schedule', ...DYNAMIC_MODES, 'maintenance'];
 
 type Tab = 'overview' | 'stops' | 'consist';
 type Wagon = Train['wagons'][number];
@@ -298,8 +305,10 @@ export class TrainScreen implements Screen {
   // ---- Overview
 
   private overview(t: Train): HTMLElement {
-    const next = () =>
-      this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)])?.name;
+    const next = () => {
+      const stop = nextStopId(t);
+      return stop === null ? undefined : this.builder.stationById(stop)?.name;
+    };
     const status: HTMLElement[] = [
       this.kv(
         STR.train.state,
@@ -420,7 +429,7 @@ export class TrainScreen implements Screen {
       const b = el(
         'button',
         { type: 'button', class: 'dp-veh', title: name },
-        vehicleSprite(this.atlas, defId),
+        spriteSlot(vehicleArt(this.atlas, defId)),
         cap,
       );
       b.addEventListener('click', () => {
@@ -478,7 +487,15 @@ export class TrainScreen implements Screen {
       'div',
       { class: 'k-inrow dp-modes' },
       segmented({
-        options: ROUTE_BUTTONS.map((m) => ({ id: m, label: STR.train.mode[m] })),
+        options: ROUTE_BUTTONS.map((m) => {
+          const off = m === 'maintenance' && !t.hasMaintenanceWagon;
+          return {
+            id: m,
+            label: STR.train.mode[m],
+            disabled: off,
+            title: off ? STR.fleet.needMaintenanceWagon : undefined,
+          };
+        }),
         value: t.mode,
         onChange: (id) => {
           this.accepted(this.commands.setTrainMode(t, id as RouteMode));
@@ -535,7 +552,7 @@ export class TrainScreen implements Screen {
           t.setStandby(i, !off);
           this.render();
         },
-        { cls: 'small', title: STR.modes.hint },
+        { cls: 'small', title: modesHint() },
       );
     };
     const engines = t.locos.map((l, i) => {
@@ -549,6 +566,8 @@ export class TrainScreen implements Screen {
           `${STR.roster.type[l.def.type]} · ${Math.round(l.def.power * levelMul(l.level))} t`,
           mode,
         ],
+        card: copyTip(this.fleet, l.uid),
+        fitted: l.inCab,
         on: at.kind === 'l' && at.index === i,
         onClick: () => this.pickVehicle('l', i),
         right: i > 0 ? [standby(i)] : undefined,
@@ -562,6 +581,7 @@ export class TrainScreen implements Screen {
         level: w.level,
         sub: [sub],
         warn: this.deadWeight(t, w),
+        card: copyTip(this.fleet, w.uid),
         on: at.kind === 'w' && at.index === i,
         onClick: () => this.pickVehicle('w', i),
       });
@@ -574,7 +594,7 @@ export class TrainScreen implements Screen {
       ...(at.kind === 'l'
         ? this.engineDetail(t, at.index, standby)
         : this.wagonDetail(t, at.index)),
-      well(STR.train.engineModes, note(STR.modes.hint)),
+      well(STR.train.engineModes, note(modesHint())),
     );
     return ld.root;
   }
@@ -613,7 +633,7 @@ export class TrainScreen implements Screen {
   /** A wagon's line: its cargo against its capacity and the weight, or empty. */
   private wagonNow(w: Wagon): string {
     const cap = w.def.capacity * levelMul(w.level);
-    if (w.def.service) return wagonStats(w.def, levelMul(w.level));
+    if (w.def.service || w.def.capacity <= 0) return wagonStats(w.def, levelMul(w.level));
     return w.cargo
       ? `${cargoDef(w.cargo).name} ${Math.round(w.amount)}/${Math.round(cap)} · ${(w.def.weight + w.amount * cargoDef(w.cargo).weight).toFixed(1)} t`
       : `${STR.depot.empty} · ${Math.round(cap)} u · ${w.def.weight} t`;
@@ -642,7 +662,7 @@ export class TrainScreen implements Screen {
       well(
         null,
         sectionHeader(l.def.name, STR.train.engineOf(i + 1, t.locos.length)),
-        el('div', { class: 'dp-big' }, vehicleSprite(this.atlas, l.def.id, 2)),
+        el('div', { class: 'dp-big' }, spriteSlot(vehicleArt(this.atlas, l.def.id))),
         this.rarityRow(l.def.rarity),
         labelValue(STR.roster.level, levelGain(l.level, m, STR.train.speedAndPower)),
         labelValue(
@@ -670,11 +690,15 @@ export class TrainScreen implements Screen {
     const m = levelMul(w.level);
     const cap = Math.round(w.def.capacity * m);
     const cart = w.def.service;
+    // a wagon that holds nothing has no capacity to show
+    const holds = w.def.capacity > 0;
     const parts: (HTMLElement | null)[] = [
       sectionHeader(w.def.name, STR.train.wagonOf(i + 1, t.wagons.length)),
-      el('div', { class: 'dp-big' }, vehicleSprite(this.atlas, w.def.id, 2)),
+      el('div', { class: 'dp-big' }, spriteSlot(vehicleArt(this.atlas, w.def.id))),
       this.rarityRow(w.def.rarity),
-      cart ? null : labelValue(STR.roster.level, levelGain(w.level, m, STR.train.capacity)),
+      cart || !holds
+        ? null
+        : labelValue(STR.roster.level, levelGain(w.level, m, STR.train.capacity)),
       labelValue(STR.train.carries, STR.roster.carries[w.def.carries] ?? w.def.carries),
       labelValue(STR.train.size, STR.roster.size[w.def.size ?? 'small']),
     ];
@@ -682,7 +706,7 @@ export class TrainScreen implements Screen {
       parts.push(
         labelValue(STR.train.refuelCart, `+${w.def.serviceCap ?? 0} ${serviceResource(cart)}`),
       );
-    else {
+    else if (holds) {
       parts.push(labelValue(STR.roster.capacity, `${cap} u`));
       parts.push(
         bindMeter(this.live, meter(STR.train.cargoAboard, '', 0), () => {

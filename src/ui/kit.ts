@@ -214,7 +214,7 @@ const ICONS = {
   saveas:
     '<path d="M12 20H5V4h11.5L20 7.5V11"/><path d="M8.5 4v5h7V4"/><path d="M14.5 20.5l.7-2.8 5-5 2.1 2.1-5 5z"/>',
   folder: '<path d="M3 19V5h6l2 2.5h10V19z"/><path d="M3 10.5h18"/>',
-  gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M10.1 4.9l.3-2.8h3.2l.3 2.8 1.8.7 2.2-1.7 2.2 2.2-1.7 2.2.7 1.8 2.8.3v3.2l-2.8.3-.7 1.8 1.7 2.2-2.2 2.2-2.2-1.7-1.8.7-.3 2.8h-3.2l-.3-2.8-1.8-.7-2.2 1.7-2.2-2.2 1.7-2.2-.7-1.8-2.8-.3v-3.2l2.8-.3.7-1.8-1.7-2.2 2.2-2.2 2.2 1.7z"/>',
   slider: '<path d="M3 12h18"/><circle cx="14" cy="12" r="3" fill="currentColor"/>',
   list: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.5M3.5 12h.5M3.5 18h.5"/>',
   undo: '<path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
@@ -236,6 +236,28 @@ const ICONS = {
   copy: '<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="1.2"/><path d="M15.5 8.5V4H4v11.5h4.5"/>',
   mountain: '<path d="M2 20l7-12 4 6.5 3-4 6 9.5z"/>',
   keys: '<rect x="3" y="7.5" width="18" height="9" rx="2"/><path d="M8 12h8"/>',
+  // the menu bar's (menuBarModel.ts)
+  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  saves:
+    '<path d="M2.5 8h11l3 3v10.5h-14z"/><path d="M5.5 8v4h6V8M5.5 21.5v-5h8v5"/><path d="M10.5 8V2.5h8l3 3v10h-5"/><path d="M13.5 2.5v3h4v-3"/>',
+  speaker:
+    '<path d="M4 9.5v5h3.5l4.5 4v-13l-4.5 4z"/><path d="M15.5 9.2a4 4 0 0 1 0 5.6M18 6.7a7.5 7.5 0 0 1 0 10.6"/>',
+  bell: '<path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  book: '<path d="M12 6.5C10 5 7 4.5 3.5 5v14c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5v14"/>',
+  scale:
+    '<path d="M12 3.5v17M7.5 20.5h9M4.5 6.5h15"/><path d="M4.5 6.5l-2.7 7h5.4zM19.5 6.5l-2.7 7h5.4z"/><path d="M1.8 13.5a2.7 2.7 0 0 0 5.4 0M16.8 13.5a2.7 2.7 0 0 0 5.4 0"/>',
+  shed: '<path d="M3 20.5V10l9-5.5L21 10v10.5z"/><path d="M7.5 20.5V14a4.5 4.5 0 0 1 9 0v6.5M12 9.5v11"/>',
+  semaphore:
+    '<path d="M9.5 3v18M6 21h7"/><path d="M9.5 5.5H20V9H9.5"/><path d="M9.5 16l8-3.5v-3"/>',
+  map: '<path d="M3 6l6-2.5L15 6l6-2.5v15L15 21l-6-2.5L3 21z"/><path d="M9 3.5v15M15 6v15"/>',
+  cloud: '<path d="M7 18.5a4.5 4.5 0 0 1-.6-9 6 6 0 0 1 11.6 1.2 4 4 0 0 1-.5 7.8z"/>',
+  moon: '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 7 7 0 0 0 20 14.5z"/>',
+  bulb: '<path d="M9.5 16.5c0-.9-.4-1.6-1-2.1a6 6 0 1 1 7 0c-.6.5-1 1.2-1 2.1z"/><path d="M9.5 19.5h5M10.5 21.8h3"/>',
+  speakeroff:
+    '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9.5l5 5M20.5 9.5l-5 5"/>',
+  pause: '<path d="M8.5 5v14M15.5 5v14"/>',
+  trackback: '<path d="M18.5 5l-9 7 9 7z"/><path d="M5.5 5v14"/>',
+  trackforward: '<path d="M5.5 5l9 7-9 7z"/><path d="M18.5 5v14"/>',
 };
 export type IconName = keyof typeof ICONS;
 
@@ -393,6 +415,8 @@ export function meter(label: string, value: string, share: number, tone = ''): H
 export interface SegOption {
   id: string;
   label: string;
+  /** greyed out and not pressable; the title says why */
+  disabled?: boolean;
   title?: string;
 }
 
@@ -408,7 +432,9 @@ export function segmented(o: {
   const buttons = o.options.map((opt) => {
     const b = el('button', { type: 'button', role: 'radio', text: opt.label });
     if (opt.title) b.title = opt.title;
+    if (opt.disabled) b.disabled = true;
     onPress(b, () => {
+      if (opt.disabled) return;
       value = pickOption(o.options, opt.id, value);
       show();
       o.onChange(value);

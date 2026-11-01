@@ -464,6 +464,10 @@ html[lang='hu'] .panel-name {
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
+}
+.btn.mb-entry .k-ic {
+  margin: 0;
 }
 .mb-entry .badge {
   margin-left: 0;
@@ -473,14 +477,17 @@ html[lang='hu'] .panel-name {
   font-size: 9px;
   opacity: 0.6;
 }
-.mb-icon {
-  display: flex;
+/* the bar is short of room (Hud.fit): the icon alone, and the tooltip names it */
+.mb-entry.folded .mb-label {
+  display: none;
 }
 /* the open menu: over the whole HUD, under the tooltips, the menus and the modal screens */
 #menu-pane {
   position: absolute;
   top: 30px;
   min-width: 190px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   padding: 3px;
@@ -491,9 +498,8 @@ html[lang='hu'] .panel-name {
 }
 .btn.mb-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 18px;
+  gap: 7px;
   padding: 5px 9px;
   background: none;
   border: none;
@@ -504,16 +510,44 @@ html[lang='hu'] .panel-name {
 .btn.mb-item:hover {
   background: var(--stone);
 }
+.btn.mb-item .k-ic {
+  margin: 0;
+}
 .btn.mb-item kbd {
+  margin-left: auto;
+  padding-left: 18px;
   color: var(--text-dim);
   font: inherit;
   font-size: 11px;
+}
+.btn.mb-item .badge {
+  margin-left: auto;
 }
 .btn.mb-item.on {
   color: var(--cyan);
 }
 .btn.mb-item.on::after {
   content: '✓';
+  margin-left: auto;
+  padding-left: 18px;
+}
+/* the depots under Fleet's Depot row: set in, with the gauge and the trains after the name */
+.mb-depots {
+  display: flex;
+  flex-direction: column;
+}
+.btn.mb-item.mb-depot-row {
+  padding-left: 22px;
+}
+.btn.mb-item.mb-depot-row small {
+  margin-left: auto;
+  padding-left: 18px;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+.btn.mb-item.mb-depot-row.on::after {
+  margin-left: 0;
+  padding-left: 0;
 }
 .btn.mb-item.mb-cheat {
   color: var(--text-dim);
@@ -524,7 +558,8 @@ html[lang='hu'] .panel-name {
   padding: 0 6px;
 }
 #topbar .datespeed,
-#topbar > .tt-term {
+#topbar > .tt-term,
+#topbar .now-playing {
   flex: none;
 }
 /* short of room (Hud.fit): tighter cells and buttons and no weather text; if still short, compact-2 */
@@ -665,6 +700,11 @@ html[lang='hu'] .panel-name {
   letter-spacing: 0.03em;
   /* room for the ring */
   padding-right: 22px;
+}
+/* a menu entry's line icon before its name */
+.tt-title .k-ic {
+  margin-right: 5px;
+  vertical-align: -2px;
 }
 .tt-row {
   display: flex;
@@ -1047,8 +1087,10 @@ html[lang='hu'] .panel-name {
   align-items: center;
   gap: 2px;
   width: 100%;
-  height: 71px;
-  padding: 5px 4px 4px;
+  /* a name that needs two lines takes them, and the tiles of its row grow with it */
+  min-height: 71px;
+  /* the cost line of three goods is 14 px tall: it fits the 71 as the old fixed height held it */
+  padding: 5px 4px 3px;
   font-size: 11.5px;
   /* two lines of 13 px under the icon: `.btn`'s 16 px does not fit the tile */
   line-height: 13px;
@@ -1081,15 +1123,15 @@ html[lang='hu'] .panel-name {
 .tb-name {
   flex: none;
   max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-align: center;
+  text-wrap: balance;
 }
 .tb-cost {
   flex: none;
   display: flex;
   align-items: center;
   gap: 5px;
+  margin-top: auto;
   font-size: 10.5px;
   color: var(--text-dim);
   white-space: nowrap;
@@ -1100,16 +1142,9 @@ html[lang='hu'] .panel-name {
   gap: 2px;
   color: var(--text);
 }
-/* Hungarian runs longer: a tile's name takes two lines and the tile grows to hold them */
+/* Hungarian runs longer: every tile has room for a name of two lines */
 html[lang='hu'] .btn.tb-item {
-  height: 84px;
-}
-html[lang='hu'] .tb-name {
-  white-space: normal;
-  text-align: center;
-}
-html[lang='hu'] .tb-cost {
-  margin-top: auto;
+  min-height: 84px;
 }
 .tb-cost .res-icon {
   width: 12px;
@@ -2327,14 +2362,6 @@ input[type='range'] {
   align-items: center;
   gap: 8px;
 }
-/* the store the bar shows; a click steps to the next */
-#resbar .res-store {
-  flex: none;
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 #resbar .res-group {
   display: flex;
   align-items: center;
@@ -3201,6 +3228,13 @@ table.market td {
 .k-seg > button:hover {
   color: var(--text);
 }
+.k-seg > button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.k-seg > button:disabled:hover {
+  color: var(--text-dim);
+}
 .k-seg > button.on {
   background: var(--iron);
   color: var(--amber);
@@ -3873,7 +3907,8 @@ table.market td {
 .k-pane-h:empty {
   display: none;
 }
-.k-pane-h > .k-tabs + .k-well {
+.k-pane-h > .k-tabs + .k-well,
+.k-pane-h > .k-well + .k-tabs {
   margin-top: 6px;
 }
 .k-pane-b {
@@ -3931,8 +3966,6 @@ html[lang='hu'] .dp-li .k-li-m > small:has(> .dp-aboard) {
 }
 .dp-pick:hover:not(.on) {
   background: rgba(255, 255, 255, 0.03);
-}
-.k-spr > .dp-img {
 }
 
 /* ---- the economy screens: Contracts, Market, Crafting, Roster, Inspect 3D ---- */
@@ -4335,13 +4368,6 @@ html[lang='hu'] .dp-li .k-li-m > small:has(> .dp-aboard) {
 .dp-veh:hover {
   border-color: var(--amber);
 }
-.dp-veh > .dp-img {
-  width: 64px;
-  height: 40px;
-  object-fit: contain;
-  background: var(--stone-dark);
-  border: 1px solid var(--border-dark);
-}
 .dp-veh > small {
   display: inline-flex;
   align-items: center;
@@ -4374,10 +4400,11 @@ html[lang='hu'] .dp-li .k-li-m > small:has(> .dp-aboard) {
   border: 1px solid var(--border-dark);
   box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.4);
 }
-.dp-big > .dp-img {
-  max-width: 140px;
-  max-height: 84px;
-  object-fit: contain;
+.dp-big > .k-spr {
+  width: 132px;
+  height: 88px;
+  border: none;
+  box-shadow: none;
 }
 .dp-modectl {
 }
@@ -4965,4 +4992,640 @@ body.title-up
 /* an age's icon on an accent button is the button's own dark, not amber on amber */
 .btn.pri .age-icon {
   color: inherit;
+}
+
+/* ---- the music in the top bar, left of the weather (nowPlaying.ts) ---- */
+/*
+ * Over the scrims of the menus (60) and the screens (70), so it can be worked from the Audio screen
+ * with a press that does not close it, and under the name prompt (75) and the tooltips (85). Frames
+ * stop at 90vh, so none reaches the top bar at 720 and over.
+ */
+#topbar .now-playing {
+  flex: none;
+  position: relative;
+  z-index: 71;
+  gap: 2px;
+  width: 190px;
+  height: 26px;
+  padding: 0 6px;
+}
+body.title-up #topbar .now-playing:not(.held) {
+  visibility: visible;
+}
+#topbar .now-playing .tt-term {
+  flex: none;
+}
+#topbar .now-playing .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 18px;
+  padding: 0;
+}
+#topbar .now-playing .btn .k-ic {
+  margin: 0;
+  font-size: 12px;
+}
+#topbar .now-playing .btn:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+#topbar .now-playing .tt-term:last-child {
+  flex: 1;
+  min-width: 0;
+  margin-left: 4px;
+}
+.np-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-body);
+  font-size: 11px;
+}
+.np-title.paused {
+  color: var(--text-dim);
+}
+.np-text {
+  display: inline-block;
+}
+.np-title.roll {
+  mask-image: linear-gradient(90deg, #000 calc(100% - 8px), transparent);
+}
+.np-title.roll .np-text {
+  animation: np-roll var(--np-time) ease-in-out infinite alternate;
+}
+.np-title.roll.paused .np-text {
+  animation-play-state: paused;
+}
+/* it stands at each end for the part of a roll `nowPlaying.ts` does not count as moving */
+@keyframes np-roll {
+  0%,
+  20% {
+    transform: translateX(0);
+  }
+  80%,
+  100% {
+    transform: translateX(var(--np-shift));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .np-title.roll .np-text {
+    animation: none;
+  }
+}
+
+/* ---- the Audio screen: rows stand in under the row they answer to ---- */
+.au-ctl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.au-depth1 {
+  padding-left: 30px;
+}
+.au-depth2 {
+  padding-left: 50px;
+}
+.au-silenced .k-lab,
+.au-silenced .k-sl {
+  opacity: 0.45;
+}
+/* ---- the Depot: the depot bar, the train list, the consist strip, the stock by model ---- */
+.dp-screen {
+  flex-direction: column;
+  gap: 6px;
+}
+.dp-screen > .k-split {
+  flex: 1;
+  min-height: 0;
+  padding-top: 0;
+}
+/* the depots: one line of chips, which scrolls when there are more than it shows */
+.dp-bar {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  padding: 2px 6px 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+.dp-bar > .k-p {
+  margin: 4px 0;
+}
+.dp-dep {
+  flex: 0 1 270px;
+  min-width: 262px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1px 8px;
+  align-items: center;
+  padding: 3px 8px 4px;
+  border: 1px solid var(--border-dark);
+  background: var(--stone);
+  box-shadow:
+    inset 1px 1px 0 var(--border-light),
+    inset -1px -1px 0 var(--border-dark);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dp-bar.many > .dp-dep {
+  min-width: 196px;
+}
+.dp-bar.many .dp-gz {
+  display: none;
+}
+.dp-dep:hover:not(.on) {
+  background: var(--iron);
+}
+.dp-dep.on {
+  border-color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 12%, var(--stone));
+  box-shadow: inset 0 -2px 0 var(--amber);
+}
+.dp-dep-h {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.dp-dep-h > b {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dp-dep > small {
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dp-gst {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-dim);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.dp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-light);
+}
+.dp-gst.ok {
+  color: var(--text-good);
+}
+.dp-gst.ok > .dp-dot {
+  background: var(--text-good);
+}
+.dp-gst.bad {
+  color: var(--text-bad);
+}
+.dp-gst.bad > .dp-dot {
+  background: var(--text-bad);
+}
+/* the list: This depot or All under New train, and a train as a row of two lines */
+.dp-scope:not(:empty) {
+  margin-top: 4px;
+}
+.dp-scope > .k-seg {
+  display: flex;
+}
+.dp-scope > .k-seg > button {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-li.dp-train {
+  position: relative;
+  min-height: 34px;
+  gap: 7px;
+  padding: 3px 6px 3px 9px;
+}
+.dp-train > .k-spr {
+  width: 42px;
+  height: 28px;
+}
+.dp-stripe {
+  position: absolute;
+  left: 2px;
+  top: 3px;
+  bottom: 3px;
+  width: 4px;
+  border-radius: 1px;
+}
+.dp-tl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.dp-tn {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dp-tl > .ol-chip {
+  flex: none;
+  font-weight: 400;
+}
+/* the strip: the consist as a train, under it what it weighs and hauls */
+.dp-cars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 5px 10px 3px;
+}
+.dp-sum > .dp-cars:not(:first-child) {
+  padding-top: 1px;
+}
+.dp-car {
+  position: relative;
+  flex: none;
+  cursor: pointer;
+}
+.dp-cars.ro .dp-car {
+  cursor: default;
+}
+.dp-car-w {
+  margin-left: 7px;
+}
+.dp-car > .k-spr {
+  width: 46px;
+  height: 31px;
+}
+.dp-cars:not(.ro) > .dp-car:hover > .k-spr,
+.dp-car:focus-visible > .k-spr {
+  border-color: var(--amber);
+}
+.dp-car-bad > .k-spr {
+  border-color: var(--text-bad);
+  box-shadow: inset 0 0 0 1px var(--text-bad);
+}
+.dp-car.drag {
+  opacity: 0.45;
+}
+.dp-car.over > .k-spr {
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+.dp-car > em {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  padding: 0 2px;
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--text);
+  font:
+    600 9px/11px var(--font-body),
+    sans-serif;
+  font-style: normal;
+  pointer-events: none;
+}
+.dp-cars > .btn {
+  align-self: center;
+}
+.dp-hint {
+  flex: 1 0 auto;
+  align-self: center;
+  color: var(--text-dim);
+  font-size: 10.5px;
+  text-align: right;
+}
+.dp-pickt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+/* a vehicle's picture and name open its card */
+.k-spr:has(> .dp-card) {
+  position: relative;
+}
+.k-spr > .dp-card {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.dp-card {
+  cursor: inherit;
+}
+.dp-vt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.dp-vt > .dp-card {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dp-vt > .label-row {
+  flex: none;
+}
+/* a list of the stock keeps its head in sight as it scrolls */
+.dp-stockw > .k-sec {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--stone);
+}
+/* what cannot roll out of this depot, folded under one line */
+.dp-fold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 28px;
+  padding: 3px 10px;
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.22);
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.dp-fold:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+}
+.dp-fold > .k-ic {
+  flex: none;
+  transform: rotate(180deg);
+}
+.dp-fold.on > .k-ic {
+  transform: rotate(90deg);
+}
+.dp-fold > span:not(.k-ic) {
+  flex: none;
+}
+.dp-fold > small {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.btn.dp-use[hidden] {
+  display: none;
+}
+.btn.dp-use {
+  flex: none;
+}
+/* a row of the stock: how many are free, how many ride, the way to the Roster */
+.dp-li:has(.dp-vt) {
+  min-height: 38px;
+  padding: 3px 8px;
+}
+.dp-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dp-stock > small {
+  color: var(--text-dim);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.dp-stock .k-num input {
+  width: 20px;
+  text-align: center;
+}
+.dp-stock .k-num > span {
+  padding: 0 3px;
+}
+/* what the last action came to, in the dock line beside the gate */
+.dp-rl-g:has(> .dp-notice) {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+/* on a line of its own: what it names must not be clipped by a long refusal beside it */
+.dp-rl > .k-note.dp-notice {
+  flex: 1 1 100%;
+  min-width: 0;
+  color: var(--amber);
+}
+.dp-short:empty {
+  display: none;
+}
+.dp-lv.dp-cab {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+/* the card as a tooltip: its picture and labels */
+.tt-vehicle {
+  display: grid;
+  gap: 4px;
+  margin: 2px 0;
+}
+.tt-vehicle > .k-spr {
+  width: 100%;
+  height: 120px;
+}
+/* a tooltip does not open another one over itself from its labels */
+.tt-vehicle .tt-label {
+  pointer-events: none;
+}
+/* the roll-out block: the gate line, then Show and the name, on one line */
+.dp-dock {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+.dp-rl-g {
+  flex: 1;
+}
+.dp-rl-n {
+  flex: 0 0 250px;
+}
+
+/* ---- the era tooltip's age cards (ageTooltip.ts, tooltipRender.ts) ---- */
+.tt:has(.tt-cards) {
+  max-width: 780px;
+}
+.tt-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 370px);
+  gap: 6px 12px;
+}
+.tt-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  padding-top: 5px;
+  border-top: 1px solid var(--border-dark);
+}
+.tt-card-b {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  font-size: 11.5px;
+  line-height: 1.3;
+}
+.tt-pic {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 54px;
+  overflow: hidden;
+  color: var(--text-dim);
+  background: var(--stone-dark);
+  border: 1px solid var(--border-dark);
+}
+.tt-pic > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ---- the Guide (guideScreen.ts) ---- */
+.gd-li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.gd-h {
+  margin: 12px 14px 2px;
+  color: var(--amber);
+  font-family: var(--font-title);
+  font-size: 13.5px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+.gd-p,
+.gd-list {
+  margin: 6px 14px;
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.gd-list {
+  padding-left: 20px;
+}
+.gd-list > li {
+  margin: 3px 0;
+}
+.gd-tw {
+  margin: 8px 14px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+.gd-t {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.gd-t th,
+.gd-t td {
+  padding: 3px 12px 3px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.22);
+  text-align: left;
+  vertical-align: top;
+}
+.gd-t th {
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  border-bottom-color: var(--border-dark);
+}
+.gd-t tr:last-child > td {
+  border-bottom: none;
+}
+.gd-pics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 14px;
+}
+.gd-pic {
+  width: 96px;
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: center;
+}
+.gd-pic > .k-spr {
+  width: 96px;
+  height: 64px;
+  margin-bottom: 3px;
+}
+.gd-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.gd-pic .tt-pic {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+.gd-pic-age {
+  width: 320px;
+}
+.gd-pic-age > .k-spr {
+  width: 320px;
+  height: 180px;
+  margin-bottom: 0;
+}
+.gd-page > .k-keys {
+  margin: 4px 4px 6px;
+}
+.gd-page .k-krow {
+  grid-template-columns: 150px minmax(0, 1fr);
+}
+.gd-page > .signal-diagram {
+  margin: 6px 14px;
+  overflow-x: auto;
+}
+
+/* ---- the level editor panel, in the kit's wells (editorPanel.ts) ---- */
+#editor-panel .k-edp {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+}
+/* the name field takes a width of its own: a control column does not stretch it */
+#editor-panel .k-ctl .k-field {
+  flex: none;
+  width: 150px;
+}
+#editor-panel .ed-age {
+  width: 140px;
+  height: 24px;
+}
+#editor-panel .k-num.ed-money input {
+  width: 84px;
+}
+#editor-panel .ed-desc,
+#editor-panel .ed-xfer {
+  height: 54px;
+}
+/* a description is prose; the level a pasted file is not */
+#editor-panel .ed-desc {
+  font: 12px/1.4 var(--font-body);
+}
+#editor-panel .k-p:empty {
+  display: none;
 }

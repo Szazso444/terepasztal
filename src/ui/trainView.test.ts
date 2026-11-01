@@ -12,6 +12,7 @@ import {
   lastStopId,
   loadShare,
   nextStopId,
+  workLine,
   problemOf,
   tanksOf,
   trainChip,
@@ -71,6 +72,8 @@ describe('the status chip', () => {
 describe('from and to', () => {
   it('the next stop is the one the route points at, round the end too', () => {
     expect(nextStopId(trainFacts({ route: [5, 6, 7], routeIndex: 1 }))).toBe(6);
+    expect(nextStopId(trainFacts({ route: [5, 6], maintaining: true })), 'on the mode').toBeNull();
+    expect(nextStopId(trainFacts({ route: [5, 6], maintaining: true, detour: 9 }))).toBe(9);
     expect(nextStopId(trainFacts({ route: [5, 6, 7], routeIndex: 4 }))).toBe(6);
   });
 
@@ -87,6 +90,26 @@ describe('from and to', () => {
   it('the last stop is the one before, round the start too', () => {
     expect(lastStopId(trainFacts({ route: [5, 6, 7], routeIndex: 1 }))).toBe(5);
     expect(lastStopId(trainFacts({ route: [5, 6, 7], routeIndex: 0 }))).toBe(7);
+  });
+});
+
+describe('what a maintenance train is doing', () => {
+  const W = STR.outliner.work;
+  const worker = (more: Parameters<typeof trainFacts>[0]) =>
+    trainFacts({ maintaining: true, ...more });
+  const job = {};
+
+  it('says it in place of a load and a route', () => {
+    expect(workLine(worker({ state: 'repairing', maint: job }))).toBe(W.repairing);
+    expect(workLine(worker({ state: 'moving', maint: job }))).toBe(W.toJob);
+    expect(workLine(worker({ state: 'moving', parkAt: job }))).toBe(W.toWait);
+    expect(workLine(worker({ state: 'idle', parkAt: job }))).toBe(W.waiting);
+    expect(workLine(worker({ state: 'idle' }))).toBe(W.waiting);
+  });
+
+  it('says nothing for any other train, or one gone for fuel', () => {
+    expect(workLine(trainFacts({ state: 'moving' }))).toBeNull();
+    expect(workLine(worker({ detour: 4 }))).toBeNull();
   });
 });
 

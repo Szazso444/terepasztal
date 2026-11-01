@@ -3,7 +3,9 @@
 // properties of docs/process/verification.md. The goldens pin the outcome of every step: they were
 // recorded before #557 (route cursor, `aheadRun`, `ClaimMap`, the sections cache), re-recorded for
 // #306 (see GOLDEN), and are a contract, not a number to update; a change that moves any train or
-// claim by a millionth of a tile on any tick fails them.
+// claim by a millionth of a tile on any tick fails them. They hold the traffic rules, so they run
+// the F7 and the hopper at the lengths of their rows, as they were recorded; the last describe runs
+// the same worlds at the lengths of the models, every property held and no digest kept.
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createHash, type Hash } from 'node:crypto';
@@ -27,6 +29,8 @@ import type { SignalLevel } from './signals';
 import type { Fleet } from './fleet';
 import type { Builder } from './build';
 import { Traffic } from './traffic';
+import { locoDef, wagonDef } from '../gacha/items';
+import { rowLengths } from '../testing/modelFixtures';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -76,9 +80,11 @@ function tickState(fleet: Fleet, full: boolean): string {
       t.poses.length,
     ]);
     if (full) {
-      // the colour code is the player's mark on a train: it moves nothing, and the goldens are older
+      // the colour code is the player's mark on a train, and the depot it left is where the Depot
+      // lists it: they move nothing, and the goldens are older
       const saved: Partial<ReturnType<Train['toJSON']>> = t.toJSON();
       delete saved.colour;
+      delete saved.depot;
       parts.push(roundedJSON(saved));
     }
   }
@@ -321,6 +327,12 @@ const stop = (id: number): StopPlan => ({
 
 /** Columns of the lines: track from LINE_X0 to LINE_X1, a road across every line at ROAD_X. */
 const LINE_X0 = 4;
+/**
+ * The uid the first item a run adds gets. The goldens hold each train's save JSON, uids included,
+ * and were recorded when a new game handed out 15 starter items; the run starts its inventory
+ * empty from that point, so a bigger or smaller starter kit does not move a digest.
+ */
+const FIRST_UID = 16;
 const LINE_X1 = 36;
 const ROAD_X = 20;
 
@@ -349,6 +361,7 @@ function linesWorld(
   level: SignalLevel | null,
 ): Lines {
   const w = simWorld({ size: 64, terrain: 'grass', seed });
+  w.inventory.load({ items: [], nextUid: FIRST_UID });
   w.builder.free = true;
   for (let i = 0; i < w.regions.unlocked.length; i++) w.regions.own(i);
   w.economy.money = 1e9;
@@ -524,6 +537,8 @@ function check(name: string, outcome: Outcome) {
 }
 
 describe('the refuge scenario, tick by tick', () => {
+  rowLengths(locoDef('f7'), wagonDef('wood_hopper'));
+
   // slow because the scenario runs past its last arrival with every check after every tick:
   // 0.3 to 0.8 s alone, so 30 s
   it.each(REFUGE)(
@@ -561,6 +576,8 @@ describe('the refuge scenario, tick by tick', () => {
 });
 
 describe('scheduled single-track lines, tick by tick', () => {
+  rowLengths(locoDef('f7'), wagonDef('wood_hopper'));
+
   // slow because a whole SimStep world runs 1200 ticks with every check after every tick: about
   // 0.6 s alone, so 30 s
   it.each(LEVELS)(
@@ -612,4 +629,48 @@ describe('scheduled single-track lines, tick by tick', () => {
     expect(w.fleet.traffic.counters.overlaps, outcome.summary).toBe(0);
     check('disrupted lines', outcome);
   }, 30_000);
+});
+describe('the same worlds at the lengths of the models', () => {
+  // the F7's model is 2.48 tiles and not 2, so the trains take longer to clear each other: three
+  // times the run, every property of the watch held on every tick
+  // slow because each run steps three times the ticks of the runs above, all checks on: 30 s
+  it.each(REFUGE)(
+    '%i trains (pinned: %s): claims, separation and the path ahead hold, the jam is broken in bounded time and all arrive',
+    (count, pinned, ticks) => {
+      const { result, cycles, firstRecovery } = refugeRun(count, pinned, 3 * ticks);
+      expect({
+        cycleSeen: cycles.first !== null,
+        recovered: firstRecovery !== null,
+        cycleOpen: cycles.open,
+        cycleWithinBound: cycles.longest <= CYCLE_BOUND,
+        deadlocks: result.traffic.counters.deadlocks,
+        overlaps: result.traffic.counters.overlaps,
+        passed: result.passed,
+        arrived: result.trains.every((t) => t.arrivedAt !== null),
+      }).toEqual({
+        cycleSeen: true,
+        recovered: true,
+        cycleOpen: null,
+        cycleWithinBound: true,
+        deadlocks: 0,
+        overlaps: 0,
+        passed: true,
+        arrived: true,
+      });
+    },
+    60_000,
+  );
+
+  // slow because a whole SimStep world runs 1200 ticks with every check after every tick: 30 s
+  it.each(LEVELS)(
+    'signals %s: claims, separation and the path ahead hold',
+    (level) => {
+      const name = `model lines ${level ?? 'none'}`;
+      const { w, outcome } = linesRun(name, linesWorld(4242, 2, 3, level), LINE_TICKS);
+      expect(w.fleet.trains.length, outcome.summary).toBeGreaterThanOrEqual(4);
+      expect(w.fleet.traffic.counters.waits, outcome.summary).toBeGreaterThan(0);
+      expect(w.fleet.traffic.counters.overlaps, outcome.summary).toBe(0);
+    },
+    30_000,
+  );
 });

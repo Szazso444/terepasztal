@@ -9,6 +9,7 @@ import {
   itemAge,
   memberClear,
   makePiece,
+  networkOf,
   portClass,
   classesJoin,
   rotationCount,
@@ -249,6 +250,14 @@ export class Builder {
   /** Depots of one gauge: each gauge has its own sheds and its own cap. */
   depotsOf(gauge: Gauge) {
     return this.depots().filter((s) => (s.def.gauge ?? 'regular') === gauge);
+  }
+  /** The depot of the gauge of the track on a tile that lies nearest to it, as the crow flies. */
+  depotForTrack(x: number, y: number): Station | undefined {
+    const piece = this.track.get(x, y);
+    if (!piece) return undefined;
+    const gauge = networkOf(piece.cls) === 'narrow' ? 'narrow' : 'regular';
+    const near = this.depotsOf(gauge).sort((a, b) => a.distTo(x, y) - b.distTo(x, y));
+    return near[0];
   }
   /** Depots the player may own: one, plus one per nine owned chunks. */
   depotsAllowed() {

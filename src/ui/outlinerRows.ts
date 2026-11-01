@@ -15,6 +15,7 @@ import {
   lastStopId,
   loadShare,
   nextStopId,
+  workLine,
   tanksOf,
   trainChip,
   weeklyIncome,
@@ -96,6 +97,8 @@ export interface TrainRow {
   cargo: Amount[];
   from: string | null;
   to: string | null;
+  /** what a maintenance train is doing; null for any other */
+  work: string | null;
   selected: boolean;
   following: boolean;
   detail: TrainDetail | null;
@@ -150,6 +153,7 @@ function trainRow(t: TrainRowFacts, c: TrainContext): TrainRow {
     cargo: cargoOf(t).map((g) => ({ res: g.res, amount: Math.round(g.amount) })),
     from: last === null || last === next ? null : c.stationName(last),
     to,
+    work: workLine(t),
     selected: c.selected === t.id,
     following: c.following === t.id,
     detail: open

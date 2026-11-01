@@ -54,6 +54,7 @@ import {
   stockLine,
   unlockOff,
 } from './craftView';
+import { wagonSizeLine } from './depotView';
 import { rarityClass } from './rarityClass';
 
 const KINDS: CraftKind[] = ['loco', 'wagon'];
@@ -361,7 +362,7 @@ export class CraftingScreen implements Screen {
     } else {
       const wd = d as WagonDef;
       lines.push(
-        `${STR.roster.capacity} ${wd.capacity} · ${STR.depot.weight} ${wd.weight} t`,
+        wagonSizeLine(wd.capacity, wd.weight),
         (wd.accepts ?? []).map((c) => cargoDef(c).name).join(', '),
       );
     }

@@ -28,6 +28,12 @@ export const HU_NAMES = {
     c50: {
       era: 'Az 1950-es évek magyar 760 mm-es keskeny nyomtávú dízele, százszámra épült erdei és mezőgazdasági vasutaknak.',
     },
+    maint_loco_narrow: {
+      era: 'Kicsi, sárga munkadízel a keskeny nyomtávra. Lassú, olcsó, a javítókocsi tolására épült.',
+    },
+    maint_loco_branch: {
+      era: 'Sárga munkadízel, amely a karbantartó kocsit húzza a vonalon. Lassú és olcsó.',
+    },
     adler: { era: '1835, Nürnberg és Fürth között. Németország első vasúti mozdonya.' },
     john_bull: { era: '1831, Camden & Amboy. Egy évszázadot futott, és ma is gőzt ad.' },
     mav375: {
@@ -92,6 +98,31 @@ export const HU_NAMES = {
     },
     ice1: { era: '1991, Németország első nagysebességű szerelvénye. Többáramnemű motorkocsi.' },
     mk48: { era: 'Magyar keskeny nyomtávú dízel-hidraulikus mozdony.' },
+    mk45: { era: '1958, dízel-hidraulikus mozdony Magyarország gyermek- és erdei vasútjaira.' },
+    nklj_aeg: {
+      era: '1921, AEG rudazatos villamos mozdony a svéd 891 mm-es Nordmark-Klarälven vonalra. Kicsi, de húzza az ércet.',
+    },
+    br45: {
+      era: '1937, német 2-10-2, a Reichsbahn legerősebb gőzöse, 2000 tonnás érccsatokhoz építve.',
+    },
+    e94: {
+      era: '1940, német nehéz tehervonati villamos, a zöld krokodil: két orr a forgóvázakon, köztük a fülke.',
+    },
+    sd70ace: {
+      era: '2004, hattengelyes váltakozó áramú tolató-vonali mozdony, a BNSF és a Union Pacific mai arca.',
+    },
+    '2te10v': {
+      era: '1975, szovjet kétszekciós tehervonati dízel: két fülkés egység háttal összekapcsolva.',
+    },
+    e499: {
+      era: '1953, Škoda gyorsvonati villamos a csehszlovák 3 kV-os vonalakra. Mindenki Bobinának hívja.',
+    },
+    aem7: {
+      era: '1978, svéd tervezésű villamos a Northeast Corridorra. A Kenyérpirító harminc évig 200 km/h-val futott.',
+    },
+    dmir_yellowstone: {
+      era: '1941, Duluth, Missabe & Iron Range 2-8-8-4. Vasérc-szerelvényeket vontatott a Felső-tó kikötőibe.',
+    },
   },
   wagons: {
     water_cart: { name: 'Fa vizeskocsi', era: 'Hordó egy kereten. Csöpög, de gurul.' },
@@ -169,6 +200,14 @@ export const HU_NAMES = {
       era: 'Fedett kocsi gabonának és árunak a keskeny nyomtávon.',
     },
     narrow_coach: { name: 'Keskeny személykocsi', era: 'Nyitott peronos személykocsi fapadokkal.' },
+    maint_wagon_narrow: {
+      name: 'Keskeny karbantartó kocsi',
+      era: 'Kavics, talpfa és javítóbrigád egy sárga garatkocsiban. Rendben tartja a keskeny nyomtávot.',
+    },
+    maint_wagon_branch: {
+      name: 'Karbantartó kocsi',
+      era: 'Sárga kavicsszóró kocsi javítóbrigáddal. A mellékvonaltól a törzsvonalig javítja a kopott pályát.',
+    },
   },
   cargo: {
     water: { name: 'Víz' },
@@ -473,6 +512,14 @@ export const HU_RULES: Record<string, { label: string; hint?: string }> = {
   trackRepairSeconds: {
     label: 'Vonatos javítás ideje (játékmásodperc)',
     hint: 'az elem teljes életének javításáért',
+  },
+  trackLookSeconds: {
+    label: 'Karbantartó vonat munkakeresése (játékmásodperc)',
+    hint: 'milyen gyakran néz újra körül a munka nélküli vonat',
+  },
+  trackYieldSeconds: {
+    label: 'Karbantartó vonat kitérése ennyi után (játékmásodperc)',
+    hint: 'meddig tarthat fel egy vonatot, a használhatatlan elemet kivéve',
   },
   trackHandRepairMul: {
     label: 'Kézi javítás ára x',

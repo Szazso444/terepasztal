@@ -17,11 +17,14 @@ import {
   networkOf,
   type Network,
   type TrackClass,
+  type TrackGraph,
   type TrackPiece,
 } from '../world/track';
 import { Polyline, poseVehicle, vehicleSpec, TOL, type VehicleSpec } from './body';
 import { STR } from '../strings';
+import { urgentWork } from './maintenance';
 import { rules } from './rules';
+import type { Train } from './trains';
 
 export interface Verdict {
   ok: boolean;
@@ -155,6 +158,16 @@ export function classRank(tc: TrainClass | null): number {
   if (!tc) return 1;
   const own = LINES[CLASS_LINE[tc]];
   return own.network === 'standard' ? own.tier : 1;
+}
+
+/**
+ * Priority rank of a train where trains contest track: its class's, except on a maintenance job.
+ * On an urgent one (`urgentWork`), bound for the piece or at it, it goes before every class, on any
+ * other after them all.
+ */
+export function trafficRank(t: Train, track: TrackGraph): number {
+  if (t.maint) return urgentWork(t, track) ? 4 : 0;
+  return classRank(t.trainClass);
 }
 
 /**
