@@ -2,6 +2,7 @@ import { el } from './dom';
 import { STR } from '../strings';
 import { choiceRows, note, page, well, type FootSpec } from './kit';
 import type { Screen } from './modal';
+import { signalHint } from './ruleText';
 import type { Settings } from '../sim/save';
 import { SIGNAL_LEVELS, type SignalLevel } from '../sim/signals';
 
@@ -36,7 +37,7 @@ export class SignalGuideScreen implements Screen {
           options: SIGNAL_LEVELS.map((lv) => ({
             id: lv,
             label: STR.settings.signalLevel[lv],
-            hint: STR.settings.signalHint[lv],
+            hint: signalHint(lv),
           })),
           value: this.settings.signalling ?? 'auto',
           onChange: (id) => {

@@ -8,6 +8,8 @@ import { NamePrompt } from './namePrompt';
 import { SettingsScreen, type SettingsActions } from './settingsScreen';
 import { AudioScreen } from './audioScreen';
 import { pictureNode } from './guideScreen';
+import { signalHint } from './ruleText';
+import type { SignalLevel } from '../sim/signals';
 import type { AtlasRegistry } from '../engine/atlas';
 import { NowPlaying, type MusicDeck } from './nowPlaying';
 import { DEFAULT_VOLUMES, heardVolumes, type Volumes } from '../engine/audioGroups';
@@ -1385,7 +1387,7 @@ describe('the Signals screen', () => {
     );
     for (const id of Object.keys(STR.settings.signalLevel)) {
       expect(text).toContain(STR.settings.signalLevel[id]);
-      expect(text).toContain(STR.settings.signalHint[id]);
+      expect(text).toContain(signalHint(id as SignalLevel));
     }
     expect(text).toContain(STR.settings.signallingNote);
     expect(level(screen, 'auto')?.attrs.get('aria-checked')).toBe('true');
@@ -1447,7 +1449,7 @@ describe('an old settings file', () => {
     screen.onOpen();
     const picked = fake(screen.root).all.filter((e) => e.attrs.get('aria-checked') === 'true');
     expect(picked.map((e) => e.text())).toEqual([
-      STR.settings.signalLevel.in_cab + STR.settings.signalHint.in_cab,
+      STR.settings.signalLevel.in_cab + signalHint('in_cab'),
     ]);
   });
 

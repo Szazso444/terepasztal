@@ -11,6 +11,7 @@ import { inSupplyMode } from '../sim/supply';
 import type { TradeDesk } from '../sim/trade';
 import type { Commands } from '../sim/commands';
 import { resIcon, ScrollKeep, setText } from './economyParts';
+import { driftHint } from './ruleText';
 import {
   DEAL_BIG_STEP,
   DEAL_MAX,
@@ -235,7 +236,7 @@ export class MarketScreen implements Screen {
       { title: STR.market.spot, right: this.fundsLabel() },
       this.storeLine,
       table,
-      note(STR.market.driftHint),
+      note(driftHint()),
     );
   }
 

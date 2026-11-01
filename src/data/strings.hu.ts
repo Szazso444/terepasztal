@@ -140,22 +140,25 @@ export const HU: Strings = {
     },
     anyOf: 'Ezek egyike:',
     anyOfMet: 'Ezek egyike: teljesítve',
-    hint: 'Egy korszak akkor kezdődik, ha minden hozzá tartozó cél teljesült; az „Ezek egyike” alatt egy cél is elég. A célokat óránként ellenőrzi a játék.',
+    hint: (hours: number) =>
+      `Egy korszak akkor kezdődik, ha minden hozzá tartozó cél teljesült; az „Ezek egyike” alatt egy cél is elég. A célokat ${hours === 1 ? 'óránként' : `${hours} óránként`} ellenőrzi a játék. A mozdonyok és a kocsik korszak szerint rendezettek, de egyiket sem zárja korszak; a mozdonynak viszont olyan vonal kell, amely elbírja az osztályát.`,
     unlocksIn: (age: string) => `Zárolva. Feloldás: ${age}`,
     reachFirst: (age: string) => `Előbb el kell érni: ${age}.`,
     news: {
       track: 'Sín: {list}',
       stations: 'Állomások: {list}',
       services: 'Város és szolgáltatások: {list}',
+      tools: 'Eszközök: {list}',
       works: 'Művek: {list}',
       electric: 'Villamosítás: {list}',
-      engines: 'Mozdonyok: {list}',
-      wagons: 'Kocsik: {list}',
+      engines: 'Mozdonyreceptek: {list}',
+      wagons: 'Kocsireceptek: {list}',
       contracts: 'Szerződések: {list}',
-      level: (n: number) => `Az épületek ${n}. szintig emelkedhetnek`,
+      level: (age: string, n: number) => `A ${age} épületei ${n}. szintig emelkedhetnek`,
       trackCount: (n: number) => `${n} síntípus`,
       stationsCount: (n: number) => `${n} állomás`,
       servicesCount: (n: number) => `${n} épületfajta`,
+      toolsCount: (n: number) => `${n} eszköz`,
       worksCount: (n: number) => `${n} mű`,
       electricCount: (n: number) => `${n} áramellátás`,
       enginesCount: (n: number) => `${n} mozdony`,
@@ -611,8 +614,8 @@ export const HU: Strings = {
     unknownInput: '?',
     or: 'vagy',
     bridgeCapacity: 'Híd teherbírása',
-    bridgeLimit: (capacity: number, slowAbove: number) =>
-      `${capacity} t · ${slowAbove} t fölött fél sebesség`,
+    bridgeLimit: (capacity: number, slowAbove: number, slowPct: number) =>
+      `${capacity} t · ${slowAbove} t fölött ${slowPct}% sebesség`,
     recipeLine: '{input} → {output}',
     recipeAlt: '{input} (vagy {alt}) → {output}',
     bridgeHint:
@@ -1094,7 +1097,7 @@ export const HU: Strings = {
     standby: 'Tartalék',
     rescuing: 'tartalék, húz',
     dormant: 'nincs használható erő',
-    hint: 'Többes vezérlés: a vezetővel azonos vezérlési osztály, teljes vonóerő. Kettős vontatás: az összesített vonóerő 82%-a. Tartalék: holtsúly, amíg a húzó egységek ki nem fogynak az üzemanyagból vagy a felsővezetékből.',
+    hint: 'Többes vezérlés: a vezetővel azonos vezérlési osztály, teljes vonóerő. Kettős vontatás: az összesített vonóerő {doubled}%-a. Tartalék: holtsúly, amíg a húzó egységek ki nem fogynak az üzemanyagból vagy a felsővezetékből.',
   },
   contracts: {
     title: 'Szerződések',
@@ -1344,13 +1347,13 @@ export const HU: Strings = {
       in_cab: 'Vezetőállás',
     },
     signalHint: {
-      auto: 'A vonatok felzárkóznak az előttük haladóhoz, nincs megszabott távolság.',
-      token:
+      auto: () => 'A vonatok felzárkóznak az előttük haladóhoz, nincs megszabott távolság.',
+      token: () =>
         'Sima szakaszonként egy vonat, bármerre is halad. A vonatok nem figyelik a szemaforokat.',
-      absolute_block: 'A vonatok 10 csempe távolságot tartanak.',
-      ctc: 'A vonatok 6 csempe távolságot tartanak.',
-      in_cab:
-        'A vezetőállás-jelzéssel felszerelt vonatok 3 csempe távolságot tartanak, a többiek 10-et.',
+      absolute_block: (gap: number) => `A vonatok ${gap} csempe távolságot tartanak.`,
+      ctc: (gap: number) => `A vonatok ${gap} csempe távolságot tartanak.`,
+      in_cab: (gap: number, others: number) =>
+        `A vezetőállás-jelzéssel felszerelt vonatok ${gap} csempe távolságot tartanak, a többiek ${others} csempét.`,
     },
     signallingNote: 'A szemaforok a Token kivételével minden szinten működnek.',
     title: 'Beállítások',
@@ -1686,7 +1689,7 @@ export const HU: Strings = {
     supplyHint: {
       simple:
         'A faszénégető, a kőőrlő és a finomító a tárolt árukból szenet, vasat és olajat készít; a dízelek olajat égetnek; az egy sínhálózaton lévő készletek megosztják az árut.',
-      full: 'Szénbányák szénéreken, vas- és rézbányák, vasművek, olajkutak olajszivárgásokon, gázolajat készítő finomító, homok a tapadáshoz és rézhuzal. A raktáraknál csak abból lehet tankolni, amit a vonatok hoznak.',
+      full: 'Szénbányák dombokon, vas- és rézbányák, vasművek, olajkutak olajszivárgásokon, gázolajat készítő finomító, homok a tapadáshoz és rézhuzal. A raktáraknál csak abból lehet tankolni, amit a vonatok hoznak.',
     },
   },
   credits: {
@@ -1946,8 +1949,8 @@ export const HU: Strings = {
     dealsAt: (label: string) => `Az ügyletek itt számolódnak el: ${label}`,
     trend: 'Trend',
     driftPct: (p: number) => `${p >= 0 ? '+' : ''}${p}%`,
-    driftHint:
-      'Az üzemanyagok (olaj, gázolaj, nyersolaj) ára lassú, heti bolyongással legfeljebb ±40%-ot változik.',
+    driftHint: (goods: string, pct: number) =>
+      `Az üzemanyagok (${goods}) ára lassú, heti bolyongással legfeljebb ±${pct}%-ot változik.`,
     hint: 'Az árak egységárak. Egy készlet minden áruból a felső határáig tart.',
     deals: 'Állandó ügyletek',
     spot: 'Azonnali árak',
@@ -2125,11 +2128,7 @@ export const HU: Strings = {
     noGrowth: 'Növekedés: nincs (nincs élelem)',
     growthCapped: 'A növekedés a szabad férőhelyeknél megáll; élelem is kell hozzá',
     capacityHint: 'A férőhelyekhez építs vagy fejlessz lakóházakat',
-    nextHouse: (at: number, mul: number) =>
-      `Következő lakóház ${at} lakosnál${mul > 1 ? ` (forgalom ×${mul})` : ''}`,
     fullHousing: 'A lakóházak megteltek; építs vagy fejlessz újakat',
-    spawned: (town: string, n: number) =>
-      `${town}: ${n === 1 ? 'új lakóház épül' : `${n} új lakóház épül`}`,
     newcomers: (town: string, n: number) => `${town}: ${n} új lakos költözött be`,
     firstTrain: (town: string, n: number) =>
       `${town}: megérkezett az első vonat, ${n} új lakos költözött be`,
@@ -2235,12 +2234,13 @@ export const HU: Strings = {
       nextCategory: 'Következő kategória',
       demolish: 'Bontás',
       pause: 'Megállítás és folytatás',
-      pieceOrCategory: 'Építési kategória, majd annak egy eleme',
+      pieceOrCategory: 'A nyitott kategória egy eleme',
+      category: 'Építési kategória, ha nincs nyitva másik',
       speedStep: 'Gyorsabb, lassabb',
       record: 'Megállók rögzítése a kijelölt vonatnak',
       finishRoute: 'A rögzítés befejezése',
       undo: 'Az utolsó lépés visszavonása',
-      redo: 'Újra megcsinálja',
+      redo: 'Visszavont lépés újra végrehajtása',
     },
     first: {
       intro:
@@ -2249,10 +2249,11 @@ export const HU: Strings = {
       goods: 'A készletben: {list}.',
       copies: 'Minden mozdonyból {engines}, minden kocsiból {wagons} darabod van.',
       stepsHead: 'Az első vonatod',
-      look: 'Vidd a mutatót a terepre. A felugró ablak megmondja, mit ad az adott csempe: erdőn {forest}, sziklán és dombon {rock}, füvön {grass}.',
-      lay: 'Nyisd meg a {category} kategóriát ({key} billentyű), és válaszd a {line} típust. Húzd tovább a sínt a fűtőház kapujától ({depot}).',
+      look: 'Vidd a mutatót a terepre. A felugró ablak megmondja, mit ad az adott csempe.',
+      lookGoods: 'Erdőn {forest}, sziklán és dombon {rock}, füvön {grass}.',
+      lay: 'Nyisd meg a {category} kategóriát ({key} billentyű), és válaszd a {line} típust. Húzd tovább a sínt a {depot} kapujától. Utána {esc}: leteszed a sínfektetőt.',
       place:
-        'Nyisd meg a {category} kategóriát ({key} billentyű), azon belül a {type} típust, és rakj le egy állomást úgy, hogy az egyik oldala sínhez érjen: {a}, {b} vagy {c}. Az a sín lesz a peronvágánya.',
+        'Nyisd meg a {category} kategóriát ({key} billentyű), azon belül a {type} típust, és rakj le egy kitermelő állomást ({list}) úgy, hogy az egyik oldala sínhez érjen. Az a sín lesz a peronvágánya.',
       train:
         'Nyisd meg a {depot} képernyőt ({key} billentyű). Válassz mozdonyt, tegyél mellé az áruhoz illő kocsikat, majd nyomd meg: {dispatch}.',
       sell: 'Amit a vonat hoz, a fűtőház készletébe kerül. Nyisd meg a {market} képernyőt ({key} billentyű), és adj el belőle: ez az első bevételed.',
@@ -2260,10 +2261,10 @@ export const HU: Strings = {
       money:
         'Pénzt a {market}, az utasok és a {contracts} hoznak. A készletben álló áru addig nem keres semmit, amíg el nem adod.',
       reach: 'Az építkezést egy {reach} csempén belüli készlet fizeti.',
-      food: 'A személyzet és a lakosok minden héten ezt eszik: {food}. A {windmill} ebből készíti: {wheat}.',
+      food: 'A személyzet és a lakosok minden héten élelmet esznek ({food}). A {windmill} búzából készíti ({wheat}).',
       land: 'Nyisd meg az áttekintő térképet ({key} billentyű), és kattints egy feltérképezetlen chunkra a földed mellett: így veheted meg. Az első gyűrű ára {price}.',
-      age: 'Vidd a mutatót a dátum melletti korszakra: megmutatja, mit kér és mit hoz az egyes korszak.',
-      advisor: 'A {advisor} megmondja, mi legyen a következő lépés.',
+      age: 'Vidd a mutatót a dátum melletti korszakra: megmutatja, hogy az egyes korszakok mit kérnek, és mit hoznak.',
+      advisor: 'A {advisor} ({view} menü) megmondja, mi legyen a következő lépés.',
     },
     track: {
       intro:
@@ -2287,6 +2288,9 @@ export const HU: Strings = {
       pieces:
         'Árak ezen a vonalon ({line}): egyenes {straight}, ív {curve}, váltó {switch}. A többi vonal ehhez mért árát a táblázat adja meg.',
       slopesHead: 'Lejtők',
+      straights: 'Az egyenes sín és a keresztezés emelkedhet, csempénként legfeljebb egy szintet.',
+      smooth: 'Az ívnek és a váltónak egyenletes terep kell, vagy hídpálya minden csempéje alatt.',
+      level: 'Az állomásoknak, műveknek, lakóházaknak és szolgáltató épületeknek sík terep kell.',
       climb:
         'Emelkedőn lassul a vonat, lejtőn gyorsabban megy. A panelje megmutatja, mennyire lassul.',
       groundHead: 'Terep',
@@ -2301,17 +2305,19 @@ export const HU: Strings = {
       colPrice: 'Ár',
       upgradeHead: 'Vonal fejlesztése',
       upgrade: '{name} ({key} billentyű):',
+      upgradeSize:
+        'Fejlesztéskor és visszaminősítéskor az ívet és a váltót újra le kell fektetni, ha az új vonal ívei más méretűek.',
     },
     stations: {
       intro:
-        'A vonatok állomásokon állnak meg. Az állomásnak lerakáskor sínhez kell érnie: az a sín lesz a peronvágánya.',
+        'A vonatok állomásokon állnak meg. A fűtőház kivételével minden állomásnak lerakáskor sínhez kell érnie: az a sín lesz a peronvágánya.',
       colStation: 'Állomás',
-      colCost: 'Ár',
+      colCost: 'Az első ára',
       colMakes: 'Termel',
       colGround: 'Ezzel számol',
       colAge: 'Korszak',
       repeat:
-        'Egy fajtából minden további példány az alapár {pct}-ával többe kerül, a fűtőházak kivételével.',
+        'Egy fajtából minden további állomás, szolgáltató épület, mű, lakóház, szemafor és oszlop drágább: minden álló példány után az első ár {pct}-ával, felfelé kerekítve. A fűtőház, a sín és a híd ára nem nő. A terep az állomás árát is szorozza, ahogy a sínét.',
       depotsHead: 'Fűtőházak',
       depots:
         'A vonatok fűtőházban épülnek, és a kapuin gördülnek ki. A {depot} normál vonatokat épít, a {narrow} keskenyeket.',
@@ -2327,6 +2333,8 @@ export const HU: Strings = {
       levelsHead: 'Szintek',
       levels:
         'Az állomások, művek és lakóházak korszakonként egy szintet emelkednek attól a korszaktól, amelyben megjelennek. Fejlesztés alatt az épület zárva van, amíg el nem készül; a fűtőház azonnal fejlődik.',
+      stopsAt: 'Néhány hamarabb megáll: {list}.',
+      stopsAtOne: '{name}, {level}. szint',
       colLevel: 'Szint',
       colStorage: 'Tárolás',
       colLoad: 'Rakodás / s',
@@ -2348,10 +2356,8 @@ export const HU: Strings = {
       found:
         'Rakj le egy {townhouse} épületet, majd tőle legfeljebb {radius} csempére egy {house} és egy {warehouse} épületet: ezzel megalapítod a várost. A városházák legalább {spacing} csempére állnak egymástól.',
       growth:
-        'Egy lakóház {built} nap alatt épül fel, és {first} lakossal nyit. Utána {days} naponként költözik be egy lakos, amíg a város készletében van ebből: {food}.',
+        'Egy lakóház {built} nap alatt épül fel, és {first} lakossal nyit. Utána {days} naponként költözik be egy lakos a ház férőhelyéig, amíg van {food} a város készletében. A város magától nem épít házat: rakj le egy új {house} épületet, vagy emeld a szintjét.',
       houses: 'Egy lakóház befogadóképessége szintenként: {list} lakos.',
-      spawn:
-        'Ha a lakosok elérik a férőhelyek {pct}-át, a város magától új házat kezd, a vonatforgalom hatására többet is.',
       passengers:
         'Az {station} a {reach} csempén belüli lakóházakat szolgálja ki. Köss össze kettőt személykocsikkal, és az emberek utazni fognak; a viteldíj a távolsággal nő.',
       servicesHead: 'Szolgáltatások',
@@ -2364,10 +2370,12 @@ export const HU: Strings = {
     trains: {
       consistHead: 'Szerelvények',
       build:
-        'Új vonatot itt állítasz össze: {depot}. Megadod, melyik fűtőházból gördüljön ki, milyen mozdonyokkal és kocsikkal, milyen útvonalon, és ha akarod, a nevét is. Az {dispatch} gomb kiküldi egy kapun.',
+        'Új vonatot a {depot} képernyőn állítasz össze: megadod, melyik fűtőházból gördüljön ki, milyen mozdonyokkal és kocsikkal, milyen útvonalon, és ha akarod, a nevét is. Az {dispatch} gomb kiküldi egy kapun.',
+      picked:
+        'A képernyő ezután az új vonatot mutatja, és a {again} gomb újabbat kezd a mintájára: ugyanazok a típusok a szabad készletből, ugyanaz az útvonal és fűtőház.',
       limits:
         'Egy vonatban legalább egy mozdony van, és legfeljebb {locos} mozdony meg {wagons} kocsi.',
-      haul: 'A mozdonynak vontatási határa van, a kocsik ez alatt kell maradjanak. A vonat csak annyit rak fel, amennyit a mozdonyai elbírnak.',
+      haul: 'A mozdonynak vontatási határa van, a kocsiknak ez alatt kell maradniuk. A vonat csak annyit rak fel, amennyit a mozdonyai elbírnak.',
       speed:
         'A vonat a leglassabb járműve sebességével megy. Több mozdony jobban húz, de nem megy gyorsabban.',
       colClass: 'Osztály',
@@ -2379,13 +2387,13 @@ export const HU: Strings = {
       colUses: 'Fogyaszt',
       steamUses: '{coal} vagy {wood}, és {water}',
       fillUp:
-        'A vonat ott tölt fel, ahol a megállónak készlete van ({depot}, {warehouse}, {townhouse}), és a szolgáltató épület hatósugarában lévő állomásokon.',
-      seek: 'A fogyó tartalékú vonat megkeresi a legközelebbi kiszolgálóhelyet, ahol megvan, ami kell neki, és magától odamegy.',
+        'A vonat ott tölt fel, ahol a megállónak készlete van ({list}), és a szolgáltató épület hatósugarában lévő állomásokon.',
+      seek: 'A fogyó tartalékú vonat megkeresi a legközelebbi szolgáltató épületet vagy fűtőházat, ahol megvan, ami kell neki, és magától odamegy.',
       carts:
         'A tankolókocsi növeli a hozzá illő mozdonyok tartályát, és {saving}-kal csökkenti a fogyasztásukat, összesen legfeljebb {cap}-kal.',
       emergency: '{name}:',
-      crew: 'A személyzet minden tagja hetente {n} egységet eszik ebből: {food}. A vonat a következő készletnél fizet, ahol tankol; ha több mint egy napi élelemmel tartozik, a sebessége {pct}-ával megy.',
-      sand: 'Ebben a termelési láncban minden vonat ezt szórja a sínre: {sand}. A következő készletből pótolja, ahol tankol.',
+      crew: 'A személyzet minden tagja hetente {n} egység élelmet ({food}) eszik. A vonat a következő készletnél fizet, ahol tankol; ha több mint egy napi élelemmel tartozik, a sebessége {pct}-ával megy.',
+      sand: 'Ebben a termelési láncban minden vonat homokot szór a sínre ({sand}); az árát a következő készletnél fizeti, ahol tankol.',
       electricHead: 'Villamos üzem',
       electric:
         'A villamos mozdonynak feszültség alatti vezeték kell. Láncolj oszlopokat ({pole}) egy áramforrástól ({plant}) az akkumulátorig ({battery}), majd fektess vezetéket a sín mentén: egy táplált akkumulátortól {radius} csempén belül lesz feszültség alatt.',
@@ -2411,7 +2419,8 @@ export const HU: Strings = {
       colHeadway: 'Követési távolság, csempe',
       colWhat: 'Mit csinál',
       inCab: 'A beszerelés ára {cost}, helye: {roster}.',
-      postCost: 'Egy szemafor ára {cost}.',
+      postCost:
+        'Az első szemafor ára {cost}; minden további ennek {pct}-ával többe kerül, felfelé kerekítve.',
     },
     goods: {
       intro: 'Ez a játék ezen a termelési láncon fut: {chain}.',
@@ -2422,7 +2431,9 @@ export const HU: Strings = {
       worksHead: 'Művek',
       works:
         'A műnek nem kell sín: a városa készletéből dolgozik, vagy a legközelebbiből {reach} csempén belül.',
-      worksLevels: 'Minden szinttel gyorsabban dolgozik a mű.',
+      worksLevels: 'Minden szint {pct}-kal növeli a mű heti adagjainak számát.',
+      windmillLevels:
+        'A {windmill} minden szinttel adagonként {n} egységgel több élelmet is ad ({food}).',
       colWorks: 'Mű',
       colRecipe: 'Recept',
       colBatches: 'Adag hetente',
@@ -2431,22 +2442,26 @@ export const HU: Strings = {
       colMadeBy: 'Ki termeli',
       colUsedBy: 'Ki használja',
       foodHead: 'Élelem',
-      food: 'A lakosok és a személyzet fejenként hetente {n} egységet esznek a készletükből ebből: {food}.',
+      food: 'A lakosok és a személyzet fejenként hetente {n} egység élelmet ({food}) fogyasztanak a készletükből.',
       famine:
         'Ha egy készletből elfogy, éhség lesz: a körülötte termelt mennyiség {pct}-ára esik, amíg vissza nem tér az élelem.',
     },
     contracts: {
       intro:
         'A szerződés azt kéri, hogy vigyél el egy áruból adott mennyiséget egyik állomásról a másikra határidőre, díjazásért. Az ajánlatok a táblán várnak, amíg el nem fogadod őket, vagy le nem járnak.',
-      ends: 'Az ajánlatok abból születnek, amit az állomásaid termelnek, és amit egy másik állomás átvesz; mindkettőnek peronvágány kell. Szerződés végpontja csak ez lehet: {ends}. Ezek sosem: {shut}.',
+      ends: 'Az ajánlatok abból születnek, amit az állomásaid termelnek, és amit egy másik állomás átvesz; mindkettőnek peronvágány kell. Szerződés végpontja csak {ends} lehet; {shut} sosem.',
       limit:
-        'A földed egyformán korlátozza a nyitott ajánlatokat és az aktív szerződéseket: a kezdő chunkon {base}, minden további chunk {per} egységgel növeli, lefelé kerekítve, legfeljebb {max}.',
+        'A földed egyformán korlátozza a nyitott ajánlatokat és az aktív szerződéseket: a kezdő chunkon {base}, minden további chunk +{per}, lefelé kerekítve, legfeljebb {max}.',
       timing: 'A tábla {days} naponként keres új ajánlatot. Egy ajánlat {life} napig marad.',
       trains:
         'Elfogadáskor a játék a legjobb helyzetben lévő vonatra bízza a szerződést, és a Szerződés útvonalú vonat elsőbbséget kap. Utána visszatér a munkájához.',
-      policy: 'Az új ajánlatokról ritkaságonként külön dönthetsz.',
+      policy: 'Az új ajánlatokról ritkaságonként külön dönthetsz, itt: {economy} › {settings}.',
       payHead: 'Díjazás és bírság',
-      pay: 'A díj a mennyiséggel, az áru árával, a távolsággal és a ritkasággal nő.',
+      pay: 'A díj a mennyiséggel, az áru árával, a távolsággal, a ritkasággal és a korszakkal nő.',
+      ageScale:
+        'A táblázatok a {first} számait adják. Minden további korszak {amount}-kal növeli a mennyiséget és {pay}-kal a díjat; a {last} után már nem nő.',
+      deadlineKinds:
+        'A ritkaság csak a {kinds} határidejét rövidíti, a Határidő oszlop szerint; a többi fajtáé nem változik.',
       fines:
         'A határidő elmulasztása a díj {fail}-ába kerül, a lemondás {cancel}-ába. Az ajánlat elutasítása ingyenes.',
       lapse: 'Ha a szerződés egyik állomását lebontod, a szerződés bírság nélkül megszűnik.',
@@ -2466,19 +2481,20 @@ export const HU: Strings = {
         'A {market} a felső sávon látható készletbe vesz, és abból ad el. Ha a {fleet} menüben vagy a {depot} képernyőn választasz fűtőházat, vagy a térképen kijelölsz egy városházát, fűtőházat vagy raktárt, a sáv annak a készletét mutatja.',
       whereSimple:
         'Ebben a termelési láncban az egy sínhálózaton lévő készletek egynek számítanak: a sáv ugyanazt mutatja, akármelyiket választod.',
-      prices: 'Az áru alapárának {buy}-át fizeted, és {sell}-át kapod.',
+      prices:
+        'Az áru alapárának {buy}-át fizeted, és {sell}-át kapod. A táblázat a játék kezdetén érvényes árakat mutatja.',
       colGood: 'Áru',
       colBuy: 'Vétel',
       colSell: 'Eladás',
       craftHead: 'Gyártás',
       craft:
-        'A saját mozdonyaid és kocsijaid itt vannak: {roster}. Újakat itt készítesz, két lépésben: {crafting}.',
+        'A saját mozdonyaid és kocsijaid a {roster} képernyőn vannak. Újakat a {crafting} képernyőn készítesz, két lépésben.',
       unlock:
         'Oldj fel egy receptet: fizess {cards} kártyáért egy fajtából és korszakból, és tarts meg egyet. A már ismert kártya helyette ezt adja vissza: {refund}.',
       build:
         'Gyártsd le: az árut a felső sávon látható készlet adja. A ritkább modell többe kerül, és a gyártás el is romolhat; ilyenkor az áru {pct}-a visszajön.',
       anyAge:
-        'A receptek korszak szerint rendezettek, de bármelyiket bármikor húzhatod. A mozdonynak attól még kell az üzemanyaga vagy a vezetéke.',
+        'A receptek korszak szerint rendezettek, de bármelyiket bármikor húzhatod. A mozdonynak attól még kell az üzemanyaga vagy a vezetéke, és olyan vonal, amely elbírja az osztályát.',
       starters: '{roster}: {key} billentyű.',
       colAge: 'Korszak',
       colEngine: 'Mozdony',
@@ -2489,14 +2505,13 @@ export const HU: Strings = {
       colSize: 'Méret',
     },
     ages: {
-      intro:
-        'Minden korszak új dolgokat nyit meg. A járművek korszak szerint rendezettek, de a receptjeiket a korszak nem zárja.',
+      intro: 'Minden korszak új dolgokat nyit meg.',
       goals: 'Az eléréséhez: {goals}.',
     },
     keys: {
       fieldHead: 'A terepen',
       overviewHead: 'Az áttekintő térképen',
-      menuHead: 'Menü felett',
+      menuHead: 'A Menüben és a címképernyőn',
       pointerHead: 'Kamera és mutató',
     },
   },

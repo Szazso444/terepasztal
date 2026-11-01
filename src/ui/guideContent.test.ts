@@ -1,10 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { existsSync } from 'node:fs';
-import { DEFAULT_CONTENT } from '../data/content';
+import { content, DEFAULT_CONTENT } from '../data/content';
 import { HU } from '../data/strings.hu';
+import { locoDef } from '../gacha/items';
 import { AGE_DEFS } from '../sim/ages';
+import { DECOR_DEFS } from '../sim/build';
+import { BUILDING_DEFS } from '../sim/buildings';
 import { Commands } from '../sim/commands';
-import { gaugeLine } from '../sim/compat';
+import { classOf, gaugeLine } from '../sim/compat';
+import { STATION_DEFS } from '../sim/stations';
 import { startDepotCentre, startDepotKind } from '../sim/startDepot';
 import { SimStep, startStock } from '../sim/step';
 import { SIM_STEP } from '../sim/time';
@@ -50,6 +54,9 @@ function partsOfPage(p: GuidePage): Parts[] {
     }
   });
 }
+/** The numbered and plain lists of a page. */
+const listsOf = (p: GuidePage) =>
+  p.blocks.flatMap((b) => (b.kind === 'steps' || b.kind === 'list' ? [b] : []));
 const blocksOf = <K extends GuideBlock['kind']>(p: GuidePage, kind: K) =>
   p.blocks.filter((b): b is Extract<GuideBlock, { kind: K }> => b.kind === kind);
 
@@ -205,6 +212,124 @@ describe('what the pages say is what the game does', () => {
     expect(says('full')).toBe(false);
   });
 
+  it('puts the track tool down before the step that opens the next category', () => {
+    const [, lay, place] = listsOf(page('first'))
+      .find((b) => b.kind === 'steps')!
+      .items.map(plain);
+    const esc = KEYMAP.find((b) => b.action === 'pauseOrClose' && b.context === 'play');
+    expect(esc?.code).toBe('Escape');
+    expect(lay.endsWith('Press Esc to put the track tool down.')).toBe(true);
+    expect(lay).not.toContain('a run');
+    expect(place).toContain('Works');
+  });
+
+  it('says houses are the player to build, as nothing else adds any', () => {
+    const text = pageWords(page('stations'));
+    expect(text).toContain('towns do not build houses themselves');
+    expect(text).not.toContain('by itself');
+    expect(text).not.toMatch(/starts a new house/);
+    expect(STR.town).not.toHaveProperty('spawned');
+    expect(STR.town).not.toHaveProperty('nextHouse');
+  });
+
+  it('heads the first price as that, and reads what each further one adds from the rule', () => {
+    expect(blocksOf(page('stations'), 'table')[0].head).toContain('Cost of the first');
+    rules.repeatCostStep = 0.35;
+    const stations = pageWords(page('stations'));
+    expect(stations).toContain('costs more: 35% of the first price');
+    expect(stations).toContain('depots, track and bridges keep their price');
+    const signals = pageWords(page('signals'));
+    expect(signals).toContain('the first semaphore costs');
+    expect(signals).toContain('each one more adds 35% of that, rounded up');
+  });
+
+  it('prices a second semaphore as the Signals page says', () => {
+    const w = simWorld({ size: 64, terrain: 'grass' });
+    const { x: cx, y } = startDepotCentre(w.map);
+    const depot = station(w, startDepotKind(), cx - 6, y, 0);
+    const store = w.stores.byKey(`st:${depot.id}`)!;
+    for (const [id, n] of Object.entries(startStock())) store.add(id, n);
+    const item = { kind: 'straight', cls: gaugeLine('narrow'), cls2: 'narrow' } as const;
+    for (let x = cx - 4; x <= cx + 4; x++)
+      expect(w.builder.placeTrack(x, y, item, 1), `${x}`).toBe(true);
+    rules.repeatCostStep = 0.5;
+
+    const base = DEFAULT_CONTENT.decor.find((d) => d.id === 'signal')?.cost ?? {};
+    expect(w.builder.checkDecor(cx, y, 'signal').cost).toEqual(base);
+    expect(w.builder.placeDecor(cx, y, 'signal', 1)).not.toBeNull();
+    const second = Object.fromEntries(
+      Object.entries(base).map(([good, n]) => [good, Math.ceil(n * 1.5)]),
+    );
+    expect(w.builder.checkDecor(cx + 2, y, 'signal').cost).toEqual(second);
+  });
+
+  it('says whose deadline rarity shortens, from the flag on the kinds', () => {
+    const kinds = content.contracts.templates;
+    const flagged = kinds.filter((t) => t.rarityDeadline);
+    expect(flagged.length).toBeGreaterThan(0);
+    const rarityTable = () => blocksOf(page('contracts'), 'table')[0];
+    expect(pageWords(page('contracts'))).toContain(
+      `only a ${flagged[0].name.toLowerCase()}'s deadline shortens with rarity`,
+    );
+    expect(rarityTable().head).toContain(STR.guide.contracts.colDeadline);
+
+    // no kind flagged: nothing is left for the column to say
+    for (const t of flagged) t.rarityDeadline = false;
+    try {
+      expect(rarityTable().head).not.toContain(STR.guide.contracts.colDeadline);
+      expect(pageWords(page('contracts'))).not.toContain('shortens with rarity');
+      expect(rarityTable().rows[0]).toHaveLength(rarityTable().head.length);
+    } finally {
+      for (const t of flagged) t.rarityDeadline = true;
+    }
+  });
+
+  it('says the numbers of a contract are those of the first age, and how they grow', () => {
+    const text = pageWords(page('contracts'));
+    expect(text).toContain('the tables give the numbers of the steam age');
+    expect(text).toContain('up to the electric age, adds 25% to the amounts and 15% to the pay');
+    expect(text).toContain('economy › contract settings');
+  });
+
+  it('writes the slopes as rules, not as what a refused piece says', () => {
+    const text = pageWords(page('track'));
+    expect(text).toContain('straight track and crossings may climb');
+    expect(text).toContain('a bridge platform under every tile');
+    expect(text).toContain('stations, works, houses and services need level ground');
+    expect(text).not.toContain(STR.build.notLevel.toLowerCase());
+    expect(text).not.toContain(STR.build.reclass.size.toLowerCase());
+  });
+
+  it('tells recipes from what an age locks, and says where a building stops rising', () => {
+    const ages = pageWords(page('ages'));
+    expect(ages).toContain('engine recipes: ');
+    expect(ages).toContain('wagon recipes: ');
+    expect(ages).toContain('no age locks them');
+    expect(ages).toContain('buildings from the steam age rise to level 2');
+    expect(ages).toContain('tools: semaphore');
+    expect(pageWords(page('stations'))).toContain('some stop earlier: charcoal kiln at level 3');
+  });
+
+  it('says what a level adds to a works, and to a windmill', () => {
+    const text = pageWords(page('goods'));
+    expect(text).toContain('each level adds 50% to the batches');
+    expect(text).toContain('also gets 2 more food');
+  });
+
+  it('names no fuel of the other chain, and calls the table the prices a game starts with', () => {
+    setSupplyMode('simple');
+    const text = pageWords(page('market'));
+    expect(text).toContain('the prices a game starts with');
+    expect(text).toContain('fuel prices (oil)');
+  });
+
+  it('says where the Advisor is, and what the Depot does after Dispatch', () => {
+    expect(pageWords(page('first'))).toContain('the advisor (view menu)');
+    const trains = pageWords(page('trains'));
+    expect(trains).toContain('the depot then shows the new train');
+    expect(trains).toContain(STR.depot.again.toLowerCase());
+  });
+
   it('gives each age its own heading, picture and what it brings', () => {
     const p = page('ages');
     const heads = blocksOf(p, 'head').map((b) => b.text);
@@ -241,7 +366,17 @@ describe('what the pages say is what the game does', () => {
       'Shift+Q',
     ])
       expect(keys, k).toContain(k);
-    for (const k of ['Tab', 'Shift+Tab', 'Ctrl+Z', 'Ctrl+Y', 'Ctrl+Shift+Z', '+', '−', '1–9'])
+    for (const k of [
+      'Tab',
+      'Shift+Tab',
+      'Ctrl+Z',
+      'Ctrl+Y',
+      'Ctrl+Shift+Z',
+      '+',
+      '−',
+      '1–9',
+      '1–5',
+    ])
       expect(keys, k).toContain(k);
     // what lives with the camera and the pointer, not in the keymap
     for (const k of ['W A S D', 'Wheel', 'Right-click', 'Delete']) expect(keys, k).toContain(k);
@@ -308,6 +443,53 @@ describe('the search', () => {
     expect(matchingPages(pages, 'semaphore gap').map((p) => p.id)).toEqual(['signals']);
     expect(matchingPages(pages, 'no such word anywhere')).toEqual([]);
   });
+
+  it('reads past accents, typed or printed', () => {
+    const pages = guidePages();
+    expect(matchingPages(pages, 'SÉMAPHORE').map((p) => p.id)).toContain('signals');
+    expect(matchingPages(pages, 'mav').map((p) => p.id)).toContain('first');
+  });
+});
+
+describe('with a def the Content editor took away', () => {
+  type Named = [{ id: string }[], string];
+  const NAMED: Named[] = [
+    ...['farm', 'lumber', 'quarry', 'town', 'warehouse', 'station', 'depot', 'narrow_depot'].map(
+      (id): Named => [STATION_DEFS, id],
+    ),
+    ...['windmill', 'substation'].map((id): Named => [BUILDING_DEFS, id]),
+    ...['signal', 'townhouse', 'power_line'].map((id): Named => [DECOR_DEFS, id]),
+  ];
+
+  /** Runs `then` with these defs gone from their lists, and puts them back. */
+  function without(gone: Named[], then: () => void) {
+    const taken = gone.map(([list, id]) => {
+      const at = list.findIndex((d) => d.id === id);
+      expect(at, id).toBeGreaterThanOrEqual(0);
+      return { list, at, def: list.splice(at, 1)[0] };
+    });
+    try {
+      then();
+    } finally {
+      for (const t of taken.reverse()) t.list.splice(t.at, 0, t.def);
+    }
+  }
+
+  for (const named of NAMED)
+    it(`opens without ${named[1]}, every slot filled`, () => {
+      without([named], () => {
+        for (const p of guidePages()) {
+          expect(pageWords(p), p.id).not.toMatch(/\{\w+\}|undefined/);
+          for (const b of listsOf(p)) expect(b.items.length).toBeGreaterThan(0);
+        }
+      });
+    });
+
+  it('opens with all of them gone', () => {
+    without(NAMED, () => {
+      expect(guidePages().map((p) => p.id)).toEqual(IDS);
+    });
+  });
 });
 
 describe('the pictures of the ages', () => {
@@ -316,6 +498,11 @@ describe('the pictures of the ages', () => {
     for (const path of Object.values(AGE_PICTURE))
       if (path)
         expect(existsSync(new URL(`../../public/${path}`, import.meta.url)), path).toBe(true);
+  });
+
+  it('shows a train of the first age a Branch Line takes', () => {
+    const id = /portraits\/(.+)\.png$/.exec(AGE_PICTURE.steam ?? '')?.[1] ?? '';
+    expect(classOf(locoDef(id))).toBe('frigate');
   });
 
   it('shows a vehicle of the age where it has one', () => {
@@ -367,6 +554,12 @@ describe('the pages, in every language', () => {
           expect(text, p.id).not.toMatch(/undefined|\[object/);
         }
       }, 30_000);
+
+  it('finds a Hungarian word typed with no accents', async () => {
+    const { guide } = await loaded('hu');
+    const found = guide.matchingPages(guide.guidePages(), 'kofejto').map((p) => p.id);
+    expect(found).toContain('stations');
+  }, 30_000);
 
   it('writes Hungarian in Hungarian, the data and the numbers with it', async () => {
     const { guide } = await loaded('hu');

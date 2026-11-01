@@ -121,7 +121,7 @@ describe('the ages the player reads about', () => {
     expect(heading.trim()).not.toBe('');
     expect(STR.ages.anyOfMet).not.toBe(STR.ages.anyOf);
     // the hint explains the heading the card shows, so a rewording of one must reach the other
-    expect(STR.ages.hint).toContain(heading);
+    expect(STR.ages.hint(1)).toContain(heading);
   });
 });
 

@@ -6,6 +6,7 @@
 import { STR } from '../strings';
 import { AGE_DEFS, type AgeStatus, type GoalKind, type GoalStatus } from '../sim/ages';
 import { ageNews, agePictureUrl, type AgeNews } from './ageNews';
+import { ageHint } from './ruleText';
 import { fmtInt, fmtMoney } from './numberFormat';
 import {
   bad,
@@ -132,9 +133,10 @@ export interface NewThing {
 /** The most things named one by one; a longer list is a count that opens them in its tooltip. */
 const NAMED_AT_MOST = 4;
 
-/** A term for one new thing: its tooltip has the name and what the data says of it. */
+/** A term for one new thing, its tooltip what the data says of it; with nothing to say, its name. */
 function thingTerm(t: NewThing): Inline {
-  return term(t.name, () => [title(t.name), ...(t.about ? [dim(...richText(t.about))] : [])]);
+  const about = t.about;
+  return about ? term(t.name, () => [title(t.name), dim(...richText(about))]) : t.name;
 }
 
 /** A list of new things: named while it is short, a count that lists them when it is not. */
@@ -178,6 +180,7 @@ export function newsLines(n: AgeNews): NewsLine[] {
     { label: N.track, things: [...lines, ...n.bridges.map(named)], count: N.trackCount },
     { label: N.stations, things: n.stations.map(named), count: N.stationsCount },
     { label: N.services, things: n.decor.map(named), count: N.servicesCount },
+    { label: N.tools, things: n.tools.map(named), count: N.toolsCount },
     { label: N.works, things: n.works.map(named), count: N.worksCount },
     { label: N.electric, things: supplies, count: N.electricCount },
     {
@@ -199,12 +202,17 @@ export function newsLines(n: AgeNews): NewsLine[] {
   return all.filter((l) => l.things.length);
 }
 
+/** The level the first age's buildings may rise to in an age: later ones start lower. */
+export function levelLine(level: number): string {
+  return STR.ages.news.level(ageName(AGE_DEFS[0].id), level);
+}
+
 /** An age's news as dim lines, then the level its buildings may rise to. */
 function newsBlocks(n: AgeNews): Block[] {
   const out = newsLines(n).map((l) =>
     dim(...fill(l.label, { list: thingList(l.things, l.count) })),
   );
-  if (n.level > 1) out.push(dim(...richText(STR.ages.news.level(n.level))));
+  if (n.level > 1) out.push(dim(...richText(levelLine(n.level))));
   return out;
 }
 
@@ -231,6 +239,6 @@ export function ageTip(ages: AgeStatus[]): TipDoc {
     else out.push(dim(STR.ages.start));
     out.push(...newsOf(a.id));
   }
-  out.push(hint(STR.ages.hint));
+  out.push(hint(ageHint()));
   return out;
 }

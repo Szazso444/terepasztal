@@ -167,7 +167,9 @@ const EN = {
     anyOf: 'One of these:',
     /** the same heading once one of its goals is met */
     anyOfMet: 'One of these: met',
-    hint: 'An age begins once every goal listed for it is met; under "One of these", one goal is enough. Goals are checked every hour.',
+    /** read through `ageHint` (src/ui/ruleText.ts), which passes the hours between two checks */
+    hint: (hours: number) =>
+      `An age begins once every goal listed for it is met; under "One of these", one goal is enough. Goals are checked every ${hours === 1 ? 'hour' : `${hours} hours`}. Engines and wagons are sorted by age, but no age locks them; an engine still needs a line that takes its class.`,
     /** a locked item of the build bar: the age that opens it, and the one to reach before that */
     unlocksIn: (age: string) => `Locked. Unlocks in the ${age}`,
     reachFirst: (age: string) => `Reach the ${age} first.`,
@@ -179,15 +181,18 @@ const EN = {
       track: 'Track: {list}',
       stations: 'Stations: {list}',
       services: 'Town and services: {list}',
+      tools: 'Tools: {list}',
       works: 'Works: {list}',
       electric: 'Electrification: {list}',
-      engines: 'Engines: {list}',
-      wagons: 'Wagons: {list}',
+      engines: 'Engine recipes: {list}',
+      wagons: 'Wagon recipes: {list}',
       contracts: 'Contracts: {list}',
-      level: (n: number) => `Buildings rise to level ${n}`,
+      /** the level the buildings of the first age may reach: later ones start lower */
+      level: (age: string, n: number) => `Buildings from the ${age} rise to level ${n}`,
       trackCount: (n: number) => `${n} kinds of track`,
       stationsCount: (n: number) => `${n} stations`,
       servicesCount: (n: number) => `${n} kinds of building`,
+      toolsCount: (n: number) => `${n} tools`,
       worksCount: (n: number) => `${n} works`,
       electricCount: (n: number) => `${n} supplies`,
       enginesCount: (n: number) => `${n} engines`,
@@ -478,7 +483,7 @@ const EN = {
       `${run} track cannot cross ${line} track: it needs a bridge or an underpass`,
     /** crossings a dragged run lays by itself where it meets a line at right angles */
     autoCrossings: (n: number) =>
-      `+${n} crossing${n === 1 ? '' : 's'}, laid automatically, turned to the run`,
+      `+${n} crossing${n === 1 ? '' : 's'}, laid automatically, turned to the line`,
     reclassCost: (what: string, cost: string) => `${what}: ${cost}`,
     reclassFree: (what: string) => `${what}: free`,
     reclassIdle: (what: string) => `${what}: click a piece or drag along the line`,
@@ -616,7 +621,7 @@ const EN = {
     roads: 'Roads',
     road: 'Road',
     roadDesc:
-      'Walkers prefer roads and go faster along them. A street door near a road is joined to it for free. Drag to lay a run.',
+      'Walkers prefer roads and go faster along them. A street door near a road is joined to it for free. Drag to lay a stretch of road.',
     cycleHint: '1–9 item · Shift+Q / E category · Tab next · R turn · Esc close',
     typeHint: '1–9 piece · Q / E type · Shift+Q / E category · Tab next · R turn · Esc close',
     /** the last line of a tooltip of the bar */
@@ -629,15 +634,15 @@ const EN = {
     secCost: 'Cost',
     secMakes: 'Makes',
     secWhere: 'Where it goes',
-    secRun: 'The run you are laying',
+    secRun: 'The stretch you are laying',
     /** `BuildingDef.perWeek` counts runs of the recipe, not units of its output */
     batches: (n: number) => `${n} batches a week`,
     runSize: (tiles: number, curves: number) =>
       `${tiles} tile${tiles === 1 ? '' : 's'} · ${curves} curve${curves === 1 ? '' : 's'}`,
     /** the foot of the build card */
     foot: {
-      run: 'Drag: lay a run, with a curve where it turns',
-      drag: 'Drag: lay a run',
+      run: 'Drag: lay a stretch, with a curve where it turns',
+      drag: 'Drag: lay a stretch',
       /** Upgrade and Downgrade lay nothing: they work on track that stands */
       reclass: 'Click: one piece · Drag: along the line',
       click: 'Click: place',
@@ -679,21 +684,22 @@ const EN = {
       road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight Narrow Gauge, Branch or Main Line track at right angles, as a level crossing; never Trunk Line.',
     },
     trackDesc: {
-      straight_branch: 'Branch Line straight. Drag to lay a run of straights.',
+      straight_branch: 'Branch Line straight. Drag to lay a stretch of track.',
       curve_branch:
         'Two by two tiles, radius one and a half: room for long trains to turn. The inner corner tile is blocked. R rotates.',
       switch_branch:
         'Two by two tiles: one line splits into two. Lay a straight beside its far end and the branch bends into a parallel track. R rotates through both handings.',
       crossing_branch_branch: 'Two Branch Lines cross without connecting.',
       bridge_branch: 'Spans one tile of water. Only on water.',
-      straight_narrow: 'Narrow Gauge straight. Only narrow trains run on it. Drag to lay a run.',
+      straight_narrow:
+        'Narrow Gauge straight. Only narrow trains run on it. Drag to lay a stretch of track.',
       curve_narrow: 'Narrow Gauge quarter turn on one tile: for tight spaces. R rotates.',
       switch_narrow: 'Narrow Gauge switch on one tile. R rotates through both handings.',
       crossing_narrow_narrow: 'Two Narrow Gauge lines cross at grade.',
       crossing_narrow_branch:
         'A Narrow Gauge line crosses a Branch Line at grade without joining it. R swaps which line runs which way.',
       straight_main:
-        'Main Line straight: concrete sleepers on a wide bed, for Destroyers and smaller. Joins Branch and Trunk Line directly. Drag to lay a run.',
+        'Main Line straight: concrete sleepers on a wide bed, for Destroyers and smaller. Joins Branch and Trunk Line directly. Drag to lay a stretch of track.',
       curve_main:
         'Three by three tiles, radius two and a half: long trains take it faster. The inner tiles are blocked. R rotates.',
       switch_main:
@@ -702,7 +708,7 @@ const EN = {
       crossing_branch_main:
         'A Branch Line crosses a Main Line without connecting. R swaps which line runs which way.',
       straight_trunk:
-        'Trunk Line straight: heavy rail on wide concrete sleepers and dark basalt, for every class. Joins Branch and Main Line directly. Drag to lay a run.',
+        'Trunk Line straight: heavy rail on wide concrete sleepers and dark basalt, for every class. Joins Branch and Main Line directly. Drag to lay a stretch of track.',
       curve_trunk:
         'Four by four tiles, radius three and a half: room for the longest trains. The inner tiles are blocked. R rotates.',
       switch_trunk:
@@ -758,9 +764,9 @@ const EN = {
     unknownInput: '?',
     or: 'or',
     bridgeCapacity: 'Bridge capacity',
-    /** "half speed" is `BRIDGE_SLOW_FACTOR` in src/sim/bridges.ts; reword it if that changes. */
-    bridgeLimit: (capacity: number, slowAbove: number) =>
-      `${capacity} t · half speed above ${slowAbove} t`,
+    /** `slowPct` is `BRIDGE_SLOW_FACTOR` in src/sim/bridges.ts as a percent (`bridgeLimit`) */
+    bridgeLimit: (capacity: number, slowAbove: number, slowPct: number) =>
+      `${capacity} t · ${slowPct}% speed above ${slowAbove} t`,
     /** the works tooltip's recipe line, each side a list of amounts and resources */
     recipeLine: '{input} → {output}',
     recipeAlt: '{input} (or {alt}) → {output}',
@@ -1252,7 +1258,8 @@ const EN = {
     rescuing: 'standby, pulling',
     /** a working unit without usable power */
     dormant: 'no usable power',
-    hint: 'Multiple: same control class as the leader, full effort. Double-headed: 82% of the summed effort. Standby: dead weight until the pulling units lose fuel or the wire.',
+    /** {doubled}: the percent `modesHint` reads from `physics.doubleHeadEfficiency` */
+    hint: 'Multiple: same control class as the leader, full effort. Double-headed: {doubled}% of the summed effort. Standby: dead weight until the pulling units lose fuel or the wire.',
   } as Record<string, string>,
   contracts: {
     title: 'Contracts',
@@ -1511,13 +1518,15 @@ const EN = {
       ctc: 'CTC',
       in_cab: 'In-cab',
     } as Record<string, string>,
+    /** `gap`: the level's `HEADWAY`; `others`: what stock without in-cab keeps (`signalHint`) */
     signalHint: {
-      auto: 'Trains close up behind the train ahead, with no set distance.',
-      token: 'One train per plain section, whichever way it runs. Trains ignore semaphores.',
-      absolute_block: 'Trains keep 10 tiles apart.',
-      ctc: 'Trains keep 6 tiles apart.',
-      in_cab: 'Trains with an in-cab locomotive keep 3 tiles apart; the others keep 10.',
-    } as Record<string, string>,
+      auto: () => 'Trains close up behind the train ahead, with no set distance.',
+      token: () => 'One train per plain section, whichever way it runs. Trains ignore semaphores.',
+      absolute_block: (gap: number) => `Trains keep ${gap} tiles apart.`,
+      ctc: (gap: number) => `Trains keep ${gap} tiles apart.`,
+      in_cab: (gap: number, others: number) =>
+        `Trains with an in-cab locomotive keep ${gap} tiles apart; the others keep ${others}.`,
+    } as Record<string, (gap: number, others: number) => string>,
     signallingNote: 'Semaphores work at every level except Token.',
     title: 'Settings',
     saves: 'Saves',
@@ -1889,7 +1898,7 @@ const EN = {
     supplyHint: {
       simple:
         'Kiln, grinder and refinery make coal, iron and oil from stored goods; diesels burn oil; the stores on one rail network share their goods.',
-      full: 'Collieries on coal seams, iron and copper mines, ironworks, oil derricks on seeps, a refinery making diesel, sand for grip and copper wire. Warehouses refuel only from what trains bring.',
+      full: 'Collieries on hills, iron and copper mines, ironworks, oil derricks on seeps, a refinery making diesel, sand for grip and copper wire. Warehouses refuel only from what trains bring.',
     } as Record<string, string>,
   },
   credits: {
@@ -2163,7 +2172,9 @@ const EN = {
     dealsAt: (label: string) => `Deals settle at ${label}`,
     trend: 'Trend',
     driftPct: (p: number) => `${p >= 0 ? '+' : ''}${p}%`,
-    driftHint: 'Fuel prices (oil, diesel, crude) wander up to ±40 % on a slow weekly walk.',
+    /** read through `driftHint`: the fuels of this game's chain, the band of `DRIFT_MAX` */
+    driftHint: (goods: string, pct: number) =>
+      `Fuel prices (${goods}) wander up to ±${pct}% on a slow weekly walk.`,
     hint: 'Prices are per unit. A store holds up to its cap of each good.',
     deals: 'Standing deals',
     spot: 'Spot prices',
@@ -2356,11 +2367,7 @@ const EN = {
     noGrowth: 'Growth: none (no food)',
     growthCapped: 'Growth stops at available housing capacity; food is required',
     capacityHint: 'Build or upgrade Houses to increase capacity',
-    nextHouse: (at: number, mul: number) =>
-      `Next house at ${at} residents${mul > 1 ? ` (traffic ×${mul})` : ''}`,
     fullHousing: 'Housing full; build or upgrade Houses to provide room',
-    spawned: (town: string, n: number) =>
-      `${town} is building ${n === 1 ? 'a new house' : `${n} new houses`}`,
     newcomers: (town: string, n: number) => `${n} newcomers moved into ${town}`,
     firstTrain: (town: string, n: number) =>
       `The first train reached ${town}: ${n} newcomers moved in`,
@@ -2487,7 +2494,9 @@ const EN = {
       nextCategory: 'Next category',
       demolish: 'Demolish',
       pause: 'Pause and resume',
-      pieceOrCategory: 'A build category, then an item of it',
+      pieceOrCategory: 'An item of the open category',
+      /** the same digits with no category open: not an action of its own (`keyRows`) */
+      category: 'A build category, with none open',
       speedStep: 'Faster, slower',
       record: 'Record stops for the picked train',
       finishRoute: 'Finish the recording',
@@ -2501,10 +2510,11 @@ const EN = {
       goods: 'In the store: {list}.',
       copies: 'You hold {engines} of each engine and {wagons} of each wagon.',
       stepsHead: 'Your first train',
-      look: 'Rest the pointer on the ground. The tooltip says what each tile gives: {forest} on forest, {rock} on rock and hills, {grass} on grass.',
-      lay: 'Open {category} (key {key}) and pick {line}. Drag from the track at a gate of the {depot} to lay a run.',
+      look: 'Rest the pointer on the ground. The tooltip says what each tile gives.',
+      lookGoods: 'You get {forest} on forest, {rock} on rock and hills, {grass} on grass.',
+      lay: 'Open {category} (key {key}) and pick {line}. Drag from the track at a gate of the {depot} to lay a stretch of track. Press {esc} to put the track tool down.',
       place:
-        'Open {category} (key {key}), then {type}, and place a {a}, a {b} or a {c} with the track touching one side. That track becomes its platform.',
+        'Open {category} (key {key}), then {type}, and place a harvesting station ({list}) with the track touching one side. That track becomes its platform.',
       train:
         'Press {key} for the {depot}. Pick a locomotive, add wagons that carry the good, and press {dispatch}.',
       sell: 'What the train brings goes into the depot store. Press {key} for the {market} and sell some of it: that is your first income.',
@@ -2515,7 +2525,7 @@ const EN = {
       food: 'Crews and residents eat {food} every week. A {windmill} makes it from {wheat}.',
       land: 'Press {key} for the overview map and click an uncharted chunk beside your land to buy it. The first ring costs {price}.',
       age: 'Rest on the age beside the date to see what each age asks for and what it brings.',
-      advisor: 'The {advisor} tells you what to do next.',
+      advisor: 'The {advisor} ({view} menu) tells you what to do next.',
     },
     track: {
       intro:
@@ -2539,6 +2549,9 @@ const EN = {
       pieces:
         'On {line} a straight costs {straight}, a curve {curve} and a switch {switch}. The table gives the other lines against it.',
       slopesHead: 'Slopes',
+      straights: 'Straight track and crossings may climb, one level per tile at most.',
+      smooth: 'Curves and switches need smooth ground, or a bridge platform under every tile.',
+      level: 'Stations, works, houses and services need level ground.',
       climb:
         'A train slows on a climb and runs faster coming down. Its panel says how slow it gets.',
       groundHead: 'Ground',
@@ -2553,16 +2566,19 @@ const EN = {
       colPrice: 'Cost',
       upgradeHead: 'Upgrading a line',
       upgrade: '{name} (key {key}):',
+      upgradeSize:
+        'Upgrading or downgrading a curve or switch to a line whose curves are another size needs the piece laid again.',
     },
     stations: {
       intro:
-        'Trains call at stations. A station must touch track when you place it: that track is its platform.',
+        'Trains call at stations. Every station but a depot must touch track when you place it: that track is its platform.',
       colStation: 'Station',
-      colCost: 'Cost',
+      colCost: 'Cost of the first',
       colMakes: 'Makes',
       colGround: 'Counts',
       colAge: 'Age',
-      repeat: 'Every further one of a kind costs {pct} of its base price more, depots apart.',
+      repeat:
+        'Every further station, service, works, house, semaphore or pole of a kind costs more: {pct} of the first price for each one that stands, rounded up. Depots, track and bridges keep their price. The ground multiplies what a station costs, as it does for track.',
       depotsHead: 'Depots',
       depots:
         'Trains are built in a depot and roll out of its gates. A {depot} builds standard trains and a {narrow} narrow ones.',
@@ -2577,6 +2593,8 @@ const EN = {
       levelsHead: 'Levels',
       levels:
         'Stations, works and houses rise one level per age, from the age they appear in. A building being upgraded is closed until it is done; a depot upgrades at once.',
+      stopsAt: 'Some stop earlier: {list}.',
+      stopsAtOne: '{name} at level {level}',
       colLevel: 'Level',
       colStorage: 'Storage',
       colLoad: 'Loading / s',
@@ -2598,10 +2616,8 @@ const EN = {
       found:
         'Place a {townhouse}, then a {house} and a {warehouse} within {radius} tiles of it: that founds a town. Townhouses keep {spacing} tiles apart.',
       growth:
-        'A house takes {built} days to build and opens with {first} residents. After that one resident moves in every {days} days while the town store has {food}.',
+        "A house takes {built} days to build and opens with {first} residents. After that one resident moves in every {days} days while the town store has {food}, up to the house's capacity. Towns do not build houses themselves: place a {house}, or raise its level.",
       houses: 'A house holds, level by level: {list} residents.',
-      spawn:
-        'At {pct} of its housing a town starts a new house by itself, and train traffic makes it start more.',
       passengers:
         'A {station} serves the homes within {reach} tiles. Join two of them with coaches and people travel; the fare grows with the distance.',
       servicesHead: 'Services',
@@ -2615,6 +2631,8 @@ const EN = {
       consistHead: 'Consists',
       build:
         'A new train is put together in the {depot}: the depot it rolls out of, its engines and wagons, its route and, if you like, its name. {dispatch} sends it out through a gate.',
+      picked:
+        'The Depot then shows the new train, and {again} starts another like it: the same models from the free stock, its route and depot.',
       limits: 'A train has at least one engine, and at most {locos} engines and {wagons} wagons.',
       haul: 'Engines haul a set weight, and the wagons must stay under it. A train takes on only the load its engines can haul.',
       speed:
@@ -2628,8 +2646,8 @@ const EN = {
       colUses: 'Uses',
       steamUses: '{coal} or {wood}, and {water}',
       fillUp:
-        'A train fills up at a stop with a store (a {depot}, a {warehouse}, a {townhouse}) and at a station in reach of a service building.',
-      seek: 'A train running low looks for the nearest service that holds what it needs, and goes there by itself.',
+        'A train fills up at a stop with a store ({list}) and at a station in reach of a service building.',
+      seek: 'A train running low looks for the nearest service or depot that holds what it needs, and goes there by itself.',
       carts:
         'A refuelling cart adds to the tanks of engines of its kind and cuts their use by {saving}, up to {cap} in all.',
       emergency: '{name}:',
@@ -2660,7 +2678,7 @@ const EN = {
       colHeadway: 'Gap, tiles',
       colWhat: 'What it does',
       inCab: 'Fitting it costs {cost}, in the {roster}.',
-      postCost: 'A semaphore costs {cost}.',
+      postCost: 'The first semaphore costs {cost}; each one more adds {pct} of that, rounded up.',
     },
     goods: {
       intro: 'This game runs the {chain} production chain.',
@@ -2671,7 +2689,8 @@ const EN = {
       worksHead: 'Works',
       works:
         'A works needs no track: it runs from its town store, or else the nearest store within {reach} tiles.',
-      worksLevels: 'Each level makes a works faster.',
+      worksLevels: 'Each level adds {pct} to the batches a works makes in a week.',
+      windmillLevels: 'A {windmill} also gets {n} more {food} out of each batch with every level.',
       colWorks: 'Works',
       colRecipe: 'Recipe',
       colBatches: 'Batches a week',
@@ -2693,9 +2712,13 @@ const EN = {
       timing: 'The board looks for new offers every {days} days. An offer stays {life} days.',
       trains:
         'When you accept, the game hands the contract to the train best placed to work it, and a train on the Contract route is picked ahead of the rest. It goes back to its work afterwards.',
-      policy: 'Each rarity has its own policy for new offers.',
+      policy: 'Each rarity has its own policy for new offers, set in {economy} › {settings}.',
       payHead: 'Pay and fines',
-      pay: 'The payout grows with the amount, the price of the good, the distance and the rarity.',
+      pay: 'The payout grows with the amount, the price of the good, the distance, the rarity and the age.',
+      ageScale:
+        'The tables give the numbers of the {first}. Each age after it, up to the {last}, adds {amount} to the amounts and {pay} to the pay.',
+      deadlineKinds:
+        "Only a {kinds}'s deadline shortens with rarity, by the Deadline column; other deadlines stay as they are.",
       fines:
         'Missing the deadline costs {fail} of the payout, and cancelling costs {cancel}. Declining an offer is free.',
       lapse: 'If a station of a contract is demolished, the contract lapses with no fine.',
@@ -2715,7 +2738,8 @@ const EN = {
         'The {market} buys into and sells from the store shown on the resource bar. Pick a depot in {fleet} or on the {depot} screen, or select a townhouse, a depot or a warehouse on the map, and the bar shows its store.',
       whereSimple:
         'In this production chain the stores on one rail network count as one: the bar shows the same goods whichever of them you pick.',
-      prices: "You pay {buy} of a good's base price and get {sell} of it.",
+      prices:
+        "You pay {buy} of a good's base price and get {sell} of it. The table gives the prices a game starts with.",
       colGood: 'Good',
       colBuy: 'Buy',
       colSell: 'Sell',
@@ -2727,7 +2751,7 @@ const EN = {
       build:
         'Craft it: spend goods from the store shown on the resource bar. Rarer models cost more and can fail; a failure gives back {pct} of the goods.',
       anyAge:
-        'Recipes are sorted by age, but you may draw any of them at any time. An engine still needs its fuel or its wire.',
+        'Recipes are sorted by age, but you may draw any of them at any time. An engine still needs its fuel or its wire, and a line that takes its class.',
       starters: 'Key {key} opens the {roster}.',
       colAge: 'Age',
       colEngine: 'Engine',
@@ -2738,14 +2762,13 @@ const EN = {
       colSize: 'Size',
     },
     ages: {
-      intro:
-        'Each age opens new things. Rolling stock is sorted by age, but its recipes are not locked by it.',
+      intro: 'Each age opens new things.',
       goals: 'To reach it: {goals}.',
     },
     keys: {
       fieldHead: 'In the field',
       overviewHead: 'On the overview map',
-      menuHead: 'Over a menu',
+      menuHead: 'In the Menu and on the title screen',
       pointerHead: 'Camera and pointer',
     },
   },

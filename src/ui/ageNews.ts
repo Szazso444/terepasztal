@@ -32,7 +32,8 @@ import { BUILDABLE_CLASSES, lineAge, type TrackClass } from '../world/track';
  * and the Guide's Ages page at 320×180.
  */
 export const AGE_PICTURE: Record<string, string | null> = {
-  steam: 'assets/portraits/flying_scotsman.png',
+  // a Frigate: the Branch Line a player has in this age takes it
+  steam: 'assets/portraits/jupiter.png',
   diesel: 'assets/portraits/f7.png',
   electric: 'assets/portraits/taurus.png',
   nuclear: null,
@@ -56,6 +57,8 @@ export interface AgeNews {
   stations: StationDef[];
   /** services and town buildings: they have no age of their own and belong to the first */
   decor: DecorDef[];
+  /** what stands on the track, as the bar's Tools list has it: of the first age as well */
+  tools: DecorDef[];
   works: BuildingDef[];
   supplies: SupplyKind[];
   locos: LocoDef[];
@@ -80,7 +83,8 @@ export function ageNews(index: number): AgeNews {
     lines: BUILDABLE_CLASSES.filter((c) => lineOpens(c) === index && openLine(c)),
     bridges: works.filter((b) => b.bridge),
     stations: STATION_DEFS.filter((d) => d.tier === index && inSupplyMode(d) && openStation(d)),
-    decor: index === 0 ? DECOR_DEFS : [],
+    decor: index === 0 ? DECOR_DEFS.filter((d) => !d.onTrack) : [],
+    tools: index === 0 ? DECOR_DEFS.filter((d) => d.onTrack) : [],
     works: works.filter((b) => !b.bridge),
     supplies: SUPPLY_KINDS.filter((k) => SUPPLY_DEFS[k].tier === index),
     locos: craftPool('loco', index).map(locoDef),

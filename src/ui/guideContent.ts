@@ -7,13 +7,14 @@
 import { content, type Cost } from '../data/content';
 import { CRAFT_CONFIG, CRAFT_TIERS } from '../gacha/crafting';
 import { LEVEL_CAP, STAT_PER_LEVEL } from '../gacha/items';
-import { AGE_DEFS, type GoalKind } from '../sim/ages';
+import { AGE_DEFS, RAIL_AGES, type GoalKind } from '../sim/ages';
 import { BRIDGE_SLOW_FACTOR, BRIDGE_SLOW_SHARE } from '../sim/bridges';
-import { Builder, DECOR_DEFS, decorDef } from '../sim/build';
-import { BUILDING_DEFS, buildingDef } from '../sim/buildings';
+import { Builder, DECOR_DEFS } from '../sim/build';
+import { BUILDING_DEFS, buildingRate, buildingRecipe, worksUpgradeMax } from '../sim/buildings';
 import { CARGO } from '../sim/cargo';
 import { SUPPLY_DEFS, SUPPLY_KINDS } from '../sim/catenary';
 import { CLASS_LINE, TRAIN_CLASSES, classOf, classRunsOn, gaugeLine } from '../sim/compat';
+import { AMOUNT_PER_AGE, PAY_PER_AGE } from '../sim/contracts';
 import { MAX_LOCOS, MAX_WAGONS } from '../sim/fleet';
 import { lineSpeedCap } from '../sim/lineSpeed';
 import { rules, weekSeconds, daySeconds } from '../sim/rules';
@@ -25,7 +26,6 @@ import {
   HARVEST_RADIUS,
   LEVELS,
   STATION_DEFS,
-  stationDef,
   weeklyOutput,
 } from '../sim/stations';
 import { FAMINE_PRODUCTION_MUL, PASSENGER_CATCHMENT, startStock } from '../sim/step';
@@ -45,12 +45,13 @@ import {
 } from '../world/track';
 import { curveFactor } from '../world/trackGeom';
 import { ageNews, lineOpens } from './ageNews';
-import { ageName, fmtGoal, newsLines } from './ageTooltip';
+import { ageName, fmtGoal, levelLine, newsLines } from './ageTooltip';
 import { buildCatalog, keyLabel, visibleCategories, type CategoryId } from './buildBar';
 import type { IconName } from './kit';
-import { KEYMAP, screenKey, type KeyAction, type KeyContext } from './keymap';
+import { CATEGORY_KEYS, KEYMAP, screenKey, type KeyAction, type KeyContext } from './keymap';
 import { fmtDecimal, fmtInt, fmtMoney } from './numberFormat';
 import { makersOf, usersOf, type BuildRef } from './resourceOrder';
+import { ageHint, driftHint, modesHint, signalHint } from './ruleText';
 import { tileGoods } from './tileTooltip';
 import { amounts } from './tooltipContent';
 import { fill, num, plain, res, richText, type Inline, type Parts } from './tooltipDoc';
@@ -113,10 +114,23 @@ function percent(share: number): string {
 }
 const times = (v: number) => `×${fmtDecimal(v)}`;
 const lineName = (c: TrackClass) => STR.toolbar.trackClass[c];
-/** Names in a sentence: "a, b and c". */
-function names(list_: readonly string[]): string {
+/** Names in a sentence: "a, b and c", or with another last join. */
+function names(list_: readonly string[], join: string = G.and): string {
   if (list_.length < 2) return list_.join('');
-  return `${list_.slice(0, -1).join(', ')} ${G.and} ${list_[list_.length - 1]}`;
+  return `${list_.slice(0, -1).join(', ')} ${join} ${list_[list_.length - 1]}`;
+}
+/**
+ * The defs a page names by id. The Content editor can remove any of them: the piece of the page
+ * that needs one goes with it, and the Guide still opens.
+ */
+const stationNamed = (id: string) => STATION_DEFS.find((d) => d.id === id);
+const worksNamed = (id: string) => BUILDING_DEFS.find((d) => d.id === id);
+const decorNamed = (id: string) => DECOR_DEFS.find((d) => d.id === id);
+/** Whichever of these stations the data has, by name. */
+const stationNames = (...ids: string[]) => ids.flatMap((id) => stationNamed(id)?.name ?? []);
+/** What `piece` makes of a def, as a list to spread: nothing without the def. */
+function ifAny<D, P>(def: D | undefined, piece: (d: D) => P): P[] {
+  return def === undefined ? [] : [piece(def)];
 }
 /** Pieces of a line, with commas between them. */
 function joined(items: readonly Inline[][]): Inline[] {
@@ -165,8 +179,8 @@ const keyOf = (action: KeyAction, context: KeyContext = 'play') => keysOf(action
 /** A new game to a first train earning. */
 function firstPage(): GuidePage {
   const S = G.first;
-  const depot = stationDef(startDepotKind());
-  const line = gaugeLine(depot.gauge ?? 'regular');
+  const depot = stationNamed(startDepotKind());
+  const line = gaugeLine(depot?.gauge ?? 'regular');
   const engines = content.locomotives.filter((l) => l.starter && !l.retired);
   const wagons = content.wagons.filter((w) => w.starter && !w.retired);
   const stock = Object.entries(startStock()).map(([id, n]): Inline[] => [
@@ -174,7 +188,10 @@ function firstPage(): GuidePage {
     ' ',
     res(id),
   ]);
-  const goodOn = (t: Terrain) => res(tileGoods(t)[0].cargo);
+  const goodOn = (t: Terrain) => tileGoods(t)[0]?.cargo;
+  const [forest, rock, grass] = [Terrain.Forest, Terrain.Rock, Terrain.Grass].map(goodOn);
+  const harvesters = stationNames('farm', 'lumber', 'quarry');
+  const windmill = worksNamed('windmill');
   const track = category('track');
   const works = category('works');
   return {
@@ -182,11 +199,13 @@ function firstPage(): GuidePage {
     title: G.pages.first,
     icon: 'play',
     blocks: [
-      para(S.intro, {
-        money: num(fmtMoney(rules.startMoney)),
-        depot: depot.name,
-        line: lineName(line),
-      }),
+      ...ifAny(depot, (d) =>
+        para(S.intro, {
+          money: num(fmtMoney(rules.startMoney)),
+          depot: d.name,
+          line: lineName(line),
+        }),
+      ),
       head(S.haveHead),
       para(S.goods, { list: joined(stock) }),
       {
@@ -199,25 +218,34 @@ function firstPage(): GuidePage {
       }),
       head(S.stepsHead),
       steps(
-        fill(S.look, {
-          forest: goodOn(Terrain.Forest),
-          rock: goodOn(Terrain.Rock),
-          grass: goodOn(Terrain.Grass),
-        }),
-        fill(S.lay, {
-          category: track.label,
-          key: num(track.key),
-          line: lineName(line),
-          depot: depot.name,
-        }),
-        fill(S.place, {
-          category: works.label,
-          key: num(works.key),
-          type: STR.toolbar.rawMaterials,
-          a: stationDef('farm').name,
-          b: stationDef('lumber').name,
-          c: stationDef('quarry').name,
-        }),
+        [
+          ...said(S.look),
+          ...(forest && rock && grass
+            ? [
+                ' ',
+                ...fill(S.lookGoods, { forest: res(forest), rock: res(rock), grass: res(grass) }),
+              ]
+            : []),
+        ],
+        ...ifAny(depot, (d) =>
+          fill(S.lay, {
+            category: track.label,
+            key: num(track.key),
+            line: lineName(line),
+            depot: d.name,
+            esc: num(keyOf('pauseOrClose')),
+          }),
+        ),
+        ...(harvesters.length
+          ? [
+              fill(S.place, {
+                category: works.label,
+                key: num(works.key),
+                type: STR.toolbar.rawMaterials,
+                list: names(harvesters, G.or),
+              }),
+            ]
+          : []),
         [
           ...fill(S.train, {
             key: num(screenKey('depot') ?? ''),
@@ -233,14 +261,12 @@ function firstPage(): GuidePage {
       list(
         fill(S.money, { market: STR.market.title, contracts: STR.contracts.title }),
         fill(S.reach, { reach: num(rules.buildReach) }),
-        fill(S.food, {
-          food: res('food'),
-          windmill: buildingDef('windmill').name,
-          wheat: res('wheat'),
-        }),
+        ...ifAny(windmill, (w) =>
+          fill(S.food, { food: res('food'), windmill: w.name, wheat: res('wheat') }),
+        ),
         fill(S.land, { key: num(keyOf('overview')), price: num(fmtMoney(rules.chunkCost)) }),
         said(S.age),
-        fill(S.advisor, { advisor: STR.advisor.button }),
+        fill(S.advisor, { advisor: STR.advisor.button, view: STR.topbar.view }),
       ),
     ],
   };
@@ -307,12 +333,7 @@ function trackPage(): GuidePage {
         }),
       ),
       head(S.slopesHead),
-      list(
-        said(STR.build.tooSteep),
-        said(STR.build.notLevel),
-        said(STR.build.notSmooth),
-        said(S.climb),
-      ),
+      list(said(S.straights), said(S.smooth), said(S.level), said(S.climb)),
       head(S.groundHead),
       para(S.ground),
       table(
@@ -344,7 +365,7 @@ function trackPage(): GuidePage {
           ' ',
           ...said(STR.toolbar.downgradeHint),
         ],
-        said(STR.build.reclass.size),
+        said(S.upgradeSize),
       ),
     ],
   };
@@ -359,10 +380,15 @@ function stationMakes(cargo: readonly { cargo: string }[]): Parts {
 function stationsPage(): GuidePage {
   const S = G.stations;
   const defs = STATION_DEFS.filter(inSupplyMode);
-  const depot = stationDef('depot');
-  const narrow = stationDef('narrow_depot');
-  const house = decorDef('townhouse');
+  const depot = stationNamed('depot');
+  const narrow = stationNamed('narrow_depot');
+  const townhouse = stationNamed('town');
+  const warehouse = stationNamed('warehouse');
+  const passengers = stationNamed('station');
+  const house = decorNamed('townhouse');
   const services = DECOR_DEFS.filter((d) => d.radius);
+  // what stops rising before the last age, at the level it stops at
+  const stopping = BUILDING_DEFS.filter((b) => Number.isInteger(b.lastTier) && inSupplyMode(b));
   const cfg = content.houses;
   return {
     id: 'stations',
@@ -372,11 +398,9 @@ function stationsPage(): GuidePage {
       para(S.intro),
       {
         kind: 'pictures',
-        items: ['farm', 'lumber', 'quarry', 'town', 'station', 'warehouse'].map((id) => ({
-          of: 'station',
-          id,
-          caption: stationDef(id).name,
-        })),
+        items: ['farm', 'lumber', 'quarry', 'town', 'station', 'warehouse'].flatMap((id) =>
+          ifAny(stationNamed(id), (d): GuidePicture => ({ of: 'station', id, caption: d.name })),
+        ),
       },
       table(
         [S.colStation, S.colCost, S.colMakes, S.colGround, S.colAge],
@@ -391,7 +415,7 @@ function stationsPage(): GuidePage {
       para(S.repeat, { pct: num(percent(rules.repeatCostStep)) }),
       head(S.depotsHead),
       list(
-        fill(S.depots, { depot: depot.name, narrow: narrow.name }),
+        ...(depot && narrow ? [fill(S.depots, { depot: depot.name, narrow: narrow.name })] : []),
         said(S.depotCount),
         fill(S.depotStore, { cap: num(fmtInt(rules.depotCap)) }),
       ),
@@ -407,6 +431,17 @@ function stationsPage(): GuidePage {
       ),
       head(S.levelsHead),
       para(S.levels),
+      ...(stopping.length
+        ? [
+            para(S.stopsAt, {
+              list: joined(
+                stopping.map((b) =>
+                  fill(S.stopsAtOne, { name: b.name, level: num(worksUpgradeMax(b)) }),
+                ),
+              ),
+            }),
+          ]
+        : []),
       table(
         [S.colLevel, S.colStorage, S.colLoad, S.colPlatforms, S.colWeek],
         LEVELS.production.map((_, i) => [
@@ -430,25 +465,30 @@ function stationsPage(): GuidePage {
       ),
       head(S.townsHead),
       list(
-        fill(S.found, {
-          townhouse: stationDef('town').name,
-          house: house.name,
-          warehouse: stationDef('warehouse').name,
-          radius: num(TOWN_RADIUS),
-          spacing: num(Builder.TOWN_SPACING),
-        }),
-        fill(S.growth, {
-          food: res('food'),
-          days: num(fmtDecimal(cfg.growthDays)),
-          first: num(cfg.startResidents),
-          built: num(cfg.constructionDays),
-        }),
+        ...(townhouse && house && warehouse
+          ? [
+              fill(S.found, {
+                townhouse: townhouse.name,
+                house: house.name,
+                warehouse: warehouse.name,
+                radius: num(TOWN_RADIUS),
+                spacing: num(Builder.TOWN_SPACING),
+              }),
+            ]
+          : []),
+        ...ifAny(house, (h) =>
+          fill(S.growth, {
+            food: res('food'),
+            days: num(fmtDecimal(cfg.growthDays)),
+            first: num(cfg.startResidents),
+            built: num(cfg.constructionDays),
+            house: h.name,
+          }),
+        ),
         fill(S.houses, { list: cfg.capacity.map((c) => fmtInt(c)).join(', ') }),
-        fill(S.spawn, { pct: num(percent(cfg.spawnAt)) }),
-        fill(S.passengers, {
-          station: stationDef('station').name,
-          reach: num(PASSENGER_CATCHMENT),
-        }),
+        ...ifAny(passengers, (p) =>
+          fill(S.passengers, { station: p.name, reach: num(PASSENGER_CATCHMENT) }),
+        ),
         said(STR.toolbar.roadDesc),
       ),
       head(S.servicesHead),
@@ -474,7 +514,9 @@ function trainsPage(): GuidePage {
   );
   const wagonClasses = ['bulk', 'mineral', 'liquid', 'people'] as const;
   const physics = content.track.physics;
-  const battery = buildingDef('substation');
+  const battery = worksNamed('substation');
+  const pole = decorNamed('power_line');
+  const stops = stationNames('depot', 'warehouse', 'town');
   const modes = ['auto', 'custom', 'transport', 'contract', 'freight'];
   const cargoOf = (c: string) =>
     CARGO.filter((x) => x.class === c && inSupplyMode(x)).map((x): Inline[] => [res(x.id)]);
@@ -487,11 +529,12 @@ function trainsPage(): GuidePage {
       head(S.consistHead),
       list(
         fill(S.build, { depot: STR.depot.title, dispatch: STR.depot.dispatch }),
+        fill(S.picked, { again: STR.depot.again }),
         fill(S.limits, { locos: num(MAX_LOCOS), wagons: num(MAX_WAGONS) }),
         said(STR.fleet.mixedGauge),
         said(S.haul),
         said(S.speed),
-        said(STR.modes.hint),
+        said(modesHint()),
       ),
       table(
         [S.colClass, S.colRuns],
@@ -521,11 +564,7 @@ function trainsPage(): GuidePage {
         ],
       ),
       list(
-        fill(S.fillUp, {
-          depot: stationDef('depot').name,
-          warehouse: stationDef('warehouse').name,
-          townhouse: stationDef('town').name,
-        }),
+        ...(stops.length ? [fill(S.fillUp, { list: stops.join(', ') })] : []),
         said(S.seek),
         fill(S.carts, {
           saving: num(percent(physics.cartSaving)),
@@ -544,12 +583,18 @@ function trainsPage(): GuidePage {
         ...(sandPerTile() > 0 ? [fill(S.sand, { sand: res('sand') })] : []),
       ),
       head(S.electricHead),
-      para(S.electric, {
-        plant: names(BUILDING_DEFS.filter((b) => b.power && inSupplyMode(b)).map((b) => b.name)),
-        pole: decorDef('power_line').name,
-        battery: battery.name,
-        radius: num(battery.substation?.radius ?? 0),
-      }),
+      ...(battery && pole
+        ? [
+            para(S.electric, {
+              plant: names(
+                BUILDING_DEFS.filter((b) => b.power && inSupplyMode(b)).map((b) => b.name),
+              ),
+              pole: pole.name,
+              battery: battery.name,
+              radius: num(battery.substation?.radius ?? 0),
+            }),
+          ]
+        : []),
       table(
         [S.colSupply, G.track.colPrice, S.colCeiling, S.colAbout],
         SUPPLY_KINDS.map((k) => {
@@ -575,7 +620,6 @@ function trainsPage(): GuidePage {
           finish: num(keyOf('finishRoute', 'overview')),
         }),
         [...fill(S.emergency, { name: STR.depot.recall }), ' ', ...said(STR.depot.recallHint)],
-        [...fill(S.emergency, { name: STR.depot.again }), ' ', ...said(STR.depot.againHint)],
       ),
       head(S.levelsHead),
       para(S.levels, { pct: num(percent(STAT_PER_LEVEL)), cap: num(LEVEL_CAP) }),
@@ -600,7 +644,7 @@ function signalsPage(): GuidePage {
         SIGNAL_LEVELS.map((lv) => [
           cell(L.signalLevel[lv]),
           cell(HEADWAY[lv] ? HEADWAY[lv] : G.none),
-          said(L.signalHint[lv]),
+          said(signalHint(lv)),
         ]),
       ),
       list(said(L.signallingNote), [
@@ -609,7 +653,12 @@ function signalsPage(): GuidePage {
         ...fill(S.inCab, { cost: num(fmtMoney(rules.inCabCost)), roster: STR.roster.title }),
       ]),
       head(T.guideTitle),
-      list(said(T.guidePlace), fill(S.postCost, { cost: costCell(decorDef('signal').cost) })),
+      list(
+        said(T.guidePlace),
+        ...ifAny(decorNamed('signal'), (d) =>
+          fill(S.postCost, { cost: costCell(d.cost), pct: num(percent(rules.repeatCostStep)) }),
+        ),
+      ),
       { kind: 'diagram', text: T.guideDiagram },
       list(
         said(T.guideAspects),
@@ -641,6 +690,8 @@ function goodsPage(): GuidePage {
   const works = BUILDING_DEFS.filter(
     (b) => inSupplyMode(b) && !b.bridge && Object.keys(b.recipe.out).length,
   );
+  const windmill = worksNamed('windmill');
+  const worksRate = works.find((b) => b.perWeek > 0);
   const goods = [
     ...CARGO.filter((c) => inSupplyMode(c) && c.class !== 'people').map((c) => c.id),
     'power',
@@ -675,7 +726,28 @@ function goodsPage(): GuidePage {
         kind: 'pictures',
         items: works.map((b) => ({ of: 'works', id: b.id, caption: b.name })),
       },
-      list(fill(S.works, { reach: num(rules.buildReach) }), said(S.worksLevels)),
+      list(
+        fill(S.works, { reach: num(rules.buildReach) }),
+        ...ifAny(worksRate, (b) =>
+          fill(S.worksLevels, {
+            pct: num(
+              percent(
+                buildingRate({ id: b.id, level: 2 }) / buildingRate({ id: b.id, level: 1 }) - 1,
+              ),
+            ),
+          }),
+        ),
+        ...ifAny(windmill, (w) =>
+          fill(S.windmillLevels, {
+            windmill: w.name,
+            food: res('food'),
+            n: num(
+              (buildingRecipe({ id: w.id, level: 2 }).out.food ?? 0) -
+                (buildingRecipe({ id: w.id, level: 1 }).out.food ?? 0),
+            ),
+          }),
+        ),
+      ),
       table(
         [S.colWorks, S.colRecipe, S.colBatches, S.colAge],
         works.map((b) => [
@@ -708,6 +780,8 @@ function contractsPage(): GuidePage {
   );
   const shut = STATION_DEFS.filter((d) => d.contracts === false).map((d) => d.name);
   const weight = C.rarities.reduce((n, r) => n + r.weight, 0);
+  // rarity shortens only the deadlines of the kinds that say so
+  const hurried = C.templates.filter((t) => t.rarityDeadline).map((t) => t.name);
   return {
     id: 'contracts',
     title: G.pages.contracts,
@@ -726,11 +800,25 @@ function contractsPage(): GuidePage {
           life: num(C.offerLifetimeDays),
         }),
         said(S.trains),
-        [...said(S.policy), ' ', ...said(STR.settings.contractPolicyHint)],
+        [
+          ...fill(S.policy, {
+            economy: STR.topbar.economy,
+            settings: STR.topbar.contractSettings,
+          }),
+          ' ',
+          ...said(STR.settings.contractPolicyHint),
+        ],
       ),
       head(S.payHead),
       list(
         said(S.pay),
+        fill(S.ageScale, {
+          first: ageName(AGE_DEFS[0].id),
+          last: ageName(AGE_DEFS[RAIL_AGES - 1].id),
+          amount: num(percent(AMOUNT_PER_AGE)),
+          pay: num(percent(PAY_PER_AGE)),
+        }),
+        ...(hurried.length ? [fill(S.deadlineKinds, { kinds: names(hurried, G.or) })] : []),
         fill(S.fines, {
           fail: num(percent(C.failFine * rules.failPenaltyMul)),
           cancel: num(percent(C.cancelFine)),
@@ -738,13 +826,19 @@ function contractsPage(): GuidePage {
         said(S.lapse),
       ),
       table(
-        [S.colRarity, S.colChance, S.colReward, S.colAmount, S.colDeadline],
+        [
+          S.colRarity,
+          S.colChance,
+          S.colReward,
+          S.colAmount,
+          ...(hurried.length ? [S.colDeadline] : []),
+        ],
         C.rarities.map((r) => [
           cell(STR.contracts.rarity[r.id] ?? r.name),
           cell(percent(r.weight / weight)),
           cell(times(r.rewardMul)),
           cell(times(r.amountMul)),
-          cell(times(r.deadlineMul)),
+          ...(hurried.length ? [cell(times(r.deadlineMul))] : []),
         ]),
       ),
       table(
@@ -786,7 +880,7 @@ function marketPage(): GuidePage {
           buy: num(percent(BUY_MUL * rules.spotPriceMul)),
           sell: num(percent(SELL_MUL * rules.spotPriceMul)),
         }),
-        said(STR.market.driftHint),
+        said(driftHint()),
         said(STR.market.dealsHint(Math.round(weekSeconds() / daySeconds()))),
         said(STR.market.hint),
       ),
@@ -851,7 +945,7 @@ function goalParts(index: number): Parts {
 /** Each age on its own: its picture, what it asks for, what it brings. */
 function agesPage(): GuidePage {
   const S = G.ages;
-  const blocks: GuideBlock[] = [{ kind: 'text', parts: said(STR.ages.hint) }, para(S.intro)];
+  const blocks: GuideBlock[] = [{ kind: 'text', parts: said(ageHint()) }, para(S.intro)];
   AGE_DEFS.forEach((a, i) => {
     const n = ageNews(i);
     blocks.push(
@@ -864,7 +958,7 @@ function agesPage(): GuidePage {
     const lines = newsLines(n).map((l) =>
       fill(l.label, { list: l.things.map((t) => t.name).join(', ') }),
     );
-    if (n.level > 1) lines.push(said(STR.ages.news.level(n.level)));
+    if (n.level > 1) lines.push(said(levelLine(n.level)));
     blocks.push(list(...lines));
   });
   return { id: 'ages', title: G.pages.ages, icon: 'up', blocks };
@@ -877,6 +971,9 @@ function keyRows(context: KeyContext): GuideKey[] {
   for (const b of KEYMAP) {
     if (b.context !== context || seen.has(b.action)) continue;
     seen.add(b.action);
+    // the digits open a category first, and with one open they pick its items
+    if (b.action === 'pieceOrCategory')
+      out.push({ keys: [`1–${CATEGORY_KEYS}`], text: G.keyAction.category });
     out.push({ keys: keysOf(b.action, context), text: G.keyAction[b.action] });
   }
   return out;
@@ -956,11 +1053,14 @@ export function pageWords(p: GuidePage): string {
   return [p.title, ...p.blocks.map(blockWords)].join(' ').toLowerCase();
 }
 
+/** Text as the search reads it: lower case with no accents, so "ko" finds "kő". */
+const folded = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+
 /** The pages a search keeps: every word typed appears somewhere on the page. */
 export function matchingPages(pages: readonly GuidePage[], query: string): GuidePage[] {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const words = folded(query).split(/\s+/).filter(Boolean);
   return pages.filter((p) => {
-    const text = pageWords(p);
+    const text = folded(pageWords(p));
     return words.every((w) => text.includes(w));
   });
 }

@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ageName, ageProgress, ageTip, eraView, lockTip } from './ageTooltip';
+import { ageName, ageProgress, ageTip, eraView, levelLine, lockTip } from './ageTooltip';
+import { decorPlace } from './buildBar';
+import { ageHint } from './ruleText';
+import { DECOR_DEFS } from '../sim/build';
 import { blockText, partsOf, plain, termsOf, type Block } from './tooltipDoc';
 import { AGE_PICTURE, ageNews, agePictureUrl } from './ageNews';
 import { DEFAULT_CONTENT } from '../data/content';
@@ -93,7 +96,7 @@ describe('ageTip', () => {
     expect(lines).toContain(`${ageName('steam')}: ${STR.ages.reached}`);
     expect(lines).toContain(`${ageName('diesel')}: ${STR.ages.current}`);
     expect(lines).toContain(`${ageName('electric')}: ${STR.ages.locked}`);
-    expect(doc[doc.length - 1]).toEqual({ kind: 'hint', parts: [STR.ages.hint] });
+    expect(doc[doc.length - 1]).toEqual({ kind: 'hint', parts: [ageHint()] });
   });
   it('heads each age with its name, the current one in the accent tone', () => {
     const ids = ['steam', 'diesel', 'electric'];
@@ -261,7 +264,7 @@ describe('what each age brings', () => {
     ]);
     const refinery = data.buildings.find((b) => b.id === 'refinery');
     expect(terms.some((t) => t.term === refinery?.name)).toBe(true);
-    expect(lines).toContain(STR.ages.news.level(2));
+    expect(lines).toContain(levelLine(2));
     expect(lines.join('\n')).not.toContain('{');
   });
 
@@ -276,8 +279,32 @@ describe('what each age brings', () => {
 
   it('says of an age with nothing but a level just that', () => {
     const lines = card(tip(), 'nuclear').map(blockText);
-    expect(lines[lines.length - 1]).toBe(STR.ages.news.level(4));
+    expect(lines[lines.length - 1]).toBe(levelLine(4));
     expect(card(tip(), 'nuclear').filter((b) => b.kind === 'dim')).toHaveLength(1);
+  });
+
+  it('calls engines and wagons recipes, and says the level of the first age alone', () => {
+    const lines = card(tip(), 'diesel').map(blockText);
+    expect(lines.some((l) => l.startsWith('Engine recipes: '))).toBe(true);
+    expect(lines.some((l) => l.startsWith('Wagon recipes: '))).toBe(true);
+    expect(lines).toContain('Buildings from the Steam Age rise to level 2');
+  });
+
+  it('lists what the bar calls tools as tools, not as town and services', () => {
+    const lines = card(tip(), 'steam').map(blockText);
+    const tools = lines.find((l) => l.startsWith('Tools: ')) ?? '';
+    const onTools = DECOR_DEFS.filter((d) => decorPlace(d).category === 'tools');
+    expect(onTools.length).toBeGreaterThan(0);
+    for (const d of onTools) expect(tools).toContain(d.name);
+    expect(ageNews(0).tools).toEqual(onTools);
+    expect(ageNews(0).decor).toEqual(DECOR_DEFS.filter((d) => !onTools.includes(d)));
+  });
+
+  it('gives a term only to what has something to say', () => {
+    const diesel = termsOf(card(tip(), 'diesel')).map((t) => t.term);
+    const contract = data.contracts.templates.find((t) => t.minTier === 1);
+    expect(card(tip(), 'diesel').map(blockText).join('\n')).toContain(contract?.name);
+    expect(diesel).not.toContain(contract?.name);
   });
 
   it('reads no part of a picture', () => {

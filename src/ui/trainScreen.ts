@@ -35,6 +35,7 @@ import {
   type FootSpec,
 } from './kit';
 import { Bindings, bindMeter, keepPlace, keepScroll } from './liveView';
+import { modesHint } from './ruleText';
 import { copyTip, vehicleRow } from './vehicleRow';
 import {
   haulShare,
@@ -537,7 +538,7 @@ export class TrainScreen implements Screen {
           t.setStandby(i, !off);
           this.render();
         },
-        { cls: 'small', title: STR.modes.hint },
+        { cls: 'small', title: modesHint() },
       );
     };
     const engines = t.locos.map((l, i) => {
@@ -579,7 +580,7 @@ export class TrainScreen implements Screen {
       ...(at.kind === 'l'
         ? this.engineDetail(t, at.index, standby)
         : this.wagonDetail(t, at.index)),
-      well(STR.train.engineModes, note(STR.modes.hint)),
+      well(STR.train.engineModes, note(modesHint())),
     );
     return ld.root;
   }
