@@ -52,6 +52,59 @@ describe('the atmosphere over the objects (#555)', () => {
   });
 });
 
+describe('the night over ground objects built within a frame, after its atmosphere pass', () => {
+  type Scatter = Map<number, { s: Sprite }[]>;
+  const scatterOf = (w: WorldRenderer) =>
+    (w as unknown as { scatterSprites: Scatter }).scatterSprites;
+  /** A night world over open plains, with the tile that has the most scatter on it. */
+  const night = () => {
+    const w = world(emptyMap(3, 64, 64, Terrain.Grass));
+    w.setAtmosphereTint(NIGHT);
+    let at = -1;
+    for (const [i, list] of scatterOf(w))
+      if (at < 0 || list.length > scatterOf(w).get(at)!.length) at = i;
+    expect(at, 'the plains hold some scatter').toBeGreaterThanOrEqual(0);
+    return { w, x: at % 64, y: Math.floor(at / 64), at };
+  };
+  const sprites = (w: WorldRenderer) =>
+    [...scatterOf(w).values()].flatMap((l) => l.map((o) => o.s));
+
+  it('shows the night the moment the scatter is built, without another pass', () => {
+    const { w, x, y } = night();
+    const before = new Set(sprites(w));
+    expect(before.size).toBeGreaterThan(0);
+    // a station put up (a frame builds it after its pass) clears and builds the nature around it
+    w.setStructure('station:1', x, y, 'fx/warn');
+    const built = sprites(w).filter((s) => !before.has(s));
+    expect(built.length, 'the nature around the station was built again').toBeGreaterThan(0);
+    for (const s of built) expect(s.tint, 'drawn at the night colour').toBe(NIGHT);
+  });
+
+  it('builds no nature again for a marker, which the game sets again every half second', () => {
+    const { w, x, y } = night();
+    const before = new Set(sprites(w));
+    for (let k = 0; k < 4; k++) {
+      w.setStructure('notice:t1:route', x, y, 'structures/warn', 46, -40);
+      w.setStructure('contract:dest', x + 1, y, 'structures/note', 46, -58);
+    }
+    w.removeStructure('notice:t1:route');
+    w.removeStructure('contract:dest');
+    expect(sprites(w).length).toBe(before.size);
+    for (const s of sprites(w)) expect(before.has(s), 'the same sprite as before').toBe(true);
+    // a building does clear and build it again
+    w.setStructure('station:1', x, y, 'fx/warn');
+    expect(sprites(w).some((s) => !before.has(s))).toBe(true);
+  });
+
+  it('turns the scatter with the season, as the props are', () => {
+    const { w } = night();
+    w.setSeasonTint(0xffeecc, 0xccddaa);
+    for (const s of sprites(w)) expect(s.tint).toBe(multiplyTint(0xccddaa, NIGHT));
+    w.setAtmosphereTint(0xffffff);
+    for (const s of sprites(w)) expect(s.tint).toBe(0xccddaa);
+  });
+});
+
 describe('viewTileRows', () => {
   it('holds every tile whose centre lies in the view, row by row, as a scan of the map did', () => {
     const rng = new Rng(11);
