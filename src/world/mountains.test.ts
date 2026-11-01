@@ -7,6 +7,7 @@ import {
   MOUNTAIN_SHAPES,
   SCULPT_REACH,
   coverMountains,
+  liftFade,
   massifAt,
   massifLift,
   massifWander,
@@ -58,6 +59,51 @@ describe('massifLift', () => {
         expect(massifWander(80 + dx, 80 + dy, dx, dy, seed), `${seed}`).toBe(0);
       }
     }
+  });
+
+  it('has no step where the clear around the start ends, sampled on rings just outside it', () => {
+    // the cut is a circle of 23 tiles about the start chunk's middle: sample every tile of the
+    // rings from 22 to 26 out, with its neighbour a tile nearer or further
+    let worst = 0;
+    let across = 0;
+    for (let k = 0; k < 120; k++) {
+      const seed = 31 + k * 97;
+      const at = (dx: number, dy: number) => liftFade(500 + dx, 500 + dy, dx, dy, seed);
+      for (let dy = -27; dy <= 27; dy++)
+        for (let dx = -27; dx <= 27; dx++) {
+          const far = Math.hypot(dx, dy);
+          if (far > 26) continue;
+          const here = at(dx, dy);
+          if (far <= 23) expect(here, `${seed} ${dx} ${dy}`).toBe(0);
+          for (const [nx, ny] of [
+            [dx + 1, dy],
+            [dx, dy + 1],
+          ]) {
+            if (Math.hypot(nx, ny) > 26) continue;
+            // only the pairs that straddle the cut
+            if (far <= 23 === Math.hypot(nx, ny) <= 23) continue;
+            across++;
+            worst = Math.max(worst, Math.abs(at(nx, ny) - here));
+          }
+        }
+    }
+    expect(across).toBeGreaterThan(1000);
+    // the fade without its ramp stepped by 0.18 across that line
+    expect(worst).toBeLessThan(0.01);
+  });
+
+  it('lifts a massif hardly at all just outside the clear around the start', () => {
+    let most = 0;
+    for (let k = 0; k < 120; k++) {
+      const seed = 31 + k * 97;
+      for (let dy = -25; dy <= 25; dy++)
+        for (let dx = -25; dx <= 25; dx++) {
+          const far = Math.hypot(dx, dy);
+          if (far > 23 && far < 24)
+            most = Math.max(most, massifLift(500 + dx, 500 + dy, dx, dy, seed));
+        }
+    }
+    expect(most).toBeLessThan(0.01);
   });
 
   it('wanders only on the slope it makes', () => {

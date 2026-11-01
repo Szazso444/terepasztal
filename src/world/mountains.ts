@@ -59,20 +59,24 @@ const LIFT_FULL = 54;
 const LIFT_WOBBLE = 24;
 /** Past the corners of the start chunk, in tiles: no lift nearer, however the noise falls. */
 const LIFT_NONE = 23;
+/** The tiles past LIFT_NONE over which the fade comes in, so it has no step where the clear ends. */
+const LIFT_RAMP = 12;
 /** How much a slope as steep as the lift gets moves a tile in the flood's order, end to end. */
 const WANDER = 0.18;
 
 /**
  * How far out of the start the lift has come at world tile (`wx`, `wy`), `dx`, `dy` from the start
  * chunk's centre, 0 to 1. The ring it rises on follows no line of the grid: a long straight slope
- * sends every river down it side by side.
+ * sends every river down it side by side. It is 0 up to LIFT_NONE and comes in smoothly from there,
+ * where the noise alone would put a step of up to 0.2 on that line.
  */
-function liftFade(wx: number, wy: number, dx: number, dy: number, seed: number): number {
+export function liftFade(wx: number, wy: number, dx: number, dy: number, seed: number): number {
   const far = Math.hypot(dx, dy);
   if (far <= LIFT_NONE) return 0;
   if (far >= LIFT_FULL + LIFT_WOBBLE / 2) return 1;
   const wobbled = far + LIFT_WOBBLE * (fbm(wx / 20, wy / 20, seed + 70, 3) - 0.5);
-  return clamp((wobbled - LIFT_CLEAR) / (LIFT_FULL - LIFT_CLEAR));
+  const fade = clamp((wobbled - LIFT_CLEAR) / (LIFT_FULL - LIFT_CLEAR));
+  return fade * ease(clamp((far - LIFT_NONE) / LIFT_RAMP));
 }
 
 /** How far up the side of a massif world tile (`wx`, `wy`) stands, 0 to 1. */

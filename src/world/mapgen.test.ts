@@ -78,11 +78,11 @@ describe('generateMap', () => {
     // A tripwire, not a specification: any deliberate change to map generation invalidates
     // every existing seed, so re-bless these numbers on purpose or not at all.
     const m = generateMap(SEED, SMALL);
-    expect(fnv(m.terrain)).toBe(3262652033);
+    expect(fnv(m.terrain)).toBe(466482162);
     expect(fnv(m.biome)).toBe(3895354596);
     expect(fnv(m.variant)).toBe(417171169);
-    expect(m.props.size).toBe(471);
-    expect(fnv(m.generatedLevel!)).toBe(1305521375);
+    expect(m.props.size).toBe(472);
+    expect(fnv(m.generatedLevel!)).toBe(3775704277);
   });
 
   it('fills the plane it was asked for', () => {
@@ -172,7 +172,7 @@ describe('a grown map', () => {
       fnv(m.variant),
       propHash(m),
       fnv(m.generatedLevel!),
-    ]).toEqual([153610151, 3196331832, 1813736059, 3852344555, 2259723918]);
+    ]).toEqual([2055292387, 913513656, 1813736059, 1615046882, 2259723918]);
     const g = grown(SEED, 160);
     expect([
       fnv(g.terrain),
@@ -180,7 +180,7 @@ describe('a grown map', () => {
       fnv(g.variant),
       propHash(g),
       fnv(g.generatedLevel!),
-    ]).toEqual([1386159934, 3209111700, 1107381422, 173682738, 970212280]);
+    ]).toEqual([3951292950, 4272823928, 1107381422, 3363527260, 970212280]);
   });
 });
 
