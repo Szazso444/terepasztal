@@ -60,11 +60,6 @@ const FORMER_WAGONS = ['water_cart', 'wood_hopper', 'flatbed', 'wooden_coach'];
 /** The engines the content marks as starters: what a new game hands out, whatever they are. */
 const STARTER_LOCOS = content.locomotives.filter((l) => l.starter);
 
-/** Is this model a maintenance wagon? */
-function wagonMaintenance(id: string): boolean {
-  return content.wagons.some((w) => w.id === id && w.maintenance);
-}
-
 /** Plenty of every fuel and crafting material, for the tests that are not about the start stock. */
 function plenty(): Record<string, number> {
   const out: Record<string, number> = {};
@@ -215,34 +210,33 @@ describe('the starter kit of a new game', () => {
     },
   );
 
-  it('marks only narrow-gauge wagons as starters, bar the maintenance wagons, and hands out no other regular one', () => {
+  it('marks only narrow-gauge wagons as starters, and hands out no regular one', () => {
     const starters = content.wagons.filter((w) => w.starter);
     expect(starters.length).toBeGreaterThan(0);
-    for (const w of starters.filter((x) => !x.maintenance)) expect(gaugeOf(w), w.id).toBe('narrow');
+    for (const w of starters) expect(gaugeOf(w), w.id).toBe('narrow');
     const { inventory } = newGame();
     const wagons = inventory.items.filter((i) => i.kind === 'wagon');
     expect(wagons.length).toBeGreaterThan(0);
-    for (const i of wagons.filter((x) => !wagonDef(x.defId).maintenance))
-      expect(gaugeOf(itemDef(i.defId)), i.defId).toBe('narrow');
-    // the one regular wagon is the Branch maintenance wagon: it waits for a regular-gauge depot
-    expect(
-      wagons.filter((i) => gaugeOf(itemDef(i.defId)) !== 'narrow').map((i) => i.defId),
-    ).toEqual(Array(content.crafting.starterCopies.wagon).fill('maint_wagon_branch'));
+    for (const i of wagons) expect(gaugeOf(itemDef(i.defId)), i.defId).toBe('narrow');
   });
 
-  it('maintenance wagons are Steam, starter stock, one per network', () => {
+  it('maintenance wagons are Steam, the narrow one starter stock, the Branch one a Steam draw', () => {
     const wagons = content.wagons.filter((w) => w.maintenance);
     expect(wagons.map((w) => [w.id, w.class, gaugeOf(w)])).toEqual([
       ['maint_wagon_narrow', 'corvette', 'narrow'],
       ['maint_wagon_branch', 'frigate', 'regular'],
     ]);
     const { inventory, crafting } = newGame();
-    for (const w of wagons) {
-      expect(w.starter, w.id).toBe(true);
-      expect(w.tier, w.id).toBe(0);
-      expect(inventory.count(w.id), w.id).toBe(content.crafting.starterCopies.wagon);
-      expect(crafting.knows(w.id), w.id).toBe(true);
-    }
+    for (const w of wagons) expect(w.tier, w.id).toBe(0);
+    // the narrow start hands out the Narrow wagon only: a regular wagon has no depot to roll out of
+    const [narrow, branch] = wagons;
+    expect(narrow.starter).toBe(true);
+    expect(inventory.count(narrow.id)).toBe(content.crafting.starterCopies.wagon);
+    expect(crafting.knows(narrow.id)).toBe(true);
+    expect(branch.starter).toBeUndefined();
+    expect(inventory.count(branch.id)).toBe(0);
+    expect(crafting.knows(branch.id)).toBe(false);
+    expect(craftPool('wagon', 0)).toContain(branch.id);
   });
 
   it('hands out each starter in the copies the crafting table says, and nothing else', () => {
@@ -281,7 +275,7 @@ describe('the starter kit of a new game', () => {
     const { inventory, crafting, stock } = newGame();
     expect([...crafting.recipes].sort()).toEqual(inventory.ownedDefs().sort());
     for (const id of crafting.recipes) {
-      if (!wagonMaintenance(id)) expect(gaugeOf(itemDef(id)), id).toBe('narrow');
+      expect(gaugeOf(itemDef(id)), id).toBe('narrow');
       expect(crafting.canCraft(id, stock), id).toBe(true);
     }
   });
@@ -744,9 +738,7 @@ describe('the depot a new game starts with', () => {
     const { depot } = firstDepot(w, startDepotKind(), 0);
     const owned = w.inventory.ownedDefs();
     expect(owned.length).toBeGreaterThan(0);
-    // bar the Branch maintenance wagon, which a regular-gauge depot builds
-    for (const id of owned.filter((x) => gaugeOf(itemDef(x)) === 'narrow'))
-      expect(w.fleet.modelDeployReason(itemDef(id), depot), id).toBeNull();
+    for (const id of owned) expect(w.fleet.modelDeployReason(itemDef(id), depot), id).toBeNull();
     const free = w.inventory.free('loco');
     const deployable = free.filter((i) => !w.fleet.modelDeployReason(locoDef(i.defId), depot));
     expect(deployable[0].defId).toBe('rocket');
@@ -757,9 +749,7 @@ describe('the depot a new game starts with', () => {
   // next on the start stock alone
   it.each(
     STARTER_LOCOS.flatMap((l) =>
-      content.wagons
-        .filter((wg) => wg.starter && gaugeOf(wg) === gaugeOf(l))
-        .map((wg) => [l.id, wg.id]),
+      content.wagons.filter((wg) => wg.starter).map((wg) => [l.id, wg.id]),
     ),
   )('rolls a %s pulling a %s out of it, past two stops on the start stock', (locoId, wagonId) => {
     const w = newGame(startStock());

@@ -381,7 +381,6 @@
     "carries": "bulk",
     "capacity": 0,
     "weight": 8,
-    "starter": true,
     "tier": 0,
     "size": "small",
     "maintenance": true

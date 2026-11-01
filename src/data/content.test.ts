@@ -385,14 +385,21 @@ describe('the maintenance rolling stock', () => {
     const wagons = shipped.content.wagons.filter((w) => w.maintenance);
     expect(wagons.map((w) => w.id)).toEqual(['maint_wagon_narrow', 'maint_wagon_branch']);
     for (const w of wagons) {
-      expect(
-        [w.tier, w.capacity, w.carries, w.weight, w.rarity, w.starter, w.body, w.paint],
-        w.id,
-      ).toEqual([0, 0, 'bulk', 8, 'N', true, 'hopper', 'yellow']);
+      expect([w.tier, w.capacity, w.carries, w.weight, w.rarity, w.body, w.paint], w.id).toEqual([
+        0,
+        0,
+        'bulk',
+        8,
+        'N',
+        'hopper',
+        'yellow',
+      ]);
     }
     const [narrow, branch] = wagons;
     expect([narrow.class, narrow.gauge]).toEqual(['corvette', 'narrow']);
     expect([branch.class, branch.gauge]).toEqual(['frigate', undefined]);
+    // only the Narrow wagon is starter stock: the narrow start has no regular depot
+    expect([narrow.starter, branch.starter]).toEqual([true, undefined]);
     // no other wagon claims to be one
     expect(shipped.content.wagons.filter((w) => !wagons.includes(w) && w.maintenance)).toEqual([]);
   });
