@@ -5,6 +5,7 @@ import {
   railLevel,
   railGrade,
   railProfile,
+  rampReach,
   supportedDeck,
   CLIMB_SPEED,
   DESCENT_SPEED,
@@ -202,5 +203,118 @@ describe('rail inclines', () => {
     expect(supportedDeck(m, curve(5, 5, 3), none)).toBeNull();
     // Neighbours on platforms adapt: the deck is the piece's own highest tile.
     expect(supportedDeck(m, curve(4, 6, 0), () => true)).toBe(1);
+  });
+});
+
+describe('stored deck heights', () => {
+  /** A line of `n` tiles with a bridge on tiles `from`..`to` stored at `h`. */
+  const raised = (n: number, from: number, to: number, h: number, ground = 0) => {
+    const terrain = new Array<number>(n).fill(ground),
+      bridge = terrain.map((_, i) => i >= from && i <= to),
+      decks = bridge.map((b) => (b ? h : undefined));
+    return lineSpans(terrain, bridge, 0, [], [], decks);
+  };
+
+  it('changes nothing without a stored height', () => {
+    forAll(
+      (rng) => {
+        const n = rng.int(3, 14);
+        return {
+          terrain: Array.from({ length: n }, () => rng.int(0, 2)),
+          bridge: Array.from({ length: n }, () => rng.int(0, 2) === 0),
+        };
+      },
+      ({ terrain, bridge }) => {
+        const none = terrain.map(() => undefined);
+        expect(lineSpans(terrain, bridge, 0, [], [], none)).toEqual(lineSpans(terrain, bridge));
+      },
+    );
+  });
+
+  it('stands a deck at its height and ramps the approach one level per tile', () => {
+    const { levels, spans } = raised(13, 5, 7, 4);
+    expect(levels).toEqual([0, 0, 1, 2, 3, 4, 4, 4, 3, 2, 1, 0, 0]);
+    const b = bed(spans);
+    for (let t = -0.5; t < 12.5; t += 1 / 32)
+      expect(Math.abs(railLevel(b, t + 1 / 32) - railLevel(b, t)) * 32).toBeLessThanOrEqual(1.0001);
+  });
+
+  it('keeps a deck above the ground and the water under it', () => {
+    expect(raised(5, 2, 2, 1, 3).levels[2]).toBe(3);
+    const over = lineSpans([2, 2, 2], [false, true, false], 0, [], [2, 2, 2], [undefined, 1]);
+    expect(over.levels[1]).toBe(2);
+    expect(raised(7, 3, 3, 3, 2).levels).toEqual([2, 2, 2, 3, 2, 2, 2]);
+  });
+
+  it('ramps up to a stored deck just past an end of the line', () => {
+    const { levels, spans } = lineSpans([0, 0, 0, 0, 0], [], 0, [], [], [], [undefined, 3]);
+    expect(levels).toEqual([0, 0, 0, 1, 2]);
+    expect(railLevel(bed(spans), 4.5)).toBeCloseTo(3);
+  });
+
+  it('seats a curve on a platform at the stored height', () => {
+    const map = emptyMap(5, 8, 8),
+      links = [[Dir.E, Dir.S]] as const,
+      one = { x: 3, y: 3, links };
+    expect(
+      supportedDeck(
+        map,
+        [one],
+        () => true,
+        () => 3,
+      ),
+    ).toBe(3);
+    expect(
+      supportedDeck(
+        map,
+        [one, { x: 4, y: 3, links }],
+        () => true,
+        (x) => (x === 3 ? 3 : 2),
+      ),
+    ).toBeNull();
+  });
+
+  it('honours the height through the whole profile, and the ramp stays on its ground', () => {
+    const map = emptyMap(5, 16, 8),
+      track = new TrackGraph(16, 8);
+    for (let x = 1; x <= 12; x++) track.place(x, 3, 'straight', 1, 'branch');
+    const platform = (x: number, y: number) => y === 3 && x >= 6 && x <= 7,
+      beds = railProfile(map, track, platform, (x, y) => (platform(x, y) ? 2 : undefined)),
+      at = (x: number) => railLevel(beds.get(3 * 16 + x)!, x);
+    expect(at(6)).toBeCloseTo(2);
+    expect(at(7)).toBeCloseTo(2);
+    expect(at(5)).toBeGreaterThan(0.5);
+    expect(beds.get(3 * 16 + 6)!.bridge).toBe(true);
+    expect(beds.get(3 * 16 + 5)!.bridge).toBeUndefined();
+    expect(at(1)).toBeCloseTo(0);
+    expect(at(12)).toBeCloseTo(0);
+  });
+
+  it('reports the pieces a ramp would have to rise under', () => {
+    const map = emptyMap(5, 16, 8),
+      track = new TrackGraph(16, 8);
+    for (let x = 3; x <= 9; x++) track.place(x, 3, 'straight', 1, 'narrow');
+    const pieceAt = (x: number, y: number) =>
+        x === 2 && y === 3 ? { links: pieceLinks('curve', 0) } : track.get(x, y),
+      deck = (h: number) => [{ x: 6, y: 3, deck: h }];
+    // A height of 1 is met by the next tile's ground.
+    expect(rampReach(map, pieceAt, deck(1)).climbs).toEqual([]);
+    expect(rampReach(map, pieceAt, deck(3)).climbs).toEqual(
+      expect.arrayContaining([
+        { x: 5, y: 3 },
+        { x: 4, y: 3 },
+        { x: 7, y: 3 },
+        { x: 8, y: 3 },
+      ]),
+    );
+    expect(rampReach(map, pieceAt, deck(2), (x) => x === 5).blocked).toEqual([{ x: 5, y: 3 }]);
+    const clear = rampReach(
+      map,
+      pieceAt,
+      deck(2),
+      () => false,
+      (x) => x === 5,
+    );
+    expect(clear.climbs).toEqual([{ x: 7, y: 3 }]);
   });
 });
