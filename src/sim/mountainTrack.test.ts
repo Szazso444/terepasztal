@@ -30,7 +30,7 @@ import { Catenary } from './catenary';
 import { streetDoors } from './doors';
 import { Economy } from './economy';
 import { Fleet } from './fleet';
-import { STATION_DEFS, Station, resetStationIds, stationFootprint } from './stations';
+import { STATION_DEFS, Station, resetStationIds, stationFootprint, stationGates } from './stations';
 import { Train, resetTrainIds, type TickCtx } from './trains';
 import { setSupplyMode } from './supply';
 import { Inventory } from '../gacha/inventory';
@@ -1231,6 +1231,81 @@ describe('track inside', () => {
       // beside the tunnel, the cliff stands as it did
       expect(w.builder.placeLine(run(10, 15, ROW + 1))).toBe(true);
       expect(w.builder.checkTrack(16, ROW + 1, STRAIGHT, 1).reason).toBe(STR.build.tooSteep);
+    });
+  });
+
+  describe('a station beside a tunnel', () => {
+    type Kind = 'dug' | 'cut' | 'open';
+    /** A plain where the first gate of `defId` at (20, ROW) is of that kind and holds rail. */
+    function beside(defId: string, kind: Kind) {
+      const w = ground(() => 0),
+        [gate] = stationGates(defId, 20, ROW, 0);
+      if (kind === 'dug') w.under.dig(gate.x, gate.y, 0);
+      if (kind === 'cut') w.under.cut(gate.x, gate.y);
+      w.track.place(gate.x, gate.y, 'straight', 1);
+      return { ...w, gate };
+    }
+
+    it.each([
+      ['dug', false],
+      ['cut', true],
+      ['open', true],
+    ] as const)('takes a gate on a %s tile as its track: %s', (kind, serves) => {
+      const w = beside('quarry', kind),
+        { builder, gate } = w;
+      expect(builder.hasAdjacentTrack(20, ROW, 'quarry', 0)).toBe(serves);
+      expect(builder.checkStation(20, ROW, 'quarry', 0).reason === STR.build.needTrack).toBe(
+        !serves,
+      );
+      const st = new Station('quarry', 20, ROW);
+      builder.stations.push(st);
+      expect(builder.platformTiles(st)).toEqual(serves ? [gate] : []);
+      expect(builder.isOrphaned(st)).toBe(!serves);
+      expect(builder.stationForTrackTile(gate.x, gate.y)).toBe(serves ? st : undefined);
+    });
+
+    it('does not take rail inside as track beside a plain tile either', () => {
+      const w = ground(() => 0);
+      w.under.dig(21, ROW, 0);
+      w.track.place(21, ROW, 'straight', 1);
+      expect(w.builder.hasAdjacentTrack(20, ROW)).toBe(false);
+      w.under.fill(21, ROW);
+      expect(w.builder.hasAdjacentTrack(20, ROW)).toBe(true);
+    });
+
+    it.each([
+      ['dug', false],
+      ['cut', true],
+    ] as const)('a depot with its gate on a %s tile rolls out there: %s', (kind, serves) => {
+      const w = beside('depot', kind),
+        { builder, gate, track, map } = w;
+      const depot = new Station('depot', 20, ROW);
+      builder.stations.push(depot);
+      expect(builder.platformTiles(depot)).toEqual(serves ? [gate] : []);
+      const fleet = new Fleet(track, builder, map, new Inventory(), builder.economy);
+      expect(fleet.depotClasses(depot).size).toBe(serves ? 1 : 0);
+      const train = new Train([
+        { uid: 1, level: 0, def: content.locomotives.find((d) => d.id === 'f7')! },
+      ]);
+      const report = fleet.gateReport(train, depot).find((g) => g.x === gate.x && g.y === gate.y)!;
+      if (!serves) expect(report.reason).toBe(STR.compat.gateNoTrack(gate.x, gate.y));
+      else expect(report.cls).not.toBeNull();
+    });
+
+    it('does not make a platform of a gate inside: the line through it is one section', () => {
+      const sections = (kind: Kind) => {
+        const w = beside('quarry', kind),
+          { gate, track, builder, map } = w;
+        for (let x = gate.x - 3; x <= gate.x + 3; x++)
+          if (x !== gate.x) track.place(x, gate.y, 'straight', 1);
+        builder.stations.push(new Station('quarry', 20, ROW));
+        const { traffic } = new Fleet(track, builder, map, new Inventory(), builder.economy);
+        traffic.rebuildSections();
+        const { sections: all } = traffic as unknown as { sections: Map<number, number> };
+        return new Set(all.values()).size;
+      };
+      expect(sections('open')).toBeGreaterThan(sections('dug'));
+      expect(sections('cut')).toBe(sections('open'));
     });
   });
 });

@@ -405,13 +405,19 @@ export class Builder {
    * any of its tiles, so a station of two tiles is served from either).
    */
   hasAdjacentTrack(x: number, y: number, defId?: string, rot = 0) {
-    if (defId !== undefined)
-      return stationGates(defId, x, y, rot).some((g) => this.track.has(g.x, g.y));
-    return DIRS.some((d) => this.track.has(x + DIR_DX[d], y + DIR_DY[d]));
+    if (defId !== undefined) return stationGates(defId, x, y, rot).some((g) => this.gateTrack(g));
+    return DIRS.some((d) => this.gateTrack({ x: x + DIR_DX[d], y: y + DIR_DY[d] }));
+  }
+  /**
+   * The track a station on the surface meets on tile `g`. There is none on a dug tile: the rail
+   * inside runs under the ground, behind the wall of the tunnel. A cut lies open, and serves.
+   */
+  gateTrack(g: { x: number; y: number }): TrackPiece | undefined {
+    return this.underground.isDug(g.x, g.y) ? undefined : this.track.get(g.x, g.y);
   }
   /** Track tiles serving a station: its platforms (a depot's gates with track on them). */
   platformTiles(s: Station): { x: number; y: number }[] {
-    const gates = s.gateTiles().filter((p) => this.track.has(p.x, p.y));
+    const gates = s.gateTiles().filter((p) => this.gateTrack(p));
     if (!s.def.depot) return gates;
     // rails through the shed serve it too
     for (const t of s.footprint()) if (this.track.has(t.x, t.y)) gates.push(t);
@@ -419,6 +425,7 @@ export class Builder {
   }
   /** Station whose platform set contains this track tile (if any). */
   stationForTrackTile(x: number, y: number): Station | undefined {
+    if (this.underground.isDug(x, y)) return undefined;
     return this.stations.find((s) => s.gateTiles().some((g) => g.x === x && g.y === y));
   }
   isOrphaned(s: Station) {

@@ -288,7 +288,7 @@ export class Fleet {
     const out: GateInfo[] = [];
     const need = t.length;
     for (const g of depot.gateTiles()) {
-      const piece = this.track.get(g.x, g.y);
+      const piece = this.builder.gateTrack(g);
       const info: GateInfo = {
         x: g.x,
         y: g.y,
@@ -370,7 +370,7 @@ export class Fleet {
   depotClasses(depot: Station): Set<TrackClass> {
     const out = new Set<TrackClass>();
     for (const g of depot.gateTiles()) {
-      const p = this.track.get(g.x, g.y);
+      const p = this.builder.gateTrack(g);
       if (!p) continue;
       const toStation = DIRS.find((d) => depot.covers(g.x + DIR_DX[d], g.y + DIR_DY[d]));
       const entry =
