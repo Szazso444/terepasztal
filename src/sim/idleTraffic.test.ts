@@ -2316,7 +2316,7 @@ describe('with shunting on, an idle train in the way on a single line whose sidi
             parked = {
               state: idle.state,
               note: idle.lastMessage,
-              keys: idle.occupancyKeys(w.track.w),
+              keys: [...idle.occupancyKeys(w.track.w)],
             };
           return broken !== null || (!!parked && sim.arrivals(caller).includes(target.id));
         }, 120);

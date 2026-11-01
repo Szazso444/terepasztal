@@ -1,0 +1,94 @@
+{
+  "returned": [1254, 1254],
+  "box": [349, 297, 911, 1110],
+  "footWidth": 563,
+  "footCentre": [630, 969.25],
+  "scale": 13.096068853221679,
+  "widthOverShort": 0.44896331738437,
+  "camera": {
+    "off": true,
+    "by": 2.5,
+    "elevation": 2.5,
+    "turn": 0,
+    "ratio": 0.537,
+    "looking": 32.5
+  },
+  "apexOverW": 1.0999111900532859,
+  "stubSlope": 0.4838709677419355,
+  "stubDirectionPass": true,
+  "stubSpan": 68.87670143089026,
+  "hubTarget": [-16, -50],
+  "hubFromAnchorWorld": [-13.66822380106572, -50.52159413854352],
+  "hubOffset": [2.3317761989342802, -0.5215941385435201],
+  "hubDistance": 2.389401742545476,
+  "doorPosition": null,
+  "doorHeight": null,
+  "pixels": {
+    "timber": 349,
+    "white": 3451,
+    "amber": 0
+  },
+  "check": {
+    "ok": false,
+    "problems": [
+      "camera off by 2.5°: it looks down from 32.5° where the game looks down from 30° (the tower's foot is an ellipse 0.54 minor over major, the game's 0.50)"
+    ],
+    "notes": ["placed by its outline: no straight wall base was found"],
+    "fit": {
+      "method": "outline",
+      "sure": [false, false],
+      "measured": [0.5, -0.5],
+      "slopes": [0.5, -0.5],
+      "base": {
+        "w": [349, 1021],
+        "s": [634, 1163.5],
+        "e": [910, 1025.5]
+      },
+      "scale": 0.8031,
+      "vertical": 1,
+      "shear": 0,
+      "cx": 629.5,
+      "cy": 1023.3,
+      "box": {
+        "left": 286.7,
+        "top": 248.7,
+        "right": 738.1,
+        "bottom": 901.7
+      },
+      "camera": null,
+      "area": 323755
+    },
+    "camera": {
+      "by": 2.5,
+      "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+    }
+  },
+  "tests": {
+    "camera": false,
+    "tower": true,
+    "stub": true,
+    "hub": false,
+    "doorPosition": true,
+    "doorHeight": true,
+    "timber": false,
+    "amber": true,
+    "white": false,
+    "check": false,
+    "eye": true,
+    "position": true
+  },
+  "eye": {
+    "view": 1,
+    "apexTip": 350,
+    "stub": [
+      [500, 350],
+      [562, 380]
+    ],
+    "hub": [451, 360],
+    "hubBox": [401, 295, 501, 423],
+    "door": null,
+    "noDoorWindow": true,
+    "pass": true,
+    "notes": "Plain round smooth stone tower, slate cone/plain tip, no door/window on visible faces, rear stub root hidden by cap and complete plate above-left; left lighter than right; no sails/plinth/ground/objects."
+  }
+}

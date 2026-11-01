@@ -1,0 +1,11 @@
+{
+  "stub": [
+    [539, 530],
+    [474, 558]
+  ],
+  "hub": [449, 592],
+  "hubBox": [414, 544, 490, 642],
+  "door": [480, 934, 549, 1129],
+  "pass": true,
+  "notes": "Round smooth tower, plain tip, no sails/ground/objects. Limestone and slate, upper-left lighting. Door and shaft on lower-left face."
+}

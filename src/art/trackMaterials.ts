@@ -142,6 +142,15 @@ export function drawStrip(
     if (len > 1e-9 && Math.max(Math.abs(mid.x), Math.abs(mid.y)) < reach) {
       const along = { x: (b.x - a.x) / len, y: (b.y - a.y) / len };
       const n = normals[i];
+      // on a curve the slices fan out: the outer edge of the strip opens by this many px
+      const c2 = points[Math.min(j + 1, points.length - 1)];
+      const turn = Math.abs(
+        Math.atan2(
+          along.x * (c2.y - b.y) - along.y * (c2.x - b.x),
+          along.x * (c2.x - b.x) + along.y * (c2.y - b.y),
+        ),
+      );
+      const fan = Math.max(Math.abs(from), Math.abs(to)) * turn * perTile;
       const across = { x: n.x, y: n.y };
       const origin = { x: a.x + across.x * from, y: a.y + across.y * from };
       frameTransform(c, base, pr, origin, along, across, 1 / perTile, (to - from) / img.height);
@@ -152,7 +161,9 @@ export function drawStrip(
       while (left > 1e-6) {
         const w = Math.min(left, period - u);
         // a hair of overlap closes the seams between slices
-        c.drawImage(img, u, 0, Math.max(w, 0.01), img.height, at, 0, w + 0.6, img.height);
+        const more = left - w > 1e-6 ? 0 : fan;
+        const sw = Math.max(Math.min(w + more, period - u), 0.01);
+        c.drawImage(img, u, 0, sw, img.height, at, 0, w + 0.6 + more, img.height);
         at += w;
         left -= w;
         u = 0;

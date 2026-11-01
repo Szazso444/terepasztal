@@ -178,6 +178,8 @@ export interface Settings extends Volumes {
   autosave: boolean;
   dayNight: boolean;
   smoke: boolean;
+  /** chimney smoke, the quarry crane's load and the windmill's sails move; off, a still picture */
+  buildingLife: boolean;
   showFps: boolean;
   weather: boolean;
   /** the language of the text, read as the page loads (`LANGUAGE`) */
@@ -283,6 +285,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autosave: true,
   dayNight: true,
   smoke: true,
+  buildingLife: true,
   showFps: false,
   weather: true,
   language: 'en',
@@ -1058,6 +1061,10 @@ export function clearSave() {
     /* ignore */
   }
 }
+/** The browser asks for less motion; false where nothing can say. */
+function prefersReducedMotion() {
+  return globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+}
 /** The defaults overlaid by `stored`, sharing no object with `DEFAULT_SETTINGS`. */
 function settingsFrom(stored: Partial<Settings>): Settings {
   const s = { ...DEFAULT_SETTINGS, ...stored };
@@ -1066,6 +1073,8 @@ function settingsFrom(stored: Partial<Settings>): Settings {
   s.soundOff = { ...stored.soundOff };
   s.alerts = alertSettingsFrom(stored.alerts);
   s.language = languageOf(stored.language);
+  // Building life starts off for a player who asked for less motion; a stored choice stands
+  if (typeof stored.buildingLife !== 'boolean') s.buildingLife = !prefersReducedMotion();
   return s;
 }
 export function readSettings(): Settings {

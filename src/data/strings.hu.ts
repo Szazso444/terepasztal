@@ -1373,6 +1373,8 @@ export const HU: Strings = {
     autosave: 'Automatikus mentés (percenként)',
     dayNight: 'Nappalok és éjszakák',
     smoke: 'Mozdonyfüst',
+    buildingLife: 'Élet az épületeken',
+    buildingLifeHint: 'Kéményfüst, a kőbánya darúja és a szélmalom vitorlái',
     weather: 'Időjárás és évszakok',
     showFps: 'FPS kijelzése',
     controls: 'Irányítás',

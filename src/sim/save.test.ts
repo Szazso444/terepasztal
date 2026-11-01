@@ -2997,6 +2997,27 @@ describe('settings', () => {
       expect(readSettings().contractPolicy).toEqual(accept);
     });
 
+    it('keeps Building life with the settings, off by default for reduced motion', () => {
+      expect(DEFAULT_SETTINGS.buildingLife).toBe(true);
+      expect(readSettings().buildingLife).toBe(true);
+      writeSettings({ ...readSettings(), buildingLife: false });
+      expect(readSettings().buildingLife).toBe(false);
+      // what is stored is the player's; anything else is the default
+      store.items.set(SETTINGS_KEY, JSON.stringify({ buildingLife: 'maybe' }));
+      expect(readSettings().buildingLife).toBe(true);
+      const matchMedia = vi.fn(() => ({ matches: true }));
+      vi.stubGlobal('matchMedia', matchMedia);
+      try {
+        expect(readSettings().buildingLife).toBe(false);
+        expect(matchMedia).toHaveBeenCalledWith('(prefers-reduced-motion: reduce)');
+        store.items.set(SETTINGS_KEY, JSON.stringify({ buildingLife: true }));
+        expect(readSettings().buildingLife).toBe(true);
+      } finally {
+        vi.unstubAllGlobals();
+        vi.stubGlobal('localStorage', store);
+      }
+    });
+
     it('hands out settings that share no policy with the defaults', () => {
       const a = readSettings();
       a.contractPolicy!.common = 'accept';

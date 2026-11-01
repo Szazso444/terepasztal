@@ -309,6 +309,8 @@ describe('a building being upgraded', () => {
     w.builder.upgradeStation(farm);
     expect(farm.crew).toBe(0);
     expect(w.builder.crewTotal()).toBe(crew - LEVELS.crew[0]);
+    // the total is what the sites add up to
+    expect(w.builder.crewTotal()).toBe(w.builder.crewSites().reduce((n, c) => n + c.crew, 0));
     farm.tick(weekSeconds());
     expect(farm.totalStored()).toBe(0);
     // the step makes nothing there either, and counts no crew to feed

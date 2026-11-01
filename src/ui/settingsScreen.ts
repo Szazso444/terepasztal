@@ -147,9 +147,10 @@ export class SettingsScreen implements Screen {
 
   private switchRow(
     label: string,
-    key: 'edgeScroll' | 'autosave' | 'dayNight' | 'smoke' | 'showFps' | 'weather',
+    key: 'edgeScroll' | 'autosave' | 'dayNight' | 'smoke' | 'buildingLife' | 'showFps' | 'weather',
+    hint?: string,
   ) {
-    return formRow(
+    const row = formRow(
       label,
       toggleSwitch(
         label,
@@ -160,6 +161,8 @@ export class SettingsScreen implements Screen {
         },
       ),
     );
+    if (hint) row.title = hint;
+    return row;
   }
 
   private saveTab(): HTMLElement {
@@ -288,6 +291,11 @@ export class SettingsScreen implements Screen {
             this.switchRow(STR.settings.autosave, 'autosave'),
             this.switchRow(STR.settings.dayNight, 'dayNight'),
             this.switchRow(STR.settings.smoke, 'smoke'),
+            this.switchRow(
+              STR.settings.buildingLife,
+              'buildingLife',
+              STR.settings.buildingLifeHint,
+            ),
             this.switchRow(STR.settings.weather, 'weather'),
             this.switchRow(STR.settings.showFps, 'showFps'),
             formRow(
