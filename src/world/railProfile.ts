@@ -45,6 +45,10 @@ const CUT_FLOOR = 0;
 function drilledLevel(drilled: BedsUnder, x: number, y: number): number | undefined {
   return drilled.floorAt(x, y) ?? (drilled.isCut(x, y) ? CUT_FLOOR : undefined);
 }
+/** The level rail stands at on (x, y): the bed the Drill made there, else the ground. */
+function railGround(map: Levels, drilled: BedsUnder, x: number, y: number): number {
+  return drilledLevel(drilled, x, y) ?? levelAt(map, x, y);
+}
 
 /** Rail height in levels at position `t` along the bed's axis. */
 export function railLevel(bed: RailBed, t: number): number {
@@ -81,24 +85,25 @@ export function climbAxes(links: readonly (readonly [number, number])[]): ('x' |
  * Deck level of a curve or switch carried by bridge platforms: the level of the rails it meets
  * off the bridge (neighbours across its links that stand on the ground), or its highest tile when
  * every neighbour is on a platform too. Null when the rails it meets disagree, or the deck would
- * sit below the ground under one of its tiles.
+ * sit below the ground under one of its tiles. A tile the Drill made counts at its bed.
  */
 export function supportedDeck(
   map: Levels,
   members: readonly { x: number; y: number; links: readonly (readonly [number, number])[] }[],
   bridgeAt: (x: number, y: number) => boolean,
+  drilled: BedsUnder = NOTHING_UNDER,
 ): number | null {
   const inside = new Set(members.map((m) => m.y * map.w + m.x)),
     meets = new Set<number>();
   let top = 0;
   for (const m of members) {
-    top = Math.max(top, levelAt(map, m.x, m.y));
+    top = Math.max(top, railGround(map, drilled, m.x, m.y));
     for (const link of m.links)
       for (const d of link) {
         const nx = m.x + DIR_DX[d],
           ny = m.y + DIR_DY[d];
         if (inside.has(ny * map.w + nx) || bridgeAt(nx, ny)) continue;
-        meets.add(levelAt(map, nx, ny));
+        meets.add(railGround(map, drilled, nx, ny));
       }
   }
   if (meets.size > 1) return null;
@@ -175,8 +180,8 @@ export function railProfile(
       links: track.get(t.x, t.y)?.links ?? [],
     }));
     const deck =
-      supportedDeck(map, members, bridgeAt) ??
-      Math.max(...members.map((t) => levelAt(map, t.x, t.y)));
+      supportedDeck(map, members, bridgeAt, drilled) ??
+      Math.max(...members.map((t) => railGround(map, drilled, t.x, t.y)));
     beds.set(k, {
       axis: 'x',
       spans: [{ from: x - 2, to: x + 2, a: deck, b: deck }],
@@ -201,7 +206,7 @@ function lineProfile(
     // A crossing holds both lines level at its centre, so the two rails meet.
     pinned = tiles.map(([x, y]) => (track.get(x, y)?.links.length ?? 0) > 1),
     // A tile the Drill made counts at its bed, so the line does not climb to the ground over it.
-    terrain = tiles.map(([x, y]) => drilledLevel(drilled, x, y) ?? levelAt(map, x, y)),
+    terrain = tiles.map(([x, y]) => railGround(map, drilled, x, y)),
     // A deck over water is never below the water's level.
     under = tiles.map(([x, y], i) =>
       map.terrain[y * map.w + x] === Terrain.Water ? terrain[i] : 0,
