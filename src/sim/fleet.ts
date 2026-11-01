@@ -47,7 +47,7 @@ import { sfx } from '../engine/audio';
 import { ENGLISH, STR } from '../strings';
 import { biomeDef, biomeAt } from './biomes';
 import { daySeconds, rules } from './rules';
-import { jobTier, MaintenanceBoard } from './maintenance';
+import { MaintenanceBoard, urgentJob } from './maintenance';
 import { Traffic } from './traffic';
 import { Junctions } from './junctions';
 import { Signals, HEADWAY } from './signals';
@@ -1319,11 +1319,11 @@ export class Fleet {
     return { theirs, bound, sidings };
   }
   /**
-   * A train at work on a piece not unusable now gives way (spec, section 6): once a train has been
-   * held for `trackYieldSeconds`, by it or at a signal with it on the route ahead, it lets the job
-   * go, its health as it stands, and pulls aside as an idle train does (`makeWay`). Where the way
-   * ends it idles, and looks for work again. With no way aside it works on, and looks again every
-   * ASIDE_RETRY seconds.
+   * A train at work on a job not urgent (`urgentJob`) gives way (spec, section 6): once a train has
+   * been held for `trackYieldSeconds`, by it or at a signal with it on the route ahead, it lets the
+   * job go, its health as it stands, and pulls aside as an idle train does (`makeWay`). Where the
+   * way ends it idles, and looks for work again. With no way aside it works on, and looks again
+   * every ASIDE_RETRY seconds.
    */
   private yieldWork(ctx: TickCtx, now: number) {
     const held = this.trains.filter((o) => o.blocked && o.blockedTime > rules.trackYieldSeconds);
@@ -1331,7 +1331,7 @@ export class Fleet {
       (t) =>
         t.state === 'repairing' &&
         t.maint !== null &&
-        jobTier(t.maint, this.track) > 0 &&
+        !urgentJob(t.maint, this.track) &&
         t.asideRetry <= now,
     );
     if (!held.length || !workers.length) return;
@@ -1405,12 +1405,12 @@ export class Fleet {
 }
 const MUTUAL_GRACE = 4;
 /**
- * Which train of a jam backs off first, among those equally able to clear it: one on a job on a
- * piece trains still run over, then the rest, and last one bound for an unusable piece.
+ * Which train of a jam backs off first, among those equally able to clear it: one on a job that is
+ * not urgent (`urgentJob`), then the rest, and last one on a job that is.
  */
 function backOffOrder(t: Train, track: TrackGraph) {
   if (!t.maint) return 1;
-  return jobTier(t.maint, track) === 0 ? 2 : 0;
+  return urgentJob(t.maint, track) ? 2 : 0;
 }
 /** tiles a jammed train's head moves before its note no longer says it is jammed */
 const JAM_MOVED = 0.5;

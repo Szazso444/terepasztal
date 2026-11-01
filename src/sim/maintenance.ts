@@ -17,7 +17,7 @@ export interface MaintJob {
   /** the piece's anchor */
   ax: number;
   ay: number;
-  /** 0 unusable, 1 degraded, 2 close to degraded, as the piece stood when picked (`jobTier`) */
+  /** 0 unusable, 1 degraded, 2 close to degraded, as the piece stood when picked (`urgentJob`) */
   tier: 0 | 1 | 2;
   /** the tile the train stands on */
   x: number;
@@ -42,12 +42,14 @@ function tierOf(p: TrackPiece): MaintJob['tier'] | null {
 }
 
 /**
- * The tier a job is in now, by its piece's health and not by what it was when picked. A piece mended
- * past the tiers, or gone, counts as the last of them.
+ * Does this job go before other trains and hold its ground against them? While its piece is
+ * unusable, whatever the piece was when picked; and a job begun on an unusable piece until the piece
+ * is out of degraded, so the first repair does not end it. A piece that is gone asks for nothing.
  */
-export function jobTier(job: MaintJob, track: TrackGraph): MaintJob['tier'] {
+export function urgentJob(job: MaintJob, track: TrackGraph): boolean {
   const piece = track.get(job.ax, job.ay);
-  return (piece && tierOf(piece)) ?? 2;
+  const now = piece ? tierOf(piece) : null;
+  return now === 0 || (now === 1 && job.tier === 0);
 }
 
 /** What the fleet's maintenance trains are working on, and what is left to do. */

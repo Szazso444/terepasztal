@@ -937,20 +937,32 @@ describe('a maintenance train in traffic', () => {
     expect(trafficRank(t, w.track)).toBe(classRank(t.trainClass));
   });
 
-  it('ranks by the piece as it stands now, not as it stood when picked', () => {
+  it('a job begun on an unusable piece keeps its rank until the piece is out of degraded', () => {
     const { w } = workLine();
     const t = onlooker();
     t.maint = job(0);
     wearDown(w, 40, 0.01);
-    expect(trafficRank(t, w.track), 'mended past unusable').toBe(0);
-    t.maint = job(1);
-    wearDown(w, 40, 0);
-    expect(trafficRank(t, w.track), 'failed since it was picked').toBe(4);
+    expect(trafficRank(t, w.track), 'barely mended').toBe(4);
+    wearDown(w, 40, rules.trackDegradedAt - 0.01);
+    expect(trafficRank(t, w.track), 'just under').toBe(4);
+    wearDown(w, 40, rules.trackDegradedAt);
+    expect(trafficRank(t, w.track), 'out of degraded').toBe(0);
     wearDown(w, 40, 0.9);
     expect(trafficRank(t, w.track), 'mended past the tiers').toBe(0);
-    t.maint = job(0);
     cut(w, 40);
     expect(trafficRank(t, w.track), 'taken away').toBe(0);
+  });
+
+  it('a job begun on a usable piece ranks last until the piece fails', () => {
+    const { w } = workLine();
+    const t = onlooker();
+    for (const tier of [1, 2] as const) {
+      t.maint = job(tier);
+      wearDown(w, 40, 0.01);
+      expect(trafficRank(t, w.track), `tier ${tier}, usable`).toBe(0);
+      wearDown(w, 40, 0);
+      expect(trafficRank(t, w.track), `tier ${tier}, failed since it was picked`).toBe(4);
+    }
   });
 
   it('a train heading for an unusable piece goes first', () => {
@@ -986,17 +998,22 @@ describe('a maintenance train in traffic', () => {
     expect(other.blockedBy).toBe(t.id);
   });
 
-  it('a job begun on an unusable piece gives way once the piece has any health', () => {
+  it('a job begun on an unusable piece gives way only once the piece is out of degraded', () => {
     const { w, west, near } = sidedLine();
-    rules.trackRepairSeconds = 200;
+    rules.trackRepairSeconds = 400;
     wearDown(w, 42, 0);
     const t = maintTrain(w, []);
     until(w, repairing(t));
     expect(t.maint?.tier).toBe(0);
     const other = maintTrain(w, [near, west], 'schedule');
     until(w, () => other.blockedBy === t.id, 120);
-    until(w, () => t.maint === null, 20);
-    expect(healthAt(w, 42)).toBeGreaterThan(0);
+    until(w, () => other.blockedTime > rules.trackYieldSeconds + 3, 20);
+    expect(healthAt(w, 42), 'held past the yield time, still degraded').toBeGreaterThan(0);
+    expect(healthAt(w, 42)).toBeLessThan(rules.trackDegradedAt);
+    expect(t.state).toBe('repairing');
+    expect(t.yieldCount).toBe(0);
+    until(w, () => t.maint === null, 200);
+    expect(healthAt(w, 42)).toBeGreaterThanOrEqual(rules.trackDegradedAt);
     expect(t.yieldCount).toBe(1);
   });
 
