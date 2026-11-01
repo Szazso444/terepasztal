@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createHash, type Hash } from 'node:crypto';
 import { Dir } from '../engine/iso';
 import type { PathSegment } from '../world/pathfinding';
+import { Biome, Terrain } from '../world/tiles';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
 import {
   buildTrafficScenario,
@@ -628,8 +629,10 @@ describe('a train through a tunnel', () => {
    * One train running to and fro between a quarry and a warehouse on one line, on flat ground, or
    * through the hill by a dug tunnel, or up and over it. The stations stand off the hill in every
    * case, and nothing else differs. It is laid from the west end, with the Drill on inside.
+   * `rock` is what the hill is made of from level 3 up, where the tunnel runs dug: the banks either
+   * side, and the cuts in them, stay grass in the Plains.
    */
-  function tunnelRun(ground: Ground, ticks: number) {
+  function tunnelRun(ground: Ground, ticks: number, rock?: { terrain: Terrain; biome: Biome }) {
     const w = simWorld({ size: 64, terrain: 'grass', seed: 4242 });
     w.builder.free = true;
     for (let i = 0; i < w.regions.unlocked.length; i++) w.regions.own(i);
@@ -637,6 +640,12 @@ describe('a train through a tunnel', () => {
       w.map.groundLevel = Uint8Array.from({ length: w.map.w * w.map.h }, (_, i) =>
         hillLevel(i % w.map.w, Math.floor(i / w.map.w)),
       );
+    if (rock)
+      w.map.terrain.forEach((_, i) => {
+        if (hillLevel(i % w.map.w, Math.floor(i / w.map.w)) < 3) return;
+        w.map.terrain[i] = rock.terrain;
+        w.map.biome[i] = rock.biome;
+      });
     if (ground === 'tunnel') {
       const drag = Array.from({ length: 15 }, (_, i) => ({ x: PEAK_X - 7 + i, y: ROW }));
       expect(w.builder.dig(drag), w.builder.checkDig(drag).reason).toBe(true);
@@ -700,4 +709,21 @@ describe('a train through a tunnel', () => {
     expect(over.outcome.digest).not.toBe(flat.outcome.digest);
     expect(over.t.distance).toBeLessThan(flat.t.distance);
   }, 30_000);
+
+  // slow because two whole SimStep worlds run 2400 ticks each: under a second alone, so 30 s
+  it.each([
+    ['stone in the Mountain biome', Terrain.Mountain, Biome.Mountain],
+    ['a Hill in the Plains', Terrain.Hill, Biome.Plains],
+  ])(
+    'inside %s a train runs as on flat ground, tick by tick',
+    (_name, terrain, biome) => {
+      const TICKS = 2400;
+      const flat = tunnelRun('flat', TICKS);
+      const tunnel = tunnelRun('tunnel', TICKS, { terrain, biome });
+      expect(new Set(flat.path).has(`${PEAK_X},${ROW}`)).toBe(true);
+      expect(tunnel.path).toEqual(flat.path);
+      expect(tunnel.outcome).toEqual(flat.outcome);
+    },
+    30_000,
+  );
 });

@@ -502,7 +502,7 @@ export interface TickCtx {
   now: number;
   /** weather / season speed multiplier */
   speedFactor: number;
-  /** biome under a tile: speed and water-use multipliers */
+  /** biome under a tile: speed and water-use multipliers; a dug tile has no speed of its biome */
   biomeAt: (x: number, y: number) => { speedMul: number; waterUseMul: number };
   /** speed multiplier for crossing a segment: slower climbing a hill, faster coming down */
   gradeAt?: (seg: PathSegment) => number;
@@ -776,7 +776,7 @@ export class Train {
     this.serviceStop = points.get(last.y * ctx.track.w + last.x)!;
     this.atStation?.occupants.delete(this.id);
     this.atStation = null;
-    this.setPath(best.route, ctx.map, ctx.track);
+    this.setPath(best.route, ctx.map, ctx.track, ctx.builder);
     this.trackVersion = ctx.track.version;
     this.setState('moving');
     this.lastMessage = ENGLISH.trainNote.service;
@@ -1816,7 +1816,7 @@ export class Train {
       }
     }
     if (!path) return false;
-    this.setPath(path, map, track);
+    this.setPath(path, map, track, builder);
     this.trackVersion = track.version;
     return true;
   }
@@ -1913,7 +1913,13 @@ export class Train {
    * Follow `path` from the head. `headRoute` is the route of a multi-tile piece the head already
    * runs along on the path's first tile, where that tile alone cannot tell the routes apart.
    */
-  private setPath(path: PathSegment[], map: GameMap, track: TrackGraph, headRoute?: number) {
+  private setPath(
+    path: PathSegment[],
+    map: GameMap,
+    track: TrackGraph,
+    builder: Builder,
+    headRoute?: number,
+  ) {
     this.path = path;
     this.pathPts = [];
     this.pathCum = [];
@@ -1930,7 +1936,9 @@ export class Train {
         const t = terrainAt(map, seg.x, seg.y);
         if (t === Terrain.Water && !track.get(seg.x, seg.y)?.bridgeCapacity)
           factor = Math.min(factor, trackData.bridgeSpeed);
-        if (t === Terrain.Hill) factor = Math.min(factor, 0.85);
+        // inside, a train runs as on flat ground: the hill is over it
+        if (t === Terrain.Hill && !builder.underground.isDug(seg.x, seg.y))
+          factor = Math.min(factor, 0.85);
       }
       for (let i = 0; i < upto; i++) {
         const p = { x: seg.x + pts[i].x, y: seg.y + pts[i].y, seg, factor };
@@ -3159,7 +3167,7 @@ export class Train {
     if (plan.flip) this.reverseConsist();
     if (this.atStation) this.atStation.occupants.delete(this.id);
     this.atStation = null;
-    this.setPath(plan.path, ctx.map, ctx.track);
+    this.setPath(plan.path, ctx.map, ctx.track, ctx.builder);
     this.shunt = plan.back ?? null;
     this.trackVersion = ctx.track.version;
     this.holding = true;
@@ -3202,7 +3210,7 @@ export class Train {
       return;
     }
     this.reverseConsist();
-    this.setPath(back, ctx.map, ctx.track);
+    this.setPath(back, ctx.map, ctx.track, ctx.builder);
     this.trackVersion = ctx.track.version;
   }
 
@@ -3396,7 +3404,7 @@ export class Train {
   /** Run on along `path` from the head at the speed the train had. */
   private followAfterLoad(path: PathSegment[], builder: Builder, headRoute?: number) {
     const speed = this.speed;
-    this.setPath(path, builder.map, builder.track, headRoute);
+    this.setPath(path, builder.map, builder.track, builder, headRoute);
     this.trackVersion = builder.track.version;
     this.speed = speed;
   }

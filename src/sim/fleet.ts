@@ -765,7 +765,10 @@ export class Fleet {
       chooseNext: (t) => this.chooseNext(t),
       biomeAt: (x, y) => {
         const d = biomeDef(biomeAt(this.map, x, y));
-        return { speedMul: d.speedMul, waterUseMul: d.waterUseMul };
+        return {
+          speedMul: this.builder.underground.isDug(x, y) ? 1 : d.speedMul,
+          waterUseMul: d.waterUseMul,
+        };
       },
       gradeAt: (s) => railGrade(this.railBeds, this.map.w, s.x, s.y, s.in, s.out),
       framed: this.framed,

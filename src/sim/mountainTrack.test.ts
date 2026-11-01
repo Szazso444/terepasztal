@@ -1688,7 +1688,11 @@ describe('a train on mountain track', () => {
    * The speed a lone diesel would run at as it sets off west along row 30, its head on a tile of
    * the given biome, the ground under it painted Mountain by `paint` (given the head tile).
    */
-  function freeSpeed(biome: number, paint: (map: GameMap, hx: number, hy: number) => void) {
+  function freeSpeed(
+    biome: number,
+    paint: (map: GameMap, hx: number, hy: number) => void,
+    drilled?: 'dug' | 'cut',
+  ) {
     const map = emptyMap(4242, 96, 96, Terrain.Grass),
       track = new TrackGraph(96, 96),
       economy = electricAge();
@@ -1712,6 +1716,8 @@ describe('a train on mountain track', () => {
     const head = t.headTile!;
     paint(map, head.x, head.y);
     map.biome[head.y * map.w + head.x] = biome;
+    if (drilled === 'dug') builder.underground.dig(head.x, head.y, 0);
+    if (drilled === 'cut') builder.underground.cut(head.x, head.y);
     fleet.railBeds = railProfile(map, track, undefined, builder.underground);
     t.tick(0.05, ctx);
     expect(t.headTile).toEqual(head);
@@ -1740,6 +1746,9 @@ describe('a train on mountain track', () => {
     // in the Mountain biome
     expect(freeSpeed(MOUNTAIN_BIOME, climb)).toBeCloseTo(flat * 0.45, 9);
     expect(freeSpeed(MOUNTAIN_BIOME, plateau)).toBeCloseTo(flat * 0.9, 9);
+    // on a tile in a cut the surface still counts; dug, the biome stays outside
+    expect(freeSpeed(MOUNTAIN_BIOME, plateau, 'cut')).toBeCloseTo(flat * 0.9, 9);
+    expect(freeSpeed(MOUNTAIN_BIOME, plateau, 'dug')).toBeCloseTo(flat, 9);
     expect(freeSpeed(MOUNTAIN_BIOME, grass)).toBeCloseTo(flat * 0.9, 9);
   });
 });
