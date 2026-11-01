@@ -1,0 +1,28 @@
+
+> terepasztal@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 1005 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                 0.51 kB │ gzip:   0.31 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+dist/assets/landscape.worker-DQOpS4O_.js       33.63 kB
+dist/assets/index-31Ai_deX.css                 68.79 kB │ gzip:  13.94 kB
+dist/assets/Filter-DgDEp5hh.js                  0.95 kB │ gzip:   0.51 kB │ map:     4.04 kB
+dist/assets/BufferResource-JDctZitI.js         11.18 kB │ gzip:   2.89 kB │ map:    28.73 kB
+dist/assets/BitmapFont-BV3F1v_c.js             12.82 kB │ gzip:   4.68 kB │ map:    53.23 kB
+dist/assets/webworkerAll-N9wDNa_M.js           15.47 kB │ gzip:   4.91 kB │ map:    57.06 kB
+dist/assets/CanvasRenderer-CxRxIuBo.js         17.84 kB │ gzip:   6.00 kB │ map:    78.83 kB
+dist/assets/browserAll-DwelLgVe.js             43.13 kB │ gzip:  11.33 kB │ map:   162.54 kB
+dist/assets/WebGPURenderer-BKWulA8H.js         46.06 kB │ gzip:  13.25 kB │ map:   158.11 kB
+dist/assets/RenderTargetSystem-BCkVLSKr.js     52.20 kB │ gzip:  14.42 kB │ map:   196.77 kB
+dist/assets/WebGLRenderer-BS0Kkifp.js          72.15 kB │ gzip:  19.66 kB │ map:   240.60 kB
+dist/assets/index-CJ8eARQI.js               1,708.45 kB │ gzip: 550.38 kB │ map: 6,753.10 kB
+✓ built in 1m 39s
