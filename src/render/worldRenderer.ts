@@ -41,9 +41,9 @@ import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import { clearedByPaving, scatterFor } from './scatter';
-import { levelAt } from '../world/elevation';
+import { levelAt, tileLevels } from '../world/elevation';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
-import { DEFAULT_RELIEF, heightFactor } from './terrainRelief';
+import { DEFAULT_RELIEF, heightFactor, RELIEF_MAX } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
 import { doorstepChanges, pavingDoorsteps, type PavingDoor } from './townPaving';
 import { PAL, type RGB } from '../art/palette';
@@ -91,6 +91,7 @@ import { cullByChunk } from './chunkCull';
 import { blockOfTile, type StripMesh } from './edgeStripMesh';
 import { EdgeStripView } from './edgeStripView';
 import { surfaceVersions, type TileRect } from './fx';
+import { NOTHING_DUG, TunnelGlass, type DugView } from './tunnelGlass';
 
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
 /** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
@@ -159,6 +160,12 @@ const CUT_BY_TRACK: ReadonlySet<PropKind> = new Set<PropKind>(['wheat']);
 function illustrated(f: FrameInfo) {
   return f.texture.frame.width / f.w > 1;
 }
+
+/**
+ * The structures that stand on a rail: signals and catenary. On a dug tile they are inside the
+ * mountain, where the Drill's glass shows them; anything else stays over the surface (a notice).
+ */
+const ON_THE_RAIL = /^(decor|supply):/;
 
 /** What fits one building to the ground, beside its picture (`setStructure`). */
 interface GroundFitSprites {
@@ -299,6 +306,16 @@ export class WorldRenderer {
   occupied: (x: number, y: number) => boolean = () => false;
   /** Tiles that must render flat (track / station on hill). */
   private flattened = new Set<number>();
+  /** The Drill's work as the game keeps it; handed in before anything is placed on it. */
+  underground: DugView = NOTHING_DUG;
+  /** The Drill's view of the mountains (`setGlass`), under the track and all that stands. */
+  private readonly glassLayer = new Container();
+  /** Its part that stands in front of a rail: over the track, under the objects. */
+  private readonly glassOver = new Container();
+  private glass: TunnelGlass | null = null;
+  private glassOn = false;
+  /** The tiles' levels while the surface stands: the sheet reads each of them several times. */
+  private glassLevels: { surface: number; levels: Uint8Array } | null = null;
   /** Rail profile over each straight track tile (world/railProfile.ts). */
   private railBeds = new Map<number, RailBed>();
   /** Track tiles whose rail bends or climbs: the piece is a mesh that follows the profile. */
@@ -411,10 +428,12 @@ export class WorldRenderer {
       this.ground,
       this.waterDetails,
       this.contactGround,
+      this.glassLayer,
       this.piers,
       this.platforms,
       this.track,
       this.crossings,
+      this.glassOver,
       this.lights,
       this.harvest.layer,
       this.objects,
@@ -892,6 +911,7 @@ export class WorldRenderer {
     const s = new Sprite(f.texture);
     s.anchor.set(f.anchorX, f.anchorY);
     if (isTree(p.kind)) s.scale.set(TREE_SCALE);
+    s.renderable = !(this.glassOn && levelAt(this.map, x, y) > 0);
     const wp = tileToWorld(x + p.ox, y + p.oy);
     s.position.set(Math.round(wp.x), Math.round(wp.y + this.elevationOf(x + p.ox, y + p.oy)));
     s.zIndex = depthKey(x + p.ox, y + p.oy, 10);
@@ -993,6 +1013,7 @@ export class WorldRenderer {
 
   animate(dt: number) {
     this.strip.update(dt);
+    this.glass?.update(this.view);
     if (this.landscape.flush()) {
       this.refreshSummits();
       this.harvest.refresh();
@@ -1019,7 +1040,7 @@ export class WorldRenderer {
       for (const [id, a] of this.structureAnchors) {
         const s = this.structures.get(id);
         if (!s) continue;
-        const p = this.surfacePoint(a.x, a.y);
+        const p = this.standPoint(id, a.x, a.y);
         s.position.set(p.x + a.dx, p.y + a.dy);
         const footing = this.footings.get(id);
         if (footing) this.fitPlinth(footing, s);
@@ -1327,6 +1348,7 @@ export class WorldRenderer {
           s.anchor.set(f.anchorX, f.anchorY);
           s.scale.set(1.05 + hash2(x + this.map.originX, y + this.map.originY, 27) * 0.3);
           s.zIndex = depthKey(x, y, 2);
+          s.renderable = !this.glassOn;
           this.objects.addChild(s);
           this.summitSprites.set(k, s);
         }
@@ -2124,8 +2146,9 @@ export class WorldRenderer {
     }
     // texture, anchor and size: a reused sprite never keeps the size of the frame it showed
     const building = this.setSpriteFrame(s, frame);
-    const p = tileToWorld(x, y);
-    s.position.set(p.x + dx, p.y + this.elevationOf(x, y) + dy);
+    const p = this.standPoint(id, x, y);
+    s.position.set(p.x + dx, p.y + dy);
+    s.renderable = this.glassOn || this.floorUnder(id, x, y) === undefined;
     s.zIndex = depthKey(x, y, layer);
     // only a building has window lights and a ground fit; drop those of a building shown before
     if (!building) this.dropBuildingDressing(id);
@@ -2443,6 +2466,67 @@ export class WorldRenderer {
   surfacePoint(x: number, y: number) {
     const p = tileToWorld(x, y);
     return { x: p.x, y: p.y + this.elevationOf(x, y) };
+  }
+  /** The floor structure `id` on (x, y) stands on inside the mountain; undefined if it is not. */
+  private floorUnder(id: string, x: number, y: number) {
+    return ON_THE_RAIL.test(id)
+      ? this.underground.floorAt(Math.round(x), Math.round(y))
+      : undefined;
+  }
+  /** Where structure `id` stands on (x, y): on the bed of a dug tile, else on the surface. */
+  private standPoint(id: string, x: number, y: number) {
+    const floor = this.floorUnder(id, x, y);
+    if (floor === undefined) return this.surfacePoint(x, y);
+    const p = tileToWorld(x, y);
+    return { x: p.x, y: p.y - floor * this.levelPx };
+  }
+  private levelsForGlass() {
+    const surface = this.landscape.surfaceVersion;
+    if (this.glassLevels?.surface !== surface)
+      this.glassLevels = { surface, levels: tileLevels(this.map) };
+    return this.glassLevels.levels;
+  }
+  private makeGlass() {
+    const { map, atlas } = this;
+    const glass = new TunnelGlass({
+      atlas,
+      under: () => this.underground,
+      levelPx: () => this.levelPx,
+      level: (x, y) =>
+        x < 0 || y < 0 || x >= map.w || y >= map.h ? 0 : this.levelsForGlass()[y * map.w + x],
+      cut: (x, y) => this.underground.isCut(x, y),
+      shown: (x, y) => this.isBuilt(x, y),
+      lift: (x, y) => -this.elevationOf(x, y),
+      ground: () => this.landscape.surfaceVersion + this.builtRegions.size * 2 ** 32,
+      // a raised tile stands up to RELIEF_MAX px over its place on the ground
+      rows: (view) => viewTileRows(view, RELIEF_MAX, map.w, map.h),
+    });
+    this.glassLayer.addChild(glass.root);
+    this.glassOver.addChild(glass.over);
+    return glass;
+  }
+  /**
+   * The Drill's view: `on`, every mountain is glass (tunnelGlass.ts), and `preview` lists the tiles
+   * the drag would take. Peaks, props and scatter on raised tiles do not draw while it is on, and
+   * signals and catenary on dug tiles draw only then, as they stand inside.
+   */
+  setGlass(on: boolean, preview: readonly { x: number; y: number }[] = []) {
+    this.glass ??= this.makeGlass();
+    if (on !== this.glassOn) {
+      this.glassOn = on;
+      this.glass.show(on);
+      for (const s of this.summitSprites.values()) s.renderable = !on;
+      const levels = on ? this.levelsForGlass() : null,
+        hidden = (k: number) => !!levels && levels[k] > 0;
+      for (const [k, list] of this.propSprites) for (const s of list) s.renderable = !hidden(k);
+      for (const [k, list] of this.scatterSprites)
+        for (const { s } of list) s.renderable = !hidden(k);
+      for (const [id, a] of this.structureAnchors) {
+        const s = this.structures.get(id);
+        if (s && this.floorUnder(id, a.x, a.y) !== undefined) s.renderable = on;
+      }
+    }
+    if (on) this.glass.setPreview(preview);
   }
   tileAtSurface(x: number, y: number) {
     return this.landscape.failed ? worldToTileInt(x, y) : this.landscape.tileAtWorld(x, y);
