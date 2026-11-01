@@ -61,11 +61,16 @@ const GROUND_POOL_SPARE = 16;
 type Tile = { x: number; y: number };
 
 /**
- * The tools the Drill stays on for: those that work inside, track and its signals, and Demolish,
- * which back-fills. Any other tool puts it down.
+ * The tools the Drill stays on for: those that work inside, track with its signals and wire, and
+ * Demolish, which back-fills. Any other tool puts it down.
  */
 function worksInside(t: Tool) {
-  return t.kind === 'track' || t.kind === 'remove' || (t.kind === 'decor' && onRails(t.defId));
+  return (
+    t.kind === 'track' ||
+    t.kind === 'supply' ||
+    t.kind === 'remove' ||
+    (t.kind === 'decor' && onRails(t.defId))
+  );
 }
 
 /**

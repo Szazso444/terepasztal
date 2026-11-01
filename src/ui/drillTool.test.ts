@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Sprite } from 'pixi.js';
 import { Builder } from '../sim/build';
+import { SUPPLY_KINDS } from '../sim/catenary';
 import { Economy } from '../sim/economy';
 import { DEFAULT_RULES, rules } from '../sim/rules';
 import { storeWith } from '../testing/storeFixtures';
@@ -191,7 +192,6 @@ describe('the Drill', () => {
       { kind: 'road' },
       { kind: 'ground', delta: 1 },
       { kind: 'building', defId: 'bridge_wood' },
-      { kind: 'supply', supply: 'third_rail' },
       { kind: 'reclass', dir: 'up' },
     ] as Tool[]) {
       h.b.setTool({ kind: 'drill' });
@@ -201,12 +201,13 @@ describe('the Drill', () => {
     }
   });
 
-  it('stays on for what works inside: track, a signal, Demolish', () => {
+  it('stays on for what works inside: track, a signal, wire, Demolish', () => {
     const h = harness();
     h.b.setTool({ kind: 'drill' });
     for (const t of [
       { kind: 'track', item: STRAIGHT },
       { kind: 'decor', defId: 'signal' },
+      ...SUPPLY_KINDS.map((supply) => ({ kind: 'supply' as const, supply })),
       { kind: 'remove' },
     ] as Tool[]) {
       h.b.setTool(t);
