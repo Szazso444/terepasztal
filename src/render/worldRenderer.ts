@@ -86,6 +86,7 @@ import { paintedRoads } from './roadPaint';
 import { RoadWalk, roadWalks } from './roadWalk';
 import { crossingAxis, levelCrossingFrame } from './levelCrossing';
 import { AtmosphereTint, setOwnTint } from './atmosphere';
+import { wholePixel } from './pixelGrid';
 import { cullByChunk } from './chunkCull';
 import { surfaceVersions } from './fx';
 
@@ -963,8 +964,8 @@ export class WorldRenderer {
     const z = cam.zoom;
     this.root.scale.set(z);
     this.root.position.set(
-      Math.round(cam.viewW / 2 - cam.x * z),
-      Math.round(cam.viewH / 2 - cam.y * z),
+      wholePixel(cam.viewW / 2 - cam.x * z),
+      wholePixel(cam.viewH / 2 - cam.y * z),
     );
     // Same resolution cap as the renderer in game.ts.
     this.landscape.focus(this.view, z * Math.min(window.devicePixelRatio || 1, 2));
