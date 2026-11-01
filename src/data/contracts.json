@@ -11,8 +11,7 @@
       "amount": [16, 36],
       "baseDays": 0.9,
       "daysPerTile": 0.035,
-      "payoutMul": 2.2,
-      "tickets": 1
+      "payoutMul": 2.2
     },
     {
       "id": "bulk",
@@ -22,8 +21,7 @@
       "amount": [40, 80],
       "baseDays": 1.6,
       "daysPerTile": 0.045,
-      "payoutMul": 2.6,
-      "tickets": 1
+      "payoutMul": 2.6
     },
     {
       "id": "rush",
@@ -34,7 +32,6 @@
       "baseDays": 0.45,
       "daysPerTile": 0.022,
       "payoutMul": 3.8,
-      "tickets": 2,
       "rarityDeadline": true
     },
     {
@@ -45,8 +42,7 @@
       "amount": [120, 240],
       "baseDays": 3,
       "daysPerTile": 0.05,
-      "payoutMul": 3,
-      "tickets": 3
+      "payoutMul": 3
     },
     {
       "id": "standing",
@@ -56,8 +52,7 @@
       "amount": [80, 140],
       "baseDays": 2.4,
       "daysPerTile": 0.04,
-      "payoutMul": 2.4,
-      "tickets": 2
+      "payoutMul": 2.4
     }
   ],
   "rarities": [
@@ -66,7 +61,6 @@
       "name": "Common",
       "weight": 55,
       "rewardMul": 1,
-      "ticketMul": 1,
       "amountMul": 1,
       "deadlineMul": 1
     },
@@ -75,7 +69,6 @@
       "name": "Uncommon",
       "weight": 25,
       "rewardMul": 2,
-      "ticketMul": 2,
       "amountMul": 1.5,
       "deadlineMul": 0.95
     },
@@ -84,7 +77,6 @@
       "name": "Rare",
       "weight": 13,
       "rewardMul": 5,
-      "ticketMul": 3,
       "amountMul": 2.5,
       "deadlineMul": 0.9
     },
@@ -93,7 +85,6 @@
       "name": "Epic",
       "weight": 6,
       "rewardMul": 15,
-      "ticketMul": 5,
       "amountMul": 4,
       "deadlineMul": 0.85
     },
@@ -102,7 +93,6 @@
       "name": "Legendary",
       "weight": 1,
       "rewardMul": 50,
-      "ticketMul": 10,
       "amountMul": 6,
       "deadlineMul": 0.8,
       "maxOpen": 1

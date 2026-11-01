@@ -25,7 +25,6 @@ function genInventory(rng: Rng): InventoryJSON {
       kind: LOCOS.some((l) => l.id === defId) ? 'loco' : 'wagon',
       level: rng.int(1, 5),
       assigned: rng.chance(0.3) ? rng.int(1, 4) : null,
-      dupes: rng.int(0, 3),
       obtainedAt: rng.int(0, 1000),
     };
   });
@@ -145,7 +144,8 @@ describe('Inventory.seedStarter', () => {
         expect(inv.toJSON().nextUid).toBe(kit.length + 1);
         for (const i of inv.items) {
           expect(i.kind, i.defId).toBe(LOCOS.some((l) => l.id === i.defId) ? 'loco' : 'wagon');
-          expect([i.level, i.assigned, i.dupes, i.obtainedAt], i.defId).toEqual([1, null, 0, 7]);
+          expect([i.level, i.assigned, i.obtainedAt], i.defId).toEqual([1, null, 7]);
+          expect(i, i.defId).not.toHaveProperty('dupes');
         }
       },
       { shrink: shrinkKit },

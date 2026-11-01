@@ -78,7 +78,6 @@ const EN = {
   hud: {
     money: 'Funds',
     weather: (season: string, weather: string) => `${season} · ${weather}`,
-    tickets: 'Tickets',
     /** the era widget's progress toward the next age, a whole percent */
     agePercent: (pct: number) => `${pct}%`,
     day: (d: number) => `Day ${d}`,
@@ -353,7 +352,6 @@ const EN = {
     seed: 'Seed',
     entities: 'Entities',
     giveMoney: '+10,000 funds',
-    giveTickets: '+10 tickets',
     nextAge: 'Next age',
     giveResources: '+200 resources',
     spawnContract: 'Spawn contract',
@@ -1253,7 +1251,6 @@ const EN = {
     offersBadge: (n: number) => `${n} new`,
     sideEmpty: 'No active contracts.',
     sideEmptyOffers: 'Offers waiting on the board.',
-    dailyTicket: "Daily bonus: +1 ticket for yesterday's deliveries",
     cancelFine: (fine: string) => `Cancel (fine ${fine})`,
     cancelled: 'Cancelled',
     cancelledMsg: (n: string, fine: string) => `${n} cancelled: fined ${fine}`,
@@ -1271,29 +1268,9 @@ const EN = {
       legendary: 'Legendary',
     } as Record<string, string>,
   },
-  gacha: {
-    title: 'Rolling Stock Works',
-    banners: 'Banners',
-    pull: 'Pull',
-    rates: 'Rates',
-    rules: (pity: number) => `SSR guaranteed within ${pity} pulls. 10x guarantees at least one R.`,
-    pity: (n: number, max: number) => `Pity ${n} / ${max}`,
-    pull1: (c: number) => `Pull x1 (${c} ticket)`,
-    pull10: (c: number) => `Pull x10 (${c} tickets)`,
-    poolSize: (n: number) => `${n} items in the pool`,
-    idleHint: 'Tickets come from contracts and daily deliveries. No real money, ever.',
-    noTickets: 'Not enough tickets',
+  rollingStock: {
     loco: 'Locomotive',
     wagon: 'Wagon',
-    newItem: 'NEW',
-    dupe: (n: number, need: number) => `Duplicate: ${n} / ${need} to next level`,
-    levelUp: (l: number) => `Level up! Now Lv ${l}`,
-    guaranteed: 'guaranteed',
-    collect: 'Collect',
-    ssrToast: (n: number) => `${n} SSR pulled!`,
-    featured: (days: number, pct: number) =>
-      `Featured (rate-up ${pct}% of their rarity) · rotates in ${days}d`,
-    featuredBadge: 'featured',
   },
   craft: {
     title: 'Crafting',
@@ -1476,7 +1453,6 @@ const EN = {
     serviceLine: (service: string, cap: number) =>
       `Refuelling cart: +${cap} ${service === 'battery' ? 'power' : service === 'fuel' ? 'oil' : 'coal'}, 10% less use per cart (${service === 'coal' ? 'steam' : service === 'fuel' ? 'diesel' : 'electric'} engines only)`,
     maxLevel: 'Max level',
-    dupeProgress: (n: number, need: number) => `Duplicates ${n} / ${need} to next level`,
     assignedTo: (n: string) => `In service: ${n}`,
     inDepot: 'In depot',
   },
@@ -1686,15 +1662,9 @@ const EN = {
       storage: 'Could not store that save (storage full or blocked). Your game is unchanged.',
       tooLarge: "This save's map is larger than the game can build.",
     },
-    /** `refund` is the text of `saves.refund`; with nothing refunded its sentence is left out. */
+    /** `refund` is the money given back, formatted; with none its sentence is left out. */
     pruned: (list: string, refund: string) =>
       `This save held things the game no longer has. Removed: ${list}.${refund ? ` Refunded ${refund}.` : ''}`,
-    /** Money and tickets given back; `money` is already formatted, empty when none. */
-    refund: (money: string, tickets: number) => {
-      const t = `${tickets} ticket${tickets === 1 ? '' : 's'}`;
-      if (tickets <= 0) return money;
-      return money ? `${money} and ${t}` : t;
-    },
     /**
      * A loaded save stores the ground of `n` chunks in a form this game cannot read (damaged, or
      * written by a newer game): that land is generated again for this session, and the stored
@@ -1767,7 +1737,7 @@ const EN = {
     chain: 'Production chain',
   },
   menu: {
-    tagline: 'Rails, contracts and the luck of the draw',
+    tagline: 'Rails, contracts and industry',
     continue: 'Continue',
     newGame: 'New game',
     tuning: 'Game tuning',
@@ -1980,7 +1950,6 @@ const EN = {
       contracts: 'Contracts',
       decor: 'Decor',
       buildings: 'Buildings',
-      gacha: 'Gacha',
       track: 'Track',
       crafting: 'Crafting',
       houses: 'Houses',
@@ -2285,7 +2254,6 @@ const EN = {
     depot: 'Depot',
     signals: 'Signals',
     contracts: 'Contracts',
-    gacha: 'Gacha',
     crafting: 'Crafting',
     roster: 'Roster',
     market: 'Market',
