@@ -137,6 +137,9 @@ function isJunctionUnit(p: TrackPiece) {
  * the same direction may enter behind it. Trains stop short of the first tile they could not
  * claim ("claim limit"), which the fleet uses to park waiting trains off the holder's path.
  *
+ * A train standing with no way on (`Train.noWayOn`) holds only the tiles under it: a train may enter
+ * its section and close up behind it, as behind a train running the same way.
+ *
  * Priority: a bigger train class goes first, and a maintenance train by its job (`trafficRank`).
  * It is served before smaller trains, and it takes over a stretch a smaller train has claimed but
  * not yet reached when that train can still stop short of it (`giveWay`).
@@ -461,7 +464,8 @@ export class Traffic {
             this.recoveries.ownerAt(this.key(p.x, p.y), t.id) === null;
           const head = ahead[0];
           const inside = section > 0 && head && this.sectionOf(head.x, head.y) === section;
-          const stop = following || inside ? p.arc : first.arc;
+          const closing = section > 0 && !!byId.get(holder)?.noWayOn;
+          const stop = following || inside || closing ? p.arc : first.arc;
           t.claimLimit = Math.max(0, stop - pos);
           t.claimBlocker = holder;
           // No partial section/exit claim may remain after a failed acquisition.
@@ -476,7 +480,7 @@ export class Traffic {
           }
           // Trains already inside a contested section still acquire the free prefix. Without
           // this, both ends can advance into the same unclaimed tile before either occupies it.
-          if (inside || following)
+          if (inside || following || closing)
             for (let j = i; j < conflict; j++) {
               const p = ahead[j];
               if (this.claimedBy(p.x, p.y, t.id) === null)

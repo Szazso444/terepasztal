@@ -1155,3 +1155,39 @@ describe('a maintenance train in traffic', () => {
     expect(t.repairUnpaid).toBe(false);
   });
 });
+
+/** A train of an Adler and a flatbed, on its way east, stopped by a piece failing at `x`. */
+function stoppedBy(w: SimWorld, x: number, from: number, to: number) {
+  const loco = w.inventory.add('adler', 0).uid;
+  const t = w.fleet.create([loco], [w.inventory.add('flatbed', 0).uid], [from, to]);
+  if (typeof t === 'string') throw new Error(t);
+  until(w, () => t.headTile!.x >= x - 6 && t.state === 'moving', 200);
+  wearDown(w, x, 0);
+  until(w, () => t.state === 'noRoute' && t.speed === 0, 60);
+  return t;
+}
+
+describe('a maintenance train and a train stopped at the break', () => {
+  const SLOW = { timeout: 60_000 };
+  const tilesUnder = (w: SimWorld, t: Train) => t.occupancyKeys(w.track.w).map((k) => k % w.track.w);
+
+  it('any train may close up behind one with no way on', SLOW, () => {
+    const { w, west, east } = sidedLine(false);
+    const stopped = stoppedBy(w, 50, west, east);
+    wearDown(w, 50, 1);
+    stopped.coal = 0;
+    stopped.water = 0;
+    until(w, () => stopped.state === 'noFuel', 30);
+    const behind = maintTrain(w, [west, east], 'schedule');
+    until(w, () => behind.blockedBy === stopped.id && behind.speed === 0, 200);
+    expect(behind.headTile!.x).toBeGreaterThanOrEqual(Math.min(...tilesUnder(w, stopped)) - 2);
+  });
+
+  it('a train with no way on holds only its own tiles', SLOW, () => {
+    const { w, west, east } = sidedLine(false);
+    const stopped = stoppedBy(w, 50, west, east);
+    const tiles = stopped.occupancyKeys(w.track.w);
+    expect([...w.fleet.traffic.claims.keys()].sort()).toEqual([...new Set(tiles)].sort());
+  });
+
+});

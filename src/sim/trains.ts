@@ -471,6 +471,10 @@ const EDGE_SLACK = 1e-6;
 const REROUTE_AFTER = 6;
 /** blocked this long: try rerouting again */
 const RETRY_EVERY = 20;
+/** states of a train that cannot work: it gives up its job (`Train.maint`) */
+const STOPS_WORK: readonly TrainState[] = ['stranded', 'noFuel', 'noPower'];
+/** states of a train standing with no way on (`Train.noWayOn`) */
+const NO_WAY_ON: readonly TrainState[] = ['noRoute', ...STOPS_WORK];
 /** notes about a yield, dropped when the train sets off from it */
 const YIELD_NOTES: readonly string[] = [
   ENGLISH.traffic.pullingAside,
@@ -920,6 +924,10 @@ export class Train {
   /** On the Maintenance mode, its work and not its stop list decides where it goes. */
   get maintaining() {
     return this.mode === 'maintenance' && !this.job;
+  }
+  /** Stopped with no way on, for now or for good: it needs no more track than it stands on. */
+  get noWayOn() {
+    return NO_WAY_ON.includes(this.state);
   }
   /** A maintenance train on no refuelling detour is bound for its job, its waiting place or nowhere. */
   private get boundForWork() {
