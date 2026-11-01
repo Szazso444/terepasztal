@@ -44,6 +44,15 @@ describe('continuous landscape invariants', () => {
     );
     expect(dense.terrain).toEqual(before);
   });
+  it('raises water that stands above level 0', () => {
+    const m = map();
+    const raised = { ...m, terrain: m.terrain.slice(), waterSurface: new Uint8Array(m.w * m.h) };
+    raised.terrain[300] = Terrain.Water;
+    raised.waterSurface[300] = 2;
+    expect(landscapeHeights(raised, new Set())[300]).toBeGreaterThan(0);
+    raised.waterSurface[300] = 0;
+    expect(landscapeHeights(raised, new Set())[300]).toBe(0);
+  });
   it('keeps excavation flat and bounds every slope so projected surfaces cannot fold', () => {
     const m = map();
     m.terrain.fill(Terrain.Mountain);

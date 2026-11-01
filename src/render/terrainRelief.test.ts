@@ -353,6 +353,44 @@ describe('connected illustrated terrain', () => {
   });
 });
 
+describe('raised water in the relief', () => {
+  /** A 7 x 7 hill plateau with a 3 x 3 pool at its middle, raised to `level`. */
+  function pool(level: number) {
+    const map = emptyMap(1, 16, 16);
+    const surface = new Uint8Array(16 * 16);
+    for (let y = 4; y < 11; y++)
+      for (let x = 4; x < 11; x++) map.terrain[y * 16 + x] = Terrain.Hill;
+    for (let y = 6; y < 9; y++)
+      for (let x = 6; x < 9; x++) {
+        map.terrain[y * 16 + x] = Terrain.Water;
+        surface[y * 16 + x] = level;
+      }
+    map.waterSurface = surface;
+    return map;
+  }
+  const middle = (k: number) => k * 17 + 7;
+
+  for (const [name, style] of [
+    ['terraces', DEFAULT_RELIEF],
+    ['corners', { ...DEFAULT_RELIEF, shape: 'corners' as const }],
+  ] as const)
+    it(`gives water at level 2 corner level 2 (${name})`, () => {
+      const r = buildRelief(pool(2), new Set(), style);
+      expect(r.corners[middle(7)]).toBe(2);
+      expect(r.corners[middle(8)]).toBe(2);
+    });
+
+  it('leaves the corners of water at level 0 as they are on a map with no levels', () => {
+    const flat = pool(0);
+    const none = pool(0);
+    none.waterSurface = undefined;
+    for (const style of [DEFAULT_RELIEF, { ...DEFAULT_RELIEF, shape: 'corners' as const }])
+      expect(buildRelief(flat, new Set(), style).corners).toEqual(
+        buildRelief(none, new Set(), style).corners,
+      );
+  });
+});
+
 describe('the top of the relief in a box, on any map', () => {
   // A relief per case: about half a second alone
   it('is never below the surface anywhere in the box, its corners and edges included', () => {

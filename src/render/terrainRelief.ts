@@ -1,6 +1,6 @@
 import { Terrain } from '../world/tiles';
 import { hash2 } from '../engine/rng';
-import { tileLevels } from '../world/elevation';
+import { levelTarget, tileLevels } from '../world/elevation';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import type { LandscapeMap } from './landscapeModel';
 
@@ -109,8 +109,7 @@ export function buildRelief(
             level = 0;
             continue;
           }
-          const t = map.terrain[k];
-          level = Math.min(level, t === Terrain.Hill ? 2 : t === Terrain.Mountain ? 4 : 0);
+          level = Math.min(level, levelTarget(map, k));
         }
       // Broad saddles in mountain interiors avoid a uniform, featureless tabletop.
       if (level === 4) {
@@ -160,7 +159,7 @@ export function buildRelief(
     for (let x = 0; x < w; x++) {
       const k = y * w + x,
         t = map.terrain[k];
-      if (t !== Terrain.Hill && t !== Terrain.Mountain) continue;
+      if (!levelTarget(map, k)) continue;
       const c = y * stride + x,
         a = corners[c] * step,
         b = corners[c + 1] * step,
