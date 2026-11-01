@@ -466,7 +466,10 @@ export class Station {
   gateTiles(): { x: number; y: number }[] {
     return gatesOf(this.def, this.x, this.y, this.rot);
   }
-  /** The edge of a gate's piece on the station's side, or its first link's: a train entering there runs out of the gate. */
+  /**
+   * The edge of a gate's piece on the station's side, or its first link's: a train entering there
+   * runs out of the gate.
+   */
   gateEntry(g: { x: number; y: number }, links: readonly (readonly Dir[])[]): Dir | undefined {
     const toStation = DIRS.find((d) => this.covers(g.x + DIR_DX[d], g.y + DIR_DY[d]));
     return toStation !== undefined && links.some((l) => l.includes(toStation))
