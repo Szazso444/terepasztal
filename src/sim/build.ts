@@ -1,4 +1,4 @@
-import { DIRS, DIR_DX, DIR_DY, tileToWorld } from '../engine/iso';
+import { DIRS, DIR_DX, DIR_DY, Dir, rotateDir, tileToWorld } from '../engine/iso';
 import { Terrain, TERRAIN_NAMES, inBounds, terrainAt, type GameMap } from '../world/tiles';
 import type { RegionState } from '../world/regions';
 import {
@@ -501,31 +501,63 @@ export class Builder {
     return out;
   }
 
-  /** Services can serve a platform or the rail directly within their advertised radius. */
+  /**
+   * What a tile hands out. A decor serves a platform or the rail directly within its advertised
+   * radius, each its own (`fuel` is coal, `liquidFuel`, `water`); a depot or a warehouse is universal.
+   */
   serviceAt(x: number, y: number) {
-    let fuel = false,
+    let coal = false,
+      liquid = false,
       water = false;
     for (const d of this.decor.values()) {
       const def = decorDef(d.id);
       if (Math.max(Math.abs(x - d.x), Math.abs(y - d.y)) > (def.radius ?? 0)) continue;
-      fuel ||= !!def.fuel;
+      coal ||= !!def.fuel;
+      liquid ||= !!def.liquidFuel;
       water ||= !!def.water;
     }
     for (const st of this.stations)
       if (!st.def.stockpile && this.platformTiles(st).some((p) => p.x === x && p.y === y)) {
-        fuel ||= st.refuelsFuel;
+        coal ||= st.refuelsCoal;
+        liquid ||= st.refuelsLiquid;
         water ||= st.refuelsWater;
       }
-    return { fuel, water };
+    return { fuel: coal || liquid, coal, liquid, water };
+  }
+  /**
+   * The rotations of a building at (x, y) whose front touches track: those a `facesTrack` decor
+   * may stand in.
+   */
+  trackFacingRots(x: number, y: number): number[] {
+    return [0, 1, 2, 3].filter((rot) => {
+      const f = facedTile(x, y, rot);
+      return this.track.railOn(f.x, f.y);
+    });
+  }
+  /**
+   * The track tiles a train leaves its route for to reach a decor's service: the tile a
+   * `facesTrack` decor's front faces. One that faces no track (it was placed before buildings had
+   * to, or the track went) still serves every track tile in its radius.
+   */
+  private serviceTilesOf(d: Decor): { x: number; y: number }[] {
+    const def = decorDef(d.id);
+    const f = facedTile(d.x, d.y, d.rot);
+    if (def.facesTrack && this.track.railOn(f.x, f.y)) return [f];
+    const r = def.radius ?? 0;
+    const out: { x: number; y: number }[] = [];
+    for (let y = d.y - r; y <= d.y + r; y++)
+      for (let x = d.x - r; x <= d.x + r; x++) if (this.track.has(x, y)) out.push({ x, y });
+    return out;
   }
   serviceTiles() {
     const keys = new Set<number>();
+    const faced = new Set<number>();
     for (const d of this.decor.values()) {
       const def = decorDef(d.id);
-      if (!def.fuel && !def.water) continue;
-      const r = def.radius ?? 0;
-      for (let y = d.y - r; y <= d.y + r; y++)
-        for (let x = d.x - r; x <= d.x + r; x++) if (this.track.has(x, y)) keys.add(this.key(x, y));
+      if (!def.fuel && !def.liquidFuel && !def.water) continue;
+      const tiles = this.serviceTilesOf(d);
+      for (const p of tiles) keys.add(this.key(p.x, p.y));
+      if (def.facesTrack && tiles.length === 1) faced.add(this.key(tiles[0].x, tiles[0].y));
     }
     for (const s of this.stations)
       if (!s.def.stockpile && (s.refuelsFuel || s.refuelsWater))
@@ -533,7 +565,7 @@ export class Builder {
     return [...keys].map((k) => {
       const x = k % this.map.w,
         y = Math.floor(k / this.map.w);
-      return { x, y, ...this.serviceAt(x, y) };
+      return { x, y, faced: faced.has(k), ...this.serviceAt(x, y) };
     });
   }
   // ------------------------------------------------------------------ track
@@ -1136,8 +1168,15 @@ export class Builder {
     }
     return null;
   }
-  checkDecor(x: number, y: number, defId: string): PlacementCheck {
-    const reason = this.canPlaceDecor(x, y, defId);
+  /** Why a `facesTrack` decor cannot stand here: no track beside it, or `rot` turned from it. */
+  private facingProblem(x: number, y: number, defId: string, rot?: number): string | null {
+    if (!decorDef(defId).facesTrack) return null;
+    const rots = this.trackFacingRots(x, y);
+    if (!rots.length) return STR.build.needTrack;
+    return rot === undefined || rots.includes(wrapRotation(rot)) ? null : STR.build.facesTrack;
+  }
+  checkDecor(x: number, y: number, defId: string, rot?: number): PlacementCheck {
+    const reason = this.canPlaceDecor(x, y, defId) ?? this.facingProblem(x, y, defId, rot);
     if (reason) return { ok: false, cost: {}, reason };
     return this.affordable(this.priced(decorDef(defId).cost, this.kindMul(defId)), x, y);
   }
@@ -1146,7 +1185,7 @@ export class Builder {
    * roads, free (`connectPlace`).
    */
   placeDecor(x: number, y: number, defId: string, rot: number): Decor | null {
-    const c = this.checkDecor(x, y, defId);
+    const c = this.checkDecor(x, y, defId, rot);
     if (!c.ok || !this.pay(c, x, y)) return null;
     const d = this.addDecor(x, y, defId, rot);
     this.connectPlace(decorPlace(d));
@@ -1179,13 +1218,14 @@ export class Builder {
     sfx('build.remove');
     return true;
   }
-  /** Water towers and coaling stages within their radius mark stations as supplied; towers also boost loading. */
+  /** Water towers, coaling stages and Fuel Pumps within their radius mark stations as supplied; towers also boost loading. */
   refreshStationBoosts() {
     for (const s of this.stations) {
       let boost = 0;
       let count = 0;
       s.waterSupply = false;
-      s.fuelSupply = false;
+      s.coalSupply = false;
+      s.liquidSupply = false;
       for (const d of this.decor.values()) {
         const def = decorDef(d.id);
         if (!def.radius) continue;
@@ -1195,7 +1235,8 @@ export class Builder {
           count++;
         }
         if (def.water) s.waterSupply = true;
-        if (def.fuel) s.fuelSupply = true;
+        if (def.fuel) s.coalSupply = true;
+        if (def.liquidFuel) s.liquidSupply = true;
       }
       s.loadBoost = 1 + boost;
     }
@@ -1649,6 +1690,11 @@ export function stationPlace(s: Station): PlaceAt {
 /** A works or a bridge platform where it stands (a platform has no door: `hasDoors`). */
 export function buildingPlace(b: Building): PlaceAt {
   return { def: buildingDef(b.id), x: b.x, y: b.y, rot: b.rot ?? 0 };
+}
+/** The tile a building's front faces, turned to `rot`: S, W, N or E of it at 0 to 3. */
+export function facedTile(x: number, y: number, rot: number): { x: number; y: number } {
+  const side = rotateDir(Dir.S, wrapRotation(rot));
+  return { x: x + DIR_DX[side], y: y + DIR_DY[side] };
 }
 /** Decor where it stands (only a house or a service stop has a door: `hasDoors`). */
 export function decorPlace(d: Decor): PlaceAt {

@@ -24,7 +24,7 @@ import { HALF_H } from '../engine/iso';
 import { rules } from '../sim/rules';
 import { HarvestCells, harvestBreakdown, weeklyOutput } from '../sim/stations';
 import type { Season } from '../sim/weather';
-import { nextToolRotation, stationGhostFrame, toolRotations } from './toolRotation';
+import { facingRotation, nextToolRotation, stationGhostFrame, toolRotations } from './toolRotation';
 import { pieceName } from './trackGroups';
 import { placingTip, yieldLabel } from './placingTooltip';
 import type { TipDoc } from './tooltipDoc';
@@ -224,7 +224,9 @@ export class BuildController {
     // (once a held track drag has set off, R turns the run instead: `updateTrackTool`)
     const turningDrag =
       this.tool.kind === 'track' && this.dragStart && this.dragAxis && inp.buttons.has(0);
-    if (inp.wasPressed('KeyR') && this.turns() && !turningDrag)
+    // a fuel building turns among the sides that face track (`updateDecorTool`)
+    const facing = this.tool.kind === 'decor' && decorDef(this.tool.defId).facesTrack;
+    if (inp.wasPressed('KeyR') && this.turns() && !turningDrag && !facing)
       this.rot = nextToolRotation(this.tool, this.rot);
     if (inp.wasPressed('Delete') && inMap && active) this.removeAt(t.x, t.y);
     this.updatePlacing(active, t, inMap);
@@ -619,7 +621,13 @@ export class BuildController {
     }
     const def = decorDef(tool.defId);
     this.showReach(t, def.power ? 2 : (def.radius ?? 0));
-    const check = this.builder.checkDecor(t.x, t.y, tool.defId);
+    if (def.facesTrack)
+      this.rot = facingRotation(
+        this.builder.trackFacingRots(t.x, t.y),
+        this.rot,
+        this.input.wasPressed('KeyR'),
+      );
+    const check = this.builder.checkDecor(t.x, t.y, tool.defId, this.rot);
     this.placement = { check, at: t };
     const g = this.ensureGhost(structureFrame(this.world.atlas, `structures/${def.id}`, this.rot));
     this.placeGhostAt(g, t.x, t.y, check.ok);

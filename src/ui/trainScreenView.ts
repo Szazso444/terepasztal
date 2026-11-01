@@ -19,7 +19,6 @@ export interface TankInput {
   steam: boolean;
   diesel: boolean;
   electric: boolean;
-  fuelKind: string;
   oilKind: string;
   coal: number;
   coalCap: number;
@@ -56,8 +55,8 @@ export function tankRows(t: TankInput, oilName: string): TankRow[] {
   if (t.steam) {
     rows.push({
       key: 'fuel',
-      icon: t.fuelKind,
-      label: `${STR.train.fuel} (${cargoWord(t.fuelKind)})`,
+      icon: 'coal',
+      label: `${STR.train.fuel} (${cargoWord('coal')})`,
       value: t.coal,
       cap: t.coalCap,
       tone: tankTone(t.coal, t.coalCap, t.coalRate),
@@ -110,14 +109,13 @@ export function rangeText(rangeTiles: number): string {
 /** The use per tile, as the screen lists it; a dash when nothing is used. */
 export function perTileText(t: {
   coalRate: number;
-  fuelKind: string;
   waterRate: number;
   oilRate: number;
   oilKind: string;
   powerRate: number;
 }): string {
   const rate = [
-    t.coalRate > 0 ? `${fmtDecimal(t.coalRate, 2)} ${cargoWord(t.fuelKind)}` : '',
+    t.coalRate > 0 ? `${fmtDecimal(t.coalRate, 2)} ${cargoWord('coal')}` : '',
     t.waterRate > 0 ? `${fmtDecimal(t.waterRate, 2)} ${cargoWord('water')}` : '',
     t.oilRate > 0 ? `${fmtDecimal(t.oilRate, 2)} ${cargoWord(t.oilKind)}` : '',
     t.powerRate > 0 ? `${fmtDecimal(t.powerRate, 2)} ${cargoWord('power')}` : '',

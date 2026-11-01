@@ -420,6 +420,7 @@ export const HU: Strings = {
     depotLocked: (n: number) => `A következő fűtőház ${n} saját chunknál nyílik meg`,
     townTooClose: (d: number) => `A városi állomások legalább ${d} csempére legyenek egymástól`,
     needTrackHere: 'Jelző csak sínre kerülhet',
+    facesTrack: 'Az elejének a sín felé kell néznie',
     roadHere: 'Itt már van út',
     roadOnBuilding: 'Az út megkerüli az épületet, és csak az ajtajánál találkozik vele',
     roadInWay: 'Itt út fut: előbb bontsd el',
@@ -455,7 +456,7 @@ export const HU: Strings = {
     works: 'Művek',
     stations: 'Állomások',
     town: 'Város',
-    services: 'Szolgáltatások',
+    services: 'Üzemanyag',
     trackTools: 'Sín',
     electrification: 'Villamosítás',
     rawMaterials: 'Nyersanyagok',
@@ -523,6 +524,8 @@ export const HU: Strings = {
       onTrack: 'Meglévő síncsempére. R forgatja.',
       service: (r: number) =>
         `Szabad csempére, legfeljebb ${r} csempére a kiszolgálandó állomásoktól.`,
+      facing: (r: number) =>
+        `Sín melletti szabad csempére, az elejével a sín fölé. Magától a sín felé fordul; R a többi oldalt próbálja. A ${r} csempén belüli állomások is ebből kapnak.`,
       powerLine:
         'Sínre vagy bármilyen szabad csempére. Az oszlopok 2 csempén belül kapcsolódnak egymáshoz és az erőműhöz; egy feszültség alatti oszloptól 1 csempén belül feszültség alá kerül a sín.',
       building: 'Szabad fű-, erdő-, homok- vagy sík dombcsempére.',
@@ -727,7 +730,7 @@ export const HU: Strings = {
       famine:
         'A személyzetnek élelem kell: a termelés a felére esett. Lásd el a szélmalmot, vagy vegyél élelmet a Piacon (K).',
       outOfFuel: (n: string) =>
-        `${n}: kifogyott az üzemanyag. Töltsd fel a készletet (Piac K, faszénégető vagy fatelep a fához), vagy használd a sürgősségi tankolást a vonat részleteinél.`,
+        `${n}: kifogyott az üzemanyag. Töltsd fel a készletet (Piac K vagy faszénégető a szénhez), vagy használd a sürgősségi tankolást a vonat részleteinél.`,
       lowCoal:
         'Kevés a szén. Építs faszénégetőt (Művek), amely fából szenet csinál, vagy vegyél szenet a Piacon.',
       noWater:
@@ -1896,7 +1899,6 @@ export const HU: Strings = {
     perTile: 'Fogyasztás csempénként',
     range: 'Hatótáv a mostani tartályokkal',
     tiles: 'csempe',
-    prefer: 'Gőzüzemanyag:',
     routing: 'Útvonaltervezés',
     hungry: 'Éhes a személyzet: lassabban fut, amíg olyan készlethez nem ér, ahol van élelem',
     clickHint: 'Kattints a kijelöléshez',
@@ -1915,8 +1917,6 @@ export const HU: Strings = {
       freight:
         'Dinamikus: előbb oda megy, ahol a legtöbb áru áll, majd egy másik termelőnél tölt rá, amíg van hely. Az áru a legközelebbi olyan készletbe megy, ahol még van hely (fűtőház, raktár vagy városháza); készletből nem visz el semmit. Minden megállóban újratervez, és magától tankol.',
     },
-    coal: 'Szén',
-    wood: 'Fa',
     lastLoop: 'Előző kör',
     currentLoop: 'Mostani kör',
     noTrip: 'Még nincs befejezett kör.',
@@ -1990,7 +1990,7 @@ export const HU: Strings = {
       wheat: 'Tanyákról. A szélmalom minden búzából legalább 5 élelmet készít.',
       food: 'Kenyér a szélmalmokból. Hetente etet lakosokat és személyzetet; a fejlesztések javítják a búza-élelem arányt.',
       stone: 'Kőfejtőkből. Sínhez és épületekhez kell; a kőőrlő vasat készít belőle.',
-      wood: 'Fatelepekről. Szinte mindenhez kell; a faszénégető szenet készít belőle; a gőzmozdonyok el is égethetik.',
+      wood: 'Fatelepekről. Szinte mindenhez kell; a faszénégető szenet készít belőle.',
       coal: 'Faszénégetőkből vagy a Piacról. Gőzmozdonyok tüzelője és erőművek fűtőanyaga.',
       oil: 'A finomítóból vagy a Piacról. Dízelmozdonyok üzemanyaga; az erőmű is égetheti.',
       iron: 'A kőőrlőből vagy a Piacról. Váltókhoz, jelzőkhöz, távvezetékekhez és üzemekhez kell.',
