@@ -3316,13 +3316,12 @@ export class Train {
   /**
    * Where an idle train, or one at work on a piece (`Fleet.yieldWork`), can go to get out of the way
    * of `group`, the trains whose route crosses the tiles it stands on: the nearest place that holds
-   * the whole consist off every route in
-   * `spots.theirs`, in a siding when one is free, else on plain track, a platform or a depot gate
-   * no other train is bound for. The way there crosses no other train, no other escape and no
-   * claim of a train outside the group; the group's claims give way to the move. With `through`
-   * the way may cross the trains of the group: the way it would take were they to back off. With
-   * `shunt`, when no such place can be run straight into, a move that reverses once partway to
-   * one, a siding first. Null when there is nowhere to go.
+   * the whole consist off every route in `spots.theirs`, in a siding when one is free, else on plain
+   * track, a platform or a depot gate no other train is bound for. The way there crosses no other
+   * train, no other escape and no claim of a train outside the group; the group's claims give way to
+   * the move. With `through` the way may cross the trains of the group: the way it would take were
+   * they to back off. With `shunt`, when no such place can be run straight into, a move that
+   * reverses once partway to one, a siding first. Null when there is nowhere to go.
    */
   planAside(
     ctx: TickCtx,

@@ -4,6 +4,7 @@ import { levelMul } from '../gacha/items';
 import { STR } from '../strings';
 import { depotWith } from '../testing/storeFixtures';
 import { line, simWorld, station, type SimWorld } from '../testing/simWorld';
+import { Dir } from '../engine/iso';
 import { findPath } from '../world/pathfinding';
 import { classRank, consistAccess, consistGauge, gaugeOf, trafficRank } from './compat';
 import type { Contract } from './contracts';
@@ -921,17 +922,35 @@ describe('a maintenance train in traffic', () => {
   const job = (tier: 0 | 1 | 2) => ({ ax: 40, ay: 30, tier, x: 40, y: 30 });
 
   it('ranks above every class on an unusable piece, and below every class on any other', () => {
+    const { w } = workLine();
     const t = onlooker();
-    expect(trafficRank(t)).toBe(classRank(t.trainClass));
-    t.maint = job(0);
-    expect(trafficRank(t)).toBe(4);
-    t.maint = job(1);
-    expect(trafficRank(t)).toBe(0);
+    expect(trafficRank(t, w.track)).toBe(classRank(t.trainClass));
     t.maint = job(2);
-    expect(trafficRank(t)).toBe(0);
+    wearDown(w, 40, 0);
+    expect(trafficRank(t, w.track)).toBe(4);
+    wearDown(w, 40, 0.2);
+    expect(trafficRank(t, w.track)).toBe(0);
+    wearDown(w, 40, 0.4);
+    expect(trafficRank(t, w.track)).toBe(0);
     t.maint = null;
     t.parkAt = { x: 8, y: 30 };
-    expect(trafficRank(t)).toBe(classRank(t.trainClass));
+    expect(trafficRank(t, w.track)).toBe(classRank(t.trainClass));
+  });
+
+  it('ranks by the piece as it stands now, not as it stood when picked', () => {
+    const { w } = workLine();
+    const t = onlooker();
+    t.maint = job(0);
+    wearDown(w, 40, 0.01);
+    expect(trafficRank(t, w.track), 'mended past unusable').toBe(0);
+    t.maint = job(1);
+    wearDown(w, 40, 0);
+    expect(trafficRank(t, w.track), 'failed since it was picked').toBe(4);
+    wearDown(w, 40, 0.9);
+    expect(trafficRank(t, w.track), 'mended past the tiers').toBe(0);
+    t.maint = job(0);
+    cut(w, 40);
+    expect(trafficRank(t, w.track), 'taken away').toBe(0);
   });
 
   it('a train heading for an unusable piece goes first', () => {
@@ -947,9 +966,10 @@ describe('a maintenance train in traffic', () => {
     expect(other.t.yieldCount).toBeGreaterThan(0);
   });
 
-  it('at work on an unusable piece it is not backed off', () => {
+  it('at work on a piece still unusable it is not backed off', () => {
     const { w, west, near } = sidedLine();
-    rules.trackRepairSeconds = 200;
+    // a repair that gets nowhere: the piece stays as it is
+    rules.trackRepairSeconds = Infinity;
     wearDown(w, 42, 0);
     const t = maintTrain(w, []);
     until(w, repairing(t));
@@ -960,9 +980,62 @@ describe('a maintenance train in traffic', () => {
       expect(t.state).toBe('repairing');
       expect(t.maint?.ax).toBe(42);
     });
+    expect(healthAt(w, 42)).toBe(0);
     expect(t.headTile).toEqual(at);
     expect(t.yieldCount).toBe(0);
     expect(other.blockedBy).toBe(t.id);
+  });
+
+  it('a job begun on an unusable piece gives way once the piece has any health', () => {
+    const { w, west, near } = sidedLine();
+    rules.trackRepairSeconds = 200;
+    wearDown(w, 42, 0);
+    const t = maintTrain(w, []);
+    until(w, repairing(t));
+    expect(t.maint?.tier).toBe(0);
+    const other = maintTrain(w, [near, west], 'schedule');
+    until(w, () => other.blockedBy === t.id, 120);
+    until(w, () => t.maint === null, 20);
+    expect(healthAt(w, 42)).toBeGreaterThan(0);
+    expect(t.yieldCount).toBe(1);
+  });
+
+  /** Posts facing east at x 22 and x 44: a train held at the first while another is in the block. */
+  function posted(w: SimWorld) {
+    const signal = (x: number) => ({ id: 'signal', x, y: 30, rot: Dir.E });
+    w.fleet.signals.rebuild([signal(22), signal(44)] as unknown as Parameters<
+      typeof w.fleet.signals.rebuild
+    >[0]);
+  }
+
+  it('a train held at a post with it on the route ahead makes it pull aside too', () => {
+    const { w, west, near } = sidedLine();
+    posted(w);
+    rules.trackRepairSeconds = 200;
+    wearDown(w, 41, 0.2);
+    const t = maintTrain(w, []);
+    until(w, repairing(t));
+    const other = maintTrain(w, [near, west], 'schedule');
+    until(w, () => other.blocked && other.speed === 0, 120);
+    expect(other.blockedBy).toBeNull();
+    expect(other.claimBlocker).toBeNull();
+    until(w, () => t.maint === null, 20);
+    expect(t.yieldCount).toBe(1);
+  });
+
+  it('a train held at a post with it nowhere on the route ahead leaves it at work', () => {
+    const { w, west } = sidedLine();
+    const short = station(w, 'warehouse', 28, 29).id;
+    posted(w);
+    rules.trackRepairSeconds = 200;
+    wearDown(w, 41, 0.2);
+    const t = maintTrain(w, []);
+    until(w, repairing(t));
+    const other = maintTrain(w, [short, west], 'schedule');
+    until(w, () => other.blocked && other.speed === 0, 120);
+    until(w, () => other.blockedTime > rules.trackYieldSeconds + 3, 20);
+    expect(t.state).toBe('repairing');
+    expect(t.yieldCount).toBe(0);
   });
 
   it('heading for an unusable piece it backs off only for a train that has no way aside', () => {

@@ -400,7 +400,7 @@ export class Traffic {
     const order = [...trains].sort(
       (a, b) =>
         Number(this.recoveries.active.has(b.id)) - Number(this.recoveries.active.has(a.id)) ||
-        trafficRank(b) - trafficRank(a) ||
+        trafficRank(b, this.track) - trafficRank(a, this.track) ||
         (this.stats.get(a.id)?.lastMoveAt ?? now) - (this.stats.get(b.id)?.lastMoveAt ?? now) ||
         b.yieldCount - a.yieldCount ||
         b.weight - a.weight ||
@@ -495,9 +495,9 @@ export class Traffic {
   /**
    * May `t` take tiles `from`..`to` of its path from the lower ranked trains that claimed them? Only
    * when every holder ranks below it (`trafficRank`), has no escape leased, stands neither on that
-   * stretch nor anywhere on `t`'s path, and can still stop before the claim group
-   * of its own the stretch falls in. On success the holders' claims from that group on are
-   * dropped, so they claim again behind `t` (they come later in the order).
+   * stretch nor anywhere on `t`'s path, and can still stop before the claim group of its own the
+   * stretch falls in. On success the holders' claims from that group on are dropped, so they claim
+   * again behind `t` (they come later in the order).
    */
   private giveWay(
     t: Train,
@@ -508,7 +508,7 @@ export class Traffic {
     byId: Map<number, Train>,
     occupied: Map<number, number>,
   ) {
-    const rank = trafficRank(t);
+    const rank = trafficRank(t, this.track);
     if (rank <= 0 || this.recoveries.active.has(t.id)) return false;
     const contested = new Set<number>();
     const holders = new Set<number>();
@@ -519,7 +519,8 @@ export class Traffic {
       if (h === undefined || h === t.id) continue;
       if (occupied.get(key) === h) return false;
       const other = byId.get(h);
-      if (!other || this.recoveries.active.has(h) || trafficRank(other) >= rank) return false;
+      if (!other || this.recoveries.active.has(h) || trafficRank(other, this.track) >= rank)
+        return false;
       contested.add(key);
       holders.add(h);
     }

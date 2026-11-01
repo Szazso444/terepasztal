@@ -17,7 +17,7 @@ export interface MaintJob {
   /** the piece's anchor */
   ax: number;
   ay: number;
-  /** 0 unusable, 1 degraded, 2 close to degraded */
+  /** 0 unusable, 1 degraded, 2 close to degraded, as the piece stood when picked (`jobTier`) */
   tier: 0 | 1 | 2;
   /** the tile the train stands on */
   x: number;
@@ -39,6 +39,15 @@ function tierOf(p: TrackPiece): MaintJob['tier'] | null {
   if (h <= 0) return 0;
   if (h < rules.trackDegradedAt) return 1;
   return h < rules.trackCloseAt ? 2 : null;
+}
+
+/**
+ * The tier a job is in now, by its piece's health and not by what it was when picked. A piece mended
+ * past the tiers, or gone, counts as the last of them.
+ */
+export function jobTier(job: MaintJob, track: TrackGraph): MaintJob['tier'] {
+  const piece = track.get(job.ax, job.ay);
+  return (piece && tierOf(piece)) ?? 2;
 }
 
 /** What the fleet's maintenance trains are working on, and what is left to do. */

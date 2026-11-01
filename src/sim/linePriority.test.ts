@@ -250,15 +250,17 @@ describe('priority at a contested section', () => {
 });
 
 describe('priority of a maintenance train at a contested section', () => {
-  const onJob = (t: Train, tier: 0 | 1 | 2) => {
-    t.maint = { ax: 20, ay: 5, tier, x: 20, y: 5 };
+  /** Gives a train the job of the piece at x 14, its health that of the tier. */
+  const onJob = (t: Train, g: TrackGraph, tier: 0 | 1 | 2) => {
+    g.get(14, 5)!.wear.health = [0, 0.2, 0.4][tier];
+    t.maint = { ax: 14, ay: 5, tier, x: 14, y: 5 };
     return t;
   };
 
   it('serves one bound for an unusable piece before the biggest class', () => {
     const { g, traffic, key } = contested();
     const cruiser = moving(1, EAST, [2], g.w, 'cruiser');
-    const worker = onJob(moving(2, WEST, [12], g.w, 'frigate'), 0);
+    const worker = onJob(moving(2, WEST, [12], g.w, 'frigate'), g, 0);
     traffic.assign([cruiser, worker], 0);
     expect(traffic.claims.get(key(7))).toBe(2);
     expect(cruiser.claimBlocker).toBe(2);
@@ -267,7 +269,7 @@ describe('priority of a maintenance train at a contested section', () => {
   it('takes the stretch of the biggest class for an unusable piece', () => {
     const { g, traffic, key } = contested();
     const cruiser = moving(1, EAST, [2], g.w, 'cruiser', 1);
-    const worker = onJob(moving(2, WEST, [12], g.w, 'frigate'), 0);
+    const worker = onJob(moving(2, WEST, [12], g.w, 'frigate'), g, 0);
     worker.state = 'waiting';
     traffic.assign([cruiser, worker], 0);
     expect(traffic.claims.get(key(7))).toBe(1);
@@ -279,7 +281,7 @@ describe('priority of a maintenance train at a contested section', () => {
   it('serves one bound for a degraded piece after the smallest class', () => {
     for (const tier of [1, 2] as const) {
       const { g, traffic, key } = contested();
-      const worker = onJob(moving(1, EAST, [2], g.w, 'frigate'), tier);
+      const worker = onJob(moving(1, EAST, [2], g.w, 'frigate'), g, tier);
       const corvette = moving(2, WEST, [12], g.w, 'corvette');
       traffic.assign([worker, corvette], 0);
       expect(traffic.claims.get(key(7))).toBe(2);
@@ -289,7 +291,7 @@ describe('priority of a maintenance train at a contested section', () => {
 
   it('lets the smallest class take a stretch from one bound for a degraded piece', () => {
     const { g, traffic, key } = contested();
-    const worker = onJob(moving(1, EAST, [2], g.w, 'frigate', 1), 1);
+    const worker = onJob(moving(1, EAST, [2], g.w, 'frigate', 1), g, 1);
     const corvette = moving(2, WEST, [12], g.w, 'corvette');
     corvette.state = 'waiting';
     traffic.assign([worker, corvette], 0);
