@@ -81,6 +81,7 @@ import {
 } from './wheatField';
 import { FIELD_BUDGET_MS, WheatFields, type WheatHost } from './wheatFields';
 import { BuildingLife } from './buildingLife';
+import { Puddles } from './puddles';
 import { TreeSway } from './treeSway';
 import { doorSides, roadCode, roadSides } from './roadShape';
 import { paintedRoads } from './roadPaint';
@@ -257,6 +258,8 @@ export class WorldRenderer {
   readonly buildingLife: BuildingLife;
   /** the trees in the wind */
   readonly treeSway = new TreeSway();
+  /** the puddles the rain leaves */
+  readonly puddles: Puddles;
   /** out-of-map void ring */
   readonly border = new Container();
   private trackSprites = new Map<number, Sprite>();
@@ -375,6 +378,22 @@ export class WorldRenderer {
     this.landscape = new Landscape(map, this.flattened, this.railBeds);
     this.harvest = new HarvestHighlight(map, (x, y) => this.surfacePoint(x, y));
     this.buildingLife = new BuildingLife(this.atlas, this.objects, this.surfaces);
+    this.puddles = new Puddles(
+      map,
+      this.contactGround,
+      (x, y) => this.surfacePoint(x, y),
+      (x, y) => {
+        const i = idx(map, x, y);
+        return (
+          this.isBuilt(x, y) &&
+          !this.occupied(x, y) &&
+          !this.trackSprites.has(i) &&
+          !this.scatterSprites.has(i) &&
+          !this.roads.has(i) &&
+          !this.paved(i)
+        );
+      },
+    );
     this.wheat = new WheatFields(map.w, map.h);
     this.wheatHost = {
       site: (x, y) => this.fieldSite(x, y),
@@ -910,6 +929,7 @@ export class WorldRenderer {
   }
   /** Something was built or cleared near (x, y): scatter there follows. */
   private refreshScatter(x: number, y: number, radius: number) {
+    this.puddles.invalidate(x, y);
     for (let dy = -radius; dy <= radius; dy++)
       for (let dx = -radius; dx <= radius; dx++) {
         const xx = x + dx,

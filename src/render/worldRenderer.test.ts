@@ -177,6 +177,7 @@ function renderer() {
     groundFits: new Map(),
     buildingLife: { place: () => undefined, remove: () => undefined },
     treeSway: { add: () => undefined },
+    puddles: { invalidate: () => undefined },
     surfaces: {
       picture: pictureOf,
       window: (_key: string, _f: FrameInfo, _procedural: boolean, family: string) => {
@@ -1483,6 +1484,7 @@ function fieldWorld(fields: [number, number][]) {
   Object.assign(world, {
     buildingLife: { place: () => undefined, remove: () => undefined },
     treeSway: { add: () => undefined },
+    puddles: { invalidate: () => undefined },
     surfaces: {
       picture: pictureOf,
       window: () => Texture.EMPTY,
