@@ -725,7 +725,7 @@ describe('a world that grows', () => {
 
   // three worlds of 96 tiles grown to 160, track laid across the seams: about 0.7 s alone
   it('mixes stored and new ground after a generator change, and track crosses the seam', () => {
-    for (const seed of [1, 7412, 31337]) {
+    for (const seed of [2, 6, 31337]) {
       const world = worldOf(seed, { w: 96, h: 96 });
       const old = groundOf(world, generatorOf('simple')).map;
       const save = parseSave(JSON.stringify(buildSave(partsOf(world))))!;
@@ -963,7 +963,7 @@ describe('the seams of a world grown under a changed generator', () => {
   // four worlds of 160 tiles a side, each seam row checked against the build rules: about 1 s alone
   it('take track on every row of ordinary ground across each of the four seams', () => {
     const straight = { kind: 'straight', cls: 'branch' } as const;
-    for (const seed of [1, 7412, 31337, 20260912]) {
+    for (const seed of [2, 6, 13, 31337]) {
       const world = worldOf(seed, { w: 96, h: 96 });
       groundOf(world, generatorOf('simple'));
       const save = parseSave(JSON.stringify(buildSave(partsOf(world))))!;
