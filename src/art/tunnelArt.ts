@@ -29,7 +29,7 @@ const BRICK_PER_ROW = 6;
 export const COPING_W = BRICK_W;
 export const COPING_H = 5;
 /** Height of the wall frames above the tile edge they stand on, in world pixels. */
-const WALL_H = 22;
+export const WALL_H = 22;
 
 /** The opening of a portal: half width in tiles, and the spring and crown of its arch in pixels. */
 export const OPEN_W = 0.46;
@@ -37,7 +37,7 @@ export const OPEN_SPRING = 18;
 export const OPEN_CROWN = 34;
 
 /** Rock as the banks show it: dressed stone, the hill's own earth, and its shadow. */
-const ROCK = {
+export const ROCK = {
   hi: PAL.stone[1],
   mid: PAL.hill[0],
   lo: mix(PAL.hillSideR, PAL.outline, 0.45),
