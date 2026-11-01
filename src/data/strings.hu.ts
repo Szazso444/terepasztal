@@ -1333,6 +1333,8 @@ export const HU: Strings = {
     smoke: 'Mozdonyfüst',
     buildingLife: 'Élet az épületeken',
     buildingLifeHint: 'Kéményfüst, a kőbánya darúja és a szélmalom vitorlái',
+    movingWater: 'Mozgó víz',
+    movingWaterHint: 'A tenger, a tavak, a folyók és a vízesések',
     weather: 'Időjárás és évszakok',
     showFps: 'FPS kijelzése',
     controls: 'Irányítás',

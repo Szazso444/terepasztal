@@ -1498,6 +1498,8 @@ const EN = {
     smoke: 'Locomotive smoke',
     buildingLife: 'Building life',
     buildingLifeHint: "Chimney smoke, the quarry crane and the windmill's sails",
+    movingWater: 'Moving water',
+    movingWaterHint: 'The sea, lakes, rivers and waterfalls',
     weather: 'Weather and seasons',
     showFps: 'Show FPS',
     controls: 'Controls',

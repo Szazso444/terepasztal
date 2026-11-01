@@ -15,6 +15,7 @@ import {
   worldToTileInt,
   depthKey,
   DIRS,
+  type Dir,
   DIR_DX,
   DIR_DY,
   ELEV_PX,
@@ -41,6 +42,8 @@ import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import { clearedByPaving, scatterFor } from './scatter';
 import { levelAt } from '../world/elevation';
+import { headwaterAt, waterfallAt } from '../world/waterfalls';
+import { isRiver } from './waterPaint';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
@@ -331,6 +334,8 @@ export class WorldRenderer {
   private waterDetails = new Graphics();
   private waterClock = 0;
   private rippleRefresh = 0;
+  /** Whether all water moves (the setting); off, the still water of before #365. */
+  movingWater = true;
   private view: { x: number; y: number; w: number; h: number } | null = null;
   /** The wheat fields' pictures (#444), one per field tile's sprite. */
   private wheat: WheatFields;
@@ -628,13 +633,19 @@ export class WorldRenderer {
       case Terrain.Hill:
         return this.flattened.has(i) ? `terrain/hillcut_${v}` : `terrain/hill_${v % 3}`;
       case Terrain.Water:
-        return `terrain/water_${v % 3}_f0`;
+        return isRiver(this.map, i) ? `terrain/river_${v % 3}_f0` : `terrain/water_${v % 3}_f0`;
       case Terrain.Rock:
         return `terrain/rock_${v}`;
       case Terrain.Mountain:
         return `terrain/mountain_${v % 3}`;
       case Terrain.Sand:
-        return b === Biome.Desert ? `terrain/desert_${v}` : `terrain/sand_${v}`;
+        return b === Biome.Desert
+          ? `terrain/desert_${v}`
+          : b === Biome.Beach
+            ? `terrain/beach_${v}`
+            : `terrain/sand_${v}`;
+      case Terrain.Ice:
+        return `terrain/glacier_${v}`;
       default:
         // a terrain with no frame of its own yet reads as the high ground it lies on
         return `terrain/mountain_${v % 3}`;
@@ -1038,6 +1049,7 @@ export class WorldRenderer {
           if (this.map.terrain[y * this.map.w + x] !== Terrain.Water || !this.isBuilt(x, y))
             continue;
           const h = hash2(x + this.map.originX, y + this.map.originY, this.map.seed + 95);
+          if (this.movingWater) this.drawWaterMotion(x, y, h);
           if (h > 0.28) continue;
           const p = tileToWorld(x, y);
           if (
@@ -1064,6 +1076,81 @@ export class WorldRenderer {
       }
     }
     this.updateFields();
+  }
+
+  /**
+   * The moving water of tile (x, y) over the painted ground (#365): a river's streaks run
+   * downstream through the middle of its tile, a fall's run down its slope and break up in flecks
+   * of foam at its foot, a headwater rings out, and still water drifts a second glint.
+   * `h` is the tile's own hash, so no two tiles keep time.
+   */
+  private drawWaterMotion(x: number, y: number, h: number) {
+    const g = this.waterDetails,
+      map = this.map,
+      i = idx(map, x, y),
+      side = map.flowDir?.[i] ?? 0,
+      clock = this.waterClock;
+    if (!side) {
+      if (h > 0.5) return;
+      const p = tileToWorld(x, y),
+        run = ((clock * 0.09 + h * 7) % 1) * 2 - 1,
+        px = p.x + run * 14,
+        py = p.y + 3 - h * 12;
+      g.moveTo(px - 3, py)
+        .quadraticCurveTo(px, py + 0.6, px + 4, py - 0.2)
+        .stroke({ color: 0xb7d1be, width: 0.6, alpha: 0.1 * (1 - run * run) });
+      return;
+    }
+    const d = (side - 1) as Dir,
+      dx = DIR_DX[d],
+      dy = DIR_DY[d],
+      fall = waterfallAt(map, x, y);
+    for (let k = 0; k < 3; k++) {
+      const seed = hash2(x + map.originX, y + map.originY, map.seed + 96 + k),
+        pace = 0.7 + 0.5 * seed,
+        along = (clock * pace * 0.42 + seed * 5 + h * 3) % 1,
+        fade = Math.sin(along * Math.PI),
+        side2 = (seed - 0.5) * 0.44,
+        s = along - 0.5,
+        ex = x + dx * s - dy * side2,
+        ey = y + dy * s + dx * side2,
+        fx = ex + dx * 0.16,
+        fy = ey + dy * 0.16,
+        a = tileToWorld(ex, ey),
+        b = tileToWorld(fx, fy);
+      if (fall && s > 0) continue;
+      g.moveTo(a.x, a.y + this.elevationOf(ex, ey))
+        .lineTo(b.x, b.y + this.elevationOf(fx, fy))
+        .stroke({ color: 0xe4f3ee, width: 0.7, alpha: 0.26 * fade });
+    }
+    if (fall)
+      for (let k = 0; k < 5; k++) {
+        const seed = hash2(x + map.originX + k, y + map.originY, map.seed + 97),
+          t = (clock * (0.9 + seed * 0.5) + seed * 9) % 1,
+          across = (seed - 0.5) * 0.56,
+          along = t * 0.62 + 0.25,
+          ex = x + dx * along - dy * across,
+          ey = y + dy * along + dx * across,
+          fx = ex + dx * 0.1,
+          fy = ey + dy * 0.1,
+          a = tileToWorld(ex, ey),
+          b = tileToWorld(fx, fy),
+          top = a.y + this.elevationOf(ex, ey);
+        g.moveTo(a.x, top)
+          .lineTo(b.x, b.y + this.elevationOf(fx, fy))
+          .stroke({ color: 0xe0ddd2, width: 1, alpha: 0.5 * Math.sin(t * Math.PI) });
+      }
+    if (headwaterAt(map, x, y)) {
+      const p = tileToWorld(x, y),
+        z = this.elevationOf(x, y),
+        t = (clock * 1.2 + h * 5) % 1;
+      g.ellipse(p.x, p.y + z, 2 + t * 7, 1 + t * 3.5).stroke({
+        color: 0xcde2e0,
+        width: 0.7,
+        alpha: 0.45 * (1 - t),
+      });
+      g.circle(p.x, p.y + z, 0.9).fill({ color: 0xe0ddd2, alpha: 0.85 });
+    }
   }
 
   /**

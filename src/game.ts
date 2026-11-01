@@ -1229,7 +1229,10 @@ export class Game implements UiHost {
     audio.applyMusic();
     if (!this.settings.weather && this.weather) this.weather.visible = 0;
     if (this.world) this.applySeason();
-    if (this.world) this.world.buildingLife.enabled = this.settings.buildingLife;
+    if (this.world) {
+      this.world.buildingLife.enabled = this.settings.buildingLife;
+      this.world.movingWater = this.settings.movingWater;
+    }
     if (this.ui) this.hud.setToggles(this.settings.weather, this.settings.dayNight);
     if (this.fleet) this.fleet.signals.level = this.settings.signalling ?? 'auto';
   }

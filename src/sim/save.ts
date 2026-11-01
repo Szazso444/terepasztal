@@ -181,6 +181,8 @@ export interface Settings {
   smoke: boolean;
   /** chimney smoke, the quarry crane's load and the windmill's sails move; off, a still picture */
   buildingLife: boolean;
+  /** the sea, lakes, rivers and falls move; off, still water with its faint glints */
+  movingWater: boolean;
   showFps: boolean;
   weather: boolean;
   /** the language of the text, read as the page loads (`LANGUAGE`) */
@@ -260,6 +262,7 @@ export const DEFAULT_SETTINGS: Settings = {
   dayNight: true,
   smoke: true,
   buildingLife: true,
+  movingWater: true,
   showFps: false,
   weather: true,
   language: 'en',
@@ -1047,6 +1050,7 @@ function settingsFrom(stored: Partial<Settings>): Settings {
   s.language = languageOf(stored.language);
   // Building life starts off for a player who asked for less motion; a stored choice stands
   if (typeof stored.buildingLife !== 'boolean') s.buildingLife = !prefersReducedMotion();
+  if (typeof stored.movingWater !== 'boolean') s.movingWater = !prefersReducedMotion();
   return s;
 }
 export function readSettings(): Settings {

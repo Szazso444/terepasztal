@@ -73,7 +73,7 @@ describe('connected illustrated terrain', () => {
         expect(detail).toBeLessThanOrEqual(1);
         expect(Math.abs(detail - grassDetail(x + 0.001, y))).toBeLessThan(0.002);
         surfaceBlend(m, x, y, weights);
-        expect(weights.slice(4).reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10);
+        expect(weights.slice(4, 8).reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10);
         const forest = weights
           .slice(0, 4)
           .reduce((n, t, i) => n + (t === 1 ? weights[i + 4] : 0), 0);
@@ -391,6 +391,8 @@ describe('raised water in the relief', () => {
         buildRelief(none, new Set(), style).corners,
       );
   });
+});
+
 describe('the slope rule', () => {
   it('agrees with the simulation on every tile of seeded maps', () => {
     let refused = 0;
