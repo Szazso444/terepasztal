@@ -737,6 +737,11 @@ describe('a train through a tunnel', () => {
       expect(new Set(flat.path).has(`${PEAK_X},${ROW}`)).toBe(true);
       expect(tunnel.path).toEqual(flat.path);
       expect(tunnel.outcome).toEqual(flat.outcome);
+    },
+    30_000,
+  );
+});
+
 describe('the same worlds at the lengths of the models', () => {
   // the F7's model is 2.48 tiles and not 2, so the trains take longer to clear each other: three
   // times the run, every property of the watch held on every tick
