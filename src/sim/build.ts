@@ -79,6 +79,7 @@ import {
   TUNNEL_COVER,
   Underground,
   drillLine,
+  faceTo,
   touchesWater,
   type DigPlan,
   type DigWork,
@@ -760,15 +761,19 @@ export class Builder {
   /**
    * Rail takes a level a tile, and generated ground steps up to four: is the edge between `t` and
    * (nx, ny) too steep for a link? Each side counts at its rail: a dug or cut tile at its bed, so
-   * the ground over it does not bind the link, and open ground at its level. The rail inside is
-   * level, so a dug tile takes open ground at its own floor only: rail on the mountain beside a
-   * tunnel does not join it through the wall.
+   * the ground over it does not bind the link, and open ground at its level. The sides of a dug
+   * tile are the wall of the tunnel: the way out of one, to a cut or to open ground, is a portal on
+   * exactly that face, at the floor. Elsewhere rail takes the step, at most one.
    */
   private cliffAt(t: { x: number; y: number }, nx: number, ny: number): boolean {
     const under = this.underground,
+      n = { x: nx, y: ny },
       rail = (x: number, y: number) => under.bedAt(x, y) ?? levelAt(this.map, x, y),
-      step = Math.abs(rail(t.x, t.y) - rail(nx, ny));
-    return step > (under.isDug(t.x, t.y) !== under.isDug(nx, ny) ? 0 : 1);
+      step = Math.abs(rail(t.x, t.y) - rail(nx, ny)),
+      dug = under.isDug(t.x, t.y);
+    if (dug === under.isDug(nx, ny)) return step > 1;
+    const [inner, outer] = dug ? [t, n] : [n, t];
+    return step > 0 || !under.hasPortal(inner.x, inner.y, faceTo(inner, outer));
   }
   refundFor(p: TrackPiece): Cost {
     return this.free

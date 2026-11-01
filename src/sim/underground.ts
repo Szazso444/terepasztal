@@ -115,7 +115,7 @@ function frontOf(p: Portal): Tile {
 }
 
 /** The face of `from` that looks at the tile beside it, `to`. */
-function faceTo(from: Tile, to: Tile): Face {
+export function faceTo(from: Tile, to: Tile): Face {
   return FACES.find((_, d) => from.x + DIR_DX[d] === to.x && from.y + DIR_DY[d] === to.y)!;
 }
 
@@ -250,6 +250,10 @@ export class Underground {
   }
   private portalKey(x: number, y: number, face: Face): number {
     return (y * this.w + x) * FACES.length + FACES.indexOf(face);
+  }
+  /** A portal stands on (x, y) with its opening on `face`. */
+  hasPortal(x: number, y: number, face: Face): boolean {
+    return this.inside(x, y) && this.portalKeys.has(this.portalKey(x, y, face));
   }
   /** Add a portal; false for one off the map, with a bad face or floor, or already there. */
   addPortal(p: Portal): boolean {

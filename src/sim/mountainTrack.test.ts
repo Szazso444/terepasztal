@@ -728,6 +728,7 @@ describe('rail on the steps of generated ground', () => {
     const { builder } = cliff(4);
     expect(builder.placeTrack(19, 20, STRAIGHT, 1)).toBe(true);
     builder.underground.dig(20, 20, 0);
+    builder.underground.addPortal({ x: 20, y: 20, face: 'W', floor: 0 });
     builder.insideMode = true;
     expect(builder.checkTrack(20, 20, STRAIGHT, 1).ok).toBe(true);
     builder.insideMode = false;
@@ -1349,8 +1350,10 @@ describe('track inside', () => {
       const world = () => {
         const w = ground((x) => (x === 19 ? level : 0));
         expect(levelAt(w.map, 19, ROW)).toBe(level);
-        if (kind === 'dug') w.under.dig(20, ROW, 0);
-        else w.under.cut(20, ROW);
+        if (kind === 'dug') {
+          w.under.dig(20, ROW, 0);
+          w.under.addPortal({ x: 20, y: ROW, face: 'W', floor: 0 });
+        } else w.under.cut(20, ROW);
         return w;
       };
       const want = joins ? { ok: true } : { ok: false, reason: STR.build.tooSteep };
@@ -1388,11 +1391,87 @@ describe('track inside', () => {
       });
     });
 
+    describe('an edge between a dug tile and what is not dug', () => {
+      const STEP = { ok: false, reason: STR.build.tooSteep };
+      /** A straight across (x, y) with the Drill on, then the one beside it with it off. */
+      const refusesBeside = (
+        w: ReturnType<typeof ground>,
+        x: number,
+        y: number,
+        nx: number,
+        ny: number,
+      ) => {
+        const rot = nx === x ? 0 : 1;
+        w.builder.insideMode = true;
+        expect(w.builder.placeTrack(x, y, STRAIGHT, rot)).toBe(true);
+        w.builder.insideMode = false;
+        expect(w.builder.checkTrack(nx, ny, STRAIGHT, rot)).toMatchObject(STEP);
+      };
+
+      it.each([['open'], ['cut']] as const)(
+        'joins a tile that is %s only through a portal on exactly that face',
+        (kind) => {
+          const FACES = ['N', 'E', 'S', 'W'] as const;
+          for (const d of [Dir.N, Dir.E, Dir.S, Dir.W])
+            for (const face of FACES) {
+              const nx = 20 + DIR_DX[d],
+                ny = ROW + DIR_DY[d],
+                where = `out ${FACES[d]}, portal ${face}`;
+              const world = () => {
+                const w = ground(() => 0);
+                w.under.dig(20, ROW, 0);
+                if (kind === 'cut') w.under.cut(nx, ny);
+                w.under.addPortal({ x: 20, y: ROW, face, floor: 0 });
+                return w;
+              };
+              const want = FACES[d] === face ? { ok: true } : STEP;
+              // the outer piece down first
+              const a = world();
+              expect(a.builder.placeTrack(nx, ny, STRAIGHT, along(d)), where).toBe(true);
+              a.builder.insideMode = true;
+              expect(a.builder.checkTrack(20, ROW, STRAIGHT, along(d)), where).toMatchObject(want);
+              // the piece inside down first
+              const b = world();
+              b.builder.insideMode = true;
+              expect(b.builder.placeTrack(20, ROW, STRAIGHT, along(d)), where).toBe(true);
+              b.builder.insideMode = false;
+              expect(b.builder.checkTrack(nx, ny, STRAIGHT, along(d)), where).toMatchObject(want);
+            }
+        },
+      );
+
+      it('a drag along the foot of a cliff makes no portal, and no way in', () => {
+        const w = ground((x) => (x >= 16 ? 4 : 0));
+        const drag = Array.from({ length: 5 }, (_, i) => ({ x: 16, y: 10 + i }));
+        expect(w.builder.dig(drag)).toBe(true);
+        expect(drag.every((t) => w.under.isDug(t.x, t.y))).toBe(true);
+        expect(w.under.portals()).toEqual([]);
+        refusesBeside(w, 16, 12, 15, 12);
+      });
+
+      it('a tile dug on the corner of a cliff makes no portal, and no way in', () => {
+        const w = ground((x, y) => (x >= 16 && y >= 16 ? 4 : 0));
+        expect(w.builder.dig([{ x: 16, y: 16 }])).toBe(true);
+        expect(w.under.isDug(16, 16)).toBe(true);
+        expect(w.under.portals()).toEqual([]);
+        refusesBeside(w, 16, 16, 15, 16);
+      });
+
+      it('a portal on the west face lets no straight in from the cut on the north', () => {
+        const w = ground((x) => (x >= 16 ? 4 : 0));
+        w.under.cut(16, 20);
+        w.under.dig(16, 21, 0);
+        w.under.addPortal({ x: 16, y: 21, face: 'W', floor: 0 });
+        refusesBeside(w, 16, 21, 16, 20);
+      });
+    });
+
     it('a dug tile joins a dug tile and a cut at their floor', () => {
       const w = hill();
       w.under.cut(16, ROW);
       w.under.dig(17, ROW, 0);
       w.under.dig(18, ROW, 0);
+      w.under.addPortal({ x: 17, y: ROW, face: 'W', floor: 0 });
       expect(w.builder.placeTrack(16, ROW, STRAIGHT, 1)).toBe(true);
       w.builder.insideMode = true;
       expect(w.builder.placeTrack(17, ROW, STRAIGHT, 1)).toBe(true);
@@ -1402,6 +1481,7 @@ describe('track inside', () => {
     it('lifts the cliff rule for the tunnel only: the row beside it keeps its cliff', () => {
       const w = wall();
       w.under.dig(16, ROW, 0);
+      w.under.addPortal({ x: 16, y: ROW, face: 'W', floor: 0 });
       expect(w.builder.placeLine(run(10, 15, ROW))).toBe(true);
       w.builder.insideMode = true;
       expect(w.builder.placeTrack(16, ROW, STRAIGHT, 1)).toBe(true);
