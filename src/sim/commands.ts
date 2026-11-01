@@ -106,11 +106,6 @@ export class Commands {
     t.setProgram([...stops]);
     return done();
   }
-  /** Which solid fuel a steam train takes first. */
-  setFuelPreference(t: Train, pref: 'coal' | 'wood'): CommandResult {
-    t.fuelPreference = pref;
-    return done();
-  }
   /** Rename a train: trimmed and cut to `TRAIN_NAME_MAX` characters; never empty. */
   renameTrain(t: Train, name: string): CommandResult {
     if (!this.fleet.byId(t.id)) return refuse(STR.train.gone);

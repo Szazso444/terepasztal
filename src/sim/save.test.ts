@@ -171,7 +171,7 @@ describe('the migration registry', () => {
           m.from === 11
             ? { contractRefreshDays: 6, contractOfferCount: 2 }
             : { contractRefreshDays: 1.5, contractOfferCount: 3 },
-        trains: [{ id: 1 }],
+        trains: [{ id: 1, ...(m.from === 24 ? { tanks: { kind: 'wood', pref: 'coal' } } : {}) }],
         stations: [stationOf('farm', undefined)],
         ...(m.from > 3 ? { buildings: [[7, 7, 'kiln', 0] as BuildingJSON] } : {}),
         ...(m.from === 21
@@ -3391,7 +3391,7 @@ describe('a file with one field every version has taken out or retyped', () => {
           tier: from < 9 ? Math.min(2, economy.tier) : economy.tier,
         });
         // what the file held of tickets is gone, whatever the version it came from
-        if (from < SAVE_VERSION) expect(save.economy).not.toHaveProperty('tickets');
+        if (from <= 23) expect(save.economy).not.toHaveProperty('tickets');
         for (const key of ['track', 'stations', 'trains'] as const)
           expect(save[key], key).toHaveLength((file[key] as unknown[]).length);
 
@@ -4621,5 +4621,36 @@ describe('v22 to v23', () => {
     const [train] = migrate(file as SaveGame).trains as { colour: number }[];
     expect(train.colour).toBe(0);
     expect(isTrainColour(train.colour)).toBe(true);
+  });
+});
+
+describe('v24 to v25', () => {
+  it('turns a wood burner into a coal burner with the same energy, and no more than that', () => {
+    const tanks = { coal: 12.5, oil: 0, water: 30, battery: 0, kind: 'wood', pref: 'wood' };
+    const file = {
+      ...oldestSave(),
+      version: 24,
+      trains: [{ id: 3, tanks }, 'not a train'],
+    } as SaveGame;
+    expect(runStep(24, file).trains).toEqual([
+      { id: 3, tanks: { coal: 12.5, oil: 0, water: 30, battery: 0 } },
+      'not a train',
+    ]);
+  });
+
+  it('tells the player so', () => {
+    const step = MIGRATIONS.find((m) => m.from === 24)!;
+    expect(step.note).toContain('wood');
+    expect(step.quiet).toBeFalsy();
+  });
+
+  it('a train loaded from such a file burns coal', () => {
+    const track = new TrackGraph(8, 8);
+    const t = new Train([{ uid: 1, level: 1, def: locoDef('general') }]);
+    t.coal = 7;
+    const json = JSON.parse(JSON.stringify(t.toJSON()));
+    expect(json.tanks).not.toHaveProperty('kind');
+    expect(json.tanks).not.toHaveProperty('pref');
+    expect(Train.fromJSON(json, track).coal).toBe(7);
   });
 });

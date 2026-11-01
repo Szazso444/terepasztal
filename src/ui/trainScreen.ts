@@ -210,7 +210,6 @@ export class TrainScreen implements Screen {
           t.hasDiesel,
           t.hasElectric,
           t.batteryCap > 0,
-          t.fuelKind,
           t.oilKind,
           !!(t.job ?? t.jobs[0]),
           !!t.lastMessage,
@@ -278,7 +277,6 @@ export class TrainScreen implements Screen {
       steam: t.hasSteam,
       diesel: t.hasDiesel,
       electric: t.hasElectric,
-      fuelKind: t.fuelKind,
       oilKind: t.oilKind,
       coal: t.coal,
       coalCap: t.coalCap,
@@ -486,21 +484,6 @@ export class TrainScreen implements Screen {
         },
       }),
     );
-    if (t.hasSteam)
-      modes.append(
-        el('small', { text: STR.train.prefer }),
-        segmented({
-          options: [
-            { id: 'coal', label: STR.train.coal },
-            { id: 'wood', label: STR.train.wood },
-          ],
-          value: t.fuelPreference,
-          onChange: (id) => {
-            this.accepted(this.commands.setFuelPreference(t, id as 'coal' | 'wood'));
-            this.render();
-          },
-        }),
-      );
     // the train's own program, also while a contract job runs its two stops
     this.stops.show(t);
     const count = el('span');

@@ -236,14 +236,16 @@ export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
     cost: d.cost,
     frame: d.id === 'signal' ? 'structures/signal_green' : `structures/${d.id}`,
     desc: d.flavor,
-    tier: 0,
+    tier: d.tier ?? 0,
     place: d.power
       ? STR.toolbar.place.powerLine
       : d.onTrack
         ? STR.toolbar.place.onTrack
-        : d.radius
-          ? STR.toolbar.place.service(d.radius)
-          : STR.toolbar.place.building,
+        : d.facesTrack
+          ? STR.toolbar.place.facing(d.radius ?? 0)
+          : d.radius
+            ? STR.toolbar.place.service(d.radius)
+            : STR.toolbar.place.building,
     reach: d.power ? 2 : d.radius,
     group: decorPlace(d).group,
   });

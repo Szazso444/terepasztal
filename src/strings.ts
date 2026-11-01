@@ -482,6 +482,8 @@ const EN = {
      */
     besideWater: { pump: 'A water pump needs water right beside it.' } as Record<string, string>,
     needTrack: 'Must touch track',
+    /** a water tower, a coaling stage or a Fuel Pump turned away from the track beside it */
+    facesTrack: 'Its front must face the track',
     depotLocked: (n: number) => `Next depot unlocks at ${n} owned chunks`,
     townTooClose: (d: number) => `Town stations keep ${d} tiles apart`,
     needTrackHere: 'Signals stand on track',
@@ -544,7 +546,7 @@ const EN = {
     /** the types of Buildings */
     stations: 'Stations',
     town: 'Town',
-    services: 'Services',
+    services: 'Fuel',
     /** the types of Tools */
     trackTools: 'Track',
     electrification: 'Electrification',
@@ -627,6 +629,9 @@ const EN = {
       town: 'On grass, forest, sand or a level hill tile with track touching one side, at least 25 tiles from any other Townhouse.',
       onTrack: 'On an existing track tile. R rotates.',
       service: (r: number) => `On a free tile within ${r} tiles of the stations it should serve.`,
+      /** a water tower, a coaling stage or a Fuel Pump (`facesTrack`) */
+      facing: (r: number) =>
+        `On a free tile beside track, its front over the rails. It turns to the track; R tries the other sides. Stations within ${r} tiles draw on it too.`,
       powerLine:
         'On track or any free tile. Poles link within 2 tiles of each other and of a Power Plant; rails within 1 tile of a live pole are powered.',
       building: 'On a free grass, forest, sand or level hill tile.',
@@ -840,7 +845,7 @@ const EN = {
       famine:
         'The crews need food: production halved. Supply a Windmill or buy food on the Market (K).',
       outOfFuel: (n: string) =>
-        `${n} is out of fuel. Fill the store (Market K, a kiln or a lumber yard for wood) or use Emergency refuel in the train details.`,
+        `${n} is out of fuel. Fill the store (Market K or a kiln for coal) or use Emergency refuel in the train details.`,
       lowCoal:
         'Coal is short. Build a Charcoal Kiln (Works) to turn wood into coal, or buy coal on the Market.',
       noWater:
@@ -2035,7 +2040,6 @@ const EN = {
     perTile: 'Use per tile',
     range: 'Range on current tanks',
     tiles: 'tiles',
-    prefer: 'Steam fuel:',
     routing: 'Routing',
     /** the crew owes more than a day of food (`Train.hungry`) */
     hungry: 'Crew hungry: runs slower until it reaches a store with food',
@@ -2056,8 +2060,6 @@ const EN = {
       freight:
         'Dynamic: fullest producer first, tops up at another producer while room is left. The goods go to the nearest store with room (depot, warehouse or Townhouse); nothing is taken out of a store. Re-plans at every stop and refuels on its own.',
     } as Record<string, string>,
-    coal: 'Coal',
-    wood: 'Wood',
     lastLoop: 'Last loop',
     currentLoop: 'Current loop',
     noTrip: 'No completed loop yet.',
@@ -2137,7 +2139,7 @@ const EN = {
       wheat: 'From farms. A Windmill turns each wheat into at least 5 food.',
       food: 'Bread from Windmills. Feeds residents and crews weekly; upgrades improve the wheat-to-food ratio.',
       stone: 'From quarries. Builds track and buildings; the grinder turns it into iron.',
-      wood: 'From lumber yards. Builds almost everything; the kiln turns it into coal; steam engines can burn it.',
+      wood: 'From lumber yards. Builds almost everything; the kiln turns it into coal.',
       coal: 'From charcoal kilns or the Market. Steam engine fuel and power plant feed.',
       oil: 'From the refinery or the Market. Diesel engine fuel; the power plant can burn it too.',
       iron: 'From the stone grinder or the Market. Switches, signals, power lines and works.',

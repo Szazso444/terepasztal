@@ -71,6 +71,8 @@ function meetOtherRules(
     const def = DECOR_DEFS.find((d) => d.id === id)!;
     // a signal stands on the rails, which may be laid on forest
     if (def.onTrack && !def.anyTile) builder.track.place(X, Y, 'straight', 1, 'branch');
+    // a fuel building stands with its front on track
+    if (def.facesTrack) builder.track.place(X, Y + 1, 'straight', 1, 'branch');
   }
 }
 

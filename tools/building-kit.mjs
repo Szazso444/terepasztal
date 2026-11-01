@@ -176,7 +176,8 @@ export function loadInventory(root = '.') {
           upgradeable: true,
         });
   for (const d of data('decor.json')) {
-    if (d.onTrack || d.power) continue;
+    // the Fuel Pump came after this queue: its pictures are the 3D model's (assets/source/models)
+    if (d.onTrack || d.power || d.id === 'fuel_pump') continue;
     add({
       family: d.id,
       id: d.id,

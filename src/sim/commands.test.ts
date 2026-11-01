@@ -334,17 +334,6 @@ describe('setSchedule', () => {
   });
 });
 
-describe('setFuelPreference', () => {
-  it('sets the solid fuel a steam train takes first', () => {
-    const w = world();
-    const t = train(w, 20);
-    expect(w.commands.setFuelPreference(t, 'wood')).toEqual({ ok: true });
-    expect(t.fuelPreference).toBe('wood');
-    expect(w.commands.setFuelPreference(t, 'coal')).toEqual({ ok: true });
-    expect(t.fuelPreference).toBe('coal');
-  });
-});
-
 describe('renameTown', () => {
   /** A Townhouse with its town, in a running game: the world starts in the editor's mode. */
   function founded() {
@@ -464,7 +453,7 @@ describe('turnSignal', () => {
   it('refuses decor that is not a signal on the map', () => {
     const w = world();
     const changed = vi.fn();
-    const tower = w.builder.placeDecor(40, ROW - 1, 'water_tower', 0)!;
+    const tower = w.builder.spawnDecor(40, ROW - 1, 'water_tower', 0)!;
     const loose = { id: 'signal', x: 50, y: ROW, rot: 0 };
     w.builder.onDecorChanged = changed;
     const gone = { ok: false, message: STR.signals.gone };

@@ -512,7 +512,7 @@ describe('stations and decor in a level', () => {
         const placedWorks = works.map((s) => stand(w, s));
         const st = w.builder.placeStation(depot.x, depot.y, 'depot', depot.rot);
         const hd = w.builder.placeDecor(house.x, house.y, 'townhouse', house.rot);
-        const td = w.builder.placeDecor(tower.x, tower.y, 'water_tower', tower.rot);
+        const td = w.builder.spawnDecor(tower.x, tower.y, 'water_tower', tower.rot);
         if (!st || !hd || !td) throw new Error('the depot, townhouse or water tower was refused');
 
         const { file, keys } = saved(w);

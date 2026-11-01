@@ -293,12 +293,17 @@ export const HU_NAMES = {
     water_tower: {
       name: 'Víztorony',
       flavor:
-        'Tárolt vizet ad a közeli állomásoknak és síneknek. A gőzvonatok felkeresik, mielőtt kifogynának. Szénrakodóval együtt teljes kiszolgálóhely.',
+        'A város raktárából tölti vízzel a kifolyója alá álló gőzmozdonyokat. A közeli állomások is ebből kapnak. Szénrakodóval együtt teljes kiszolgálóhely.',
     },
     fuel_stop: {
       name: 'Szénrakodó',
       flavor:
-        'Tárolt üzemanyagot ad a közeli állomásoknak és síneknek. A fogyó tartalékú vonatok felkeresnek egy elérhető szénrakodót; tegyél mellé víztornyot a teljes gőzös kiszolgáláshoz.',
+        'A város raktárából tölti szénnel a csúszdája alá álló gőzmozdonyokat. A közeli állomások is ebből kapnak. Tegyél mellé víztornyot a teljes gőzös kiszolgáláshoz.',
+    },
+    fuel_pump: {
+      name: 'Üzemanyagkút',
+      flavor:
+        'A város raktárából tölti a dízelmozdonyokat a sín fölé nyúló tömlőn át. A közeli állomások is ebből kapnak.',
     },
     power_line: {
       name: 'Távvezeték',
@@ -470,4 +475,5 @@ export const HU_MIGRATIONS: Record<number, string> = {
   20: 'a közös készlet a kezdő fűtőházba került; minden raktár megtartja a saját áruját',
   21: 'a hat vonaltípus váltotta fel a sínosztályokat: a széles és a nagysebességű sín Mellékvonal lett, az átmenetek Mellékvonal-egyenesek',
   22: 'a vonatok színkódot kaptak: a régebbi mentések minden vonata az első színt kapja',
+  24: 'a fa többé nem mozdonyüzemanyag: a fával fűtött gőzmozdonyok ezentúl szénnel mennek, a tartályukban ugyanannyi energiával',
 };

@@ -556,13 +556,18 @@ function layoutScene(c: Layout): World {
   const sites = c.sites.map((s) => put(s.kind, s.x, ROW - 1, s.stocked));
   if (c.siding !== null) sites.splice(1, 0, put('warehouse', c.siding + 1, ROW + 6, true));
   if (c.service !== undefined) {
-    // two rows off the line they serve its tiles two columns either side; an even column stands
-    // clear of every siding, and the tower east of it too
+    // two rows off the line, facing no track as in an older save, they serve its tiles two
+    // columns either side; one row off, facing it, the tile they face, a tender's length on for
+    // the head, kept off a stop's platform. An even column stands clear of every siding, and
+    // those beside it too
+    const clear = c.sites.every((s) => Math.abs(s.x - c.service!) > 3);
+    const y = clear && c.service % 4 === 0 ? ROW + 1 : ROW + 2;
     for (const [id, x] of [
+      ['fuel_pump', c.service - 1],
       ['fuel_stop', c.service],
       ['water_tower', c.service + 1],
     ] as const)
-      builder.decor.set((ROW + 2) * map.w + x, { id, x, y: ROW + 2, rot: 0 });
+      builder.decor.set(y * map.w + x, { id, x, y, rot: y === ROW + 1 ? 2 : 0 });
   }
   const w = { map, track, regions, economy, builder, arrivals: [] as number[] };
   const fleet = fleetOf(w);
@@ -1022,7 +1027,11 @@ function editWay(
       const service = train.serviceStop;
       if (service) {
         // the service two tiles on along the line
-        const other = { ...service, x: service.x + (service.x < SIZE / 2 ? 2 : -2) };
+        const other = {
+          ...service,
+          end: undefined,
+          x: service.x + (service.x < SIZE / 2 ? 2 : -2),
+        };
         if (!w.track.has(other.x, other.y) || (end.x === other.x && end.y === other.y)) return null;
         return { train: { ...train, serviceStop: other } };
       }
@@ -2774,9 +2783,10 @@ describe('a train stopped dry on its way to a fuel or water service when saved',
             expect(pathEnd(b), `where its path ends ${why}`).toEqual(pathEnd(a));
             if (!headsFor(a)) continue;
             n.heading++;
+            const stop = service.end ?? service;
             expect(pathEnd(b), `where its path ends ${why}, on the service`).toEqual({
-              x: service.x,
-              y: service.y,
+              x: stop.x,
+              y: stop.y,
             });
           }
           if (!ctlTook) {
