@@ -7,6 +7,8 @@ import { ScreenFrame, ScreenManager, type Screen } from './modal';
 import { NamePrompt } from './namePrompt';
 import { SettingsScreen, type SettingsActions } from './settingsScreen';
 import { AudioScreen } from './audioScreen';
+import { pictureNode } from './guideScreen';
+import type { AtlasRegistry } from '../engine/atlas';
 import { NowPlaying, type MusicDeck } from './nowPlaying';
 import { DEFAULT_VOLUMES, heardVolumes, type Volumes } from '../engine/audioGroups';
 import { numberField, slider, textField, type ConfirmOptions } from './kit';
@@ -1337,6 +1339,21 @@ describe('the Signals screen', () => {
     level(screen, 'ctc')?.fire('click');
     expect(settings.signalling).toBe('ctc');
     expect(onChange).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the pictures of the Guide', () => {
+  it('draws a vehicle from its portrait file, not from its id', () => {
+    const img = fake(
+      pictureNode({ of: 'vehicle', id: 'rocket', caption: '' }, {} as AtlasRegistry),
+    );
+    expect(img.attrs.get('src')).toContain('assets/portraits/rocket.png');
+  });
+
+  it('has none for a vehicle with no portrait', () => {
+    expect(
+      pictureNode({ of: 'vehicle', id: 'no_such_model', caption: '' }, {} as AtlasRegistry),
+    ).toBeNull();
   });
 });
 

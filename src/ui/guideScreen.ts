@@ -24,15 +24,17 @@ import {
   type FootSpec,
 } from './kit';
 import type { Screen } from './modal';
-import { portraitImg } from './rosterPortraits';
+import { portraitImg, portraitUrl } from './rosterPortraits';
 import { spriteImg } from './spritePreview';
 import { agePicture, renderParts } from './tooltipRender';
 
 /** What a page's picture is drawn from: the portrait, the station or works frame, the age's. */
-function pictureNode(p: GuidePicture, atlas: AtlasRegistry): Node | null {
+export function pictureNode(p: GuidePicture, atlas: AtlasRegistry): Node | null {
   switch (p.of) {
-    case 'vehicle':
-      return portraitImg(p.id, 'gd-img');
+    case 'vehicle': {
+      const src = portraitUrl(p.id);
+      return src ? portraitImg(src, 'gd-img') : null;
+    }
     case 'station':
       return spriteImg(atlas, `structures/${stationDef(p.id).art}_1`, 1, 'gd-img');
     case 'works':
