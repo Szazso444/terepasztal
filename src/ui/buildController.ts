@@ -244,6 +244,7 @@ export class BuildController {
     for (const c of inp.clicks) {
       if (c.button === 2) {
         const ct = this.tileUnderMouse();
+        if (this.lowerClick(ct)) continue;
         if (!this.removeAt(ct.x, ct.y) && this.tool.kind !== 'none') this.setTool({ kind: 'none' });
         else if (this.tool.kind === 'none') this.select(null);
       }
@@ -722,15 +723,34 @@ export class BuildController {
     );
     this.placeGhostAt(this.ghostDiamond, t.x, t.y, true);
     this.ghostDiamond.tint = 0xffffff;
+    const lowers = !!raising && this.builder.checkLower(t.x, t.y).ok;
     this.status(
-      !check.ok
-        ? (check.reason ?? '')
-        : raising
-          ? cost
-            ? STR.build.raiseHint(cost)
-            : STR.build.raiseFree
-          : `${STR.build.cost(cost)}   ${STR.build.bridgeDragHint}`,
+      [
+        !check.ok
+          ? (check.reason ?? '')
+          : raising
+            ? cost
+              ? STR.build.raiseHint(cost)
+              : STR.build.raiseFree
+            : `${STR.build.cost(cost)}   ${STR.build.bridgeDragHint}`,
+        lowers ? STR.build.lowerHint : '',
+      ]
+        .filter(Boolean)
+        .join('   '),
     );
+  }
+
+  /**
+   * A right click with the Bridge tool on a raised bridge lowers it, and is spent there even when
+   * a train refuses it. On a bridge at its lowest it removes, as everywhere.
+   */
+  private lowerClick(t: { x: number; y: number }) {
+    if (this.tool.kind !== 'building' || !buildingDef(this.tool.defId).bridge) return false;
+    if (!inBounds(this.builder.map, t.x, t.y) || !this.builder.platformAt(t.x, t.y)) return false;
+    const check = this.builder.checkLower(t.x, t.y);
+    if (check.reason === STR.build.raise.lowest) return false;
+    this.act(() => this.builder.lowerSpan(t.x, t.y));
+    return true;
   }
 
   /**
