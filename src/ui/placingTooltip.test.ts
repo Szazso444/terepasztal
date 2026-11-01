@@ -17,6 +17,7 @@ import { Terrain, type Biome, type GameMap } from '../world/tiles';
 import { groundRows, harvestRows, placingTip, yieldLabel } from './placingTooltip';
 import {
   blockText,
+  partsOf,
   plain,
   richText,
   type Block,
@@ -54,7 +55,7 @@ const shape = (doc: readonly Block[]) =>
     text: blockText(b),
     tone: 'tone' in b ? b.tone : undefined,
     total: b.kind === 'row' ? b.total : undefined,
-    terms: (b.kind === 'row' ? [...b.label, ...b.value] : b.parts)
+    terms: partsOf(b)
       .filter(isTerm)
       .map((t) => t.term),
   }));

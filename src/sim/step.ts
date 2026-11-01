@@ -6,7 +6,7 @@
 import { rules, daySeconds } from './rules';
 import { pieceCost, type TrackKind } from '../world/track';
 import { tickBuildings } from './buildings';
-import type { AgeSnapshot } from './ages';
+import { AGE_CHECKS_PER_DAY, type AgeSnapshot } from './ages';
 import type { GameClock } from './time';
 import type { House, HouseRegistry } from './houses';
 import type { Builder } from './build';
@@ -37,8 +37,7 @@ export { FAMINE_SPEED_MUL } from './trains';
 export const PASSENGER_CATCHMENT = 7;
 /** Game seconds between two calls of the city hook (the game redraws its town tiles). */
 export const CITY_CHECK_SECONDS = 10;
-/** Checks of the next age's goals per in-game day, in play mode only: once an in-game hour. */
-export const AGE_CHECKS_PER_DAY = 24;
+export { AGE_CHECKS_PER_DAY };
 
 /**
  * Track pieces of the regular class the starting wood, stone and iron pay for (spec §16): about
