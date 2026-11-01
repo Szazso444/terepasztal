@@ -135,6 +135,19 @@ function workLine(goods: Record<string, number> = { wood: 1000, stone: 1000, iro
   const stops = [station(w, 'warehouse', 12, 29).id, station(w, 'warehouse', 17, 29).id];
   return { w, store, stops };
 }
+/** A depot at the west end of a Branch line, a failed piece at 40, every stop past it. */
+function brokenLine() {
+  rules.trackWearMul = 0;
+  const w = simWorld({ terrain: 'grass', size: 96 });
+  depotWith(w, { ...startStock(), wood: 1000, stone: 1000, iron: 1000 }, { x: 4, y: 30 });
+  line(w, 6, 30, 90);
+  station(w, 'warehouse', 70, 29);
+  station(w, 'warehouse', 80, 29);
+  wearDown(w, 40, 0);
+  const loco = w.inventory.add('adler', 0).uid;
+  const wagon = w.inventory.add('maint_wagon_branch', 0).uid;
+  return { w, loco, wagon };
+}
 /** A locomotive and a Branch maintenance wagon rolled out of the depot, on the mode given. */
 function maintTrain(w: SimWorld, stops: number[], mode: RouteMode = 'maintenance') {
   const loco = w.inventory.add('adler', 0);
@@ -164,6 +177,62 @@ function until(w: SimWorld, done: () => boolean, limit = 300) {
   }
 }
 const repairing = (t: Train) => () => t.state === 'repairing';
+
+describe('a maintenance train leaving a depot', () => {
+  it('rolls out with every stop past the break, and repairs the piece', () => {
+    const { w, loco, wagon } = brokenLine();
+    // no other train could: there is no way to its stops
+    expect(w.fleet.dispatchCheck([loco], [wagon], [], null).reason).not.toBeNull();
+    const check = w.fleet.dispatchCheck([loco], [wagon], [], null, 'maintenance');
+    expect(check.reason).toBeNull();
+    expect(check.gate).not.toBeNull();
+    const t = w.fleet.create([loco], [wagon], [], undefined, 'maintenance');
+    if (typeof t === 'string') throw new Error(t);
+    expect(t.headTile).toEqual(check.gate);
+    expect(t.maint).toMatchObject({ ax: 40, x: 39 });
+    until(w, repairing(t));
+    expect(t.headTile).toEqual({ x: 39, y: 30 });
+    until(w, () => healthAt(w, 40) >= 1);
+    expect(t.maint).toBeNull();
+  });
+
+  it('needs no stop at all', () => {
+    rules.trackWearMul = 0;
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    depotWith(w, startStock(), { x: 4, y: 30 });
+    line(w, 6, 30, 50);
+    wearDown(w, 30, 0.2);
+    const t = maintTrain(w, []);
+    expect(t.route.length).toBeLessThan(2);
+    until(w, repairing(t));
+    expect(t.headTile).toEqual({ x: 30, y: 30 });
+    // with no stops of its own it leaves the mode for freight
+    t.wagons = [];
+    until(w, () => t.mode === 'freight');
+  });
+
+  it('still needs its wagon', () => {
+    const { w, loco } = brokenLine();
+    const why = STR.fleet.needMaintenanceWagon;
+    expect(w.fleet.dispatchCheck([loco], [], [], null, 'maintenance').reason).toBe(why);
+    expect(w.fleet.create([loco], [], [], undefined, 'maintenance')).toBe(why);
+  });
+
+  it('still needs a gate it can run out through', () => {
+    const { w, loco, wagon } = brokenLine();
+    cut(w, 7);
+    const check = w.fleet.dispatchCheck([loco], [wagon], [], null, 'maintenance');
+    expect(check.gate).toBeNull();
+    expect(check.reason).not.toBeNull();
+    expect(w.fleet.create([loco], [wagon], [], undefined, 'maintenance')).toBe(check.reason);
+  });
+
+  it('asks the preview the same question', () => {
+    const { w, loco } = brokenLine();
+    expect(w.fleet.previewSpawn([loco], [], null).gate).toBeNull();
+    expect(w.fleet.previewSpawn([loco], [], null, 'maintenance').gate).not.toBeNull();
+  });
+});
 
 describe('a maintenance train choosing work', () => {
   it('takes unusable before degraded before close to degraded', () => {

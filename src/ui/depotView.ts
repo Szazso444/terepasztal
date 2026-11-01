@@ -1,11 +1,16 @@
 import { STR } from '../strings';
-import { defaultStop, type StopPlan } from '../sim/trains';
+import { defaultStop, DYNAMIC_MODES, type RouteMode, type StopPlan } from '../sim/trains';
 
 /**
  * What the Depot and the stop editor say and decide, as plain functions over plain data: the
  * rows of the train list, the haul meter, whether Dispatch may be pressed and why not, the stop
  * list's edits. DOM-free, so it is tested under Node from literals.
  */
+
+/** The dynamic modes the Depot offers a consist: Maintenance only with the wagon in it. */
+export function dispatchModes(hasMaintenanceWagon: boolean): RouteMode[] {
+  return hasMaintenanceWagon ? [...DYNAMIC_MODES, 'maintenance'] : DYNAMIC_MODES;
+}
 
 /** How a train's state reads in colour: good, info (at a platform), warn (waiting) or bad. */
 export type Tone = '' | 'good' | 'info' | 'warn' | 'bad';

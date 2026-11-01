@@ -1074,6 +1074,7 @@ const EN = {
     rollOut: 'Roll-out',
     gateAt: (d: string, x: number, y: number, first: string) =>
       `${d}: gate at ${x},${y}, first stop ${first}`,
+    gateOut: (d: string, x: number, y: number) => `${d}: gate at ${x},${y}`,
     show: 'Show',
     servedBy: (n: number) => `${n} station${n === 1 ? '' : 's'} on this depot's rails`,
     groupStatic: 'Static',
@@ -1084,6 +1085,7 @@ const EN = {
       transport: 'Transport',
       contract: 'Contract',
       freight: 'Freight',
+      maintenance: 'Maintenance',
     } as Record<string, string>,
     routeHint: {
       auto: 'Static: visits every station with platform track, nearest first, and empties into the depot. Edit stops, dwell times and conditions later in the train details.',
@@ -1095,6 +1097,8 @@ const EN = {
         'Dynamic: works contracts. Waits on its platform until a contract it can carry is accepted, is chosen for it ahead of busier trains, runs it origin to destination and returns to waiting. Refuels on its own.',
       freight:
         'Dynamic: heads for the producer with the fullest, biggest pile within reach, then tops up at another producer while room is left, and takes the goods to the nearest store with room: a depot, a warehouse or a Townhouse. Never takes goods out of a store, and a producer in a town puts its goods into the town store itself. Re-plans at every stop and refuels on its own.',
+      maintenance:
+        'Dynamic: looks after the track. Goes to the most worn piece it can reach and repairs it, paid from the nearest store that holds the price. Needs no stop, only a gate to run out through.',
     } as Record<string, string>,
     dynamicTag: 'dynamic',
     routeAutoHint:

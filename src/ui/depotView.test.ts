@@ -11,6 +11,7 @@ import {
   MAX_DWELL,
   appendStop,
   checkLifetime,
+  dispatchModes,
   editorSignature,
   haulShare,
   haulTone,
@@ -47,6 +48,20 @@ const row = (o: Partial<TrainRowInput> = {}): TrainRowInput => ({
   power: 40,
   message: '',
   ...o,
+});
+
+describe('the modes the Depot offers', () => {
+  it('has Maintenance only for a consist with the wagon', () => {
+    expect(dispatchModes(false)).not.toContain('maintenance');
+    expect(dispatchModes(true)).toEqual([...dispatchModes(false), 'maintenance']);
+  });
+
+  it('says what each of them does, under its own name', () => {
+    for (const m of dispatchModes(true)) {
+      expect(STR.depot.routeMode[m], m).toBeTruthy();
+      expect(STR.depot.routeHint[m], m).toBeTruthy();
+    }
+  });
 });
 
 describe('a train in the list', () => {

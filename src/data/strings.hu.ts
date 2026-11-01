@@ -920,6 +920,7 @@ export const HU: Strings = {
     rollOut: 'Kigördülés',
     gateAt: (d: string, x: number, y: number, first: string) =>
       `${d}: kapu ${x},${y}, első megálló: ${first}`,
+    gateOut: (d: string, x: number, y: number) => `${d}: kapu ${x},${y}`,
     show: 'Mutasd',
     servedBy: (n: number) => `${n} állomás e fűtőház sínhálózatán`,
     groupStatic: 'Statikus',
@@ -930,6 +931,7 @@ export const HU: Strings = {
       transport: 'Utasszállítás',
       contract: 'Szerződés',
       freight: 'Teherfuvar',
+      maintenance: 'Karbantartás',
     },
     routeHint: {
       auto: 'Statikus: a legközelebbivel kezdve minden peronvágányos állomást felkeres, és a fűtőházba üríti a rakományt. A megállókat, állásidőket és feltételeket később a vonat részleteinél szerkesztheted.',
@@ -941,6 +943,8 @@ export const HU: Strings = {
         'Dinamikus: szerződéseket teljesít. A peronján vár, amíg el nem fogadsz egy általa szállítható szerződést; a forgalmasabb vonatok előtt kapja meg, a kiindulási helyről a célba viszi, aztán újra vár. Magától tankol.',
       freight:
         'Dinamikus: ahhoz a termelőhöz megy az elérhetők közül, ahol a legtöbb áru áll, majd egy másik termelőnél tölt rá, amíg van hely, és az árut a legközelebbi olyan készletbe viszi, ahol még van hely: fűtőházba, raktárba vagy városházára. Készletből sosem visz el árut, és a városi termelő maga teszi az áruját a város készletébe. Minden megállóban újratervez, és magától tankol.',
+      maintenance:
+        'Dinamikus: a pályát gondozza. A legkopottabb elérhető sínhez megy és megjavítja, az árát a legközelebbi raktár fizeti, amelyikben megvan. Megálló nem kell hozzá, csak egy kapu, amelyen kifuthat.',
     },
     dynamicTag: 'dinamikus',
     routeAutoHint:

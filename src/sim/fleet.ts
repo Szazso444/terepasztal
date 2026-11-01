@@ -206,22 +206,35 @@ export class Fleet {
   /**
    * Put a train on a free gate of the depot from which one of its stops can be reached, facing
    * away from the shed, with its route index at that stop. Tries every free gate and both ways
-   * of standing on it. Returns the gate, or the reason nothing worked.
+   * of standing on it. Returns the gate, or the reason nothing worked. A maintenance train goes to
+   * the track, not to a stop, so any gate it can run out through will do: a piece that failed
+   * between the depot and every stop is what it is sent for.
    */
-  private rollOut(t: Train, depot: Station): { x: number; y: number } | string {
+  private rollOut(
+    t: Train,
+    depot: Station,
+    mode: RouteMode = 'schedule',
+  ): { x: number; y: number } | string {
     const report = this.gateReport(t, depot);
     if (!report.some((g) => g.cls !== null)) return STR.fleet.depotNoGate(depot.name);
     const usable = report.filter((g) => g.ok);
-    const stops = t.schedule;
+    const entries = (g: GateInfo) => {
+      const out: number[] = g.entry !== null ? [g.entry] : [];
+      for (const l of this.track.get(g.x, g.y)!.links)
+        for (const d of l) if (!out.includes(d)) out.push(d);
+      return out;
+    };
+    const maintenance = mode === 'maintenance';
+    if (maintenance)
+      for (const g of usable)
+        for (const entry of entries(g))
+          if (t.spawnAt(this.track, g.x, g.y, entry)) return { x: g.x, y: g.y };
+    const stops = maintenance ? [] : t.schedule;
     for (let si = 0; si < stops.length; si++) {
       const st = this.builder.stationById(stops[si].stationId);
       if (!st || st === depot || !this.builder.platformTiles(st).length) continue;
       for (const g of usable) {
-        const piece = this.track.get(g.x, g.y)!;
-        const entries: number[] = [];
-        if (g.entry !== null) entries.push(g.entry);
-        for (const l of piece.links) for (const d of l) if (!entries.includes(d)) entries.push(d);
-        for (const entry of entries) {
+        for (const entry of entries(g)) {
           if (!t.spawnAt(this.track, g.x, g.y, entry)) continue;
           t.routeIndex = si;
           if (t.dispatch(this.track, this.builder, this.map)) return { x: g.x, y: g.y };
@@ -431,6 +444,7 @@ export class Fleet {
     locoUids: number[],
     schedule: (StopPlan | number)[],
     depotId: number | null,
+    mode: RouteMode = 'schedule',
   ): {
     gate: { x: number; y: number } | null;
     depot: Station | null;
@@ -444,7 +458,8 @@ export class Fleet {
     if (typeof depot === 'string') return { gate: null, depot: null, reason: depot, stops: [] };
     let stops = schedule.map((s) => (typeof s === 'number' ? defaultStop(s) : s));
     if (stops.length < 2) stops = this.autoSchedule(depot);
-    if (stops.length < 2) return { gate: null, depot, reason: STR.fleet.needTwoStops, stops };
+    if (stops.length < 2 && mode !== 'maintenance')
+      return { gate: null, depot, reason: STR.fleet.needTwoStops, stops };
     const items = locoUids
       .map((u) => this.inventory.byUid(u))
       .filter((l) => l && l.kind === 'loco');
@@ -458,7 +473,7 @@ export class Fleet {
       : [this.probeLoco(depot.def.gauge ?? 'regular')];
     const probe = new Train(locos, 'probe', -1);
     probe.schedule = stops;
-    const r = this.rollOut(probe, depot);
+    const r = this.rollOut(probe, depot, mode);
     return typeof r === 'string'
       ? { gate: null, depot, reason: r, stops }
       : { gate: r, depot, reason: null, stops };
@@ -466,7 +481,7 @@ export class Fleet {
   /**
    * The train a consist, a route and a depot make, ready to roll out, or the reason it cannot be
    * made: every refusal `create` has before the gate, in its order. `id` is for a probe, which
-   * takes no train number. Nothing is changed.
+   * takes no train number. Nothing is changed. A maintenance train needs its wagon and no stops.
    */
   private assemble(
     locoUids: number[],
@@ -474,6 +489,7 @@ export class Fleet {
     schedule: (StopPlan | number)[],
     name: string | undefined,
     depotId: number | null,
+    mode: RouteMode,
     id?: number,
   ): { train: Train; depot: Station; locoItems: Item[]; wagonItems: Item[] } | string {
     if (!locoUids.length) return STR.fleet.needLoco;
@@ -502,12 +518,13 @@ export class Fleet {
     }));
     if (t.emptyWeight > t.power)
       return STR.fleet.tooHeavy(Math.round(t.emptyWeight), Math.round(t.power));
+    if (mode === 'maintenance' && !t.hasMaintenanceWagon) return STR.fleet.needMaintenanceWagon;
     const gauge = consistGauge([...locos.map((l) => l.def), ...t.wagons.map((w) => w.def)]);
     const depot = this.depotFor(gauge, depotId);
     if (typeof depot === 'string') return depot;
     let stops = schedule.map((s) => (typeof s === 'number' ? defaultStop(s) : s));
     if (stops.length < 2) stops = this.autoSchedule(depot);
-    if (stops.length < 2) return STR.fleet.needTwoStops;
+    if (stops.length < 2 && mode !== 'maintenance') return STR.fleet.needTwoStops;
     t.schedule = stops;
     return { train: t, depot, locoItems: locoItems as Item[], wagonItems: wagons as Item[] };
   }
@@ -517,23 +534,25 @@ export class Fleet {
    * `create` and the depot screen both ask, so they never disagree. The consist is the real one,
    * wagons and length included, rolled out of the depot's gates as it would be. `reason` is what
    * `create` would answer, null when it would go; `gate`, `depot` and `stops` are what is known by
-   * then (the route is the automatic one when `schedule` has fewer than two stops).
+   * then (the route is the automatic one when `schedule` has fewer than two stops). `mode` is the
+   * one the train would be sent out on.
    */
   dispatchCheck(
     locoUids: number[],
     wagonUids: number[],
     schedule: (StopPlan | number)[],
     depotId: number | null,
+    mode: RouteMode = 'schedule',
   ): {
     reason: string | null;
     gate: { x: number; y: number } | null;
     depot: Station | null;
     stops: StopPlan[];
   } {
-    const made = this.assemble(locoUids, wagonUids, schedule, 'probe', depotId, -1);
+    const made = this.assemble(locoUids, wagonUids, schedule, 'probe', depotId, mode, -1);
     if (typeof made === 'string') return { reason: made, gate: null, depot: null, stops: [] };
     const { train, depot } = made;
-    const placed = this.rollOut(train, depot);
+    const placed = this.rollOut(train, depot, mode);
     return typeof placed === 'string'
       ? { reason: placed, gate: null, depot, stops: train.schedule }
       : { reason: null, gate: placed, depot, stops: train.schedule };
@@ -548,10 +567,10 @@ export class Fleet {
     mode: RouteMode = 'schedule',
     depotId: number | null = null,
   ): Train | string {
-    const made = this.assemble(locoUids, wagonUids, schedule, name, depotId);
+    const made = this.assemble(locoUids, wagonUids, schedule, name, depotId, mode);
     if (typeof made === 'string') return made;
     const { train: t, depot, locoItems, wagonItems: wagons } = made;
-    const placed = this.rollOut(t, depot);
+    const placed = this.rollOut(t, depot, mode);
     if (typeof placed === 'string') return placed;
     t.mode = mode;
     if (t.mode !== 'schedule') {

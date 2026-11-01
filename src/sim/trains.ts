@@ -157,8 +157,8 @@ export function consistPhysics(
  * the fullest producer or warehouse and hauls its goods on (producer goods into the nearest
  * warehouse or a depot, warehouse goods into a depot), `transport` carries passengers between
  * town stations, `contract` works the contracts handed to it; all three pick their stops on the
- * fly. `maintenance` looks after the track and needs a maintenance wagon; it is no dynamic mode of
- * the depot's menu (`DYNAMIC_MODES`), since a train takes it only once it has the wagon.
+ * fly. `maintenance` looks after the track and needs a maintenance wagon; it is not among
+ * `DYNAMIC_MODES`, since only a consist with the wagon is offered it (`dispatchModes`).
  */
 export type RouteMode = 'schedule' | 'freight' | 'transport' | 'contract' | 'maintenance';
 export const DYNAMIC_MODES: RouteMode[] = ['freight', 'transport', 'contract'];
