@@ -51,6 +51,8 @@ const DOOR_TINT = 0xfff08a;
 const DOOR_MARK_FRAMES = 30;
 /** frames between two looks at the same Raise or Lower: the ground may have changed under it */
 const GROUND_LOOK_FRAMES = 30;
+/** diamonds a Raise or Lower keeps beyond the ones it shows; a bigger pool is cut down to this */
+const GROUND_POOL_SPARE = 16;
 
 type Tile = { x: number; y: number };
 
@@ -816,11 +818,27 @@ export class BuildController {
       this.groundSeen = seen;
       this.groundAge = 0;
       this.judgeGround(this.builder.checkGround(tiles, delta), delta);
+      this.layGroundMarks();
+    } else {
+      // the diamonds stand where the look put them; a pause over a panel only hid them
+      for (let i = 0; i < this.groundMarks.length; i++) this.lineGhosts[i].visible = true;
     }
-    this.showGhosts(this.groundMarks, true);
-    // the frame carries the colour, as the road tool's does
-    for (let i = 0; i < this.groundMarks.length; i++) this.lineGhosts[i].tint = 0xffffff;
     this.status(this.groundStatus);
+  }
+
+  /**
+   * Put a diamond on each mark of the look. Their places read the relief, so this runs with a look
+   * and not every frame. A pool that a long run grew far past what is shown is cut down.
+   */
+  private layGroundMarks() {
+    const { groundMarks: marks } = this;
+    this.showGhosts(marks, true);
+    // the frame carries the colour, as the road tool's does
+    for (let i = 0; i < marks.length; i++) this.lineGhosts[i].tint = 0xffffff;
+    const keep = marks.length + GROUND_POOL_SPARE;
+    if (this.lineGhosts.length > 2 * marks.length + GROUND_POOL_SPARE) {
+      for (const g of this.lineGhosts.splice(keep)) g.destroy();
+    }
   }
 
   /**
@@ -842,6 +860,7 @@ export class BuildController {
     this.groundMarks = [...marks.values()];
     const money = check.cost.money ?? 0;
     const price = money > 0 ? fmtMoney(money) : STR.build.free;
+    // `reason` is the first refused tile's: the line counts the tiles and says so
     if (check.refused.length) {
       this.groundStatus = STR.build.groundRefused(check.refused.length, check.reason ?? '');
       return;

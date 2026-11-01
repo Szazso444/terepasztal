@@ -100,6 +100,8 @@ export interface ToolItem {
   label?: string;
   /** a key of its own, beside its number */
   hot?: string;
+  /** not offered in the level editor: a level keeps no raised or lowered ground (`inMode`) */
+  playOnly?: boolean;
 }
 
 export type CategoryId = 'track' | 'buildings' | 'tools' | 'works' | 'roads' | 'terrain';
@@ -113,7 +115,7 @@ export interface Category {
   /** not offered in the level editor: a level keeps none of what it lays (roads) */
   playOnly?: boolean;
   /** types the items are listed by; one is open at a time */
-  groups?: { id: string; label: string }[];
+  groups?: { id: string; label: string; playOnly?: boolean }[];
 }
 
 /** Where a def is listed. */
@@ -317,6 +319,7 @@ export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
     tier: 0,
     place: STR.toolbar.place.ground,
     group: 'ground',
+    playOnly: true,
   });
   const supplyItem = (k: SupplyKind): ToolItem => ({
     key: `supply:${k}`,
@@ -409,7 +412,7 @@ export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
       groups: [
         { id: 'track', label: STR.toolbar.trackTools },
         { id: 'electrification', label: STR.toolbar.electrification },
-        { id: 'ground', label: STR.toolbar.ground },
+        { id: 'ground', label: STR.toolbar.ground, playOnly: true },
       ],
     },
     {
@@ -491,6 +494,19 @@ export function keyLabel(place: number): string {
 export function pickAt(shown: ToolItem[], place: number, tier: number): ToolItem | null {
   const it = shown[place];
   return it && !isLocked(it, tier) ? it : null;
+}
+
+/**
+ * The category as the editor or the game shows it: the editor drops what is only for play, items
+ * and types alike. The game's is the category itself.
+ */
+export function inMode(c: Category, editor: boolean): Category {
+  if (!editor || !(c.items.some((i) => i.playOnly) || c.groups?.some((g) => g.playOnly))) return c;
+  return {
+    ...c,
+    items: c.items.filter((i) => !i.playOnly),
+    groups: c.groups?.filter((g) => !g.playOnly),
+  };
 }
 
 /** The categories on the row: the editor has Terrain in the place of Roads. */
@@ -659,8 +675,12 @@ export class BuildBar {
     private readonly onChange: () => void,
   ) {}
 
+  /** The category as this mode shows it (`inMode`). */
   category(id: CategoryId) {
-    return this.categories.find((c) => c.id === id)!;
+    return inMode(
+      this.categories.find((c) => c.id === id)!,
+      this.editor,
+    );
   }
   visible() {
     return visibleCategories(this.categories, this.editor);

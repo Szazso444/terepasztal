@@ -152,8 +152,8 @@ describe('the run being dragged', () => {
 describe('the Raise and Lower tools', () => {
   const SIZE = 16;
   /** Grass at level 0 with the given tiles set, every region owned, $100,000 in hand. */
-  function field(levels: Record<string, number> = {}) {
-    const map = emptyMap(7, SIZE, SIZE, Terrain.Grass),
+  function field(levels: Record<string, number> = {}, size = SIZE) {
+    const map = emptyMap(7, size, size, Terrain.Grass),
       regions = new RegionState(map);
     for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
     const economy = new Economy();
@@ -161,15 +161,15 @@ describe('the Raise and Lower tools', () => {
     const builder = new Builder(
       map,
       regions,
-      new TrackGraph(SIZE, SIZE),
+      new TrackGraph(size, size),
       economy,
       storeWith({}).stores,
     );
     if (Object.keys(levels).length) {
-      map.groundLevel = new Uint8Array(SIZE * SIZE);
+      map.groundLevel = new Uint8Array(size * size);
       for (const [at, v] of Object.entries(levels)) {
         const [x, y] = at.split(',').map(Number);
-        map.groundLevel[y * SIZE + x] = v;
+        map.groundLevel[y * size + x] = v;
       }
     }
     return { map, economy, builder };
@@ -181,13 +181,22 @@ describe('the Raise and Lower tools', () => {
     const buttons = new Set<number>();
     const buttonPressed = new Set<number>();
     const buttonReleased = new Set<number>();
-    const input = { wasPressed: () => false, buttons, buttonPressed, buttonReleased, clicks: [] };
+    const keys = new Set<string>();
+    const clicks: { button: number }[] = [];
+    const input = {
+      wasPressed: (code: string) => keys.has(code),
+      buttons,
+      buttonPressed,
+      buttonReleased,
+      clicks,
+    };
     const made: Sprite[] = [];
     const frames = new Map<Sprite, string>();
+    const surfacePoint = vi.fn((x: number, y: number) => ({ x, y }));
     const world = {
       makeOverlaySprite: () => made[made.push(new Sprite()) - 1],
       // a sprite's position is the tile it stands on
-      surfacePoint: (x: number, y: number) => ({ x, y }),
+      surfacePoint,
       setSpriteFrame: (g: Sprite, frame: string) => frames.set(g, frame),
     };
     const b = new BuildController(input as never, builder, world as never, () => at);
@@ -195,7 +204,7 @@ describe('the Raise and Lower tools', () => {
     b.onStatus = (s) => (status = s);
     b.setTool({ kind: 'ground', delta });
     /** One frame with the pointer on (x, y) and the left button as given. */
-    const frame = (x: number, y: number, press?: 'down' | 'up') => {
+    const frame = (x: number, y: number, press?: 'down' | 'up', over = true) => {
       at.x = x;
       at.y = y;
       buttonPressed.clear();
@@ -207,15 +216,26 @@ describe('the Raise and Lower tools', () => {
         buttons.delete(0);
         buttonReleased.add(0);
       }
-      b.update(true);
+      b.update(over);
+      keys.clear();
+      clicks.length = 0;
     };
     /** The tiles shown with a frame: `ghost_ok` for the ones that move, `ghost_bad` for those that refuse. */
     const shown = (frameName: string) =>
       made
-        .filter((g) => g.visible && frames.get(g) === frameName)
+        .filter((g) => !g.destroyed && g.visible && frames.get(g) === frameName)
         .map((g) => `${g.position.x},${g.position.y}`)
         .sort();
-    return { b, frame, shown, status: () => status };
+    return {
+      b,
+      frame,
+      shown,
+      status: () => status,
+      surfacePoint,
+      key: (code: string) => keys.add(code),
+      click: (button: number) => clicks.push({ button }),
+      live: () => made.filter((g) => !g.destroyed).length,
+    };
   }
 
   const level = (map: GameMap, x: number, y: number) => levelAt(map, x, y);
@@ -307,6 +327,100 @@ describe('the Raise and Lower tools', () => {
     for (let x = 7; x <= 10; x++) expect(level(map, x, 8), `x ${x}`).toBe(0);
     expect(map.groundLevel).toBeUndefined();
     expect(economy.money).toBe(100_000);
+  });
+
+  it('puts the run down on Escape, a right click or another tool, and a release then moves nothing', () => {
+    const drag = (how: (t: ReturnType<typeof tool>) => void) => {
+      const { map, economy, builder } = field();
+      const t = tool(builder, 1);
+      t.frame(4, 8, 'down');
+      t.frame(8, 8);
+      expect(t.shown('terrain/ghost_ok')).toHaveLength(5);
+      how(t);
+      t.frame(8, 8, 'up');
+      t.frame(9, 8);
+      for (let x = 3; x <= 9; x++) expect(level(map, x, 8), `x ${x}`).toBe(0);
+      expect(economy.money).toBe(100_000);
+      return t;
+    };
+    const escape = drag((t) => {
+      t.key('Escape');
+      t.frame(8, 8);
+    });
+    expect(escape.b.tool.kind).toBe('none');
+    expect(escape.shown('terrain/ghost_ok')).toEqual([]);
+    const right = drag((t) => {
+      t.click(2);
+      t.frame(8, 8);
+    });
+    expect(right.b.tool.kind).toBe('none');
+    drag((t) => t.b.setTool({ kind: 'none' }));
+    drag((t) => t.b.setTool({ kind: 'ground', delta: -1 }));
+  });
+
+  it('drops a run whose button is let go over a panel, and shows it again when the pointer is back', () => {
+    const { map, economy, builder } = field();
+    const t = tool(builder, 1);
+    t.frame(4, 8, 'down');
+    t.frame(8, 8);
+    // over a panel the diamonds go; the button comes up there
+    t.frame(8, 8, undefined, false);
+    expect(t.shown('terrain/ghost_ok')).toEqual([]);
+    t.frame(8, 8, 'up', false);
+    t.frame(8, 8);
+    expect(level(map, 8, 8)).toBe(0);
+    expect(economy.money).toBe(100_000);
+    // a run still held over a panel and back is the same look, shown again at once
+    t.frame(2, 2, 'down');
+    t.frame(5, 2);
+    const calls = vi.spyOn(builder, 'checkGround').mock.calls.length;
+    t.frame(5, 2, undefined, false);
+    expect(t.shown('terrain/ghost_ok')).toEqual([]);
+    t.frame(5, 2);
+    expect(t.shown('terrain/ghost_ok')).toHaveLength(4);
+    expect(builder.checkGround).toHaveBeenCalledTimes(calls);
+  });
+
+  it('does nothing in the level editor', () => {
+    const { map, builder } = field();
+    const t = tool(builder, 1);
+    t.b.editor = {} as never;
+    t.frame(4, 8, 'down');
+    t.frame(8, 8);
+    expect(t.shown('terrain/ghost_ok')).toEqual([]);
+    t.frame(8, 8, 'up');
+    expect(map.groundLevel).toBeUndefined();
+  });
+
+  it('looks again after a few frames, for what changed under the same tiles', () => {
+    const { map, builder } = field({ '8,8': 1, '9,8': 1 });
+    const t = tool(builder, 1);
+    t.frame(8, 8);
+    expect(t.status()).toBe(STR.build.groundUp(4, fmtMoney(4 * rules.groundCost)));
+    // the ground changes with no pointer move (an undo, a build elsewhere)
+    map.groundLevel![8 * SIZE + 8] = 0;
+    map.groundLevel![8 * SIZE + 9] = 0;
+    for (let i = 0; i < 28; i++) t.frame(8, 8);
+    expect(t.status(), 'not yet').toBe(STR.build.groundUp(4, fmtMoney(4 * rules.groundCost)));
+    t.frame(8, 8);
+    t.frame(8, 8);
+    expect(t.status()).toBe(STR.build.groundUp(1, fmtMoney(rules.groundCost)));
+  });
+
+  it('places its diamonds when it looks, not on every frame, and lets go of a pool a long run grew', () => {
+    const { builder } = field({}, 80);
+    const t = tool(builder, 1);
+    t.frame(2, 40, 'down');
+    t.frame(72, 40);
+    expect(t.shown('terrain/ghost_ok')).toHaveLength(71);
+    t.surfacePoint.mockClear();
+    for (let i = 0; i < 5; i++) t.frame(72, 40);
+    expect(t.surfacePoint).not.toHaveBeenCalled();
+    // back to one tile: the pool is cut down, not kept at the longest run's size
+    t.frame(72, 40, 'up');
+    t.frame(10, 10);
+    expect(t.shown('terrain/ghost_ok')).toHaveLength(1);
+    expect(t.live()).toBeLessThanOrEqual(2 + 1 + 16);
   });
 
   it('says so when nothing would move, and when the money is short', () => {

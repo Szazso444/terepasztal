@@ -433,9 +433,11 @@ const EN = {
       `Lower: ${tiles} ${tiles === 1 ? 'tile' : 'tiles'}, ${cost}`,
     /** Raise or Lower over ground that stays where it is */
     groundStays: 'Nothing moves here',
-    /** how many tiles of the action refuse, and why the first does */
+    /** how many tiles of the action refuse; `reason` is the first one's, the others may differ */
     groundRefused: (tiles: number, reason: string) =>
-      `${tiles} ${tiles === 1 ? 'tile' : 'tiles'} cannot move: ${reason}`,
+      tiles === 1
+        ? `1 tile cannot move: ${reason}`
+        : `${tiles} tiles cannot move, the first: ${reason}`,
     notLevel: 'Needs level ground: only straight track can climb a slope',
     notSmooth:
       'Curves and switches need smooth ground: only straights and crossings climb a slope, unless bridge platforms support every tile of the piece',
@@ -666,7 +668,7 @@ const EN = {
       reclass:
         'Click a piece or drag along the line. A piece that does not fit stays as it was, shown in red.',
       ground:
-        'On land with nothing built on it. Water cannot be moved, and ground over a tunnel stays above its roof.',
+        'On land with nothing built on it and no deposit, from sea level up to level 16. Water cannot be moved, and ground over a tunnel stays above its roof.',
       road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight Narrow Gauge, Branch or Main Line track at right angles, as a level crossing; never Trunk Line.',
     },
     trackDesc: {

@@ -442,6 +442,26 @@ describe('the categories on show', () => {
     bar.openAt(4);
     expect(bar.open).toBe('terrain');
   });
+  it('leaves Raise and Lower, and their type, out of the editor', () => {
+    const { bar } = barOn(catalog());
+    bar.setEditor(true);
+    const tools = bar.category('tools');
+    expect(tools.items.map((i) => i.key)).not.toContain('ground:up');
+    expect(tools.items.map((i) => i.key)).not.toContain('ground:down');
+    expect(tools.groups?.map((g) => g.id)).toEqual(['track', 'electrification']);
+    // the type row has no Ground type to step to, and nothing of it is listed
+    bar.openCategory('tools');
+    for (let i = 0; i < 3; i++) {
+      expect(bar.openGroup()).not.toBe('ground');
+      expect(bar.openList().map((it) => it.key)).not.toContain('ground:up');
+      bar.cycleGroup(1);
+    }
+    // the game has them again, and the other categories are the same objects
+    bar.setEditor(false);
+    expect(bar.category('tools').items.map((i) => i.key)).toContain('ground:up');
+    expect(bar.category('tools').groups?.map((g) => g.id)).toContain('ground');
+    expect(bar.category('works')).toBe(bar.categories.find((c) => c.id === 'works'));
+  });
   it('steps round the visible categories both ways', () => {
     const ids: CategoryId[] = ['track', 'buildings', 'roads'];
     expect(stepCategory(ids, 'track', 1)).toBe('buildings');
