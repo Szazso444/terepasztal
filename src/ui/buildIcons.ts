@@ -20,6 +20,7 @@ export type BuildIcon =
   | 'chevr'
   | 'up'
   | 'down'
+  | 'drill'
   | 'lock'
   | 'close'
   | 'train'
@@ -44,6 +45,7 @@ export const BUILD_ICON: Record<BuildIcon, string> = {
   chevr: '<path d="M9 5l7 7-7 7"/>',
   up: '<path d="M12 20V5M6 11l6-6 6 6"/>',
   down: '<path d="M12 4v15M6 13l6 6 6-6"/>',
+  drill: '<path d="M4 4l5 5M3 10l7-7 5 5-7 7zM12 12l9 9-5-1-5-3z"/>',
   lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   train:

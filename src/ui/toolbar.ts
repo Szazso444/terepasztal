@@ -88,7 +88,7 @@ export class Toolbar {
     private readonly ages: () => AgeStatus[],
   ) {
     this.bar = new BuildBar(
-      buildCatalog((frame) => atlas.has(frame)),
+      buildCatalog((frame) => atlas.has(frame), tierProvider),
       tierProvider,
       onSelect,
       () => this.paint(),
@@ -187,7 +187,8 @@ export class Toolbar {
       this.renderRows();
     }
     const key = toolKey(bar.active);
-    for (const [k, b] of this.tiles) b.classList.toggle('active', k === key);
+    for (const [k, b] of this.tiles)
+      b.classList.toggle('active', k === key || (k === 'drill' && bar.drilling));
     this.paintStatus();
   }
 
