@@ -641,6 +641,117 @@ describe('mountain lines on generated maps', () => {
   }, 60_000);
 });
 
+// ---------------------------------------------------------------- cliffs
+
+describe('rail on the steps of generated ground', () => {
+  /**
+   * A generated level plane on grass: level 0 west of column 20 and `high` from it on, as
+   * tileLevels settles it, the slope rule asked and nothing to pay. Rows 2 to 37 stand clear of
+   * the map's border.
+   */
+  function cliff(high: number) {
+    const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass),
+      raw = new Uint8Array(SIZE * SIZE);
+    for (let i = 0; i < raw.length; i++) raw[i] = i % SIZE >= 20 ? high : 0;
+    map.generatedLevel = tileLevels({ ...map, generatedLevel: raw });
+    const track = new TrackGraph(SIZE, SIZE),
+      regions = new RegionState(map);
+    const builder = new Builder(map, regions, track, electricAge(), storeWith({}).stores);
+    builder.free = true;
+    builder.groundCheck = (x, y, need) => groundAllowsOn(map, x, y, need);
+    expect(levelAt(map, 19, 20)).toBe(0);
+    expect(levelAt(map, 20, 20)).toBe(high);
+    return { map, track, builder };
+  }
+  const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
+  /** A north-south straight, as the cliff runs. */
+  const ns = (x: number, y: number): LinePiece => ({
+    kind: 'track',
+    x,
+    y,
+    item: STRAIGHT,
+    rot: 0,
+  });
+
+  it('a link across a step of 2 refuses, from either side', () => {
+    const { builder } = cliff(2);
+    expect(builder.placeTrack(19, 20, STRAIGHT, 1)).toBe(true);
+    expect(builder.checkTrack(20, 20, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+    expect(builder.placeTrack(20, 22, STRAIGHT, 1)).toBe(true);
+    expect(builder.checkTrack(19, 22, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+    expect(builder.placeTrack(19, 22, STRAIGHT, 1)).toBe(false);
+  });
+
+  it('a line stops on the first tile past the edge', () => {
+    const { builder } = cliff(4);
+    expect(builder.checkLine(run(16, 24, 20))).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+      at: 4,
+    });
+    expect(builder.placeLine(run(16, 24, 20))).toBe(false);
+    expect(builder.track.pieces.size).toBe(0);
+  });
+
+  it('a step of 1 is laid', () => {
+    const { builder } = cliff(1);
+    expect(builder.placeLine(run(16, 24, 20))).toBe(true);
+  });
+
+  it('a straight along a cliff is laid', () => {
+    const { builder } = cliff(4);
+    for (const x of [19, 20]) {
+      const line = Array.from({ length: 8 }, (_, i) => ns(x, 16 + i));
+      expect(builder.placeLine(line), `column ${x}`).toBe(true);
+    }
+  });
+
+  it('a line may end at the foot or the top of a cliff, facing it', () => {
+    const { builder } = cliff(4);
+    expect(builder.placeLine(run(16, 19, 20))).toBe(true);
+    expect(builder.placeLine(run(23, 20, 21))).toBe(true);
+  });
+
+  it('a link into a dug or cut tile ignores the step', () => {
+    const { builder } = cliff(4);
+    expect(builder.placeTrack(19, 20, STRAIGHT, 1)).toBe(true);
+    builder.underground.dig(20, 20, 0);
+    expect(builder.checkTrack(20, 20, STRAIGHT, 1).ok).toBe(true);
+    expect(builder.placeTrack(19, 22, STRAIGHT, 1)).toBe(true);
+    builder.underground.cut(20, 22);
+    expect(builder.checkTrack(20, 22, STRAIGHT, 1).ok).toBe(true);
+    // and from the other side, with the piece on the dug or cut tile down first
+    expect(builder.placeTrack(20, 24, STRAIGHT, 1)).toBe(true);
+    builder.underground.cut(20, 24);
+    expect(builder.checkTrack(19, 24, STRAIGHT, 1).ok).toBe(true);
+    // a line's probe reads the same store
+    builder.underground.dig(20, 26, 0);
+    expect(builder.checkLine(run(18, 20, 26)).ok).toBe(true);
+    expect(builder.checkLine(run(18, 20, 28)).ok).toBe(false);
+  });
+
+  it('refuses new links only: track that crosses a step stays, and can be relaid', () => {
+    const { track, builder } = cliff(4);
+    track.place(19, 20, 'straight', 1);
+    track.place(20, 20, 'straight', 1);
+    const main: TrackItem = { kind: 'straight', cls: 'main' };
+    expect(builder.checkTrack(20, 20, main, 1).ok).toBe(true);
+    expect(builder.checkTrack(19, 20, main, 1).ok).toBe(true);
+  });
+
+  it('asks nothing of a builder with no slope rule: that ground counts as level', () => {
+    const { builder } = cliff(4);
+    builder.groundCheck = null;
+    expect(builder.placeLine(run(16, 24, 20))).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------- speed
 
 describe('a train on mountain track', () => {

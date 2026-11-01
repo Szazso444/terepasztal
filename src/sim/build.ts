@@ -1,5 +1,7 @@
 import { DIRS, DIR_DX, DIR_DY, tileToWorld } from '../engine/iso';
 import { Terrain, TERRAIN_NAMES, inBounds, terrainAt, type GameMap } from '../world/tiles';
+import { NO_LEVEL, levelAt, tileLevels } from '../world/elevation';
+import { reshape, type Reshape } from '../world/reshape';
 import type { RegionState } from '../world/regions';
 import {
   TrackGraph,
@@ -72,6 +74,7 @@ import {
   type RoadLinks,
 } from './roads';
 import { hasDoors, streetDoors, type Door, type PlaceAt } from './doors';
+import { TUNNEL_COVER, Underground } from './underground';
 import type { BuildLog, PieceSpec } from './buildLog';
 import type { Work } from './upgrade';
 
@@ -111,6 +114,16 @@ export interface PlacementCheck {
   reason?: string;
   /** the key of the store that pays `cost` (`Builder.payerAt`); absent when nothing is paid */
   payer?: string;
+}
+
+/**
+ * What Raise or Lower would do, as `reshape` gives it. `moved` is what `reshapeGround` writes, and
+ * holds tiles that only keep their level: a ghost or a count compares `to` with the level there.
+ * `cost` is in money, under `money`, and refused tiles cost nothing.
+ */
+export interface GroundCheck extends PlacementCheck {
+  moved: Reshape['moved'];
+  refused: Reshape['refused'];
 }
 
 /**
@@ -188,7 +201,8 @@ export class Builder {
   onTrackChanged: ((x: number, y: number) => void) | null = null;
   /**
    * The rendered hill decides what its ground carries: `straight` rails climb at most one level
-   * per tile, `level` pieces and structures need a level tile. Unset means level everywhere.
+   * per tile, `level` pieces and structures need a level tile. Unset means level everywhere, and
+   * no link is too steep (`cliffAt`).
    */
   groundCheck: ((x: number, y: number, need: 'straight' | 'level') => boolean) | null = null;
   onStationChanged: ((s: Station, removed: boolean) => void) | null = null;
@@ -225,6 +239,8 @@ export class Builder {
     readonly stores: StoreRegistry,
     /** the roads on the map (src/sim/roads.ts); a line's probe shares its builder's */
     readonly roads: Roads = new Roads(track),
+    /** what the Drill has made (src/sim/underground.ts); a line's probe shares its builder's */
+    readonly underground: Underground = new Underground(map.w, map.h),
   ) {
     this.buildings = new BuildingMap(map.w, map.h);
   }
@@ -649,11 +665,30 @@ export class Builder {
           // the standard lines join each other; a separate network joins only itself
           if (!classesJoin(mine, theirs))
             return { ok: false, cost: {}, reason: STR.build.gaugeBreak };
+          // a link that stands already stays, on any step; only a new one is judged
+          if (this.groundCheck && !this.track.opensTo(t.x, t.y, d) && this.cliffAt(t, nx, ny))
+            return { ok: false, cost: {}, reason: STR.build.tooSteep };
         }
     }
     let mul = 0;
     for (const t of tiles) mul = Math.max(mul, this.terrainMul(t.x, t.y));
     return { ok: true, cost: this.priced(pieceCost(kind, item.cls, item.cls2), mul) };
+  }
+  /**
+   * Rail takes a level a tile, and generated ground steps up to four: is the edge between `t` and
+   * (nx, ny) too steep for a link? A dug or cut tile on either side lays its rail at its bed, so
+   * the ground's step does not bind it.
+   */
+  private cliffAt(t: { x: number; y: number }, nx: number, ny: number): boolean {
+    const under = this.underground;
+    if (
+      under.isDug(t.x, t.y) ||
+      under.isCut(t.x, t.y) ||
+      under.isDug(nx, ny) ||
+      under.isCut(nx, ny)
+    )
+      return false;
+    return Math.abs(levelAt(this.map, t.x, t.y) - levelAt(this.map, nx, ny)) > 1;
   }
   refundFor(p: TrackPiece): Cost {
     return this.free
@@ -923,7 +958,15 @@ export class Builder {
   private probe(): Builder {
     const track = new TrackGraph(this.track.w, this.track.h);
     for (const [k, p] of this.track.pieces) track.pieces.set(k, p);
-    const b = new Builder(this.map, this.regions, track, this.economy, this.stores, this.roads);
+    const b = new Builder(
+      this.map,
+      this.regions,
+      track,
+      this.economy,
+      this.stores,
+      this.roads,
+      this.underground,
+    );
     b.free = this.free;
     b.groundCheck = this.groundCheck;
     b.stations.push(...this.stations);
@@ -1256,6 +1299,91 @@ export class Builder {
   /** A deposit prop (coal seam, oil seep) lies on the tile. */
   hasDeposit(x: number, y: number, kind: string) {
     return !!this.map.props.get(this.key(x, y))?.some((p) => p.kind === kind);
+  }
+
+  // ------------------------------------------------------------------ ground
+  /** Something stands on (x, y) that Raise and Lower leave alone. */
+  private groundTaken(x: number, y: number) {
+    return (
+      this.track.has(x, y) ||
+      this.roads.has(x, y) ||
+      !!this.stationAt(x, y) ||
+      !!this.buildingAt(x, y) ||
+      !!this.decorAt(x, y) ||
+      this.hasDeposit(x, y, 'coal') ||
+      this.hasDeposit(x, y, 'oil') ||
+      this.underground.isCut(x, y)
+    );
+  }
+  /** Water on a side or a corner of (x, y). */
+  private touchesWater(x: number, y: number) {
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++)
+        if (terrainAt(this.map, x + dx, y + dy) === Terrain.Water) return true;
+    return false;
+  }
+  /** Why the refused tile (x, y) of a raise or lower may not move. */
+  private groundRefusal({ x, y }: { x: number; y: number }, delta: 1 | -1): string {
+    if (!inBounds(this.map, x, y)) return STR.build.offMap;
+    if (!this.unlocked(x, y)) return STR.build.locked;
+    if (terrainAt(this.map, x, y) === Terrain.Water) return STR.build.nothingOn.water;
+    if (this.groundTaken(x, y)) return STR.build.occupied;
+    if (delta < 0 && this.touchesWater(x, y)) return STR.build.groundBesideWater;
+    return STR.build.groundLimit;
+  }
+  /**
+   * What Raise (`delta` 1) or Lower (-1) of `tiles` would move and cost. The action is whole: any
+   * tile it would move that may not refuses it. A tile with anything on it stays, a tile touching
+   * water stays on a lower so a raised lake cannot run out, and a tile may not fall under the cover
+   * of a dug tile. A tile that only keeps its level (`moved` in `Reshape`) is free.
+   */
+  checkGround(tiles: readonly { x: number; y: number }[], delta: 1 | -1): GroundCheck {
+    const levels = tileLevels(this.map);
+    const { moved, refused } = reshape(
+      this.map,
+      levels,
+      tiles,
+      delta,
+      (x, y) =>
+        !this.unlocked(x, y) || this.groundTaken(x, y) || (delta < 0 && this.touchesWater(x, y)),
+      (x, y) => {
+        const floor = this.underground.floorAt(x, y);
+        return floor === undefined ? 0 : floor + TUNNEL_COVER;
+      },
+    );
+    if (refused.length)
+      return {
+        ok: false,
+        cost: {},
+        reason: this.groundRefusal(refused[0], delta),
+        moved,
+        refused,
+      };
+    let steps = 0;
+    for (const m of moved) steps += Math.abs(m.to - levels[this.key(m.x, m.y)]);
+    const cost = this.priced({ money: rules.groundCost * steps }, 1);
+    if (hasPrice(cost) && !this.economy.canAfford(cost.money))
+      return { ok: false, cost, reason: STR.build.funds, moved, refused };
+    return { ok: true, cost, moved, refused };
+  }
+  /**
+   * Raise or lower `tiles` by one level and pay for it; false, with nothing moved or paid, when
+   * `checkGround` refuses. The caller redraws what `checkGround` listed. Every tile of `moved` is
+   * written, so the plane holds settled levels; stone that comes down to level 0 turns to Grass, so
+   * a lowered mountain is ground that can be built on.
+   */
+  reshapeGround(tiles: readonly { x: number; y: number }[], delta: 1 | -1): boolean {
+    const c = this.checkGround(tiles, delta);
+    if (!c.ok || !c.moved.length) return false;
+    if (hasPrice(c.cost) && !this.economy.spend(c.cost.money)) return false;
+    const { map } = this;
+    const lowered = c.moved.filter((m) => m.to === 0 && levelAt(map, m.x, m.y) !== 0);
+    const plane = (map.groundLevel ??= new Uint8Array(map.w * map.h).fill(NO_LEVEL));
+    for (const m of c.moved) plane[this.key(m.x, m.y)] = m.to;
+    for (const m of lowered)
+      if (stone(terrainAt(map, m.x, m.y))) map.terrain[this.key(m.x, m.y)] = Terrain.Grass;
+    sfx('build.place');
+    return true;
   }
 
   // ------------------------------------------------------------------ electrification

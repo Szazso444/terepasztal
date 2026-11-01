@@ -7,6 +7,9 @@ import { Terrain } from '../world/tiles';
  * that decides what may be dug comes with the Drill. Tiles are map tiles, as the track keys them.
  */
 
+/** The ground over a dug tile stays this many levels above its floor, or higher. */
+export const TUNNEL_COVER = 3;
+
 /** The side of a tile a portal looks out of. */
 export type Face = 'N' | 'E' | 'S' | 'W';
 const FACES: readonly Face[] = ['N', 'E', 'S', 'W'];

@@ -338,6 +338,8 @@ export const HU: Strings = {
     mountainLine: 'A hegyi sínnek meglévő vonalat kell folytatnia',
     needBridge: 'A vízhez híd kell',
     tooSteep: 'Túl meredek: az egyenes sín csempénként legfeljebb egy szintet emelkedhet',
+    groundLimit: 'A föld itt nem mozdulhat tovább',
+    groundBesideWater: 'Vizet érintő föld nem süllyeszthető',
     notLevel: 'Sík terep kell: csak egyenes sín mehet emelkedőre',
     notSmooth:
       'Az ívekhez és váltókhoz egyenletes terep kell: emelkedőre csak egyenes és keresztezés mehet, hacsak nem tartja hídpálya az elem minden csempéjét',

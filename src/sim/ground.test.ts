@@ -34,6 +34,8 @@ import {
   type GeneratedWorld,
 } from './ground';
 import { Builder } from './build';
+import { BUILDING_DEFS } from './buildings';
+import { Station } from './stations';
 import { Economy } from './economy';
 import { DEFAULT_RULES, rules, rulesFrom } from './rules';
 import { DEFAULT_SUPPLY, setSupplyMode, supplyMode, type SupplyMode } from './supply';
@@ -48,6 +50,7 @@ import {
   type MapGenerator,
 } from '../world/chunks';
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from '../world/mapgen';
+import { NO_LEVEL, levelAt, tileLevels } from '../world/elevation';
 import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph, pieceCost } from '../world/track';
@@ -1539,5 +1542,314 @@ describe('a table of chunks that holds more than chunks', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+});
+
+describe('Raise and Lower', () => {
+  const SIZE = 16;
+  /** Grass at level 0, every chunk owned, $100,000 in hand. */
+  function world(levels?: (x: number, y: number) => number) {
+    const map = emptyMap(7, SIZE, SIZE, Terrain.Grass),
+      regions = new RegionState(map);
+    for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
+    const economy = new Economy();
+    economy.money = 100_000;
+    const builder = new Builder(
+      map,
+      regions,
+      new TrackGraph(SIZE, SIZE),
+      economy,
+      storeWith({}).stores,
+    );
+    if (levels) {
+      const plane = new Uint8Array(SIZE * SIZE);
+      for (let y = 0; y < SIZE; y++)
+        for (let x = 0; x < SIZE; x++) plane[y * SIZE + x] = levels(x, y);
+      map.groundLevel = plane;
+    }
+    return { map, regions, economy, builder };
+  }
+  /** Level 2, falling to 1 on the border, so that nothing but the tiles under test has to move. */
+  const tableland = (x: number, y: number) =>
+    x === 0 || y === 0 || x === SIZE - 1 || y === SIZE - 1 ? 1 : 2;
+  /** Makes (x, y) water at surface `surface`; no plane sets a level on water. */
+  function water(map: GameMap, x: number, y: number, surface = 0) {
+    const k = y * SIZE + x;
+    map.terrain[k] = Terrain.Water;
+    map.waterSurface ??= new Uint8Array(SIZE * SIZE);
+    map.waterSurface[k] = surface;
+    if (map.groundLevel) map.groundLevel[k] = NO_LEVEL;
+  }
+  const tile = (x: number, y: number) => ({ x, y });
+
+  it('refuses water, track, road, building and deposit tiles', () => {
+    const { map, builder } = world();
+    builder.free = true;
+    const refusal = (x: number, y: number, why: string) => {
+      for (const delta of [1, -1] as const) {
+        expect(builder.checkGround([tile(x, y)], delta)).toMatchObject({
+          ok: false,
+          cost: {},
+          reason: why,
+          moved: [],
+          refused: [tile(x, y)],
+        });
+        expect(builder.reshapeGround([tile(x, y)], delta)).toBe(false);
+      }
+    };
+    water(map, 3, 3);
+    refusal(3, 3, STR.build.nothingOn.water);
+    builder.track.place(6, 3, 'straight', 1);
+    refusal(6, 3, STR.build.occupied);
+    expect(builder.placeRoad(9, 3)).toBe(true);
+    refusal(9, 3, STR.build.occupied);
+    const works = BUILDING_DEFS.find(
+      (d) => !d.bridge && !d.terrain && !d.deposit && !d.needsWater,
+    )!;
+    expect(builder.placeBuilding(6, 6, works.id)).not.toBeNull();
+    refusal(6, 6, STR.build.occupied);
+    builder.stations.push(new Station('quarry', 3, 6));
+    refusal(3, 6, STR.build.occupied);
+    expect(builder.placeDecor(10, 6, 'water_tower', 0)).not.toBeNull();
+    refusal(10, 6, STR.build.occupied);
+    for (const [kind, x] of [
+      ['coal', 3],
+      ['oil', 6],
+    ] as const) {
+      map.props.set(10 * SIZE + x, [{ kind, ox: 0, oy: 0, variant: 0 }]);
+      refusal(x, 10, STR.build.occupied);
+    }
+    // a surface tree is no reason to refuse
+    map.props.set(10 * SIZE + 9, [{ kind: 'tree', ox: 0, oy: 0, variant: 0 }]);
+    expect(builder.checkGround([tile(9, 10)], 1).ok).toBe(true);
+    expect(map.groundLevel).toBeUndefined();
+  });
+
+  it('a tile the slope has to move refuses just as a tile asked for does', () => {
+    const { map, builder } = world();
+    builder.track.place(9, 8, 'straight', 1);
+    expect(builder.reshapeGround([tile(8, 8)], 1)).toBe(true);
+    const before = [...tileLevels(map)];
+    expect(builder.checkGround([tile(8, 8)], 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.occupied,
+      moved: [],
+      refused: [tile(9, 8)],
+    });
+    expect(builder.reshapeGround([tile(8, 8)], 1)).toBe(false);
+    expect([...tileLevels(map)]).toEqual(before);
+  });
+
+  it('refuses a tile off the map and one in a region not owned', () => {
+    const { regions, builder } = world();
+    expect(builder.checkGround([tile(8, 8), tile(SIZE, 8)], 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.offMap,
+      moved: [],
+      refused: [tile(SIZE, 8)],
+    });
+    regions.unlocked.fill(false);
+    expect(builder.checkGround([tile(8, 8)], 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.locked,
+      refused: [tile(8, 8)],
+    });
+    builder.free = true;
+    expect(builder.checkGround([tile(8, 8)], 1).ok).toBe(true);
+  });
+
+  it('refuses past the top, below the bottom, and under the cover of a dug tile', () => {
+    const { builder } = world((x, y) => (x > 3 && x < 12 && y > 3 && y < 12 ? 3 : tableland(x, y)));
+    const flat = world().builder;
+    expect(flat.checkGround([tile(8, 8)], -1)).toMatchObject({
+      ok: false,
+      reason: STR.build.groundLimit,
+      refused: [tile(8, 8)],
+    });
+    expect(builder.underground.dig(8, 8, 0)).toBe(true);
+    // over the dug tile the ground stays at rail + 3
+    expect(builder.checkGround([tile(8, 8)], -1)).toMatchObject({
+      ok: false,
+      reason: STR.build.groundLimit,
+      refused: [tile(8, 8)],
+    });
+    expect(builder.checkGround([tile(8, 8)], 1).ok).toBe(true);
+    expect(builder.reshapeGround([tile(7, 8)], -1)).toBe(true);
+    // a pulled tile counts as a tile asked for
+    expect(builder.checkGround([tile(7, 8)], -1).refused).toContainEqual(tile(8, 8));
+    // a cut is built: its ground stays
+    builder.underground.cut(9, 9);
+    expect(builder.checkGround([tile(9, 9)], 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.occupied,
+    });
+  });
+
+  describe('Lower refuses a tile touching water, side or corner', () => {
+    function lake() {
+      const w = world(tableland);
+      water(w.map, 8, 8, 2);
+      return w;
+    }
+
+    it('on a side and on a corner, asked for', () => {
+      const { builder } = lake();
+      for (const t of [tile(7, 8), tile(8, 7), tile(9, 8), tile(8, 9), tile(7, 7), tile(9, 9)])
+        expect(builder.checkGround([t], -1)).toMatchObject({
+          ok: false,
+          cost: {},
+          reason: STR.build.groundBesideWater,
+          moved: [],
+          refused: [t],
+        });
+    });
+
+    it('a tile two away moves', () => {
+      const { builder } = lake();
+      expect(builder.reshapeGround([tile(6, 8)], -1)).toBe(true);
+      expect(builder.reshapeGround([tile(6, 7)], -1)).toBe(true);
+    });
+
+    it('pulled by the slope, on a side and on a corner', () => {
+      const { map, builder } = lake();
+      for (const t of [tile(6, 8), tile(6, 7)])
+        expect(builder.reshapeGround([t], -1), `(${t.x}, ${t.y})`).toBe(true);
+      const before = [...tileLevels(map)];
+      // (6, 8) would pull (7, 8), on the side of the water, down with it
+      const side = builder.checkGround([tile(6, 8)], -1);
+      expect(side.ok).toBe(false);
+      expect(side.moved).toEqual([]);
+      expect(side.refused).toContainEqual(tile(7, 8));
+      // (6, 7) would pull (7, 7), on its corner
+      const corner = builder.checkGround([tile(6, 7)], -1);
+      expect(corner.ok).toBe(false);
+      expect(corner.refused).toContainEqual(tile(7, 7));
+      expect(builder.reshapeGround([tile(6, 8)], -1)).toBe(false);
+      expect([...tileLevels(map)]).toEqual(before);
+    });
+
+    it('a raise is not refused for it', () => {
+      const { map, builder } = lake();
+      expect(builder.reshapeGround([tile(7, 8)], 1)).toBe(true);
+      expect(builder.reshapeGround([tile(7, 7)], 1)).toBe(true);
+      expect(levelAt(map, 7, 8)).toBe(3);
+      expect(levelAt(map, 7, 7)).toBe(3);
+    });
+  });
+
+  it('prices per tile per level and charges nothing on refusal', () => {
+    const { map, economy, builder } = world();
+    rules.groundCost = 100;
+    const up = [tile(8, 8)],
+      start = economy.money;
+    expect(builder.checkGround(up, 1)).toMatchObject({ ok: true, cost: { money: 100 } });
+    expect(builder.reshapeGround(up, 1)).toBe(true);
+    expect(economy.money).toBe(start - 100);
+    // the second level lifts the four sides too: five tiles, a level each
+    expect(builder.checkGround(up, 1).cost).toEqual({ money: 500 });
+    expect(builder.reshapeGround(up, 1)).toBe(true);
+    expect(economy.money).toBe(start - 600);
+    // the same both ways
+    expect(builder.checkGround(up, -1).cost).toEqual({ money: 100 });
+    // the tuning slider and the build cost
+    rules.groundCost = 250;
+    expect(builder.checkGround(up, -1).cost).toEqual({ money: 250 });
+    rules.buildCostMul = 2;
+    expect(builder.checkGround(up, -1).cost).toEqual({ money: 500 });
+    rules.groundCost = 100;
+    rules.buildCostMul = 1;
+    // what cannot be paid moves nothing and charges nothing, and the ghost still has it
+    const levels = [...tileLevels(map)];
+    economy.money = 50;
+    expect(builder.checkGround(up, 1)).toMatchObject({
+      ok: false,
+      cost: { money: 1300 },
+      reason: STR.build.funds,
+      refused: [],
+    });
+    expect(builder.checkGround(up, 1).moved).toHaveLength(13);
+    expect(builder.reshapeGround(up, 1)).toBe(false);
+    expect(economy.money).toBe(50);
+    expect([...tileLevels(map)]).toEqual(levels);
+    // nor does a refusal
+    economy.money = 1000;
+    map.terrain[9 * SIZE + 8] = Terrain.Water;
+    expect(builder.checkGround(up, 1)).toMatchObject({ ok: false, cost: {} });
+    expect(builder.reshapeGround(up, 1)).toBe(false);
+    expect(economy.money).toBe(1000);
+    // the editor pays nothing, with no money at all
+    economy.money = 0;
+    map.terrain[9 * SIZE + 8] = Terrain.Grass;
+    builder.free = true;
+    expect(builder.checkGround(up, 1)).toMatchObject({ ok: true, cost: {} });
+    expect(builder.reshapeGround(up, 1)).toBe(true);
+    expect(economy.money).toBe(0);
+  });
+
+  it('writes the tiles it pins, without a charge or a change to their terrain', () => {
+    // a block of mountain: its foot stands at 1 only because the grass beside it stands at 0
+    const { map, economy, builder } = world();
+    for (let y = 4; y <= 10; y++)
+      for (let x = 7; x <= 11; x++) map.terrain[y * SIZE + x] = Terrain.Mountain;
+    rules.groundCost = 100;
+    const start = economy.money,
+      before = tileLevels(map),
+      terrain = [...map.terrain],
+      check = builder.checkGround([tile(6, 7)], 1);
+    expect(before[7 * SIZE + 7]).toBe(1);
+    const changed = check.moved.filter((m) => before[m.y * SIZE + m.x] !== m.to);
+    expect(changed).toEqual([{ x: 6, y: 7, to: 1 }]);
+    expect(check.moved).toContainEqual({ x: 7, y: 7, to: 1 });
+    expect(check.cost).toEqual({ money: 100 });
+    expect(builder.reshapeGround([tile(6, 7)], 1)).toBe(true);
+    expect(economy.money).toBe(start - 100);
+    expect(map.groundLevel![7 * SIZE + 7]).toBe(1);
+    expect([...map.terrain]).toEqual(terrain);
+    // every tile the action left alone keeps no level, and the map stands where the action said
+    for (let k = 0; k < SIZE * SIZE; k++)
+      if (!check.moved.some((m) => m.y * SIZE + m.x === k))
+        expect(map.groundLevel![k]).toBe(NO_LEVEL);
+    const after = tileLevels(map),
+      want = Uint8Array.from(before);
+    want[7 * SIZE + 6] = 1;
+    expect([...after]).toEqual([...want]);
+    for (let y = 0; y < SIZE; y++)
+      for (let x = 0; x < SIZE; x++) expect(levelAt(map, x, y)).toBe(after[y * SIZE + x]);
+  });
+
+  it('lowering stone to 0 turns it to Grass; raising keeps terrain', () => {
+    const { map, builder } = world();
+    const at = (x: number, y: number) => map.terrain[y * SIZE + x];
+    for (const [x, t] of [
+      [4, Terrain.Rock],
+      [11, Terrain.Forest],
+    ] as const) {
+      map.terrain[8 * SIZE + x] = t;
+      expect(builder.reshapeGround([tile(x, 8)], 1)).toBe(true);
+      expect(at(x, 8)).toBe(t);
+      expect(levelAt(map, x, 8)).toBe(1);
+      expect(builder.reshapeGround([tile(x, 8)], -1)).toBe(true);
+      expect(levelAt(map, x, 8)).toBe(0);
+      expect(at(x, 8)).toBe(t === Terrain.Rock ? Terrain.Grass : t);
+    }
+    // a lone mountain tile stands at 1, held down by the ground around it
+    map.terrain[4 * SIZE + 8] = Terrain.Mountain;
+    expect(levelAt(map, 8, 4)).toBe(1);
+    expect(builder.reshapeGround([tile(8, 4)], -1)).toBe(true);
+    expect(levelAt(map, 8, 4)).toBe(0);
+    expect(at(8, 4)).toBe(Terrain.Grass);
+  });
+
+  it('a tile the lower pulls to 0 turns too; stone that stays up stays stone', () => {
+    const { map, builder } = world((x, y) => (y === 8 && x >= 5 && x <= 7 ? 1 : 0));
+    for (const x of [5, 6, 7]) map.terrain[8 * SIZE + x] = Terrain.Rock;
+    expect(builder.reshapeGround([tile(6, 8)], 1)).toBe(true);
+    expect(levelAt(map, 6, 8)).toBe(2);
+    expect(builder.reshapeGround([tile(6, 8)], -1)).toBe(true);
+    expect(map.terrain[8 * SIZE + 6]).toBe(Terrain.Rock);
+    expect(builder.reshapeGround([tile(7, 8)], -1)).toBe(true);
+    expect(levelAt(map, 7, 8)).toBe(0);
+    expect(map.terrain[8 * SIZE + 7]).toBe(Terrain.Grass);
+    expect(map.terrain[8 * SIZE + 6]).toBe(Terrain.Rock);
   });
 });

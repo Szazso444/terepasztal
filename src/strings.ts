@@ -419,6 +419,10 @@ const EN = {
     mountainLine: 'Mountain track must continue an existing line',
     needBridge: 'Water needs a bridge',
     tooSteep: 'Too steep for rails: straight track climbs one level per tile at most',
+    /** Raise or Lower would take a tile past the top, the bottom or the cover of a tunnel */
+    groundLimit: 'The ground can go no further here',
+    /** Lower on a tile that touches water, or pulling one down */
+    groundBesideWater: 'Ground touching water cannot be lowered',
     notLevel: 'Needs level ground: only straight track can climb a slope',
     notSmooth:
       'Curves and switches need smooth ground: only straights and crossings climb a slope, unless bridge platforms support every tile of the piece',
