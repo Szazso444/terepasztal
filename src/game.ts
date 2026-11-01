@@ -1539,7 +1539,7 @@ export class Game implements UiHost {
         const phase = s.index % 4;
         const edge = (s.index === 0 ? 1 : 0) + (s.index === s.length - 1 ? 2 : 0);
         const key = `structures/span_${s.material}_${s.axis}_${n}_${phase}_${edge}`;
-        // Over water the deck sits at the waterline and its piers stand in the water. Over
+        // Over water the deck sits at the water's level and its piers stand in the water. Over
         // land it carries the rail's level on piers cut to the ground under them: a fenced span
         // under straight rail, a square pad under a curve or switch. A raised deck stands at its
         // stored height, on tall supports over either.
@@ -1549,7 +1549,7 @@ export class Game implements UiHost {
             b.deck !== undefined
               ? b.deck * this.world.levelPx
               : water
-                ? 0
+                ? this.world.waterDeck(b.x, b.y)
                 : -this.world.railAt(b.x, b.y).dz,
           dy = -deck - this.world.elevationOf(b.x, b.y),
           open = water && !raised,
