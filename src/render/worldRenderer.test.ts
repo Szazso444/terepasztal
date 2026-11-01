@@ -2409,3 +2409,37 @@ function paveChanged(was: TownPaving, is: TownPaving, i: number, j: number) {
     }
   return false;
 }
+
+describe('the pointer on a raised deck', () => {
+  const at = (deckTops: Map<number, number>) => {
+    const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
+    Object.assign(world, {
+      map: { w: 16, h: 16 },
+      deckTops,
+      landscape: { failed: true },
+    });
+    return world;
+  };
+
+  it('finds the deck as drawn, not the ground under the pointer', () => {
+    const tile = 5 * 16 + 7,
+      world = at(new Map([[tile, 40]])),
+      p = tileToWorld(7, 5);
+    expect(world.tileAtSurface(p.x, p.y - 40)).toEqual({ x: 7, y: 5 });
+    expect(world.tileAtSurface(p.x, p.y)).not.toBeUndefined();
+    expect(world.surfacePoint(7, 5).y).toBe(p.y - 40);
+  });
+
+  it('takes the deck nearest the camera where two are drawn over one point', () => {
+    const near = 6 * 16 + 8,
+      far = 5 * 16 + 7,
+      world = at(
+        new Map([
+          [far, 8],
+          [near, 40],
+        ]),
+      ),
+      p = tileToWorld(8, 6);
+    expect(world.tileAtSurface(p.x, p.y - 40)).toEqual({ x: 8, y: 6 });
+  });
+});
