@@ -343,7 +343,10 @@ export function buildCatalog(
     tool: { kind: 'drill' },
     name: STR.toolbar.drill,
     cost: {},
-    costText: `${fmtMoney(rules.drillCost)} ${STR.toolbar.drillCost}`,
+    // a game's own tuning comes with its save, after the catalogue is made
+    get costText() {
+      return `${fmtMoney(rules.drillCost)} ${STR.toolbar.drillCost}`;
+    },
     frame: '',
     icon: 'drill',
     desc: STR.toolbar.drillHint,
