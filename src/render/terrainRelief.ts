@@ -606,9 +606,9 @@ export function groundAllows(
 ) {
   if (x < 0 || y < 0 || x >= map.w || y >= map.h) return false;
   if (relief.tiles) {
-    // Terraces: neighbours never differ by more than a level, so a straight rail always fits
-    // (its bed climbs at most one level per tile). Level pieces and structures need a tile
-    // no bank reaches into: all four neighbours at its own level.
+    // Terraces: a straight rail always fits a tile on its own; a link across a step above one
+    // level is an edge between two tiles, which the builder refuses. Level pieces and structures
+    // need a tile no bank reaches into: all four neighbours at its own level.
     if (need === 'straight') return true;
     const here = relief.tiles[y * map.w + x];
     for (const [dx, dy] of [
