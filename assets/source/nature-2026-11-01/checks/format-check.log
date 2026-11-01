@@ -1,0 +1,6 @@
+
+> terepasztal@0.1.0 format:check
+> prettier --check "src/**/*.{ts,json,css}" index.html "tools/**/*.{mjs,ts}" "*.md" "docs/**/*.md" ".github/**/*.{yml,json,md}" ".claude/**/*.{md,js,json}"
+
+Checking formatting...
+All matched files use Prettier code style!

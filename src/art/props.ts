@@ -185,6 +185,202 @@ const WILLOWS = [
   { w: 49, h: 40, ax: 25 },
 ];
 
+/**
+ * The nature set's fallbacks (#653). Each kind's frames, [w, h, ax, ay] in world px, are the packed
+ * paintings' (assets/source/nature-2026-11-01), so a fallback stands where its painting does; the
+ * painting is what the game shows, and a fallback is only the kind's crown or clump in its colours.
+ * `crown` is the share of the frame's height its crown fills from the top.
+ */
+const NATURE_TREES: Record<string, { frames: number[][]; crown: number; bark: RGB; leaf: RGB[] }> =
+  {
+    beech: {
+      frames: [
+        [33, 23, 18, 23],
+        [39, 28, 18, 28],
+        [49, 34, 23, 33],
+      ],
+      crown: 0.88,
+      bark: [122, 118, 108],
+      leaf: [
+        [60, 86, 58],
+        [76, 104, 68],
+        [44, 66, 48],
+        [98, 124, 80],
+      ],
+    },
+    poplar: {
+      frames: [
+        [12, 30, 6, 29],
+        [16, 36, 7, 36],
+        [17, 43, 8, 43],
+      ],
+      crown: 0.9,
+      bark: [104, 92, 72],
+      leaf: [
+        [78, 112, 62],
+        [98, 134, 72],
+        [58, 88, 52],
+        [128, 156, 86],
+      ],
+    },
+    apple: {
+      frames: [
+        [19, 18, 9, 17],
+        [27, 22, 13, 21],
+        [30, 26, 15, 25],
+      ],
+      crown: 0.77,
+      bark: [96, 76, 56],
+      leaf: [
+        [92, 122, 72],
+        [120, 142, 88],
+        [68, 96, 58],
+        [216, 196, 186],
+      ],
+    },
+    maple: {
+      frames: [
+        [26, 23, 12, 23],
+        [34, 29, 17, 28],
+        [39, 34, 19, 33],
+      ],
+      crown: 0.81,
+      bark: [92, 74, 58],
+      leaf: [
+        [142, 76, 44],
+        [168, 96, 52],
+        [106, 58, 40],
+        [190, 124, 66],
+      ],
+    },
+    larch: {
+      frames: [
+        [18, 23, 9, 23],
+        [20, 28, 10, 28],
+        [27, 34, 13, 33],
+      ],
+      crown: 0.9,
+      bark: [98, 80, 62],
+      leaf: [
+        [132, 138, 66],
+        [156, 158, 80],
+        [100, 110, 58],
+        [180, 176, 98],
+      ],
+    },
+    acacia: {
+      frames: [
+        [36, 18, 19, 17],
+        [42, 22, 20, 21],
+        [60, 26, 32, 25],
+      ],
+      crown: 0.44,
+      bark: [108, 92, 72],
+      leaf: [
+        [120, 124, 78],
+        [142, 142, 90],
+        [94, 100, 66],
+        [166, 162, 108],
+      ],
+    },
+  };
+const NATURE_GROUND: Record<string, { frames: number[][]; leaf: RGB[] }> = {
+  stump: {
+    frames: [
+      [11, 8, 5, 7],
+      [11, 8, 5, 7],
+    ],
+    leaf: [
+      [120, 88, 58],
+      [196, 164, 120],
+      [88, 64, 44],
+      [216, 188, 146],
+    ],
+  },
+  log: {
+    frames: [
+      [15, 8, 7, 6],
+      [13, 8, 6, 6],
+    ],
+    leaf: [
+      [108, 84, 58],
+      [104, 116, 62],
+      [76, 60, 44],
+      [128, 136, 74],
+    ],
+  },
+  fern: {
+    frames: [
+      [17, 10, 8, 8],
+      [16, 10, 7, 10],
+    ],
+    leaf: [
+      [58, 92, 54],
+      [76, 112, 62],
+      [42, 70, 46],
+      [98, 132, 72],
+    ],
+  },
+  mushrooms: {
+    frames: [
+      [8, 6, 4, 6],
+      [8, 6, 4, 6],
+    ],
+    leaf: [
+      [160, 74, 58],
+      [212, 196, 164],
+      [118, 56, 48],
+      [226, 212, 182],
+    ],
+  },
+  heather: {
+    frames: [
+      [17, 8, 8, 8],
+      [17, 8, 8, 8],
+    ],
+    leaf: [
+      [122, 92, 128],
+      [146, 112, 148],
+      [92, 96, 84],
+      [168, 134, 164],
+    ],
+  },
+  dryshrub: {
+    frames: [
+      [17, 12, 9, 12],
+      [23, 12, 10, 12],
+    ],
+    leaf: [
+      [122, 104, 78],
+      [142, 124, 92],
+      [92, 78, 60],
+      [132, 136, 88],
+    ],
+  },
+};
+
+/** A nature tree's fallback: a trunk up from its foot into its crown. */
+function natureTree(kind: string, seed: number, v: number): PixelBuf {
+  const { frames, crown, bark, leaf } = NATURE_TREES[kind];
+  const [w, h, ax, ay] = frames[v];
+  const b = new PixelBuf(w, h);
+  const under = h * crown;
+  trunk(b, ax - 1, Math.round(under / 2), 2, Math.min(ay, h - 1) - Math.round(under / 2) + 1, bark);
+  mass(b, w / 2, (under + 1) / 2, w / 2 - 1, (under - 1) / 2, leaf, seed);
+  b.outline(PAL.outline, 150);
+  return b;
+}
+
+/** A nature ground piece's fallback: one low clump in its colours. */
+function natureGround(kind: string, seed: number, v: number): PixelBuf {
+  const { frames, leaf } = NATURE_GROUND[kind];
+  const [w, h] = frames[v];
+  const b = new PixelBuf(w, h);
+  mass(b, w / 2, h / 2, w / 2 - 1, h / 2 - 1, leaf, seed);
+  b.outline(PAL.outline, 150);
+  return b;
+}
+
 /** A point `t` of the way along the quadratic curve from `a` over `c` to `b`. */
 function curve(a: [number, number], c: [number, number], b: [number, number], t: number) {
   const u = 1 - t;
@@ -1006,6 +1202,17 @@ export function generatePropsAtlas(): AtlasImage {
     ab.add(`props/mangrove_${v}`, mangroveTree(170 + v, v).toImageData(), m.ax, m.ay);
     add(`props/willow_${v}`, willowTree(180 + v, v), WILLOWS[v].ax);
   }
+  // the nature set too
+  Object.keys(NATURE_TREES).forEach((kind, k) =>
+    NATURE_TREES[kind].frames.forEach(([, , ax, ay], v) =>
+      ab.add(`props/${kind}_${v}`, natureTree(kind, 190 + k * 3 + v, v).toImageData(), ax, ay),
+    ),
+  );
+  Object.keys(NATURE_GROUND).forEach((kind, k) =>
+    NATURE_GROUND[kind].frames.forEach(([, , ax, ay], v) =>
+      ab.add(`props/${kind}_${v}`, natureGround(kind, 210 + k * 2 + v, v).toImageData(), ax, ay),
+    ),
+  );
   // a wheat field is anchored on the tile centre, which the patch is drawn around
   for (let v = 0; v < 3; v++)
     ab.add(`props/wheat_${v}`, wheatField(160 + v, v).toImageData(), WHEAT_CX, WHEAT_CY);
