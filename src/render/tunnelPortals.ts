@@ -255,6 +255,12 @@ export class TunnelPortals {
   private stale = true;
   /** Portals an edit reached: only these look again. */
   private readonly touched = new Set<Standing>();
+  /** What `tunnel` read, and the store it read it from. */
+  private readonly openTiles = {
+    under: null as DugView | null,
+    version: -1,
+    tiles: new Set<number>(),
+  };
 
   constructor(private readonly host: PortalHost) {
     this.masks.includeInBuild = false;
@@ -480,13 +486,33 @@ export class TunnelPortals {
 
   /**
    * Is (x, y) under a mountain, in the view where nothing shows there? A dug tile whose track was
-   * taken away has no car in it: a train left there stands in plain sight, as on the surface.
+   * taken away has no car in it, and a room no portal leads to any more has none either: a train
+   * left there stands in plain sight, as on the surface.
    */
   inside(x: number, y: number) {
     if (this.host.glass()) return false;
     const tx = Math.floor(x + 0.5),
       ty = Math.floor(y + 0.5);
-    return this.host.under().floorAt(tx, ty) !== undefined && !this.host.bare(tx, ty);
+    return this.tunnel().has(laneKey(tx, ty)) && !this.host.bare(tx, ty);
+  }
+
+  /** The dug tiles a portal leads to, read again when the store changes. */
+  private tunnel() {
+    const under = this.host.under(),
+      open = this.openTiles;
+    if (open.under === under && open.version === under.version) return open.tiles;
+    open.under = under;
+    open.version = under.version;
+    open.tiles.clear();
+    const walk = under.portals().map((p) => ({ x: p.x, y: p.y }));
+    while (walk.length) {
+      const { x, y } = walk.pop()!,
+        key = laneKey(x, y);
+      if (open.tiles.has(key) || under.floorAt(x, y) === undefined) continue;
+      open.tiles.add(key);
+      for (let d = 0; d < 4; d++) walk.push({ x: x + DIR_DX[d], y: y + DIR_DY[d] });
+    }
+    return open.tiles;
   }
 
   /**

@@ -264,6 +264,7 @@ describe('what a car shows', () => {
   it('a car in another tunnel near a portal is hidden, and not shown through its mask', () => {
     const t = east();
     t.dig(8, 7, 10, 7);
+    t.portal(8, 7, 'W');
     const s = t.car(9, 7);
     expect(s.visible).toBe(false);
     expect(s.mask).toBeFalsy();
@@ -405,6 +406,16 @@ describe('what a car shows', () => {
       expect(s.mask).toBeFalsy();
     }
     expect(t.portals.inside(5, 10)).toBe(false);
+  });
+  it('a car in a room no portal leads to any more stands in plain sight', () => {
+    const t = east();
+    expect(t.car(5, 10).visible).toBe(false);
+    t.under.fill(10, 10);
+    expect(t.car(5, 10).visible).toBe(true);
+    expect(t.portals.inside(5, 10)).toBe(false);
+    t.under.dig(10, 10, 0);
+    t.portal(10, 10, 'E');
+    expect(t.car(5, 10).visible).toBe(false);
   });
   it('a car on a tile back-filled stands in plain sight too', () => {
     const t = east();
