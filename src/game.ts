@@ -162,6 +162,8 @@ import { HouseRegistry } from './sim/houses';
 import { PeopleSim } from './sim/people';
 import { expandSave, ownsBorderChunk } from './sim/expand';
 import { generatorOf, groundOf } from './sim/ground';
+import { EDGE_STRIP_TILES, edgeStripRequest } from './world/edgeStrip';
+import { buildEdgeStrip } from './render/edgeStripView';
 import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
 import { SimStep, startStock, eaters, ageSnapshot as ageSnapshotOf } from './sim/step';
@@ -1092,6 +1094,9 @@ export class Game implements UiHost {
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
+    // the ground past the map, built away from the page and shown when it is ready
+    const strip = edgeStripRequest(this.spec, this.supply);
+    if (strip) void buildEdgeStrip(strip).then((s) => s && this.world.setEdgeStrip(s));
     await this.world.loadBridgeSurfaces();
     this.world.onBridgeStyle = () => this.refreshBridges();
     this.world.occupied = (x, y) =>
@@ -1125,7 +1130,12 @@ export class Game implements UiHost {
       this.dayNight.overlay,
       this.world.root.getChildIndex(this.world.harvest.layer),
     );
-    this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
+    // the night reaches over the edge strip, so its lines do not change colour part of the way out
+    this.dayNight.setWorld(
+      this.map.w,
+      this.map.h,
+      Math.max(WorldRenderer.BORDER, EDGE_STRIP_TILES),
+    );
     this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.world.overlay.addChild(this.fog.patches);
     this.app.stage.addChild(this.world.root, this.fog.haze, this.rain.root, this.overview.root);
