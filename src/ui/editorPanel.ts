@@ -51,7 +51,7 @@ export class EditorPanel {
   private body = el('div', { class: 'panel-body k-edp' });
   private status = el('p', { class: 'k-p bad' });
   // the box outlives a redraw of the panel: what is pasted in it stays
-  private transfer = pasteBox({ placeholder: STR.settings.transferHint });
+  private transfer = pasteBox();
 
   constructor(
     private readonly editor: Editor,
