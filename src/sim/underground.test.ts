@@ -13,7 +13,7 @@ import { Economy } from './economy';
 import { DEFAULT_RULES, rules } from './rules';
 import { Station } from './stations';
 import { STR } from '../strings';
-import { storeWith } from '../testing/storeFixtures';
+import { storeWith, storesWith } from '../testing/storeFixtures';
 import { NO_LEVEL, levelAt, tileLevels } from '../world/elevation';
 import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
@@ -484,13 +484,147 @@ describe('the dig plan', () => {
 
   it('raises a tile on the way down when the drag stops before open ground', () => {
     const w = world(hills(PEAK));
-    const tiles = row(MID, 12, 17);
-    expect(levelsOf(w, tiles)).toEqual([6, 5, 4, 3, 2, 1]);
+    const tiles = row(MID, 12, 16);
+    expect(levelsOf(w, row(MID, 12, 17))).toEqual([6, 5, 4, 3, 2, 1]);
     const p = plan(w, tiles);
     expect(p.cut).toEqual([]);
     expect(p.dig).toEqual(tiles);
     expect(p.portals).toEqual([]);
-    expect(p.raise.find((m) => m.x === 17 && m.y === MID)?.to).toBe(3);
+    expect(p.raise.find((m) => m.x === 16 && m.y === MID)?.to).toBe(3);
+  });
+
+  it('reads the tile past the end of a drag: level 0 there makes the slope a cut', () => {
+    const w = world(hills(PEAK));
+    const p = plan(w, row(MID, 12, 17));
+    expect(levelAt(w.map, 18, MID)).toBe(0);
+    expect(p.dig).toEqual(row(MID, 12, 15));
+    expect(p.cut).toEqual(row(MID, 16, 17));
+    expect(p.raise).toEqual([]);
+    expect(p.portals).toEqual([{ x: 15, y: MID, face: 'E', floor: 0 }]);
+  });
+
+  it('starts from rail at the foot of a slope, on the rail or on the bank', () => {
+    const w = world(hills([[10, MID, 6]]));
+    expect(levelsOf(w, row(MID, 4, 7))).toEqual([0, 1, 2, 3]);
+    w.builder.track.place(4, MID, 'straight', 1);
+    for (const from of [4, 5]) {
+      expect(w.builder.checkDig(row(MID, from, 9)), `from x ${from}`).toMatchObject({
+        ok: true,
+        cut: row(MID, 5, 6),
+        dig: row(MID, 7, 9),
+        raise: [],
+        portals: [{ x: 7, y: MID, face: 'W', floor: 0 }],
+      });
+    }
+    expect(w.builder.dig(row(MID, 4, 9))).toBe(true);
+    expect(w.builder.track.get(4, MID)).toBeTruthy();
+    expect(levelAt(w.map, 4, MID)).toBe(0);
+  });
+
+  it('starts from rail at the foot of a cliff, on the rail or on the rock', () => {
+    const w = steep((x) => (x <= 10 ? 4 : 0));
+    w.builder.track.place(11, MID, 'straight', 1);
+    for (const from of [11, 10]) {
+      expect(w.builder.checkDig(row(MID, from, 8)), `from x ${from}`).toMatchObject({
+        ok: true,
+        cut: [],
+        dig: row(MID, 10, 8),
+        portals: [{ x: 10, y: MID, face: 'E', floor: 0 }],
+      });
+    }
+  });
+
+  it('starts from a line along a cliff foot, and leaves that line alone', () => {
+    const w = steep((x) => (x <= 10 ? 4 : 0));
+    for (let y = 8; y <= 16; y++) w.builder.track.place(11, y, 'straight', 0);
+    expect(w.builder.checkDig(row(MID, 11, 8))).toMatchObject({
+      ok: true,
+      dig: row(MID, 10, 8),
+      portals: [{ x: 10, y: MID, face: 'E', floor: 0 }],
+    });
+    // along the rail itself there is nothing to write, and nothing to refuse
+    expect(w.builder.checkDig(column(11, 9, 15))).toMatchObject({ ok: true, dig: [], cut: [] });
+  });
+
+  it('still refuses rail the line would run through', () => {
+    const w = steep(VALLEY);
+    w.builder.track.place(10, MID, 'straight', 0);
+    const c = w.builder.checkDig(row(MID, 8, 12));
+    expect(c).toMatchObject({ ok: false, reason: STR.build.occupied, dig: [], raise: [] });
+    expect(c.refused).toEqual([{ x: 10, y: MID }]);
+    // a tile the line cuts is written too, even at the end of the drag
+    const slope = world(hills([[10, MID, 6]]));
+    slope.builder.track.place(5, MID, 'straight', 1);
+    expect(slope.builder.checkDig(row(MID, 5, 9)).reason).toBe(STR.build.occupied);
+  });
+
+  it('lets a last open tile touch water, and no tile it writes', () => {
+    const wet = (x: number, y: number) => {
+      const w = world(hills(PEAK));
+      const k = y * SIZE + x;
+      w.map.terrain[k] = Terrain.Water;
+      w.map.groundLevel![k] = NO_LEVEL;
+      return w;
+    };
+    expect(plan(wet(19, MID + 1), row(MID, 12, 18))).toMatchObject({
+      ok: true,
+      cut: row(MID, 16, 17),
+      portals: [{ x: 15, y: MID, face: 'E', floor: 0 }],
+    });
+    expect(plan(wet(18, MID + 1), row(MID, 12, 18))).toMatchObject({
+      ok: false,
+      reason: STR.build.digBesideWater,
+      refused: [{ x: 17, y: MID }],
+    });
+  });
+
+  it('gives a dug line its portal from a drag that starts past its end', () => {
+    const w = world(hills(PEAK));
+    w.under.apply(plan(w, row(MID, 12, 15)));
+    const p = plan(w, row(MID, 16, 18));
+    expect(p.dig).toEqual([]);
+    expect(p.cut).toEqual(row(MID, 16, 17));
+    expect(p.portals).toEqual([{ x: 15, y: MID, face: 'E', floor: 0 }]);
+  });
+
+  it('counts a cut past the end of a drag as leading out', () => {
+    const w = world(hills(PEAK));
+    w.under.cut(17, MID);
+    const p = plan(w, row(MID, 16, 12));
+    expect(p).toMatchObject({ ok: true, raise: [], cut: [{ x: 16, y: MID }] });
+    expect(p.dig).toEqual(row(MID, 15, 12));
+    expect(p.portals).toEqual([{ x: 15, y: MID, face: 'E', floor: 0 }]);
+  });
+
+  it('counts a dug tile past the end of a drag as covered: a saddle up to it is raised', () => {
+    const w = world(hills(SADDLE));
+    w.under.apply(plan(w, row(MID, 8, 10)));
+    const p = plan(w, row(MID, 11, 11));
+    expect(p.dig).toEqual([{ x: 11, y: MID }]);
+    expect(p.raise).toContainEqual({ x: 11, y: MID, to: 3 });
+    const q = plan(w, row(MID, 11, 12));
+    expect(q.dig).toEqual(row(MID, 11, 12));
+    expect(q.portals).toEqual([]);
+  });
+
+  it('reads the four sides for one tile: exactly one that leads out takes the portal', () => {
+    const w = world(hills(PEAK));
+    expect(w.builder.dig(row(MID, 12, 18))).toBe(true);
+    expect(w.builder.fillDug(15, MID)).toBe(true);
+    expect(w.under.portals()).toEqual([]);
+    expect(w.builder.dig([{ x: 15, y: MID }])).toBe(true);
+    expect(w.under.portals()).toEqual([{ x: 15, y: MID, face: 'E', floor: 0 }]);
+
+    const cliff = steep((x) => (x <= 10 ? 4 : 0));
+    expect(plan(cliff, [{ x: 10, y: MID }]).portals).toEqual([
+      { x: 10, y: MID, face: 'E', floor: 0 },
+    ]);
+    expect(plan(cliff, [{ x: 9, y: MID }]).portals).toEqual([]);
+    const stack = steep((x, y) => (x === MID && y === MID ? 4 : 0));
+    expect(plan(stack, [{ x: MID, y: MID }])).toMatchObject({
+      dig: [{ x: MID, y: MID }],
+      portals: [],
+    });
   });
 
   it('cuts both ends of a line that runs right through', () => {
@@ -617,11 +751,9 @@ describe('the dig plan', () => {
       { x: MID, y: MID },
       { x: 17, y: MID },
     ]);
-    // alone, the tile at level 1 leads nowhere: it is raised, and nothing between the two is dug
-    expect(p.dig).toEqual([
-      { x: MID, y: MID },
-      { x: 17, y: MID },
-    ]);
+    // nothing between the two is dug; alone, the tile at level 1 has one side that leads out
+    expect(p.dig).toEqual([{ x: MID, y: MID }]);
+    expect(p.cut).toEqual([{ x: 17, y: MID }]);
     expect(p.portals).toEqual([]);
   });
 
@@ -837,6 +969,63 @@ describe('the dig plan', () => {
     expect(u.fill(3, 3)?.portals.map((p) => p.face)).toEqual(['E', 'W']);
     expect(u.portals()).toEqual([]);
     expect(u.fill(3, 3)).toBeNull();
+  });
+
+  it('filling a cut takes the portal that looks at it, with its refund', () => {
+    const w = world(hills(PEAK));
+    expect(w.builder.dig(row(MID, 12, 18))).toBe(true);
+    expect(w.under.portals()).toEqual([{ x: 15, y: MID, face: 'E', floor: 0 }]);
+    const money = w.economy.money;
+    expect(w.builder.fillDug(17, MID)).toBe(true);
+    expect(w.under.portals()).toHaveLength(1);
+    expect(w.builder.fillDug(16, MID)).toBe(true);
+    expect(w.under.portals()).toEqual([]);
+    expect(w.economy.money).toBe(money + rules.drillCost + rules.portalCost * 0.5);
+  });
+
+  it('an unapply leaves a portal that looked at a cut before the cut came', () => {
+    const w = world(hills(PEAK));
+    const portal = { x: 15, y: MID, face: 'E', floor: 0 } as const;
+    w.under.dig(15, MID, 0);
+    w.under.addPortal(portal);
+    const p = plan(w, row(MID, 16, 18));
+    expect(p.portals).toEqual([]);
+    w.under.apply(p);
+    w.under.unapply(p);
+    expect(w.under.portals()).toEqual([portal]);
+    expect(w.under.isCut(16, MID)).toBe(false);
+  });
+
+  it('holds the ground a portal looks out at, against Raise and against a dig', () => {
+    const w = steep((x) => (x <= 10 || x >= 14 ? 4 : 0));
+    expect(w.builder.dig(row(MID, 8, 11))).toBe(true);
+    expect(w.under.portals()).toEqual([{ x: 10, y: MID, face: 'E', floor: 0 }]);
+    expect(levelAt(w.map, 11, MID)).toBe(0);
+    expect(w.builder.checkGround([{ x: 11, y: MID }], 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.occupied,
+      refused: [{ x: 11, y: MID }],
+    });
+    // a tunnel alongside would pull the tile up with its slope
+    const c = w.builder.checkDig(row(MID + 1, 10, 14));
+    expect(c).toMatchObject({ ok: false, reason: STR.build.occupied, dig: [], raise: [] });
+    expect(c.refused).toContainEqual({ x: 11, y: MID });
+    // the line running on through it is another matter: that shuts the portal
+    expect(w.builder.dig(row(MID, 10, 14))).toBe(true);
+    expect(w.under.portals()).toEqual([]);
+  });
+
+  it('brings the stone to one store whichever way the drag runs', () => {
+    for (const tiles of [row(MID, 10, 14), row(MID, 14, 10)]) {
+      const w = world(hills(PEAK));
+      const { stores, depots } = storesWith([
+        { amounts: {}, at: { x: 2, y: MID } },
+        { amounts: {}, at: { x: 22, y: MID } },
+      ]);
+      const builder = new Builder(w.map, w.regions, new TrackGraph(SIZE, SIZE), w.economy, stores);
+      expect(builder.dig(tiles)).toBe(true);
+      expect(depots.map((d) => d.get('stone'))).toEqual([10, 0]);
+    }
   });
 
   it('fill refuses a tile with track', () => {

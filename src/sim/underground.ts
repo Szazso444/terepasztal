@@ -47,8 +47,10 @@ export interface DigWork {
 
 /**
  * What a drag of the Drill would do. `cost` is in money, before `Builder` applies the build price,
- * and `stone` is what the dug tiles bring in. Refused, it does nothing: every list but `refused`
- * is empty, and `reason` says why the first refused tile refuses.
+ * and `stone` is what the dug tiles bring in. Refused by the plan, it does nothing: every list but
+ * `refused` is empty, and `reason` says why the first refused tile refuses. Refused by
+ * `Builder.checkDig` for want of money, `ok` is false and every list stays full, with `cost` and
+ * `stone` as they would be: the ghost shows what the drag would do and that it cannot be paid.
  */
 export interface DigPlan extends PlacementCheck, DigWork {
   /**
@@ -94,6 +96,12 @@ function linesOf(tiles: readonly Tile[]): Tile[][] {
     else out.push([t]);
   });
   return out;
+}
+
+/** The tile a portal looks out at. */
+function frontOf(p: Portal): Tile {
+  const d = FACES.indexOf(p.face);
+  return { x: p.x + DIR_DX[d], y: p.y + DIR_DY[d] };
 }
 
 /** The face of `from` that looks at the tile beside it, `to`. */
@@ -193,18 +201,38 @@ export class Underground {
     this.version++;
     return true;
   }
+  /** Make (x, y) neither dug nor cut, and leave the portals be. False when it was neither. */
+  private clear(x: number, y: number): boolean {
+    if (!this.inside(x, y)) return false;
+    const k = y * this.w + x;
+    if (!this.dug.delete(k) && !this.cuts.delete(k)) return false;
+    this.version++;
+    return true;
+  }
   /**
-   * Back-fill (x, y): it is neither dug nor cut after, and its portals go with it. The answer holds
-   * those portals, as a tile open on two sides has two; null when the tile was neither.
+   * Back-fill (x, y): it is neither dug nor cut after, and the portals on it and the portal that
+   * looks out at it go with it. The answer holds those portals, as a tile open on two sides has
+   * two; null when the tile was neither.
    */
   fill(x: number, y: number): { portals: Portal[] } | null {
-    if (!this.inside(x, y)) return null;
-    const k = y * this.w + x;
-    if (!this.dug.delete(k) && !this.cuts.delete(k)) return null;
-    const portals = this.list.filter((p) => p.x === x && p.y === y);
-    this.removePortals(x, y);
-    this.version++;
+    const portals = this.portalsOf(x, y);
+    if (!this.clear(x, y)) return null;
+    this.keepPortals((p) => !portals.includes(p));
     return { portals };
+  }
+  /** The portals a back-fill of (x, y) takes: those on the tile and those looking out at it. */
+  portalsOf(x: number, y: number): Portal[] {
+    return this.list.filter((p) => {
+      const front = frontOf(p);
+      return (p.x === x && p.y === y) || (front.x === x && front.y === y);
+    });
+  }
+  /** A portal looks out at (x, y): the ground there has to stay as it is. */
+  fronted(x: number, y: number): boolean {
+    return this.list.some((p) => {
+      const front = frontOf(p);
+      return front.x === x && front.y === y;
+    });
   }
   private portalKey(x: number, y: number, face: Face): number {
     return (y * this.w + x) * FACES.length + FACES.indexOf(face);
@@ -239,6 +267,34 @@ export class Underground {
   }
 
   /**
+   * `line` with the tile past each end, along the drag, where that tile has a say: it is dug, or
+   * it leads out, being level 0 or a cut. These are read and never written. A drag from the foot of
+   * a slope, or into the mountain from a tile beside rail, leads out this way. One tile has no
+   * direction: it takes one from its four sides when exactly one of them leads out.
+   */
+  private withEnds(line: readonly Tile[], levels: Uint8Array): Tile[] {
+    const leadsOut = (t: Tile) =>
+      this.inside(t.x, t.y) && (!levels[t.y * this.w + t.x] || this.isCut(t.x, t.y));
+    const counts = (t: Tile) => this.isDug(t.x, t.y) || leadsOut(t);
+    const past = (t: Tile, from: Tile) => ({ x: 2 * t.x - from.x, y: 2 * t.y - from.y });
+    const [a] = line,
+      z = line[line.length - 1];
+    let before: Tile | undefined, after: Tile | undefined;
+    if (line.length > 1) {
+      before = past(a, line[1]);
+      after = past(z, line[line.length - 2]);
+    } else {
+      const open = FACES.map((_, d) => ({ x: a.x + DIR_DX[d], y: a.y + DIR_DY[d] })).filter(
+        leadsOut,
+      );
+      if (open.length !== 1) return [a];
+      [before] = open;
+      after = past(a, before);
+    }
+    return [...[before].filter(counts), ...line, ...[after].filter(counts)];
+  }
+
+  /**
    * What each tile of `line` becomes. A tile dug already or at rail + 3 or higher is dug. Past the
    * last of these at each end, or along the whole of a line with none, the tiles lead out to open
    * ground when that end comes to level 0 or to a cut: they are cuts, and level 0 stays open
@@ -265,13 +321,16 @@ export class Underground {
 
   /**
    * What the Drill would do with the drag `tiles`, in the order they were dragged, on ground that
-   * stands at `levels` (tileLevels(map)). The whole drag refuses if any tile of it touches water
-   * or has something on the surface (`surfaceFree`), or if a tile the ground would lift may not
-   * move. `surfaceFree` is not asked of a tile dug or cut already, which costs nothing again.
+   * stands at `levels` (tileLevels(map)). The whole drag refuses if any tile it would dig or cut
+   * touches water or has something on the surface (`surfaceFree`), or if a tile the ground would
+   * lift may not move. Water and the surface are not asked of a tile the plan leaves as it is: a
+   * tile dug or cut already, or open ground, so a drag from rail on open ground starts from that
+   * rail. A tile a portal looks out at does not move, unless this dig digs it.
    *
    * A portal stands on the dug tile where a line comes out: beside a cut or open ground, along the
-   * drag. A portal costs `portalCost` on top of its tile. A cut costs a tile and brings no stone,
-   * and a raise is priced by the levels that really change, at Raise's price.
+   * drag and the one tile past each of its ends (`withEnds`). A portal costs `portalCost` on top of
+   * its tile. A cut costs a tile and brings no stone, and a raise is priced by the levels that
+   * really change, at Raise's price.
    */
   plan(
     map: GameMap,
@@ -297,9 +356,6 @@ export class Underground {
       if (seen.has(k)) continue;
       seen.add(k);
       drag.push(t);
-      const stands = this.isDug(t.x, t.y) || this.isCut(t.x, t.y);
-      if (touchesWater(map, t.x, t.y)) refuse(t, STR.build.digBesideWater);
-      else if (!stands && !surfaceFree(t.x, t.y)) refuse(t, STR.build.occupied);
     }
     if (refused.length) return { ok: false, cost: {}, reason, ...nothing, refused };
 
@@ -313,39 +369,48 @@ export class Underground {
       portals.push({ x: at.x, y: at.y, face, floor: this.floorAt(at.x, at.y) ?? DIG_FLOOR });
     };
     for (const line of linesOf(drag)) {
-      const kinds = this.kindsOf(line, levels);
-      line.forEach((t, i) => {
-        const fresh = !this.isDug(t.x, t.y) && !this.isCut(t.x, t.y);
-        if (fresh && kinds[i] === 'cut') cut.push(t);
-        if (fresh && kinds[i] === 'dug') dig.push(t);
-        if (fresh && kinds[i] === 'dug' && levels[t.y * this.w + t.x] < TUNNEL_COVER) low.push(t);
-        if (i === line.length - 1 || (kinds[i] === 'dug') === (kinds[i + 1] === 'dug')) return;
-        if (kinds[i] === 'dug') portal(t, line[i + 1]);
-        else portal(line[i + 1], t);
+      const walk = this.withEnds(line, levels),
+        kinds = this.kindsOf(walk, levels);
+      walk.forEach((t, i) => {
+        const written =
+          line.includes(t) && !this.isDug(t.x, t.y) && !this.isCut(t.x, t.y) && kinds[i] !== 'open';
+        if (written && touchesWater(map, t.x, t.y)) refuse(t, STR.build.digBesideWater);
+        else if (written && !surfaceFree(t.x, t.y)) refuse(t, STR.build.occupied);
+        else if (written && kinds[i] === 'cut') cut.push(t);
+        else if (written) dig.push(t);
+        if (written && kinds[i] === 'dug' && levels[t.y * this.w + t.x] < TUNNEL_COVER) low.push(t);
+        if (i === walk.length - 1 || (kinds[i] === 'dug') === (kinds[i + 1] === 'dug')) return;
+        if (kinds[i] === 'dug') portal(t, walk[i + 1]);
+        else portal(walk[i + 1], t);
       });
     }
+    if (refused.length) return { ok: false, cost: {}, reason, ...nothing, refused };
 
-    // the ground comes up round a tile as a Raise brings it, and leaves a cut lying open
-    const cuts = new Set(cut.map((t) => t.y * this.w + t.x));
+    const shut = this.list.filter((p) => {
+      const front = frontOf(p);
+      return dig.some((t) => t.x === front.x && t.y === front.y);
+    });
+    // the ground comes up round a tile as a Raise brings it, and leaves lying open a cut and the
+    // ground a portal looks out at
+    const open = [...this.list.filter((p) => !shut.includes(p)), ...portals].map(frontOf);
+    const held = new Set(
+      [...cut, ...open].filter((t) => this.inside(t.x, t.y)).map((t) => t.y * this.w + t.x),
+    );
     const stays = (x: number, y: number) =>
-      this.isCut(x, y) || cuts.has(y * this.w + x) || !surfaceFree(x, y);
-    const { moved, refused: held } = raiseToCover(map, levels, low, stays);
-    if (held.length) {
-      const [{ x, y }] = held;
+      this.isCut(x, y) || held.has(y * this.w + x) || !surfaceFree(x, y);
+    const { moved, refused: stopped } = raiseToCover(map, levels, low, stays);
+    if (stopped.length) {
+      const [{ x, y }] = stopped;
       const why =
         map.terrain[y * this.w + x] === Terrain.Water
           ? STR.build.groundMovesWater
           : stays(x, y)
             ? STR.build.occupied
             : STR.build.groundLimit;
-      return { ok: false, cost: {}, reason: why, ...nothing, refused: held };
+      return { ok: false, cost: {}, reason: why, ...nothing, refused: stopped };
     }
     let steps = 0;
     for (const m of moved) steps += m.to - levels[m.y * this.w + m.x];
-    const shut = this.list.filter((p) => {
-      const d = FACES.indexOf(p.face);
-      return dig.some((t) => t.x === p.x + DIR_DX[d] && t.y === p.y + DIR_DY[d]);
-    });
     const money =
       rules.drillCost * (dig.length + cut.length) +
       rules.portalCost * portals.length +
@@ -373,7 +438,7 @@ export class Underground {
   /** Take a dig back out, as an undo does: what stood before it stays. */
   unapply(work: DigWork) {
     for (const p of work.portals) this.removePortal(p);
-    for (const t of [...work.dig, ...work.cut]) this.fill(t.x, t.y);
+    for (const t of [...work.dig, ...work.cut]) this.clear(t.x, t.y);
     for (const p of work.shut) this.addPortal(p);
   }
 

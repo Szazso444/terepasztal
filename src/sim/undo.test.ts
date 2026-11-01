@@ -1681,11 +1681,11 @@ describe('a dig in the history', () => {
 
   it('takes back its own portal and leaves one that stood before', () => {
     const g = game();
-    steep(g, (x, y) => (x === 40 && y === Y ? 4 : 0));
+    steep(g, (x, y) => (y === Y && x === 40 ? 4 : y === Y && x === 39 ? 1 : 0));
     g.commands.act(() => g.builder.dig(row(40, 41)));
     const before = dugNow(g);
     expect(g.builder.underground.portals()).toEqual([{ x: 40, y: Y, face: 'E', floor: 0 }]);
-    expect(g.commands.act(() => g.builder.dig(row(39, 40)))).toBe(true);
+    expect(g.commands.act(() => g.builder.dig(row(38, 40)))).toBe(true);
     expect(g.builder.underground.portals()).toHaveLength(2);
     expect(g.history.undo()).toEqual({ ok: true });
     expect(dugNow(g)).toBe(before);
@@ -1783,6 +1783,27 @@ describe('a dig in the history', () => {
       expect(dugNow(g)).toBe(after);
     }
     expect(g.stock.get('stone')).toBe(stone);
+  });
+
+  it('a back-filled cut takes the portal that looks at it, and the undo brings both back', () => {
+    const g = game();
+    ready(g);
+    g.commands.act(() => g.builder.dig(row(36, 50)));
+    const before = dugNow(g),
+      money = g.economy.money,
+      back = (rules.drillCost + rules.portalCost) * rules.refundRate;
+    expect(g.commands.act(() => g.builder.fillDug(48, Y))).toBe(true);
+    expect(g.builder.underground.portals()).toEqual([]);
+    expect(g.economy.money).toBe(money + back);
+    const after = dugNow(g);
+    for (let i = 0; i < 2; i++) {
+      expect(g.history.undo()).toEqual({ ok: true });
+      expect(dugNow(g)).toBe(before);
+      expect(g.economy.money).toBe(money);
+      expect(g.history.redo()).toEqual({ ok: true });
+      expect(dugNow(g)).toBe(after);
+      expect(g.economy.money).toBe(money + back);
+    }
   });
 
   it('a back-filled cut comes back a cut, and the undo needs the refund in hand', () => {

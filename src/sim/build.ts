@@ -1333,10 +1333,11 @@ export class Builder {
 
   // ------------------------------------------------------------------ ground
   /**
-   * Something stands on (x, y) that Raise and Lower leave alone. The track of a dug tile and what
-   * stands on it run under the ground, so they do not hold it; a cut lies open, and holds it.
+   * Something stands on (x, y) that Raise, Lower and the Drill leave alone. The track of a dug tile
+   * and what stands on it run under the ground, so they do not hold it; a cut lies open, and holds
+   * it.
    */
-  private groundTaken(x: number, y: number) {
+  private surfaceTaken(x: number, y: number) {
     const dug = this.underground.isDug(x, y),
       decor = this.decorAt(x, y);
     return (
@@ -1349,6 +1350,10 @@ export class Builder {
       this.hasDeposit(x, y, 'oil') ||
       this.underground.isCut(x, y)
     );
+  }
+  /** Raise and Lower leave (x, y) alone: what stands on it, or a portal looking out at it. */
+  private groundTaken(x: number, y: number) {
+    return this.surfaceTaken(x, y) || this.underground.fronted(x, y);
   }
   /** Why the refused tile (x, y) of a raise or lower may not move. */
   private groundRefusal({ x, y }: { x: number; y: number }, delta: 1 | -1): string {
@@ -1447,16 +1452,17 @@ export class Builder {
 
   // ------------------------------------------------------------------ the Drill
   /**
-   * What the Drill would do with the drag `tiles` (`Underground.plan`), at the build price. Ground
-   * Raise and Lower leave alone is ground the Drill leaves alone: the plan asks `groundTaken` of
-   * each tile, so rail on the surface refuses the drag and rail inside a dug tile does not.
+   * What the Drill would do with the drag `tiles` (`Underground.plan`), at the build price. The
+   * plan asks `surfaceTaken` of each tile it would write and of each the ground would lift, so rail
+   * on the surface refuses the drag and rail inside a dug tile does not. Short of money, the check
+   * refuses with the plan's lists full, for the ghost (`DigPlan`).
    */
   checkDig(tiles: readonly { x: number; y: number }[]): DigPlan {
     const plan = this.underground.plan(
       this.map,
       tileLevels(this.map),
       tiles,
-      (x, y) => this.unlocked(x, y) && !this.groundTaken(x, y),
+      (x, y) => this.unlocked(x, y) && !this.surfaceTaken(x, y),
     );
     if (!plan.ok) {
       const [t] = plan.refused;
@@ -1473,7 +1479,8 @@ export class Builder {
    * Dig the drag `tiles` and pay for it; false, with nothing dug or paid, when `checkDig` refuses
    * or there is nothing to dig. The raise is written in full, as `reshapeGround` writes its own,
    * and a tile of the drag that really comes up turns to Rock, the ridge the tunnel makes; the slope
-   * round it keeps its ground. Stone goes to the store that takes in goods from the first tile dug.
+   * round it keeps its ground. Stone goes to the store that takes in goods from the dug tile with
+   * the lowest key, so it does not hang on which way the drag ran.
    * It goes in the build log, with what was paid, as one change (`setDug`).
    */
   dig(tiles: readonly { x: number; y: number }[]): boolean {
@@ -1498,20 +1505,24 @@ export class Builder {
     });
     this.log?.dig(c, changes, paid);
     this.setDug(c, changes, true);
-    if (c.stone > 0) this.intakeAt(c.dig[0].x, c.dig[0].y)?.add('stone', c.stone);
+    if (c.stone > 0) {
+      const at = c.dig.reduce((a, t) => (this.key(t.x, t.y) < this.key(a.x, a.y) ? t : a));
+      this.intakeAt(at.x, at.y)?.add('stone', c.stone);
+    }
     sfx('build.place');
     return true;
   }
   /**
    * Back-fill a dug or cut tile with no track on it and refund the refund share of what it cost,
-   * its portals too. The ground stays as the dig left it, and the stone stays in the stock. False,
-   * with nothing changed, for any other tile.
+   * with each portal it takes: those on it, and the one that looks out at a cut. The ground stays
+   * as the dig left it, and the stone stays in the stock. False, with nothing changed, for any
+   * other tile.
    */
   fillDug(x: number, y: number): boolean {
     const { underground: under } = this,
       floor = under.floorAt(x, y);
     if ((floor === undefined && !under.isCut(x, y)) || this.track.has(x, y)) return false;
-    const portals = under.portals().filter((p) => p.x === x && p.y === y),
+    const portals = under.portalsOf(x, y),
       price = { money: rules.drillCost + rules.portalCost * portals.length },
       back = this.priced(price, rules.refundRate).money ?? 0,
       tile: FilledTile = { x, y, floor, portals };
