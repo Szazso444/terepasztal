@@ -388,6 +388,7 @@ export const HU: Strings = {
     depotLocked: (n: number) => `A következő fűtőház ${n} saját chunknál nyílik meg`,
     townTooClose: (d: number) => `A városi állomások legalább ${d} csempére legyenek egymástól`,
     needTrackHere: 'Jelző csak sínre kerülhet',
+    facesTrack: 'Az elejének a sín felé kell néznie',
     roadHere: 'Itt már van út',
     roadOnBuilding: 'Az út megkerüli az épületet, és csak az ajtajánál találkozik vele',
     roadInWay: 'Itt út fut: előbb bontsd el',

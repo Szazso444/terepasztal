@@ -97,7 +97,9 @@ const PLACES: Entry[] = [
 ];
 const label = (e: Entry, rot: number) => `${e.def.id} r${rot}`;
 /** A station that needs track beside it: any but a depot, whose rails run through its shed. */
-const wantsTrack = (e: Entry) => e.kind === 'station' && !(e.def as StationDef).depot;
+const wantsTrack = (e: Entry) =>
+  (e.kind === 'station' && !(e.def as StationDef).depot) ||
+  ('facesTrack' in e.def && !!e.def.facesTrack);
 
 /**
  * Stand a place on the builder's lists with its corner at (x, y), turned to `rot`, as a save
@@ -300,15 +302,9 @@ describe('a road beside a place', () => {
 // ------------------------------------------------------------------ the spur
 
 /** One of each sort of place the player places, with the footprints of two and four tiles. */
-const PLACED: Entry[] = [
-  'station',
-  'depot',
-  'narrow_depot',
-  'windmill',
-  'townhouse',
-  'water_tower',
-  'fuel_stop',
-].map((id) => PLACES.find((e) => e.def.id === id)!);
+const PLACED: Entry[] = ['station', 'depot', 'narrow_depot', 'windmill', 'townhouse'].map((id) =>
+  PLACES.find((e) => e.def.id === id)!,
+);
 /** The townhouse, the place the tests below stand where they need a door. */
 const HOUSE = PLACES.find((e) => e.def.id === 'townhouse')!;
 /** Where `placed` puts a place's corner. */
@@ -664,9 +660,7 @@ describe('placing a place away from every road', () => {
   it('lays none for any door of a game, the start depot included, but the road the player lays', () => {
     const w = world();
     w.builder.free = true;
-    ['townhouse', 'water_tower', 'fuel_stop'].forEach((id, i) =>
-      expect(w.builder.placeDecor(5 + 4 * i, 5, id, 0), id).not.toBeNull(),
-    );
+    expect(w.builder.placeDecor(5, 5, 'townhouse', 0)).not.toBeNull();
     expect(w.builder.placeBuilding(5, 12, 'windmill', 0)).not.toBeNull();
     const depot = ensureStartDepot(w.builder, 'depot', { x: 20, y: 20 });
     expect(depot).not.toBeNull();
@@ -732,7 +726,7 @@ describe('a road the player lays', () => {
 // ------------------------------------------------------------------ every spur keeps the rules
 
 const SIDE = 40;
-const KINDS = ['station', 'depot', 'narrow_depot', 'windmill', 'townhouse', 'water_tower'];
+const KINDS = ['station', 'depot', 'narrow_depot', 'windmill', 'townhouse'];
 type Op =
   | { op: 'road'; x: number; y: number; n: number; across: boolean }
   | { op: 'track'; x: number; y: number; n: number; across: boolean; cls: TrackItem['cls'] }
@@ -1083,7 +1077,7 @@ function genBox(rng: Rng) {
     h: long ? rng.int(1, 3) : rng.int(3, 6),
   };
   const inBox = () => ({ x: box.x + rng.int(0, box.w - 1), y: box.y + rng.int(0, box.h - 1) });
-  const ids = ['townhouse', 'townhouse', 'water_tower', 'fuel_stop', 'windmill', 'station'];
+  const ids = ['townhouse', 'townhouse', 'townhouse', 'windmill', 'station'];
   const ground = Array.from({ length: rng.int(0, Math.floor((box.w * box.h) / 6)) }, () => ({
     ...inBox(),
     n: rng.int(0, 2),
@@ -1308,7 +1302,7 @@ describe('every spur, against an exhaustive search', () => {
     expect(w.builder.placeTrack(23, 7, STRAIGHT, EW)).toBe(true);
     pave(w, [{ x: 23, y: 9 }]);
     const before = roadsOf(w);
-    expect(w.builder.placeDecor(24, 8, 'water_tower', 2)).not.toBeNull();
+    expect(w.builder.placeDecor(24, 8, 'townhouse', 2)).not.toBeNull();
     const tower = decorPlace(w.builder.decorAt(24, 8)!);
     const [door] = streetOf(tower);
     expect(door.reach).toEqual({ x: 24, y: 7 });
@@ -1325,7 +1319,7 @@ describe('every spur, against an exhaustive search', () => {
     const old = world();
     old.builder.free = true;
     expect(old.builder.placeTrack(23, 7, STRAIGHT, EW)).toBe(true);
-    const was = stand(old, entryOf('water_tower'), 24, 8, 2);
+    const was = stand(old, entryOf('townhouse'), 24, 8, 2);
     const [reach] = streetOf(was).map((d) => d.reach);
     pave(old, [{ x: 23, y: 9 }]);
     const [road, ...laid] = roadsOf(old);

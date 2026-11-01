@@ -388,7 +388,17 @@ export interface DecorDef {
   radius?: number;
   loadBoost?: number;
   water?: boolean;
+  /** fills steam engines' coal: the Coaling Stage */
   fuel?: boolean;
+  /** fills diesel engines' oil or diesel: the Fuel Pump */
+  liquidFuel?: boolean;
+  /**
+   * Must stand with its front (the spout, chute or hose) on track: refused at any other rotation
+   * (`Builder.canPlaceDecor`), and a train leaving its route to refuel stops at that tile.
+   */
+  facesTrack?: boolean;
+  /** the age it opens in, for the build bar; missing: from the start */
+  tier?: number;
   power?: boolean;
   /**
    * Marks a townhouse: people live here and the house registry tracks how many. The number is

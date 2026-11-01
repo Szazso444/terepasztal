@@ -173,8 +173,11 @@ describe('the ground each kind stands on, against the rule before the helper', (
         const { map, builder } = grassWorld();
         paint(map, [{ x: X, y: Y }], t);
         const c = builder.checkDecor(X, Y, def.id);
+        const ground = expected('decor', t, undefined);
         const want =
-          def.onTrack && !def.anyTile ? STR.build.needTrackHere : expected('decor', t, undefined);
+          def.onTrack && !def.anyTile
+            ? STR.build.needTrackHere
+            : (ground ?? (def.facesTrack ? STR.build.needTrack : undefined));
         expect(c.reason, `${def.id} on ${name(t)}`).toBe(want);
       }
   });
