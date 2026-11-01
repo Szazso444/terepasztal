@@ -9,6 +9,8 @@ const wildSheets = new WeakMap<Uint8ClampedArray, Uint8ClampedArray>();
 export function shareWildSheet(sheet: Uint8ClampedArray, wild: Uint8ClampedArray) {
   wildSheets.set(sheet, wild);
 }
+/** Whether the wild sheet reached the painter. */
+export const hasWildSheet = (sheet: Uint8ClampedArray) => wildSheets.has(sheet);
 /** What a material of the wild sheet stands in for while that sheet is missing. */
 const WILD_FALLBACK = [
   Material.Water,

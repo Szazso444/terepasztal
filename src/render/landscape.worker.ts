@@ -8,6 +8,7 @@ import {
 import { reliefHeight, surfaceAlongRay, RELIEF_MAX, type TerrainRelief } from './terrainRelief';
 import {
   grassDetail,
+  hasWildSheet,
   paintedWater,
   rockExposure,
   shareSurfaceDetail,
@@ -600,6 +601,8 @@ const BANK_TONES = {
   lush: [0.9, 1.02, 0.86],
 };
 const snowColor = [0, 0, 0];
+/** Snow where the snow picture is missing. */
+const PLAIN_SNOW = [234, 239, 246];
 /** How much snow the last point took, and the brightest snow and ice may be: #DCE1E4. */
 let snowed = 0;
 const SNOW_CAP = [220, 225, 228];
@@ -647,8 +650,13 @@ function previewLooks(
       const snow = amount * (1 - water);
       snowed = snow;
       if (snow > 0) {
-        surfaceColor(source, Material.Snow, wx, wy, snowColor);
-        for (let c = 0; c < 3; c++) color[c] += (snowColor[c] * SNOW_TONE[c] - color[c]) * snow;
+        if (hasWildSheet(source)) {
+          surfaceColor(source, Material.Snow, wx, wy, snowColor);
+          for (let c = 0; c < 3; c++) color[c] += (snowColor[c] * SNOW_TONE[c] - color[c]) * snow;
+        } else {
+          const texture = 0.88 + 0.12 * ((color[0] + color[1] + color[2]) / 3 / 140);
+          for (let c = 0; c < 3; c++) color[c] += (PLAIN_SNOW[c] * texture - color[c]) * snow;
+        }
       }
     }
   }
