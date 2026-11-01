@@ -560,6 +560,18 @@ const PROP_KINDS = Object.keys({
   coal: 0,
   oil: 0,
   wheat: 0,
+  beech: 0,
+  poplar: 0,
+  apple: 0,
+  maple: 0,
+  larch: 0,
+  acacia: 0,
+  stump: 0,
+  log: 0,
+  fern: 0,
+  mushrooms: 0,
+  heather: 0,
+  dryshrub: 0,
 } satisfies Record<PropKind, number>) as PropKind[];
 const DEPOSITS = new Set<PropKind>(['coal', 'oil']);
 

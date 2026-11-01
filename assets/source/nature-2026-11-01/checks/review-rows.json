@@ -1,0 +1,44 @@
+{
+  "checks/review-1.png": [
+    "tree-beech-1.png",
+    "tree-beech-2.png",
+    "tree-beech-3.png",
+    "tree-poplar-1.png",
+    "tree-poplar-2.png"
+  ],
+  "checks/review-2.png": [
+    "tree-poplar-3.png",
+    "tree-apple-1.png",
+    "tree-apple-2.png",
+    "tree-apple-3.png",
+    "tree-maple-1.png"
+  ],
+  "checks/review-3.png": [
+    "tree-maple-2.png",
+    "tree-maple-3.png",
+    "tree-larch-1.png",
+    "tree-larch-2.png",
+    "tree-larch-3.png"
+  ],
+  "checks/review-4.png": [
+    "tree-acacia-1.png",
+    "tree-acacia-2.png",
+    "tree-acacia-3.png",
+    "stump-1.png",
+    "stump-2.png"
+  ],
+  "checks/review-5.png": [
+    "log-1.png",
+    "log-2.png",
+    "fern-1.png",
+    "fern-2.png",
+    "mushrooms-1.png"
+  ],
+  "checks/review-6.png": [
+    "mushrooms-2.png",
+    "heather-1.png",
+    "heather-2.png",
+    "dryshrub-1.png",
+    "dryshrub-2.png"
+  ]
+}

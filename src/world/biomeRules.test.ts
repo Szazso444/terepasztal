@@ -711,6 +711,53 @@ describe('the decorations and oil fields of a generated map', () => {
     expect(oil).toBeGreaterThan(0);
   }, 60_000);
 
+  it('grow the nature set by climate, and only there', () => {
+    /** The kinds on a field of `terrain` in `climate`. */
+    const kindsOf = (terrain: Terrain, climate: Biome) => {
+      const m = emptyMap(7412, 96, 96, terrain);
+      m.biome.fill(climate);
+      decorateProps(m, 7412);
+      return new Set([...m.props.values()].flat().map((p) => p.kind));
+    };
+    const has = (kinds: Set<string>, ...want: string[]) =>
+      expect(want.filter((k) => !kinds.has(k))).toEqual([]);
+    const lacks = (kinds: Set<string>, ...not: string[]) =>
+      expect(not.filter((k) => kinds.has(k))).toEqual([]);
+
+    const forest = kindsOf(Terrain.Forest, Biome.Forest);
+    has(forest, 'beech', 'maple', 'fern', 'mushrooms', 'log', 'stump', 'oak', 'birch');
+    lacks(forest, 'larch', 'acacia', 'apple', 'dryshrub');
+    const taiga = kindsOf(Terrain.Forest, Biome.Taiga);
+    has(taiga, 'larch', 'spruce', 'pine', 'log', 'heather');
+    lacks(taiga, 'beech', 'maple', 'acacia');
+    const plains = kindsOf(Terrain.Grass, Biome.Plains);
+    has(plains, 'poplar', 'apple', 'heather', 'stump');
+    lacks(plains, 'larch', 'acacia', 'dryshrub', 'mushrooms');
+    const desert = kindsOf(Terrain.Sand, Biome.Desert);
+    has(desert, 'acacia', 'dryshrub');
+    lacks(desert, 'beech', 'fern', 'larch');
+    const shrubland = kindsOf(Terrain.Grass, Biome.Desert);
+    has(shrubland, 'acacia', 'dryshrub');
+    lacks(shrubland, 'tree', 'flowers');
+    const swamp = kindsOf(Terrain.Forest, Biome.Swamp);
+    lacks(swamp, 'beech', 'maple', 'larch', 'poplar');
+  });
+
+  it('give an apple tree its orchard: most of the plains have none, an orchard has several', () => {
+    const m = emptyMap(7412, 160, 160, Terrain.Grass);
+    m.biome.fill(Biome.Plains);
+    decorateProps(m, 7412);
+    const squares = new Map<number, number>();
+    for (const [i, list] of m.props)
+      if (list[0].kind === 'apple') {
+        const sq = ((i / 160) >> 3) * 20 + ((i % 160) >> 3);
+        squares.set(sq, (squares.get(sq) ?? 0) + 1);
+      }
+    expect(squares.size).toBeGreaterThan(0);
+    expect(squares.size).toBeLessThan(40);
+    for (const n of squares.values()) expect(n).toBeGreaterThan(1);
+  });
+
   it('read the climate under a beach: palms on an island, cacti in the desert, oil off the sea', () => {
     /** The decoration kinds and the oil tiles of a field of beach sand over `climate`. */
     const beachOf = (climate: Biome) => {
@@ -725,7 +772,7 @@ describe('the decorations and oil fields of a generated map', () => {
     };
     expect(beachOf(Biome.Ocean)).toEqual({ kinds: ['palm'], oil: 0 });
     const desert = beachOf(Biome.Desert);
-    expect(desert.kinds).toEqual(['cactus', 'deadtree']);
+    expect(desert.kinds).toEqual(['acacia', 'cactus', 'deadtree', 'dryshrub']);
     expect(desert.oil).toBeGreaterThan(0);
     expect(beachOf(Biome.Plains).kinds).toEqual([]);
   });
