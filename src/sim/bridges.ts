@@ -87,13 +87,14 @@ export function connectedPlatforms(builder: Builder, b: Building): Building[] {
 /**
  * The level `span` stands at, as a raise counts from it: the highest of its stored decks, the
  * ground and water under it, and the rail it meets off the bridge (which an automatic deck carries).
+ * Without `stored`, the level it stands at once automatic again: as low as a span can go.
  */
-export function spanLevel(builder: Builder, span: readonly Building[]) {
+export function spanLevel(builder: Builder, span: readonly Building[], stored = true) {
   const { map, track } = builder,
     on = new Set(span);
   let level = 0;
   for (const p of span) {
-    level = Math.max(level, p.deck ?? 0, levelAt(map, p.x, p.y));
+    level = Math.max(level, (stored && p.deck) || 0, levelAt(map, p.x, p.y));
     for (const d of new Set(track.get(p.x, p.y)?.links.flat())) {
       const nx = p.x + DIR_DX[d],
         ny = p.y + DIR_DY[d],
