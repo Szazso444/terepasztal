@@ -19,6 +19,7 @@ import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { simWorld, type SimWorld } from '../testing/simWorld';
 import { picture } from '../testing/townPaving';
 import { emptyMap } from '../world/mapgen';
+import { EDGE_STRIP_TILES, type EdgeStrip } from '../world/edgeStrip';
 import { RegionState } from '../world/regions';
 import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
 import { lineSpans, type RailBed } from '../world/railProfile';
@@ -1038,6 +1039,45 @@ const EVERY_FRAME = { has: () => true, get: () => ANY_FRAME } as unknown as Atla
 function wholeWorld(map: GameMap) {
   return new WorldRenderer(EVERY_FRAME, map, new RegionState(map));
 }
+
+describe('the edge strip', () => {
+  const strip = (map: GameMap): EdgeStrip => {
+    const n = (map.w + 2 * EDGE_STRIP_TILES) * (map.h + 2 * EDGE_STRIP_TILES);
+    return { w: map.w, h: map.h, terrain: new Uint8Array(n), levels: new Uint8Array(n) };
+  };
+
+  it('lies behind the map under the ground, and before it over all that stands', () => {
+    const world = wholeWorld(emptyMap(1, 6, 6));
+    const at = (c: Container) => world.root.getChildIndex(c);
+    expect(at(world.stripBack)).toBeLessThan(at(world.landscape.root));
+    expect(at(world.stripFront)).toBeGreaterThan(at(world.objects));
+    expect(at(world.stripFront)).toBeLessThan(at(world.overlay));
+  });
+
+  it('takes the place of the void ring', () => {
+    const map = emptyMap(1, 64, 64);
+    const world = wholeWorld(map);
+    expect(world.border.visible).toBe(true);
+    world.setEdgeStrip(strip(map));
+    expect(world.border.visible).toBe(false);
+  });
+
+  it('goes on only from the regions in view, and more of it as more of them come in', () => {
+    const map = emptyMap(1, 160, 160);
+    const regions = new RegionState(map);
+    const world = new WorldRenderer(EVERY_FRAME, map, regions);
+    world.setEdgeStrip(strip(map));
+    const shown = () =>
+      [...world.stripBack.children, ...world.stripFront.children].filter((c) => c.visible).length;
+    regions.unlocked.fill(false);
+    regions.own(regions.regionIndex(80, 80));
+    world.rebuildFog();
+    expect(shown()).toBe(0);
+    regions.own(regions.regionIndex(0, 80));
+    world.rebuildFog();
+    expect(shown()).toBeGreaterThan(0);
+  });
+});
 
 const selecting = (x: number, y: number, id: string) => ({
   tool: { kind: 'none' },

@@ -30,6 +30,7 @@ import {
   type PropKind,
   idx,
 } from '../world/tiles';
+import type { EdgeStrip } from '../world/edgeStrip';
 import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
 import { MATERIAL_COLORS, Material, materialAt } from './landscapeModel';
@@ -86,6 +87,7 @@ import { RoadWalk, roadWalks } from './roadWalk';
 import { crossingAxis, levelCrossingFrame } from './levelCrossing';
 import { AtmosphereTint, setOwnTint } from './atmosphere';
 import { cullByChunk } from './chunkCull';
+import { drawEdgeStrip, type StripShape } from './edgeStripView';
 import { surfaceVersions } from './fx';
 
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
@@ -253,6 +255,11 @@ export class WorldRenderer {
   readonly harvest: HarvestHighlight;
   /** out-of-map void ring */
   readonly border = new Container();
+  /** The edge strip behind the map, under the ground, and before it, over all that stands. */
+  readonly stripBack = new Container();
+  readonly stripFront = new Container();
+  /** The strip's blocks, each shown while the region beside it is (`showEdgeStrip`). */
+  private stripShapes: StripShape[] = [];
   private trackSprites = new Map<number, Sprite>();
   /** The frame each track sprite shows (`setTrack`): a plain straight takes a level crossing. */
   private trackFrames = new Map<number, string>();
@@ -388,6 +395,7 @@ export class WorldRenderer {
     this.piers.sortableChildren = true;
     this.root.addChild(
       this.border,
+      this.stripBack,
       this.landscape.root,
       this.ground,
       this.waterDetails,
@@ -400,12 +408,14 @@ export class WorldRenderer {
       this.harvest.layer,
       this.objects,
       this.fog,
+      this.stripFront,
       this.overlay,
     );
     // Pixi's culler measured every child of these layers each frame; they are culled by chunk
     // instead (chunkCull.ts), keeping their children, and so the depth order, as they are
     cullByChunk(this.root, [
       this.border,
+      this.stripBack,
       this.landscape.root,
       this.ground,
       this.contactGround,
@@ -416,6 +426,7 @@ export class WorldRenderer {
       this.lights,
       this.objects,
       this.fog,
+      this.stripFront,
       this.overlay,
     ]);
     this.buildBorder();
@@ -943,6 +954,7 @@ export class WorldRenderer {
       this.fog.addChild(g);
       this.fogShapes.set(i, g);
     }
+    this.showEdgeStrip();
   }
 
   /** Apply camera transform. */
@@ -1209,6 +1221,22 @@ export class WorldRenderer {
       }
     for (const ch of chunks.values())
       ch.c.cullArea = new Rectangle(ch.minX, ch.minY, ch.maxX - ch.minX, ch.maxY - ch.minY);
+  }
+
+  /** Shows the ground past the map (edgeStripView.ts), in place of the void ring it stands on. */
+  setEdgeStrip(strip: EdgeStrip) {
+    this.stripShapes = drawEdgeStrip(
+      strip,
+      (x, y) => this.regions.regionIndex(x, y),
+      this.stripBack,
+      this.stripFront,
+    );
+    this.border.visible = false;
+    this.showEdgeStrip();
+  }
+  /** The strip goes on from the regions in view and from no others. */
+  private showEdgeStrip() {
+    for (const s of this.stripShapes) s.shape.visible = this.regions.isRevealed(s.region);
   }
 
   /** Multiply-tint every ground and prop sprite (seasons). Water and void are left alone. */
