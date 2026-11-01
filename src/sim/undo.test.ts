@@ -8,10 +8,11 @@ import { buildingToJSON } from './buildings';
 import { Commands, TRAIN_NAME_MAX } from './commands';
 import type { Contract } from './contracts';
 import { DEFAULT_RULES, rules } from './rules';
-import type { Station } from './stations';
+import { Station } from './stations';
 import { TRAIN_COLOURS } from './trainColours';
 import { Train, defaultStop } from './trains';
-import type { PropInstance } from '../world/tiles';
+import { levelAt, tileLevels } from '../world/elevation';
+import { Terrain, type PropInstance } from '../world/tiles';
 import type { TrackItem } from '../world/track';
 
 type Tile = { x: number; y: number };
@@ -763,6 +764,23 @@ describe('refusal', () => {
     expectRefused(g, 'undo', STR.history.builtOver);
   });
 
+  it('a works taken off ground that has moved since, on its tile or beside it', () => {
+    const g = game();
+    const tile = { x: 12, y: ROW + 5 };
+    for (const moved of [tile, { x: 11, y: ROW + 5 }]) {
+      expect(g.builder.placeBuilding(tile.x, tile.y, 'windmill', 0)).toBeTruthy();
+      g.commands.act(() => g.builder.removeBuilding(tile.x, tile.y));
+      // past the history, as nothing the player does is
+      expect(g.builder.reshapeGround([moved], 1)).toBe(true);
+      expectRefused(g, 'undo', STR.history.builtOver);
+      expect(g.builder.buildingAt(tile.x, tile.y)).toBeUndefined();
+      expect(g.builder.reshapeGround([moved], -1)).toBe(true);
+      expect(g.history.undo()).toEqual({ ok: true });
+      expect(g.builder.buildingAt(tile.x, tile.y)).toBeTruthy();
+      g.builder.removeBuilding(tile.x, tile.y);
+    }
+  });
+
   it('something built on the track a redo would lay', () => {
     const g = game();
     g.commands.act(() => run(g, 10, 12));
@@ -1442,5 +1460,90 @@ describe('a train renamed or recoloured, a step of its own', () => {
     expect(t.name).toBe('Editor test');
     expect(t.colour).toBe(2);
     expect(g.history.undoLabel).toBe(label);
+  });
+});
+
+describe('a raise or a lower in the history', () => {
+  const levels = (g: Game) => [...tileLevels(g.map)];
+  const TILE = { x: 40, y: 40 };
+
+  it('goes back and forward whole, with its money', () => {
+    const g = game();
+    g.economy.money = 5000;
+    rules.groundCost = 100;
+    g.commands.act(() => g.builder.reshapeGround([TILE], 1));
+    g.commands.act(() => g.builder.reshapeGround([TILE], 1));
+    const before = levels(g);
+    expect(g.economy.money).toBe(4400);
+    const earned = g.economy.earned;
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.economy.money).toBe(4900);
+    expect(g.economy.earned).toBe(earned);
+    expect(levelAt(g.map, 40, 40)).toBe(1);
+    expect(levelAt(g.map, 41, 40)).toBe(0);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.economy.money).toBe(5000);
+    expect(levels(g).every((v) => v === 0)).toBe(true);
+    for (let i = 0; i < 2; i++) expect(g.history.redo()).toEqual({ ok: true });
+    expect(g.economy.money).toBe(4400);
+    expect(levels(g)).toEqual(before);
+  });
+
+  it('is named, and a drag is one step', () => {
+    const g = game();
+    for (let x = 40; x < 43; x++)
+      g.commands.act(() => g.builder.reshapeGround([{ x, y: 40 }], 1), 7);
+    expect(g.history.undoLabel).toBe(STR.history.groundMoved);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(levels(g).every((v) => v === 0)).toBe(true);
+  });
+
+  it('gives back the terrain a lower turned, and the harvest with it', () => {
+    const g = game();
+    g.economy.money = 1e6;
+    g.map.terrain.fill(Terrain.Rock, 30 * g.map.w, 50 * g.map.w);
+    const quarry = new Station('quarry', 40, 40);
+    g.builder.stations.push(quarry);
+    g.builder.refreshHarvest();
+    const before = quarry.terrainFactor,
+      block: { x: number; y: number }[] = [];
+    for (let y = 31; y < 49; y++)
+      for (let x = 31; x < 49; x++) if (x !== 40 || y !== 40) block.push({ x, y });
+    expect(g.builder.reshapeGround(block, 1)).toBe(true);
+    g.commands.act(() => g.builder.reshapeGround(block, -1));
+    expect(g.map.terrain[40 * g.map.w + 41]).toBe(Terrain.Grass);
+    expect(quarry.terrainFactor).toBeLessThan(before);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.map.terrain[40 * g.map.w + 41]).toBe(Terrain.Rock);
+    expect(quarry.terrainFactor).toBe(before);
+  });
+
+  it('tells the game on the way back too', () => {
+    const g = game();
+    g.commands.act(() => g.builder.reshapeGround([TILE], 1));
+    const told: number[] = [];
+    g.builder.onGroundChanged = (tiles) => told.push(tiles.length);
+    g.history.undo();
+    expect(told).toEqual([1]);
+  });
+
+  it('refuses a redo the money cannot pay', () => {
+    const g = game();
+    g.economy.money = 5000;
+    rules.groundCost = 100;
+    g.commands.act(() => g.builder.reshapeGround([TILE], 1));
+    g.history.undo();
+    g.economy.money = 50;
+    expectRefused(g, 'redo', STR.build.funds);
+    expect(levelAt(g.map, 40, 40)).toBe(0);
+    expect(g.economy.money).toBe(50);
+  });
+
+  it('refuses an undo on ground moved since, past the history', () => {
+    const g = game();
+    g.commands.act(() => g.builder.reshapeGround([TILE], 1));
+    expect(g.builder.reshapeGround([TILE], 1)).toBe(true);
+    expectRefused(g, 'undo', STR.history.builtOver);
+    expect(levelAt(g.map, 40, 40)).toBe(2);
   });
 });

@@ -35,7 +35,7 @@ import {
 } from './ground';
 import { Builder } from './build';
 import { BUILDING_DEFS } from './buildings';
-import { Station } from './stations';
+import { Station, terrainFactorAt } from './stations';
 import { Economy } from './economy';
 import { DEFAULT_RULES, rules, rulesFrom } from './rules';
 import { DEFAULT_SUPPLY, setSupplyMode, supplyMode, type SupplyMode } from './supply';
@@ -1598,7 +1598,7 @@ describe('Raise and Lower', () => {
       }
     };
     water(map, 3, 3);
-    refusal(3, 3, STR.build.nothingOn.water);
+    refusal(3, 3, STR.build.groundMovesWater);
     builder.track.place(6, 3, 'straight', 1);
     refusal(6, 3, STR.build.occupied);
     expect(builder.placeRoad(9, 3)).toBe(true);
@@ -1838,6 +1838,86 @@ describe('Raise and Lower', () => {
     expect(builder.reshapeGround([tile(8, 4)], -1)).toBe(true);
     expect(levelAt(map, 8, 4)).toBe(0);
     expect(at(8, 4)).toBe(Terrain.Grass);
+  });
+
+  it('stone turned to Grass changes what the stations round it harvest', () => {
+    const { map, builder } = world();
+    map.terrain.fill(Terrain.Rock);
+    const quarry = new Station('quarry', 4, 8);
+    builder.stations.push(quarry);
+    builder.refreshHarvest();
+    const before = quarry.terrainFactor;
+    const block: { x: number; y: number }[] = [];
+    for (let y = 1; y < SIZE - 1; y++)
+      for (let x = 1; x < SIZE - 1; x++) if (x !== 4 || y !== 8) block.push(tile(x, y));
+    // a raise turns nothing and leaves the harvest as it was
+    expect(builder.reshapeGround(block, 1)).toBe(true);
+    expect(quarry.terrainFactor).toBe(before);
+    expect(builder.reshapeGround(block, -1)).toBe(true);
+    expect(map.terrain[8 * SIZE + 5]).toBe(Terrain.Grass);
+    expect(quarry.terrainFactor).toBeLessThan(before);
+    expect(quarry.terrainFactor).toBe(terrainFactorAt(map, 4, 8, 'quarry'));
+  });
+
+  it('tells who redraws which tiles', () => {
+    const { builder } = world();
+    const told: { x: number; y: number }[][] = [];
+    builder.onGroundChanged = (tiles) => told.push(tiles.map(({ x, y }) => tile(x, y)));
+    expect(builder.reshapeGround([tile(8, 8)], -1)).toBe(false);
+    expect(told).toEqual([]);
+    expect(builder.reshapeGround([tile(8, 8)], 1)).toBe(true);
+    expect(told).toEqual([[tile(8, 8)]]);
+  });
+
+  it('over a laid tunnel the ground moves, down to rail + 3', () => {
+    // a dome, level 5 from four tiles in, settled at a level a tile
+    const { map, builder } = world((x, y) =>
+      Math.min(5, 1 + Math.min(x, y, SIZE - 1 - x, SIZE - 1 - y)),
+    );
+    for (let x = 6; x <= 9; x++) {
+      expect(builder.underground.dig(x, 8, 0)).toBe(true);
+      builder.track.place(x, 8, 'straight', 1);
+    }
+    builder.decor.set(8 * SIZE + 7, { id: 'signal', x: 7, y: 8, rot: 1 });
+    expect(builder.reshapeGround([tile(8, 8)], 1)).toBe(true);
+    expect(levelAt(map, 8, 8)).toBe(6);
+    expect(builder.reshapeGround([tile(7, 8)], 1)).toBe(true);
+    expect(levelAt(map, 7, 8)).toBe(6);
+    expect(builder.reshapeGround([tile(7, 8)], -1)).toBe(true);
+    for (const level of [5, 4, 3]) {
+      expect(builder.reshapeGround([tile(8, 8)], -1)).toBe(true);
+      expect(levelAt(map, 8, 8)).toBe(level);
+    }
+    expect(builder.checkGround([tile(8, 8)], -1)).toMatchObject({
+      ok: false,
+      reason: STR.build.groundLimit,
+      moved: [],
+    });
+    expect(builder.checkGround([tile(8, 8)], -1).refused).toContainEqual(tile(8, 8));
+    expect(builder.reshapeGround([tile(8, 8)], -1)).toBe(false);
+    expect(levelAt(map, 8, 8)).toBe(3);
+    // the same pieces on the surface hold the ground, and so does a cut, with or without its rail
+    builder.track.place(10, 8, 'straight', 1);
+    expect(builder.checkGround([tile(10, 8)], 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.occupied,
+    });
+    builder.underground.cut(10, 8);
+    expect(builder.checkGround([tile(10, 8)], 1).reason).toBe(STR.build.occupied);
+    builder.decor.set(10 * SIZE + 8, { id: 'signal', x: 8, y: 10, rot: 1 });
+    expect(builder.checkGround([tile(8, 10)], 1).reason).toBe(STR.build.occupied);
+  });
+
+  it('a raise that would have to lift the water says so, not that nothing stands on water', () => {
+    const { map, builder } = world(tableland);
+    water(map, 8, 8, 2);
+    expect(builder.reshapeGround([tile(7, 8)], 1)).toBe(true);
+    expect(builder.checkGround([tile(7, 8)], 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.groundMovesWater,
+      refused: [tile(8, 8)],
+    });
+    expect(STR.build.groundMovesWater).not.toBe(STR.build.nothingOn.water);
   });
 
   it('a tile the lower pulls to 0 turns too; stone that stays up stays stone', () => {

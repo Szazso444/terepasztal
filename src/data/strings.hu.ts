@@ -107,6 +107,7 @@ export const HU: Strings = {
     downgradedTo: (name: string, level: number) => `${name} visszaminősítve: ${level}. szint`,
     renamed: (was: string, now: string) => `Átnevezve: ${was} → ${now}`,
     recoloured: (train: string, colour: string) => `${train} színkódja: ${colour}`,
+    groundMoved: 'Föld átalakítva',
     builtOver: 'Azóta más épült oda.',
     trainOn: (train: string) => `${train} áll a sínen.`,
     routedTo: (train: string, station: string) => `${train} útvonala ide vezet: ${station}.`,
@@ -340,6 +341,7 @@ export const HU: Strings = {
     tooSteep: 'Túl meredek: az egyenes sín csempénként legfeljebb egy szintet emelkedhet',
     groundLimit: 'A föld itt nem mozdulhat tovább',
     groundBesideWater: 'Vizet érintő föld nem süllyeszthető',
+    groundMovesWater: 'Ez megmozdítaná a vizet: a víz nem emelhető és nem süllyeszthető',
     notLevel: 'Sík terep kell: csak egyenes sín mehet emelkedőre',
     notSmooth:
       'Az ívekhez és váltókhoz egyenletes terep kell: emelkedőre csak egyenes és keresztezés mehet, hacsak nem tartja hídpálya az elem minden csempéjét',

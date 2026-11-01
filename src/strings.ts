@@ -126,6 +126,7 @@ const EN = {
     downgradedTo: (name: string, level: number) => `Downgraded ${name} to level ${level}`,
     renamed: (was: string, now: string) => `Renamed ${was} to ${now}`,
     recoloured: (train: string, colour: string) => `Marked ${train} ${colour}`,
+    groundMoved: 'Reshaped the ground',
     /** why an undo or a redo cannot be done */
     builtOver: 'Something else has been built there since.',
     trainOn: (train: string) => `${train} stands on the track.`,
@@ -423,6 +424,8 @@ const EN = {
     groundLimit: 'The ground can go no further here',
     /** Lower on a tile that touches water, or pulling one down */
     groundBesideWater: 'Ground touching water cannot be lowered',
+    /** Raise or Lower on a water tile, or one that would have to move the water beside it */
+    groundMovesWater: 'This would move the water: water cannot be raised or lowered',
     notLevel: 'Needs level ground: only straight track can climb a slope',
     notSmooth:
       'Curves and switches need smooth ground: only straights and crossings climb a slope, unless bridge platforms support every tile of the piece',

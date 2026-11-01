@@ -126,6 +126,16 @@ export interface GroundCheck extends PlacementCheck {
   refused: Reshape['refused'];
 }
 
+/** A tile a raise or lower writes: its entry in the ground level plane and its terrain, each way. */
+export interface GroundChange {
+  x: number;
+  y: number;
+  was: number;
+  now: number;
+  terrainWas: Terrain;
+  terrainNow: Terrain;
+}
+
 /**
  * Why nothing can be built on terrain `t`, naming the ground, or null when it takes buildings.
  * The one list of where nothing stands: stations, works, decor off the track, roads and a depot's
@@ -209,6 +219,8 @@ export class Builder {
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
   onSupplyChanged: ((x: number, y: number) => void) | null = null;
+  /** fired when a raise or a lower, or the undo or redo of one, wrote these tiles */
+  onGroundChanged: ((tiles: readonly { x: number; y: number }[]) => void) | null = null;
   /** fired when an undo gave a tile back the props track or a structure took off it */
   onPropsBack: ((x: number, y: number) => void) | null = null;
   /** fired when a road is laid on or taken off a tile (`placeRoad`, `removeRoad`) */
@@ -1302,14 +1314,19 @@ export class Builder {
   }
 
   // ------------------------------------------------------------------ ground
-  /** Something stands on (x, y) that Raise and Lower leave alone. */
+  /**
+   * Something stands on (x, y) that Raise and Lower leave alone. The track of a dug tile and what
+   * stands on it run under the ground, so they do not hold it; a cut lies open, and holds it.
+   */
   private groundTaken(x: number, y: number) {
+    const dug = this.underground.isDug(x, y),
+      decor = this.decorAt(x, y);
     return (
-      this.track.has(x, y) ||
+      (this.track.has(x, y) && !dug) ||
       this.roads.has(x, y) ||
       !!this.stationAt(x, y) ||
       !!this.buildingAt(x, y) ||
-      !!this.decorAt(x, y) ||
+      (!!decor && !(dug && onRails(decor.id))) ||
       this.hasDeposit(x, y, 'coal') ||
       this.hasDeposit(x, y, 'oil') ||
       this.underground.isCut(x, y)
@@ -1326,7 +1343,7 @@ export class Builder {
   private groundRefusal({ x, y }: { x: number; y: number }, delta: 1 | -1): string {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
-    if (terrainAt(this.map, x, y) === Terrain.Water) return STR.build.nothingOn.water;
+    if (terrainAt(this.map, x, y) === Terrain.Water) return STR.build.groundMovesWater;
     if (this.groundTaken(x, y)) return STR.build.occupied;
     if (delta < 0 && this.touchesWater(x, y)) return STR.build.groundBesideWater;
     return STR.build.groundLimit;
@@ -1368,22 +1385,51 @@ export class Builder {
   }
   /**
    * Raise or lower `tiles` by one level and pay for it; false, with nothing moved or paid, when
-   * `checkGround` refuses. The caller redraws what `checkGround` listed. Every tile of `moved` is
-   * written, so the plane holds settled levels; stone that comes down to level 0 turns to Grass, so
-   * a lowered mountain is ground that can be built on.
+   * `checkGround` refuses. Every tile of `moved` is written, so the plane holds settled levels;
+   * stone that comes down to level 0 turns to Grass, so a lowered mountain is ground that can be
+   * built on. It goes in the build log, with what was paid, as one change (`setGround`).
    */
   reshapeGround(tiles: readonly { x: number; y: number }[], delta: 1 | -1): boolean {
     const c = this.checkGround(tiles, delta);
     if (!c.ok || !c.moved.length) return false;
-    if (hasPrice(c.cost) && !this.economy.spend(c.cost.money)) return false;
+    const paid = c.cost.money ?? 0;
+    if (paid > 0 && !this.economy.spend(paid)) return false;
     const { map } = this;
-    const lowered = c.moved.filter((m) => m.to === 0 && levelAt(map, m.x, m.y) !== 0);
-    const plane = (map.groundLevel ??= new Uint8Array(map.w * map.h).fill(NO_LEVEL));
-    for (const m of c.moved) plane[this.key(m.x, m.y)] = m.to;
-    for (const m of lowered)
-      if (stone(terrainAt(map, m.x, m.y))) map.terrain[this.key(m.x, m.y)] = Terrain.Grass;
+    const changes = c.moved.map((m): GroundChange => {
+      const k = this.key(m.x, m.y),
+        terrain = map.terrain[k] as Terrain,
+        turns = m.to === 0 && levelAt(map, m.x, m.y) !== 0 && stone(terrain);
+      return {
+        x: m.x,
+        y: m.y,
+        was: map.groundLevel?.[k] ?? NO_LEVEL,
+        now: m.to,
+        terrainWas: terrain,
+        terrainNow: turns ? Terrain.Grass : terrain,
+      };
+    });
+    this.log?.ground(changes, paid);
+    this.setGround(changes, true);
     sfx('build.place');
     return true;
+  }
+  /**
+   * Write `changes` forward, or back as an undo does. A tile that changes terrain changes what the
+   * stations round it harvest.
+   */
+  setGround(changes: readonly GroundChange[], forward: boolean) {
+    const { map } = this;
+    const plane = (map.groundLevel ??= new Uint8Array(map.w * map.h).fill(NO_LEVEL));
+    let turned = false;
+    for (const c of changes) {
+      const k = this.key(c.x, c.y),
+        terrain = forward ? c.terrainNow : c.terrainWas;
+      plane[k] = forward ? c.now : c.was;
+      if (map.terrain[k] !== terrain) turned = true;
+      map.terrain[k] = terrain;
+    }
+    if (turned) this.refreshHarvest();
+    this.onGroundChanged?.(changes);
   }
 
   // ------------------------------------------------------------------ electrification

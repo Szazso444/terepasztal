@@ -745,6 +745,20 @@ describe('rail on the steps of generated ground', () => {
     expect(builder.checkTrack(19, 20, main, 1).ok).toBe(true);
   });
 
+  it('a replace that adds a link over the step refuses', () => {
+    const { track, builder } = cliff(4);
+    track.place(20, 20, 'straight', 1);
+    expect(builder.placeTrack(19, 20, STRAIGHT, 0)).toBe(true);
+    const crossing: TrackItem = { kind: 'crossing', cls: 'branch', cls2: 'branch' };
+    expect(builder.checkTrack(19, 20, crossing, 0)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+    // with nothing past the edge there is no link to refuse
+    expect(builder.placeTrack(19, 24, STRAIGHT, 0)).toBe(true);
+    expect(builder.checkTrack(19, 24, crossing, 0).ok).toBe(true);
+  });
+
   it('asks nothing of a builder with no slope rule: that ground counts as level', () => {
     const { builder } = cliff(4);
     builder.groundCheck = null;
