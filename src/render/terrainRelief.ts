@@ -52,9 +52,9 @@ export interface ReliefStyle {
 }
 /**
  * The shipped style, approved 2026-09-27: terraces. Every hill tile is a level plateau at its own
- * level, a level is a quarter of a tile side, neighbouring tiles differ by at most one level, and
- * the change happens in a rounded bank half a tile wide at the shared edge. Banks show rock; slope
- * tops catch light and their feet sit in soft shadow. (Earlier: corner slopes, { step: 10,
+ * level, a level is a quarter of a tile side, neighbouring tiles differ by up to `maxStep` levels,
+ * and the change happens in a rounded bank half a tile wide at the shared edge. Banks show rock;
+ * slope tops catch light and their feet sit in soft shadow. (Earlier: corner slopes, { step: 10,
  * maxRise: 1, faces: false }, then { step: side/4, maxRise: 2, faces: true }.)
  */
 export const DEFAULT_RELIEF: ReliefStyle = {
