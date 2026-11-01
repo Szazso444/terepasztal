@@ -1,6 +1,6 @@
 import { STR } from '../strings';
 import { ageDef } from '../sim/ages';
-import { SAVE_VERSION, type SlotMeta } from '../sim/save';
+import { SAVE_QUIET_VERSION, SAVE_VERSION, type SlotMeta } from '../sim/save';
 import { fmtMoney } from './dom';
 
 /**
@@ -17,7 +17,7 @@ export interface SlotText {
   saved: string | null;
   /** the date and time it was written, for the title of the `saved` line */
   savedAt: string | null;
-  /** the file's format when it is not this build's; null when it is */
+  /** the file's format when the player is told it is not this build's (`formatNote`) */
   format: string | null;
 }
 
@@ -26,9 +26,12 @@ export function ageName(tier: number): string {
   return STR.ages.name[ageDef(tier).id] ?? '';
 }
 
-/** Says when a save's format is older or newer than this build's; null when it is the same. */
+/**
+ * Says when a save's format is older or newer than this build's; null when it is the same, or
+ * older by nothing the player has to be told (`SAVE_QUIET_VERSION`).
+ */
 export function formatNote(version: number): string | null {
-  if (version < SAVE_VERSION) return STR.saves.olderFormat(version);
+  if (version < SAVE_QUIET_VERSION) return STR.saves.olderFormat(version);
   if (version > SAVE_VERSION) return STR.saves.newerFormat(version);
   return null;
 }

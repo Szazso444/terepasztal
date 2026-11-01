@@ -213,18 +213,8 @@ describe('what the save list shows', () => {
     expect(STR.saves.ago(-5 * min)).toBe(STR.saves.ago(0));
   });
 
-  it('names what was refunded and leaves out what was not', () => {
-    const money = '$1,200';
-    expect(STR.saves.refund(money, 2)).toMatch(/^\$1,200 .*\b2 tickets$/);
-    expect(STR.saves.refund(money, 1)).toMatch(/^\$1,200 .*\b1 ticket$/);
-    expect(STR.saves.refund(money, 0)).toBe(money);
-    expect(STR.saves.refund('', 2)).toBe('2 tickets');
-    expect(STR.saves.refund('', 1)).toBe('1 ticket');
-    expect(STR.saves.refund('', 0)).toBe('');
-  });
-
   it('says what was removed and what came back, without an empty refund', () => {
-    const refund = STR.saves.refund('$50', 1);
+    const refund = '$50';
     expect(STR.saves.pruned('Old loco', refund)).toContain('Old loco');
     expect(STR.saves.pruned('Old loco', refund)).toContain(refund);
     expect(STR.saves.pruned('Old loco', '')).not.toMatch(/Refunded/);

@@ -87,10 +87,6 @@ export const TAB_FORMS: Record<ContentKey, FormSpec[]> = {
   ],
   decor: [{ pick: (b) => b.decor, list: true }],
   buildings: [{ pick: (b) => b.buildings, list: true }],
-  gacha: [
-    { pick: (b) => b.gacha, list: false, title: STR.content.config, skip: ['banners'] },
-    { pick: (b) => b.gacha.banners, list: true, title: STR.content.entries },
-  ],
   track: [{ pick: (b) => b.track, list: false }],
   crafting: [{ pick: (b) => b.crafting, list: false }],
   houses: [{ pick: (b) => b.houses, list: false }],
