@@ -47,6 +47,8 @@ A crossing on a climb holds both lines level at its centre, so the two rails mee
 
 A bridge can be raised, one height a click, to level 4 (`Builder.raiseSpan`). The whole connected
 bridge rises, and each platform stores its deck height as an absolute level (`Building.deck`).
+A right click with the Bridge tool lowers it one height (`Builder.lowerSpan`), for free and with
+no refund; at its lowest the deck is automatic again.
 A deck with no stored height stays automatic, as every bridge of an older save does. A new
 platform beside a raised one carries the bridge on at that height.
 
@@ -56,7 +58,7 @@ ground that lies lower: the ramp is rail on its own ground, so the painter lifts
 it into an embankment, and the land around it keeps its shape. A curve, switch, crossing, level
 crossing or station must stay level, so `rampReach` reports it and the raise is refused, as is
 laying such a piece where a ramp climbs. A road on a bridge has no ramps and keeps the bridge at
-its banks' height.
+its banks' height, and no road goes on a raised deck.
 
 ## Tile types along a line
 
