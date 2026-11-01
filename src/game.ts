@@ -1094,9 +1094,6 @@ export class Game implements UiHost {
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
-    // the ground past the map, built away from the page and shown when it is ready
-    const strip = edgeStripRequest(this.spec, this.supply);
-    if (strip) void buildEdgeStrip(strip).then((s) => s && this.world.setEdgeStrip(s));
     await this.world.loadBridgeSurfaces();
     this.world.onBridgeStyle = () => this.refreshBridges();
     this.world.occupied = (x, y) =>
@@ -1130,13 +1127,7 @@ export class Game implements UiHost {
       this.dayNight.overlay,
       this.world.root.getChildIndex(this.world.harvest.layer),
     );
-    // the night reaches over the edge strip, so its lines do not change colour part of the way out
-    this.dayNight.setWorld(
-      this.map.w,
-      this.map.h,
-      Math.max(WorldRenderer.BORDER, EDGE_STRIP_TILES),
-    );
-    this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
+    this.startEdgeStrip();
     this.world.overlay.addChild(this.fog.patches);
     this.app.stage.addChild(this.world.root, this.fog.haze, this.rain.root, this.overview.root);
     this.glows = new Glows(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
@@ -2025,6 +2016,23 @@ export class Game implements UiHost {
     );
   }
   // ---------------------------------------------------------------- sim
+  /**
+   * Sets how far the night and the weather's fog reach, and starts the ground past the map, which
+   * is built away from the page and shown when it is ready. Where a strip was asked for the night
+   * reaches over it, so its lines do not change colour part of the way out, and the fog follows the
+   * strip's blocks as they show. A world with none, or a build that fails, keeps the void ring.
+   */
+  private startEdgeStrip() {
+    const { w, h } = this.map;
+    const border = WorldRenderer.BORDER;
+    const req = edgeStripRequest(this.spec, this.supply);
+    this.dayNight.setWorld(w, h, req ? Math.max(border, EDGE_STRIP_TILES) : border);
+    this.fog.setWorld(w, h, border);
+    if (!req) return;
+    this.world.onStripReach = (reach) => this.fog.setWorld(w, h, border, reach);
+    void buildEdgeStrip(req, this.map).then((meshes) => meshes && this.world.setEdgeStrip(meshes));
+  }
+
   private update(dt: number) {
     if (this.settings.autosave && this.mode === 'play' && !this.menuOpen) {
       this.autosaveTimer += dt;
