@@ -17,6 +17,7 @@ import { cargoDef, cargoName, cargoWord } from '../sim/cargo';
 import { levelMul } from '../gacha/items';
 import type { AtlasRegistry } from '../engine/atlas';
 import { spriteImg } from './spritePreview';
+import { vehicleArt } from './economyParts';
 import { TrainStops } from './scheduleEditor';
 import {
   actionButton,
@@ -29,12 +30,14 @@ import {
   note,
   sectionHeader,
   segmented,
+  spriteSlot,
   well,
   type FootSpec,
 } from './kit';
 import { Bindings, bindMeter, keepPlace, keepScroll } from './liveView';
 import { nextStopId } from './trainView';
-import { vehicleRow, vehicleSprite } from './vehicleRow';
+import { modesHint } from './ruleText';
+import { copyTip, vehicleRow } from './vehicleRow';
 import {
   haulShare,
   haulTone,
@@ -426,7 +429,7 @@ export class TrainScreen implements Screen {
       const b = el(
         'button',
         { type: 'button', class: 'dp-veh', title: name },
-        vehicleSprite(this.atlas, defId),
+        spriteSlot(vehicleArt(this.atlas, defId)),
         cap,
       );
       b.addEventListener('click', () => {
@@ -549,7 +552,7 @@ export class TrainScreen implements Screen {
           t.setStandby(i, !off);
           this.render();
         },
-        { cls: 'small', title: STR.modes.hint },
+        { cls: 'small', title: modesHint() },
       );
     };
     const engines = t.locos.map((l, i) => {
@@ -563,6 +566,8 @@ export class TrainScreen implements Screen {
           `${STR.roster.type[l.def.type]} · ${Math.round(l.def.power * levelMul(l.level))} t`,
           mode,
         ],
+        card: copyTip(this.fleet, l.uid),
+        fitted: l.inCab,
         on: at.kind === 'l' && at.index === i,
         onClick: () => this.pickVehicle('l', i),
         right: i > 0 ? [standby(i)] : undefined,
@@ -576,6 +581,7 @@ export class TrainScreen implements Screen {
         level: w.level,
         sub: [sub],
         warn: this.deadWeight(t, w),
+        card: copyTip(this.fleet, w.uid),
         on: at.kind === 'w' && at.index === i,
         onClick: () => this.pickVehicle('w', i),
       });
@@ -588,7 +594,7 @@ export class TrainScreen implements Screen {
       ...(at.kind === 'l'
         ? this.engineDetail(t, at.index, standby)
         : this.wagonDetail(t, at.index)),
-      well(STR.train.engineModes, note(STR.modes.hint)),
+      well(STR.train.engineModes, note(modesHint())),
     );
     return ld.root;
   }
@@ -656,7 +662,7 @@ export class TrainScreen implements Screen {
       well(
         null,
         sectionHeader(l.def.name, STR.train.engineOf(i + 1, t.locos.length)),
-        el('div', { class: 'dp-big' }, vehicleSprite(this.atlas, l.def.id, 2)),
+        el('div', { class: 'dp-big' }, spriteSlot(vehicleArt(this.atlas, l.def.id))),
         this.rarityRow(l.def.rarity),
         labelValue(STR.roster.level, levelGain(l.level, m, STR.train.speedAndPower)),
         labelValue(
@@ -688,7 +694,7 @@ export class TrainScreen implements Screen {
     const holds = w.def.capacity > 0;
     const parts: (HTMLElement | null)[] = [
       sectionHeader(w.def.name, STR.train.wagonOf(i + 1, t.wagons.length)),
-      el('div', { class: 'dp-big' }, vehicleSprite(this.atlas, w.def.id, 2)),
+      el('div', { class: 'dp-big' }, spriteSlot(vehicleArt(this.atlas, w.def.id))),
       this.rarityRow(w.def.rarity),
       cart || !holds
         ? null

@@ -61,6 +61,16 @@ Asset redesign to the art direction in `docs/art-direction/README.md`, plus the 
   file is missing the synthesized ambient loop takes over, so a build without it still has music.
 - Music and effects volume sliders in the title screen and the pause menu, alongside the existing
   settings screen sliders. They drive the live bus and travel with the settings.
+- All eight tracks play in every age with no set of its own. Pastoral Pulse opens the game once a
+  tab; a reload, a restart or a new game goes on with the shuffled rounds, not starting with what
+  played last.
+- A now-playing widget in the top bar, left of the weather: back, pause, forward and a rolling
+  title. Its pause holds the music alone.
+- An Audio screen of its own under Settings, in place of the Settings tab and the sliders in the
+  menus: Master over Music and Effects, Effects over Weather, Environment, UI, Building, Trains and
+  Events, each with a slider and a switch that keeps its level. Ambience now passes through
+  Effects; the defaults and the migration of an old settings file keep every sound as loud as it
+  was.
 
 Atlas frame counts (2,839), atlas dimensions and anchors are unchanged, generation cost is
 unchanged on the same machine, curve compatibility verdicts are byte-identical and map generation

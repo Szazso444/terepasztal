@@ -114,6 +114,8 @@ export function termKeys(labels: readonly string[]): string[] {
 
 /** What draws the stack. `C` is a tooltip's content, opaque here. */
 export interface TipView<C> {
+  /** `content` says nothing: no tooltip stands for it */
+  empty(content: C): boolean;
   /** draw the tooltip of `level` with `content`, its corner placed from `anchor` (`placeTip`) */
   open(level: number, content: C, anchor: Point): void;
   /** place it from a new anchor: an unlocked root follows the pointer */
@@ -276,7 +278,7 @@ export class TooltipStack<C> {
    * works' status and rate, a train's state). Call it as often as you like: it builds and shows
    * the content at most every `UPDATE_MS`, and keeps the ring, the lock and the tooltips above.
    * A term still there stays the term the pointer rests on; one that went is as if the pointer
-   * left it. Returns whether it did.
+   * left it. Content that ran out closes it, as a close does. Returns whether it did.
    */
   update(key: string, build: () => C): boolean {
     const root = this.tips[0];
@@ -284,7 +286,11 @@ export class TooltipStack<C> {
     const now = this.clock.now();
     if (now - root.builtAt < UPDATE_MS) return false;
     root.builtAt = now;
-    if (!this.view.refresh(0, build()) && this.onTerm === 0) this.termLeave(0);
+    const content = build();
+    if (this.view.empty(content)) {
+      this.closeFrom(0);
+      this.hush();
+    } else if (!this.view.refresh(0, content) && this.onTerm === 0) this.termLeave(0);
     return true;
   }
 
@@ -309,7 +315,8 @@ export class TooltipStack<C> {
    * tooltip opens at level 0). After `SHOW_MS` of rest the term's tooltip opens one level up,
    * replacing what was there, at `anchor()` (`termAnchor` of the term's box, read then). `term`
    * is who the term is: the view gives a term the same one across `update` while it is still
-   * there. A term of a tooltip that is not locked does nothing.
+   * there. A term of a tooltip that is not locked does nothing, and one with nothing to say right
+   * now opens nothing.
    */
   termEnter(parent: number, term: object, anchor: () => Point, build: () => C): void {
     if (parent >= 0 && !this.tips[parent]?.locked) return;
@@ -375,6 +382,11 @@ export class TooltipStack<C> {
 
   private openAt(level: number, key: unknown, fromTerm: boolean, anchor: Point, content: C) {
     this.closeFrom(level);
+    // nothing open means nothing for Escape to take first, and the next rest asks again
+    if (this.view.empty(content)) {
+      if (!fromTerm) this.hush();
+      return;
+    }
     const tip: Tip = {
       key,
       fromTerm,

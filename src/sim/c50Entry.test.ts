@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { content } from '../data/content';
 import { craftPool, craftSize, craftTier } from '../gacha/crafting';
 import { isRetired, locoDef } from '../gacha/items';
-import { OWN_LENGTH, SIZE_LEN, vehicleSpec } from './body';
+import { SIZE_LEN, vehicleSpec } from './body';
 import { gaugeOf, vehicleAccess } from './compat';
 
 /** The common narrow diesels the C-50 joins (decision c50-role, 2026-10-11, "New narrow diesel, common"). */
@@ -54,12 +54,13 @@ describe('the MÁV C-50 (c50-role: a common narrow diesel, found, not handed out
   it('is a small rigid body of its own length: the size its plan needs, the length of its model', () => {
     expect(c50.size).toBe('small');
     expect(craftSize('c50')).toBe('small');
-    expect(c50.length).toBe(0.82);
-    expect(c50.length!).toBeGreaterThanOrEqual(OWN_LENGTH.min);
-    expect(c50.length!).toBeLessThanOrEqual(OWN_LENGTH.max);
+    // measured on its model (locoFit.json), no longer written on its row
+    expect(c50.length).toBeUndefined();
+    expect(c50.lengthTiles).toBe(0.7378);
     const spec = vehicleSpec(c50);
+    expect(spec.L).toBe(0.7378);
     expect(spec.segments).toHaveLength(1);
-    expect(spec.segments[0].L).toBe(0.82);
+    expect(spec.segments[0].L).toBeCloseTo(0.7378, 6);
     expect(spec.segments[0].L).toBeLessThan(SIZE_LEN.small);
   });
 

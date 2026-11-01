@@ -187,7 +187,7 @@ export interface HarvestBreakdown {
 }
 
 /** Whether ground of terrain `t` counts for a station that harvests `want`. */
-function harvests(want: HarvestTerrain, t: Terrain): boolean {
+export function harvests(want: HarvestTerrain, t: Terrain): boolean {
   switch (want) {
     case 'grass':
       return t === Terrain.Grass;

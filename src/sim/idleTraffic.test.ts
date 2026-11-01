@@ -19,10 +19,14 @@ import {
 } from './trains';
 import { Station, resetStationIds } from './stations';
 import { locoDef, wagonDef } from '../gacha/items';
+import { sceneLengths } from '../testing/modelFixtures';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { setSeasonOffset } from './weather';
 import { STR } from '../strings';
+
+// a scene laid out tile by tile: see sceneLengths
+sceneLengths();
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);

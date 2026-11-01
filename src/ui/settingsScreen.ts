@@ -1,9 +1,7 @@
-import { SIGNAL_LEVELS } from '../sim/signals';
 import { el } from './dom';
 import {
   actionButton,
   buttonRow,
-  choiceRows,
   columns,
   formRow,
   keyBadge,
@@ -11,25 +9,16 @@ import {
   note,
   pasteBox,
   segmented,
-  slider,
   textField,
   toggleSwitch,
   well,
   type FootSpec,
 } from './kit';
-import { contractRarityLabel } from './labels';
 import { LANGUAGE, LANGUAGES, LANGUAGE_NAME, STR, type Language } from '../strings';
 import type { FrameTabs, Screen } from './modal';
 import { slotRows, type Confirm } from './saveRows';
 import { autosaveText } from './saveSlots';
-import {
-  CONTRACT_RARITIES,
-  contractPolicyFor,
-  uniformContractPolicy,
-  type ContractPolicy,
-  type Settings,
-  type SlotMeta,
-} from '../sim/save';
+import type { Settings, SlotMeta } from '../sim/save';
 
 export interface SettingsActions {
   save(): void;
@@ -46,13 +35,10 @@ export interface SettingsActions {
   slots(): SlotMeta[];
 }
 
-export type SettingsTab = 'audio' | 'gameplay' | 'contracts' | 'signalling' | 'controls' | 'saves';
+export type SettingsTab = 'gameplay' | 'controls' | 'saves';
 
 const TABS: { id: SettingsTab; label: string }[] = [
-  { id: 'audio', label: STR.settings.audio },
   { id: 'gameplay', label: STR.settings.gameplay },
-  { id: 'contracts', label: STR.settings.contractsTab },
-  { id: 'signalling', label: STR.settings.signalling },
   { id: 'controls', label: STR.settings.controls },
   { id: 'saves', label: STR.settings.saves },
 ];
@@ -94,7 +80,7 @@ export class SettingsScreen implements Screen {
   onNotifications: (() => void) | null = null;
   /** the language control: it reloads the page, or the control goes back (`render`) */
   onLanguage: ((language: Language) => void) | null = null;
-  private tab: SettingsTab = 'audio';
+  private tab: SettingsTab = 'gameplay';
   /** how many named saves the Saves tab counts; storage is not read at every refresh */
   private slotCount = 0;
   /** autosave on or off and when the game was last stored; kept current while the screen is up */
@@ -134,10 +120,6 @@ export class SettingsScreen implements Screen {
   onOpen() {
     this.render();
   }
-  /** Stand on a tab when it opens: a screen that sends the player here says which. */
-  showTab(id: string) {
-    if (TABS.some((t) => t.id === id)) this.tab = id as SettingsTab;
-  }
   refresh() {
     if (this.tab === 'saves') this.showAutosave();
   }
@@ -163,20 +145,6 @@ export class SettingsScreen implements Screen {
     this.autosaveLine.title = savedAt ? new Date(savedAt).toLocaleString() : '';
   }
 
-  private volume(label: string, key: 'master' | 'sfx' | 'music' | 'ambient') {
-    return formRow(
-      label,
-      slider({
-        label,
-        value: Math.round((this.settings[key] ?? 0.35) * 100),
-        onInput: (v) => {
-          this.settings[key] = v / 100;
-          this.onChange();
-        },
-      }),
-    );
-  }
-
   private switchRow(
     label: string,
     key: 'edgeScroll' | 'autosave' | 'dayNight' | 'smoke' | 'buildingLife' | 'showFps' | 'weather',
@@ -195,28 +163,6 @@ export class SettingsScreen implements Screen {
     );
     if (hint) row.title = hint;
     return row;
-  }
-
-  /** One row per contract rarity: what happens to a new offer of that rarity. */
-  private contractPolicyRows(): HTMLElement[] {
-    const POLICIES: ContractPolicy[] = ['accept', 'prompt', 'deny'];
-    return CONTRACT_RARITIES.map((r) =>
-      formRow(
-        el('span', { class: `crarity-${r}` }, contractRarityLabel(r), STR.contracts.rarity[r] ?? r),
-        segmented({
-          options: POLICIES.map((p) => ({ id: p, label: STR.settings.policy[p] })),
-          value: contractPolicyFor(this.settings, r),
-          onChange: (id) => {
-            if (!this.settings.contractPolicy)
-              this.settings.contractPolicy = uniformContractPolicy(
-                contractPolicyFor(this.settings, r),
-              );
-            this.settings.contractPolicy[r] = id as ContractPolicy;
-            this.onChange();
-          },
-        }),
-      ),
-    );
   }
 
   private saveTab(): HTMLElement {
@@ -328,17 +274,6 @@ export class SettingsScreen implements Screen {
 
   private drawTab(): (HTMLElement | null)[] {
     switch (this.tab) {
-      case 'audio':
-        return [
-          well(
-            STR.settings.audio,
-            this.volume(STR.settings.master, 'master'),
-            this.volume(STR.settings.sfx, 'sfx'),
-            this.volume(STR.settings.music, 'music'),
-            this.volume(STR.settings.ambient, 'ambient'),
-            note(STR.settings.audioNote),
-          ),
-        ];
       case 'gameplay':
         return [
           well(
@@ -367,33 +302,6 @@ export class SettingsScreen implements Screen {
               STR.alerts.title,
               actionButton(STR.alerts.open, () => this.onNotifications?.(), { cls: 'small' }),
             ),
-          ),
-        ];
-      case 'contracts':
-        return [
-          well(
-            STR.settings.contractPolicy,
-            ...this.contractPolicyRows(),
-            note(STR.settings.contractPolicyHint),
-          ),
-        ];
-      case 'signalling':
-        return [
-          well(
-            STR.settings.signalling,
-            choiceRows({
-              options: SIGNAL_LEVELS.map((lv) => ({
-                id: lv,
-                label: STR.settings.signalLevel[lv],
-                hint: STR.settings.signalHint[lv],
-              })),
-              value: this.settings.signalling ?? 'auto',
-              onChange: (id) => {
-                this.settings.signalling = id as (typeof SIGNAL_LEVELS)[number];
-                this.onChange();
-              },
-            }),
-            note(STR.settings.signallingNote),
           ),
         ];
       case 'controls': {

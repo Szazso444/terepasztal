@@ -3,7 +3,7 @@
  * contracts a tab lists and in what order, what a card says about time and delivery, and the words
  * an empty tab shows. DOM-free, so it runs under Node.
  */
-export type ContractTab = 'offers' | 'active' | 'history';
+export type ContractTab = 'offers' | 'active' | 'history' | 'settings';
 
 /** The last contracts the Recent tab keeps. */
 export const HISTORY_LIMIT = 12;
@@ -48,21 +48,32 @@ export interface TabCounts {
   history: number;
 }
 
-/** The tabs in order, each with the number of cards under it. */
+/** The tabs in order: the ones with cards with their number, then Settings, which has none. */
 export function contractTabs(
   counts: TabCounts,
   labels: Record<ContractTab, string>,
-): { id: ContractTab; label: string; count: number }[] {
-  return (['offers', 'active', 'history'] as const).map((id) => ({
-    id,
-    label: labels[id],
-    count: counts[id],
-  }));
+): { id: ContractTab; label: string; count?: number }[] {
+  return [
+    ...(['offers', 'active', 'history'] as const).map((id) => ({
+      id,
+      label: labels[id],
+      count: counts[id],
+    })),
+    { id: 'settings', label: labels.settings },
+  ];
 }
 
 /** The tab that exists: a value that is none leaves the screen where it was. */
 export function pickTab(id: string, current: ContractTab): ContractTab {
-  return id === 'offers' || id === 'active' || id === 'history' ? id : current;
+  return id === 'offers' || id === 'active' || id === 'history' || id === 'settings' ? id : current;
+}
+
+/**
+ * The tab the screen stands on when it comes back: where it was left, but Settings is gone to, not
+ * stayed on, so the next C opens on the offers.
+ */
+export function tabOnReturn(tab: ContractTab): ContractTab {
+  return tab === 'settings' ? 'offers' : tab;
 }
 
 export type EmptyKind = 'noOffers' | 'needStations' | 'noActive' | 'noHistory';
@@ -71,7 +82,7 @@ export type EmptyKind = 'noOffers' | 'needStations' | 'noActive' | 'noHistory';
  * Which empty text a tab with no cards shows. Offers say why nothing is on the board: no pair of
  * stations makes a contract yet, or the next ones simply have not come.
  */
-export function emptyKind(tab: ContractTab, canGenerate: boolean): EmptyKind {
+export function emptyKind(tab: Exclude<ContractTab, 'settings'>, canGenerate: boolean): EmptyKind {
   if (tab === 'offers') return canGenerate ? 'noOffers' : 'needStations';
   return tab === 'active' ? 'noActive' : 'noHistory';
 }

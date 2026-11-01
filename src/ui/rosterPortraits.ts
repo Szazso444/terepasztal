@@ -1,4 +1,5 @@
 import { el } from './dom';
+import { frameForItem } from './spritePreview';
 
 /**
  * Vehicles with a shipped portrait, `public/assets/portraits/<id>.png`, built by
@@ -67,6 +68,10 @@ export const PORTRAIT_IDS: ReadonlySet<string> = new Set([
   'narrow_tank',
   'narrow_box',
   'narrow_coach',
+  'maint_loco_narrow',
+  'maint_loco_branch',
+  'maint_wagon_narrow',
+  'maint_wagon_branch',
 ]);
 
 /** URL of a vehicle's portrait, or null when it has none yet. */
@@ -74,10 +79,19 @@ export function portraitUrl(defId: string, base: string = import.meta.env.BASE_U
   return PORTRAIT_IDS.has(defId) ? `${base}assets/portraits/${defId}.png` : null;
 }
 
-/** <img> of a vehicle's portrait, or null when it has none yet. */
-export function portraitImg(defId: string, cls: string): HTMLElement | null {
-  const src = portraitUrl(defId);
-  if (!src) return null;
+/** What stands for a vehicle wherever it is listed: its portrait, else its atlas sprite. */
+export type VehiclePicture = { portrait: string } | { frame: string };
+
+export function vehiclePicture(
+  defId: string,
+  base: string = import.meta.env.BASE_URL,
+): VehiclePicture {
+  const portrait = portraitUrl(defId, base);
+  return portrait ? { portrait } : { frame: frameForItem(defId) };
+}
+
+/** <img> of a portrait. */
+export function portraitImg(src: string, cls: string): HTMLElement {
   const img = el('img', { class: cls, src, alt: '' });
   img.draggable = false;
   return img;
