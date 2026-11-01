@@ -88,7 +88,7 @@ export function depotSiteBlocked(
   y: number,
   rot: number,
 ): string | null {
-  const { map, regions, track } = builder;
+  const { map, regions } = builder;
   // granting lifts the chunk lock too; the depot still stands only on ground the player owns
   const unowned = (tx: number, ty: number) => {
     if (!inBounds(map, tx, ty)) return STR.build.offMap;
@@ -111,7 +111,7 @@ export function depotSiteBlocked(
       if (bad) return bad;
       if (builder.stationAt(g.x, g.y) || builder.decorAt(g.x, g.y) || builder.buildingAt(g.x, g.y))
         return STR.build.occupied;
-      const there = track.get(g.x, g.y);
+      const there = builder.gateTrack(g);
       if (there) {
         if (!inGauge(gateClass(there, g, footprint), gauge)) return STR.build.gaugeBreak;
         continue;
@@ -145,7 +145,7 @@ export function grantDepot(
     const gate = gateTrack(defId, rot);
     const laid: { x: number; y: number }[] = [];
     for (const g of d.gateTiles()) {
-      if (builder.track.has(g.x, g.y)) continue;
+      if (builder.gateTrack(g)) continue;
       if (builder.placeTrack(g.x, g.y, gate.item, gate.rot)) {
         laid.push(g);
         continue;
