@@ -55,6 +55,7 @@ import {
   type FieldPicture,
 } from './wheatField';
 import { WheatFields } from './wheatFields';
+import { NOTHING_DUG } from './tunnelGlass';
 import { WorldRenderer } from './worldRenderer';
 
 /** The paved tiles a world renderer holds (`setCity`), which its `paved` reads. */
@@ -170,6 +171,7 @@ function renderer() {
     map: { w: 1, h: 1, originX: 0, originY: 0, terrain: [0], biome: [0] },
     objects,
     contactGround,
+    underground: NOTHING_DUG,
     city: new Set(),
     paved: (tile: number) => cityOf(world).has(tile),
     doorsteps: [],
