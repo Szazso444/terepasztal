@@ -347,6 +347,10 @@ export const HU: Strings = {
     groundUp: (tiles: number, cost: string) => `Emelés: ${tiles} csempe, ${cost}`,
     groundDown: (tiles: number, cost: string) => `Süllyesztés: ${tiles} csempe, ${cost}`,
     digBesideWater: 'Vizet érintő föld nem ásható ki',
+    overTunnel: 'E csempe alatt alagút fut',
+    inCutting: 'A bevágásba csak sín kerülhet',
+    notDug: 'Odabent az egész elemnek kiásott föld kell',
+    drillLine: 'A fúró keskeny nyomtávot, mellék-, fő- és törzsvonalat fektet',
     groundStays: 'Itt nem mozdul semmi',
     groundRefused: (tiles: number, reason: string) =>
       tiles === 1

@@ -75,8 +75,10 @@ import {
 } from './roads';
 import { hasDoors, streetDoors, type Door, type PlaceAt } from './doors';
 import {
+  DRILL_AGE,
   TUNNEL_COVER,
   Underground,
+  drillLine,
   touchesWater,
   type DigPlan,
   type DigWork,
@@ -230,6 +232,11 @@ export class Builder {
    * no link is too steep (`cliffAt`).
    */
   groundCheck: ((x: number, y: number, need: 'straight' | 'level') => boolean) | null = null;
+  /**
+   * The Drill is on: track and signals go on dug tiles only. Off, a dug tile takes neither, as it
+   * has a surface over it.
+   */
+  insideMode = false;
   onStationChanged: ((s: Station, removed: boolean) => void) | null = null;
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
@@ -384,6 +391,14 @@ export class Builder {
   }
   private unlocked(x: number, y: number) {
     return this.free || this.regions.isTileUnlocked(x, y);
+  }
+  /**
+   * Why the Drill's work on (x, y) keeps off what stands on the surface, or null on open ground: a
+   * dug tile has the mountain over it, and a cut takes rail alone.
+   */
+  private drilled(x: number, y: number): string | null {
+    if (this.underground.isDug(x, y)) return STR.build.overTunnel;
+    return this.underground.isCut(x, y) ? STR.build.inCutting : null;
   }
   /**
    * Track beside (x, y); with a station kind given, beside its footprint turned to `rot` (beside
@@ -616,9 +631,10 @@ export class Builder {
     return null;
   }
   /**
-   * Can a piece with its anchor at (x,y) be laid? Checks every footprint tile, that a piece on rock
-   * or a mountain continues a line, the ground under it, then that each open edge meeting existing
-   * track joins a line of the same network.
+   * Can a piece with its anchor at (x,y) be laid? Checks every footprint tile, that its whole
+   * footprint is on the right side of the ground (`insideRefusal`), that a piece on rock or a
+   * mountain continues a line, the ground under it, then that each open edge meeting existing track
+   * joins a line of the same network.
    */
   checkTrack(x: number, y: number, item: TrackItem, rot = 0): PlacementCheck {
     const c = this.trackRules(x, y, item, rot, true);
@@ -636,6 +652,11 @@ export class Builder {
     replace: boolean,
   ): PlacementCheck {
     const kind = item.kind;
+    if (this.insideMode) {
+      if (!drillLine(item)) return { ok: false, cost: {}, reason: STR.build.drillLine };
+      if (this.lineLocked(DRILL_AGE))
+        return { ok: false, cost: {}, reason: STR.build.tierLocked(DRILL_AGE) };
+    }
     if ((item.cls === 'narrow' || item.cls2 === 'narrow') && !rules.narrowUnlocked)
       return { ok: false, cost: {}, reason: STR.build.narrowLocked };
     if (this.lineLocked(itemAge(item)))
@@ -647,6 +668,8 @@ export class Builder {
       const why = this.checkTrackTile(t.x, t.y, kind, !wide, replace, clear);
       if (why) return { ok: false, cost: {}, reason: why };
     }
+    const inside = this.insideRefusal(tiles);
+    if (inside) return { ok: false, cost: {}, reason: inside };
     // class compatibility with the neighbours the new piece would open onto
     const probe = new TrackGraph(this.map.w, this.map.h);
     probe.place(x, y, kind, rot, item.cls, item.cls2);
@@ -668,11 +691,17 @@ export class Builder {
     )
       return { ok: false, cost: {}, reason: STR.build.mountainLine };
     // Straights and crossings may climb. Curves and switches need smooth ground on every tile, or a bridge platform under every tile: then
-    // they sit at the deck, the level of the rails they meet off the bridge.
+    // they sit at the deck, the level of the rails they meet off the bridge. A dug or cut tile asks
+    // nothing of the ground: its rail stands on a bed of its own.
     const members = tiles.map((t) => ({ ...t, links: probe.get(t.x, t.y)?.links ?? [] })),
       // Members of a wide piece are parts of a curve or switch, whatever their links look like.
-      climbs = !wide && members.some((m) => climbAxes(m.links).length > 0);
-    if (this.groundCheck && !climbs && !tiles.every((t) => this.groundCheck!(t.x, t.y, 'level'))) {
+      climbs = !wide && members.some((m) => climbAxes(m.links).length > 0),
+      bedded = (t: { x: number; y: number }) => !!this.drilled(t.x, t.y);
+    if (
+      this.groundCheck &&
+      !climbs &&
+      !tiles.every((t) => bedded(t) || this.groundCheck!(t.x, t.y, 'level'))
+    ) {
       if (!tiles.every((t) => this.bridgeAt(t.x, t.y)))
         return { ok: false, cost: {}, reason: STR.build.notSmooth };
       if (supportedDeck(this.map, members, (bx, by) => !!this.bridgeAt(bx, by)) === null)
@@ -681,7 +710,7 @@ export class Builder {
     for (const t of tiles) {
       const p = probe.get(t.x, t.y);
       if (!p) continue;
-      if (climbs && this.groundCheck && !this.groundCheck(t.x, t.y, 'straight'))
+      if (climbs && this.groundCheck && !bedded(t) && !this.groundCheck(t.x, t.y, 'straight'))
         return { ok: false, cost: {}, reason: STR.build.tooSteep };
       for (const [a, b] of p.links)
         for (const d of [a, b]) {
@@ -703,6 +732,16 @@ export class Builder {
     let mul = 0;
     for (const t of tiles) mul = Math.max(mul, this.terrainMul(t.x, t.y));
     return { ok: true, cost: this.priced(pieceCost(kind, item.cls, item.cls2), mul) };
+  }
+  /**
+   * Why a piece on `tiles`, every tile of its footprint, may not go there as the Drill stands, or
+   * null. On, it goes on dug tiles only, so walls never cut through a curve or a switch. Off, no
+   * tile may be dug: rail off the Drill runs on the surface, and a dug tile has none to give.
+   */
+  private insideRefusal(tiles: readonly { x: number; y: number }[]): string | null {
+    const { underground: under } = this;
+    if (this.insideMode) return tiles.every((t) => under.isDug(t.x, t.y)) ? null : STR.build.notDug;
+    return tiles.some((t) => under.isDug(t.x, t.y)) ? STR.build.overTunnel : null;
   }
   /**
    * Rail takes a level a tile, and generated ground steps up to four: is the edge between `t` and
@@ -999,6 +1038,7 @@ export class Builder {
     );
     b.free = this.free;
     b.groundCheck = this.groundCheck;
+    b.insideMode = this.insideMode;
     b.stations.push(...this.stations);
     for (const [k, d] of this.decor) b.decor.set(k, d);
     for (const [k, w] of this.buildings) b.buildings.set(k, w);
@@ -1015,6 +1055,8 @@ export class Builder {
     for (const { x: tx, y: ty } of stationFootprint(defId, x, y, rot)) {
       if (!inBounds(this.map, tx, ty)) return { ok: false, cost: {}, reason: STR.build.offMap };
       if (!this.unlocked(tx, ty)) return { ok: false, cost: {}, reason: STR.build.locked };
+      const drilled = this.drilled(tx, ty);
+      if (drilled) return { ok: false, cost: {}, reason: drilled };
       const bad = unbuildable(terrainAt(this.map, tx, ty));
       if (bad) return { ok: false, cost: {}, reason: bad };
       if (
@@ -1197,7 +1239,12 @@ export class Builder {
     if (this.decorAt(x, y) || this.buildingAt(x, y)) return STR.build.occupied;
     if (onRails(defId)) {
       if (!this.track.railOn(x, y)) return STR.build.needTrackHere;
+      // what stands on the rails goes where a piece of track would
+      const inside = this.insideRefusal([{ x, y }]);
+      if (inside) return inside;
     } else {
+      const drilled = this.drilled(x, y);
+      if (drilled) return drilled;
       const bad = unbuildable(terrainAt(this.map, x, y));
       if (bad) return bad;
       if (this.stationAt(x, y)) return STR.build.occupied;
@@ -1300,6 +1347,8 @@ export class Builder {
     if (!this.free && !inSupplyMode(def))
       return { ok: false, cost: {}, reason: STR.build.supplyLocked };
     for (const { x: tx, y: ty } of tiles) {
+      const drilled = this.drilled(tx, ty);
+      if (drilled) return { ok: false, cost: {}, reason: drilled };
       const t = terrainAt(this.map, tx, ty);
       // Bridge platforms stand on water or carry a rail level across a dip in the land.
       const bad = def.bridge && t === Terrain.Water ? null : unbuildable(t);
@@ -1332,6 +1381,16 @@ export class Builder {
   }
 
   // ------------------------------------------------------------------ ground
+  /** A road, a station, a works or a deposit lies on (x, y). */
+  private builtOn(x: number, y: number) {
+    return (
+      this.roads.has(x, y) ||
+      !!this.stationAt(x, y) ||
+      !!this.buildingAt(x, y) ||
+      this.hasDeposit(x, y, 'coal') ||
+      this.hasDeposit(x, y, 'oil')
+    );
+  }
   /**
    * Something stands on (x, y) that Raise, Lower and the Drill leave alone. The track of a dug tile
    * and what stands on it run under the ground, so they do not hold it; a cut lies open, and holds
@@ -1342,14 +1401,15 @@ export class Builder {
       decor = this.decorAt(x, y);
     return (
       (this.track.has(x, y) && !dug) ||
-      this.roads.has(x, y) ||
-      !!this.stationAt(x, y) ||
-      !!this.buildingAt(x, y) ||
+      this.builtOn(x, y) ||
       (!!decor && !(dug && onRails(decor.id))) ||
-      this.hasDeposit(x, y, 'coal') ||
-      this.hasDeposit(x, y, 'oil') ||
       this.underground.isCut(x, y)
     );
+  }
+  /** Nothing on (x, y) but rail and what stands on it: a portal may look out at it. */
+  private railOnly(x: number, y: number) {
+    const decor = this.decorAt(x, y);
+    return !this.builtOn(x, y) && (!decor || onRails(decor.id));
   }
   /** Raise and Lower leave (x, y) alone: what stands on it, or a portal looking out at it. */
   private groundTaken(x: number, y: number) {
@@ -1454,8 +1514,9 @@ export class Builder {
   /**
    * What the Drill would do with the drag `tiles` (`Underground.plan`), at the build price. The
    * plan asks `surfaceTaken` of each tile it would write and of each the ground would lift, so rail
-   * on the surface refuses the drag and rail inside a dug tile does not. Short of money, the check
-   * refuses with the plan's lists full, for the ghost (`DigPlan`).
+   * on the surface refuses the drag and rail inside a dug tile does not; it asks `railOnly` of the
+   * tile each new portal looks at. Short of money, the check refuses with the plan's lists full, for
+   * the ghost (`DigPlan`).
    */
   checkDig(tiles: readonly { x: number; y: number }[]): DigPlan {
     const plan = this.underground.plan(
@@ -1463,6 +1524,7 @@ export class Builder {
       tileLevels(this.map),
       tiles,
       (x, y) => this.unlocked(x, y) && !this.surfaceTaken(x, y),
+      (x, y) => this.railOnly(x, y),
     );
     if (!plan.ok) {
       const [t] = plan.refused;
@@ -1645,6 +1707,8 @@ export class Builder {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     if (roads.has(x, y)) return STR.build.roadHere;
+    const drilled = this.drilled(x, y);
+    if (drilled) return drilled;
     const deck = this.bridgeAt(x, y);
     const bad = unbuildable(terrainAt(this.map, x, y));
     // a platform stands on water or on land, never on rock or a mountain (`buildingRules`)

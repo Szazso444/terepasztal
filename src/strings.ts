@@ -435,6 +435,14 @@ const EN = {
       `Lower: ${tiles} ${tiles === 1 ? 'tile' : 'tiles'}, ${cost}`,
     /** a Drill drag over a tile touching water, on a side or a corner */
     digBesideWater: 'Ground touching water cannot be dug',
+    /** anything tried on a dug tile from outside: it has the mountain over it */
+    overTunnel: 'A tunnel runs under this tile',
+    /** anything but rail tried on a cut tile */
+    inCutting: 'A cutting takes rail only',
+    /** track or a signal tried off a dug tile with the Drill on */
+    notDug: 'Inside, the whole piece needs dug ground',
+    /** Maglev or Hyperloop track tried with the Drill on */
+    drillLine: 'The Drill lays Narrow Gauge, Branch, Main and Trunk Line',
     /** Raise or Lower over ground that stays where it is */
     groundStays: 'Nothing moves here',
     /** how many tiles of the action refuse; `reason` is the first one's, the others may differ */

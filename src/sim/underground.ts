@@ -3,6 +3,7 @@ import { STR } from '../strings';
 import { MAX_LEVEL, NO_LEVEL, tileLevels, type Elevated } from '../world/elevation';
 import { reshape, type Reshape } from '../world/reshape';
 import { Terrain, terrainAt, type GameMap } from '../world/tiles';
+import type { TrackClass } from '../world/track';
 import type { PlacementCheck } from './build';
 import { rules } from './rules';
 
@@ -20,6 +21,15 @@ export const TUNNEL_COVER = 3;
 
 /** The floor the Drill digs at: one floor in this step of the game. */
 const DIG_FLOOR = 0;
+
+/** The lines the Drill lays inside. Maglev and Hyperloop come later. */
+const DRILL_LINES: readonly TrackClass[] = ['narrow', 'branch', 'main', 'trunk'];
+/** The age the Drill opens in, as `economy.tier` counts it: the Diesel Age. */
+export const DRILL_AGE = 1;
+/** Every line of `item` is one the Drill lays inside. */
+export function drillLine(item: { cls: TrackClass; cls2?: TrackClass }): boolean {
+  return DRILL_LINES.includes(item.cls) && (!item.cls2 || DRILL_LINES.includes(item.cls2));
+}
 
 /** The side of a tile a portal looks out of. */
 export type Face = 'N' | 'E' | 'S' | 'W';
@@ -328,15 +338,17 @@ export class Underground {
    * rail. A tile a portal looks out at does not move, unless this dig digs it.
    *
    * A portal stands on the dug tile where a line comes out: beside a cut or open ground, along the
-   * drag and the one tile past each of its ends (`withEnds`). A portal costs `portalCost` on top of
-   * its tile. A cut costs a tile and brings no stone, and a raise is priced by the levels that
-   * really change, at Raise's price.
+   * drag and the one tile past each of its ends (`withEnds`). The tile a new portal looks at must
+   * be able to carry a line out, so anything there but rail (`railOnly`) refuses the drag. A portal
+   * costs `portalCost` on top of its tile. A cut costs a tile and brings no stone, and a raise is
+   * priced by the levels that really change, at Raise's price.
    */
   plan(
     map: GameMap,
     levels: Uint8Array,
     tiles: readonly Tile[],
     surfaceFree: (x: number, y: number) => boolean,
+    railOnly: (x: number, y: number) => boolean,
   ): DigPlan {
     const nothing = { dig: [], cut: [], raise: [], portals: [], shut: [], stone: 0 };
     const refused: Tile[] = [],
@@ -384,6 +396,8 @@ export class Underground {
         else portal(walk[i + 1], t);
       });
     }
+    for (const front of portals.map(frontOf))
+      if (!railOnly(front.x, front.y)) refuse(front, STR.build.occupied);
     if (refused.length) return { ok: false, cost: {}, reason, ...nothing, refused };
 
     const shut = this.list.filter((p) => {

@@ -366,7 +366,8 @@ describe('the dig plan', () => {
     { map, under }: World,
     tiles: readonly Tile[],
     free: (x: number, y: number) => boolean = () => true,
-  ) => under.plan(map, tileLevels(map), tiles, free);
+    railOnly: (x: number, y: number) => boolean = () => true,
+  ) => under.plan(map, tileLevels(map), tiles, free, railOnly);
   /** The tiles of row `y` from `from` to `to`, in that order. */
   function row(y: number, from: number, to: number): Tile[] {
     const out: Tile[] = [];
@@ -556,6 +557,126 @@ describe('the dig plan', () => {
     const slope = world(hills([[10, MID, 6]]));
     slope.builder.track.place(5, MID, 'straight', 1);
     expect(slope.builder.checkDig(row(MID, 5, 9)).reason).toBe(STR.build.occupied);
+  });
+
+  describe('the open tile a new portal looks at', () => {
+    /** The drag into the east cliff of the valley's west side, level 0 past it at x 9. */
+    const DRAG = row(MID, 7, 8);
+    const FRONT = { x: 9, y: MID };
+    const onFront = (w: World, what: (b: Builder) => void) => {
+      what(w.builder);
+      return w;
+    };
+    const SITES: [string, (b: Builder) => void][] = [
+      [
+        'a building',
+        (b) => {
+          const def = BUILDING_DEFS.find((d) => !d.bridge)!;
+          b.buildings.set(MID * SIZE + 9, {
+            id: def.id,
+            x: 9,
+            y: MID,
+            acc: 0,
+            rot: 0,
+            active: false,
+            rate: 0,
+          });
+        },
+      ],
+      ['a road', (b) => b.roads.add(FRONT.x, FRONT.y)],
+      ['a station', (b) => b.stations.push(new Station('quarry', FRONT.x, FRONT.y))],
+      ['a depot', (b) => b.stations.push(new Station('depot', FRONT.x, FRONT.y))],
+      ['a coal seam', (b) => b.map.props.set(MID * SIZE + 9, [prop('coal')])],
+      ['an oil seep', (b) => b.map.props.set(MID * SIZE + 9, [prop('oil')])],
+      ['a tower', (b) => b.decor.set(MID * SIZE + 9, { id: 'water_tower', x: 9, y: MID, rot: 0 })],
+      [
+        'rail with a road across it',
+        (b) => {
+          b.track.place(FRONT.x, FRONT.y, 'straight', 1);
+          b.roads.add(FRONT.x, FRONT.y);
+        },
+      ],
+    ];
+
+    it('with nothing on it, takes the portal', () => {
+      const w = steep(VALLEY);
+      expect(w.builder.checkDig(DRAG)).toMatchObject({
+        ok: true,
+        dig: DRAG,
+        portals: [{ x: 8, y: MID, face: 'E', floor: 0 }],
+      });
+    });
+
+    it.each(SITES)('refuses the dig with %s on it', (_name, what) => {
+      const w = onFront(steep(VALLEY), what);
+      const money = w.economy.money;
+      const c = w.builder.checkDig(DRAG);
+      expect(c).toMatchObject({
+        ok: false,
+        reason: STR.build.occupied,
+        refused: [FRONT],
+        dig: [],
+        cut: [],
+        portals: [],
+        raise: [],
+        stone: 0,
+      });
+      expect(w.builder.dig(DRAG)).toBe(false);
+      expect(w.under.empty).toBe(true);
+      expect(w.economy.money).toBe(money);
+    });
+
+    it('takes rail, and a signal on it: a portal carries the line out', () => {
+      const w = steep(VALLEY);
+      w.builder.track.place(FRONT.x, FRONT.y, 'straight', 1);
+      expect(w.builder.checkDig(DRAG)).toMatchObject({ ok: true, portals: [{ face: 'E' }] });
+      w.builder.decor.set(MID * SIZE + 9, { id: 'signal', x: 9, y: MID, rot: 1 });
+      expect(w.builder.dig(DRAG)).toBe(true);
+      expect(w.under.portals()).toHaveLength(1);
+    });
+
+    it('asks it of the tile past a drag on a cut too, with a cut in front of the portal', () => {
+      // on the slope of a hill the tile the portal looks at is a cut, and the plan asks the surface
+      const w = world(hills(PEAK));
+      expect(w.builder.checkDig(row(MID, 6, 9))).toMatchObject({
+        ok: true,
+        portals: [{ x: 9, y: MID, face: 'W' }],
+        cut: row(MID, 7, 8),
+      });
+      w.builder.roads.add(8, MID);
+      expect(w.builder.checkDig(row(MID, 6, 9))).toMatchObject({
+        ok: false,
+        reason: STR.build.occupied,
+      });
+    });
+
+    it('leaves a portal that stands alone: only a new one asks', () => {
+      const w = steep(VALLEY);
+      expect(w.builder.dig(DRAG)).toBe(true);
+      w.builder.roads.add(FRONT.x, FRONT.y);
+      const c = w.builder.checkDig(row(MID, 6, 8));
+      expect(c).toMatchObject({ ok: true, portals: [] });
+    });
+
+    it('asks the plan through its own question, not the surface one', () => {
+      const w = steep(VALLEY);
+      expect(
+        plan(
+          w,
+          DRAG,
+          () => true,
+          (x) => x !== FRONT.x,
+        ).ok,
+      ).toBe(false);
+      expect(
+        plan(
+          w,
+          DRAG,
+          (x) => x !== FRONT.x,
+          () => true,
+        ).ok,
+      ).toBe(true);
+    });
   });
 
   it('lets a last open tile touch water, and no tile it writes', () => {
