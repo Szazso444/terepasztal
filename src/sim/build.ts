@@ -233,8 +233,9 @@ export class Builder {
    */
   groundCheck: ((x: number, y: number, need: 'straight' | 'level') => boolean) | null = null;
   /**
-   * The Drill is on: track and signals go on dug tiles only. Off, a dug tile takes neither, as it
-   * has a surface over it.
+   * The Drill is on: track and signals go on dug tiles, on cuts, and on the open tile a portal looks
+   * at, so one drag lays a line out of a tunnel. Off, a dug tile takes neither, as it has a surface
+   * over it, and a cut still takes both.
    */
   insideMode = false;
   onStationChanged: ((s: Station, removed: boolean) => void) | null = null;
@@ -691,12 +692,10 @@ export class Builder {
     }
     // Rock and mountain take track only as the continuation of a line, so a mountain line is
     // always drawn up from its foot or from track already on the mountain. The ground under it
-    // is asked next, as anywhere. Nothing climbs inside, so a dug tile asks none of this: a
-    // junction can be laid in a mountain before the line reaches it.
+    // is asked next, as anywhere. Nothing climbs on a tile the Drill made, so it asks none of this:
+    // a junction can be laid in a mountain before the line reaches it, and a cut is the way in.
     if (
-      tiles.some(
-        (t) => stone(terrainAt(this.map, t.x, t.y)) && !this.underground.isDug(t.x, t.y),
-      ) &&
+      tiles.some((t) => stone(terrainAt(this.map, t.x, t.y)) && !this.drilled(t.x, t.y)) &&
       !continuesLine(this.track, probe, tiles)
     )
       return { ok: false, cost: {}, reason: STR.build.mountainLine };
@@ -745,13 +744,18 @@ export class Builder {
   }
   /**
    * Why a piece on `tiles`, every tile of its footprint, may not go there as the Drill stands, or
-   * null. On, it goes on dug tiles only, so walls never cut through a curve or a switch. Off, no
-   * tile may be dug: rail off the Drill runs on the surface, and a dug tile has none to give.
+   * null. On, it stands wholly on dug tiles, or wholly outside on cuts and the tiles portals look
+   * at, so no wall cuts through a curve or a switch and none stands across the mouth of a tunnel.
+   * Off, no tile may be dug: rail off the Drill runs on the surface, and a dug tile has none to
+   * give.
    */
   private insideRefusal(tiles: readonly { x: number; y: number }[]): string | null {
-    const { underground: under } = this;
-    if (this.insideMode) return tiles.every((t) => under.isDug(t.x, t.y)) ? null : STR.build.notDug;
-    return tiles.some((t) => under.isDug(t.x, t.y)) ? STR.build.overTunnel : null;
+    const { underground: under } = this,
+      dug = tiles.filter((t) => under.isDug(t.x, t.y)).length;
+    if (!this.insideMode) return dug ? STR.build.overTunnel : null;
+    if (dug === tiles.length) return null;
+    const outside = tiles.every((t) => under.isCut(t.x, t.y) || under.fronted(t.x, t.y));
+    return !dug && outside ? null : STR.build.notDug;
   }
   /**
    * Rail takes a level a tile, and generated ground steps up to four: is the edge between `t` and
