@@ -42,6 +42,7 @@ import { Terrain as TerrainEnum } from './world/tiles';
 import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
 import { climbAxes, railProfile } from './world/railProfile';
+import { levelAt } from './world/elevation';
 import { RegionState } from './world/regions';
 import { WorldRenderer, type TexturedBridge } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
@@ -978,6 +979,7 @@ export class Game implements UiHost {
     this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
     this.builder.groundCheck = (x, y, need) => this.world.groundAllows(x, y, need);
+    this.builder.busy = (x, y) => this.fleet.occupied(x, y, -1);
     this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
     this.builder.onDecorChanged = (d, removed) => this.onDecorChanged(d, removed);
     this.builder.onStationOrphaned = (s, orphaned) => this.onStationOrphaned(s, orphaned);
@@ -1446,7 +1448,12 @@ export class Game implements UiHost {
   /** Every straight line conforms to its neighbours: inclines, transitions, bridge decks. */
   private refreshRails() {
     this.railsDirty = false;
-    const beds = railProfile(this.map, this.track, (x, y) => !!this.builder.bridgeAt(x, y));
+    const beds = railProfile(
+      this.map,
+      this.track,
+      (x, y) => !!this.builder.bridgeAt(x, y),
+      (x, y) => this.builder.bridgeAt(x, y)?.deck,
+    );
     this.fleet.railBeds = beds;
     if (this.world.setRailBeds(beds)) this.refreshBridges();
   }
@@ -1521,27 +1528,39 @@ export class Game implements UiHost {
     if (this.restoringWorld) return;
     this.bridgesDirty = false;
     const mode = this.world.bridgeMode,
-      textured: TexturedBridge[] = [];
+      textured: TexturedBridge[] = [],
+      raisedDecks: { x: number; y: number; top: number }[] = [];
     for (const b of this.builder.buildings.values())
       if (buildingDef(b.id).bridge) {
+        // a deck covers its tile: nothing that grew there stands on it
+        this.world.removeProps(b.x, b.y);
         const s = bridgeSpan(this.builder, b);
         const n = Math.min(4, s.length - Math.floor(s.index / 4) * 4);
         const phase = s.index % 4;
         const edge = (s.index === 0 ? 1 : 0) + (s.index === s.length - 1 ? 2 : 0);
         const key = `structures/span_${s.material}_${s.axis}_${n}_${phase}_${edge}`;
-        // Over water the deck sits at the waterline and its piers stand in the water. Over land
-        // it carries the rail's level on piers cut to the ground under them: a fenced span under
-        // straight rail, a square pad under a curve or switch.
+        // Over water the deck sits at the waterline and its piers stand in the water. Over
+        // land it carries the rail's level on piers cut to the ground under them: a fenced span
+        // under straight rail, a square pad under a curve or switch. A raised deck stands at its
+        // stored height, on tall supports over either.
         const water = terrainAt(this.map, b.x, b.y) === Terrain.Water,
-          deck = water ? 0 : -this.world.railAt(b.x, b.y).dz,
+          raised = b.deck !== undefined && b.deck > levelAt(this.map, b.x, b.y),
+          deck =
+            b.deck !== undefined
+              ? b.deck * this.world.levelPx
+              : water
+                ? 0
+                : -this.world.railAt(b.x, b.y).dz,
           dy = -deck - this.world.elevationOf(b.x, b.y),
+          open = water && !raised,
           piece = this.track.get(b.x, b.y),
           straight = !piece || climbAxes(piece.links).length > 0,
-          land = water
+          land = open
             ? null
             : straight
               ? `structures/landspan_${s.material}_${s.axis}`
               : `structures/landpad_${s.material}`;
+        if (raised) raisedDecks.push({ x: b.x, y: b.y, top: deck });
         const id = 'bridge:' + b.x + ',' + b.y;
         if (mode === 'textured') {
           // Meshes for every tile at once, so side-by-side bridges merge (setTexturedBridges).
@@ -1561,6 +1580,8 @@ export class Game implements UiHost {
             open: DIRS.map((d) => !!piece?.links.some((l) => l.includes(d))),
             water,
             level: b.level ?? 1,
+            height: b.deck,
+            raised,
           });
           continue;
         }
@@ -1585,6 +1606,7 @@ export class Game implements UiHost {
             straight ? (s.axis as 0 | 1) : null,
             deck,
             water,
+            raised,
           );
         } else {
           this.world.setPlatform(
@@ -1592,7 +1614,7 @@ export class Game implements UiHost {
             b.y,
             land && !straight ? land : (land ?? key) + '_deck',
             0,
-            water,
+            open,
             deck,
           );
           if (land && !straight) this.world.removeStructure(id);
@@ -1600,9 +1622,10 @@ export class Game implements UiHost {
           this.world.setBridgePiers(
             b.x,
             b.y,
-            water ? null : s.material,
+            open ? null : s.material,
             straight ? (s.axis as 0 | 1) : null,
             deck,
+            water,
           );
         }
         const detail = `structures/bridge_detail_${s.material}_${s.axis}_${b.level ?? 1}`;
@@ -1620,6 +1643,7 @@ export class Game implements UiHost {
         else this.world.removeStructure(detailId);
       }
     this.world.setTexturedBridges(textured);
+    this.world.setRaisedDecks(raisedDecks);
   }
   private onBuildingChanged(b: Building, removed: boolean) {
     const id = `building:${b.x},${b.y}`;
@@ -1634,6 +1658,7 @@ export class Game implements UiHost {
         this.world.removeStructure('bridge-detail:' + b.x + ',' + b.y);
         this.world.setBridgePiers(b.x, b.y, null);
         this.world.setBridgeKit(b.x, b.y, null);
+        this.world.rebuildProps(b.x, b.y);
       }
       this.refreshBridges();
       return;
