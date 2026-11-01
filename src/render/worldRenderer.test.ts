@@ -176,6 +176,8 @@ function renderer() {
     windowLights: new Map(),
     groundFits: new Map(),
     buildingLife: { place: () => undefined, remove: () => undefined },
+    treeSway: { add: () => undefined },
+    puddles: { invalidate: () => undefined },
     surfaces: {
       picture: pictureOf,
       window: (_key: string, _f: FrameInfo, _procedural: boolean, family: string) => {
@@ -1481,6 +1483,8 @@ function fieldWorld(fields: [number, number][]) {
   world.occupied = (x, y) => taken.has(`${x},${y}`);
   Object.assign(world, {
     buildingLife: { place: () => undefined, remove: () => undefined },
+    treeSway: { add: () => undefined },
+    puddles: { invalidate: () => undefined },
     surfaces: {
       picture: pictureOf,
       window: () => Texture.EMPTY,

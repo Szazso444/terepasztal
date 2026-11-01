@@ -368,12 +368,52 @@ function seeTrains(seen: number[], trains: Train[]) {
   return true;
 }
 
-/** Screen-space rain streaks; density follows the weather intensity. */
+/** The slant the rain streak is drawn with: across over down. */
+const STREAK_SLANT = -3 / 9;
+/**
+ * A falling drop's speed in screen px a second at wind strength `s`, `across` being the wind's
+ * direction over the screen, -1..1: straight down in a calm, slanting further and falling harder
+ * as it blows.
+ */
+export function rainVelocity(s: number, across: number) {
+  return { vx: across * s * 620, vy: 620 * (1 + 0.35 * s) };
+}
+/** The rotation that takes the drawn streak to the direction a drop falls in. */
+export function streakRotation(vx: number, vy: number) {
+  return Math.atan2(STREAK_SLANT, 1) - Math.atan2(vx, vy);
+}
+
+/**
+ * Screen-space rain streaks, slanted by the wind; density follows the weather intensity. The mask
+ * keeps them to the map: none falls on the dark outside it.
+ */
 export class Rain {
   readonly root = new Container();
-  private drops: { s: Sprite; vx: number; vy: number }[] = [];
-  constructor(private readonly atlas: AtlasRegistry) {}
-  update(dt: number, intensity: number, w: number, h: number) {
+  private drops: { s: Sprite; pace: number }[] = [];
+  private readonly clip = new Graphics();
+  private corners: { x: number; y: number }[] = [];
+  constructor(private readonly atlas: AtlasRegistry) {
+    this.root.addChild(this.clip);
+    this.root.mask = this.clip;
+  }
+  /** The map's size in tiles: its edge is where the rain stops. */
+  setWorld(w: number, h: number) {
+    const b = 0.5;
+    this.corners = [
+      tileToWorld(-b, -b),
+      tileToWorld(w - 1 + b, -b),
+      tileToWorld(w - 1 + b, h - 1 + b),
+      tileToWorld(-b, h - 1 + b),
+    ];
+  }
+  update(
+    dt: number,
+    intensity: number,
+    w: number,
+    h: number,
+    wind: { strength: number; dir: { x: number } },
+    view: { x: number; y: number; zoom: number },
+  ) {
     const want = Math.round(intensity * 260);
     while (this.drops.length < want) {
       const f = this.atlas.get('fx/rain');
@@ -382,19 +422,35 @@ export class Rain {
       s.position.set(Math.random() * (w + 200) - 100, Math.random() * h);
       s.scale.set(1 + Math.random() * 0.6);
       this.root.addChild(s);
-      this.drops.push({ s, vx: -140 - Math.random() * 60, vy: 560 + Math.random() * 220 });
+      this.drops.push({ s, pace: 0.85 + Math.random() * 0.3 });
     }
     while (this.drops.length > want) this.drops.pop()!.s.destroy();
     this.root.visible = this.drops.length > 0;
     this.root.alpha = Math.min(0.7, intensity * 0.8);
+    if (!this.drops.length) return;
+    const { vx, vy } = rainVelocity(wind.strength, wind.dir.x),
+      rotation = streakRotation(vx, vy),
+      // how far a drop drifts across on its way down, so that the screen fills up to its edges
+      drift = (vx / vy) * h;
     for (const d of this.drops) {
-      d.s.x += d.vx * dt;
-      d.s.y += d.vy * dt;
-      if (d.s.y > h + 12 || d.s.x < -20) {
-        d.s.x = Math.random() * (w + 240) - 60;
+      d.s.x += vx * d.pace * dt;
+      d.s.y += vy * d.pace * dt;
+      d.s.rotation = rotation;
+      if (d.s.y > h + 12 || d.s.x < -40 - Math.abs(drift) || d.s.x > w + 40 + Math.abs(drift)) {
+        d.s.x = Math.random() * (w + Math.abs(drift)) - Math.max(0, drift);
         d.s.y = -12 - Math.random() * 40;
       }
     }
+    this.clip.clear();
+    if (this.corners.length)
+      this.clip
+        .poly(
+          this.corners.flatMap((p) => [
+            (p.x - view.x) * view.zoom + w / 2,
+            (p.y - view.y) * view.zoom + h / 2,
+          ]),
+        )
+        .fill(0xffffff);
   }
 }
 

@@ -1118,6 +1118,7 @@ export class Game implements UiHost {
     );
     this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
+    this.rain.setWorld(this.map.w, this.map.h);
     this.world.overlay.addChild(this.fog.patches);
     this.app.stage.addChild(this.world.root, this.fog.haze, this.rain.root, this.overview.root);
     this.glows = new Glows(
@@ -2412,7 +2413,15 @@ export class Game implements UiHost {
     const rainI = this.settings.weather && this.weather.kind === 'rain' ? this.weather.visible : 0;
     const fogI = this.settings.weather && this.weather.kind === 'fog' ? this.weather.visible : 0;
     this.dayNight.update(this.clock.dayFraction, this.settings.dayNight, rainI);
-    this.rain.update(dt, this.viewTarget === 0 ? rainI : 0, this.camera.viewW, this.camera.viewH);
+    this.rain.update(
+      dt,
+      this.viewTarget === 0 ? rainI : 0,
+      this.camera.viewW,
+      this.camera.viewH,
+      this.weather.wind,
+      this.camera,
+    );
+    this.world.puddles.update(dt * this.clock.speed, rainI, this.camera.viewRect());
     this.fog.update(
       dt,
       this.viewTarget === 0 ? fogI : 0,
@@ -2445,6 +2454,11 @@ export class Game implements UiHost {
     this.glows.update(this.builder.stations, this.fleet.trains, night);
     this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
     this.peopleRenderer.update(this.people, dt * this.clock.speed);
+    this.world.treeSway.update(
+      this.clock.speed ? dt : 0,
+      this.weather.wind,
+      this.camera.viewRect(),
+    );
     this.world.buildingLife.update(
       this.clock.speed ? dt : 0,
       this.weather.wind,
