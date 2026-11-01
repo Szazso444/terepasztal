@@ -855,7 +855,6 @@ describe('the drainage', () => {
     const p: DrainInput = {
       waterLevel: 0.36,
       hillLevel: 0.64,
-      rockLevel: 0.76,
       w: size,
       h: size,
       core: { x0: 2, y0: 2, x1: size - 2, y1: size - 2 },
@@ -882,7 +881,7 @@ describe('the drainage', () => {
   };
 
   it('reads the demo thresholds in level steps of the Map sliders', () => {
-    const s = { waterLevel: 0.36, hillLevel: 0.64, rockLevel: 0.76 };
+    const s = { waterLevel: 0.36, hillLevel: 0.64 };
     expect(levelSteps(s, 0.36)).toBeCloseTo(0);
     expect(levelSteps(s, 0.64)).toBeCloseTo(3);
     expect(levelSteps(s, 0.76)).toBeCloseTo(4);

@@ -14,7 +14,7 @@ import {
   type CoverSliders,
   type MountainShape,
 } from './mountains';
-import { Biome, Terrain, startRegion } from './tiles';
+import { Biome, Terrain, startRegion, type GameMap } from './tiles';
 import { MAX_WATER_LEVEL } from './waterfalls';
 
 /** Twenty worlds of 160 x 160, generated once for the tests that read them. */
@@ -285,25 +285,33 @@ describe('the mountains of generated worlds', () => {
         (n, on, i) => n + (on && planes.map.terrain[i] === Terrain.Forest ? 1 : 0),
         0,
       );
-    // the rock slider moves the rivers as well, and with them how much of a massif stands, so a
-    // count of stone says little: the line shows in how much of the ground at levels 4 and 5 is
-    const stoneShare = (planes: MapPlanes) => {
-      const { terrain, generatedLevel: g } = planes.map;
-      let ground = 0;
-      let stone = 0;
-      massifTiles(planes).forEach((on, i) => {
-        if (!on || g![i] < 4 || g![i] > 5 || terrain[i] === Terrain.Water) return;
-        ground++;
-        if (terrain[i] === Terrain.Rock || terrain[i] === Terrain.Mountain) stone++;
-      });
-      return stone / ground;
-    };
+    const stone = (planes: MapPlanes) =>
+      massifTiles(planes).reduce((n, on, i) => {
+        const t = planes.map.terrain[i];
+        return n + (on && (t === Terrain.Rock || t === Terrain.Mountain) ? 1 : 0);
+      }, 0);
     const usual = world({});
     expect(forest(world({ forestDensity: 0.4 }))).toBeGreaterThan(forest(usual));
     expect(forest(world({ forestDensity: 0.7 }))).toBeLessThan(forest(usual));
-    expect(stoneShare(world({ rockLevel: 0.68 }))).toBeGreaterThan(stoneShare(usual));
-    expect(stoneShare(world({ rockLevel: 0.9 }))).toBeLessThan(stoneShare(usual));
+    expect(stone(world({ rockLevel: 0.68 }))).toBeGreaterThan(stone(usual));
+    expect(stone(world({ rockLevel: 0.9 }))).toBeLessThan(stone(usual));
   }, 30_000);
+
+  // The rain above the hill line keeps one step whatever the slider says: read on the slider's own
+  // scale, a rock level under the hill level gave a massif 80 steps of rain, and the rivers ate it.
+  it('keeps the water and the tops of a world across the whole rock slider', () => {
+    const water = ({ terrain }: GameMap) => terrain.filter((t) => t === Terrain.Water).length;
+    const top = ({ generatedLevel: g }: GameMap) => Math.max(...g!);
+    for (const seed of [101, 7053]) {
+      const usual = generateMapPlanes(seed, { w: 96, h: 96 }).map;
+      for (const rockLevel of [0.5, 0.6, 0.7, 0.9, 1]) {
+        const { map } = generateMapPlanes(seed, { w: 96, h: 96, rockLevel });
+        const near = `seed ${seed} at ${rockLevel}`;
+        expect(Math.abs(water(map) / water(usual) - 1), near).toBeLessThan(0.05);
+        expect(Math.abs(top(map) - top(usual)), near).toBeLessThanOrEqual(1);
+      }
+    }
+  }, 60_000);
 
   it('uses all three shapes over 40 seeds, hill the most', () => {
     // the shape is a noise over world tiles, so 40 seeds are cheap read directly, on a massif

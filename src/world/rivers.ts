@@ -54,20 +54,25 @@ const RAIN_FROM = (0.55 - 0.24) / 0.11;
 const RAIN_PER_STEP = 2 * 0.11;
 /** A level step is never less than this in elevation, whatever the sliders say. */
 const MIN_STEP = 0.01;
+/**
+ * A level step above the hill line, in elevation: the default rockLevel less the default hillLevel.
+ * It stays this whatever the rock slider says: a massif's lift of 0.8 is about 7 steps, and read
+ * on the slider's own scale it was up to 80, whose rain flooded the massifs.
+ */
+const HIGH_STEP = 0.76 - 0.64;
 
 /** The elevation sliders the level steps are set by (MapGenParams). */
 export interface LevelScale {
   waterLevel: number;
   hillLevel: number;
-  rockLevel: number;
 }
 
 /**
- * Elevation `e` in the demo's level steps above the sea, unclamped. The demo's sea, hill line and
- * rock line (0, 3 and 4 steps) are the game's waterLevel, hillLevel and rockLevel, so below the
- * hill line a step is a third of (hillLevel - waterLevel), and above it rockLevel - hillLevel
- * (0.0933 and 0.12 at the default sliders). Sliders out of order are read as if a step were
- * MIN_STEP at least.
+ * Elevation `e` in the demo's level steps above the sea, unclamped. The demo's sea and hill line (0
+ * and 3 steps) are the game's waterLevel and hillLevel, so below the hill line a step is a third of
+ * (hillLevel - waterLevel), 0.0933 at the default sliders, and above it HIGH_STEP. Only the rain
+ * reads steps above the hill line: every other use asks about step 2 or lower. Sliders out of order
+ * are read as if a step were MIN_STEP at least.
  */
 export function levelSteps(s: LevelScale, e: number): number {
   return stepper(s)(e);
@@ -77,9 +82,8 @@ export function levelSteps(s: LevelScale, e: number): number {
 function stepper(s: LevelScale): (e: number) => number {
   const sea = s.waterLevel;
   const hill = Math.max(s.hillLevel, sea + 3 * MIN_STEP);
-  const rock = Math.max(s.rockLevel, hill + MIN_STEP);
   const below = 3 / (hill - sea);
-  const above = 1 / (rock - hill);
+  const above = 1 / HIGH_STEP;
   return (e) => (e < hill ? (e - sea) * below : 3 + (e - hill) * above);
 }
 

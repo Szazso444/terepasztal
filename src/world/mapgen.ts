@@ -1079,6 +1079,7 @@ function riverPlan(
   rs: number,
 ): RiverPlan {
   const { waterLevel, hillLevel, rockLevel, forestDensity } = params;
+  // the rock slider moves the ground the plan reads, though the drainage itself does not read it
   const key = [seed, waterLevel, hillLevel, rockLevel, forestDensity, cx0, cy0, rs].join();
   const at = plans.findIndex((p) => p.key === key);
   if (at >= 0) {
@@ -1137,7 +1138,6 @@ function riverPlan(
   const d = drain({
     waterLevel,
     hillLevel,
-    rockLevel,
     w,
     h: w,
     core,
