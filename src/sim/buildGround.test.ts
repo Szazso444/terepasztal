@@ -3,10 +3,11 @@ import { emptyMap } from '../world/mapgen';
 import { TERRAIN_NAMES, Terrain, type GameMap, type PropKind } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import { TrackGraph } from '../world/track';
+import { NO_LEVEL, tileLevels } from '../world/elevation';
 import { Builder, DECOR_DEFS, unbuildable } from './build';
 import { BUILDING_DEFS } from './buildings';
 import { Economy } from './economy';
-import { STATION_DEFS, stationFootprint, stationGates } from './stations';
+import { STATION_DEFS, Station, stationFootprint, stationGates } from './stations';
 import { depotSiteBlocked } from './startDepot';
 import { DEFAULT_RULES, rules } from './rules';
 import { STAND_ON } from '../data/content';
@@ -246,5 +247,94 @@ describe('the ground each kind stands on, against the rule before the helper', (
       ]);
       expect([...reasons], name(t)).toEqual([unbuildable(t) ?? undefined]);
     }
+  });
+});
+
+describe('Raise and Lower beside a piece that needs level ground', () => {
+  const AT = { x: 20, y: 20 };
+  const SIDE = { x: 19, y: 20 };
+  const works = BUILDING_DEFS.find((d) => !d.bridge && !d.terrain && !d.deposit && !d.needsWater)!;
+  const platform = BUILDING_DEFS.find((d) => d.bridge)!;
+  const house = DECOR_DEFS.find((d) => !d.onTrack && !d.anyTile)!;
+  const pole = DECOR_DEFS.find((d) => d.anyTile)!;
+  /** Each piece that needs level ground, stood on (20, 20). */
+  const levelPieces: Record<string, (b: Builder) => void> = {
+    works: (b) => void b.placeBuilding(AT.x, AT.y, works.id),
+    curve: (b) => void b.track.place(AT.x, AT.y, 'curve', 0),
+    switch: (b) => void b.track.place(AT.x, AT.y, 'switch', 0),
+    crossing: (b) => void b.track.place(AT.x, AT.y, 'crossing', 0),
+    station: (b) => void b.stations.push(new Station('quarry', AT.x, AT.y)),
+    depot: (b) => void b.stations.push(new Station('depot', AT.x, AT.y)),
+    house: (b) => void b.placeDecor(AT.x, AT.y, house.id, 0),
+  };
+  const refusedBeside = (builder: Builder, tile: typeof SIDE, delta: 1 | -1) => {
+    expect(builder.checkGround([tile], delta)).toMatchObject({
+      ok: false,
+      cost: {},
+      reason: STR.build.groundBesideLevel,
+      moved: [],
+      refused: [tile],
+    });
+    expect(builder.reshapeGround([tile], delta)).toBe(false);
+  };
+
+  it('refuses a raise beside each of them, and moves nothing', () => {
+    for (const [name, stand] of Object.entries(levelPieces)) {
+      const { map, builder } = grassWorld();
+      stand(builder);
+      expect(builder.holdsLevel(SIDE.x, SIDE.y), name).toBe(true);
+      const before = [...tileLevels(map)];
+      refusedBeside(builder, SIDE, 1);
+      expect([...tileLevels(map)]).toEqual(before);
+    }
+  });
+
+  it('refuses on each side of a works, and a lower as well', () => {
+    const { map, builder } = grassWorld();
+    map.groundLevel = new Uint8Array(SIZE * SIZE).fill(NO_LEVEL);
+    for (let y = 15; y <= 22; y++) for (let x = 15; x <= 22; x++) map.groundLevel[y * SIZE + x] = 1;
+    builder.placeBuilding(AT.x, AT.y, works.id);
+    for (const side of [SIDE, { x: 21, y: 20 }, { x: 20, y: 19 }, { x: 20, y: 21 }])
+      for (const delta of [1, -1] as const) refusedBeside(builder, side, delta);
+    // a tile a corner away is no side
+    expect(builder.checkGround([{ x: 19, y: 19 }], -1).ok).toBe(true);
+  });
+
+  it('refuses the tile a raise pulls along, not only the one asked for', () => {
+    const { builder } = grassWorld();
+    builder.placeBuilding(AT.x, AT.y, works.id);
+    const far = { x: 18, y: 20 };
+    expect(builder.reshapeGround([far], 1)).toBe(true);
+    expect(builder.checkGround([far], 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.groundBesideLevel,
+      refused: [SIDE],
+    });
+  });
+
+  it('lets the ground move beside a straight, a road, a platform and what stands anywhere', () => {
+    const pieces: ((b: Builder) => void)[] = [
+      (b) => void b.track.place(AT.x, AT.y, 'straight', 0),
+      (b) => void b.placeRoad(AT.x, AT.y),
+      (b) => void b.placeBuilding(AT.x, AT.y, platform.id),
+      (b) => void b.placeDecor(AT.x, AT.y, pole.id, 0),
+    ];
+    for (const stand of pieces) {
+      const { builder } = grassWorld();
+      stand(builder);
+      expect(builder.holdsLevel(SIDE.x, SIDE.y)).toBe(false);
+      expect(builder.reshapeGround([SIDE], 1)).toBe(true);
+    }
+  });
+
+  it('lets the ground move beside rail on a bed of its own', () => {
+    const onPlatform = grassWorld();
+    onPlatform.builder.placeBuilding(AT.x, AT.y, platform.id);
+    onPlatform.builder.track.place(AT.x, AT.y, 'curve', 0);
+    expect(onPlatform.builder.reshapeGround([SIDE], 1)).toBe(true);
+    const dug = grassWorld();
+    dug.builder.underground.dig(AT.x, AT.y, 0);
+    dug.builder.track.place(AT.x, AT.y, 'curve', 0);
+    expect(dug.builder.reshapeGround([SIDE], 1)).toBe(true);
   });
 });

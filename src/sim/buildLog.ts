@@ -466,6 +466,11 @@ export class BuildStep implements HistoryStep {
     for (const [k, state] of forward ? this.before : this.after)
       if (tileState(b, k % b.map.w, Math.floor(k / b.map.w)) !== state)
         return STR.history.builtOver;
+    // what stands beside moved ground is not on the step's own tiles; a house a town grew may be
+    for (const op of this.ops)
+      if (op.op === 'ground' || op.op === 'dig')
+        for (const c of op.changes)
+          if (!c.held && b.holdsLevel(c.x, c.y)) return STR.history.builtOver;
     const rails: Tile[] = [];
     for (const op of this.ops) {
       if (op.op === 'track' && (forward ? op.was : op.now)) rails.push(...op.tiles);

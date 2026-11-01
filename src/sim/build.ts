@@ -140,8 +140,11 @@ export interface GroundCheck extends PlacementCheck {
 export interface GroundChange {
   x: number;
   y: number;
+  /** the tile's entry in the plane, each way */
   was: number;
   now: number;
+  /** the tile only keeps the level it has (`Reshape`) */
+  held?: boolean;
   terrainWas: Terrain;
   terrainNow: Terrain;
 }
@@ -1475,6 +1478,30 @@ export class Builder {
   private groundTaken(x: number, y: number) {
     return this.surfaceTaken(x, y) || this.underground.fronted(x, y);
   }
+  /**
+   * What stands on (x, y) needs level ground, as `groundCheck` asks it when it is placed: a station,
+   * depot, works or house, or track that is no plain straight. Rail on a platform or on a tile the
+   * Drill made stands on a bed of its own, and a platform stands on any ground.
+   */
+  private needsLevel(x: number, y: number) {
+    if (this.stationAt(x, y)) return true;
+    const works = this.buildingAt(x, y),
+      decor = this.decorAt(x, y),
+      p = this.track.get(x, y);
+    if (works && !buildingDef(works.id).bridge) return true;
+    if (decor && !decorDef(decor.id).onTrack && !decorDef(decor.id).anyTile) return true;
+    if (!p || this.bridgeAt(x, y) || this.drilled(x, y)) return false;
+    return !!p.unit || p.links.length > 1 || !climbAxes(p.links).length;
+  }
+  /** A side of (x, y) holds a piece that needs level ground: the level of (x, y) may not change. */
+  holdsLevel(x: number, y: number) {
+    return (
+      this.needsLevel(x + 1, y) ||
+      this.needsLevel(x - 1, y) ||
+      this.needsLevel(x, y + 1) ||
+      this.needsLevel(x, y - 1)
+    );
+  }
   /** Why the refused tile (x, y) of a raise or lower may not move. */
   private groundRefusal({ x, y }: { x: number; y: number }, delta: 1 | -1): string {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
@@ -1482,13 +1509,15 @@ export class Builder {
     if (terrainAt(this.map, x, y) === Terrain.Water) return STR.build.groundMovesWater;
     if (this.groundTaken(x, y)) return STR.build.occupied;
     if (delta < 0 && touchesWater(this.map, x, y)) return STR.build.groundBesideWater;
+    if (this.holdsLevel(x, y)) return STR.build.groundBesideLevel;
     return STR.build.groundLimit;
   }
   /**
    * What Raise (`delta` 1) or Lower (-1) of `tiles` would move and cost. The action is whole: any
    * tile it would move that may not refuses it. A tile with anything on it stays, a tile touching
-   * water stays on a lower so a raised lake cannot run out, and a tile may not fall under the cover
-   * of a dug tile. A tile that only keeps its level (`moved` in `Reshape`) is free.
+   * water stays on a lower so a raised lake cannot run out, a tile beside a piece that needs level
+   * ground stays, and a tile may not fall under the cover of a dug tile. A tile that only keeps its
+   * level (`moved` in `Reshape`) is free, and asks none of this.
    */
   checkGround(tiles: readonly { x: number; y: number }[], delta: 1 | -1): GroundCheck {
     const levels = tileLevels(this.map);
@@ -1500,7 +1529,8 @@ export class Builder {
       (x, y) =>
         !this.unlocked(x, y) ||
         this.groundTaken(x, y) ||
-        (delta < 0 && touchesWater(this.map, x, y)),
+        (delta < 0 && touchesWater(this.map, x, y)) ||
+        this.holdsLevel(x, y),
       (x, y) => {
         const floor = this.underground.floorAt(x, y);
         return floor === undefined ? 0 : floor + TUNNEL_COVER;
@@ -1542,6 +1572,7 @@ export class Builder {
         y: m.y,
         was: map.groundLevel?.[k] ?? NO_LEVEL,
         now: m.to,
+        held: m.to === levelAt(map, m.x, m.y),
         terrainWas: terrain,
         terrainNow: turns ? Terrain.Grass : terrain,
       };
@@ -1588,6 +1619,7 @@ export class Builder {
       tiles,
       (x, y) => this.unlocked(x, y) && !this.surfaceTaken(x, y),
       (x, y) => this.railOnly(x, y),
+      (x, y) => this.holdsLevel(x, y),
     );
     if (!plan.ok) {
       const [t] = plan.refused;
@@ -1624,6 +1656,7 @@ export class Builder {
         y: m.y,
         was: map.groundLevel?.[k] ?? NO_LEVEL,
         now: m.to,
+        held: m.to === levelAt(map, m.x, m.y),
         terrainWas: terrain,
         terrainNow: ridge ? Terrain.Rock : terrain,
       };

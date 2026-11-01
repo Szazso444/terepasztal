@@ -353,7 +353,8 @@ export class Underground {
    * touches water or has something on the surface (`surfaceFree`), or if a tile the ground would
    * lift may not move. Water and the surface are not asked of a tile the plan leaves as it is: a
    * tile dug or cut already, or open ground, so a drag from rail on open ground starts from that
-   * rail. A tile a portal looks out at does not move, unless this dig digs it. A tile on the last
+   * rail. A tile a portal looks out at does not move, unless this dig digs it, and nor does a tile
+   * beside a piece that needs level ground (`holdsLevel`, as Raise asks it). A tile on the last
    * row of the map refuses too: a ring the map grows by lies beside it, and may bring water there.
    *
    * A portal stands on the dug tile where a line comes out: beside a cut or open ground, along the
@@ -368,6 +369,7 @@ export class Underground {
     tiles: readonly Tile[],
     surfaceFree: (x: number, y: number) => boolean,
     railOnly: (x: number, y: number) => boolean,
+    holdsLevel: (x: number, y: number) => boolean = () => false,
   ): DigPlan {
     const nothing = { dig: [], cut: [], raise: [], portals: [], shut: [], stone: 0 };
     const refused: Tile[] = [],
@@ -430,17 +432,20 @@ export class Underground {
     const held = new Set(
       [...cut, ...open].filter((t) => this.inside(t.x, t.y)).map((t) => t.y * this.w + t.x),
     );
-    const stays = (x: number, y: number) =>
+    const taken = (x: number, y: number) =>
       this.isCut(x, y) || held.has(y * this.w + x) || !surfaceFree(x, y);
+    const stays = (x: number, y: number) => taken(x, y) || holdsLevel(x, y);
     const { moved, refused: stopped } = raiseToCover(map, levels, low, stays);
     if (stopped.length) {
       const [{ x, y }] = stopped;
       const why =
         map.terrain[y * this.w + x] === Terrain.Water
           ? STR.build.groundMovesWater
-          : stays(x, y)
+          : taken(x, y)
             ? STR.build.occupied
-            : STR.build.groundLimit;
+            : holdsLevel(x, y)
+              ? STR.build.groundBesideLevel
+              : STR.build.groundLimit;
       return { ok: false, cost: {}, reason: why, ...nothing, refused: stopped };
     }
     let steps = 0;

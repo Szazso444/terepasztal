@@ -1852,12 +1852,13 @@ describe('Raise and Lower', () => {
     const before = quarry.terrainFactor;
     const block: { x: number; y: number }[] = [];
     for (let y = 1; y < SIZE - 1; y++)
-      for (let x = 1; x < SIZE - 1; x++) if (x !== 4 || y !== 8) block.push(tile(x, y));
+      for (let x = 1; x < SIZE - 1; x++)
+        if (Math.abs(x - 4) + Math.abs(y - 8) > 1) block.push(tile(x, y));
     // a raise turns nothing and leaves the harvest as it was
     expect(builder.reshapeGround(block, 1)).toBe(true);
     expect(quarry.terrainFactor).toBe(before);
     expect(builder.reshapeGround(block, -1)).toBe(true);
-    expect(map.terrain[8 * SIZE + 5]).toBe(Terrain.Grass);
+    expect(map.terrain[8 * SIZE + 6]).toBe(Terrain.Grass);
     expect(quarry.terrainFactor).toBeLessThan(before);
     expect(quarry.terrainFactor).toBe(terrainFactorAt(map, 4, 8, 'quarry'));
   });

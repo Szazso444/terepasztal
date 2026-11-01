@@ -1489,6 +1489,50 @@ describe('a raise or a lower in the history', () => {
     expect(levels(g)).toEqual(before);
   });
 
+  it('a raise refused beside a works is no step; undoing the works lets it through', () => {
+    const g = game();
+    const works = { x: 20, y: 20 },
+      side = { x: 19, y: 20 };
+    g.commands.act(() => g.builder.placeBuilding(works.x, works.y, 'windmill', 0));
+    const label = g.history.undoLabel;
+    g.commands.act(() => g.builder.reshapeGround([side], 1));
+    expect(levelAt(g.map, side.x, side.y)).toBe(0);
+    expect(g.history.undoLabel).toBe(label);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.buildingAt(works.x, works.y)).toBeUndefined();
+    g.commands.act(() => g.builder.reshapeGround([side], 1));
+    expect(levelAt(g.map, side.x, side.y)).toBe(1);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(levelAt(g.map, side.x, side.y)).toBe(0);
+  });
+
+  it('a one-tile curve holds the ground beside it as a works does, and goes with an undo', () => {
+    const g = game();
+    const side = { x: 19, y: 20 };
+    expect(
+      g.commands.act(() => g.builder.placeTrack(20, 20, { kind: 'curve', cls: 'narrow' }, 0)),
+    ).toBe(true);
+    expect(g.builder.track.get(20, 20)?.unit).toBeUndefined();
+    expect(g.builder.reshapeGround([side], 1)).toBe(false);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.reshapeGround([side], 1)).toBe(true);
+  });
+
+  it('refuses to move ground back beside a level piece that stands there now', () => {
+    const g = game();
+    const [hill, beside] = [TILE, { x: 41, y: 40 }];
+    g.commands.act(() => g.builder.reshapeGround([hill], 1));
+    g.commands.act(() => g.builder.reshapeGround([hill], -1));
+    // past the history, as a house a town grows is
+    g.builder.free = true;
+    expect(g.builder.placeDecor(beside.x, beside.y, 'water_tower', 0)).toBeTruthy();
+    expectRefused(g, 'undo', STR.history.builtOver);
+    expect(levelAt(g.map, hill.x, hill.y)).toBe(0);
+    g.builder.removeDecor(beside.x, beside.y);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(levelAt(g.map, hill.x, hill.y)).toBe(1);
+  });
+
   it('is named, and a drag is one step', () => {
     const g = game();
     for (let x = 40; x < 43; x++)
@@ -1557,13 +1601,14 @@ describe('a raise or a lower in the history', () => {
     const before = quarry.terrainFactor,
       block: { x: number; y: number }[] = [];
     for (let y = 31; y < 49; y++)
-      for (let x = 31; x < 49; x++) if (x !== 40 || y !== 40) block.push({ x, y });
+      for (let x = 31; x < 49; x++)
+        if (Math.abs(x - 40) + Math.abs(y - 40) > 1) block.push({ x, y });
     expect(g.builder.reshapeGround(block, 1)).toBe(true);
     g.commands.act(() => g.builder.reshapeGround(block, -1));
-    expect(g.map.terrain[40 * g.map.w + 41]).toBe(Terrain.Grass);
+    expect(g.map.terrain[40 * g.map.w + 42]).toBe(Terrain.Grass);
     expect(quarry.terrainFactor).toBeLessThan(before);
     expect(g.history.undo()).toEqual({ ok: true });
-    expect(g.map.terrain[40 * g.map.w + 41]).toBe(Terrain.Rock);
+    expect(g.map.terrain[40 * g.map.w + 42]).toBe(Terrain.Rock);
     expect(quarry.terrainFactor).toBe(before);
   });
 

@@ -1067,11 +1067,32 @@ describe('the dig plan', () => {
     expect(b.terrainEdits.get(ridge)).toBe(Terrain.Rock);
     expect([...b.terrainEdits.keys()].every((k) => map.terrain[k] === Terrain.Rock)).toBe(true);
     const changes: GroundChange[] = [
-      { x: 11, y: MID, was: 1, now: 1, terrainWas: Terrain.Grass, terrainNow: Terrain.Rock },
+      {
+        x: 11,
+        y: MID,
+        was: 1,
+        now: 1,
+        terrainWas: Terrain.Grass,
+        terrainNow: Terrain.Rock,
+      },
     ];
     b.setGround(changes, false);
     expect(b.terrainEdits.get(ridge)).toBe(Terrain.Grass);
     expect(map.terrain[ridge]).toBe(Terrain.Grass);
+  });
+
+  it('does not raise the ground beside a piece that needs it level', () => {
+    const w = world(hills(LOW_SADDLE));
+    const { builder: b } = w;
+    const lifted = b.checkDig(row(MID, 8, 14)).raise.filter((m) => m.y === MID + 1);
+    const { x } = lifted.find((m) => m.to > levelAt(w.map, m.x, m.y))!;
+    // the ground a tunnel lifts beside a curve would tilt it
+    b.track.place(x, MID + 2, 'curve', 0);
+    expect(b.checkDig(row(MID, 8, 14))).toMatchObject({
+      ok: false,
+      reason: STR.build.groundBesideLevel,
+    });
+    expect(b.dig(row(MID, 8, 14))).toBe(false);
   });
 
   it('refuses the whole drag over a building, road, deposit or surface track', () => {
