@@ -1095,17 +1095,27 @@ describe('track inside', () => {
   });
 
   it.each([
-    ['dug', true],
-    ['dug, Drill on', true],
-    ['cut', false],
-  ] as const)('a %s tile takes no road, building, station, depot or decor', (name, dug) => {
+    ['dug'],
+    ['dug, Drill on'],
+    ['cut'],
+    ['portal front'],
+    ['portal front, Drill on'],
+  ] as const)('a %s tile takes no road, building, station, depot or decor', (name) => {
     const AT = { x: 20, y: ROW };
     // a level plain, with level ground and grass where every check would take it
     const w = ground(() => 0);
-    if (dug) w.under.dig(AT.x, AT.y, 0);
-    else w.under.cut(AT.x, AT.y);
-    w.builder.insideMode = name === 'dug, Drill on';
-    const reason = dug ? STR.build.overTunnel : STR.build.inCutting;
+    let reason: string = STR.build.portalFront;
+    if (name.startsWith('dug')) {
+      w.under.dig(AT.x, AT.y, 0);
+      reason = STR.build.overTunnel;
+    } else if (name === 'cut') {
+      w.under.cut(AT.x, AT.y);
+      reason = STR.build.inCutting;
+    } else {
+      w.under.dig(AT.x + 1, AT.y, 0);
+      w.under.addPortal({ x: AT.x + 1, y: AT.y, face: 'W', floor: 0 });
+    }
+    w.builder.insideMode = name.endsWith('Drill on');
     const refused = { ok: false, reason };
     expect(w.builder.checkRoad(AT.x, AT.y), 'road').toMatchObject(refused);
     expect(w.builder.placeRoad(AT.x, AT.y), 'road').toBe(false);
@@ -1125,6 +1135,51 @@ describe('track inside', () => {
       expect(w.builder.spawnDecor(AT.x, AT.y, d.id, 0), d.id).toBeNull();
     }
     expect(w.builder.stations.length + w.builder.decor.size + w.builder.buildings.size).toBe(0);
+  });
+
+  it('the tile a portal looks at keeps its rail: no road crosses it, and it opens with the portal gone', () => {
+    const w = ground(() => 0);
+    w.under.dig(21, ROW, 0);
+    w.under.addPortal({ x: 21, y: ROW, face: 'W', floor: 0 });
+    expect(w.builder.placeTrack(20, ROW, STRAIGHT, 1)).toBe(true);
+    expect(w.builder.placeDecor(20, ROW, 'signal', 1)).not.toBeNull();
+    expect(w.builder.checkRoad(20, ROW)).toMatchObject({
+      ok: false,
+      reason: STR.build.portalFront,
+    });
+    expect(w.under.fill(21, ROW)).not.toBeNull();
+    expect(w.builder.checkRoad(20, ROW).ok).toBe(true);
+    expect(w.builder.checkDecor(20, ROW - 1, 'water_tower').ok).toBe(true);
+  });
+
+  it('a curve on platforms meets rail on a cut at its bed, not the bank over the bed', () => {
+    const w = ground((x) => (x < 16 ? 0 : x < 18 ? 2 : 5)),
+      narrow: TrackItem = { kind: 'curve', cls: 'narrow' };
+    const drag = Array.from({ length: 6 }, (_, i) => ({ x: 15 + i, y: ROW }));
+    expect(w.builder.dig(drag)).toBe(true);
+    expect(w.under.isCut(16, ROW)).toBe(true);
+    expect(w.under.fronted(15, ROW)).toBe(false);
+    expect(levelAt(w.map, 16, ROW)).toBe(2);
+    const platform = BUILDING_DEFS.find((d) => d.bridge)!;
+    expect(w.builder.placeBuilding(15, ROW, platform.id)).not.toBeNull();
+    // east to the cut and south to open ground at level 0: both rails stand at 0
+    const c = w.builder.checkTrack(15, ROW, narrow, 1);
+    expect(c.ok, c.reason).toBe(true);
+    expect(w.builder.placeTrack(15, ROW, narrow, 1)).toBe(true);
+    const bed = railProfile(w.map, w.track, (x, y) => !!w.builder.bridgeAt(x, y), w.under);
+    expect(bed.get(ROW * SIZE + 15)!.spans[0].a).toBe(0);
+  });
+
+  it('a bridge platform keeps off the tile a cliff portal looks at, and may stand beside it', () => {
+    const w = wall();
+    expect(w.builder.dig(Array.from({ length: 10 }, (_, i) => ({ x: 15 + i, y: ROW })))).toBe(true);
+    expect(w.under.fronted(15, ROW)).toBe(true);
+    const platform = BUILDING_DEFS.find((d) => d.bridge)!;
+    expect(w.builder.checkBuilding(15, ROW, platform.id)).toMatchObject({
+      ok: false,
+      reason: STR.build.portalFront,
+    });
+    expect(w.builder.checkBuilding(15, ROW + 1, platform.id).ok).toBe(true);
   });
 
   it('a footprint with one tile on a dug or cut tile refuses as a whole', () => {

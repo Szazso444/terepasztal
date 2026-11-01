@@ -350,6 +350,7 @@ export const HU: Strings = {
     overTunnel: 'E csempe alatt alagút fut',
     inCutting: 'A bevágásba csak sín kerülhet',
     cutStraight: 'A bevágásba csak egyenes sín kerülhet',
+    portalFront: 'Itt nyílik egy alagút: erre a csempére csak sín kerülhet',
     notDug: 'Odabent az egész elemnek kiásott föld kell',
     drillLine: 'A fúró keskeny nyomtávot, mellék-, fő- és törzsvonalat fektet',
     groundStays: 'Itt nem mozdul semmi',

@@ -403,6 +403,15 @@ export class Builder {
     return this.underground.isCut(x, y) ? STR.build.inCutting : null;
   }
   /**
+   * Why (x, y) takes nothing but rail, or null: the Drill's work on it, or a portal looking out at
+   * it, as a portal has to be able to carry a line out for as long as it stands. Every check of
+   * what stands off the rails asks this; track and signals ask `drilled`, as such a tile stays
+   * open ground under them.
+   */
+  private railsOnly(x: number, y: number): string | null {
+    return this.drilled(x, y) ?? (this.underground.fronted(x, y) ? STR.build.portalFront : null);
+  }
+  /**
    * Track beside (x, y); with a station kind given, beside its footprint turned to `rot` (beside
    * any of its tiles, so a station of two tiles is served from either).
    */
@@ -1080,7 +1089,7 @@ export class Builder {
     for (const { x: tx, y: ty } of stationFootprint(defId, x, y, rot)) {
       if (!inBounds(this.map, tx, ty)) return { ok: false, cost: {}, reason: STR.build.offMap };
       if (!this.unlocked(tx, ty)) return { ok: false, cost: {}, reason: STR.build.locked };
-      const drilled = this.drilled(tx, ty);
+      const drilled = this.railsOnly(tx, ty);
       if (drilled) return { ok: false, cost: {}, reason: drilled };
       const bad = unbuildable(terrainAt(this.map, tx, ty));
       if (bad) return { ok: false, cost: {}, reason: bad };
@@ -1268,7 +1277,7 @@ export class Builder {
       const inside = this.insideRefusal([{ x, y }]);
       if (inside) return inside;
     } else {
-      const drilled = this.drilled(x, y);
+      const drilled = this.railsOnly(x, y);
       if (drilled) return drilled;
       const bad = unbuildable(terrainAt(this.map, x, y));
       if (bad) return bad;
@@ -1372,7 +1381,7 @@ export class Builder {
     if (!this.free && !inSupplyMode(def))
       return { ok: false, cost: {}, reason: STR.build.supplyLocked };
     for (const { x: tx, y: ty } of tiles) {
-      const drilled = this.drilled(tx, ty);
+      const drilled = this.railsOnly(tx, ty);
       if (drilled) return { ok: false, cost: {}, reason: drilled };
       const t = terrainAt(this.map, tx, ty);
       // Bridge platforms stand on water or carry a rail level across a dip in the land.
@@ -1732,7 +1741,7 @@ export class Builder {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     if (roads.has(x, y)) return STR.build.roadHere;
-    const drilled = this.drilled(x, y);
+    const drilled = this.railsOnly(x, y);
     if (drilled) return drilled;
     const deck = this.bridgeAt(x, y);
     const bad = unbuildable(terrainAt(this.map, x, y));
