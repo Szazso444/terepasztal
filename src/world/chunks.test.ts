@@ -1356,8 +1356,8 @@ describe('stored chunks, over any generator, frame and text', () => {
 });
 
 describe('the seam between a stored chunk and a new one', () => {
-  // Levels are not stored: they are read from the terrain of the map as built, which caps every
-  // tile at one level above its neighbours, so the seam needs no easing of its own.
+  // A chunk stores its generated levels, and these rings have none, so the new tiles' levels are
+  // fitted to the stored ones (fitLevels): neighbours stay within maxStep(map), on the seam too.
 
   /** The level terrain `t` rises to on open ground (elevation.ts). */
   const peak = (t: number) => (t === Terrain.Hill ? 2 : t === Terrain.Mountain ? 4 : 0);
@@ -1371,7 +1371,7 @@ describe('the seam between a stored chunk and a new one', () => {
   // three worlds of 96 tiles grown to 160, each planning its rivers once (#341), every tile's
   // level read: about 0.9 s alone for each ring
   it.each(rings)(
-    'keeps neighbouring levels within one step against a ring of %s',
+    'keeps neighbouring levels within maxStep against a ring of %s',
     (_, fill) => {
       let steep = 0;
       for (const seed of [1, 7412, 20260912]) {

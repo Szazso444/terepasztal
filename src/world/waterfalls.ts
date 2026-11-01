@@ -27,8 +27,8 @@ import { Terrain, type GameMap } from './tiles';
  *
  * Generated water steps down one level at a time (rivers.ts, the drainage's levels), so every
  * waterfall a world generates drops one level. Drops of 2 to MAX_DROP are held all the same; the
- * relief (tileLevels) keeps every tile within a level of its neighbours, water included, so such a
- * drop would stand in it as a single level.
+ * relief (tileLevels) keeps every tile within maxStep of its neighbours, water included, so such a
+ * drop stands in full on a map with generated levels, and as a single level on a map without them.
  */
 
 /**
