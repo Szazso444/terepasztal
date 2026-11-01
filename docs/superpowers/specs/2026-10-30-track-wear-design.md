@@ -147,8 +147,11 @@ finishes a job, when it reaches its waiting place and as it waits there.
 
 **Choosing work.** A train picks a job when it starts or finishes one, never per frame. It works
 one piece at a time and always to 100 %: it keeps the job and its claim until then, and takes no
-other meanwhile. It lets a job go only when the piece is gone, when it leaves the mode, or when it is
-stopped (below).
+other meanwhile, with one exception: when failed track cuts it off from its job, it mends the failed
+piece that cuts its way first, then returns and finishes the job. Only that piece may go first, and
+the job stays claimed, in the save too. If that piece is out of its reach or another train holds it,
+it stands and looks again. It lets a job go only when the piece is gone, when it leaves the mode, or
+when it is stopped (below).
 It looks in three tiers: unusable, then degraded, then close to degraded. One `findPath` per tier
 with every job of that tier as a target gives the nearest reachable one, so a pick costs at most
 three searches. A claimed piece is left to the train that claimed it. A train that stops in

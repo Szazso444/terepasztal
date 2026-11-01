@@ -83,6 +83,32 @@ export class MaintenanceBoard {
     const tiles = new Set(this.workTiles(track, ax, ay).map((p) => track.key(p.x, p.y)));
     return tiles.size ? this.search(t, track, (x, y) => tiles.has(track.key(x, y))) : null;
   }
+  /**
+   * The train's job is cut off by failed track: it takes the first failed piece on the way, as the
+   * way would run were the track sound, and sets the job aside (`Train.heldJob`), claimed still. A
+   * piece taken this way that a further failure cuts off gives way to that one. Null, with nothing
+   * changed, when no failed piece cuts the way, or another train holds it.
+   */
+  takeCut(t: Train, track: TrackGraph): PathSegment[] | null {
+    const { ax, ay } = t.maint!;
+    const job = new Set(track.unitTiles(ax, ay).map((p) => track.key(p.x, p.y)));
+    const ends = t.pathEnds();
+    const clear = t.pathPastBreaks(track, ends, (x, y) => job.has(track.key(x, y)));
+    const cut = clear?.find((s) => {
+      const piece = track.get(s.x, s.y);
+      return !!piece && piece.wear.health <= 0 && !job.has(track.key(s.x, s.y));
+    });
+    if (!cut) return null;
+    const at = track.anchorOf(cut.x, cut.y);
+    if (this.claimed(track).has(track.key(at.x, at.y))) return null;
+    const tiles = new Set(this.workTiles(track, at.x, at.y).map((p) => track.key(p.x, p.y)));
+    const way = this.search(t, track, (x, y) => tiles.has(track.key(x, y)));
+    if (!way) return null;
+    const end = way[way.length - 1];
+    t.heldJob ??= t.maint;
+    t.maint = { ax: at.x, ay: at.y, tier: 0, x: end.x, y: end.y };
+    return way;
+  }
   /** The job `pick` would give a train standing where it stands, claiming nothing. */
   peek(t: Train, track: TrackGraph): MaintJob | null {
     return this.nearest(t, track, t.pathEnds())?.job ?? null;
@@ -105,6 +131,7 @@ export class MaintenanceBoard {
   /** The train has no job any more: the piece is on the board again. */
   release(t: Train): void {
     t.maint = null;
+    t.heldJob = null;
     t.repairUnpaid = false;
   }
   /**
@@ -214,11 +241,17 @@ export class MaintenanceBoard {
       }
     return out;
   }
+  /** The anchors of the pieces trains hold: their jobs, and the jobs they set aside. */
+  private claimed(track: TrackGraph): Set<number> {
+    const out = new Set<number>();
+    for (const o of this.trains())
+      for (const job of [o.maint, o.heldJob]) if (job) out.add(track.key(job.ax, job.ay));
+    return out;
+  }
   /** Every piece no train holds, tier by tier, keyed by the tile a train would stand on. */
   private openJobs(track: TrackGraph): Map<number, MaintJob>[] {
     const tiers: Map<number, MaintJob>[] = [new Map(), new Map(), new Map()];
-    const claimed = new Set<number>();
-    for (const o of this.trains()) if (o.maint) claimed.add(track.key(o.maint.ax, o.maint.ay));
+    const claimed = this.claimed(track);
     for (const { x: ax, y: ay, piece } of track.anchors()) {
       const tier = tierOf(piece);
       if (tier === null || claimed.has(track.key(ax, ay))) continue;

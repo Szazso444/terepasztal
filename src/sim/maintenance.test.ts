@@ -917,6 +917,9 @@ describe('a maintenance train at work', () => {
     const none = t.toJSON();
     expect('repairOwed' in none).toBe(false);
     expect('maint' in none).toBe(false);
+    expect('heldJob' in none).toBe(false);
+    t.heldJob = { ax: 41, ay: 30, tier: 1, x: 41, y: 30 };
+    expect(Train.fromJSON(t.toJSON(), w.track).heldJob).toEqual(t.heldJob);
     expect(Train.fromJSON(none, w.track).maint).toBeNull();
   });
 
@@ -927,6 +930,11 @@ describe('a maintenance train at work', () => {
     const load = (maint: unknown, repairOwed: unknown) =>
       Train.fromJSON({ ...j, maint, repairOwed } as typeof j, w.track);
     expect(load(job, { wood: 0.5 }).maint).toEqual(job);
+    const held = (heldJob: unknown) =>
+      Train.fromJSON({ ...j, heldJob } as typeof j, w.track).heldJob;
+    expect(held(job)).toEqual(job);
+    expect(held({ ...job, tier: 3 })).toBeNull();
+    expect(held('job')).toBeNull();
     expect(load({ ...job, tier: 3 }, undefined).maint).toBeNull();
     expect(load({ ...job, ax: 'a' }, undefined).maint).toBeNull();
     expect(load({ ...job, x: Number.NaN }, undefined).maint).toBeNull();
@@ -1300,6 +1308,88 @@ describe('a maintenance train in traffic', () => {
     expect(t.blockedTime).toBe(0);
     w.track.place(44, 30, 'straight', 1, 'branch');
     until(w, repairing(t), 120);
+  });
+
+  it('cut off by a failed piece it mends that first, then finishes the job', () => {
+    const { w, t } = pulledAside();
+    until(w, () => t.state === 'idle', 60);
+    expect(t.headTile!.x).toBe(47);
+    rules.trackRepairSeconds = 40;
+    wearDown(w, 44, 0);
+    until(w, () => t.maint?.ax === 44, 30);
+    expect(t.heldJob?.ax).toBe(41);
+    until(w, () => healthAt(w, 44) >= 1, 200);
+    expect(healthAt(w, 41)).toBeLessThan(1);
+    until(w, () => t.maint?.ax === 41 && t.heldJob === null, 30);
+    until(w, () => healthAt(w, 41) >= 1, 200);
+    until(w, () => t.maint === null, 30);
+  });
+
+  it('only the piece that cuts its way goes first', () => {
+    const { w, t } = pulledAside();
+    until(w, () => t.state === 'idle', 60);
+    rules.trackRepairSeconds = 40;
+    wearDown(w, 44, 0);
+    wearDown(w, 60, 0);
+    until(w, () => t.maint?.ax === 44, 30);
+    until(w, () => healthAt(w, 44) >= 1, 200);
+    until(w, () => healthAt(w, 41) >= 1, 200);
+    expect(healthAt(w, 60)).toBe(0);
+    until(w, () => t.maint?.ax === 60, 30);
+  });
+
+  it('a failed stretch across its way is mended piece by piece, the job kept', () => {
+    const { w, t } = pulledAside();
+    until(w, () => t.state === 'idle', 60);
+    rules.trackRepairSeconds = 40;
+    wearDown(w, 44, 0);
+    wearDown(w, 43, 0);
+    until(w, () => healthAt(w, 44) >= 1 && healthAt(w, 43) >= 1, 400);
+    until(w, () => healthAt(w, 41) >= 1, 200);
+  });
+
+  it('a second worker leaves the job set aside alone', () => {
+    const { w, t } = pulledAside();
+    until(w, () => t.state === 'idle', 60);
+    wearDown(w, 41, 0.2);
+    wearDown(w, 44, 0);
+    until(w, () => t.heldJob !== null, 30);
+    const second = maintTrain(w, []);
+    expect(second.maint).toBeNull();
+  });
+
+  it("with that piece in another train's hands it stands and looks again", () => {
+    const { w, t, other } = pulledAside();
+    until(w, () => t.state === 'idle', 60);
+    wearDown(w, 44, 0);
+    other.t.maint = { ax: 44, ay: 30, tier: 0, x: 43, y: 30 };
+    run(w, 20, () => {
+      expect(t.maint?.ax).toBe(41);
+      expect(t.heldJob).toBeNull();
+      expect(t.state).toBe('idle');
+    });
+    other.t.maint = null;
+    until(w, () => t.maint?.ax === 44 && t.heldJob?.ax === 41, 30);
+  });
+
+  it('stopped on the way to the piece it drops both jobs', () => {
+    const { w, t } = pulledAside();
+    until(w, () => t.state === 'idle', 60);
+    wearDown(w, 44, 0);
+    until(w, () => t.heldJob !== null, 30);
+    t.coal = 0;
+    t.water = 0;
+    until(w, () => t.state === 'noFuel', 60);
+    expect([t.maint, t.heldJob]).toEqual([null, null]);
+  });
+
+  it('taken off the mode it drops both jobs', () => {
+    const { w, t } = pulledAside();
+    until(w, () => t.state === 'idle', 60);
+    wearDown(w, 44, 0);
+    until(w, () => t.heldJob !== null, 30);
+    t.leaveWork();
+    expect([t.maint, t.heldJob]).toEqual([null, null]);
   });
 
   it('a piece gone while it stands aside ends the job', () => {

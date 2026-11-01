@@ -196,18 +196,21 @@ function owedJSON(owed: { food: number; sand: number }): {
 } {
   return { owed: { ...owed } };
 }
-/** A maintenance train's job, waiting place and repair debt in its save: only when it has them. */
+/** A maintenance train's jobs, waiting place and repair debt in its save: only when it has them. */
 function maintJSON(
   maint: MaintJob | null,
+  heldJob: MaintJob | null,
   parkAt: { x: number; y: number } | null,
   repairOwed: Record<string, number>,
 ): {
   maint?: MaintJob;
+  heldJob?: MaintJob;
   parkAt?: { x: number; y: number };
   repairOwed?: Record<string, number>;
 } {
   return {
     ...(maint && { maint: { ...maint } }),
+    ...(heldJob && { heldJob: { ...heldJob } }),
     ...(parkAt && { parkAt: { ...parkAt } }),
     ...(Object.keys(repairOwed).length && { repairOwed: { ...repairOwed } }),
   };
@@ -917,6 +920,8 @@ export class Train {
   }
   /** the piece it looks after (`MaintenanceBoard`), kept until the job is done or left */
   maint: MaintJob | null = null;
+  /** the job it left to mend a failed piece that cut it off (`MaintenanceBoard.takeCut`), claimed still */
+  heldJob: MaintJob | null = null;
   /** the tile it waits on with no job, or heads for to wait (`MaintenanceBoard.park`) */
   parkAt: { x: number; y: number } | null = null;
   /** what its repairs have cost short of a whole unit, by resource */
@@ -1266,6 +1271,15 @@ export class Train {
       this.access.classes.has(pieceClassFor(p, entry)) &&
       this.mass <= (p.bridgeCapacity ?? Infinity)
     );
+  }
+  /** `pathTo` as if every piece were sound: where the way would run but for failed track. */
+  pathPastBreaks(
+    track: TrackGraph,
+    start: readonly PathStart[],
+    isTarget: (x: number, y: number) => boolean,
+  ) {
+    const fits = (p: TrackPiece, entry: Dir) => this.fits(p, entry);
+    return findPath(track, [...start], isTarget, 100000, undefined, fits, this.tollOf);
   }
   /** Route cost multiplier: a smaller train pays extra on a bigger line (`lineToll`). */
   readonly tollOf = (p: TrackPiece, entry: Dir) =>
@@ -2457,7 +2471,8 @@ export class Train {
    * Standing with a job it pulled away from, it looks for the way back every BACK_EVERY seconds and
    * takes it once no train stands on it, holds it or is about to run over it. After
    * `trackLookSeconds` it takes it as it is: a train parked on the way only moves off for a train
-   * on the way, and traffic control sees to the rest. With no way it stands and looks again.
+   * on the way, and traffic control sees to the rest. With no way it mends the failed piece that
+   * cuts it off, and with none it can mend it stands and looks again.
    */
   private comeBack(gdt: number, ctx: TickCtx) {
     const t = this.stateTime;
@@ -2469,7 +2484,10 @@ export class Train {
       return;
     }
     const way = board.wayToJob(this, ctx.track);
-    if (!way) return;
+    if (!way) {
+      this.mendCut(ctx);
+      return;
+    }
     const taken = (s: PathSegment) =>
       ctx.occupied(s.x, s.y, this.id) ||
       ctx.claimedBy(s.x, s.y, this.id) !== null ||
@@ -2487,13 +2505,18 @@ export class Train {
   }
   /**
    * Take the next job, if there is one it can reach; `ahead`, past its head (`pick`). A job with
-   * work left stays its job: it goes back to that, or stands and looks for the way (`comeBack`).
+   * work left stays its job, and one set aside comes next: it goes back to that, mends what cuts it
+   * off, or stands and looks for the way (`comeBack`).
    */
   private takeJob(ctx: TickCtx, ahead = false): boolean {
+    if (this.heldJob && !ctx.maintenance.unfinished(this, ctx.track)) {
+      this.maint = this.heldJob;
+      this.heldJob = null;
+    }
     if (ctx.maintenance.unfinished(this, ctx.track)) {
       const way = ctx.maintenance.wayToJob(this, ctx.track);
       if (way) this.backToJob(way, ctx);
-      else this.idle();
+      else if (!this.mendCut(ctx)) this.idle();
       return true;
     }
     const found = ctx.maintenance.pick(this, ctx.track, ahead);
@@ -2501,6 +2524,12 @@ export class Train {
     this.parkAt = null;
     if (!this.setOff(found.path, ctx)) this.startWork();
     return true;
+  }
+  /** Off to the failed piece that cuts it off from its job; false when there is none to take. */
+  private mendCut(ctx: TickCtx): boolean {
+    const way = ctx.maintenance.takeCut(this, ctx.track);
+    if (way) this.backToJob(way, ctx);
+    return !!way;
   }
   /** Set off along a way to the job it holds: the way's end is the tile it works from now. */
   private backToJob(way: PathSegment[], ctx: TickCtx) {
@@ -2573,6 +2602,7 @@ export class Train {
    */
   leaveWork(): void {
     this.maint = null;
+    this.heldJob = null;
     this.parkAt = null;
     this.repairUnpaid = false;
     const onItsWay =
@@ -2640,6 +2670,7 @@ export class Train {
     // a train that cannot go on gives its job back: the claim does not outlive the work
     if (STOPS_WORK.includes(s)) {
       this.maint = null;
+      this.heldJob = null;
       this.repairUnpaid = false;
     }
     // the way an idle train wants aside is its own (`wantAside`): never a later yield's way on
@@ -3986,7 +4017,7 @@ export class Train {
       ...owedJSON(this.owed),
       // the job it holds, where it waits and what its repairs left owing; a file without them has
       // none of these
-      ...maintJSON(this.maint, this.parkAt, this.repairOwed),
+      ...maintJSON(this.maint, this.heldJob, this.parkAt, this.repairOwed),
     };
   }
 
@@ -4057,6 +4088,7 @@ export class Train {
     t.dropped = j.dropped === true;
     t.owed = { food: owedOf(j.owed?.food), sand: owedOf(j.owed?.sand) };
     t.maint = maintOf(j.maint);
+    t.heldJob = maintOf(j.heldJob);
     t.parkAt = parkAtOf(j.parkAt);
     t.repairOwed = repairOwedOf(j.repairOwed);
     // a yielding train looks again only every two seconds: until then what it last found holds
