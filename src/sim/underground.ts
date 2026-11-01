@@ -23,7 +23,7 @@ export const TUNNEL_COVER = 3;
 const DIG_FLOOR = 0;
 
 /** The lines the Drill lays inside. Maglev and Hyperloop come later. */
-const DRILL_LINES: readonly TrackClass[] = ['narrow', 'branch', 'main', 'trunk'];
+export const DRILL_LINES: readonly TrackClass[] = ['narrow', 'branch', 'main', 'trunk'];
 /** The age the Drill opens in, as `economy.tier` counts it: the Diesel Age. */
 export const DRILL_AGE = 1;
 /** Every line of `item` is one the Drill lays inside. */

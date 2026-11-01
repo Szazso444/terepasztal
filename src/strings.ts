@@ -717,6 +717,8 @@ const EN = {
         'Click a piece or drag along the line. A piece that does not fit stays as it was, shown in red.',
       ground:
         'On land with nothing built on it and no deposit, from sea level up to level 16. Water cannot be moved, and ground over a tunnel stays above its roof.',
+      drill:
+        'Into ground with nothing on it, from the Diesel Age on, for every line but Maglev and Hyperloop. Not touching water, and not on the edge of the map.',
       road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight Narrow Gauge, Branch or Main Line track at right angles, as a level crossing; never Trunk Line.',
     },
     trackDesc: {

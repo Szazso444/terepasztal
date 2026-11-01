@@ -558,6 +558,8 @@ export const HU: Strings = {
         'Kattints egy elemre, vagy húzd végig a vonalon. Ami nem illeszkedik, az marad, és pirossal látszik.',
       ground:
         'Szárazföldi csempére, amelyen nincs semmi és nincs lelőhely, a tengerszint és a 16. szint között. A vizet nem lehet mozdítani, az alagút fölötti föld pedig a tető fölött marad.',
+      drill:
+        'Olyan földbe, amelyen nincs semmi, a Dízelkorszaktól, minden vonalhoz a Maglev és a Hyperloop kivételével. Vizet nem érhet, és a térkép szélére sem kerülhet.',
       road: 'Fűre, erdőbe, homokra vagy dombra, épületre soha: az épülettel az utcai ajtajánál találkozik. Keskeny nyomtáv, Mellékvonal vagy Fővonal sima egyenes sínjét derékszögben keresztezi, útátjáróként; Törzsvonalat soha.',
     },
     trackDesc: {
