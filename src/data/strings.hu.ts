@@ -108,6 +108,8 @@ export const HU: Strings = {
     renamed: (was: string, now: string) => `Átnevezve: ${was} → ${now}`,
     recoloured: (train: string, colour: string) => `${train} színkódja: ${colour}`,
     groundMoved: 'Föld átalakítva',
+    tunnelDug: 'Alagút fúrva',
+    tunnelFilled: 'Ásott csempe betöltve',
     builtOver: 'Azóta más épült oda.',
     trainOn: (train: string) => `${train} áll a sínen.`,
     routedTo: (train: string, station: string) => `${train} útvonala ide vezet: ${station}.`,
@@ -344,6 +346,7 @@ export const HU: Strings = {
     groundMovesWater: 'Ez megmozdítaná a vizet: a víz nem emelhető és nem süllyeszthető',
     groundUp: (tiles: number, cost: string) => `Emelés: ${tiles} csempe, ${cost}`,
     groundDown: (tiles: number, cost: string) => `Süllyesztés: ${tiles} csempe, ${cost}`,
+    digBesideWater: 'Vizet érintő föld nem ásható ki',
     groundStays: 'Itt nem mozdul semmi',
     groundRefused: (tiles: number, reason: string) =>
       tiles === 1

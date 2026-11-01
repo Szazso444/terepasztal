@@ -74,7 +74,14 @@ import {
   type RoadLinks,
 } from './roads';
 import { hasDoors, streetDoors, type Door, type PlaceAt } from './doors';
-import { TUNNEL_COVER, Underground } from './underground';
+import {
+  TUNNEL_COVER,
+  Underground,
+  touchesWater,
+  type DigPlan,
+  type DigWork,
+  type Portal,
+} from './underground';
 import type { BuildLog, PieceSpec } from './buildLog';
 import type { Work } from './upgrade';
 
@@ -134,6 +141,14 @@ export interface GroundChange {
   now: number;
   terrainWas: Terrain;
   terrainNow: Terrain;
+}
+
+/** A tile back-filled, as it stood: dug at `floor`, or a cut when that is undefined. */
+export interface FilledTile {
+  x: number;
+  y: number;
+  floor: number | undefined;
+  portals: Portal[];
 }
 
 /**
@@ -219,7 +234,7 @@ export class Builder {
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
   onSupplyChanged: ((x: number, y: number) => void) | null = null;
-  /** fired when a raise or a lower, or the undo or redo of one, wrote these changes */
+  /** fired when a raise, a lower or a dig, or the undo or redo of one, wrote these changes */
   onGroundChanged: ((changes: readonly GroundChange[]) => void) | null = null;
   /** fired when an undo gave a tile back the props track or a structure took off it */
   onPropsBack: ((x: number, y: number) => void) | null = null;
@@ -345,11 +360,14 @@ export class Builder {
     const payer = this.stores.nearest(x, y).find((s) => s.key === c.payer);
     return !!payer && payer.spend(c.cost);
   }
-  /** Give back the refund share of `cost` to the store that supplies (x, y), else the nearest. */
+  /** The store that takes in goods from (x, y): the one that supplies it, else the nearest. */
+  private intakeAt(x: number, y: number): ResourceStore | undefined {
+    return this.stores.supplierFor(x, y) ?? this.stores.nearest(x, y, Infinity)[0];
+  }
+  /** Give back the refund share of `cost` to the store that takes in goods from (x, y). */
   private refund(cost: Cost, x: number, y: number) {
     if (this.free) return;
-    const to = this.stores.supplierFor(x, y) ?? this.stores.nearest(x, y, Infinity)[0];
-    to?.refund(cost, rules.refundRate);
+    this.intakeAt(x, y)?.refund(cost, rules.refundRate);
   }
   /**
    * A station was placed, removed or changed (a level, an upgrade begun): it is told, then the
@@ -1332,20 +1350,13 @@ export class Builder {
       this.underground.isCut(x, y)
     );
   }
-  /** Water on a side or a corner of (x, y). */
-  private touchesWater(x: number, y: number) {
-    for (let dy = -1; dy <= 1; dy++)
-      for (let dx = -1; dx <= 1; dx++)
-        if (terrainAt(this.map, x + dx, y + dy) === Terrain.Water) return true;
-    return false;
-  }
   /** Why the refused tile (x, y) of a raise or lower may not move. */
   private groundRefusal({ x, y }: { x: number; y: number }, delta: 1 | -1): string {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     if (terrainAt(this.map, x, y) === Terrain.Water) return STR.build.groundMovesWater;
     if (this.groundTaken(x, y)) return STR.build.occupied;
-    if (delta < 0 && this.touchesWater(x, y)) return STR.build.groundBesideWater;
+    if (delta < 0 && touchesWater(this.map, x, y)) return STR.build.groundBesideWater;
     return STR.build.groundLimit;
   }
   /**
@@ -1362,7 +1373,9 @@ export class Builder {
       tiles,
       delta,
       (x, y) =>
-        !this.unlocked(x, y) || this.groundTaken(x, y) || (delta < 0 && this.touchesWater(x, y)),
+        !this.unlocked(x, y) ||
+        this.groundTaken(x, y) ||
+        (delta < 0 && touchesWater(this.map, x, y)),
       (x, y) => {
         const floor = this.underground.floorAt(x, y);
         return floor === undefined ? 0 : floor + TUNNEL_COVER;
@@ -1430,6 +1443,101 @@ export class Builder {
     }
     if (turned) this.refreshHarvest();
     this.onGroundChanged?.(changes);
+  }
+
+  // ------------------------------------------------------------------ the Drill
+  /**
+   * What the Drill would do with the drag `tiles` (`Underground.plan`), at the build price. Ground
+   * Raise and Lower leave alone is ground the Drill leaves alone: the plan asks `groundTaken` of
+   * each tile, so rail on the surface refuses the drag and rail inside a dug tile does not.
+   */
+  checkDig(tiles: readonly { x: number; y: number }[]): DigPlan {
+    const plan = this.underground.plan(
+      this.map,
+      tileLevels(this.map),
+      tiles,
+      (x, y) => this.unlocked(x, y) && !this.groundTaken(x, y),
+    );
+    if (!plan.ok) {
+      const [t] = plan.refused;
+      const uncharted = inBounds(this.map, t.x, t.y) && !this.unlocked(t.x, t.y);
+      return uncharted ? { ...plan, reason: STR.build.locked } : plan;
+    }
+    const cost = this.priced(plan.cost, 1),
+      stone = this.free ? 0 : plan.stone;
+    if (hasPrice(cost) && !this.economy.canAfford(cost.money))
+      return { ...plan, ok: false, cost, stone, reason: STR.build.funds };
+    return { ...plan, cost, stone };
+  }
+  /**
+   * Dig the drag `tiles` and pay for it; false, with nothing dug or paid, when `checkDig` refuses
+   * or there is nothing to dig. The raise is written in full, as `reshapeGround` writes its own,
+   * and a tile of the drag that really comes up turns to Rock, the ridge the tunnel makes; the slope
+   * round it keeps its ground. Stone goes to the store that takes in goods from the first tile dug.
+   * It goes in the build log, with what was paid, as one change (`setDug`).
+   */
+  dig(tiles: readonly { x: number; y: number }[]): boolean {
+    const c = this.checkDig(tiles);
+    if (!c.ok || !(c.dig.length || c.cut.length || c.portals.length)) return false;
+    const paid = c.cost.money ?? 0;
+    if (paid > 0 && !this.economy.spend(paid)) return false;
+    const { map } = this,
+      digging = new Set(c.dig.map((t) => this.key(t.x, t.y)));
+    const changes = c.raise.map((m): GroundChange => {
+      const k = this.key(m.x, m.y),
+        terrain = map.terrain[k] as Terrain,
+        ridge = digging.has(k) && m.to > levelAt(map, m.x, m.y) && !stone(terrain);
+      return {
+        x: m.x,
+        y: m.y,
+        was: map.groundLevel?.[k] ?? NO_LEVEL,
+        now: m.to,
+        terrainWas: terrain,
+        terrainNow: ridge ? Terrain.Rock : terrain,
+      };
+    });
+    this.log?.dig(c, changes, paid);
+    this.setDug(c, changes, true);
+    if (c.stone > 0) this.intakeAt(c.dig[0].x, c.dig[0].y)?.add('stone', c.stone);
+    sfx('build.place');
+    return true;
+  }
+  /**
+   * Back-fill a dug or cut tile with no track on it and refund the refund share of what it cost,
+   * its portals too. The ground stays as the dig left it, and the stone stays in the stock. False,
+   * with nothing changed, for any other tile.
+   */
+  fillDug(x: number, y: number): boolean {
+    const { underground: under } = this,
+      floor = under.floorAt(x, y);
+    if ((floor === undefined && !under.isCut(x, y)) || this.track.has(x, y)) return false;
+    const portals = under.portals().filter((p) => p.x === x && p.y === y),
+      price = { money: rules.drillCost + rules.portalCost * portals.length },
+      back = this.priced(price, rules.refundRate).money ?? 0,
+      tile: FilledTile = { x, y, floor, portals };
+    this.log?.fill(tile, -back);
+    this.setFilled(tile, true);
+    // it comes back as it went: it was never earned
+    this.economy.money += back;
+    sfx('build.remove');
+    return true;
+  }
+  /** Write a dig forward, or back as an undo does. */
+  setDug(work: DigWork, changes: readonly GroundChange[], forward: boolean) {
+    if (forward) this.underground.apply(work);
+    else this.underground.unapply(work);
+    if (changes.length) this.setGround(changes, forward);
+  }
+  /** Write a back-fill forward, or back as an undo does. */
+  setFilled(t: FilledTile, forward: boolean) {
+    const { underground: under } = this;
+    if (forward) {
+      under.fill(t.x, t.y);
+      return;
+    }
+    if (t.floor === undefined) under.cut(t.x, t.y);
+    else under.dig(t.x, t.y, t.floor);
+    for (const p of t.portals) under.addPortal(p);
   }
 
   // ------------------------------------------------------------------ electrification

@@ -1,7 +1,7 @@
 import { STR } from '../strings';
 import { footprintOf, type TrackClass, type TrackGraph, type TrackPiece } from '../world/track';
 import type { ReclassDir } from '../world/reclass';
-import { decorDef, type Builder, type Decor, type GroundChange } from './build';
+import { decorDef, type Builder, type Decor, type FilledTile, type GroundChange } from './build';
 import { buildingDef, buildingFootprint, buildingLevel, type Building } from './buildings';
 import type { SupplyKind } from './catenary';
 import type { CommandResult } from './commands';
@@ -14,6 +14,7 @@ import type { Station } from './stations';
 import { fmtCost, type GoodsMove, type Holdings } from './stores';
 import type { GameClock } from './time';
 import type { Town, TownRegistry } from './towns';
+import type { DigWork } from './underground';
 import type { Work } from './upgrade';
 import { levelAt } from '../world/elevation';
 import type { PropInstance } from '../world/tiles';
@@ -114,6 +115,10 @@ export type BuildOp =
   | { op: 'supply'; x: number; y: number; was: SupplyKind | null; now: SupplyKind | null }
   /** a raise or a lower, and the money it cost: money is not among the goods a step counts */
   | { op: 'ground'; changes: readonly GroundChange[]; money: number }
+  /** a dig, the ground it raised and the money it cost */
+  | { op: 'dig'; work: DigWork; changes: readonly GroundChange[]; money: number }
+  /** a back-fill; `money` is what it cost, so a refund stands below zero */
+  | { op: 'fill'; tile: FilledTile; money: number }
   /** `spur`: a road the game laid to a door by itself */
   | { op: 'road'; x: number; y: number; laid: boolean; spur: boolean }
   | { op: 'stationLevel'; station: Station; was: StationLevel; now: StationLevel }
@@ -130,9 +135,9 @@ interface PeopleMove {
 /**
  * What stands on a tile, in the terms an undo cares about: the track, road, wire, station, works
  * and decor there, and the ground under it, the levels of the tile and its four sides, as a piece
- * stands back with no rule asked and only the ground it left is sure to carry it. A station's
- * level, a signal's turn or a switch's form are not in it: they change without anything new having
- * been built.
+ * stands back with no rule asked and only the ground it left is sure to carry it, and whether the
+ * tile is dug or cut. A station's level, a signal's turn or a switch's form are not in it: they
+ * change without anything new having been built.
  */
 function tileState(b: Builder, x: number, y: number): string {
   const p = b.track.get(x, y);
@@ -150,6 +155,7 @@ function tileState(b: Builder, x: number, y: number): string {
     b.stationAt(x, y)?.id ?? '',
     b.buildingAt(x, y)?.id ?? '',
     b.decorAt(x, y)?.id ?? '',
+    b.underground.isDug(x, y) ? 'dug' : b.underground.isCut(x, y) ? 'cut' : '',
   ].join('|');
 }
 
@@ -163,6 +169,15 @@ function pieceAt(track: TrackGraph, x: number, y: number): PieceSpec | null {
 }
 const stationLevelOf = (s: Station): StationLevel => ({ level: s.level, work: s.work });
 const worksLevelOf = (b: Building): WorksLevel => ({ level: b.level, work: b.work });
+
+/** The money an operation cost: only those that move ground or dig carry any. */
+function moneyOf(op: BuildOp): number {
+  return op.op === 'ground' || op.op === 'dig' || op.op === 'fill' ? op.money : 0;
+}
+/** The operation wrote ground levels. */
+function movesGround(op: BuildOp): boolean {
+  return op.op === 'ground' || (op.op === 'dig' && op.changes.length > 0);
+}
 
 /** What moved in each store between two looks at them: a good left alone differs by nothing. */
 function goodsMoved(before: Holdings, after: Holdings): GoodsMove[] {
@@ -230,6 +245,14 @@ export class BuildLog {
   ground(changes: readonly GroundChange[], money: number) {
     this.touch(changes);
     this.ops.push({ op: 'ground', changes, money });
+  }
+  dig(work: DigWork, changes: readonly GroundChange[], money: number) {
+    this.touch([...work.dig, ...work.cut, ...changes]);
+    this.ops.push({ op: 'dig', work, changes, money });
+  }
+  fill(tile: FilledTile, money: number) {
+    this.touch([tile]);
+    this.ops.push({ op: 'fill', tile, money });
   }
   road(x: number, y: number, laid: boolean, spur = false) {
     this.touch([{ x, y }]);
@@ -350,7 +373,7 @@ export class BuildStep implements HistoryStep {
     for (const [k, v] of next.before) if (!this.before.has(k)) this.before.set(k, v);
     for (const [k, v] of next.after) this.after.set(k, v);
     // ground that moved has moved under the sides of the tiles before it too
-    if (next.ops.some((op) => op.op === 'ground')) {
+    if (next.ops.some(movesGround)) {
       const b = this.w.builder;
       for (const k of this.after.keys())
         this.after.set(k, tileState(b, k % b.map.w, Math.floor(k / b.map.w)));
@@ -391,7 +414,7 @@ export class BuildStep implements HistoryStep {
     if (!forward) this.putPropsBack();
     // a tile a later frame of a drag first touched noted its sides with the earlier frames' ground
     // moved; the way forward starts from the ground as the undo left it
-    if (!forward && this.ops.some((op) => op.op === 'ground'))
+    if (!forward && this.ops.some(movesGround))
       for (const k of this.before.keys())
         this.before.set(k, tileState(builder, k % builder.map.w, Math.floor(k / builder.map.w)));
     for (const { held } of this.lapsed(forward)) {
@@ -455,11 +478,9 @@ export class BuildStep implements HistoryStep {
     if (train) return STR.history.trainOn(train.name);
     const short = b.stores.shortOf(takes);
     if (short) return STR.history.short(b.stores.label(short.store), fmtCost(short.missing));
-    if (forward) {
-      let money = 0;
-      for (const op of this.ops) if (op.op === 'ground') money += op.money;
-      if (!b.economy.canAfford(money)) return STR.build.funds;
-    }
+    let money = 0;
+    for (const op of this.ops) money += forward ? moneyOf(op) : -moneyOf(op);
+    if (money > 0 && !b.economy.canAfford(money)) return STR.build.funds;
     // a contract that had a train comes back with one: not as work nobody will do, and a fine
     for (const { held, origin, dest } of this.lapsed(forward)) {
       const c = held.contract;
@@ -467,6 +488,14 @@ export class BuildStep implements HistoryStep {
         return STR.history.contractNoTrain(contractTitle(c.name));
     }
     return null;
+  }
+
+  /** Pay what an operation cost, or take it back: what comes back was never earned. */
+  private settle(money: number, forward: boolean) {
+    const { economy } = this.w.builder,
+      paid = forward ? money : -money;
+    if (paid > 0) economy.spend(paid);
+    else economy.money -= paid;
   }
 
   private apply(op: BuildOp, forward: boolean) {
@@ -479,10 +508,16 @@ export class BuildStep implements HistoryStep {
         b.setSupply(op.x, op.y, forward ? op.now : op.was);
         break;
       case 'ground':
-        // what was paid comes back as it went: it was never earned
-        if (forward) b.economy.spend(op.money);
-        else b.economy.money += op.money;
+        this.settle(op.money, forward);
         b.setGround(op.changes, forward);
+        break;
+      case 'dig':
+        this.settle(op.money, forward);
+        b.setDug(op.work, op.changes, forward);
+        break;
+      case 'fill':
+        this.settle(op.money, forward);
+        b.setFilled(op.tile, forward);
         break;
       case 'road':
         b.setRoad(op.x, op.y, op.laid === forward);
@@ -610,6 +645,10 @@ export function stepLabel(ops: readonly BuildOp[]): string {
       return H.renamed(first.shown, first.now);
     case 'ground':
       return H.groundMoved;
+    case 'dig':
+      return H.tunnelDug;
+    case 'fill':
+      return H.tunnelFilled;
     default:
       return H.built(H.track);
   }

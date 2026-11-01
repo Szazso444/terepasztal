@@ -1,17 +1,29 @@
+import { DIR_DX, DIR_DY } from '../engine/iso';
+import { STR } from '../strings';
 import { MAX_LEVEL, NO_LEVEL, tileLevels, type Elevated } from '../world/elevation';
-import { Terrain } from '../world/tiles';
+import { reshape, type Reshape } from '../world/reshape';
+import { Terrain, terrainAt, type GameMap } from '../world/tiles';
+import type { PlacementCheck } from './build';
+import { rules } from './rules';
 
 /**
  * The store of what the Drill has made: the tiles dug inside a mountain, the cuttings that lead
- * down from a portal to open ground, and the portals themselves. It holds no rules; the dig plan
- * that decides what may be dug comes with the Drill. Tiles are map tiles, as the track keys them.
+ * down from a portal to open ground, and the portals themselves, with the plan of what a drag of
+ * the Drill makes (`Underground.plan`). Nothing else writes the store: `Builder` prices a plan and
+ * hands it to `apply`. Tiles are map tiles, as the track keys them.
  */
+
+type Tile = { x: number; y: number };
 
 /** The ground over a dug tile stays this many levels above its floor, or higher. */
 export const TUNNEL_COVER = 3;
 
+/** The floor the Drill digs at: one floor in this step of the game. */
+const DIG_FLOOR = 0;
+
 /** The side of a tile a portal looks out of. */
 export type Face = 'N' | 'E' | 'S' | 'W';
+/** In the order of `Dir`, so a face's place in the list is its direction. */
 const FACES: readonly Face[] = ['N', 'E', 'S', 'W'];
 
 /** A portal on tile (x, y), its opening on `face`, the rail inside at level `floor`. */
@@ -21,6 +33,35 @@ export interface Portal {
   face: Face;
   floor: number;
 }
+
+/** What a dig writes in the store, and what its undo takes out: new things only. */
+export interface DigWork {
+  /** the tiles it digs; a tile dug already is not among them */
+  dig: Tile[];
+  /** the tiles it cuts; a tile cut already is not among them */
+  cut: Tile[];
+  portals: Portal[];
+  /** portals that stood already and would look into a tile this dig digs */
+  shut: Portal[];
+}
+
+/**
+ * What a drag of the Drill would do. `cost` is in money, before `Builder` applies the build price,
+ * and `stone` is what the dug tiles bring in. Refused, it does nothing: every list but `refused`
+ * is empty, and `reason` says why the first refused tile refuses.
+ */
+export interface DigPlan extends PlacementCheck, DigWork {
+  /**
+   * Every tile the ground under the drag writes, as `Reshape.moved` holds them: a tile that only
+   * keeps its level is among them, so a count or a price compares `to` with the level there.
+   */
+  raise: Reshape['moved'];
+  stone: number;
+  refused: Tile[];
+}
+
+/** What a tile of a line becomes: under cover, in a cutting, or left as open ground. */
+type TileKind = 'dug' | 'cut' | 'open';
 
 /** What a save holds of the store: dug tiles [x, y, floor], cut tiles [x, y] and the portals. */
 export interface UndergroundJSON {
@@ -34,6 +75,61 @@ export type GroundLevelJSON = [number, number, number][];
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
+/** Water on a side or a corner of (x, y), or on the tile itself. */
+export function touchesWater(map: GameMap, x: number, y: number) {
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++)
+      if (terrainAt(map, x + dx, y + dy) === Terrain.Water) return true;
+  return false;
+}
+
+/** A drag cut where it jumps: each list runs from tile to tile by their sides. */
+function linesOf(tiles: readonly Tile[]): Tile[][] {
+  const out: Tile[][] = [];
+  tiles.forEach((t, i) => {
+    const b = tiles[i - 1];
+    if (b && Math.abs(t.x - b.x) + Math.abs(t.y - b.y) === 1) out[out.length - 1].push(t);
+    else out.push([t]);
+  });
+  return out;
+}
+
+/** The face of `from` that looks at the tile beside it, `to`. */
+function faceTo(from: Tile, to: Tile): Face {
+  return FACES.find((_, d) => from.x + DIR_DX[d] === to.x && from.y + DIR_DY[d] === to.y)!;
+}
+
+/**
+ * The raise that brings `tiles` up to the cover: Raise's steps, run until they all stand there.
+ * `moved` holds every tile any step wrote, at the last level it got, so the whole of it written
+ * leaves the map settled, as one `reshape` does. Refused, one step refused and nothing moves.
+ */
+function raiseToCover(
+  map: GameMap,
+  levels: Uint8Array,
+  tiles: readonly Tile[],
+  fixed: (x: number, y: number) => boolean,
+): Reshape {
+  const now = Uint8Array.from(levels),
+    plane = map.groundLevel
+      ? Uint8Array.from(map.groundLevel)
+      : new Uint8Array(map.w * map.h).fill(NO_LEVEL),
+    ground = { ...map, groundLevel: plane },
+    moved = new Map<number, Reshape['moved'][number]>();
+  for (;;) {
+    const low = tiles.filter((t) => now[t.y * map.w + t.x] < TUNNEL_COVER);
+    if (!low.length) break;
+    const step = reshape(ground, now, low, 1, fixed, () => 0);
+    if (step.refused.length) return step;
+    for (const m of step.moved) {
+      const k = m.y * map.w + m.x;
+      now[k] = plane[k] = m.to;
+      moved.set(k, m);
+    }
+  }
+  return { moved: [...moved].sort(([a], [b]) => a - b).map(([, m]) => m), refused: [] };
 }
 
 /** A whole number from 0 to `max`, else undefined. */
@@ -97,13 +193,18 @@ export class Underground {
     this.version++;
     return true;
   }
-  /** Back-fill (x, y): it is neither dug nor cut after. False when it was neither. */
-  fill(x: number, y: number): boolean {
-    if (!this.inside(x, y)) return false;
+  /**
+   * Back-fill (x, y): it is neither dug nor cut after, and its portals go with it. The answer holds
+   * those portals, as a tile open on two sides has two; null when the tile was neither.
+   */
+  fill(x: number, y: number): { portals: Portal[] } | null {
+    if (!this.inside(x, y)) return null;
     const k = y * this.w + x;
-    if (!this.dug.delete(k) && !this.cuts.delete(k)) return false;
+    if (!this.dug.delete(k) && !this.cuts.delete(k)) return null;
+    const portals = this.list.filter((p) => p.x === x && p.y === y);
+    this.removePortals(x, y);
     this.version++;
-    return true;
+    return { portals };
   }
   private portalKey(x: number, y: number, face: Face): number {
     return (y * this.w + x) * FACES.length + FACES.indexOf(face);
@@ -121,13 +222,159 @@ export class Underground {
   }
   /** Take away the portals on (x, y); false when there were none. */
   removePortals(x: number, y: number): boolean {
-    const kept = this.list.filter((p) => p.x !== x || p.y !== y);
+    return this.keepPortals((p) => p.x !== x || p.y !== y);
+  }
+  /** Take away the portal on one face; false when it was not there. */
+  private removePortal(p: Portal): boolean {
+    return this.keepPortals((q) => q.x !== p.x || q.y !== p.y || q.face !== p.face);
+  }
+  private keepPortals(keep: (p: Portal) => boolean): boolean {
+    const kept = this.list.filter(keep);
     if (kept.length === this.list.length) return false;
     this.list = kept;
     this.portalKeys.clear();
     for (const q of kept) this.portalKeys.add(this.portalKey(q.x, q.y, q.face));
     this.version++;
     return true;
+  }
+
+  /**
+   * What each tile of `line` becomes. A tile dug already or at rail + 3 or higher is dug. Past the
+   * last of these at each end, or along the whole of a line with none, the tiles lead out to open
+   * ground when that end comes to level 0 or to a cut: they are cuts, and level 0 stays open
+   * ground. An end that does not, and every tile between two dug tiles, level 0 too, is raised and
+   * dug: one drag is one tunnel. A cut that stands stays a cut.
+   */
+  private kindsOf(line: readonly Tile[], levels: Uint8Array): TileKind[] {
+    const level = (t: Tile) => levels[t.y * this.w + t.x];
+    const covered = (t: Tile) =>
+      this.isDug(t.x, t.y) || (!this.isCut(t.x, t.y) && level(t) >= TUNNEL_COVER);
+    const first = line.findIndex(covered);
+    const last = line.length - 1 - [...line].reverse().findIndex(covered);
+    const ends = first < 0 ? [line] : [line.slice(0, first), line.slice(last + 1)];
+    const leadsOut = new Set(
+      ends.filter((end) => end.some((t) => !level(t) || this.isCut(t.x, t.y))).flat(),
+    );
+    return line.map((t) => {
+      if (covered(t)) return 'dug';
+      if (this.isCut(t.x, t.y)) return 'cut';
+      if (!leadsOut.has(t)) return 'dug';
+      return level(t) ? 'cut' : 'open';
+    });
+  }
+
+  /**
+   * What the Drill would do with the drag `tiles`, in the order they were dragged, on ground that
+   * stands at `levels` (tileLevels(map)). The whole drag refuses if any tile of it touches water
+   * or has something on the surface (`surfaceFree`), or if a tile the ground would lift may not
+   * move. `surfaceFree` is not asked of a tile dug or cut already, which costs nothing again.
+   *
+   * A portal stands on the dug tile where a line comes out: beside a cut or open ground, along the
+   * drag. A portal costs `portalCost` on top of its tile. A cut costs a tile and brings no stone,
+   * and a raise is priced by the levels that really change, at Raise's price.
+   */
+  plan(
+    map: GameMap,
+    levels: Uint8Array,
+    tiles: readonly Tile[],
+    surfaceFree: (x: number, y: number) => boolean,
+  ): DigPlan {
+    const nothing = { dig: [], cut: [], raise: [], portals: [], shut: [], stone: 0 };
+    const refused: Tile[] = [],
+      seen = new Set<number>(),
+      drag: Tile[] = [];
+    let reason = '';
+    const refuse = (t: Tile, why: string) => {
+      refused.push({ x: t.x, y: t.y });
+      reason ||= why;
+    };
+    for (const t of tiles) {
+      if (!this.inside(t.x, t.y)) {
+        refuse(t, STR.build.offMap);
+        continue;
+      }
+      const k = t.y * this.w + t.x;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      drag.push(t);
+      const stands = this.isDug(t.x, t.y) || this.isCut(t.x, t.y);
+      if (touchesWater(map, t.x, t.y)) refuse(t, STR.build.digBesideWater);
+      else if (!stands && !surfaceFree(t.x, t.y)) refuse(t, STR.build.occupied);
+    }
+    if (refused.length) return { ok: false, cost: {}, reason, ...nothing, refused };
+
+    const dig: Tile[] = [],
+      cut: Tile[] = [],
+      low: Tile[] = [],
+      portals: Portal[] = [];
+    const portal = (at: Tile, out: Tile) => {
+      const face = faceTo(at, out);
+      if (this.portalKeys.has(this.portalKey(at.x, at.y, face))) return;
+      portals.push({ x: at.x, y: at.y, face, floor: this.floorAt(at.x, at.y) ?? DIG_FLOOR });
+    };
+    for (const line of linesOf(drag)) {
+      const kinds = this.kindsOf(line, levels);
+      line.forEach((t, i) => {
+        const fresh = !this.isDug(t.x, t.y) && !this.isCut(t.x, t.y);
+        if (fresh && kinds[i] === 'cut') cut.push(t);
+        if (fresh && kinds[i] === 'dug') dig.push(t);
+        if (fresh && kinds[i] === 'dug' && levels[t.y * this.w + t.x] < TUNNEL_COVER) low.push(t);
+        if (i === line.length - 1 || (kinds[i] === 'dug') === (kinds[i + 1] === 'dug')) return;
+        if (kinds[i] === 'dug') portal(t, line[i + 1]);
+        else portal(line[i + 1], t);
+      });
+    }
+
+    // the ground comes up round a tile as a Raise brings it, and leaves a cut lying open
+    const cuts = new Set(cut.map((t) => t.y * this.w + t.x));
+    const stays = (x: number, y: number) =>
+      this.isCut(x, y) || cuts.has(y * this.w + x) || !surfaceFree(x, y);
+    const { moved, refused: held } = raiseToCover(map, levels, low, stays);
+    if (held.length) {
+      const [{ x, y }] = held;
+      const why =
+        map.terrain[y * this.w + x] === Terrain.Water
+          ? STR.build.groundMovesWater
+          : stays(x, y)
+            ? STR.build.occupied
+            : STR.build.groundLimit;
+      return { ok: false, cost: {}, reason: why, ...nothing, refused: held };
+    }
+    let steps = 0;
+    for (const m of moved) steps += m.to - levels[m.y * this.w + m.x];
+    const shut = this.list.filter((p) => {
+      const d = FACES.indexOf(p.face);
+      return dig.some((t) => t.x === p.x + DIR_DX[d] && t.y === p.y + DIR_DY[d]);
+    });
+    const money =
+      rules.drillCost * (dig.length + cut.length) +
+      rules.portalCost * portals.length +
+      rules.groundCost * steps;
+    return {
+      ok: true,
+      cost: { money },
+      dig,
+      cut,
+      raise: moved,
+      portals,
+      shut,
+      stone: rules.drillStone * dig.length,
+      refused: [],
+    };
+  }
+
+  /** Write what a dig makes; the ground under it is `Builder.setGround`'s. */
+  apply(work: DigWork) {
+    for (const p of work.shut) this.removePortal(p);
+    for (const t of work.dig) this.dig(t.x, t.y, DIG_FLOOR);
+    for (const t of work.cut) this.cut(t.x, t.y);
+    for (const p of work.portals) this.addPortal(p);
+  }
+  /** Take a dig back out, as an undo does: what stood before it stays. */
+  unapply(work: DigWork) {
+    for (const p of work.portals) this.removePortal(p);
+    for (const t of [...work.dig, ...work.cut]) this.fill(t.x, t.y);
+    for (const p of work.shut) this.addPortal(p);
   }
 
   /** In tile order, so the same store always writes the same text. */

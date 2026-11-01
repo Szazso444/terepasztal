@@ -127,6 +127,8 @@ const EN = {
     renamed: (was: string, now: string) => `Renamed ${was} to ${now}`,
     recoloured: (train: string, colour: string) => `Marked ${train} ${colour}`,
     groundMoved: 'Reshaped the ground',
+    tunnelDug: 'Dug a tunnel',
+    tunnelFilled: 'Filled a dug tile',
     /** why an undo or a redo cannot be done */
     builtOver: 'Something else has been built there since.',
     trainOn: (train: string) => `${train} stands on the track.`,
@@ -431,6 +433,8 @@ const EN = {
       `Raise: ${tiles} ${tiles === 1 ? 'tile' : 'tiles'}, ${cost}`,
     groundDown: (tiles: number, cost: string) =>
       `Lower: ${tiles} ${tiles === 1 ? 'tile' : 'tiles'}, ${cost}`,
+    /** a Drill drag over a tile touching water, on a side or a corner */
+    digBesideWater: 'Ground touching water cannot be dug',
     /** Raise or Lower over ground that stays where it is */
     groundStays: 'Nothing moves here',
     /** how many tiles of the action refuse; `reason` is the first one's, the others may differ */

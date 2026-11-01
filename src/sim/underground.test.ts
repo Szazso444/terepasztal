@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import {
   Underground,
   groundLevelFromJSON,
@@ -7,8 +7,21 @@ import {
   shiftGroundLevel,
   shiftUnderground,
 } from './underground';
+import { Builder, type GroundChange } from './build';
+import { BUILDING_DEFS } from './buildings';
+import { Economy } from './economy';
+import { DEFAULT_RULES, rules } from './rules';
+import { Station } from './stations';
+import { STR } from '../strings';
+import { storeWith } from '../testing/storeFixtures';
 import { NO_LEVEL, levelAt, tileLevels } from '../world/elevation';
-import { Terrain } from '../world/tiles';
+import { emptyMap } from '../world/mapgen';
+import { RegionState } from '../world/regions';
+import { Terrain, type PropKind } from '../world/tiles';
+import { TrackGraph } from '../world/track';
+
+// the build rules play a sound when something is dug
+vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
 describe('Underground', () => {
   it('starts empty', () => {
@@ -41,8 +54,8 @@ describe('Underground', () => {
     expect([u.isDug(1, 1), u.isCut(1, 1)]).toEqual([false, true]);
     u.dig(1, 1, 0);
     expect([u.isDug(1, 1), u.isCut(1, 1)]).toEqual([true, false]);
-    expect(u.fill(1, 1)).toBe(true);
-    expect(u.fill(1, 1)).toBe(false);
+    expect(u.fill(1, 1)).toEqual({ portals: [] });
+    expect(u.fill(1, 1)).toBeNull();
     expect(u.empty).toBe(true);
   });
 
@@ -315,5 +328,537 @@ describe('moving a saved underground and plane with the map', () => {
     expect(shiftUnderground('x' as never, 32)).toBe('x');
     expect(shiftGroundLevel('x' as never, 32)).toBe('x');
     expect(shiftGroundLevel([5, null] as never, 32)).toEqual([5, null]);
+  });
+});
+
+describe('the dig plan', () => {
+  const SIZE = 24;
+  const MID = 12;
+  type Tile = { x: number; y: number };
+  type Peak = [x: number, y: number, height: number];
+  /** Square hills, a level a tile down each side, and level 0 between them. */
+  const hills = (peaks: readonly Peak[]) => (x: number, y: number) =>
+    Math.max(0, ...peaks.map(([px, py, h]) => h - Math.max(Math.abs(x - px), Math.abs(y - py))));
+  /** Grass with `levels` in the player's plane, every chunk owned, $100,000 in hand. */
+  function world(levels: (x: number, y: number) => number) {
+    const map = emptyMap(7, SIZE, SIZE, Terrain.Grass),
+      regions = new RegionState(map);
+    for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
+    const plane = new Uint8Array(SIZE * SIZE);
+    for (let y = 0; y < SIZE; y++)
+      for (let x = 0; x < SIZE; x++) plane[y * SIZE + x] = levels(x, y);
+    map.groundLevel = plane;
+    const economy = new Economy();
+    economy.money = 100_000;
+    const { stores, depot } = storeWith({}, { x: MID, y: MID });
+    const builder = new Builder(map, regions, new TrackGraph(SIZE, SIZE), economy, stores);
+    return { map, regions, economy, depot, builder, under: builder.underground };
+  }
+  type World = ReturnType<typeof world>;
+  /** The same as a generated plane, which may step by up to 4; level 0 on the border. */
+  function steep(levels: (x: number, y: number) => number) {
+    const w = world((x, y) => (x && y && x < SIZE - 1 && y < SIZE - 1 ? levels(x, y) : 0));
+    w.map.generatedLevel = w.map.groundLevel;
+    w.map.groundLevel = undefined;
+    return w;
+  }
+  const plan = (
+    { map, under }: World,
+    tiles: readonly Tile[],
+    free: (x: number, y: number) => boolean = () => true,
+  ) => under.plan(map, tileLevels(map), tiles, free);
+  /** The tiles of row `y` from `from` to `to`, in that order. */
+  function row(y: number, from: number, to: number): Tile[] {
+    const out: Tile[] = [];
+    for (let x = from; ; x += Math.sign(to - from)) {
+      out.push({ x, y });
+      if (x === to) return out;
+    }
+  }
+  const column = (x: number, from: number, to: number) =>
+    row(x, from, to).map((t) => ({ x: t.y, y: t.x }));
+  const levelsOf = ({ map }: World, tiles: readonly Tile[]) =>
+    tiles.map((t) => levelAt(map, t.x, t.y));
+  const prop = (kind: PropKind) => ({ kind, ox: 0, oy: 0, variant: 0 });
+  /** One hill of 6 on the middle of the map. */
+  const PEAK: readonly Peak[] = [[MID, MID, 6]];
+  /** Two hills of 5 with a saddle of 2 at x 11 on the middle row. */
+  const SADDLE: readonly Peak[] = [
+    [8, MID, 5],
+    [14, MID, 5],
+  ];
+  /** Two hills of 6 with a saddle of 1 at x 11 on the middle row. */
+  const LOW_SADDLE: readonly Peak[] = [
+    [6, MID, 6],
+    [16, MID, 6],
+  ];
+  /** Two cliffs of 4 with level 0 between them, from x 9 to 11. */
+  const VALLEY = (x: number) => (x <= 8 || x >= 12 ? 4 : 0);
+
+  beforeEach(() => {
+    Object.assign(rules, DEFAULT_RULES);
+  });
+
+  it('digs under ground at rail + 3 or higher', () => {
+    const w = world(hills(PEAK));
+    const tiles = row(MID, 10, 14);
+    expect(levelsOf(w, tiles)).toEqual([4, 5, 6, 5, 4]);
+    expect(plan(w, tiles)).toMatchObject({
+      ok: true,
+      dig: tiles,
+      cut: [],
+      raise: [],
+      portals: [],
+      cost: { money: 5 * rules.drillCost },
+    });
+  });
+
+  it('raises a saddle between dug tiles to rail + 3, at the Raise price', () => {
+    const w = world(hills(SADDLE));
+    const tiles = row(MID, 9, 13);
+    expect(levelsOf(w, tiles)).toEqual([4, 3, 2, 3, 4]);
+    const p = plan(w, tiles);
+    expect(p.raise).toEqual([{ x: 11, y: MID, to: 3 }]);
+    expect(p.dig).toEqual(tiles);
+    expect(p.cut).toEqual([]);
+    expect(p.cost).toEqual({ money: 5 * rules.drillCost + rules.groundCost });
+    expect(p.portals).toEqual([]);
+  });
+
+  it('raises the slope round a saddle too, a price a level', () => {
+    const w = world(hills(LOW_SADDLE));
+    const tiles = row(MID, 8, 14);
+    expect(levelsOf(w, tiles)).toEqual([4, 3, 2, 1, 2, 3, 4]);
+    const p = plan(w, tiles);
+    expect(p.dig).toEqual(tiles);
+    expect(p.cut).toEqual([]);
+    const levels = tileLevels(w.map);
+    const steps = p.raise.reduce((n, m) => n + m.to - levels[m.y * SIZE + m.x], 0);
+    expect(p.raise.find((m) => m.x === 11 && m.y === MID)?.to).toBe(3);
+    expect(steps).toBeGreaterThan(4);
+    expect(p.cost).toEqual({ money: 7 * rules.drillCost + steps * rules.groundCost });
+  });
+
+  it('raises level 0 between dug tiles: one drag is one tunnel', () => {
+    const p = plan(steep(VALLEY), row(MID, 8, 12));
+    expect(p.dig).toEqual(row(MID, 8, 12));
+    expect(p.cut).toEqual([]);
+    expect(p.portals).toEqual([]);
+    expect(p.raise.filter((m) => m.y === MID && m.to === 3).map((m) => m.x)).toEqual([9, 10, 11]);
+  });
+
+  it('holds a tile the raise would free to rise, and prices it at nothing', () => {
+    const w = world(hills([[MID, MID, 3]]));
+    const centre = MID * SIZE + MID;
+    // a mountain no plane sets, held at 3 by the sides that are about to come up
+    w.map.terrain[centre] = Terrain.Mountain;
+    w.map.groundLevel![centre] = NO_LEVEL;
+    expect(levelAt(w.map, MID, MID)).toBe(3);
+    const sides = [
+      { x: MID - 1, y: MID },
+      { x: MID, y: MID - 1 },
+      { x: MID + 1, y: MID },
+      { x: MID, y: MID + 1 },
+    ];
+    const p = plan(w, sides);
+    expect(p.raise).toContainEqual({ x: MID, y: MID, to: 3 });
+    const levels = tileLevels(w.map);
+    const steps = p.raise.reduce((n, m) => n + m.to - levels[m.y * SIZE + m.x], 0);
+    expect(steps).toBeLessThan(p.raise.length);
+    expect(p.cost).toEqual({ money: 4 * rules.drillCost + steps * rules.groundCost });
+    expect(w.builder.dig(sides)).toBe(true);
+    expect(w.map.groundLevel![centre]).toBe(3);
+    expect(tileLevels(w.map)[centre]).toBe(3);
+    expect(w.map.terrain[centre]).toBe(Terrain.Mountain);
+  });
+
+  it('turns a tile on the way down to open ground into a cut', () => {
+    const w = world(hills(PEAK));
+    const tiles = row(MID, 12, 18);
+    expect(levelsOf(w, tiles)).toEqual([6, 5, 4, 3, 2, 1, 0]);
+    const p = plan(w, tiles);
+    expect(p.dig).toEqual(row(MID, 12, 15));
+    expect(p.cut).toEqual(row(MID, 16, 17));
+    expect(p.raise).toEqual([]);
+  });
+
+  it('raises a tile on the way down when the drag stops before open ground', () => {
+    const w = world(hills(PEAK));
+    const tiles = row(MID, 12, 17);
+    expect(levelsOf(w, tiles)).toEqual([6, 5, 4, 3, 2, 1]);
+    const p = plan(w, tiles);
+    expect(p.cut).toEqual([]);
+    expect(p.dig).toEqual(tiles);
+    expect(p.portals).toEqual([]);
+    expect(p.raise.find((m) => m.x === 17 && m.y === MID)?.to).toBe(3);
+  });
+
+  it('cuts both ends of a line that runs right through', () => {
+    const w = world(hills(PEAK));
+    const p = plan(w, row(MID, 6, 18));
+    expect(p.cut).toEqual([...row(MID, 7, 8), ...row(MID, 16, 17)]);
+    expect(p.dig).toEqual(row(MID, 9, 15));
+    expect(p.portals).toEqual([
+      { x: 9, y: MID, face: 'W', floor: 0 },
+      { x: 15, y: MID, face: 'E', floor: 0 },
+    ]);
+    expect(p.cost).toEqual({ money: 11 * rules.drillCost + 2 * rules.portalCost });
+  });
+
+  it('puts a portal on the first tile at rail + 3 going in from the open side', () => {
+    const w = world(hills(PEAK));
+    const p = plan(w, row(MID, 18, 12));
+    expect(p.portals).toEqual([{ x: 15, y: MID, face: 'E', floor: 0 }]);
+    expect(levelAt(w.map, 15, MID)).toBe(3);
+    // a portal stands on a dug tile at its floor: on a cut the load would drop it
+    w.under.apply(p);
+    expect(w.under.isDug(15, MID)).toBe(true);
+    const back = Underground.fromJSON(JSON.parse(JSON.stringify(w.under)), SIZE, SIZE);
+    expect(back.portals()).toEqual(p.portals);
+  });
+
+  it('makes a portal for each of the four faces', () => {
+    const cases = [
+      [row(MID, 12, 18), { x: 15, y: MID }, 'E'],
+      [row(MID, 12, 6), { x: 9, y: MID }, 'W'],
+      [column(MID, 12, 18), { x: MID, y: 15 }, 'S'],
+      [column(MID, 12, 6), { x: MID, y: 9 }, 'N'],
+    ] as const;
+    for (const [tiles, at, face] of cases) {
+      const p = plan(world(hills(PEAK)), tiles);
+      expect(p.portals, face).toEqual([{ ...at, face, floor: 0 }]);
+      expect(p.dig, face).toContainEqual(at);
+    }
+  });
+
+  it('a cliff makes a portal with no cut outside it', () => {
+    const w = steep((x) => (x <= 10 ? 4 : 0));
+    const tiles = row(MID, 8, 12);
+    expect(levelsOf(w, tiles)).toEqual([4, 4, 4, 0, 0]);
+    const p = plan(w, tiles);
+    expect(p.dig).toEqual(row(MID, 8, 10));
+    expect(p.cut).toEqual([]);
+    expect(p.raise).toEqual([]);
+    expect(p.portals).toEqual([{ x: 10, y: MID, face: 'E', floor: 0 }]);
+  });
+
+  it('gives a tile open on two sides a portal on each', () => {
+    const w = steep((x, y) => (x === MID && y === MID ? 4 : 0));
+    const p = plan(w, row(MID, 11, 13));
+    expect(p.dig).toEqual([{ x: MID, y: MID }]);
+    expect(p.portals.map((q) => q.face)).toEqual(['W', 'E']);
+  });
+
+  it('continues what stands: a dug tile is free, and its open side takes the portal', () => {
+    const w = world(hills(PEAK));
+    w.under.apply(plan(w, row(MID, 12, 15)));
+    expect(w.under.portals()).toEqual([]);
+    const p = plan(w, row(MID, 14, 18));
+    expect(p.dig).toEqual([]);
+    expect(p.cut).toEqual(row(MID, 16, 17));
+    expect(p.portals).toEqual([{ x: 15, y: MID, face: 'E', floor: 0 }]);
+    expect(p.stone).toBe(0);
+    expect(p.cost).toEqual({ money: 2 * rules.drillCost + rules.portalCost });
+    w.under.apply(p);
+    // the same drag again asks for nothing
+    expect(plan(w, row(MID, 14, 18))).toMatchObject({
+      dig: [],
+      cut: [],
+      portals: [],
+      cost: { money: 0 },
+    });
+  });
+
+  it('keeps a cut a cut, and carries a cutting on past it', () => {
+    const w = world(hills(PEAK));
+    w.under.cut(16, MID);
+    const p = plan(w, row(MID, 15, 17));
+    expect(p.cut).toEqual([{ x: 17, y: MID }]);
+    expect(p.dig).toEqual([{ x: 15, y: MID }]);
+    expect(p.portals).toEqual([{ x: 15, y: MID, face: 'E', floor: 0 }]);
+    expect(p.raise).toEqual([]);
+  });
+
+  it('shuts a portal the line now runs on through', () => {
+    const w = steep(VALLEY);
+    w.under.apply(plan(w, row(MID, 6, 9)));
+    const portal = { x: 8, y: MID, face: 'E', floor: 0 };
+    expect(w.under.portals()).toEqual([portal]);
+    const p = plan(w, row(MID, 8, 12));
+    expect(p.dig).toEqual(row(MID, 9, 12));
+    expect(p.portals).toEqual([]);
+    expect(p.shut).toEqual([portal]);
+    w.under.apply(p);
+    expect(w.under.portals()).toEqual([]);
+    w.under.unapply(p);
+    expect(w.under.portals()).toEqual([portal]);
+    expect(w.under.isDug(10, MID)).toBe(false);
+  });
+
+  it('has nothing to dig on open ground', () => {
+    expect(
+      plan(
+        world(() => 0),
+        row(MID, 8, 12),
+      ),
+    ).toMatchObject({
+      ok: true,
+      dig: [],
+      cut: [],
+      raise: [],
+      portals: [],
+      cost: { money: 0 },
+    });
+  });
+
+  it('breaks the line where a drag jumps', () => {
+    const w = world(hills(PEAK));
+    const p = plan(w, [
+      { x: MID, y: MID },
+      { x: 17, y: MID },
+    ]);
+    // alone, the tile at level 1 leads nowhere: it is raised, and nothing between the two is dug
+    expect(p.dig).toEqual([
+      { x: MID, y: MID },
+      { x: 17, y: MID },
+    ]);
+    expect(p.portals).toEqual([]);
+  });
+
+  it('refuses a tile touching water, side or corner', () => {
+    for (const [wx, wy] of [
+      [14, MID + 1],
+      [13, MID + 1],
+      [MID, MID],
+    ]) {
+      const w = world(hills(PEAK));
+      const k = wy * SIZE + wx;
+      w.map.terrain[k] = Terrain.Water;
+      w.map.groundLevel![k] = NO_LEVEL;
+      expect(plan(w, row(MID, 12, 13))).toMatchObject({
+        ok: false,
+        cost: {},
+        reason: STR.build.digBesideWater,
+        dig: [],
+        raise: [],
+      });
+    }
+  });
+
+  it('refuses a tile off the map, and nothing is dug', () => {
+    const w = world(hills(PEAK));
+    expect(plan(w, row(MID, 22, 24))).toMatchObject({
+      ok: false,
+      reason: STR.build.offMap,
+      refused: [{ x: 24, y: MID }],
+    });
+    expect(w.under.empty).toBe(true);
+  });
+
+  it('refuses a raise that would move something the surface holds', () => {
+    const holds = (x: number, y: number) => !(x === 11 && y === MID + 1);
+    // the saddle comes up to 3 and leaves the tile beside it at 2: nothing to move there
+    expect(plan(world(hills(SADDLE)), row(MID, 9, 13), holds).ok).toBe(true);
+    const p = plan(world(hills(LOW_SADDLE)), row(MID, 8, 14), holds);
+    expect(p).toMatchObject({ ok: false, reason: STR.build.occupied, dig: [], raise: [], cut: [] });
+    expect(p.refused).toContainEqual({ x: 11, y: MID + 1 });
+  });
+
+  it('refuses a raise past the limits of the ground', () => {
+    const w = world(hills([[MID, 2, 3]]));
+    expect(levelsOf(w, row(0, 11, 12))).toEqual([1, 1]);
+    expect(plan(w, row(0, 11, 12))).toMatchObject({
+      ok: false,
+      reason: STR.build.groundLimit,
+      raise: [],
+    });
+  });
+
+  it('refuses the whole drag over a building, road, deposit or surface track', () => {
+    const tiles = row(MID, 10, 14);
+    const works = BUILDING_DEFS.find(
+      (d) => !d.bridge && !d.terrain && !d.deposit && !d.needsWater,
+    )!;
+    const put: [string, (w: World) => void][] = [
+      ['track', (w) => w.builder.track.place(MID, MID, 'straight', 1)],
+      ['road', (w) => w.builder.roads.add(MID, MID)],
+      ['coal', (w) => w.map.props.set(MID * SIZE + MID, [prop('coal')])],
+      ['oil', (w) => w.map.props.set(MID * SIZE + MID, [prop('oil')])],
+      ['station', (w) => w.builder.stations.push(new Station('quarry', MID, MID))],
+      ['works', (w) => void w.builder.placeBuilding(MID, MID, works.id)],
+    ];
+    for (const [name, place] of put) {
+      const w = world(hills(PEAK));
+      w.builder.free = true;
+      place(w);
+      w.builder.free = false;
+      const money = w.economy.money;
+      const c = w.builder.checkDig(tiles);
+      expect(c, name).toMatchObject({
+        ok: false,
+        cost: {},
+        reason: STR.build.occupied,
+        dig: [],
+      });
+      expect(c.refused, name).toContainEqual({ x: MID, y: MID });
+      expect(w.builder.dig(tiles), name).toBe(false);
+      expect(w.under.empty, name).toBe(true);
+      expect(w.economy.money, name).toBe(money);
+    }
+    // a tree is scenery: it stays on the ground over the tunnel
+    const w = world(hills(PEAK));
+    w.map.props.set(MID * SIZE + MID, [prop('tree')]);
+    expect(w.builder.dig(tiles)).toBe(true);
+    expect(w.map.props.get(MID * SIZE + MID)).toHaveLength(1);
+  });
+
+  it('refuses uncharted ground, and a drag the money does not reach', () => {
+    const w = world(hills(PEAK));
+    w.regions.unlocked.fill(false);
+    expect(w.builder.checkDig(row(MID, 11, 13))).toMatchObject({
+      ok: false,
+      reason: STR.build.locked,
+    });
+    const poor = world(hills(PEAK));
+    poor.economy.money = 2 * rules.drillCost;
+    expect(poor.builder.checkDig(row(MID, 11, 13))).toMatchObject({
+      ok: false,
+      reason: STR.build.funds,
+      cost: { money: 3 * rules.drillCost },
+    });
+    expect(poor.builder.dig(row(MID, 11, 13))).toBe(false);
+    expect(poor.under.empty).toBe(true);
+    expect(poor.economy.money).toBe(2 * rules.drillCost);
+  });
+
+  it('digs on past rail that stands inside', () => {
+    const w = world(hills(PEAK));
+    expect(w.builder.dig(row(MID, 10, 12))).toBe(true);
+    w.builder.track.place(11, MID, 'straight', 1);
+    expect(w.builder.checkDig(row(MID, 11, 13))).toMatchObject({ ok: true, dig: [{ x: 13 }] });
+    expect(w.builder.dig(row(MID, 11, 13))).toBe(true);
+    expect(w.builder.track.get(11, MID)).toBeTruthy();
+  });
+
+  it('digs, pays, writes every tile of the raise and tells of the ground', () => {
+    const w = world(hills(LOW_SADDLE));
+    const heard: GroundChange[][] = [];
+    w.builder.onGroundChanged = (c) => heard.push([...c]);
+    const tiles = row(MID, 8, 14);
+    const c = w.builder.checkDig(tiles);
+    expect(w.builder.dig(tiles)).toBe(true);
+    expect(w.economy.money).toBe(100_000 - c.cost.money);
+    for (const t of tiles) expect(w.under.isDug(t.x, t.y)).toBe(true);
+    // every tile written: the two readers of the ground agree with the plan
+    const after = tileLevels(w.map);
+    for (const m of c.raise) {
+      expect(after[m.y * SIZE + m.x]).toBe(m.to);
+      expect(levelAt(w.map, m.x, m.y)).toBe(m.to);
+      expect(w.map.groundLevel![m.y * SIZE + m.x]).toBe(m.to);
+    }
+    expect(heard).toHaveLength(1);
+    expect(heard[0].map((g) => [g.x, g.y, g.now])).toEqual(c.raise.map((m) => [m.x, m.y, m.to]));
+    // the ridge over the tunnel is Rock, the slope beside it keeps its ground
+    expect(w.map.terrain[MID * SIZE + 11]).toBe(Terrain.Rock);
+    expect(w.map.terrain[(MID + 1) * SIZE + 11]).toBe(Terrain.Grass);
+    // and so does a dug tile that did not move
+    expect(w.map.terrain[MID * SIZE + 8]).toBe(Terrain.Grass);
+  });
+
+  it('tells nothing when a dig moves no ground, and takes nothing for nothing', () => {
+    const w = world(hills(PEAK));
+    const heard = vi.fn();
+    w.builder.onGroundChanged = heard;
+    expect(w.builder.dig(row(MID, 11, 13))).toBe(true);
+    expect(heard).not.toHaveBeenCalled();
+    const money = w.economy.money;
+    expect(w.builder.dig(row(MID, 11, 13))).toBe(false);
+    expect(w.economy.money).toBe(money);
+  });
+
+  it('digs for nothing in the editor, and brings no stone', () => {
+    const w = world(hills(PEAK));
+    w.builder.free = true;
+    expect(w.builder.checkDig(row(MID, 11, 13))).toMatchObject({ ok: true, stone: 0 });
+    expect(w.builder.dig(row(MID, 11, 13))).toBe(true);
+    expect(w.economy.money).toBe(100_000);
+    expect(w.depot.get('stone')).toBe(0);
+    expect(w.builder.fillDug(12, MID)).toBe(true);
+    expect(w.economy.money).toBe(100_000);
+  });
+
+  it('adds 2 stone a dug tile; back-fill refunds half', () => {
+    const w = world(hills(PEAK));
+    const tiles = row(MID, 10, 14);
+    expect(w.builder.checkDig(tiles).stone).toBe(5 * rules.drillStone);
+    expect(w.builder.dig(tiles)).toBe(true);
+    expect(w.depot.get('stone')).toBe(10);
+    expect(w.economy.money).toBe(100_000 - 5 * rules.drillCost);
+    const earned = w.economy.earned;
+    expect(w.builder.fillDug(14, MID)).toBe(true);
+    expect(w.economy.money).toBe(100_000 - 5 * rules.drillCost + rules.drillCost * 0.5);
+    expect(w.economy.earned).toBe(earned);
+    expect(w.under.isDug(14, MID)).toBe(false);
+    expect(w.depot.get('stone')).toBe(10);
+  });
+
+  it('a cut costs a tile, brings no stone, and fills like one', () => {
+    const w = world(hills(PEAK));
+    expect(w.builder.dig(row(MID, 14, 18))).toBe(true);
+    expect(w.economy.money).toBe(100_000 - 4 * rules.drillCost - rules.portalCost);
+    expect(w.depot.get('stone')).toBe(2 * rules.drillStone);
+    const money = w.economy.money;
+    expect(w.builder.fillDug(17, MID)).toBe(true);
+    expect(w.under.isCut(17, MID)).toBe(false);
+    expect(w.economy.money).toBe(money + rules.drillCost * 0.5);
+  });
+
+  it('a back-filled portal tile takes its portal; track removal leaves the tile dug', () => {
+    const w = world(hills(PEAK));
+    expect(w.builder.dig(row(MID, 13, 18))).toBe(true);
+    expect(w.under.portals()).toHaveLength(1);
+    w.builder.track.place(14, MID, 'straight', 1);
+    expect(w.builder.removeTrack(14, MID)).toBe(true);
+    expect(w.under.isDug(14, MID)).toBe(true);
+    const money = w.economy.money;
+    expect(w.builder.fillDug(14, MID)).toBe(true);
+    expect(w.under.portals()).toHaveLength(1);
+    expect(w.economy.money).toBe(money + rules.drillCost * 0.5);
+    expect(w.builder.fillDug(15, MID)).toBe(true);
+    expect(w.under.portals()).toEqual([]);
+    expect(w.economy.money).toBe(money + rules.drillCost + rules.portalCost * 0.5);
+  });
+
+  it('gives back every portal of a tile that has two', () => {
+    const u = new Underground(8, 8);
+    u.dig(3, 3, 0);
+    u.addPortal({ x: 3, y: 3, face: 'E', floor: 0 });
+    u.addPortal({ x: 3, y: 3, face: 'W', floor: 0 });
+    expect(u.fill(3, 3)?.portals.map((p) => p.face)).toEqual(['E', 'W']);
+    expect(u.portals()).toEqual([]);
+    expect(u.fill(3, 3)).toBeNull();
+  });
+
+  it('fill refuses a tile with track', () => {
+    const w = world(hills(PEAK));
+    expect(w.builder.dig(row(MID, 11, 13))).toBe(true);
+    w.builder.track.place(12, MID, 'straight', 1);
+    const money = w.economy.money;
+    expect(w.builder.fillDug(12, MID)).toBe(false);
+    expect(w.under.isDug(12, MID)).toBe(true);
+    expect(w.economy.money).toBe(money);
+    expect(w.builder.fillDug(5, 5)).toBe(false);
+    expect(w.economy.money).toBe(money);
+  });
+
+  it('holds raised ground at the cover, and a fill leaves it standing', () => {
+    const w = world(hills(SADDLE));
+    expect(w.builder.dig(row(MID, 9, 13))).toBe(true);
+    expect(levelAt(w.map, 11, MID)).toBe(3);
+    expect(w.builder.checkGround([{ x: 11, y: MID }], -1).ok).toBe(false);
+    expect(w.builder.fillDug(11, MID)).toBe(true);
+    expect(levelAt(w.map, 11, MID)).toBe(3);
+    expect(w.map.terrain[MID * SIZE + 11]).toBe(Terrain.Rock);
+    expect(w.builder.checkGround([{ x: 11, y: MID }], -1).ok).toBe(true);
   });
 });
