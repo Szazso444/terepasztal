@@ -131,6 +131,12 @@ export const TREE_SWAY: Readonly<Record<string, readonly [number, number]>> = {
   deadtree: [0.25, 0.9],
   mangrove: [0.62, 0.6],
   willow: [0.85, 0.42],
+  beech: [0.75, 0.44],
+  maple: [0.9, 0.46],
+  apple: [0.7, 0.52],
+  poplar: [1.05, 0.62],
+  larch: [0.8, 0.64],
+  acacia: [0.55, 0.4],
   reeds: [2.2, 0.95],
 };
 
