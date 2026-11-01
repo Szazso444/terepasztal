@@ -75,6 +75,7 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
   save.roads = (save.roads ?? []).map(([x, y]) => [x + d, y + d]);
   if (save.underground) save.underground = shiftUnderground(save.underground, d);
   if (save.groundLevel) save.groundLevel = shiftGroundLevel(save.groundLevel, d);
+  if (save.groundTerrain) save.groundTerrain = shiftGroundLevel(save.groundTerrain, d);
   for (const h of save.houses?.list ?? []) {
     h.x += d;
     h.y += d;

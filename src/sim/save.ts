@@ -10,7 +10,7 @@ import type { SupplyMode } from './supply';
 import type { SignalLevel } from './signals';
 import type { PeopleJSON } from './people';
 import type { RoadJSON } from './roads';
-import type { GroundLevelJSON, UndergroundJSON } from './underground';
+import type { GroundLevelJSON, GroundTerrainJSON, UndergroundJSON } from './underground';
 import type { StoreJSON } from './stores';
 import type { BuildingJSON } from './buildings';
 import type { ChunkStore, MapGenerator } from '../world/chunks';
@@ -147,6 +147,11 @@ export interface SaveParts {
    * NO_LEVEL; absent is a map as generated. Optional here for the same reason as `underground`.
    */
   groundLevel?: GroundLevelJSON;
+  /**
+   * v25: the terrain the ground tools changed (`GroundTerrainJSON`), which the chunks do not hold;
+   * absent is the terrain as generated. Optional here for the same reason as `underground`.
+   */
+  groundTerrain?: GroundTerrainJSON;
 }
 /** The fields every format version since v1 has; the others arrived later and may be missing. */
 type SaveCore =
@@ -752,6 +757,7 @@ const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
   roads: true,
   underground: true,
   groundLevel: true,
+  groundTerrain: true,
 };
 /** The names a type declares, without the `string` and `number` of an index signature. */
 type DeclaredKey<T> = keyof {

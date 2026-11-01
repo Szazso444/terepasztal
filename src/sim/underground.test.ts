@@ -3,6 +3,9 @@ import {
   Underground,
   groundLevelFromJSON,
   groundLevelToJSON,
+  groundTerrainFromJSON,
+  groundTerrainToJSON,
+  restoreGround,
   settleGroundLevel,
   shiftGroundLevel,
   shiftUnderground,
@@ -308,12 +311,90 @@ describe('settling a loaded plane', () => {
     expect(settled[16 * w + 17]).toBe(1);
   });
 
+  it('writes a tile the plane holds down, so levelAt reads what tileLevels gives', () => {
+    // generated ground of 12 with a held tile of 1 in it, as on an old edge after a ring
+    const generatedLevel = new Uint8Array(w * h).fill(12);
+    const plane = new Uint8Array(w * h).fill(NO_LEVEL);
+    plane[16 * w + 16] = 1;
+    const map = { ...flat(), generatedLevel, groundLevel: plane };
+    const settled = settleGroundLevel(map)!;
+    expect(settled[16 * w + 17]).toBe(5);
+    expect(settled[16 * w + 18]).toBe(9);
+    expect(settled[16 * w + 19]).toBe(NO_LEVEL);
+    const done = { ...map, groundLevel: settled },
+      levels = tileLevels(done);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) expect(levelAt(done, x, y), `${x},${y}`).toBe(levels[y * w + x]);
+    expect(settleGroundLevel(done)).toEqual(settled);
+  });
+
   it('gives none for a map without the plane, or when nothing is left of it', () => {
     expect(settleGroundLevel(flat())).toBeUndefined();
     const terrain = new Uint8Array(w * h).fill(Terrain.Water);
     const plane = new Uint8Array(w * h).fill(NO_LEVEL);
     plane[10] = 3;
     expect(settleGroundLevel({ w, h, terrain, groundLevel: plane })).toBeUndefined();
+  });
+});
+
+describe('the terrain the ground tools changed', () => {
+  const w = 8,
+    h = 6;
+  const land = () => emptyMap(1, w, h, Terrain.Rock);
+
+  it('goes through a save and back, in tile order', () => {
+    const edits = new Map<number, Terrain>([
+      [3 * w + 2, Terrain.Grass],
+      [w + 7, Terrain.Rock],
+    ]);
+    const j = groundTerrainToJSON(edits, w);
+    expect(j).toEqual([
+      [7, 1, Terrain.Rock],
+      [2, 3, Terrain.Grass],
+    ]);
+    expect(groundTerrainFromJSON(JSON.parse(JSON.stringify(j)), w, h)).toEqual(edits);
+  });
+
+  it('skips what no tool writes: a tile off the map, water, a terrain that is not one', () => {
+    const j = [
+      [8, 0, Terrain.Grass],
+      [0, 6, Terrain.Grass],
+      [1, 1, Terrain.Water],
+      [1, 2, 99],
+      [1.5, 2, Terrain.Grass],
+      'x',
+      [2, 2, Terrain.Rock],
+    ];
+    expect([...groundTerrainFromJSON(j, w, h)]).toEqual([[2 * w + 2, Terrain.Rock]]);
+    expect(groundTerrainFromJSON(undefined, w, h).size).toBe(0);
+  });
+
+  it('comes back on a load before the levels, which lowered stone needs', () => {
+    const map = land();
+    const edits = restoreGround(map, {
+      groundLevel: [[2, 2, 0]],
+      groundTerrain: [[2, 2, Terrain.Grass]],
+    });
+    expect(map.terrain[2 * w + 2]).toBe(Terrain.Grass);
+    expect(levelAt(map, 2, 2)).toBe(0);
+    expect(edits.get(2 * w + 2)).toBe(Terrain.Grass);
+  });
+
+  it('leaves water that came back from the chunks', () => {
+    const map = emptyMap(1, w, h, Terrain.Water);
+    const edits = restoreGround(map, { groundTerrain: [[2, 2, Terrain.Grass]] });
+    expect(map.terrain[2 * w + 2]).toBe(Terrain.Water);
+    expect(edits.size).toBe(0);
+  });
+
+  it('has neither plane nor terrain on a save with none', () => {
+    const map = land();
+    expect(restoreGround(map, {}).size).toBe(0);
+    expect(map.groundLevel).toBeUndefined();
+  });
+
+  it('moves with the map as it grows', () => {
+    expect(shiftGroundLevel([[1, 2, Terrain.Rock]], 32)).toEqual([[33, 34, Terrain.Rock]]);
   });
 });
 
@@ -929,12 +1010,68 @@ describe('the dig plan', () => {
 
   it('refuses a raise past the limits of the ground', () => {
     const w = world(hills([[MID, 2, 3]]));
-    expect(levelsOf(w, row(0, 11, 12))).toEqual([1, 1]);
-    expect(plan(w, row(0, 11, 12))).toMatchObject({
+    expect(levelsOf(w, row(1, 11, 12))).toEqual([2, 2]);
+    expect(plan(w, row(1, 11, 12))).toMatchObject({
       ok: false,
       reason: STR.build.groundLimit,
       raise: [],
     });
+  });
+
+  it('keeps off the last row of the map, where a ring may bring water', () => {
+    const w = world(() => 6);
+    for (const tiles of [
+      row(0, 8, 9),
+      row(SIZE - 1, 8, 9),
+      column(0, 8, 9),
+      column(SIZE - 1, 8, 9),
+    ])
+      expect(plan(w, tiles)).toMatchObject({ ok: false, reason: STR.build.digAtEdge, dig: [] });
+    expect(
+      plan(
+        steep(() => 6),
+        row(1, 8, 9),
+      ).ok,
+    ).toBe(true);
+  });
+
+  it('says what a back-fill gives back, and only where one would do something', () => {
+    const w = world(hills(PEAK));
+    const { builder: b, under } = w;
+    expect(b.fillRefund(MID, MID)).toBeNull();
+    under.dig(MID, MID, 0);
+    expect(b.fillRefund(MID, MID)).toBe(rules.drillCost * rules.refundRate);
+    under.addPortal({ x: MID, y: MID, face: 'E', floor: 0 });
+    expect(b.fillRefund(MID, MID)).toBe((rules.drillCost + rules.portalCost) * rules.refundRate);
+    b.track.place(MID, MID, 'straight', 1);
+    expect(b.fillRefund(MID, MID)).toBeNull();
+  });
+
+  it('says how much of the stone a store has room for', () => {
+    const w = world(hills(PEAK));
+    const c = w.builder.checkDig(row(MID, 11, 13));
+    expect(c.stone).toBeGreaterThan(0);
+    expect(w.builder.stoneTaken(c)).toBe(c.stone);
+    w.depot.add('stone', w.depot.cap('stone') - 1);
+    expect(w.builder.stoneTaken(c)).toBe(1);
+    w.depot.add('stone', 10);
+    expect(w.builder.stoneTaken(c)).toBe(0);
+  });
+
+  it('notes the terrain a dig or a lower changes, for the save, and an undo follows', () => {
+    const w = world(hills(LOW_SADDLE));
+    const { builder: b, map } = w;
+    expect(b.dig(row(MID, 8, 14))).toBe(true);
+    const ridge = MID * SIZE + 11;
+    expect(map.terrain[ridge]).toBe(Terrain.Rock);
+    expect(b.terrainEdits.get(ridge)).toBe(Terrain.Rock);
+    expect([...b.terrainEdits.keys()].every((k) => map.terrain[k] === Terrain.Rock)).toBe(true);
+    const changes: GroundChange[] = [
+      { x: 11, y: MID, was: 1, now: 1, terrainWas: Terrain.Grass, terrainNow: Terrain.Rock },
+    ];
+    b.setGround(changes, false);
+    expect(b.terrainEdits.get(ridge)).toBe(Terrain.Grass);
+    expect(map.terrain[ridge]).toBe(Terrain.Grass);
   });
 
   it('refuses the whole drag over a building, road, deposit or surface track', () => {

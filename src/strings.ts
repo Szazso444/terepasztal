@@ -435,6 +435,31 @@ const EN = {
       `Lower: ${tiles} ${tiles === 1 ? 'tile' : 'tiles'}, ${cost}`,
     /** a Drill drag over a tile touching water, on a side or a corner */
     digBesideWater: 'Ground touching water cannot be dug',
+    /** a Drill drag over the last row of the map, where the next ring may bring water */
+    digAtEdge: 'The Drill keeps one tile off the edge of the map',
+    /** the Drill's line: what the drag makes, a count of 0 left out, and the money */
+    digPlan: (dug: number, cut: number, raised: number, portals: number, cost: string) =>
+      `Drill: ${[
+        dug ? `dig ${dug}` : '',
+        cut ? `cut ${cut}` : '',
+        raised ? `raise ${raised}` : '',
+        portals ? `${portals} ${portals === 1 ? 'portal' : 'portals'}` : '',
+        cost,
+      ]
+        .filter(Boolean)
+        .join(', ')}`,
+    /** the stone a dig brings in */
+    digStone: (n: number) => `${n} stone`,
+    /** beside the stone: no store has room for it, or for all of it */
+    stoneLost: 'No store takes this stone',
+    stoneSome: (n: number) => `Only ${n} fits in the store`,
+    /** the Drill over tiles dug already */
+    digNothing: 'Dug already',
+    /** how many tiles of the drag refuse; `reason` is the first one's, the others may differ */
+    digRefused: (tiles: number, reason: string) =>
+      tiles === 1 ? `1 tile refuses: ${reason}` : `${tiles} tiles refuse, the first: ${reason}`,
+    /** Demolish over a dug or cut tile with no track on it */
+    backFill: (refund: string) => `Back-fill: ${refund} back`,
     /** anything tried on a dug tile from outside: it has the mountain over it */
     overTunnel: 'A tunnel runs under this tile',
     /** anything but rail tried on a cut tile */
@@ -617,6 +642,11 @@ const EN = {
       'Lowers the ground one level a tile, and the tiles around it as far as the slope needs. Every tile that moves costs money. Stone brought down to sea level turns to grass.',
     /** Raise and Lower's cost line: the price depends on how far the slope spreads */
     groundCost: 'per tile and level',
+    drill: 'Drill',
+    drillHint:
+      'Digs into a mountain at sea level, and turns every mountain to glass while it is on. Track tools then lay on dug tiles and in cuttings. Portals make themselves where a line comes out.',
+    /** the Drill's cost line: the ghost over the map has the sum */
+    drillCost: 'per tile',
     select: 'Select',
     /** the toolbar category of roads, and the road tool in it (#328) */
     roads: 'Roads',
@@ -647,6 +677,8 @@ const EN = {
       /** Upgrade and Downgrade lay nothing: they work on track that stands */
       reclass: 'Click: one piece · Drag: along the line',
       ground: 'Click: one tile · Drag: along a line',
+      /** the whole of a Drill drag is dug at once, when the button comes up */
+      dig: 'Drag: dig a line, with one turn',
       click: 'Click: place',
       paint: 'Drag: paint',
       turn: 'R: turn',

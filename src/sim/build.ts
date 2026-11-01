@@ -243,6 +243,11 @@ export class Builder {
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
   onSupplyChanged: ((x: number, y: number) => void) | null = null;
+  /**
+   * The terrain the ground tools gave a tile, by key, as it stands now. `map.terrain` holds it for
+   * the game; the save holds it from here, as a load reads terrain back from the chunks.
+   */
+  terrainEdits = new Map<number, Terrain>();
   /** fired when a raise, a lower or a dig, or the undo or redo of one, wrote these changes */
   onGroundChanged: ((changes: readonly GroundChange[]) => void) | null = null;
   /** fired when an undo gave a tile back the props track or a structure took off it */
@@ -372,6 +377,17 @@ export class Builder {
   /** The store that takes in goods from (x, y): the one that supplies it, else the nearest. */
   private intakeAt(x: number, y: number): ResourceStore | undefined {
     return this.stores.supplierFor(x, y) ?? this.stores.nearest(x, y, Infinity)[0];
+  }
+  /** The stone of a dig goes to the store for the dug tile with the lowest key (`dig`). */
+  private stoneStore(c: DigWork) {
+    if (!c.dig.length) return undefined;
+    const at = c.dig.reduce((a, t) => (this.key(t.x, t.y) < this.key(a.x, a.y) ? t : a));
+    return this.intakeAt(at.x, at.y);
+  }
+  /** How much of the stone `c` brings in a store has room for: the ghost says if it is not all. */
+  stoneTaken(c: DigPlan): number {
+    const store = this.stoneStore(c);
+    return store ? Math.min(c.stone, Math.max(0, store.cap('stone') - store.get('stone'))) : 0;
   }
   /** Give back the refund share of `cost` to the store that takes in goods from (x, y). */
   private refund(cost: Cost, x: number, y: number) {
@@ -1542,7 +1558,10 @@ export class Builder {
       const k = this.key(c.x, c.y),
         terrain = forward ? c.terrainNow : c.terrainWas;
       plane[k] = forward ? c.now : c.was;
-      if (map.terrain[k] !== terrain) turned = true;
+      if (map.terrain[k] !== terrain) {
+        turned = true;
+        this.terrainEdits.set(k, terrain);
+      }
       map.terrain[k] = terrain;
     }
     if (turned) this.refreshHarvest();
@@ -1606,10 +1625,7 @@ export class Builder {
     });
     this.log?.dig(c, changes, paid);
     this.setDug(c, changes, true);
-    if (c.stone > 0) {
-      const at = c.dig.reduce((a, t) => (this.key(t.x, t.y) < this.key(a.x, a.y) ? t : a));
-      this.intakeAt(at.x, at.y)?.add('stone', c.stone);
-    }
+    if (c.stone > 0) this.stoneStore(c)?.add('stone', c.stone);
     sfx('build.place');
     return true;
   }
@@ -1620,12 +1636,11 @@ export class Builder {
    * other tile.
    */
   fillDug(x: number, y: number): boolean {
+    const back = this.fillRefund(x, y);
+    if (back === null) return false;
     const { underground: under } = this,
-      floor = under.floorAt(x, y);
-    if ((floor === undefined && !under.isCut(x, y)) || this.track.has(x, y)) return false;
-    const portals = under.portalsOf(x, y),
-      price = { money: rules.drillCost + rules.portalCost * portals.length },
-      back = this.priced(price, rules.refundRate).money ?? 0,
+      floor = under.floorAt(x, y),
+      portals = under.portalsOf(x, y),
       tile: FilledTile = { x, y, floor, portals };
     this.log?.fill(tile, -back);
     this.setFilled(tile, true);
@@ -1633,6 +1648,14 @@ export class Builder {
     this.economy.money += back;
     sfx('build.remove');
     return true;
+  }
+  /** What a back-fill of (x, y) gives back, in money; null where `fillDug` would do nothing. */
+  fillRefund(x: number, y: number): number | null {
+    const { underground: under } = this;
+    if ((under.floorAt(x, y) === undefined && !under.isCut(x, y)) || this.track.has(x, y))
+      return null;
+    const price = { money: rules.drillCost + rules.portalCost * under.portalsOf(x, y).length };
+    return this.priced(price, rules.refundRate).money ?? 0;
   }
   /** Write a dig forward, or back as an undo does. */
   setDug(work: DigWork, changes: readonly GroundChange[], forward: boolean) {

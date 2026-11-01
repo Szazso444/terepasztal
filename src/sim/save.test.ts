@@ -147,6 +147,7 @@ function fullParts(): SaveParts {
       [2, 3, 5],
       [3, 3, 4],
     ],
+    groundTerrain: [[2, 3, 4]],
   };
 }
 
@@ -294,6 +295,7 @@ const DECLARED: Record<keyof Declared<SaveGame>, true> = {
   roads: true,
   underground: true,
   groundLevel: true,
+  groundTerrain: true,
   loadedFrom: true,
   migrationNotes: true,
 };
@@ -948,6 +950,7 @@ describe('the underground and the ground levels', () => {
     if (!('save' in read)) throw new Error('refused');
     expect(read.save.underground).toEqual(parts.underground);
     expect(read.save.groundLevel).toEqual(parts.groundLevel);
+    expect(read.save.groundTerrain).toEqual(parts.groundTerrain);
     const store = Underground.fromJSON(read.save.underground, w, h);
     expect(store.toJSON()).toEqual(parts.underground);
     const plane = groundLevelFromJSON(read.save.groundLevel, w, h)!;

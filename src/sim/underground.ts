@@ -2,7 +2,7 @@ import { DIR_DX, DIR_DY } from '../engine/iso';
 import { STR } from '../strings';
 import { MAX_LEVEL, NO_LEVEL, tileLevels, type Elevated } from '../world/elevation';
 import { reshape, type Reshape } from '../world/reshape';
-import { Terrain, terrainAt, type GameMap } from '../world/tiles';
+import { TERRAIN_NAMES, Terrain, terrainAt, type GameMap } from '../world/tiles';
 import type { TrackClass } from '../world/track';
 import type { PlacementCheck } from './build';
 import { rules } from './rules';
@@ -84,6 +84,12 @@ export interface UndergroundJSON {
 
 /** What a save holds of `GameMap.groundLevel`: the tiles with a level set, [x, y, level]. */
 export type GroundLevelJSON = [number, number, number][];
+
+/**
+ * The terrain the ground tools gave some tiles, [x, y, terrain]: stone brought down to Grass and a
+ * ridge's Rock. A load reads terrain back from the chunks, which keep the ground as generated.
+ */
+export type GroundTerrainJSON = [number, number, number][];
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === 'object' && !Array.isArray(v);
@@ -241,6 +247,10 @@ export class Underground {
       return (p.x === x && p.y === y) || (front.x === x && front.y === y);
     });
   }
+  /** The tiles the portals look out at: each has to go on carrying a line out. */
+  fronts(): Tile[] {
+    return this.list.map(frontOf);
+  }
   /** A portal looks out at (x, y): the ground there has to stay as it is. */
   fronted(x: number, y: number): boolean {
     return this.list.some((p) => {
@@ -343,7 +353,8 @@ export class Underground {
    * touches water or has something on the surface (`surfaceFree`), or if a tile the ground would
    * lift may not move. Water and the surface are not asked of a tile the plan leaves as it is: a
    * tile dug or cut already, or open ground, so a drag from rail on open ground starts from that
-   * rail. A tile a portal looks out at does not move, unless this dig digs it.
+   * rail. A tile a portal looks out at does not move, unless this dig digs it. A tile on the last
+   * row of the map refuses too: a ring the map grows by lies beside it, and may bring water there.
    *
    * A portal stands on the dug tile where a line comes out: beside a cut or open ground, along the
    * drag and the one tile past each of its ends (`withEnds`). The tile a new portal looks at must
@@ -394,7 +405,8 @@ export class Underground {
       walk.forEach((t, i) => {
         const written =
           line.includes(t) && !this.isDug(t.x, t.y) && !this.isCut(t.x, t.y) && kinds[i] !== 'open';
-        if (written && touchesWater(map, t.x, t.y)) refuse(t, STR.build.digBesideWater);
+        if (written && this.onEdge(t)) refuse(t, STR.build.digAtEdge);
+        else if (written && touchesWater(map, t.x, t.y)) refuse(t, STR.build.digBesideWater);
         else if (written && !surfaceFree(t.x, t.y)) refuse(t, STR.build.occupied);
         else if (written && kinds[i] === 'cut') cut.push(t);
         else if (written) dig.push(t);
@@ -448,6 +460,10 @@ export class Underground {
       stone: rules.drillStone * dig.length,
       refused: [],
     };
+  }
+
+  private onEdge(t: Tile) {
+    return !t.x || !t.y || t.x === this.w - 1 || t.y === this.h - 1;
   }
 
   /** Write what a dig makes; the ground under it is `Builder.setGround`'s. */
@@ -515,7 +531,10 @@ export class Underground {
  * the map and the plane are both in place. A plane has to hold settled levels (`levelAt` trusts
  * them and looks at four sides only), and a save may hold any level from 0 to MAX_LEVEL: a level
  * on a water tile is cleared, and every other is lowered to what `tileLevels` gives the tile. A
- * settled plane comes back as it was. Undefined when the map has no plane or none of it is left.
+ * tile the plane holds down gets its level written: on a grown map the tiles held at the level they
+ * had (`src/sim/holdGround.ts`) stand beside ground the new ring frees to rise, and that ground has
+ * to stop within a step of them. A settled plane comes back as it was. Undefined when the map has
+ * no plane or none of it is left.
  */
 export function settleGroundLevel(map: Elevated): Uint8Array | undefined {
   const plane = map.groundLevel;
@@ -532,7 +551,12 @@ export function settleGroundLevel(map: Elevated): Uint8Array | undefined {
       cleared[i] = Math.min(cleared[i], levels[i]);
       any = true;
     }
-  return any ? cleared : undefined;
+  if (!any) return undefined;
+  const free = tileLevels({ ...map, groundLevel: undefined });
+  for (let i = 0; i < cleared.length; i++)
+    if (cleared[i] === NO_LEVEL && levels[i] < free[i] && map.terrain[i] !== Terrain.Water)
+      cleared[i] = levels[i];
+  return cleared;
 }
 
 /**
@@ -567,7 +591,58 @@ export function groundLevelFromJSON(j: unknown, w: number, h: number): Uint8Arra
   return plane;
 }
 
-/** The tiles of a saved ground level plane, `d` tiles further along both axes (map growth). */
+/** The tiles the ground tools gave another terrain, by key (`y * w + x`), in tile order. */
+export function groundTerrainToJSON(
+  edits: ReadonlyMap<number, Terrain>,
+  w: number,
+): GroundTerrainJSON {
+  return [...edits]
+    .sort(([a], [b]) => a - b)
+    .map(([k, terrain]) => [k % w, Math.floor(k / w), terrain]);
+}
+
+/**
+ * The terrain a save holds, by key, on a map of w by h tiles. An entry off the map, or with
+ * anything but a land terrain, is skipped: no tool makes water, or takes a tile out of it.
+ */
+export function groundTerrainFromJSON(j: unknown, w: number, h: number): Map<number, Terrain> {
+  const out = new Map<number, Terrain>();
+  if (!Array.isArray(j)) return out;
+  for (const e of j as unknown[]) {
+    if (!Array.isArray(e)) continue;
+    const [x, y, terrain] = e as unknown[];
+    const t = levelOf(terrain, TERRAIN_NAMES.length - 1);
+    if (t === undefined || t === (Terrain.Water as number)) continue;
+    if (levelOf(x, w - 1) === undefined || levelOf(y, h - 1) === undefined) continue;
+    out.set((y as number) * w + (x as number), t as Terrain);
+  }
+  return out;
+}
+
+/**
+ * Bring the ground a save holds onto `map`, for a load to call before anything reads the levels:
+ * the terrain the ground tools changed, then the plane, settled (`settleGroundLevel`). The answer
+ * is the terrain it wrote, which the Builder goes on keeping. A tile the chunks came back with as
+ * water keeps its water.
+ */
+export function restoreGround(
+  map: GameMap,
+  save: { groundLevel?: unknown; groundTerrain?: unknown },
+): Map<number, Terrain> {
+  const edits = groundTerrainFromJSON(save.groundTerrain, map.w, map.h);
+  for (const [k, terrain] of edits) {
+    if (map.terrain[k] === Terrain.Water) edits.delete(k);
+    else map.terrain[k] = terrain;
+  }
+  map.groundLevel = groundLevelFromJSON(save.groundLevel, map.w, map.h);
+  map.groundLevel = settleGroundLevel(map);
+  return edits;
+}
+
+/**
+ * The tiles of a saved ground level plane or terrain list, `d` tiles further along both axes (map
+ * growth).
+ */
 export function shiftGroundLevel(j: GroundLevelJSON, d: number): GroundLevelJSON {
   if (!Array.isArray(j)) return j;
   return j.map((e) =>

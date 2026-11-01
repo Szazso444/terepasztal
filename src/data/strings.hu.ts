@@ -347,6 +347,26 @@ export const HU: Strings = {
     groundUp: (tiles: number, cost: string) => `Emelés: ${tiles} csempe, ${cost}`,
     groundDown: (tiles: number, cost: string) => `Süllyesztés: ${tiles} csempe, ${cost}`,
     digBesideWater: 'Vizet érintő föld nem ásható ki',
+    digAtEdge: 'A fúró egy csempényire marad a térkép szélétől',
+    digPlan: (dug: number, cut: number, raised: number, portals: number, cost: string) =>
+      `Fúró: ${[
+        dug ? `ásás ${dug}` : '',
+        cut ? `bevágás ${cut}` : '',
+        raised ? `emelés ${raised}` : '',
+        portals ? `${portals} kapu` : '',
+        cost,
+      ]
+        .filter(Boolean)
+        .join(', ')}`,
+    digStone: (n: number) => `${n} kő`,
+    stoneLost: 'Ezt a követ egy készlet sem veszi át',
+    stoneSome: (n: number) => `A készletbe csak ${n} fér`,
+    digNothing: 'Már ki van ásva',
+    digRefused: (tiles: number, reason: string) =>
+      tiles === 1
+        ? `1 csempe nem megy: ${reason}`
+        : `${tiles} csempe nem megy, az első oka: ${reason}`,
+    backFill: (refund: string) => `Visszatöltés: ${refund} vissza`,
     overTunnel: 'E csempe alatt alagút fut',
     inCutting: 'A bevágásba csak sín kerülhet',
     cutStraight: 'A bevágásba csak egyenes sín kerülhet',
@@ -467,6 +487,10 @@ export const HU: Strings = {
     downgradeHint:
       'Egy vonallal lejjebb teszi a sínt: Törzsvonalból Fővonal, Fővonalból Mellékvonal. Ingyenes.',
     upgradeCost: 'a különbözet',
+    drill: 'Fúró',
+    drillHint:
+      'Tengerszinten vájja a hegyet, és amíg be van kapcsolva, minden hegy üveggé válik. A sínes eszközök ilyenkor a kiásott csempékre és a bevágásokba fektetnek. A kapuk maguktól készülnek ott, ahol a vonal kibukkan.',
+    drillCost: 'csempénként',
     raise: 'Emelés',
     lower: 'Süllyesztés',
     raiseHint:
@@ -498,6 +522,7 @@ export const HU: Strings = {
       drag: 'Húzás: szakasz lefektetése',
       reclass: 'Kattintás: egy elem · Húzás: a vonal mentén',
       ground: 'Kattintás: egy csempe · Húzás: a vonal mentén',
+      dig: 'Húzás: vonal ásása, egy kanyarral',
       click: 'Kattintás: lerakás',
       paint: 'Húzás: festés',
       turn: 'R: forgatás',
