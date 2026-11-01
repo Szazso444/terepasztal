@@ -14,11 +14,15 @@ function byFacing(frame: (facing: number) => string): KeysByFacing {
 /**
  * The rolling stock's frame keys by facing, each list worked out once: `locoFrame` and its kin
  * build their names and fallbacks anew on every call, and a train asks for every sprite, every
- * frame. The atlas is complete before the train renderer exists, so a key never changes.
+ * frame. A vehicle's pages come and go at runtime, and with them the fallback a name lands on, so
+ * every list is dropped when the atlas' frames change.
  */
 export class FrameKeys {
   private readonly kept = new Map<unknown, Map<unknown, Map<unknown, KeysByFacing>>>();
-  constructor(private readonly atlas: Pick<AtlasRegistry, 'has'>) {}
+  private keptFor: number;
+  constructor(private readonly atlas: Pick<AtlasRegistry, 'has' | 'framesVersion'>) {
+    this.keptFor = atlas.framesVersion;
+  }
 
   loco(def: LocoDef, part: PartKind) {
     return (
@@ -66,6 +70,10 @@ export class FrameKeys {
   }
 
   private find(a: unknown, b: unknown, c: unknown) {
+    if (this.keptFor !== this.atlas.framesVersion) {
+      this.keptFor = this.atlas.framesVersion;
+      this.kept.clear();
+    }
     return this.kept.get(a)?.get(b)?.get(c);
   }
   private keep(a: unknown, b: unknown, c: unknown, keys: KeysByFacing) {

@@ -6,6 +6,7 @@ import { FrameKeys } from './frameKeys';
 
 // every third name exists, so each fallback of the frame functions is taken somewhere
 const atlas = {
+  framesVersion: 0,
   has(key: string) {
     let h = 0;
     for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) | 0;
@@ -42,6 +43,7 @@ describe('kept frame keys', () => {
   it('asks the atlas once per list, not once per frame', () => {
     let asked = 0;
     const keys = new FrameKeys({
+      framesVersion: 0,
       has: () => {
         asked++;
         return true;
@@ -51,5 +53,19 @@ describe('kept frame keys', () => {
     const after = asked;
     expect(keys.loco(content.locomotives[0], 'body')).toBe(first);
     expect(asked).toBe(after);
+  });
+  it('follow a vehicle whose own pages come and go', () => {
+    const def = content.locomotives[0];
+    const own = `rolling/loco_${def.id}_body_f0`;
+    const frames = new Set<string>();
+    const pages = { framesVersion: 0, has: (key: string) => frames.has(key) };
+    const keys = new FrameKeys(pages);
+    expect(keys.loco(def, 'body')[0]).not.toBe(own);
+    frames.add(own);
+    pages.framesVersion++;
+    expect(keys.loco(def, 'body')[0]).toBe(own);
+    frames.delete(own);
+    pages.framesVersion++;
+    expect(keys.loco(def, 'body')[0]).not.toBe(own);
   });
 });
