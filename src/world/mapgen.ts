@@ -1627,10 +1627,37 @@ function prop(
   };
 }
 
+/** One of `kinds`, for a draw that is `t` of the way through its band. */
+const among = <K>(kinds: readonly K[], t: number) =>
+  kinds[Math.min(kinds.length - 1, Math.floor(t * kinds.length))];
+
+/** The forest floors of the climates that have one, and the share of forest tiles that show it. */
+const FLOOR_SHARE = 0.22;
+const FOREST_FLOOR: Partial<Record<Biome, readonly PropKind[]>> = {
+  [Biome.Forest]: ['fern', 'fern', 'mushrooms', 'log', 'stump'],
+  [Biome.Plains]: ['fern', 'stump', 'heather'],
+  [Biome.Taiga]: ['log', 'heather'],
+};
+/** Plains orchards: a square of 8 tiles is one this often, and then this share of its tiles grow. */
+const ORCHARD_SHARE = 0.08;
+const ORCHARD_TREES = 0.45;
+
+/**
+ * The tree on an open tile of `b`, for the draw `pick`: the climate's own kind or now and then one
+ * of the nature set.
+ */
+function openTree(b: Biome, kind: PropKind, pick: number): PropKind {
+  if (b === Biome.Taiga) return pick < 0.3 ? 'larch' : kind;
+  if (b === Biome.Plains) return pick < 0.4 ? 'poplar' : pick < 0.55 ? 'maple' : kind;
+  if (b === Biome.Forest) return pick < 0.35 ? 'beech' : pick < 0.5 ? 'maple' : kind;
+  return kind;
+}
+
 /**
  * (Re)generate decorative props from the terrain and the climate (climateAt: palms on a beach in
  * the Ocean climate, cacti on one in the desert). With a rectangle only those tiles are redone,
- * which is what the editor needs after painting. Deterministic per tile and seed.
+ * which is what the editor needs after painting. Deterministic per tile and seed. Stored chunks
+ * keep the props they have, so a change here reaches only chunks generated after it (#368).
  */
 export function decorateProps(
   map: GameMap,
@@ -1658,18 +1685,39 @@ export function decorateProps(
         const list: PropInstance[] = [];
         for (let k = 0; k < n; k++) {
           const a = hash2(wx * 3 + k, wy, seed + 7);
+          // the kind's own draw: `a` also places the prop sideways
+          const pick = hash2(wx + k * 5, wy - k, seed + 21);
           let kind: PropKind;
-          if (b === Biome.Taiga) kind = a > 0.35 ? 'spruce' : 'pine';
+          if (b === Biome.Taiga) kind = pick < 0.22 ? 'larch' : a > 0.35 ? 'spruce' : 'pine';
           else if (b === Biome.Swamp) kind = a > 0.6 ? 'deadtree' : a > 0.3 ? 'tree' : 'reeds';
-          else if (b === Biome.Plains) kind = a > 0.6 ? 'oak' : a > 0.3 ? 'tree' : 'birch';
+          else if (b === Biome.Plains)
+            kind = pick < 0.12 ? 'maple' : a > 0.6 ? 'oak' : a > 0.3 ? 'tree' : 'birch';
+          else if (b === Biome.Desert) kind = pick < 0.6 ? 'acacia' : 'deadtree';
+          else if (pick < 0.24) kind = 'beech';
+          else if (pick < 0.34) kind = 'maple';
           else kind = a > 0.7 ? 'pine' : a > 0.45 ? 'oak' : a > 0.2 ? 'tree' : 'birch';
-          list.push(prop(kind, 3, wx, wy, seed, k, a));
+          list.push(prop(kind, kind === 'deadtree' ? 2 : 3, wx, wy, seed, k, a));
         }
+        const floor = FOREST_FLOOR[b],
+          c = hash2(wx, wy, seed + 22);
+        if (floor && c < FLOOR_SHARE)
+          list.push(
+            prop(
+              among(floor, c / FLOOR_SHARE),
+              2,
+              wx,
+              wy,
+              seed,
+              n,
+              hash2(wx * 3 + n, wy, seed + 7),
+            ),
+          );
         map.props.set(i, list);
         continue;
       }
       // grass and sand: now and then one prop
-      const r = hash2(wx, wy, seed + 5);
+      const r = hash2(wx, wy, seed + 5),
+        tree = hash2(wx, wy, seed + 23);
       let kind: PropKind | null = null;
       let variants = 3;
       if (t === Terrain.Grass) {
@@ -1679,20 +1727,44 @@ export function decorateProps(
             variants = 2;
           }
         } else if (b === Biome.Taiga) {
-          if (r > 0.95) kind = r > 0.985 ? 'spruce' : 'bush';
+          if (r > 0.95) kind = r > 0.985 ? openTree(b, 'spruce', tree) : 'bush';
+          else if (r > 0.91) {
+            kind = among(['heather', 'heather', 'log'] as const, (r - 0.91) / 0.04);
+            variants = 2;
+          }
         } else if (b === Biome.Plains) {
           if (r > 0.9) {
-            kind = r > 0.985 ? 'oak' : r > 0.955 ? 'bush' : 'flowers';
+            kind = r > 0.985 ? openTree(b, 'oak', tree) : r > 0.955 ? 'bush' : 'flowers';
             variants = r > 0.955 ? 3 : 4;
+          } else if (hash2(wx >> 3, wy >> 3, seed + 24) < ORCHARD_SHARE && tree < ORCHARD_TREES)
+            kind = 'apple';
+          else if (r > 0.875) kind = 'poplar';
+          else if (r > 0.85) {
+            kind = r > 0.865 ? 'heather' : 'stump';
+            variants = 2;
+          }
+        } else if (b === Biome.Desert) {
+          if (r > 0.9) {
+            kind = r > 0.975 ? 'acacia' : 'dryshrub';
+            variants = r > 0.975 ? 3 : 2;
           }
         } else if (b === Biome.Ocean) {
           if (r > 0.9) {
             kind = 'palm';
             variants = 2;
           }
-        } else if (r > 0.94) kind = r > 0.985 ? 'tree' : r > 0.965 ? 'bush' : 'flowers';
+        } else if (r > 0.94)
+          kind = r > 0.985 ? openTree(b, 'tree', tree) : r > 0.965 ? 'bush' : 'flowers';
+        else if (b === Biome.Forest && r > 0.9) {
+          kind = among(['fern', 'fern', 'mushrooms', 'stump', 'log'] as const, (r - 0.9) / 0.04);
+          variants = 2;
+        }
       } else if (b === Biome.Desert) {
-        if (r > 0.93) kind = r > 0.965 ? 'deadtree' : 'cactus';
+        if (r > 0.93) kind = r > 0.985 ? 'acacia' : r > 0.965 ? 'deadtree' : 'cactus';
+        else if (r > 0.9) {
+          kind = 'dryshrub';
+          variants = 2;
+        }
       } else if (b === Biome.Ocean && r > 0.9) {
         kind = 'palm';
         variants = 2;

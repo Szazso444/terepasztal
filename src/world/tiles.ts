@@ -73,7 +73,20 @@ export type PropKind =
   | 'coal'
   | 'oil'
   /** a tile of a wheat field on plains grass (generateMap's wheat pass) */
-  | 'wheat';
+  | 'wheat'
+  /** the nature set (#653): trees of their climates, then what lies on the ground */
+  | 'beech'
+  | 'poplar'
+  | 'apple'
+  | 'maple'
+  | 'larch'
+  | 'acacia'
+  | 'stump'
+  | 'log'
+  | 'fern'
+  | 'mushrooms'
+  | 'heather'
+  | 'dryshrub';
 export interface PropInstance {
   kind: PropKind;
   variant: number;
