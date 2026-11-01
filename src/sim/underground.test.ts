@@ -81,8 +81,6 @@ describe('Underground', () => {
     expect(u.addPortal({ x: 3, y: 2, face: 'Q' as 'N', floor: 0 })).toBe(false);
     expect(u.addPortal({ x: 3, y: 2, face: 'N', floor: 99 })).toBe(false);
     expect(u.portals()).toHaveLength(2);
-    expect(u.removePortals(2, 2)).toBe(true);
-    expect(u.portals()).toEqual([]);
   });
 
   it('round-trips dug tiles, cuts, portals and groundLevel', () => {

@@ -239,7 +239,8 @@ export class Builder {
   /**
    * The Drill is on: track and signals go on dug tiles, on cuts, and on the open tile a portal looks
    * at, so one drag lays a line out of a tunnel. Off, a dug tile takes neither, as it has a surface
-   * over it, and a cut still takes both.
+   * over it, and a cut still takes both. UI state, set by the build controller: the tick must
+   * never read it.
    */
   insideMode = false;
   onStationChanged: ((s: Station, removed: boolean) => void) | null = null;
@@ -1720,6 +1721,9 @@ export class Builder {
     if (!this.free && SUPPLY_DEFS[kind].tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(SUPPLY_DEFS[kind].tier) };
     if (!this.track.has(x, y)) return { ok: false, cost: {}, reason: STR.build.needTrackHere };
+    // wire goes where the rail does: on a dug tile with the Drill on, else on the surface
+    const inside = this.insideRefusal([{ x, y }]);
+    if (inside) return { ok: false, cost: {}, reason: inside };
     if (this.catenary?.supplyAt(x, y) === kind)
       return { ok: false, cost: {}, reason: STR.build.sameSupply };
     return this.affordable(this.priced(SUPPLY_DEFS[kind].cost, 1), x, y);

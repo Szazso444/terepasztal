@@ -26,7 +26,7 @@ import { forAll } from '../testing/property';
 import { BIOME_DEFS } from './biomes';
 import { Builder, DECOR_DEFS, decorPlace, type LinePiece } from './build';
 import { BUILDING_DEFS, buildingFootprint } from './buildings';
-import { Catenary } from './catenary';
+import { Catenary, SUPPLY_KINDS } from './catenary';
 import { streetDoors } from './doors';
 import { Economy } from './economy';
 import { Fleet } from './fleet';
@@ -1236,6 +1236,26 @@ describe('track inside', () => {
       expect(w.builder.spawnDecor(AT.x, AT.y, d.id, 0), d.id).toBeNull();
     }
     expect(w.builder.stations.length + w.builder.decor.size + w.builder.buildings.size).toBe(0);
+  });
+
+  it('wire stands on a dug tile with the Drill on, and is refused with it off', () => {
+    const w = room();
+    w.builder.catenary = new Catenary(w.map);
+    expect(w.builder.placeTrack(20, 20, STRAIGHT, 1)).toBe(true);
+    for (const kind of SUPPLY_KINDS) {
+      const c = w.builder.checkSupply(20, 20, kind);
+      expect(c.ok, `${kind}: ${c.reason}`).toBe(true);
+    }
+    expect(w.builder.placeSupply(20, 20, 'catenary')).toBe(true);
+    expect(w.builder.catenary.supplyAt(20, 20)).toBe('catenary');
+    w.builder.insideMode = false;
+    for (const kind of SUPPLY_KINDS)
+      expect(w.builder.checkSupply(20, 20, kind), kind).toMatchObject({
+        ok: false,
+        reason: STR.build.overTunnel,
+      });
+    expect(w.builder.placeSupply(20, 20, 'third_rail')).toBe(false);
+    expect(w.builder.catenary.supplyAt(20, 20)).toBe('catenary');
   });
 
   it('the tile a portal looks at keeps its rail: no road crosses it, and it opens with the portal gone', () => {

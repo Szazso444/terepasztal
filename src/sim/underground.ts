@@ -276,10 +276,6 @@ export class Underground {
     this.version++;
     return true;
   }
-  /** Take away the portals on (x, y); false when there were none. */
-  removePortals(x: number, y: number): boolean {
-    return this.keepPortals((p) => p.x !== x || p.y !== y);
-  }
   /** Take away the portal on one face; false when it was not there. */
   private removePortal(p: Portal): boolean {
     return this.keepPortals((q) => q.x !== p.x || q.y !== p.y || q.face !== p.face);
