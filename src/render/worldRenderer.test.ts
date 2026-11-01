@@ -178,6 +178,7 @@ function renderer() {
     buildingLife: { place: () => undefined, remove: () => undefined },
     treeSway: { add: () => undefined },
     puddles: { invalidate: () => undefined },
+    desertWind: { invalidate: () => undefined },
     surfaces: {
       picture: pictureOf,
       window: (_key: string, _f: FrameInfo, _procedural: boolean, family: string) => {
@@ -1485,6 +1486,7 @@ function fieldWorld(fields: [number, number][]) {
     buildingLife: { place: () => undefined, remove: () => undefined },
     treeSway: { add: () => undefined },
     puddles: { invalidate: () => undefined },
+    desertWind: { invalidate: () => undefined },
     surfaces: {
       picture: pictureOf,
       window: () => Texture.EMPTY,
