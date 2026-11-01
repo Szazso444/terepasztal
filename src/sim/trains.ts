@@ -2485,7 +2485,15 @@ export class Train {
     sfx('train.whistle');
     return true;
   }
-  /** The head stands on the job's tile: it stops here and the work begins. */
+  /**
+   * Held behind a train with no way on, on the way to an urgent job (`Fleet.workBehind`): it takes a
+   * way round the train if there is one, and with none starts work where it stands.
+   */
+  workBehind(ctx: TickCtx): void {
+    const avoid = (x: number, y: number) => ctx.occupied(x, y, this.id);
+    if (!this.dispatch(ctx.track, ctx.builder, ctx.map, avoid, 'forward')) this.startWork();
+  }
+  /** The head stands on the job's tile, or as near as it can get: the work begins. */
   private startWork() {
     this.atStation?.occupants.delete(this.id);
     this.atStation = null;

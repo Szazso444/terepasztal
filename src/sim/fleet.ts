@@ -1125,6 +1125,7 @@ export class Fleet {
     this.rebuildOccupancy();
     this.makeWay(ctx, now, gdt);
     this.yieldWork(ctx, now);
+    this.workBehind(ctx);
     const groups = blockingGroups(this.trains).sort(
       (a, b) => Math.max(...b.map((t) => t.blockedTime)) - Math.max(...a.map((t) => t.blockedTime)),
     );
@@ -1352,6 +1353,18 @@ export class Fleet {
       this.rebuildOccupancy();
       this.rebuildReservations();
       routes.set(t.id, t.pathTileKeys(w));
+    }
+  }
+  /**
+   * A worker on an urgent job, held behind a train with no way on, works from where it stands (spec,
+   * section 6): the way to its job's tile runs through that train, or ends under it, and the train
+   * can only leave once the piece is mended. The train is not backed off.
+   */
+  private workBehind(ctx: TickCtx) {
+    for (const t of this.trains) {
+      if (t.state !== 'moving' || !t.blocked || t.speed > 0 || t.holding) continue;
+      if (!t.maint || !urgentJob(t.maint, this.track)) continue;
+      if (t.blockedBy !== null && this.byId(t.blockedBy)?.noWayOn) t.workBehind(ctx);
     }
   }
   /**

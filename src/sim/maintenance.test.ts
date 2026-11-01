@@ -1171,6 +1171,40 @@ describe('a maintenance train and a train stopped at the break', () => {
   const SLOW = { timeout: 60_000 };
   const tilesUnder = (w: SimWorld, t: Train) => t.occupancyKeys(w.track.w).map((k) => k % w.track.w);
 
+  /** The worker mends the piece, and the stopped train goes on over it by itself. */
+  function bothGoOn(w: SimWorld, x: number, stopped: Train) {
+    expect(stopped.headTile).toEqual({ x: x - 1, y: 30 });
+    const t = maintTrain(w, []);
+    expect(t.maint?.ax).toBe(x);
+    until(w, repairing(t), 200);
+    until(w, () => stopped.headTile!.x > x, 120);
+    expect(stopped.yieldCount, 'the stopped train is not backed off').toBe(0);
+    until(w, () => healthAt(w, x) >= 1, 120);
+    until(w, () => t.maint === null && t.state !== 'repairing', 30);
+    return t;
+  }
+
+  it('on a plain line a worker behind it mends the piece and both go on', SLOW, () => {
+    const { w, west, east } = sidedLine(false);
+    const t = bothGoOn(w, 50, stoppedBy(w, 50, west, east));
+    until(w, () => t.state === 'idle', 200);
+  });
+
+  it('the worker comes right up behind the train', SLOW, () => {
+    const { w, west, east } = sidedLine(false);
+    const stopped = stoppedBy(w, 50, west, east);
+    const t = maintTrain(w, []);
+    until(w, repairing(t), 200);
+    expect(t.headTile!.x).toBeGreaterThanOrEqual(Math.min(...tilesUnder(w, stopped)) - 2);
+    expect(stopped.state).toBe('noRoute');
+  });
+
+  it.each([50, 57, 64])('with sidings on the way a break at %i is mended too', SLOW, (x) => {
+    const { w, west, east } = sidedLine();
+    const t = bothGoOn(w, x, stoppedBy(w, x, west, east));
+    until(w, () => t.state === 'idle', 200);
+  });
+
   it('any train may close up behind one with no way on', SLOW, () => {
     const { w, west, east } = sidedLine(false);
     const stopped = stoppedBy(w, 50, west, east);
@@ -1190,4 +1224,44 @@ describe('a maintenance train and a train stopped at the break', () => {
     expect([...w.fleet.traffic.claims.keys()].sort()).toEqual([...new Set(tiles)].sort());
   });
 
+  it('on a job not urgent it waits behind the train, and starts nothing from there', SLOW, () => {
+    const { w, west, east } = sidedLine(false);
+    const stopped = stoppedBy(w, 50, west, east);
+    // the break is mended by hand as the train stands: it is held by something else now
+    stopped.coal = 0;
+    stopped.water = 0;
+    wearDown(w, 50, 1);
+    until(w, () => stopped.state === 'noFuel', 30);
+    wearDown(w, 60, 0.2);
+    const t = maintTrain(w, []);
+    expect(t.maint?.ax).toBe(60);
+    until(w, () => t.blockedBy === stopped.id && t.speed === 0, 200);
+    run(w, 3, () => expect(t.state).toBe('moving'));
+  });
+
+  it('with a way round the train it takes that and reaches the job', SLOW, () => {
+    rules.trackWearMul = 0;
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    depotWith(w, { ...startStock(), wood: 1000, stone: 1000, iron: 1000 }, { x: 4, y: 30 });
+    line(w, 6, 30, 90);
+    // a passing loop along row 31, its switch blocks at 30 and 50
+    for (const x of [30, 31, 50, 51]) w.track.remove(x, 30);
+    w.track.place(30, 30, 'switch', 7, 'branch');
+    w.track.place(50, 30, 'switch', 1, 'branch');
+    line(w, 32, 31, 49);
+    expect(w.track.get(30, 30)!.form).toBe('parallel');
+    expect(w.track.get(50, 30)!.form).toBe('parallel');
+    const west = station(w, 'warehouse', 12, 29).id;
+    const east = station(w, 'warehouse', 80, 29).id;
+    const other = maintTrain(w, [west, east], 'schedule');
+    until(w, () => other.headTile!.x >= 36 && other.state === 'moving', 200);
+    expect(other.headTile!.y).toBe(30);
+    other.coal = 0;
+    other.water = 0;
+    until(w, () => other.state === 'noFuel', 30);
+    wearDown(w, 70, 0);
+    const t = maintTrain(w, []);
+    until(w, repairing(t), 200);
+    expect(t.headTile).toEqual({ x: 69, y: 30 });
+  });
 });
