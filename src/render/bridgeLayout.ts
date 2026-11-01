@@ -157,6 +157,8 @@ export interface BridgePlan {
   trestles: number[];
   /** Arched masonry walls along a span (stone over water), at across offset `w`. */
   arches: number[];
+  /** Masonry between a span's arched walls at each tile end: the bulk of its piers. */
+  blocks: Rect[];
   /**
    * The deck's end on its +x (`e`) and +y (`s`) edge rests on the bank's abutment, so its end face
    * is not drawn: over water, where the track leaves the bridge for a tile it does not merge with.
@@ -184,6 +186,9 @@ export const NARROW = {
 /** Along offset and half thickness of the stone piers under a span over land. */
 export const PIER_AT = 0.38;
 const PIER_HALF = 0.07;
+/** Half the opening of a tile's arch, and the masonry left at each tile end: a pier's half. */
+export const ARCH_OPEN = 0.36;
+const PIER_LENGTH = 0.5 - ARCH_OPEN;
 /** Half side of a pad's corner pier. */
 const PAD_PIER = { stone: 0.09, wood: 0.045 } as const;
 
@@ -237,7 +242,15 @@ export function bridgePlan(site: BridgeSite, joins: Joins, water: boolean): Brid
   const axis = site.axis,
     // The span's far and near sides: -y and +y along x, -x and +x along y.
     [far, near] = axis === 1 ? [N, S] : [W, E],
-    plan: BridgePlan = { deck, parapets: [], piers: [], trestles: [], arches: [], abutments };
+    plan: BridgePlan = {
+      deck,
+      parapets: [],
+      piers: [],
+      trestles: [],
+      arches: [],
+      blocks: [],
+      abutments,
+    };
   const side = across.deck,
     wall = across.parapet;
   if (!joins[far]) plan.parapets.push({ ...spanRect(axis, -0.5, 0.5, -side, -wall), near: false });
@@ -250,8 +263,12 @@ export function bridgePlan(site: BridgeSite, joins: Joins, water: boolean): Brid
       w1 = joins[near] ? 0.5 : across.support.pier;
     for (const l of [-PIER_AT, PIER_AT])
       plan.piers.push(spanRect(axis, l - PIER_HALF, l + PIER_HALF, w0, w1));
-  } else if (stone) plan.arches = lines(across.support.arch);
-  else plan.trestles = lines(across.support.trestle);
+  } else if (stone) {
+    plan.arches = lines(across.support.arch);
+    const w0 = joins[far] ? -0.5 : plan.arches[0],
+      w1 = plan.arches[plan.arches.length - 1];
+    plan.blocks = [-0.5, ARCH_OPEN].map((l) => spanRect(axis, l, l + PIER_LENGTH, w0, w1));
+  } else plan.trestles = lines(across.support.trestle);
   return plan;
 }
 
@@ -288,5 +305,5 @@ function padPlan(
         cy = sy > 0 && joins[S] ? 0.5 : sy * across.support.pier;
       piers.push({ x0: cx - h, x1: cx + h, y0: cy - h, y1: cy + h });
     }
-  return { deck, parapets, piers, trestles: [], arches: [], abutments };
+  return { deck, parapets, piers, trestles: [], arches: [], blocks: [], abutments };
 }
