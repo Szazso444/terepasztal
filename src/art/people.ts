@@ -1,6 +1,8 @@
 import { AtlasBuilder, type AtlasImage } from '../engine/atlas';
 import { TILE_W, TILE_H, HALF_W, HALF_H } from '../engine/iso';
 import { hash2 } from '../engine/rng';
+import { PERSON_PX } from '../render/assetScale';
+import { PROFESSIONS, type Profession } from '../sim/people';
 import { PAL, shade, type RGB } from './palette';
 import { PixelBuf, pickShade } from './pixels';
 
@@ -65,6 +67,224 @@ function walker(o: Outfit, f: number): PixelBuf {
     b.set(1, 8 + left - 1, HAIR);
     b.set(4, 8 + right - 1, HAIR);
   }
+  b.outline(PAL.outline);
+  return b;
+}
+
+// ---------------------------------------------------------------------------
+// The figures of each profession
+// ---------------------------------------------------------------------------
+
+/** Poses of a walk cycle: near foot forward, passing, far foot forward, passing. */
+export const WALK_FRAMES = 4;
+/** Who gathers from the ground and walks home with a load. */
+const CARRIERS: readonly Profession[] = ['lumberjack', 'stone_mason', 'farmer', 'pump_hand'];
+
+export type FigureView = 'front' | 'back';
+export type FigurePose = 'walk' | 'carry';
+
+/** Wide enough for a tool or a load either side of the body; PERSON_PX tall, feet on the last row. */
+const FIGURE_W = 13;
+/** The column under the hips. */
+const FIGURE_X = 6;
+const BOOT: RGB = [62, 46, 36];
+const WOOD: RGB = [118, 84, 52];
+const IRON: RGB = [132, 138, 142];
+const LOG: RGB = [136, 98, 60];
+const STONE: RGB = [188, 169, 139];
+const STRAW: RGB = [206, 176, 104];
+const WATER: RGB = [71, 123, 130];
+
+interface Dress {
+  /** Hat crown, and the brim where it is another colour or wider. */
+  hat: RGB;
+  wide?: boolean;
+  /** The clothes seen from behind; `chest` runs down the front. */
+  body: RGB;
+  chest: RGB;
+  legs: RGB;
+}
+
+const DRESS: Record<Profession, Dress> = {
+  passenger: { hat: [41, 70, 56], body: [41, 70, 56], chest: [228, 213, 181], legs: [62, 66, 66] },
+  lumberjack: { hat: [84, 92, 56], body: [158, 92, 54], chest: [41, 70, 56], legs: [76, 78, 78] },
+  stone_mason: {
+    hat: [98, 107, 108],
+    body: [150, 136, 112],
+    chest: [120, 84, 52],
+    legs: [86, 82, 72],
+  },
+  farmer: {
+    hat: STRAW,
+    wide: true,
+    body: [120, 128, 76],
+    chest: [146, 150, 96],
+    legs: [96, 78, 56],
+  },
+  pump_hand: {
+    hat: [71, 123, 130],
+    body: [188, 169, 139],
+    chest: [71, 123, 130],
+    legs: [64, 70, 78],
+  },
+  railway_worker: {
+    hat: [38, 52, 84],
+    body: [46, 62, 98],
+    chest: [62, 80, 118],
+    legs: [38, 48, 74],
+  },
+};
+
+/** Sets each `[x, y]` to `c`. */
+function dots(b: PixelBuf, c: RGB, ...at: [number, number][]) {
+  for (const [x, y] of at) b.set(x, y, c);
+}
+
+/** A two-pixel boot pointing forward, the toe at `x` + 1. */
+function boot(b: PixelBuf, x: number, y: number, c: RGB) {
+  dots(b, c, [x, y], [x + 1, y]);
+}
+
+/** Rows 6 to 8. A foot ahead stands lower on the page going down the screen, higher going up. */
+function figureLegs(b: PixelBuf, view: FigureView, f: number, legs: RGB) {
+  const near = legs,
+    far = shade(legs, 0.72),
+    farBoot = shade(BOOT, 0.8);
+  if (f % 2 === 1) {
+    // passing: one leg planted, the other swings by with its foot off the ground
+    const planted = f === 1;
+    dots(b, far, [5, 6], [5, 7]);
+    if (planted) boot(b, 7, 7, farBoot);
+    else boot(b, 5, 8, farBoot);
+    dots(b, near, [6, 6], [6, 7]);
+    if (planted) boot(b, 6, 8, BOOT);
+    else boot(b, 7, 7, BOOT);
+    return;
+  }
+  const ahead = view === 'front' ? 8 : 7,
+    behind = view === 'front' ? 7 : 8,
+    reach = (c: RGB, foot: RGB) => {
+      dots(b, c, [6, 6], [7, ahead - 1]);
+      boot(b, 8, ahead, foot);
+    },
+    trail = (c: RGB, foot: RGB) => {
+      dots(b, c, [5, 6], [4, behind - 1]);
+      boot(b, 3, behind, foot);
+    };
+  if (f === 0) {
+    trail(far, farBoot);
+    reach(near, BOOT);
+  } else {
+    reach(far, farBoot);
+    trail(near, BOOT);
+  }
+}
+
+/** Head and hat on rows 0 to 2, turned to the right of the picture, the back of it from behind. */
+function figureHead(b: PixelBuf, view: FigureView, o: Dress) {
+  if (view === 'front') dots(b, SKIN, [6, 2], [7, 2]);
+  else dots(b, SKIN, [7, 2]);
+  dots(b, HAIR, [5, 2]);
+  if (view === 'back') dots(b, HAIR, [6, 2]);
+  b.rect(5, 0, 3, 1, o.hat);
+  b.rect(o.wide ? 3 : 4, 1, o.wide ? 7 : 5, 1, shade(o.hat, 0.86));
+}
+
+/** Rows 3 to 5, with the arms swinging against the legs unless `free` is false. */
+function figureBody(b: PixelBuf, view: FigureView, f: number, o: Dress, free: boolean) {
+  b.rect(5, 3, 3, 3, o.body);
+  b.rect(7, 3, 1, 3, shade(o.body, 0.8));
+  dots(b, shade(o.body, 1.15), [5, 3]);
+  if (view === 'front') dots(b, o.chest, [6, 3], [6, 4], [6, 5]);
+  if (!free) return;
+  if (f === 0) dots(b, SKIN, [4, 5], [8, 4]);
+  else if (f === 2) dots(b, SKIN, [4, 4], [8, 5]);
+  else dots(b, shade(o.body, 0.8), [4, 4], [8, 4]);
+}
+
+/** What the figure carries, drawn over it; `false` keeps its arms off the swing. */
+const TOOLS: Record<Profession, (b: PixelBuf, view: FigureView) => boolean> = {
+  passenger(b) {
+    dots(b, [163, 107, 66], [4, 5], [4, 6]);
+    return true;
+  },
+  lumberjack(b) {
+    // the axe on the shoulder, its head behind the figure
+    dots(b, WOOD, [9, 4], [8, 3], [7, 3], [6, 2], [5, 2], [4, 1]);
+    dots(b, SKIN, [8, 4]);
+    dots(b, IRON, [3, 0], [3, 1], [2, 1], [3, 2]);
+    return false;
+  },
+  stone_mason(b) {
+    dots(b, WOOD, [9, 4], [8, 3], [7, 3], [6, 2], [5, 2], [4, 1]);
+    dots(b, SKIN, [8, 4]);
+    dots(b, IRON, [2, 2], [3, 1], [3, 0], [4, 0]);
+    return false;
+  },
+  farmer(b) {
+    b.rect(9, 1, 1, 7, WOOD);
+    dots(b, IRON, [8, 0], [9, 0], [10, 0], [8, 1], [10, 1]);
+    dots(b, SKIN, [8, 4]);
+    return false;
+  },
+  pump_hand(b) {
+    dots(b, SKIN, [4, 4], [4, 5], [8, 4], [8, 5]);
+    return false;
+  },
+  railway_worker(b) {
+    dots(b, PAL.brass, [6, 0]);
+    dots(b, SKIN, [8, 5]);
+    dots(b, WOOD, [9, 5]);
+    dots(b, PAL.brass, [9, 6], [9, 7]);
+    return false;
+  },
+};
+
+/** The load of a carrier walking home. */
+const LOADS: Partial<Record<Profession, (b: PixelBuf, view: FigureView) => void>> = {
+  lumberjack(b) {
+    b.rect(2, 3, 9, 2, LOG);
+    dots(b, shade(LOG, 0.8), [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [7, 4], [8, 4], [9, 4]);
+    dots(b, shade(LOG, 1.3), [10, 3], [10, 4]);
+    dots(b, SKIN, [8, 5]);
+  },
+  stone_mason(b, view) {
+    b.rect(8, 3, view === 'front' ? 3 : 2, 3, STONE);
+    b.rect(8, 5, view === 'front' ? 3 : 2, 1, shade(STONE, 0.78));
+    dots(b, SKIN, [7, 5]);
+  },
+  farmer(b) {
+    b.rect(2, 2, 3, 2, STRAW);
+    dots(b, shade(STRAW, 0.8), [3, 3], [4, 3]);
+    dots(b, shade(STRAW, 1.15), [1, 1], [2, 1], [3, 1]);
+    dots(b, [160, 128, 70], [4, 4]);
+    dots(b, SKIN, [8, 4]);
+  },
+  pump_hand(b) {
+    b.rect(2, 3, 9, 1, WOOD);
+    for (const x of [2, 9]) {
+      b.rect(x, 4, 2, 2, IRON);
+      b.rect(x, 4, 2, 1, WATER);
+    }
+    dots(b, SKIN, [4, 4], [8, 4]);
+  },
+};
+
+/** One frame of a profession's figure, PERSON_PX tall with its feet on the last row. */
+export function professionFigure(
+  profession: Profession,
+  view: FigureView,
+  pose: FigurePose,
+  f: number,
+): PixelBuf {
+  const b = new PixelBuf(FIGURE_W, PERSON_PX),
+    o = DRESS[profession];
+  figureLegs(b, view, f, o.legs);
+  const load = pose === 'carry' ? LOADS[profession] : undefined;
+  figureBody(b, view, f, o, !load && profession === 'passenger');
+  figureHead(b, view, o);
+  if (load) load(b, view);
+  else TOOLS[profession](b, view);
   b.outline(PAL.outline);
   return b;
 }
@@ -149,6 +369,18 @@ export function generatePeopleAtlas(): AtlasImage {
     for (let f = 0; f < 2; f++)
       ab.add(`people/walker_${k}_f${f}`, walker(o, f).toImageData(), PW / 2, PH - 1);
   });
+  for (const profession of PROFESSIONS)
+    for (const view of ['front', 'back'] as const)
+      for (const pose of ['walk', 'carry'] as const) {
+        if (pose === 'carry' && !CARRIERS.includes(profession)) continue;
+        for (let f = 0; f < WALK_FRAMES; f++)
+          ab.add(
+            `people/${profession}_${view}_${pose}_f${f}`,
+            professionFigure(profession, view, pose, f).toImageData(),
+            FIGURE_X,
+            PERSON_PX - 1,
+          );
+      }
   for (let v = 0; v < 3; v++) {
     ab.add(`people/path_dirt_${v}`, pathDirt(v).toImageData(), HALF_W, HALF_H);
     ab.add(`people/road_stone_${v}`, roadStone(v).toImageData(), HALF_W, HALF_H);

@@ -224,6 +224,326 @@
     "anchorY": 5
   },
   {
+    "key": "people/farmer_back_carry_f0",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 6,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_back_carry_f1",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 6,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_back_carry_f2",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 6,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_back_carry_f3",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 6,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_back_walk_f0",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_back_walk_f1",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_back_walk_f2",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_back_walk_f3",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_front_carry_f0",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 6,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_front_carry_f1",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 6,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_front_carry_f2",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 6,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_front_carry_f3",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 6,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_front_walk_f0",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_front_walk_f1",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_front_walk_f2",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/farmer_front_walk_f3",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_back_carry_f0",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_back_carry_f1",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_back_carry_f2",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_back_carry_f3",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_back_walk_f0",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_back_walk_f1",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_back_walk_f2",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_back_walk_f3",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_front_carry_f0",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_front_carry_f1",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_front_carry_f2",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_front_carry_f3",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_front_walk_f0",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_front_walk_f1",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_front_walk_f2",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/lumberjack_front_walk_f3",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/passenger_back_walk_f0",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/passenger_back_walk_f1",
+    "group": "people",
+    "width": 7,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/passenger_back_walk_f2",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/passenger_back_walk_f3",
+    "group": "people",
+    "width": 7,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/passenger_front_walk_f0",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/passenger_front_walk_f1",
+    "group": "people",
+    "width": 7,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/passenger_front_walk_f2",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/passenger_front_walk_f3",
+    "group": "people",
+    "width": 7,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
     "key": "people/path_dirt_0",
     "group": "people",
     "width": 61,
@@ -248,6 +568,198 @@
     "anchorY": 15
   },
   {
+    "key": "people/pump_hand_back_carry_f0",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_back_carry_f1",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_back_carry_f2",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_back_carry_f3",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_back_walk_f0",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_back_walk_f1",
+    "group": "people",
+    "width": 7,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_back_walk_f2",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_back_walk_f3",
+    "group": "people",
+    "width": 7,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_front_carry_f0",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_front_carry_f1",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_front_carry_f2",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_front_carry_f3",
+    "group": "people",
+    "width": 11,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_front_walk_f0",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_front_walk_f1",
+    "group": "people",
+    "width": 7,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_front_walk_f2",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/pump_hand_front_walk_f3",
+    "group": "people",
+    "width": 7,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/railway_worker_back_walk_f0",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/railway_worker_back_walk_f1",
+    "group": "people",
+    "width": 8,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/railway_worker_back_walk_f2",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/railway_worker_back_walk_f3",
+    "group": "people",
+    "width": 8,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/railway_worker_front_walk_f0",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/railway_worker_front_walk_f1",
+    "group": "people",
+    "width": 8,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/railway_worker_front_walk_f2",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/railway_worker_front_walk_f3",
+    "group": "people",
+    "width": 8,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
     "key": "people/road_stone_0",
     "group": "people",
     "width": 62,
@@ -270,6 +782,134 @@
     "height": 32,
     "anchorX": 31,
     "anchorY": 16
+  },
+  {
+    "key": "people/stone_mason_back_carry_f0",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_back_carry_f1",
+    "group": "people",
+    "width": 8,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_back_carry_f2",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_back_carry_f3",
+    "group": "people",
+    "width": 8,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_back_walk_f0",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_back_walk_f1",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_back_walk_f2",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_back_walk_f3",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_front_carry_f0",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_front_carry_f1",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_front_carry_f2",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 4,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_front_carry_f3",
+    "group": "people",
+    "width": 9,
+    "height": 9,
+    "anchorX": 3,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_front_walk_f0",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_front_walk_f1",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_front_walk_f2",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
+  },
+  {
+    "key": "people/stone_mason_front_walk_f3",
+    "group": "people",
+    "width": 10,
+    "height": 9,
+    "anchorX": 5,
+    "anchorY": 8
   },
   {
     "key": "people/walker_0_f0",

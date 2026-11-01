@@ -36,9 +36,11 @@ packing so its tank does not shrink to accommodate taller supports. Kiln scale i
 ## Scale contract
 
 `src/render/assetScale.ts` is the shared runtime contract for placed assets and
-construction ghosts. A 1.75 m human is 11 logical pixels; a standard 2.1 m door is
-13.2 px. This is the game's compressed visual scale, not a claim of physically
-accurate tile dimensions or a new rail gauge.
+construction ghosts. A person is 9 logical pixels tall (`PERSON_PX`), and the
+figures of each profession are drawn at that size, at scale 1, with their feet on
+the frame's last row. A standard 2.1 m door stays 13.2 px, the size the buildings
+were calibrated at beside a 1.75 m, 11 px person. This is the game's compressed
+visual scale, not a claim of physically accurate tile dimensions or a new rail gauge.
 
 Station, civic townhouse, cottage, warehouse, farm and windmill door apertures
 were measured on the packed illustrated frames. Their door-to-frame-height ratios
