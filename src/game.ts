@@ -89,7 +89,7 @@ import {
   seasonFromDate,
   type Season,
 } from './sim/weather';
-import { decorOffset, type Decor } from './sim/build';
+import { decorOffset, type Decor, type GroundChange } from './sim/build';
 import { wrapRotation } from './sim/rotation';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { Dir, DIRS, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
@@ -159,8 +159,18 @@ import { biomeDef, biomeAt } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
 import { HouseRegistry } from './sim/houses';
 import { PeopleSim } from './sim/people';
-import { expandSave, ownsBorderChunk } from './sim/expand';
+import { ownsBorderChunk } from './sim/expand';
 import { generatorOf, groundOf } from './sim/ground';
+import { growHolding } from './sim/holdGround';
+import {
+  Underground,
+  groundLevelToJSON,
+  groundTerrainToJSON,
+  restoreGround,
+} from './sim/underground';
+import { tileLevels } from './world/elevation';
+import { EDGE_STRIP_TILES, edgeStripRequest } from './world/edgeStrip';
+import { buildEdgeStrip } from './render/edgeStripView';
 import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
 import { SimStep, startStock, eaters, ageSnapshot as ageSnapshotOf } from './sim/step';
@@ -502,7 +512,15 @@ export class Game implements UiHost {
     return this.ui.overviewBanner;
   }
 
-  constructor(spec: WorldSpec, supply?: SupplyMode) {
+  /**
+   * `saved` is the save this game will load (`applySave`): its ground and what the Drill made have
+   * to be on the map before the first thing that reads them is made.
+   */
+  constructor(
+    spec: WorldSpec,
+    supply?: SupplyMode,
+    private readonly saved?: Pick<SaveGame, 'groundLevel' | 'groundTerrain' | 'underground'>,
+  ) {
     this.spec = spec;
     this.seed = spec.seed;
     setSupplyMode(supply);
@@ -946,6 +964,7 @@ export class Game implements UiHost {
       this.ground = groundOf(this.spec, generatorOf(this.supply));
       this.map = this.ground.map;
     }
+    const edits = restoreGround(this.map, this.saved ?? {});
     await onProgress?.('map', 1);
     this.regions = new RegionState(this.map, 0);
     this.camera.setMapSize(this.map.w, this.map.h);
@@ -955,7 +974,18 @@ export class Game implements UiHost {
     this.camera.centerOn(c.x, c.y);
 
     this.track = new TrackGraph(this.map.w, this.map.h);
-    this.builder = new Builder(this.map, this.regions, this.track, this.economy, this.stores);
+    const underground = Underground.fromJSON(this.saved?.underground, this.map.w, this.map.h);
+    this.builder = new Builder(
+      this.map,
+      this.regions,
+      this.track,
+      this.economy,
+      this.stores,
+      undefined,
+      underground,
+    );
+    this.builder.terrainEdits = edits;
+    this.dugSeen = underground.version;
     this.towns = new TownRegistry(this.builder);
     this.stores.attach({ builder: this.builder, towns: this.towns, track: this.track });
     this.houses = new HouseRegistry(this.builder, this.towns);
@@ -1083,6 +1113,8 @@ export class Game implements UiHost {
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
+    // before any structure is placed: nothing seats them again if it comes later
+    this.world.underground = this.builder.underground;
     await this.world.loadBridgeSurfaces();
     this.world.onBridgeStyle = () => this.refreshBridges();
     this.world.occupied = (x, y) =>
@@ -1102,6 +1134,7 @@ export class Game implements UiHost {
       if (bridgeTilesTouched((nx, ny) => !!this.builder.bridgeAt(nx, ny), x, y))
         this.bridgesDirty = true;
     };
+    this.builder.onGroundChanged = (changes) => this.onGroundChanged(changes);
     this.world.harvest.canStand = (x, y, id, rot) => this.builder.checkStation(x, y, id, rot).ok;
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
@@ -1116,8 +1149,7 @@ export class Game implements UiHost {
       this.dayNight.overlay,
       this.world.root.getChildIndex(this.world.harvest.layer),
     );
-    this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
-    this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
+    this.startEdgeStrip();
     this.world.overlay.addChild(this.fog.patches);
     this.app.stage.addChild(this.world.root, this.fog.haze, this.rain.root, this.overview.root);
     this.glows = new Glows(
@@ -1150,7 +1182,8 @@ export class Game implements UiHost {
     this.trainRenderer = new TrainRenderer(this.atlas, this.world.objects, (x, y) =>
       this.world.railAt(x, y),
     );
-    // vehicles still inside an engine shed are hidden until they roll out
+    // vehicles still inside an engine shed are hidden until they roll out; a car under the ground
+    // is the portals' to hide (`TunnelPortals.dress`), as only they know what shows at a mouth
     this.trainRenderer.hideAt = (x, y) => this.builder.stationAt(x, y)?.def.depot === true;
     this.peopleRenderer = new PeopleRenderer(this.atlas, this.world.objects, (x, y) =>
       this.world.elevationOf(x, y),
@@ -1270,6 +1303,9 @@ export class Game implements UiHost {
         houses: this.houses.toJSON(),
         people: this.people.toJSON(),
         roads: this.builder.roads.toJSON(),
+        underground: this.builder.underground.toJSON(),
+        groundLevel: groundLevelToJSON(this.map.groundLevel, this.map.w),
+        groundTerrain: groundTerrainToJSON(this.builder.terrainEdits, this.map.w),
       },
       this.saveExtra,
     );
@@ -1328,6 +1364,8 @@ export class Game implements UiHost {
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
     this.commands.history.clear();
+    // the Drill does not carry over a load: the glass goes off with it
+    this.build.setTool({ kind: 'none' });
     // content the game no longer defines goes first, before anything looks it up
     const pruned = pruneUnknownContent(j);
     // nothing the game held before the load stays in its stores
@@ -1447,12 +1485,43 @@ export class Game implements UiHost {
   // ---------------------------------------------------------------- world edits
   /** Rail profiles need recomputing: a track piece or a bridge changed. */
   private railsDirty = false;
+  /** `Underground.version` as the rail beds last saw it: a dig moves no ground, and says nothing. */
+  private dugSeen = 0;
   /** Every straight line conforms to its neighbours: inclines, transitions, bridge decks. */
   private refreshRails() {
     this.railsDirty = false;
-    const beds = railProfile(this.map, this.track, (x, y) => !!this.builder.bridgeAt(x, y));
+    const beds = railProfile(
+      this.map,
+      this.track,
+      (x, y) => !!this.builder.bridgeAt(x, y),
+      this.builder.underground,
+    );
     this.fleet.railBeds = beds;
     if (this.world.setRailBeds(beds)) this.refreshBridges();
+  }
+  /**
+   * A raise or lower, or the undo or redo of one: the ground is painted again where it moved and on
+   * the ring round it, whose corners it shares, all in one pass (`retileMany`); the rail beds are
+   * worked out again; and the survey maps are drawn again when stone turned to grass or back.
+   */
+  private onGroundChanged(changes: readonly GroundChange[]) {
+    const seen = new Set<number>(),
+      ring: { x: number; y: number }[] = [];
+    for (const c of changes)
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const x = c.x + dx,
+            y = c.y + dy;
+          if (!inBounds(this.map, x, y) || seen.has(y * this.map.w + x)) continue;
+          seen.add(y * this.map.w + x);
+          ring.push({ x, y });
+        }
+    this.world.retileMany(ring);
+    this.railsDirty = true;
+    if (changes.some((c) => c.terrainNow !== c.terrainWas)) {
+      this.minimap.rebuildBase();
+      this.overview.rebuildTerrain();
+    }
   }
   private onTrackChanged(x: number, y: number) {
     this.railsDirty = true;
@@ -1462,8 +1531,10 @@ export class Game implements UiHost {
     const p = this.track.get(x, y);
     const t = terrainAt(this.map, x, y);
     if (p) {
-      if (t === Terrain.Hill) this.world.setFlattened(x, y, true);
-      if (t === Terrain.Forest || t === Terrain.Grass)
+      // the rail on a dug tile runs under the ground, which keeps its shape and its trees
+      const inside = this.builder.underground.isDug(x, y);
+      if (t === Terrain.Hill && !inside) this.world.setFlattened(x, y, true);
+      if ((t === Terrain.Forest || t === Terrain.Grass) && !inside)
         this.world.displaceProps(x, y, p.unit ? [] : (p.links as [number, number][]));
       this.world.setTrack(x, y, pieceFrame(p));
     } else {
@@ -1959,7 +2030,9 @@ export class Game implements UiHost {
     };
     // the grid needs another ring: persist, grow the world and come back into it. A loop error
     // holds it until the player saves and reloads (`main.ts` grows such a save as it loads)
-    const grown = purchaseGrows(facts) ? writeSave(expandSave(this.snapshot(), 1)) : null;
+    const grown = purchaseGrows(facts)
+      ? writeSave(growHolding(this.snapshot(), () => tileLevels(this.map)))
+      : null;
     const after = afterPurchase(facts, grown);
     if (after.reload) {
       this.say(after.said);
@@ -2005,6 +2078,23 @@ export class Game implements UiHost {
     );
   }
   // ---------------------------------------------------------------- sim
+  /**
+   * Sets how far the night and the weather's fog reach, and starts the ground past the map, which
+   * is built away from the page and shown when it is ready. Where a strip was asked for the night
+   * reaches over it, so its lines do not change colour part of the way out, and the fog follows the
+   * strip's blocks as they show. A world with none, or a build that fails, keeps the void ring.
+   */
+  private startEdgeStrip() {
+    const { w, h } = this.map;
+    const border = WorldRenderer.BORDER;
+    const req = edgeStripRequest(this.spec, this.supply);
+    this.dayNight.setWorld(w, h, req ? Math.max(border, EDGE_STRIP_TILES) : border);
+    this.fog.setWorld(w, h, border);
+    if (!req) return;
+    this.world.onStripReach = (reach) => this.fog.setWorld(w, h, border, reach);
+    void buildEdgeStrip(req, this.map).then((meshes) => meshes && this.world.setEdgeStrip(meshes));
+  }
+
   private update(dt: number) {
     if (this.settings.autosave && this.mode === 'play' && !this.menuOpen) {
       this.autosaveTimer += dt;
@@ -2245,8 +2335,8 @@ export class Game implements UiHost {
     let bd = Infinity;
     for (const t of this.fleet.trains)
       for (const p of t.poses) {
-        const w = tileToWorld(p.x, p.y);
-        const wy = w.y + this.world.elevationOf(Math.floor(p.x + 0.5), Math.floor(p.y + 0.5));
+        const w = this.tilePoint(p.x, p.y);
+        const wy = w.y;
         const dx = Math.abs(w.x - m.x);
         const dy = Math.abs(wy - 10 - m.y);
         const d = Math.hypot(dx, dy * 1.6);
@@ -2305,10 +2395,19 @@ export class Game implements UiHost {
   viewRect() {
     return this.viewTarget === 1 ? null : this.camera.viewRect();
   }
-  /** Where a tile point is drawn, its ground's height included, in world pixels. */
+  /**
+   * Where a tile point is drawn, its ground's height included, in world pixels; in a tunnel or a
+   * cutting that is the bed, where a train inside is drawn, and not the hill over it.
+   */
   tilePoint(x: number, y: number) {
-    const w = tileToWorld(x, y);
-    return { x: w.x, y: w.y + this.world.elevationOf(Math.floor(x + 0.5), Math.floor(y + 0.5)) };
+    const w = tileToWorld(x, y),
+      tx = Math.floor(x + 0.5),
+      ty = Math.floor(y + 0.5);
+    const lift =
+      this.builder.underground.bedAt(tx, ty) === undefined
+        ? this.world.elevationOf(tx, ty)
+        : this.world.railAt(x, y).dz;
+    return { x: w.x, y: w.y + lift };
   }
   stuckFor(id: number) {
     return this.stuckNow.get(id) ?? null;
@@ -2401,6 +2500,11 @@ export class Game implements UiHost {
     this.followTrain(dt);
     this.camera.update(dt);
     this.updateViewBlend(dt);
+    // the beds follow the store: a dig or a fill that moves no ground is heard of nowhere else
+    if (this.builder.underground.version !== this.dugSeen) {
+      this.dugSeen = this.builder.underground.version;
+      this.railsDirty = true;
+    }
     if (this.railsDirty) this.refreshRails();
     if (this.bridgesDirty) this.refreshBridges();
     this.world.animate(dt);
@@ -2973,7 +3077,9 @@ export class Game implements UiHost {
   // ---------------------------------------------------------------- cursor / debug
   tileUnderMouse() {
     const w = this.camera.screenToWorld(this.input.mouseX, this.input.mouseY);
-    return this.world.tileAtSurface(w.x, w.y);
+    return this.build.drilling
+      ? this.world.tileAtFloor(w.x, w.y)
+      : this.world.tileAtSurface(w.x, w.y);
   }
   private updateCursor() {
     const t = this.tileUnderMouse();
@@ -2981,7 +3087,9 @@ export class Game implements UiHost {
     const ok = inBounds(this.map, t.x, t.y) && this.viewTarget === 0 && !this.input.overUi;
     this.cursor.visible = ok;
     if (ok) {
-      const p = this.world.surfacePoint(t.x, t.y);
+      const p = this.build.drilling
+        ? this.world.floorPoint(t.x, t.y)
+        : this.world.surfacePoint(t.x, t.y);
       this.cursor.position.set(p.x, p.y);
     }
   }

@@ -35,6 +35,22 @@ export function lineTiles(a: Tile, b: Tile): RunTile[] {
   return out;
 }
 
+/**
+ * The tiles from `a` to `b` that turn at most once: along `first`, then along the other axis. Each
+ * touches the one before it by a side and none comes twice, so the Drill can take it as one line.
+ */
+export function elbowPath(a: Tile, b: Tile, first: Axis): Tile[] {
+  const out: Tile[] = [{ x: a.x, y: a.y }];
+  const go = (axis: Axis, to: number) => {
+    for (let at = out[out.length - 1]; at[axis] !== to; at = out[out.length - 1])
+      out.push({ ...at, [axis]: at[axis] + Math.sign(to - at[axis]) });
+  };
+  go(first, b[first]);
+  const second = first === 'x' ? 'y' : 'x';
+  go(second, b[second]);
+  return out;
+}
+
 /** How many tiles the cursor must leave the first leg's line before the run turns. */
 export const TURN_AFTER = 2;
 

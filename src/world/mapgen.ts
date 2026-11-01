@@ -6,6 +6,7 @@ import {
   Biome,
   CLIMATES,
   climateAtIndex,
+  lowGround,
   startRegion,
   type GameMap,
   type PropInstance,
@@ -13,119 +14,15 @@ import {
 } from './tiles';
 import { DRY, FLOW_CAP, KEEP_OUT, LAKE_CLEARANCE, LOW, WaterKind, drain } from './rivers';
 import { markWaterfalls } from './waterfalls';
-
-/** Smooth value noise built from the coordinate hash. */
-function valueNoise(x: number, y: number, seed: number): number {
-  const x0 = Math.floor(x);
-  const y0 = Math.floor(y);
-  const fx = x - x0;
-  const fy = y - y0;
-  const sx = fx * fx * (3 - 2 * fx);
-  const sy = fy * fy * (3 - 2 * fy);
-  const a = hash2(x0, y0, seed);
-  const b = hash2(x0 + 1, y0, seed);
-  const c = hash2(x0, y0 + 1, seed);
-  const d = hash2(x0 + 1, y0 + 1, seed);
-  return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
-}
-function fbm(x: number, y: number, seed: number, octaves = 4): number {
-  let v = 0;
-  let amp = 0.5;
-  let f = 1;
-  let norm = 0;
-  for (let i = 0; i < octaves; i++) {
-    v += valueNoise(x * f, y * f, seed + i * 31) * amp;
-    norm += amp;
-    amp *= 0.5;
-    f *= 2;
-  }
-  return v / norm;
-}
-
-/** Room fbmBlock works in, kept between calls and grown when a block needs more. */
-class NoiseRoom {
-  cellX = new Int32Array(16);
-  smoothX = new Float64Array(16);
-  cellY = new Int32Array(16);
-  smoothY = new Float64Array(16);
-  corners = new Float64Array(64);
-}
-
-/**
- * `fbm(wx / scale + offset, wy / scale + offset, seed, octaves)` for every tile of a `w` x `h`
- * block whose first tile is world tile (`x0`, `y0`), row by row into the start of `out`. The
- * values are bit for bit what `fbm` returns, from the same operations in the same order; only the
- * lattice corners are hashed once per block and octave instead of four times per tile.
- */
-function fbmBlock(
-  out: Float64Array,
-  room: NoiseRoom,
-  x0: number,
-  y0: number,
-  w: number,
-  h: number,
-  scale: number,
-  offset: number,
-  seed: number,
-  octaves: number,
-) {
-  out.fill(0, 0, w * h);
-  if (room.cellX.length < w) {
-    room.cellX = new Int32Array(w);
-    room.smoothX = new Float64Array(w);
-  }
-  if (room.cellY.length < h) {
-    room.cellY = new Int32Array(h);
-    room.smoothY = new Float64Array(h);
-  }
-  const { cellX, smoothX, cellY, smoothY } = room;
-  let amp = 0.5;
-  let f = 1;
-  let norm = 0;
-  for (let o = 0; o < octaves; o++) {
-    const s = seed + o * 31;
-    for (let x = 0; x < w; x++) {
-      const X = ((x0 + x) / scale + offset) * f;
-      const xi = Math.floor(X);
-      const fx = X - xi;
-      cellX[x] = xi;
-      smoothX[x] = fx * fx * (3 - 2 * fx);
-    }
-    for (let y = 0; y < h; y++) {
-      const Y = ((y0 + y) / scale + offset) * f;
-      const yi = Math.floor(Y);
-      const fy = Y - yi;
-      cellY[y] = yi;
-      smoothY[y] = fy * fy * (3 - 2 * fy);
-    }
-    // the lattice corners the block's cells touch, hashed once
-    const lx = cellX[0];
-    const ly = cellY[0];
-    const nx = cellX[w - 1] - lx + 2;
-    const ny = cellY[h - 1] - ly + 2;
-    if (room.corners.length < nx * ny) room.corners = new Float64Array(nx * ny);
-    const corners = room.corners;
-    for (let r = 0, k = 0; r < ny; r++)
-      for (let c = 0; c < nx; c++, k++) corners[k] = hash2(lx + c, ly + r, s);
-    for (let y = 0; y < h; y++) {
-      const row = (cellY[y] - ly) * nx - lx;
-      const sy = smoothY[y];
-      for (let x = 0, i = y * w; x < w; x++, i++) {
-        const k = row + cellX[x];
-        const a = corners[k];
-        const b = corners[k + 1];
-        const c = corners[k + nx];
-        const d = corners[k + nx + 1];
-        const sx = smoothX[x];
-        out[i] += (a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy) * amp;
-      }
-    }
-    norm += amp;
-    amp *= 0.5;
-    f *= 2;
-  }
-  for (let i = 0; i < w * h; i++) out[i] /= norm;
-}
+import { tileLevels } from './elevation';
+import { NoiseRoom, fbm, fbmBlock } from './noise';
+import {
+  SCULPT_REACH,
+  coverMountains,
+  massifLift,
+  massifWander,
+  sculptMountains,
+} from './mountains';
 
 export interface MapGenParams {
   w: number;
@@ -202,14 +99,20 @@ const SMOOTH_REACH = 4;
  * climate. The terrain this reads lies within LATE_REACH of the map, and so the margin.
  */
 export const MOUNTAIN_REACH = 12;
+/**
+ * How far around the map mountains are made and covered: MOUNTAIN_REACH for the Mountain biome to
+ * find them, and 2 for the Rock around a Mountain tile (coverMountains) to reach those tiles.
+ */
+const MOUNTAIN_FIELD = MOUNTAIN_REACH + 2;
 /** How far sand reads as Beach from the sea water it lies by, in tiles along either axis. */
 export const BEACH_REACH = 2;
 /**
- * How far the passes after the rivers read: mountains 2 for the Mountain biome to find them
- * MOUNTAIN_REACH steps out. The sea shore needs less: the shore 1, oil and wheat fields 4 (a
- * centre 2 out, 2 more for the field, WHEAT_REACH).
+ * How far the passes after the rivers read: the sculpt SCULPT_REACH around the tiles it raises,
+ * which are the tiles the mountains stand on (MOUNTAIN_FIELD) and one more for the cover to read.
+ * The sea shore needs less: the shore 1, oil and wheat fields 4 (a centre 2 out, 2 more for the
+ * field, WHEAT_REACH).
  */
-const LATE_REACH = 2 + MOUNTAIN_REACH;
+const LATE_REACH = MOUNTAIN_FIELD + 1 + SCULPT_REACH;
 /**
  * Generation runs on a field this many tiles wider than the map on every side, and the map is
  * cropped out of it, so no pass ever sees the map's own edge: a tile comes out the same whatever
@@ -246,6 +149,14 @@ interface FieldSeeds {
   temp: number;
   biome: number;
   island: number;
+  massif: number;
+}
+
+/** The moisture above which climate `b` grows a forest; on the plains it is the map's slider. */
+function forestMoisture(b: Biome, forestDensity: number): number {
+  if (b === Biome.Forest) return 0.42;
+  if (b === Biome.Taiga) return 0.55;
+  return forestDensity + 0.08;
 }
 
 /**
@@ -413,15 +324,15 @@ class Field {
   }
 
   private genElev(x0: number, y0: number, x1: number, y1: number) {
-    const { w, scx, scy, elev } = this;
-    const noise = this.noise(0, x0, y0, x1, y1, 22, 0, this.seeds.elev, 5);
+    const { w, ox, oy, scx, scy, elev, seeds } = this;
+    const noise = this.noise(0, x0, y0, x1, y1, 22, 0, seeds.elev, 5);
     for (let y = y0, j = 0; y < y1; y++)
       for (let x = x0; x < x1; x++, j++) {
-        let e = noise[j];
-        // smooth basin around the start point so the centre is buildable without a hard edge;
-        // a tile 27 or more out is past its rim whatever hypot rounds to
         const dx = x - scx;
         const dy = y - scy;
+        let e = noise[j] + massifLift(x + ox, y + oy, dx, dy, seeds.massif);
+        // smooth basin around the start point so the centre is buildable without a hard edge;
+        // a tile 27 or more out is past its rim whatever hypot rounds to
         if (dx * dx + dy * dy < 27 * 27) {
           const cd = Math.hypot(dx, dy) / 26;
           if (cd < 1) {
@@ -490,25 +401,12 @@ class Field {
         else if (e < params.waterLevel + 0.025) t = Terrain.Sand;
         else if (e > params.rockLevel) t = Terrain.Rock;
         else if (e > params.hillLevel) t = b === Biome.Swamp ? Terrain.Grass : Terrain.Hill;
-        else
-          switch (b) {
-            case Biome.Desert:
-              t = Terrain.Sand;
-              break;
-            case Biome.Forest:
-              t = m > 0.42 ? Terrain.Forest : Terrain.Grass;
-              break;
-            case Biome.Taiga:
-              t = m > 0.55 ? Terrain.Forest : Terrain.Grass;
-              break;
-            case Biome.Swamp: {
-              const wet = fbm((x + ox) / 5 + 700, (y + oy) / 5 + 700, seeds.biome + 7, 2);
-              t = wet > 0.66 ? Terrain.Water : Terrain.Grass;
-              break;
-            }
-            default:
-              t = m > params.forestDensity + 0.08 ? Terrain.Forest : Terrain.Grass;
-          }
+        else if (
+          b === Biome.Swamp &&
+          fbm((x + ox) / 5 + 700, (y + oy) / 5 + 700, seeds.biome + 7, 2) > 0.66
+        )
+          t = Terrain.Water;
+        else t = lowGround(b, m > forestMoisture(b, params.forestDensity));
         ground[i] = t;
       }
   }
@@ -526,19 +424,7 @@ class Field {
     if (e < params.waterLevel + 0.025) return Terrain.Sand;
     if (e > params.rockLevel) return Terrain.Rock;
     if (e > params.hillLevel) return b === Biome.Swamp ? Terrain.Grass : Terrain.Hill;
-    switch (b) {
-      case Biome.Desert:
-        return Terrain.Sand;
-      case Biome.Forest:
-        return m > 0.42 ? Terrain.Forest : Terrain.Grass;
-      case Biome.Taiga:
-        return m > 0.55 ? Terrain.Forest : Terrain.Grass;
-      case Biome.Swamp:
-      case Biome.Ocean:
-        return Terrain.Grass;
-      default:
-        return m > params.forestDensity + 0.08 ? Terrain.Forest : Terrain.Grass;
-    }
+    return lowGround(b, m > forestMoisture(b, params.forestDensity));
   }
 }
 
@@ -670,6 +556,8 @@ export interface MapPlanes {
   lake: Uint8Array;
   /** the terrain before the sea shore turned to sand (seaShore) */
   shore: Uint8Array;
+  /** the seed of the world's massifs and shapes (massifAt, shapeAt) */
+  massifSeed: number;
 }
 
 /** generateMap, with the planes of MapPlanes. */
@@ -702,6 +590,7 @@ export function generateMapPlanes(
     temp: rng.int(1, 1e6),
     biome: rng.int(1, 1e6),
     island: rng.int(1, 1e6),
+    massif: rng.int(1, 1e6),
   };
   // the start basin sits in the middle of the start chunk, which keeps its world tiles as the map
   // grows by a ring of chunks on every side
@@ -709,7 +598,7 @@ export function generateMapPlanes(
   const scy = start.y0 + rs / 2;
   const f = new Field(w, h, ox, oy, seeds, params, scx, scy, rs);
   // the passes after the rivers run on the map and the tiles around it they read, each on a band
-  // narrower than the one it reads: the terrain LATE_REACH tiles out, the mountains MOUNTAIN_REACH
+  // narrower than the one it reads: the terrain LATE_REACH tiles out, the mountains MOUNTAIN_FIELD
   // tiles out, the sea shore 4 and the oil and wheat field centres 2
   const inMap: Span = { x0: MARGIN, y0: MARGIN, x1: MARGIN + mw, y1: MARGIN + mh };
   const late = grow(inMap, LATE_REACH);
@@ -740,6 +629,7 @@ export function generateMapPlanes(
     originX: ox,
     originY: oy,
     terrain,
+    waterSurface: water.surface,
     variant: new Uint8Array(w * h),
     // the climate, until the biome rules relabel the map's tiles
     biome: f.biome,
@@ -750,12 +640,21 @@ export function generateMapPlanes(
   };
   // an oil field reaches 2 tiles from its centre and reads the terrain under it
   const oilCentres = grow(inMap, 2);
-  raiseMountains(field, grow(inMap, MOUNTAIN_REACH));
+  const mountains = grow(inMap, MOUNTAIN_FIELD);
+  raiseMountains(field, mountains);
+  // the cover reads the levels a tile around the tiles it covers
+  const keepClear = grow(start, 4);
+  const raised = sculptMountains(field, grow(mountains, 1), keepClear, seeds.massif);
+  coverMountains(field, raised, mountains, keepClear, seeds.massif, params);
   startResources(field, start, { pond: plan.pond, river });
   // a patch painted over a lake's tile leaves land there
   for (let y = start.y0; y < start.y1; y++)
     for (let x = start.x0; x < start.x1; x++)
       if (terrain[y * w + x] !== Terrain.Water) lake[y * w + x] = 0;
+  // the level the tile's ground and water give it, or the mountain's where that is higher: each
+  // keeps neighbours within 4, so the plane holds settled levels
+  const levels = tileLevels(field);
+  for (let i = 0; i < w * h; i++) if (raised[i] > levels[i]) levels[i] = raised[i];
   const shore = cropPlane(terrain, w, mw, mh);
   // After the start chunk's patches, which it never reaches: the Ocean climate lies at least 5
   // tiles outside the start chunk (genRaw keeps the sea out of the start zone, and smoothing moves
@@ -778,6 +677,7 @@ export function generateMapPlanes(
   map.terrain = cropPlane(terrain, w, mw, mh);
   map.biome = cropPlane(field.biome, w, mw, mh);
   map.climate = cropPlane(f.biome, w, mw, mh);
+  map.generatedLevel = cropPlane(levels, w, mw, mh);
   map.waterSurface = cropPlane(water.surface, w, mw, mh);
   map.flow = cropPlane(water.flow, w, mw, mh);
   map.flowDir = cropPlane(water.dir, w, mw, mh);
@@ -803,6 +703,7 @@ export function generateMapPlanes(
     river: cropPlane(river, w, mw, mh),
     lake: cropPlane(lake, w, mw, mh),
     shore,
+    massifSeed: seeds.massif,
   };
 }
 
@@ -1184,6 +1085,7 @@ function riverPlan(
   rs: number,
 ): RiverPlan {
   const { waterLevel, hillLevel, rockLevel, forestDensity } = params;
+  // the rock slider moves the ground the plan reads, though the drainage itself does not read it
   const key = [seed, waterLevel, hillLevel, rockLevel, forestDensity, cx0, cy0, rs].join();
   const at = plans.findIndex((p) => p.key === key);
   if (at >= 0) {
@@ -1239,10 +1141,13 @@ function riverPlan(
         mark[y * w + x] |= near ? KEEP_OUT | DRY : KEEP_OUT;
       }
   const [px, py] = corners[Math.floor(hash2(seed, 3, 41) * 4) % 4];
+  const wander = new Float32Array(w * w);
+  for (let y = core.y0; y < core.y1; y++)
+    for (let x = core.x0; x < core.x1; x++)
+      wander[y * w + x] = massifWander(x + f.ox, y + f.oy, x - scx, y - scy, seeds.massif);
   const d = drain({
     waterLevel,
     hillLevel,
-    rockLevel,
     w,
     h: w,
     core,
@@ -1251,6 +1156,7 @@ function riverPlan(
     land,
     sea,
     mark,
+    wander,
     start: { chunk, pond: { x: px, y: py } },
     near: grow(chunk, rs),
   });
@@ -1314,7 +1220,7 @@ function riverWater(
   seed: number,
   late: Span,
 ): FieldWater {
-  const { w, h, ox, oy, rs, elev, biome } = f;
+  const { w, h, ox, oy, rs, elev, biome, scx, scy, seeds } = f;
   const kind = new Uint8Array(w * h);
   const surface = new Uint8Array(w * h);
   const flow = new Uint16Array(w * h);
@@ -1392,8 +1298,12 @@ function riverWater(
         if (nx < 1 || ny < 1 || nx >= w - 1 || ny >= h - 1) continue;
         if (onCourse[ny * w + nx] === id) continue;
         f.need(nx, ny, ELEV);
-        // a little position-fixed noise so streams wander the same way every time
-        const ev = elev[ny * w + nx] + (hash2(nx + ox, ny + oy, seed + 80) - 0.5) * 0.02;
+        // a little position-fixed noise so streams wander the same way every time, as much as a
+        // massif's slope needs there
+        const ev =
+          elev[ny * w + nx] +
+          (hash2(nx + ox, ny + oy, seed + 80) - 0.5) * 0.02 +
+          massifWander(nx + ox, ny + oy, nx - scx, ny - scy, seeds.massif);
         if (ev < be) {
           be = ev;
           bx = nx;

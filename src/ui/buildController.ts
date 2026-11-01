@@ -1,13 +1,16 @@
 import type { ReclassDir } from '../world/reclass';
 import { ReclassStroke } from './reclassStroke';
 import { layRun, planRun, type RunPlan, type RunStep } from './autoCrossing';
-import { lineTiles, setOffAxis, turnPath } from './dragPath';
+import { elbowPath, lineTiles, setOffAxis, turnPath } from './dragPath';
 import type { Sprite } from 'pixi.js';
 import type { Input } from '../engine/input';
 import { itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
 import type { SupplyKind } from '../sim/catenary';
 import { inBounds } from '../world/tiles';
-import type { Builder, PlacementCheck } from '../sim/build';
+import { levelAt } from '../world/elevation';
+import type { Builder, GroundCheck, PlacementCheck } from '../sim/build';
+import { onRails } from '../sim/mountainTrack';
+import type { DigPlan } from '../sim/underground';
 import type { WorldRenderer } from '../render/worldRenderer';
 import type { Station } from '../sim/stations';
 import type { Tool } from './toolbar';
@@ -39,16 +42,36 @@ import {
   type RoadStrokeCheck,
 } from './roadStroke';
 import { doorReachTiles } from './roadDoors';
+import { fmtMoney } from './numberFormat';
 
 const OK_TINT = 0x9be8ff;
 const BAD_TINT = 0xff6a5a;
 const REPLACE_TINT = 0xffc860;
+/** the Drill's mark on the tile a portal comes on */
+const PORTAL_TINT = 0xffe0a0;
 /** the road tool's mark on a street door's reach tile: not the stroke's cyan or red */
 const DOOR_TINT = 0xfff08a;
 /** frames between two looks at the street doors while the road tool is in hand (#409) */
 const DOOR_MARK_FRAMES = 30;
+/** frames between two looks at the same Raise or Lower: the ground may have changed under it */
+const GROUND_LOOK_FRAMES = 30;
+/** diamonds a Raise or Lower keeps beyond the ones it shows; a bigger pool is cut down to this */
+const GROUND_POOL_SPARE = 16;
 
 type Tile = { x: number; y: number };
+
+/**
+ * The tools the Drill stays on for: those that work inside, track with its signals and wire, and
+ * Demolish, which back-fills. Any other tool puts it down.
+ */
+function worksInside(t: Tool) {
+  return (
+    t.kind === 'track' ||
+    t.kind === 'supply' ||
+    t.kind === 'remove' ||
+    (t.kind === 'decor' && onRails(t.defId))
+  );
+}
 
 /**
  * Where a harvest station's tool shows what it would make (#336): the placing tooltip as the root
@@ -138,6 +161,22 @@ export class BuildController {
   private placingRoot: (Tile & { key: string }) | null = null;
   /** the tile of a locked placing root: its label and lit tiles stay there */
   private placingHeld: Tile | null = null;
+  /** what Raise or Lower was last judged for (tool, stroke and tiles), and how many frames ago */
+  private groundSeen = '';
+  private groundAge = 0;
+  /** the diamonds and the status line of that look */
+  private groundMarks: { x: number; y: number; frame: string }[] = [];
+  private groundStatus = '';
+  /**
+   * The Drill is on: the mountains are glass, the pointer picks on the floor, and track goes inside
+   * (`Builder.insideMode`). It stays on past the Drill tool itself (`worksInside`).
+   */
+  drilling = false;
+  /** the marks of the Drill's last look, and what they were for */
+  private digMarks: { x: number; y: number; frame: string; tint?: number }[] = [];
+  private digSeen = '';
+  private digAge = 0;
+  private digStatus = '';
   /** the counted tiles of the label's breakdown, kept from frame to frame */
   private readonly placingCells = new HarvestCells();
 
@@ -162,10 +201,21 @@ export class BuildController {
     this.stroke.stop();
     this.reclassLeft.clear();
     this.dragStart = null;
+    this.groundSeen = '';
+    this.digSeen = '';
+    this.followDrill(t);
     this.clearGhost();
     this.dropPlacing();
     if (t.kind !== 'none') this.select(null);
     this.onToolChanged?.(t);
+  }
+
+  /** The Drill goes on with its tool and off with any tool it does not stay on for. */
+  private followDrill(t: Tool) {
+    const on = t.kind === 'drill' || (this.drilling && worksInside(t));
+    if (on || this.drilling) this.world.setGlass(on);
+    this.drilling = on;
+    this.builder.insideMode = on;
   }
 
   /**
@@ -236,6 +286,8 @@ export class BuildController {
         this.dragStart = null;
         this.dragAxis = null;
       }
+      // the marks go with `clearGhostVisibility`; the Drill's preview stands in the glass
+      if (this.digSeen) this.endDigLook();
       this.clearGhostVisibility(false);
       return;
     }
@@ -272,6 +324,12 @@ export class BuildController {
         break;
       case 'road':
         this.updateRoadTool(t, inMap);
+        break;
+      case 'ground':
+        this.updateGroundTool(t, inMap);
+        break;
+      case 'drill':
+        this.updateDrillTool(t, inMap);
         break;
       case 'terrain':
         this.updateTerrainTool(t, inMap);
@@ -325,8 +383,13 @@ export class BuildController {
     return this.ghost;
   }
 
+  /** Where the tool in hand shows a tile: with the Drill on, on the floor it picks on. */
+  private spotOf(x: number, y: number) {
+    return this.drilling ? this.world.floorPoint(x, y) : this.world.surfacePoint(x, y);
+  }
+
   private placeGhostAt(g: Sprite, x: number, y: number, ok: boolean) {
-    const p = this.world.surfacePoint(x, y);
+    const p = this.spotOf(x, y);
     g.position.set(p.x, p.y);
     g.tint = ok ? OK_TINT : BAD_TINT;
     g.visible = true;
@@ -673,10 +736,16 @@ export class BuildController {
     return toolRotations(this.tool) > 1;
   }
 
+  /** What lies inside is out of reach with the Drill off: the pointer is on the hill over it. */
+  private outOfReach(x: number, y: number) {
+    return !this.drilling && this.builder.underground.isDug(x, y);
+  }
+
   private updateRemoveTool(t: { x: number; y: number }, inMap: boolean) {
     if (this.ghost) this.ghost.visible = false;
-    if (!inMap) {
+    if (!inMap || this.outOfReach(t.x, t.y)) {
       this.ghostDiamond.visible = false;
+      this.status('');
       return;
     }
     const piece = this.builder.track.get(t.x, t.y);
@@ -706,7 +775,14 @@ export class BuildController {
             : piece
               ? this.builder.refundFor(piece)
               : {};
-    this.status(Object.keys(refund).length ? STR.build.refund(fmtCost(refund)) : '');
+    const fill = Object.keys(refund).length ? null : this.builder.fillRefund(t.x, t.y);
+    this.status(
+      fill !== null
+        ? STR.build.backFill(fmtMoney(fill))
+        : Object.keys(refund).length
+          ? STR.build.refund(fmtCost(refund))
+          : '',
+    );
     for (const c of this.input.clicks) if (c.button === 0) this.removeAt(t.x, t.y);
   }
 
@@ -750,6 +826,234 @@ export class BuildController {
     this.roadPlacement(one, t);
     this.status(hoverStatus(one.steps[0], !!this.builder.bridgeAt(t.x, t.y)));
   }
+  /**
+   * Raise and Lower: press and drag a straight run, let go to move it; a press let go where it
+   * started is one tile. Each tile of the run goes one level, with the neighbours the slope rule
+   * takes along, and the whole action refuses if any tile may not move (`Builder.reshapeGround`).
+   * The ground shows what the release would do: a diamond on every tile that moves, red on those
+   * that refuse, with the tiles, the price and the reason in the status line. Money is not a
+   * store's, so no payer is named on the build card (`placement` stays empty).
+   */
+  private updateGroundTool(t: Tile, inMap: boolean) {
+    const tool = this.tool as { kind: 'ground'; delta: 1 | -1 };
+    const inp = this.input;
+    if (this.ghost) this.ghost.visible = false;
+    this.ghostDiamond.visible = false;
+    // a level keeps no raised or lowered ground
+    if (this.editor) return;
+    if (inp.buttonPressed.has(0)) this.dragStart = inMap ? { x: t.x, y: t.y } : null;
+    if (this.dragStart && inp.buttons.has(0)) {
+      this.lookAtGround(strokeTiles(this.dragStart, this.roadEnd(t)), tool.delta);
+      return;
+    }
+    if (this.dragStart && inp.buttonReleased.has(0)) {
+      const tiles = strokeTiles(this.dragStart, this.roadEnd(t));
+      this.dragStart = null;
+      this.groundSeen = '';
+      for (const g of this.lineGhosts) g.visible = false;
+      this.act(() => this.builder.reshapeGround(tiles, tool.delta));
+      return;
+    }
+    // the button is up: a stroke whose release fell over a panel moves nothing, and is over
+    this.dragStart = null;
+    if (!inMap) {
+      this.groundSeen = '';
+      for (const g of this.lineGhosts) g.visible = false;
+      this.status('');
+      return;
+    }
+    this.lookAtGround([t], tool.delta);
+  }
+
+  /**
+   * Show what Raise or Lower of `tiles` would do. `Builder.checkGround` reads the levels of the
+   * whole map, so it is asked again only when the tiles change, and every GROUND_LOOK_FRAMES
+   * frames for what changed under them (an undo, a build): not on every move of the pointer.
+   */
+  private lookAtGround(tiles: Tile[], delta: 1 | -1) {
+    const first = tiles[0],
+      last = tiles[tiles.length - 1];
+    const seen = `${delta} ${first.x},${first.y} ${last.x},${last.y}`;
+    if (seen !== this.groundSeen || ++this.groundAge >= GROUND_LOOK_FRAMES) {
+      this.groundSeen = seen;
+      this.groundAge = 0;
+      this.judgeGround(this.builder.checkGround(tiles, delta), delta);
+      this.layGroundMarks();
+    } else {
+      // the diamonds stand where the look put them; a pause over a panel only hid them
+      for (let i = 0; i < this.groundMarks.length; i++) this.lineGhosts[i].visible = true;
+    }
+    this.status(this.groundStatus);
+  }
+
+  /**
+   * Put a diamond on each mark of the look. Their places read the relief, so this runs with a look
+   * and not every frame. A pool that a long run grew far past what is shown is cut down.
+   */
+  private layGroundMarks() {
+    const { groundMarks: marks } = this;
+    this.showGhosts(marks, true);
+    // the frame carries the colour, as the road tool's does
+    for (let i = 0; i < marks.length; i++) this.lineGhosts[i].tint = 0xffffff;
+    const keep = marks.length + GROUND_POOL_SPARE;
+    if (this.lineGhosts.length > 2 * marks.length + GROUND_POOL_SPARE) {
+      for (const g of this.lineGhosts.splice(keep)) g.destroy();
+    }
+  }
+
+  /**
+   * The marks and the status line of a check. A pinned tile (in `moved` with `to` equal to the
+   * level it has) stays where it is: it is neither marked nor counted.
+   */
+  private judgeGround(check: GroundCheck, delta: 1 | -1) {
+    const { map } = this.builder;
+    const marks = new Map<number, { x: number; y: number; frame: string }>();
+    const mark = (p: Tile, frame: string) =>
+      marks.set(p.y * map.w + p.x, { x: p.x, y: p.y, frame });
+    let moving = 0;
+    for (const m of check.moved)
+      if (levelAt(map, m.x, m.y) !== m.to) {
+        moving++;
+        mark(m, 'terrain/ghost_ok');
+      }
+    for (const r of check.refused) mark(r, 'terrain/ghost_bad');
+    this.groundMarks = [...marks.values()];
+    const money = check.cost.money ?? 0;
+    const price = money > 0 ? fmtMoney(money) : STR.build.free;
+    // `reason` is the first refused tile's: the line counts the tiles and says so
+    if (check.refused.length) {
+      this.groundStatus = STR.build.groundRefused(check.refused.length, check.reason ?? '');
+      return;
+    }
+    const line = !moving
+      ? STR.build.groundStays
+      : (delta > 0 ? STR.build.groundUp : STR.build.groundDown)(moving, price);
+    // short of funds: the price is shown, with the reason
+    this.groundStatus = check.ok ? line : [line, check.reason].join('   ');
+  }
+
+  /**
+   * The Drill: press and drag a line that may turn once, as track runs (R swaps its legs), let go to
+   * dig it. A press let go where it started is one tile. The whole drag goes to `Builder.dig` at
+   * once, as cuts and portals are read along it. The drag shows what the release would do, as the
+   * glass's preview and a mark on each tile, with what it comes to in the status line.
+   */
+  private updateDrillTool(t: Tile, inMap: boolean) {
+    const inp = this.input;
+    if (this.ghost) this.ghost.visible = false;
+    this.ghostDiamond.visible = false;
+    if (inp.buttonPressed.has(0)) {
+      this.dragStart = inMap ? { x: t.x, y: t.y } : null;
+      this.dragAxis = null;
+    }
+    if (this.dragStart && inp.buttons.has(0)) {
+      this.lookAtDig(this.digPath(this.dragStart, t));
+      return;
+    }
+    if (this.dragStart && inp.buttonReleased.has(0)) {
+      const tiles = this.digPath(this.dragStart, t);
+      this.dragStart = null;
+      this.dragAxis = null;
+      this.endDigLook();
+      this.act(() => this.builder.dig(tiles));
+      return;
+    }
+    // the button is up: a stroke whose release fell over a panel digs nothing, and is over
+    this.dragStart = null;
+    if (!inMap) {
+      this.endDigLook();
+      this.status('');
+      return;
+    }
+    this.lookAtDig([t]);
+  }
+
+  /** The drag from `a` with the cursor on `t`: its axis is set as a track run's is. */
+  private digPath(a: Tile, t: Tile) {
+    const b = this.roadEnd(t),
+      setOff = this.dragAxis;
+    this.dragAxis ??= setOffAxis(a, b);
+    if (this.input.wasPressed('KeyR') && setOff) this.dragAxis = setOff === 'x' ? 'y' : 'x';
+    return elbowPath(
+      a,
+      b,
+      this.dragAxis ?? (Math.abs(b.x - a.x) >= Math.abs(b.y - a.y) ? 'x' : 'y'),
+    );
+  }
+
+  /** Nothing is being looked at: the marks and the preview go. */
+  private endDigLook() {
+    this.digSeen = '';
+    this.digMarks = [];
+    for (const g of this.lineGhosts) g.visible = false;
+    this.world.setGlass(true);
+  }
+
+  /**
+   * Show what the Drill would do with `tiles`. `Builder.checkDig` reads the levels of the whole map,
+   * so it is asked again only when the tiles change, and every GROUND_LOOK_FRAMES frames for what
+   * changed under them.
+   */
+  private lookAtDig(tiles: Tile[]) {
+    const first = tiles[0],
+      last = tiles[tiles.length - 1],
+      seen = `${first.x},${first.y} ${last.x},${last.y} ${this.dragAxis}`;
+    if (seen !== this.digSeen || ++this.digAge >= GROUND_LOOK_FRAMES) {
+      this.digSeen = seen;
+      this.digAge = 0;
+      const check = this.builder.checkDig(tiles);
+      this.judgeDig(check);
+      this.showGhosts(this.digMarks, true);
+      for (const [i, m] of this.digMarks.entries()) this.lineGhosts[i].tint = m.tint ?? 0xffffff;
+      this.world.setGlass(true, [...check.dig, ...check.cut]);
+    } else for (let i = 0; i < this.digMarks.length; i++) this.lineGhosts[i].visible = true;
+    this.status(this.digStatus);
+  }
+
+  /**
+   * The marks and the status line of a plan: a tile dug, a cut, a tile the ground comes up on, a
+   * portal, and red on those that refuse. A tile a raise only holds at its level is not shown.
+   */
+  private judgeDig(plan: DigPlan) {
+    const { map } = this.builder;
+    const marks = new Map<number, { x: number; y: number; frame: string; tint?: number }>();
+    const mark = (p: Tile, frame: string, tint?: number) =>
+      marks.set(p.y * map.w + p.x, { x: p.x, y: p.y, frame, tint });
+    const raised = plan.raise.filter((m) => levelAt(map, m.x, m.y) !== m.to);
+    for (const m of raised) mark(m, 'terrain/select', OK_TINT);
+    for (const t of plan.dig) mark(t, 'terrain/ghost_ok');
+    for (const t of plan.cut) mark(t, 'terrain/ghost_ok', REPLACE_TINT);
+    for (const p of plan.portals) mark(p, 'terrain/ghost_ok', PORTAL_TINT);
+    for (const r of plan.refused) mark(r, 'terrain/ghost_bad');
+    this.digMarks = [...marks.values()];
+    if (plan.refused.length) {
+      this.digStatus = STR.build.digRefused(plan.refused.length, plan.reason ?? '');
+      return;
+    }
+    if (!plan.dig.length && !plan.cut.length && !plan.portals.length) {
+      this.digStatus = STR.build.digNothing;
+      return;
+    }
+    const money = plan.cost.money ?? 0,
+      line = [
+        STR.build.digPlan(
+          plan.dig.length,
+          plan.cut.length,
+          raised.length,
+          plan.portals.length,
+          money > 0 ? fmtMoney(money) : STR.build.free,
+        ),
+      ];
+    if (plan.stone > 0) {
+      const taken = this.builder.stoneTaken(plan);
+      line.push(STR.build.digStone(plan.stone));
+      if (taken < plan.stone) line.push(taken ? STR.build.stoneSome(taken) : STR.build.stoneLost);
+    }
+    // short of funds: the plan is shown, with the reason
+    if (!plan.ok && plan.reason) line.push(plan.reason);
+    this.digStatus = line.join('   ');
+  }
+
   /** What the release of a road stroke from `start` would pay, and from where (`placeRoads`). */
   private roadPlacement(stroke: RoadStrokeCheck, start: Tile) {
     if (!stroke.laid) return;
@@ -969,6 +1273,7 @@ export class BuildController {
     return this.act(() => this.remove(x, y));
   }
   private remove(x: number, y: number): boolean {
+    if (this.outOfReach(x, y)) return false;
     const st = this.builder.stationAt(x, y);
     if (st) {
       if (this.selected === st) this.select(null);
@@ -991,7 +1296,8 @@ export class BuildController {
     }
     // a level crossing loses its road first, and stays plain track
     if (this.builder.roads.has(x, y)) return this.builder.removeRoad(x, y);
-    return this.builder.removeTrack(x, y);
+    // a tile stays dug when its track goes: the next use fills it
+    return this.builder.removeTrack(x, y) || this.builder.fillDug(x, y);
   }
 
   /** An undo or a redo changed the world: what was picked may no longer stand. */

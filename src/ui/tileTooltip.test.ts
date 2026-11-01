@@ -9,7 +9,7 @@ import { BUILDING_DEFS } from '../sim/buildings';
 import { CARGO } from '../sim/cargo';
 import { DEFAULT_SUPPLY, setSupplyMode, type SupplyMode } from '../sim/supply';
 import { STR } from '../strings';
-import { tileLevels } from '../world/elevation';
+import { MAX_LEVEL, NO_LEVEL, tileLevels } from '../world/elevation';
 import { emptyMap, generateMap } from '../world/mapgen';
 import { TRACK_ITEMS } from '../world/track';
 import { TERRAIN_NAMES, Terrain, type GameMap } from '../world/tiles';
@@ -253,6 +253,8 @@ describe('the tile tooltip on whole maps', () => {
   interface Case {
     size: number;
     patches: Patch[];
+    /** whether its mountains stand on generated levels, tall enough for the snow lines */
+    tall: boolean;
   }
   /** Mountains weighted up: a summit needs a mountain block seven tiles across. */
   const GROUND = [
@@ -276,6 +278,10 @@ describe('the tile tooltip on whole maps', () => {
           map.biome[y * c.size + x] = p.biome;
           map.climate[y * c.size + x] = p.climate;
         }
+    if (c.tall) {
+      const wanted = map.terrain.map((t) => (t === Terrain.Mountain ? MAX_LEVEL : NO_LEVEL));
+      map.generatedLevel = tileLevels({ ...map, generatedLevel: wanted });
+    }
     return map;
   };
   const SEEDS = Array.from({ length: 40 }, (_, i) => i + 1);
@@ -296,6 +302,7 @@ describe('the tile tooltip on whole maps', () => {
             w: rng.int(3, 12),
             h: rng.int(3, 12),
           })),
+          tall: rng.chance(0.5),
         };
       },
       (c) => checkEveryTile(mapOf(c), seen),

@@ -1,6 +1,7 @@
 import type { SaveGame } from './save';
 import type { MapGenParams } from '../world/mapgen';
 import { worldWithinBound } from './ground';
+import { shiftGroundLevel, shiftUnderground } from './underground';
 
 /** Chunk edge length in tiles (must match `emptyMap`). */
 export const CHUNK_TILES = 32;
@@ -8,7 +9,7 @@ export const CHUNK_TILES = 32;
 type Frame = Pick<MapGenParams, 'w' | 'h' | 'originX' | 'originY'>;
 
 /** The frame of a world after `ring` rings: a size larger by 2 rings and an origin shifted by one. */
-function grownFrame(p: Frame, ring: number) {
+export function grownFrame(p: Frame, ring: number) {
   const d = ring * CHUNK_TILES;
   return {
     w: p.w + 2 * d,
@@ -72,6 +73,9 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
   ]);
   save.wires = (save.wires ?? []).map(([x, y, k]) => [x + d, y + d, k]);
   save.roads = (save.roads ?? []).map(([x, y]) => [x + d, y + d]);
+  if (save.underground) save.underground = shiftUnderground(save.underground, d);
+  if (save.groundLevel) save.groundLevel = shiftGroundLevel(save.groundLevel, d);
+  if (save.groundTerrain) save.groundTerrain = shiftGroundLevel(save.groundTerrain, d);
   for (const h of save.houses?.list ?? []) {
     h.x += d;
     h.y += d;

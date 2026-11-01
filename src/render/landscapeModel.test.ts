@@ -107,7 +107,7 @@ function materialBefore(terrain: number, biome: number) {
   if (terrain === Terrain.Forest) return biome === 4 ? 4 : biome === 3 ? 3 : 1;
   return biome === 5 ? 0 : biome;
 }
-const snowLineBefore = (biome: number) => (biome === 3 ? 3 : biome === 2 ? 5 : 4);
+const snowLineBefore = (biome: number) => (biome === 3 ? 12 : biome === 2 ? 16 : 14);
 const stoneGroundBefore = (biome: number) => (biome === 5 ? 0 : biome);
 
 describe('the biome to material table', () => {
@@ -220,14 +220,14 @@ describe('the snow line and the ground between stones', () => {
       expect(stoneGroundAt(m, 4)).toBe(stoneGroundBefore(biome));
     }
   });
-  it('read the climate under a mountain biome: taiga snows from level 3 over its own ground', () => {
+  it('read the climate under a mountain biome: taiga snows from level 12 over its own ground', () => {
     const taiga = ground(Terrain.Mountain, MOUNTAIN, 3);
-    expect(snowLineAt(taiga, SNOW_LEVELS, 4)).toBe(3);
+    expect(snowLineAt(taiga, SNOW_LEVELS, 4)).toBe(12);
     expect(stoneGroundAt(taiga, 4)).toBe(Material.Taiga);
   });
   it('read the climate under a mountain biome: desert stays bare over sand', () => {
     const desert = ground(Terrain.Mountain, MOUNTAIN, 2);
-    expect(snowLineAt(desert, SNOW_LEVELS, 4)).toBe(5);
+    expect(snowLineAt(desert, SNOW_LEVELS, 4)).toBe(16);
     expect(stoneGroundAt(desert, 4)).toBe(Material.Desert);
   });
   it('make a mountain look as it does in its climate, whichever biome it carries', () => {
@@ -250,7 +250,7 @@ describe('the snow line and the ground between stones', () => {
       climate: Uint8Array.of(0, 1, 2, 3, 4, 5),
     };
     const at = (read: (i: number) => number) => Array.from({ length: 6 }, (_, i) => read(i));
-    expect(at((i) => snowLineAt(m, SNOW_LEVELS, i))).toEqual([4, 4, 5, 3, 4, 4]);
+    expect(at((i) => snowLineAt(m, SNOW_LEVELS, i))).toEqual([14, 14, 16, 12, 14, 14]);
     expect(at((i) => stoneGroundAt(m, i))).toEqual([0, 1, 2, 3, 4, 0]);
   });
   it('take the snow line from the table they are given', () => {
@@ -259,8 +259,8 @@ describe('the snow line and the ground between stones', () => {
     expect(snowLineAt(ground(Terrain.Mountain, MOUNTAIN, 20), [7, 8], 0)).toBe(7);
   });
   it('start from the snow levels the content had when this was written', () => {
-    expect(SNOW_LEVELS.slice(0, 6)).toEqual([4, 4, 5, 3, 4, 4]);
-    expect(SNOW_LEVELS.slice(6)).toEqual([4, 4, 4, 4]);
+    expect(SNOW_LEVELS.slice(0, 6)).toEqual([14, 14, 16, 12, 14, 14]);
+    expect(SNOW_LEVELS.slice(6)).toEqual([14, 14, 14, 14]);
   });
 });
 
@@ -522,7 +522,7 @@ describe('the snow line and stone ground on maps of mixed tiles', () => {
       { seeds: MIXED_SEEDS },
     );
   });
-  it('give a taiga mountain tile snow from level 3 and a desert one from level 5', () => {
+  it('give a taiga mountain tile snow from level 12 and a desert one from level 16', () => {
     // The issue's fixture: biome 9 over a climate, side by side with other climates.
     const m: Mixed = {
       w: 3,
@@ -532,7 +532,7 @@ describe('the snow line and stone ground on maps of mixed tiles', () => {
       climate: [3, 2, 0],
     };
     const map = build(m);
-    expect([0, 1, 2].map((k) => snowLineAt(map, SNOW_LEVELS, k))).toEqual([3, 5, 4]);
+    expect([0, 1, 2].map((k) => snowLineAt(map, SNOW_LEVELS, k))).toEqual([12, 16, 14]);
     expect([0, 1, 2].map((k) => stoneGroundAt(map, k))).toEqual([
       Material.Taiga,
       Material.Desert,
@@ -549,7 +549,7 @@ describe('on generated worlds', () => {
   // ids holds it (its biome its climate, no climate plane) paints every tile as before. Three
   // worlds, which between them hold every tile the check below asks for: each new world plans the
   // rivers of the chunks around its start (#341), most of a tenth of a second.
-  const WORLD_SEEDS = [20260912, 1, 7];
+  const WORLD_SEEDS = [20260912, 55, 37];
   const SIZE = { w: 48, h: 48 };
 
   // three generated worlds, every tile painted five ways: about 1.2 s alone
@@ -587,7 +587,7 @@ describe('on generated worlds', () => {
       }
     }
     // The worlds are varied enough to mean something: the tiles the old rules told apart are there,
-    // and a mountain over the taiga climate, whose snow starts at taiga's level 3.
+    // and a mountain over the taiga climate, whose snow starts at taiga's level 12.
     for (const triple of [
       [Terrain.Forest, 3, 3],
       [Terrain.Forest, 4, 4],
@@ -602,4 +602,25 @@ describe('on generated worlds', () => {
         `no tile of terrain:biome:climate ${triple.join(':')}`,
       ).toBe(true);
   }, 20_000);
+});
+
+describe('forest on raised ground', () => {
+  it('a raised Forest tile paints as Grass and a level 0 one as Forest', () => {
+    const m = map(),
+      raised = 5 * 24 + 5,
+      flat = 5 * 24 + 8;
+    m.terrain[raised] = m.terrain[flat] = Terrain.Forest;
+    // a map the painter has no levels for paints every tile as its terrain says
+    expect(materialAt(m, 5, 5)).toBe(Material.Forest);
+    m.levels = new Uint8Array(576);
+    m.levels[raised] = 1;
+    expect(materialAt(m, 5, 5)).toBe(Material.Grass);
+    expect(materialAt(m, 8, 5)).toBe(Material.Forest);
+    // only the forest floor changes: the terrain stays Forest, and a swamp or taiga floor stays
+    expect(m.terrain[raised]).toBe(Terrain.Forest);
+    for (const material of [Material.Swamp, Material.Taiga]) {
+      m.biome[raised] = BIOME_MATERIAL.indexOf(material);
+      expect(materialAt(m, 5, 5)).toBe(material);
+    }
+  });
 });

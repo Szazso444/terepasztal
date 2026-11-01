@@ -11,7 +11,11 @@ import {
   type SaveRefusal,
   type WorldSpec,
 } from './sim/save';
-import { expandSave, ownsBorderChunk } from './sim/expand';
+import { ownsBorderChunk } from './sim/expand';
+import { generatorOf, groundOf, type GeneratedWorld } from './sim/ground';
+import { growHolding } from './sim/holdGround';
+import { restoreGround } from './sim/underground';
+import { tileLevels } from './world/elevation';
 import { rules, rulesFrom } from './sim/rules';
 import { takeIntent, setTestingLevel, type Intent } from './intent';
 import { getLevel, levelFromMap, saveLevel, type LevelData } from './world/level';
@@ -236,7 +240,12 @@ async function boot() {
         guard++ < 8 &&
         (gp.w < mapSize || (save.regions && ownsBorderChunk(save.regions, gp.w, gp.h)))
       ) {
-        expandSave(save, 1);
+        const grow = save;
+        growHolding(grow, () => {
+          const { map } = groundOf(spec as GeneratedWorld, generatorOf(grow.supply));
+          restoreGround(map, grow);
+          return tileLevels(map);
+        });
         if (save.world?.kind !== 'generated') break;
         gp = save.world.params;
         spec = save.world;
@@ -252,7 +261,7 @@ async function boot() {
   // an intent the boot could not carry out (its level or its stored game is gone) opens the title
   const plan = start === 'menu' ? bootPlan(null) : asked;
 
-  const game = new Game(spec, supply);
+  const game = new Game(spec, supply, save ?? undefined);
   window.game = game;
   // what the boot says waits for the loading screen to go
   const toasts = new BootToasts();

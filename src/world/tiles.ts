@@ -55,6 +55,17 @@ export const BIOME_NAMES = [
 /** The climates, ids 0 to CLIMATES - 1: the biomes generation picks before any landform rule. */
 export const CLIMATES = 6;
 
+/**
+ * What climate `b` makes of low land, `wooded` where it has the trees for a forest: sand in the
+ * desert, grass in a swamp and on an island, grass or forest elsewhere. Map generation asks it of
+ * the ground below the hills (Field.genGround) and of the low part of a massif (coverMountains).
+ */
+export function lowGround(b: Biome, wooded: boolean): Terrain {
+  if (b === Biome.Desert) return Terrain.Sand;
+  if (b === Biome.Swamp || b === Biome.Ocean) return Terrain.Grass;
+  return wooded ? Terrain.Forest : Terrain.Grass;
+}
+
 export type PropKind =
   | 'tree'
   | 'pine'
@@ -102,12 +113,24 @@ export interface GameMap {
    */
   climate?: Uint8Array;
   /**
-   * per-tile water level of each Water tile, 0 to MAX_LEVEL: the level its surface stands at
+   * per-tile water level of each Water tile, 0 to MAX_WATER_LEVEL: the level its surface stands at
    * (levelTarget). Rivers on high ground stand above level 0 and never rise downstream. A map
    * without the plane, a level or the editor's, and a chunk stored before it, has all its water at
    * level 0, as has a tile whose terrain is not Water.
    */
   waterSurface?: Uint8Array;
+  /**
+   * per-tile ground level the generator set, 0 to MAX_LEVEL, or NO_LEVEL where the tile has none
+   * and its level comes from its terrain (levelTarget). Neighbours may differ by up to 4 here
+   * (maxStep). A map without the plane, a level or the editor's, has every tile at NO_LEVEL.
+   */
+  generatedLevel?: Uint8Array;
+  /**
+   * per-tile ground level the player set, 0 to MAX_LEVEL, or NO_LEVEL where the tile is as
+   * generated. It is read before generatedLevel (levelTarget). A map without the plane has every
+   * tile at NO_LEVEL.
+   */
+  groundLevel?: Uint8Array;
   /**
    * per-tile flow of each river tile: the tiles of rain it gathers, 1 to FLOW_CAP (0 in a chunk
    * stored before the plane), 0 elsewhere
@@ -157,7 +180,7 @@ export function climateAt(map: ClimateMap, x: number, y: number): Biome {
 export function climateAtIndex(map: Pick<ClimateMap, 'biome' | 'climate'>, i: number): Biome {
   return (map.climate ?? map.biome)[i] as Biome;
 }
-export function regionOf(map: GameMap, x: number, y: number) {
+export function regionOf(map: Pick<GameMap, 'regionSize' | 'regionsX'>, x: number, y: number) {
   return Math.floor(y / map.regionSize) * map.regionsX + Math.floor(x / map.regionSize);
 }
 /**

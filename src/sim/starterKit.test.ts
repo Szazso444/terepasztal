@@ -825,6 +825,28 @@ describe('the site a game is granted its depot on', () => {
     },
   );
 
+  it.each(['narrow_depot', 'depot'])(
+    '%s: rail inside on a gate serves nothing, and the site is passed over',
+    (defId) => {
+      const w = newGame();
+      const c = startDepotCentre(w.map);
+      const x = c.x - 1,
+        y = c.y - 1;
+      const gate = stationGates(defId, x, y, 0)[0];
+      w.builder.underground.dig(gate.x, gate.y, 0);
+      w.track.place(gate.x, gate.y, 'straight', 1, gaugeLine(gaugeOf(stationDef(defId))));
+      const piece = w.track.get(gate.x, gate.y);
+      expect(depotSiteBlocked(w.builder, defId, x, y, 0)).toBe(STR.build.overTunnel);
+      expect(grantDepot(w.builder, defId, x, y, 0)).toBeNull();
+      expect(w.builder.depots()).toEqual([]);
+      const d = ensureStartDepot(w.builder, defId)!;
+      expect(d).not.toBeNull();
+      expect(d.gateTiles().some((g) => g.x === gate.x && g.y === gate.y)).toBe(false);
+      expect(w.track.get(gate.x, gate.y)).toBe(piece);
+      expectServed(w, d);
+    },
+  );
+
   it('takes the one site that works at the edge of its reach, and none beyond it', () => {
     // level ground for exactly one narrow depot and its two gates, `reach` tiles east
     const island = (reach: number) => {

@@ -8,10 +8,11 @@ import { buildingToJSON } from './buildings';
 import { Commands, TRAIN_NAME_MAX } from './commands';
 import type { Contract } from './contracts';
 import { DEFAULT_RULES, rules } from './rules';
-import type { Station } from './stations';
+import { Station } from './stations';
 import { TRAIN_COLOURS } from './trainColours';
 import { Train, defaultStop } from './trains';
-import type { PropInstance } from '../world/tiles';
+import { levelAt, tileLevels } from '../world/elevation';
+import { Terrain, type PropInstance } from '../world/tiles';
 import type { TrackItem } from '../world/track';
 
 type Tile = { x: number; y: number };
@@ -763,6 +764,23 @@ describe('refusal', () => {
     expectRefused(g, 'undo', STR.history.builtOver);
   });
 
+  it('a works taken off ground that has moved since, on its tile or beside it', () => {
+    const g = game();
+    const tile = { x: 12, y: ROW + 5 };
+    for (const moved of [tile, { x: 11, y: ROW + 5 }]) {
+      expect(g.builder.placeBuilding(tile.x, tile.y, 'windmill', 0)).toBeTruthy();
+      g.commands.act(() => g.builder.removeBuilding(tile.x, tile.y));
+      // past the history, as nothing the player does is
+      expect(g.builder.reshapeGround([moved], 1)).toBe(true);
+      expectRefused(g, 'undo', STR.history.builtOver);
+      expect(g.builder.buildingAt(tile.x, tile.y)).toBeUndefined();
+      expect(g.builder.reshapeGround([moved], -1)).toBe(true);
+      expect(g.history.undo()).toEqual({ ok: true });
+      expect(g.builder.buildingAt(tile.x, tile.y)).toBeTruthy();
+      g.builder.removeBuilding(tile.x, tile.y);
+    }
+  });
+
   it('something built on the track a redo would lay', () => {
     const g = game();
     g.commands.act(() => run(g, 10, 12));
@@ -1461,5 +1479,408 @@ describe('a train renamed or recoloured, a step of its own', () => {
     expect(t.name).toBe('Editor test');
     expect(t.colour).toBe(2);
     expect(g.history.undoLabel).toBe(label);
+  });
+});
+
+describe('a raise or a lower in the history', () => {
+  const levels = (g: Game) => [...tileLevels(g.map)];
+  const TILE = { x: 40, y: 40 };
+
+  it('goes back and forward whole, with its money', () => {
+    const g = game();
+    g.economy.money = 5000;
+    rules.groundCost = 100;
+    g.commands.act(() => g.builder.reshapeGround([TILE], 1));
+    g.commands.act(() => g.builder.reshapeGround([TILE], 1));
+    const before = levels(g);
+    expect(g.economy.money).toBe(4400);
+    const earned = g.economy.earned;
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.economy.money).toBe(4900);
+    expect(g.economy.earned).toBe(earned);
+    expect(levelAt(g.map, 40, 40)).toBe(1);
+    expect(levelAt(g.map, 41, 40)).toBe(0);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.economy.money).toBe(5000);
+    expect(levels(g).every((v) => v === 0)).toBe(true);
+    for (let i = 0; i < 2; i++) expect(g.history.redo()).toEqual({ ok: true });
+    expect(g.economy.money).toBe(4400);
+    expect(levels(g)).toEqual(before);
+  });
+
+  it('a raise refused beside a works is no step; undoing the works lets it through', () => {
+    const g = game();
+    const works = { x: 20, y: 20 },
+      side = { x: 19, y: 20 };
+    g.commands.act(() => g.builder.placeBuilding(works.x, works.y, 'windmill', 0));
+    const label = g.history.undoLabel;
+    g.commands.act(() => g.builder.reshapeGround([side], 1));
+    expect(levelAt(g.map, side.x, side.y)).toBe(0);
+    expect(g.history.undoLabel).toBe(label);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.buildingAt(works.x, works.y)).toBeUndefined();
+    g.commands.act(() => g.builder.reshapeGround([side], 1));
+    expect(levelAt(g.map, side.x, side.y)).toBe(1);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(levelAt(g.map, side.x, side.y)).toBe(0);
+  });
+
+  it('a one-tile curve holds the ground beside it as a works does, and goes with an undo', () => {
+    const g = game();
+    const side = { x: 19, y: 20 };
+    expect(
+      g.commands.act(() => g.builder.placeTrack(20, 20, { kind: 'curve', cls: 'narrow' }, 0)),
+    ).toBe(true);
+    expect(g.builder.track.get(20, 20)?.unit).toBeUndefined();
+    expect(g.builder.reshapeGround([side], 1)).toBe(false);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.reshapeGround([side], 1)).toBe(true);
+  });
+
+  it('refuses to move ground back beside a level piece that stands there now', () => {
+    const g = game();
+    const [hill, beside] = [TILE, { x: 41, y: 40 }];
+    g.commands.act(() => g.builder.reshapeGround([hill], 1));
+    g.commands.act(() => g.builder.reshapeGround([hill], -1));
+    // past the history, as a house a town grows is
+    g.builder.free = true;
+    expect(g.builder.placeDecor(beside.x, beside.y, 'water_tower', 0)).toBeTruthy();
+    expectRefused(g, 'undo', STR.history.builtOver);
+    expect(levelAt(g.map, hill.x, hill.y)).toBe(0);
+    g.builder.removeDecor(beside.x, beside.y);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(levelAt(g.map, hill.x, hill.y)).toBe(1);
+  });
+
+  it('is named, and a drag is one step', () => {
+    const g = game();
+    for (let x = 40; x < 43; x++)
+      g.commands.act(() => g.builder.reshapeGround([{ x, y: 40 }], 1), 7);
+    expect(g.history.undoLabel).toBe(STR.history.groundMoved);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(levels(g).every((v) => v === 0)).toBe(true);
+  });
+
+  it('a drag goes back and forward whole, again and again', () => {
+    const g = game();
+    g.economy.money = 5000;
+    rules.groundCost = 100;
+    for (let x = 40; x < 43; x++)
+      g.commands.act(() => g.builder.reshapeGround([{ x, y: 40 }], 1), 7);
+    const after = levels(g);
+    expect(g.economy.money).toBe(4700);
+    expect([40, 41, 42].map((x) => levelAt(g.map, x, 40))).toEqual([1, 1, 1]);
+    for (let i = 0; i < 2; i++) {
+      expect(g.history.undo()).toEqual({ ok: true });
+      expect(g.economy.money).toBe(5000);
+      expect(levels(g).every((v) => v === 0)).toBe(true);
+      expect(g.history.redo()).toEqual({ ok: true });
+      expect(g.economy.money).toBe(4700);
+      expect(levels(g)).toEqual(after);
+    }
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.economy.money).toBe(5000);
+    expect(levels(g).every((v) => v === 0)).toBe(true);
+  });
+
+  it('a lower dragged along a ridge goes back and forward too', () => {
+    const g = game();
+    rules.groundCost = 100;
+    const ridge = Array.from({ length: 4 }, (_, i) => ({ x: 40 + i, y: 40 }));
+    expect(g.builder.reshapeGround(ridge, 1)).toBe(true);
+    const start = levels(g),
+      money = g.economy.money;
+    for (const t of ridge) g.commands.act(() => g.builder.reshapeGround([t], -1), 8);
+    expect(g.economy.money).toBe(money - 400);
+    expect(levels(g).every((v) => v === 0)).toBe(true);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(levels(g)).toEqual(start);
+    expect(g.economy.money).toBe(money);
+    expect(g.history.redo()).toEqual({ ok: true });
+    expect(levels(g).every((v) => v === 0)).toBe(true);
+    expect(g.economy.money).toBe(money - 400);
+  });
+
+  it('a redo still refuses when something moved or was built since the undo', () => {
+    const g = game();
+    for (let x = 40; x < 43; x++)
+      g.commands.act(() => g.builder.reshapeGround([{ x, y: 40 }], 1), 7);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.reshapeGround([{ x: 41, y: 41 }], 1)).toBe(true);
+    expectRefused(g, 'redo', STR.history.builtOver);
+  });
+
+  it('gives back the terrain a lower turned, and the harvest with it', () => {
+    const g = game();
+    g.economy.money = 1e6;
+    g.map.terrain.fill(Terrain.Rock, 30 * g.map.w, 50 * g.map.w);
+    const quarry = new Station('quarry', 40, 40);
+    g.builder.stations.push(quarry);
+    g.builder.refreshHarvest();
+    const before = quarry.terrainFactor,
+      block: { x: number; y: number }[] = [];
+    for (let y = 31; y < 49; y++)
+      for (let x = 31; x < 49; x++)
+        if (Math.abs(x - 40) + Math.abs(y - 40) > 1) block.push({ x, y });
+    expect(g.builder.reshapeGround(block, 1)).toBe(true);
+    g.commands.act(() => g.builder.reshapeGround(block, -1));
+    expect(g.map.terrain[40 * g.map.w + 42]).toBe(Terrain.Grass);
+    expect(quarry.terrainFactor).toBeLessThan(before);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.map.terrain[40 * g.map.w + 42]).toBe(Terrain.Rock);
+    expect(quarry.terrainFactor).toBe(before);
+  });
+
+  it('tells the game on the way back too', () => {
+    const g = game();
+    g.commands.act(() => g.builder.reshapeGround([TILE], 1));
+    const told: number[] = [];
+    g.builder.onGroundChanged = (tiles) => told.push(tiles.length);
+    g.history.undo();
+    expect(told).toEqual([1]);
+  });
+
+  it('refuses a redo the money cannot pay', () => {
+    const g = game();
+    g.economy.money = 5000;
+    rules.groundCost = 100;
+    g.commands.act(() => g.builder.reshapeGround([TILE], 1));
+    g.history.undo();
+    g.economy.money = 50;
+    expectRefused(g, 'redo', STR.build.funds);
+    expect(levelAt(g.map, 40, 40)).toBe(0);
+    expect(g.economy.money).toBe(50);
+  });
+
+  it('refuses an undo on ground moved since, past the history', () => {
+    const g = game();
+    g.commands.act(() => g.builder.reshapeGround([TILE], 1));
+    expect(g.builder.reshapeGround([TILE], 1)).toBe(true);
+    expectRefused(g, 'undo', STR.history.builtOver);
+    expect(levelAt(g.map, 40, 40)).toBe(2);
+  });
+});
+
+describe('a dig in the history', () => {
+  const Y = 40;
+  const levels = (g: Game) => [...tileLevels(g.map)];
+  const dugNow = (g: Game) => JSON.stringify(g.builder.underground.toJSON());
+  const terrain = (g: Game) => [...g.map.terrain];
+  const row = (from: number, to: number) =>
+    Array.from({ length: to - from + 1 }, (_, i) => ({ x: from + i, y: Y }));
+  /** Hills of 6 at x 34 and 44 with a saddle of 1 at 39, the second down to level 0 at x 50. */
+  function hills(g: Game) {
+    const h = (x: number, y: number, px: number) => 6 - Math.max(Math.abs(x - px), Math.abs(y - Y));
+    const plane = new Uint8Array(g.map.w * g.map.h);
+    for (let y = 0; y < g.map.h; y++)
+      for (let x = 0; x < g.map.w; x++)
+        plane[y * g.map.w + x] = Math.max(0, h(x, y, 34), h(x, y, 44));
+    g.map.groundLevel = plane;
+  }
+  /** Ready for a drag from the first hill out through the second: a saddle, two cuts, a portal. */
+  function ready(g: Game) {
+    g.economy.money = 100_000;
+    g.stock.amounts.set('stone', 100);
+    hills(g);
+    const c = g.builder.checkDig(row(36, 50));
+    expect(c.ok).toBe(true);
+    expect(c.raise.length).toBeGreaterThan(0);
+    expect(c.cut).toEqual(row(48, 49));
+    expect(c.portals).toEqual([{ x: 47, y: Y, face: 'E', floor: 0 }]);
+    return c;
+  }
+  /** A plane of the map's own making, which may step by up to 4: `levels` inside a block. */
+  function steep(g: Game, levels: (x: number, y: number) => number) {
+    const plane = new Uint8Array(g.map.w * g.map.h);
+    for (let y = 30; y < 50; y++)
+      for (let x = 30; x < 50; x++) plane[y * g.map.w + x] = levels(x, y);
+    g.map.generatedLevel = plane;
+  }
+
+  it('goes back and forward whole: money, stone, ground, terrain and portals', () => {
+    const g = game();
+    const c = ready(g);
+    const stone = g.stock.get('stone');
+    const wasLevels = levels(g),
+      wasTerrain = terrain(g),
+      money = g.economy.money,
+      earned = g.economy.earned;
+    const heard: number[] = [];
+    g.builder.onGroundChanged = (changes) => heard.push(changes.length);
+    expect(g.commands.act(() => g.builder.dig(row(36, 50)))).toBe(true);
+    const nowLevels = levels(g),
+      nowTerrain = terrain(g),
+      nowDug = dugNow(g);
+    expect(g.economy.money).toBe(money - c.cost.money);
+    expect(g.stock.get('stone')).toBe(stone + c.stone);
+    expect(g.history.undoLabel).toBe(STR.history.tunnelDug);
+    for (let i = 0; i < 2; i++) {
+      expect(g.history.undo()).toEqual({ ok: true });
+      expect(g.economy.money).toBe(money);
+      expect(g.economy.earned).toBe(earned);
+      expect(g.stock.get('stone')).toBe(stone);
+      expect(levels(g)).toEqual(wasLevels);
+      expect(terrain(g)).toEqual(wasTerrain);
+      expect(g.builder.underground.empty).toBe(true);
+      expect(g.history.redo()).toEqual({ ok: true });
+      expect(g.economy.money).toBe(money - c.cost.money);
+      expect(g.stock.get('stone')).toBe(stone + c.stone);
+      expect(levels(g)).toEqual(nowLevels);
+      expect(terrain(g)).toEqual(nowTerrain);
+      expect(dugNow(g)).toBe(nowDug);
+    }
+    // once for the dig, then for each undo and redo
+    expect(heard).toEqual(Array(5).fill(c.raise.length));
+  });
+
+  it('gives the ground back to Raise and Lower with the undo', () => {
+    const g = game();
+    ready(g);
+    g.commands.act(() => g.builder.dig(row(36, 50)));
+    expect(g.builder.checkGround([{ x: 39, y: Y }], -1).ok).toBe(false);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(levelAt(g.map, 39, Y)).toBe(1);
+    expect(g.builder.checkGround([{ x: 39, y: Y }], -1).ok).toBe(true);
+  });
+
+  it('takes back its own portal and leaves one that stood before', () => {
+    const g = game();
+    steep(g, (x, y) => (y === Y && x === 40 ? 4 : y === Y && x === 39 ? 1 : 0));
+    g.commands.act(() => g.builder.dig(row(40, 41)));
+    const before = dugNow(g);
+    expect(g.builder.underground.portals()).toEqual([{ x: 40, y: Y, face: 'E', floor: 0 }]);
+    expect(g.commands.act(() => g.builder.dig(row(38, 40)))).toBe(true);
+    expect(g.builder.underground.portals()).toHaveLength(2);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(dugNow(g)).toBe(before);
+  });
+
+  it('brings back a portal it shut', () => {
+    const g = game();
+    g.economy.money = 1e6;
+    steep(g, (x) => (x <= 36 || x >= 40 ? 4 : 0));
+    const portal = { x: 36, y: Y, face: 'E', floor: 0 };
+    g.commands.act(() => g.builder.dig(row(34, 37)));
+    expect(g.builder.underground.portals()).toEqual([portal]);
+    g.commands.act(() => g.builder.dig(row(36, 40)));
+    expect(g.builder.underground.portals()).toEqual([]);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.underground.portals()).toEqual([portal]);
+    expect(g.history.redo()).toEqual({ ok: true });
+    expect(g.builder.underground.portals()).toEqual([]);
+  });
+
+  it('a drag of many frames is one step', () => {
+    const g = game();
+    ready(g);
+    const money = g.economy.money;
+    for (const x of [45, 44, 43]) g.commands.act(() => g.builder.dig([{ x, y: Y }]), 9);
+    expect(g.economy.money).toBe(money - 3 * rules.drillCost);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.underground.empty).toBe(true);
+    expect(g.economy.money).toBe(money);
+  });
+
+  it('a raise in a later frame of a drag goes back with the rest', () => {
+    const g = game();
+    ready(g);
+    const was = levels(g);
+    for (const x of [38, 39]) g.commands.act(() => g.builder.dig([{ x, y: Y }]), 9);
+    const now = levels(g);
+    expect(now).not.toEqual(was);
+    for (let i = 0; i < 2; i++) {
+      expect(g.history.undo()).toEqual({ ok: true });
+      expect(levels(g)).toEqual(was);
+      expect(g.history.redo()).toEqual({ ok: true });
+      expect(levels(g)).toEqual(now);
+    }
+  });
+
+  it('cannot go back once its stone is spent', () => {
+    const g = game();
+    const c = ready(g);
+    g.commands.act(() => g.builder.dig(row(36, 50)));
+    g.stock.amounts.set('stone', 0);
+    expect(g.history.undo().ok).toBe(false);
+    expect(g.builder.underground.isDug(40, Y)).toBe(true);
+    g.stock.amounts.set('stone', c.stone);
+    expect(g.history.undo()).toEqual({ ok: true });
+  });
+
+  it('cannot go back over a tile filled since, past the history', () => {
+    const g = game();
+    ready(g);
+    g.commands.act(() => g.builder.dig(row(36, 50)));
+    expect(g.builder.fillDug(40, Y)).toBe(true);
+    expectRefused(g, 'undo', STR.history.builtOver);
+  });
+
+  it('needs the money for a redo', () => {
+    const g = game();
+    const c = ready(g);
+    g.commands.act(() => g.builder.dig(row(36, 50)));
+    expect(g.history.undo()).toEqual({ ok: true });
+    g.economy.money = c.cost.money - 1;
+    expectRefused(g, 'redo', STR.build.funds);
+    expect(g.builder.underground.empty).toBe(true);
+  });
+
+  it('a back-fill goes back and forward with its refund and its portals', () => {
+    const g = game();
+    ready(g);
+    g.commands.act(() => g.builder.dig(row(36, 50)));
+    const before = dugNow(g),
+      money = g.economy.money,
+      stone = g.stock.get('stone'),
+      back = (rules.drillCost + rules.portalCost) * rules.refundRate;
+    expect(g.commands.act(() => g.builder.fillDug(47, Y))).toBe(true);
+    expect(g.economy.money).toBe(money + back);
+    expect(g.builder.underground.portals()).toEqual([]);
+    expect(g.history.undoLabel).toBe(STR.history.tunnelFilled);
+    const after = dugNow(g);
+    for (let i = 0; i < 2; i++) {
+      expect(g.history.undo()).toEqual({ ok: true });
+      expect(g.economy.money).toBe(money);
+      expect(dugNow(g)).toBe(before);
+      expect(g.history.redo()).toEqual({ ok: true });
+      expect(g.economy.money).toBe(money + back);
+      expect(dugNow(g)).toBe(after);
+    }
+    expect(g.stock.get('stone')).toBe(stone);
+  });
+
+  it('a back-filled cut takes the portal that looks at it, and the undo brings both back', () => {
+    const g = game();
+    ready(g);
+    g.commands.act(() => g.builder.dig(row(36, 50)));
+    const before = dugNow(g),
+      money = g.economy.money,
+      back = (rules.drillCost + rules.portalCost) * rules.refundRate;
+    expect(g.commands.act(() => g.builder.fillDug(48, Y))).toBe(true);
+    expect(g.builder.underground.portals()).toEqual([]);
+    expect(g.economy.money).toBe(money + back);
+    const after = dugNow(g);
+    for (let i = 0; i < 2; i++) {
+      expect(g.history.undo()).toEqual({ ok: true });
+      expect(dugNow(g)).toBe(before);
+      expect(g.economy.money).toBe(money);
+      expect(g.history.redo()).toEqual({ ok: true });
+      expect(dugNow(g)).toBe(after);
+      expect(g.economy.money).toBe(money + back);
+    }
+  });
+
+  it('a back-filled cut comes back a cut, and the undo needs the refund in hand', () => {
+    const g = game();
+    ready(g);
+    g.commands.act(() => g.builder.dig(row(36, 50)));
+    g.commands.act(() => g.builder.fillDug(49, Y));
+    expect(g.builder.underground.isCut(49, Y)).toBe(false);
+    g.economy.money = rules.drillCost * rules.refundRate - 1;
+    expectRefused(g, 'undo', STR.build.funds);
+    g.economy.money = rules.drillCost * rules.refundRate;
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.underground.isCut(49, Y)).toBe(true);
+    expect(g.economy.money).toBe(0);
   });
 });

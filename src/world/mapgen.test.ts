@@ -34,7 +34,7 @@ function propHash(m: GameMap) {
 function overlapDiff(small: GameMap, big: GameMap) {
   const dx = small.originX - big.originX;
   const dy = small.originY - big.originY;
-  const diff = { terrain: 0, biome: 0, variant: 0, props: 0 };
+  const diff = { terrain: 0, biome: 0, variant: 0, props: 0, generatedLevel: 0 };
   for (let y = 0; y < small.h; y++)
     for (let x = 0; x < small.w; x++) {
       const i = y * small.w + x;
@@ -43,10 +43,11 @@ function overlapDiff(small: GameMap, big: GameMap) {
       if (small.biome[i] !== big.biome[j]) diff.biome++;
       if (small.variant[i] !== big.variant[j]) diff.variant++;
       if (propText(small.props.get(i)) !== propText(big.props.get(j))) diff.props++;
+      if (small.generatedLevel?.[i] !== big.generatedLevel?.[j]) diff.generatedLevel++;
     }
   return diff;
 }
-const SAME = { terrain: 0, biome: 0, variant: 0, props: 0 };
+const SAME = { terrain: 0, biome: 0, variant: 0, props: 0, generatedLevel: 0 };
 /** A generated map of `w` x `w` grown by one ring of 32-tile chunks, as `expandSave` grows it. */
 const grown = (seed: number, w: number, supply: SupplyMode = DEFAULT_SUPPLY) =>
   generateMap(seed, { w: w + 64, h: w + 64, originX: -32, originY: -32 }, supply);
@@ -77,10 +78,11 @@ describe('generateMap', () => {
     // A tripwire, not a specification: any deliberate change to map generation invalidates
     // every existing seed, so re-bless these numbers on purpose or not at all.
     const m = generateMap(SEED, SMALL);
-    expect(fnv(m.terrain)).toBe(2819169333);
-    expect(fnv(m.biome)).toBe(1415484685);
+    expect(fnv(m.terrain)).toBe(466482162);
+    expect(fnv(m.biome)).toBe(3895354596);
     expect(fnv(m.variant)).toBe(417171169);
-    expect(m.props.size).toBe(344);
+    expect(m.props.size).toBe(472);
+    expect(fnv(m.generatedLevel!)).toBe(3775704277);
   });
 
   it('fills the plane it was asked for', () => {
@@ -164,13 +166,21 @@ describe('a grown map', () => {
   it('generates the worlds these numbers describe', () => {
     // Tripwires like the one above, at the default map size and that map grown by one ring.
     const m = generateMap(SEED, { w: 160, h: 160 });
-    expect([fnv(m.terrain), fnv(m.biome), fnv(m.variant), propHash(m)]).toEqual([
-      1815774099, 3612118115, 1813736059, 1080511039,
-    ]);
+    expect([
+      fnv(m.terrain),
+      fnv(m.biome),
+      fnv(m.variant),
+      propHash(m),
+      fnv(m.generatedLevel!),
+    ]).toEqual([2055292387, 913513656, 1813736059, 1615046882, 2259723918]);
     const g = grown(SEED, 160);
-    expect([fnv(g.terrain), fnv(g.biome), fnv(g.variant), propHash(g)]).toEqual([
-      3055034070, 107203715, 1107381422, 904992078,
-    ]);
+    expect([
+      fnv(g.terrain),
+      fnv(g.biome),
+      fnv(g.variant),
+      propHash(g),
+      fnv(g.generatedLevel!),
+    ]).toEqual([3951292950, 4272823928, 1107381422, 3363527260, 970212280]);
   });
 });
 

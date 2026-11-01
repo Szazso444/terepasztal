@@ -10,7 +10,7 @@ import {
   type FillInstruction,
 } from 'pixi.js';
 import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
-import { Dir, ELEV_PX, depthKey, tileToWorld } from '../engine/iso';
+import { Dir, ELEV_PX, depthKey, tileToWorld, worldToTileInt } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import type { Game } from '../game';
 import { DEFAULT_RULES, rules } from '../sim/rules';
@@ -19,6 +19,9 @@ import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { simWorld, type SimWorld } from '../testing/simWorld';
 import { picture } from '../testing/townPaving';
 import { emptyMap } from '../world/mapgen';
+import { EDGE_STRIP_TILES } from '../world/edgeStrip';
+import { stripMeshes } from './edgeStripMesh';
+import type { TileRect } from './fx';
 import { RegionState } from '../world/regions';
 import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
 import { lineSpans, type RailBed } from '../world/railProfile';
@@ -52,6 +55,7 @@ import {
   type FieldPicture,
 } from './wheatField';
 import { WheatFields } from './wheatFields';
+import { NOTHING_DUG } from './tunnelGlass';
 import { WorldRenderer } from './worldRenderer';
 
 /** The paved tiles a world renderer holds (`setCity`), which its `paved` reads. */
@@ -167,6 +171,9 @@ function renderer() {
     map: { w: 1, h: 1, originX: 0, originY: 0, terrain: [0], biome: [0] },
     objects,
     contactGround,
+    underground: NOTHING_DUG,
+    followed: { under: NOTHING_DUG, version: 0 },
+    portals: { mark: () => undefined, update: () => undefined, touch: () => undefined },
     city: new Set(),
     paved: (tile: number) => cityOf(world).has(tile),
     doorsteps: [],
@@ -501,6 +508,7 @@ describe('a building fitted to the ground', () => {
       },
       refreshSummits: () => {},
       harvest: { refresh: () => {} },
+      strip: { update: () => {} },
       trackSprites: new Map(),
       scatterSprites: new Map(),
       propSprites: new Map(),
@@ -1039,6 +1047,134 @@ const EVERY_FRAME = { has: () => true, get: () => ANY_FRAME } as unknown as Atla
 function wholeWorld(map: GameMap) {
   return new WorldRenderer(EVERY_FRAME, map, new RegionState(map));
 }
+
+describe('the edge strip', () => {
+  /** Flat ground past `map`, as its worker hands it over. */
+  const shapeOf = (map: GameMap, regions: RegionState) => {
+    const n = (map.w + 2 * EDGE_STRIP_TILES) * (map.h + 2 * EDGE_STRIP_TILES);
+    const strip = { w: map.w, h: map.h, terrain: new Uint8Array(n), levels: new Uint8Array(n) };
+    return stripMeshes(strip, (x, y) => regions.regionIndex(x, y));
+  };
+  /** A world of 160 x 160, 32 tiles to a region: its start region is the middle of five by five. */
+  function world160() {
+    const map = emptyMap(1, 160, 160);
+    const regions = new RegionState(map);
+    return { map, regions, world: new WorldRenderer(EVERY_FRAME, map, regions) };
+  }
+  const shapes = (world: WorldRenderer) => [
+    ...world.stripBack.children,
+    ...world.stripFront.children,
+  ];
+  const shown = (world: WorldRenderer) => shapes(world).filter((c) => c.visible).length;
+  /** The void ring's sprites. */
+  const ring = (world: WorldRenderer) => world.border.children.flatMap((c) => c.children);
+  /** Frames go by until every block that has to show has come in. */
+  const settle = (world: WorldRenderer) => {
+    for (let i = 0; i < 100; i++) world.animate(0.1);
+  };
+
+  it('lies behind the map under the ground, and before it over all that stands', () => {
+    const world = wholeWorld(emptyMap(1, 6, 6));
+    const at = (c: Container) => world.root.getChildIndex(c);
+    expect(at(world.stripBack)).toBeLessThan(at(world.landscape.root));
+    expect(at(world.stripFront)).toBeGreaterThan(at(world.objects));
+    expect(at(world.stripFront)).toBeLessThan(at(world.overlay));
+  });
+
+  it('leaves the void ring as it is on a new game, where no block shows', () => {
+    const { map, regions, world } = world160();
+    world.setEdgeStrip(shapeOf(map, regions));
+    settle(world);
+    expect(shown(world)).toBe(0);
+    expect(world.border.visible).toBe(true);
+    expect(ring(world).every((sp) => sp.visible)).toBe(true);
+  });
+
+  it('takes the void ring away only under a block, and once the block has come in', () => {
+    const { map, regions, world } = world160();
+    const west = regions.regionIndex(0, 80);
+    regions.own(west);
+    world.setEdgeStrip(shapeOf(map, regions));
+    world.animate(0);
+    expect(ring(world).every((sp) => sp.visible)).toBe(true);
+    settle(world);
+    const gone = ring(world).filter((sp) => !sp.visible);
+    expect(gone.length).toBeGreaterThan(0);
+    expect(gone.length).toBeLessThan(ring(world).length);
+    for (const sp of ring(world)) {
+      const t = worldToTileInt(sp.x, sp.y);
+      const near = regions.regionIndex(
+        Math.max(0, Math.min(159, t.x)),
+        Math.max(0, Math.min(159, t.y)),
+      );
+      expect(sp.visible, `ring tile ${t.x},${t.y}`).toBe(!regions.isRevealed(near));
+    }
+  });
+
+  it('brings the void ring back with a block that goes', () => {
+    const { map, regions, world } = world160();
+    regions.own(regions.regionIndex(0, 80));
+    world.setEdgeStrip(shapeOf(map, regions));
+    settle(world);
+    expect(ring(world).some((sp) => !sp.visible)).toBe(true);
+    regions.unlocked.fill(false);
+    regions.own(regions.regionIndex(80, 80));
+    world.rebuildFog();
+    expect(ring(world).every((sp) => sp.visible)).toBe(true);
+  });
+
+  it('shows the blocks of the regions in view when it comes in, with nothing else asked', () => {
+    const { map, regions, world } = world160();
+    regions.own(regions.regionIndex(0, 80));
+    world.setEdgeStrip(shapeOf(map, regions));
+    settle(world);
+    expect(shown(world)).toBeGreaterThan(0);
+  });
+
+  it('goes on only from the regions in view, and more of it as more of them come in', () => {
+    const { map, regions, world } = world160();
+    world.setEdgeStrip(shapeOf(map, regions));
+    settle(world);
+    expect(shown(world)).toBe(0);
+    regions.own(regions.regionIndex(0, 80));
+    world.rebuildFog();
+    settle(world);
+    const some = shown(world);
+    expect(some).toBeGreaterThan(0);
+    regions.own(regions.regionIndex(159, 80));
+    world.rebuildFog();
+    settle(world);
+    expect(shown(world)).toBeGreaterThan(some);
+  });
+
+  it('reports what it stands on: each region in view, out to the far edge, and no more', () => {
+    const { map, regions, world } = world160();
+    const reach: TileRect[][] = [];
+    world.onStripReach = (rects) => reach.push(rects);
+    world.setEdgeStrip(shapeOf(map, regions));
+    expect(reach).toEqual([[]]);
+    regions.unlocked.fill(false);
+    regions.unlocked[regions.regionIndex(0, 0)] = true;
+    regions.unlocked[regions.regionIndex(159, 159)] = true;
+    world.rebuildFog();
+    const W = EDGE_STRIP_TILES;
+    const rects = reach[reach.length - 1];
+    // the first is a corner, the region beside it is in view, and the region round the last one
+    expect(rects).toContainEqual({ x0: -W, y0: -W, x1: 32, y1: 32 });
+    expect(rects).toContainEqual({ x0: 32, y0: -W, x1: 64, y1: 32 });
+    expect(rects).toContainEqual({ x0: 128, y0: 128, x1: 160 + W, y1: 160 + W });
+    expect(rects).not.toContainEqual({ x0: 64, y0: -W, x1: 96, y1: 32 });
+  });
+
+  it('colours its front as the night overlay colours its back, whatever the hour', () => {
+    const world = wholeWorld(emptyMap(1, 6, 6));
+    world.setAtmosphereTint(0x5c6bad);
+    expect(world.stripFront.tint).toBe(0x5c6bad);
+    expect(world.stripBack.tint).toBe(0xffffff);
+    world.setAtmosphereTint(0xffffff);
+    expect(world.stripFront.tint).toBe(0xffffff);
+  });
+});
 
 const selecting = (x: number, y: number, id: string) => ({
   tool: { kind: 'none' },
@@ -2130,6 +2266,7 @@ describe('the town paving handed to the painter', () => {
       repainted: string[] = [];
     const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
     Object.assign(world, {
+      portals: { touch: () => undefined },
       map: emptyMap(3, 4, 4),
       wheat: new WheatFields(4, 4),
       city: new Set(),
@@ -2265,6 +2402,7 @@ describe('the paving of a town the simulation raises, as the game hands it over'
       repainted = new Set<number>();
     const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
     Object.assign(world, {
+      portals: { touch: () => undefined },
       map: w.map,
       wheat: new WheatFields(w.map.w, w.map.h),
       city: new Set(),
@@ -2408,3 +2546,48 @@ function paveChanged(was: TownPaving, is: TownPaving, i: number, j: number) {
     }
   return false;
 }
+
+describe('retiling many tiles', () => {
+  /** A world whose tiles (1, 1) to (3, 3) each hold an oak, with the landscape counting its calls. */
+  function oaks() {
+    const map = emptyMap(1, 6, 6, Terrain.Grass);
+    for (let y = 1; y <= 3; y++) for (let x = 1; x <= 3; x++) map.props.set(y * 6 + x, [oak(0, 0)]);
+    const world = new WorldRenderer(PROP_ATLAS, map, new RegionState(map));
+    const calls: string[] = [];
+    vi.spyOn(world.landscape, 'failed', 'get').mockReturnValue(false);
+    vi.spyOn(world.landscape, 'invalidate').mockImplementation(() => void calls.push('invalidate'));
+    vi.spyOn(world.landscape, 'elevation').mockImplementation(() => (calls.push('elevation'), 0));
+    return { world, calls };
+  }
+  const tiles = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ x: 1 + (i % 3), y: 1 + ((i / 3) | 0) }));
+
+  it('invalidates the ground of every tile before any prop reads a height', () => {
+    const { world, calls } = oaks();
+    world.retileMany(tiles(9));
+    const firstRead = calls.indexOf('elevation');
+    expect(calls.filter((c) => c === 'invalidate')).toHaveLength(9);
+    expect(firstRead).toBe(9);
+    expect(calls.lastIndexOf('invalidate')).toBeLessThan(firstRead);
+  });
+
+  it('draws the props again at the new height, as retile one by one does', () => {
+    const one = oaks(),
+      many = oaks();
+    for (const t of tiles(9)) one.world.retile(t.x, t.y);
+    many.world.retileMany(tiles(9));
+    const at = (w: WorldRenderer) =>
+      oaksDrawn(w)
+        .map(whereIs)
+        .sort((a, b) => a.z - b.z);
+    expect(at(many.world)).toEqual(at(one.world));
+    expect(at(many.world)).toHaveLength(9);
+  });
+
+  it('leaves a tile whose region is not built alone', () => {
+    const { world, calls } = oaks();
+    vi.spyOn(world, 'isBuilt').mockReturnValue(false);
+    world.retileMany(tiles(9));
+    expect(calls).toEqual([]);
+  });
+});

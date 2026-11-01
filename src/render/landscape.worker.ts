@@ -5,7 +5,15 @@ import {
   stoneGroundAt,
   type LandscapeMap,
 } from './landscapeModel';
-import { reliefHeight, surfaceAlongRay, RELIEF_MAX, type TerrainRelief } from './terrainRelief';
+import {
+  heightFactor,
+  snowChannelLight,
+  snowTint,
+  reliefHeight,
+  surfaceAlongRay,
+  RELIEF_MAX,
+  type TerrainRelief,
+} from './terrainRelief';
 import {
   grassDetail,
   paintedWater,
@@ -56,8 +64,9 @@ self.onmessage = async (event: MessageEvent) => {
       return;
     }
     if (data.map) {
-      map = data.map;
       relief = data.relief;
+      // The painter reads each tile's level to paint a forest on raised ground as grass.
+      map = { ...data.map, levels: relief.tiles };
       version = data.version;
       tint = data.tint;
       paving = new TownPaving(
@@ -233,6 +242,7 @@ self.onmessage = async (event: MessageEvent) => {
             wy,
             snowLineAt(map, snowLevels, tileIndex),
             steep ?? 0,
+            shade,
             solid ? null : color,
           );
         }
@@ -472,7 +482,9 @@ const SNOW = [234, 239, 246];
  * paint lighter (ground level unchanged), snow patches from the tile's snow line and full snow a
  * level above, and a cast shadow darkens ground that a higher tile hides from the upper-left light.
  * Snow goes on `color`, the ground's colour, which is null where the ground is not painted (under
- * solid paving). Returns the shading factor.
+ * solid paving), lit by snowChannelLight and tinted by snowTint, as the peak pictures' snow is
+ * (SurfaceAssets.summit): it is set so that `shade`, the slope's light so far, and the factor
+ * returned, which the caller multiplies in, leave it at that. Returns the shading factor.
  */
 function previewLooks(
   x: number,
@@ -482,12 +494,13 @@ function previewLooks(
   wy: number,
   snowLine: number,
   steep: number,
+  shade: number,
   color: number[] | null,
 ) {
   const style = relief.style,
     level = Math.max(0, z / style.step);
   let factor = 1;
-  if (style.heightLight) factor *= 1 + style.heightLight * level;
+  if (style.heightLight) factor *= heightFactor(level, style.heightLight);
   if (style.snow && color) {
     const above = level - snowLine,
       // Half cover (patches) on the snow line's level, full cover from the level above.
@@ -498,8 +511,13 @@ function previewLooks(
         // Patchy snow keeps off steep rock; full snow covers everything.
         amount = unit((cover - n) / 0.06) * (cover < 0.99 ? 1 - 0.6 * steep : 1);
       if (amount > 0) {
-        const texture = 0.88 + 0.12 * ((color[0] + color[1] + color[2]) / 3 / 140);
-        for (let c = 0; c < 3; c++) color[c] += (SNOW[c] * texture - color[c]) * amount;
+        const texture = Math.min(1, 0.88 + (0.12 * (color[0] + color[1] + color[2])) / 3 / 140);
+        for (let c = 0; c < 3; c++) {
+          const season = ((tint >> (16 - c * 8)) & 255) / 255,
+            lit = (texture * snowChannelLight(shade, c)) / (shade * factor),
+            kept = snowTint(season) / season;
+          color[c] += (SNOW[c] * lit * kept - color[c]) * amount;
+        }
       }
     }
   }

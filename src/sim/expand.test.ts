@@ -58,6 +58,9 @@ function partsOf(world: SaveParts['world']): SaveParts {
     supply: 'simple',
     people: { rng: 7 },
     roads: [],
+    underground: { dug: [], cuts: [], portals: [] },
+    groundLevel: [],
+    groundTerrain: [],
   };
 }
 
@@ -301,6 +304,12 @@ describe('the shop asks for a ring and the game grows by the rings that fit', ()
       buildings: [[...at(), 'bridge_stone', 0.5, 3]],
       wires: [[...at(), 'catenary']],
       roads: [at(), at()],
+      underground: {
+        dug: [[...at(), 0]],
+        cuts: [at()],
+        portals: [{ ...pt(), face: 'E', floor: 0 }],
+      },
+      groundLevel: [[...at(), 4]],
       houses: {
         list: [{ ...pt(), level: 3, residents: 100, progress: 1 }],
         arrivals: [],
@@ -335,6 +344,10 @@ describe('the shop asks for a ring and the game grows by the rings that fit', ()
     for (const [x, y] of save.buildings ?? []) out.push([x, y]);
     for (const [x, y] of save.wires ?? []) out.push([x, y]);
     for (const [x, y] of save.roads ?? []) out.push([x, y]);
+    for (const [x, y] of save.underground?.dug ?? []) out.push([x, y]);
+    for (const [x, y] of save.underground?.cuts ?? []) out.push([x, y]);
+    for (const p of save.underground?.portals ?? []) add(p);
+    for (const [x, y] of save.groundLevel ?? []) out.push([x, y]);
     for (const h of save.houses?.list ?? []) add(h);
     for (const t of save.trains as unknown as {
       head?: At;

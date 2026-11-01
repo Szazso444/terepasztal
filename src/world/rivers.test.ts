@@ -6,7 +6,7 @@ import {
   type MapGenParams,
   type MapPlanes,
 } from './mapgen';
-import { levelTarget, tileLevels } from './elevation';
+import { levelTarget, maxStep, tileLevels } from './elevation';
 import { Biome, Terrain, startRegion, type GameMap } from './tiles';
 import {
   CHUNK_TILES,
@@ -140,9 +140,10 @@ function checkWater(small: MapPlanes, big: MapPlanes, seen: Seen) {
   for (let y = RING; y < RING + S.h; y++)
     for (let x = RING; x < RING + S.w; x++) {
       const i = y * w + x;
-      // neighbouring levels within one step, and water at its own level
-      if (Math.abs(levels[i] - levels[i - 1]) > 1 || Math.abs(levels[i] - levels[i - w]) > 1)
-        throw new Error(`a step of two at ${at(i)}`);
+      // neighbouring levels within a step, and water at its own level
+      const step = maxStep(m);
+      if (Math.abs(levels[i] - levels[i - 1]) > step || Math.abs(levels[i] - levels[i - w]) > step)
+        throw new Error(`too steep a step at ${at(i)}`);
       if (terrain[i] === Terrain.Water && levels[i] !== surface[i])
         throw new Error(`water at level ${levels[i]}, its own ${surface[i]}, at ${at(i)}`);
       if (terrain[i] !== Terrain.Water && surface[i])
@@ -793,7 +794,7 @@ interface Seam {
  * lowers it: found by scanning seeds 1 to 100. Should generation change and leave none, the seam
  * property fails on `lowered` and these want picking again.
  */
-const RAISED_WORLDS = [9, 36, 38, 61, 72, 90, 100];
+const RAISED_WORLDS = [1, 4, 36, 38, 61, 82, 89];
 const genSeam = (rng: Rng): Seam => {
   const near = rng.pick(['any', 'river', 'raised'] as const);
   const raised = near === 'raised';
@@ -815,6 +816,7 @@ function* shrinkSeam(c: Seam): Iterable<Seam> {
 /** The world's map as an older generator might have left it, to store a chunk of. */
 function stubChunk(c: Seam, like: GameMap): GameMap {
   const m = generateMap(c.seed, { w: like.w, h: like.h });
+  delete m.generatedLevel;
   m.props.clear();
   m.flow!.fill(0);
   m.flowDir!.fill(0);
@@ -853,7 +855,6 @@ describe('the drainage', () => {
     const p: DrainInput = {
       waterLevel: 0.36,
       hillLevel: 0.64,
-      rockLevel: 0.76,
       w: size,
       h: size,
       core: { x0: 2, y0: 2, x1: size - 2, y1: size - 2 },
@@ -880,13 +881,32 @@ describe('the drainage', () => {
   };
 
   it('reads the demo thresholds in level steps of the Map sliders', () => {
-    const s = { waterLevel: 0.36, hillLevel: 0.64, rockLevel: 0.76 };
+    const s = { waterLevel: 0.36, hillLevel: 0.64 };
     expect(levelSteps(s, 0.36)).toBeCloseTo(0);
     expect(levelSteps(s, 0.64)).toBeCloseTo(3);
     expect(levelSteps(s, 0.76)).toBeCloseTo(4);
     // a step is a third of the way from the water to the hills below them
     expect(levelSteps(s, 0.36 + 0.28 / 3)).toBeCloseTo(1);
     expect(levelSteps(s, 0.7)).toBeCloseTo(3.5);
+  });
+
+  it('sets the step above the hill line by the hill slider, to the default rock line', () => {
+    // the formula before the rock slider left the river scale, with rockLevel at its default
+    const old = (s: { waterLevel: number; hillLevel: number }, e: number) => {
+      const hill = Math.max(s.hillLevel, s.waterLevel + 3 * 0.01);
+      const rock = Math.max(DEFAULT_MAP_PARAMS.rockLevel, hill + 0.01);
+      const below = 3 / (hill - s.waterLevel);
+      const above = 1 / (rock - hill);
+      return e < hill ? (e - s.waterLevel) * below : 3 + (e - hill) * above;
+    };
+    for (const hillLevel of [0.4, 0.5, 0.64, 0.7, 0.75, 0.9]) {
+      const s = { waterLevel: 0.36, hillLevel };
+      for (let e = 0.3; e <= 1.6; e += 0.01) expect(levelSteps(s, e)).toBe(old(s, e));
+    }
+    // hill 0.5 keeps its step of 0.26, not the default 0.12
+    expect(levelSteps({ waterLevel: 0.36, hillLevel: 0.5 }, 0.76)).toBeCloseTo(4);
+    // sliders out of order are still read at MIN_STEP at least
+    expect(levelSteps({ waterLevel: 0.36, hillLevel: 0.9 }, 0.91)).toBeCloseTo(4);
   });
 
   it('fills a basin on low ground to a lake that overflows into a river to the edge', () => {

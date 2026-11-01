@@ -1,6 +1,6 @@
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './mapgen';
 import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
-import { levelTarget } from './elevation';
+import { MAX_LEVEL, NO_LEVEL, levelTarget, maxStep, tileLevels } from './elevation';
 import { FLOW_CAP } from './rivers';
 import {
   FALL_BITS,
@@ -103,6 +103,13 @@ import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from '
  *   byte. A fourth prop and later is all raw: five bits of kind, the variant as Elias gamma and
  *   the two offset bytes, 22 bits or more, so a corrupt count cannot make props of no text.
  *
+ * Version 6 (the tunnels) holds everything version 5 does, in the same bytes, and after the props
+ * the generated levels (GameMap.generatedLevel): whether the plane has any tile that is not
+ * NO_LEVEL, and if so the plane as the water levels are, five bits a value, its contexts by the
+ * tile's terrain. A value is 0 to MAX_LEVEL, or 31 for NO_LEVEL; any other is refused. A map
+ * with no plane is stored as one with no tile set, and a chunk of version 5 or earlier reads
+ * with every tile at NO_LEVEL.
+ *
  * The guesses are only that: a variant, prop or offset that is not the guess costs more bits and
  * reads back as it was, and a map whose generator draws them otherwise is stored all the same.
  * Changing anything here, a guess or a context included, is a new CHUNK_VERSION.
@@ -116,13 +123,14 @@ import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from '
  * and a chunk of an older version decodes with that plane empty: version 1 holds no climate, and
  * its climate is its biome; versions 1 and 2 hold no water levels, flow or sides, so their water
  * is at level 0 and their rivers have neither; versions 1 to 3 hold no water features, so they
- * have no waterfalls.
+ * have no waterfalls; versions 1 to 5 hold no generated levels, so every tile of theirs is at
+ * NO_LEVEL.
  */
 
 /** Chunk edge in world tiles: emptyMap's region size. */
 export const CHUNK_TILES = 32;
 /** The encoding encodeChunk writes; decodeChunk reads it and every one before it. */
-export const CHUNK_VERSION = 5;
+export const CHUNK_VERSION = 6;
 
 /**
  * The index a chunk stores each prop kind under. Only ever add to it: an index written into a save
@@ -183,6 +191,8 @@ export interface ChunkPlanes {
   flowDir: Uint8Array;
   /** the water features (waterfalls.ts); all 0, no waterfalls, in a chunk of version 1 to 3 */
   feature: Uint8Array;
+  /** the generated levels (GameMap.generatedLevel); all NO_LEVEL in a chunk of version 1 to 5 */
+  generatedLevel: Uint8Array;
 }
 
 /** What buildMap made. */
@@ -427,10 +437,22 @@ function readOldPlanes(r: Reader, version: number, n: number): Tiles | null {
       last = i;
     }
   }
-  return { terrain, biome, climate, variant, props, waterSurface, flow, flowDir, feature };
+  const generatedLevel = new Uint8Array(n).fill(NO_LEVEL);
+  return {
+    terrain,
+    biome,
+    climate,
+    variant,
+    props,
+    waterSurface,
+    flow,
+    flowDir,
+    feature,
+    generatedLevel,
+  };
 }
 
-// Version 5 (see the encoding above). Every number and choice below is part of the encoding: a
+// Versions 5 and 6 (see the encoding above). Every number and choice below is part of the encoding: a
 // change to any of them is a new CHUNK_VERSION, with this one kept for the texts it wrote.
 
 /**
@@ -623,14 +645,18 @@ function count(c: Coder, ctx: Uint16Array, at: number, u: number): number {
 
 /** A tile plane's contexts for a group: 4, 2 and 1 for the neighbours, 15 for the four bits. */
 const PLANE_CTX = 22;
+/** The same for a plane of five bits a value (the generated levels): 31 for the bits. */
+const LEVEL_CTX = 38;
+/** What a chunk text holds for NO_LEVEL: all five bits set. */
+const NO_STORED = 31;
 /** The groups a tile plane's tiles fall in: as many as there are ids. */
 const PLANE_GROUPS = 16;
 
 /**
- * Tile `v` (0 to 15) of a plane, under the contexts of its group from `at`: whether it is its
- * left neighbour's `L`, else its upper neighbour's `U`, else its upper right one's `R`, each
- * asked only when it is a value not asked yet nor `skip`; else its four bits, the highest first.
- * `L` is -1 for the rectangle's first tile, which has no neighbour.
+ * Tile `v` (0 to 15, or to 31 with `bits` of 5) of a plane, under the contexts of its group from
+ * `at`: whether it is its left neighbour's `L`, else its upper neighbour's `U`, else its upper
+ * right one's `R`, each asked only when it is a value not asked yet nor `skip`; else its bits, the
+ * highest first. `L` is -1 for the rectangle's first tile, which has no neighbour.
  */
 function tileValue(
   c: Coder,
@@ -641,6 +667,7 @@ function tileValue(
   U: number,
   R: number,
   skip: number,
+  bits = 4,
 ): number {
   if (L >= 0) {
     if (L !== skip && c.bit(ctx, at + (L === U ? 1 : 0) + (U === R ? 2 : 0), v === L ? 1 : 0))
@@ -649,8 +676,8 @@ function tileValue(
     if (R !== L && R !== U && R !== skip && c.bit(ctx, at + 6, v === R ? 1 : 0)) return R;
   }
   let node = 1;
-  for (let k = 3; k >= 0; k--) node = 2 * node + c.bit(ctx, at + 6 + node, (v >> k) & 1);
-  return node - 16;
+  for (let k = bits - 1; k >= 0; k--) node = 2 * node + c.bit(ctx, at + 6 + node, (v >> k) & 1);
+  return node - 2 ** bits;
 }
 
 /** codePlane's contexts, kept between calls (coding never runs inside itself), cleared for each. */
@@ -689,6 +716,32 @@ function codePlane(
         }
       }
       plane[i] = tileValue(c, ctx, g * PLANE_CTX, plane[i], L, U, R, skip);
+    }
+}
+
+/** codeLevels' contexts, kept between calls like planeContexts. */
+const levelContexts = new Uint16Array(2 * PLANE_GROUPS * (LEVEL_CTX + 2));
+
+/**
+ * The generated levels (version 6): whether any tile is set, and if so every tile as a value of
+ * five bits (tileValue) in the contexts of its terrain. The plane in memory holds NO_LEVEL where
+ * the text holds NO_STORED; a decoder is given a plane of NO_LEVEL.
+ */
+function codeLevels(c: Coder, plane: Uint8Array, terrain: Uint8Array, w: number, h: number) {
+  const stored = plane.map((v) => (v === NO_LEVEL ? NO_STORED : v));
+  const any = new Uint16Array(2);
+  if (!c.bit(any, 0, stored.some((v) => v !== NO_STORED) ? 1 : 0)) return;
+  const ctx = levelContexts.fill(0);
+  for (let y = 0, i = 0; y < h; y++)
+    for (let x = 0; x < w; x++, i++) {
+      const up = y > 0 ? stored[i - w] : -1;
+      const L = x > 0 ? stored[i - 1] : up;
+      const U = up >= 0 ? up : L;
+      const R = y > 0 && x + 1 < w ? stored[i - w + 1] : U;
+      const v = tileValue(c, ctx, terrain[i] * LEVEL_CTX, stored[i], L, U, R, -1, 5);
+      if (v > MAX_LEVEL && v !== NO_STORED) throw new Corrupt();
+      stored[i] = v;
+      plane[i] = v === NO_STORED ? NO_LEVEL : v;
     }
 }
 
@@ -892,7 +945,7 @@ function codeProps(
     }
 }
 
-/** Version 5's planes after its head, encoded from `t` and `lists`, or decoded into `t`. */
+/** The planes of version 5 or 6 after the head, encoded from `t` and `lists`, or decoded into `t`. */
 function codeTiles(
   c: Coder,
   t: Tiles,
@@ -900,6 +953,7 @@ function codeTiles(
   h: number,
   g: Guess,
   lists: (PropInstance[] | undefined)[] | null,
+  version: number,
 ) {
   const { terrain, biome, climate, variant, waterSurface, flow, flowDir, feature } = t;
   codePlane(c, terrain, w, h, null, null);
@@ -945,6 +999,7 @@ function codeTiles(
   }
   if (c.bit(any, 2, features ? 1 : 0)) codeFeatures(c, feature, flowDir);
   codeProps(c, t, w, h, g, lists);
+  if (version >= 6) codeLevels(c, t.generatedLevel, terrain, w, h);
 }
 
 function toBase64(bytes: Uint8Array): string {
@@ -969,8 +1024,9 @@ function fromBase64(text: string): Uint8Array | null {
  * The text of chunk (`cx`, `cy`): the part of it `map` covers, as the map has it. Call it on a map
  * as generated, before anything is built on it or repaired under it. Throws when the map does not
  * cover the chunk, and when it holds what this encoding cannot (a terrain, biome, climate or water
- * level id over 15, a variant over 3, a prop kind PROP_KINDS lacks, a feature byte isFeature
- * refuses), so a generator that makes one has to come with a new CHUNK_VERSION.
+ * level id over 15, a generated level over MAX_LEVEL that is not NO_LEVEL, a variant over 3, a prop
+ * kind PROP_KINDS lacks, a feature byte isFeature refuses), so a generator that makes one has to
+ * come with a new CHUNK_VERSION.
  */
 export function encodeChunk(map: GameMap, cx: number, cy: number): string {
   return encodeWith(map, cx, cy, null);
@@ -1020,6 +1076,7 @@ function encodeWith(
     flow: new Uint16Array(n),
     flowDir: new Uint8Array(n),
     feature: new Uint8Array(n),
+    generatedLevel: new Uint8Array(n).fill(NO_LEVEL),
   };
   // the map tile of the rectangle's first tile
   const mx = cx * CHUNK_TILES + c.x0 - map.originX;
@@ -1037,6 +1094,7 @@ function encodeWith(
   copy(t.flow, map.flow);
   copy(t.flowDir, map.flowDir);
   copy(t.feature, map.feature);
+  copy(t.generatedLevel, map.generatedLevel);
   const v = CHUNK_VERSION;
   const ids = (name: string, id: number) =>
     new Error(`chunk encoding ${v} holds ${name} ids 0 to 15, not ${id}`);
@@ -1056,6 +1114,10 @@ function encodeWith(
     if (t.waterSurface[i] > 15) throw ids('water level', t.waterSurface[i]);
     if (t.variant[i] > 3)
       throw new Error(`chunk encoding ${v} holds variants 0 to 3, not ${t.variant[i]}`);
+    if (t.generatedLevel[i] > MAX_LEVEL && t.generatedLevel[i] !== NO_LEVEL)
+      throw new Error(
+        `chunk encoding ${v} holds levels 0 to ${MAX_LEVEL}, not ${t.generatedLevel[i]}`,
+      );
     // a prop's kind and variant are checked as it is coded (propKind, propVariant)
     if (!lists[i]?.length) lists[i] = undefined;
   }
@@ -1087,7 +1149,7 @@ function encodeWith(
   for (const k of [gx, gy]) out.varint(zigzag(k));
   const coder = new RangeWriter(out);
   const g = { seed, wx: gx * CHUNK_TILES + c.x0, wy: gy * CHUNK_TILES + c.y0 };
-  codeTiles(coder, t, c.w, c.h, g, lists);
+  codeTiles(coder, t, c.w, c.h, g, lists, CHUNK_VERSION);
   coder.finish();
   return toBase64(out.buf.subarray(0, out.n));
 }
@@ -1128,9 +1190,10 @@ export function decodeChunk(text: string): ChunkPlanes | null {
         flow: new Uint16Array(n),
         flowDir: new Uint8Array(n),
         feature: new Uint8Array(n),
+        generatedLevel: new Uint8Array(n).fill(NO_LEVEL),
       };
       const g = { seed, wx: gx * CHUNK_TILES + x0, wy: gy * CHUNK_TILES + y0 };
-      codeTiles(new RangeReader(r), t, w, h, g, null);
+      codeTiles(new RangeReader(r), t, w, h, g, null, version);
     }
     // bytes left over are not something encodeChunk writes
     if (!t || r.i !== bytes.length) return null;
@@ -1146,7 +1209,8 @@ export function decodeChunk(text: string): ChunkPlanes | null {
  * climate, variant, the water planes and features, and the props of those tiles, which replace the
  * map's own (the map takes the chunk's prop lists themselves, so decode a chunk again for another
  * map). A map with no climate plane is given one, its climate its biome until a chunk says
- * otherwise, and one with no water plane or feature plane is given it empty. A plane the chunk's
+ * otherwise, and one with no water plane or feature plane is given it empty. A map with no level
+ * plane is given one when the chunk sets any level, NO_LEVEL elsewhere. A plane the chunk's
  * version does not hold is empty there; for the climate that means it is the biome.
  */
 export function placeChunk(map: GameMap, cx: number, cy: number, c: ChunkPlanes) {
@@ -1167,6 +1231,11 @@ function place(map: GameMap, cx: number, cy: number, c: ChunkPlanes, clear: bool
   const flow = (map.flow ??= new Uint16Array(map.w * map.h));
   const flowDir = (map.flowDir ??= new Uint8Array(map.w * map.h));
   const feature = (map.feature ??= new Uint8Array(map.w * map.h));
+  // the level plane is made only for a chunk that sets a level: a map from chunks of version 5
+  // and earlier has none, and keeps the one-level rule
+  let levels = map.generatedLevel;
+  if (!levels && c.generatedLevel.some((v) => v !== NO_LEVEL))
+    levels = map.generatedLevel = new Uint8Array(map.w * map.h).fill(NO_LEVEL);
   for (let y = y0; y < y1; y++)
     for (let x = x0; x < x1; x++) {
       const i = (y - map.originY) * map.w + x - map.originX;
@@ -1179,6 +1248,7 @@ function place(map: GameMap, cx: number, cy: number, c: ChunkPlanes, clear: bool
       flow[i] = c.flow[j];
       flowDir[i] = c.flowDir[j];
       feature[i] = c.feature[j];
+      if (levels) levels[i] = c.generatedLevel[j];
       if (!clear) continue;
       const list = c.props.get(j);
       if (list) map.props.set(i, list);
@@ -1279,6 +1349,14 @@ export function buildMap(
       added.push(c.key);
     }
   }
+  // a tile no chunk set a level for (a chunk of version 5 or earlier beside one of version 6) is
+  // at the level the old rule gives it, so that those tiles are as they were stored
+  const levels = map.generatedLevel;
+  if (levels?.includes(NO_LEVEL)) {
+    const { w, h, terrain, waterSurface } = map;
+    const legacy = tileLevels({ w, h, terrain, waterSurface });
+    for (let i = 0; i < levels.length; i++) if (levels[i] === NO_LEVEL) levels[i] = legacy[i];
+  }
   return { map, chunks: out, added, unreadable };
 }
 
@@ -1297,7 +1375,7 @@ export function buildMap(
  * A stored river that runs into a new tile is left as it is, its waterfall too: a chunk stored
  * before CHUNK_VERSION 3 does not say which way its rivers run, and one stored before version 4
  * has no waterfalls. Coasts, lake edges and biome edges cut at the seam are accepted as they fall,
- * and the levels across it stay within one step (tileLevels).
+ * and the levels across it stay within a step (tileLevels; fitLevels on a map with a level plane).
  */
 function seam(map: GameMap, stored: Uint8Array) {
   const { w, h, terrain } = map;
@@ -1310,6 +1388,12 @@ function seam(map: GameMap, stored: Uint8Array) {
     const nx = x + DIR_DX[d - 1];
     const ny = y + DIR_DY[d - 1];
     return nx < 0 || ny < 0 || nx >= w || ny >= h ? -1 : ny * w + nx;
+  };
+  // a tile's generated level is its water's, and follows it down
+  const levels = map.generatedLevel;
+  const lower = (i: number, v: number) => {
+    surface[i] = v;
+    if (levels && levels[i] !== NO_LEVEL) levels[i] = v;
   };
   const fresh: number[] = [];
   for (let i = 0; i < w * h; i++) if (!stored[i] && terrain[i] === Terrain.Water) fresh.push(i);
@@ -1335,14 +1419,14 @@ function seam(map: GameMap, stored: Uint8Array) {
         if (n >= 0) v = Math.min(v, levelTarget(map, n) + 1);
       }
       if (v < surface[i]) {
-        surface[i] = v;
+        lower(i, v);
         changed = true;
       }
     }
     for (const i of fresh) {
       const n = flowDir[i] ? ahead(i, flowDir[i]) : -1;
       if (n >= 0 && !stored[n] && surface[n] > surface[i]) {
-        surface[n] = surface[i];
+        lower(n, surface[i]);
         changed = true;
       }
     }
@@ -1357,4 +1441,53 @@ function seam(map: GameMap, stored: Uint8Array) {
     } else fall = fallAt(map, i);
     feature[i] = (feature[i] & ~FALL_BITS) | fall;
   });
+  fitLevels(map, stored);
+}
+
+/**
+ * Fits the level plane's new tiles to the stored ones (1 in `stored`), which stay as they are: each
+ * new tile comes within maxStep a tile of every stored tile, so the plane holds settled levels on
+ * either side of the seam, whatever generator made each. A tile no chunk set a level for reads the
+ * old rule's level (as buildMap fills it in), and a new tile that needs fitting is given a level.
+ */
+function fitLevels(map: GameMap, stored: Uint8Array) {
+  const levels = map.generatedLevel;
+  if (!levels) return;
+  const { w, h, terrain, waterSurface } = map;
+  const step = maxStep(map);
+  const legacy = tileLevels({ w, h, terrain, waterSurface });
+  // the most and the least each tile may stand at, a tile's own where it is stored
+  const FREE = 1 << 20;
+  const most = new Int32Array(w * h).fill(FREE);
+  const least = new Int32Array(w * h).fill(-FREE);
+  for (let i = 0; i < w * h; i++)
+    if (stored[i]) most[i] = least[i] = levels[i] === NO_LEVEL ? legacy[i] : levels[i];
+  const reach = (i: number, n: number) => {
+    if (stored[i]) return false;
+    const m = Math.min(most[i], most[n] + step);
+    const l = Math.max(least[i], least[n] - step);
+    if (m === most[i] && l === least[i]) return false;
+    most[i] = m;
+    least[i] = l;
+    return true;
+  };
+  for (let changed = true; changed;) {
+    changed = false;
+    for (let y = 0; y < h; y++)
+      for (let x = 0, i = y * w; x < w; x++, i++) {
+        if (x && reach(i, i - 1)) changed = true;
+        if (y && reach(i, i - w)) changed = true;
+      }
+    for (let y = h - 1; y >= 0; y--)
+      for (let x = w - 1, i = y * w + x; x >= 0; x--, i--) {
+        if (x < w - 1 && reach(i, i + 1)) changed = true;
+        if (y < h - 1 && reach(i, i + w)) changed = true;
+      }
+  }
+  for (let i = 0; i < w * h; i++) {
+    if (stored[i]) continue;
+    const v = levels[i] === NO_LEVEL ? legacy[i] : levels[i];
+    const fit = Math.min(most[i], Math.max(least[i], v));
+    if (fit !== v) levels[i] = fit;
+  }
 }

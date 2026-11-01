@@ -8,12 +8,13 @@ import {
   supportedDeck,
   CLIMB_SPEED,
   DESCENT_SPEED,
+  type BedsUnder,
   type RailBed,
 } from './railProfile';
 import { TrackGraph, pieceLinks } from './track';
 import { emptyMap } from './mapgen';
 import { Terrain } from './tiles';
-import { Dir } from '../engine/iso';
+import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import { forAll } from '../testing/property';
 
 const bed = (spans: RailBed['spans']): RailBed => ({ axis: 'x', spans, flat: false });
@@ -202,5 +203,213 @@ describe('rail inclines', () => {
     expect(supportedDeck(m, curve(5, 5, 3), none)).toBeNull();
     // Neighbours on platforms adapt: the deck is the piece's own highest tile.
     expect(supportedDeck(m, curve(4, 6, 0), () => true)).toBe(1);
+  });
+});
+
+describe('beds under the ground', () => {
+  const SIZE = 24;
+  const ROW = 12;
+  const key = (x: number, y = ROW) => y * SIZE + x;
+  /** Level 0 up to x 8, then a level a tile up to a top of 5 at x 13, all the way along the rows. */
+  const slope = () => {
+    const m = emptyMap(5, SIZE, SIZE);
+    m.groundLevel = Uint8Array.from({ length: SIZE * SIZE }, (_, i) =>
+      Math.max(0, Math.min(5, (i % SIZE) - 8)),
+    );
+    return m;
+  };
+  /** The view of a store with `dug` tiles at floor 0 and `cuts` cut, by column of the row. */
+  const under = (dug: readonly number[], cuts: readonly number[] = []): BedsUnder => ({
+    floorAt: (x, y) => (y === ROW && dug.includes(x) ? 0 : undefined),
+    isCut: (x, y) => y === ROW && cuts.includes(x),
+  });
+  /** An east-west line along the row. */
+  const lineOf = (from: number, to: number) => {
+    const track = new TrackGraph(SIZE, SIZE);
+    for (let x = from; x <= to; x++) track.place(x, ROW, 'straight', 1, 'branch');
+    return track;
+  };
+  /** Every point of the bed of column `x`, along its tile. */
+  const levelsOver = (b: RailBed, x: number) =>
+    [-0.5, -0.25, 0, 0.25, 0.5].map((d) => railLevel(b, x + d));
+
+  it('a dug tile has a flat bridge bed at its floor', () => {
+    const beds = railProfile(slope(), lineOf(11, 14), undefined, under([11, 12, 13, 14]));
+    for (let x = 11; x <= 14; x++) {
+      const b = beds.get(key(x))!;
+      expect(b.bridge, `column ${x}`).toBe(true);
+      expect(b.flat, `column ${x}`).toBe(true);
+      expect(levelsOver(b, x), `column ${x}`).toEqual([0, 0, 0, 0, 0]);
+    }
+  });
+
+  it('reads the floor the store gives, not the ground', () => {
+    const view: BedsUnder = { floorAt: () => 4, isCut: () => false };
+    const b = railProfile(slope(), lineOf(11, 14), undefined, view).get(key(12))!;
+    expect(levelsOver(b, 12)).toEqual([4, 4, 4, 4, 4]);
+  });
+
+  it('a cut tile has a flat bed without bridge', () => {
+    const beds = railProfile(slope(), lineOf(6, 10), undefined, under([], [9, 10]));
+    for (const x of [9, 10]) {
+      const b = beds.get(key(x))!;
+      expect(b.bridge, `column ${x}`).toBeUndefined();
+      expect(b.flat, `column ${x}`).toBe(true);
+      expect(levelsOver(b, x), `column ${x}`).toEqual([0, 0, 0, 0, 0]);
+    }
+  });
+
+  it("the first tile past a cut keeps the cut's level", () => {
+    // the line comes off the plain at x 8 into a cut at x 9 and 10 and a tunnel from x 11: read at
+    // the ground's levels it would start to climb on x 8, and that bend is the kink
+    const m = slope(),
+      track = lineOf(5, 13);
+    const natural = railProfile(m, track).get(key(8))!;
+    expect(natural.flat).toBe(false);
+    const beds = railProfile(m, track, undefined, under([11, 12, 13], [9, 10]));
+    for (let x = 5; x <= 13; x++) {
+      expect(beds.get(key(x))!.flat, `column ${x}`).toBe(true);
+      expect(levelsOver(beds.get(key(x))!, x), `column ${x}`).toEqual([0, 0, 0, 0, 0]);
+    }
+    expect(beds.get(key(8))!.bridge).toBeUndefined();
+  });
+
+  it('a line is one profile through a tunnel: its ends and its middle meet on the tile edges', () => {
+    const m = slope();
+    // past the far portal, at column 13, the ground stands at the floor and climbs a level a tile
+    for (let i = 0; i < m.groundLevel!.length; i++)
+      if (i % SIZE >= 14) m.groundLevel![i] = (i % SIZE) - 14;
+    const beds = railProfile(m, lineOf(5, 17), undefined, under([11, 12, 13], [9, 10]));
+    for (let x = 5; x < 17; x++) {
+      const here = beds.get(key(x))!,
+        next = beds.get(key(x + 1))!;
+      expect(railLevel(here, x + 0.5)).toBeCloseTo(railLevel(next, x + 0.5));
+      // the rail takes a level a tile at most
+      expect(Math.abs(railLevel(next, x + 1) - railLevel(here, x))).toBeLessThanOrEqual(1);
+    }
+    // out of the far end the rail takes the ground again
+    expect(railLevel(beds.get(key(13))!, 13)).toBe(0);
+    expect(railLevel(beds.get(key(17))!, 17)).toBeGreaterThan(2);
+  });
+
+  describe('a deck beside the beds', () => {
+    /** A one-tile curve on the row, turned as `supportedDeck`'s own test turns them. */
+    const curve = (x: number, rot: number) => [{ x, y: ROW, links: pieceLinks('curve', rot) }];
+    /** Every tile a platform but the one east of column `x`, where the curve meets the rail. */
+    const eastOf = (x: number) => (bx: number, by: number) => bx !== x + 1 || by !== ROW;
+
+    it('sits at the bed of the rail it meets, not at the ground over that bed', () => {
+      // a curve on level 0 at column 8, north and east, a cut or a tunnel at column 9, ground at 1
+      expect(supportedDeck(slope(), curve(8, 0), eastOf(8))).toBe(1);
+      expect(supportedDeck(slope(), curve(8, 0), eastOf(8), under([], [9]))).toBe(0);
+      expect(supportedDeck(slope(), curve(8, 0), eastOf(8), under([9]))).toBe(0);
+    });
+
+    it('a bed and the ground at its level do not disagree', () => {
+      // the rail north at level 0 on the ground, the rail east on the cut
+      const north = (bx: number, by: number) => !(bx === 8 && by === ROW - 1) && eastOf(8)(bx, by);
+      expect(supportedDeck(slope(), curve(8, 0), north)).toBeNull();
+      expect(supportedDeck(slope(), curve(8, 0), north, under([], [9]))).toBe(0);
+    });
+
+    it('a member on a bed counts at the bed', () => {
+      // the ground over column 10 stands at 2, the rail it meets on the cut at column 11 at 0
+      expect(supportedDeck(slope(), curve(10, 0), eastOf(10), under([], [11]))).toBeNull();
+      expect(supportedDeck(slope(), curve(10, 0), eastOf(10), under([], [10, 11]))).toBe(0);
+    });
+
+    it('a piece whose rails disagree stands at its highest bed, not the ground over it', () => {
+      const m = emptyMap(5, SIZE, SIZE),
+        track = new TrackGraph(SIZE, SIZE),
+        tiles = track.place(12, ROW, 'curve', 1, 'branch');
+      m.generatedLevel = new Uint8Array(SIZE * SIZE);
+      const on = (x: number, y: number) => tiles.some((t) => t.x === x && t.y === y);
+      const ends = tiles
+        .flatMap((t) =>
+          (track.get(t.x, t.y)?.links.flat() ?? []).map((d) => ({
+            x: t.x + DIR_DX[d],
+            y: t.y + DIR_DY[d],
+          })),
+        )
+        .filter((t) => !on(t.x, t.y));
+      expect(ends).toHaveLength(2);
+      ends.forEach((t, i) => (m.generatedLevel![key(t.x, t.y)] = i + 1));
+      const [first, covered] = [tiles[0], tiles[tiles.length - 1]];
+      m.generatedLevel[key(covered.x, covered.y)] = 4;
+      const view: BedsUnder = {
+        floorAt: () => undefined,
+        isCut: (x, y) => x === covered.x && y === covered.y,
+      };
+      expect(railProfile(m, track, on).get(key(first.x, first.y))!.spans[0].a).toBe(4);
+      expect(railProfile(m, track, on, view).get(key(first.x, first.y))!.spans[0].a).toBe(0);
+    });
+  });
+
+  it('a crossing inside has a flat bed on both its lines', () => {
+    const track = lineOf(11, 13);
+    track.place(12, ROW, 'crossing', 0, 'branch', 'branch');
+    for (const y of [ROW - 1, ROW + 1]) track.place(12, y, 'straight', 0, 'branch');
+    const view: BedsUnder = {
+      floorAt: (x, y) => (x >= 11 && x <= 13 && Math.abs(y - ROW) <= 1 ? 0 : undefined),
+      isCut: () => false,
+    };
+    const b = railProfile(slope(), track, undefined, view).get(key(12))!;
+    expect(b.cross).toBeDefined();
+    expect(b.flat).toBe(true);
+    for (const line of [b, b.cross!]) expect(railLevel(line, 12)).toBe(0);
+  });
+
+  it('a unit piece on dug tiles has flat beds', () => {
+    const m = slope(),
+      track = new TrackGraph(SIZE, SIZE);
+    const tiles = track.place(12, ROW, 'curve', 1, 'branch');
+    expect(tiles.length).toBeGreaterThan(1);
+    const dug: BedsUnder = {
+      floorAt: (x, y) => (tiles.some((t) => t.x === x && t.y === y) ? 0 : undefined),
+      isCut: () => false,
+    };
+    const beds = railProfile(m, track, undefined, dug);
+    for (const t of tiles) {
+      const b = beds.get(key(t.x, t.y))!;
+      expect(b, `${t.x},${t.y}`).toMatchObject({ bridge: true, flat: true });
+      expect(railLevel(b, t.x)).toBe(0);
+    }
+  });
+
+  it('a unit piece on cut tiles has flat beds without bridge', () => {
+    const m = slope(),
+      track = new TrackGraph(SIZE, SIZE);
+    const tiles = track.place(9, ROW, 'curve', 1, 'branch');
+    const cut: BedsUnder = {
+      floorAt: () => undefined,
+      isCut: (x, y) => tiles.some((t) => t.x === x && t.y === y),
+    };
+    const beds = railProfile(m, track, undefined, cut);
+    for (const t of tiles) {
+      const b = beds.get(key(t.x, t.y))!;
+      expect(b.bridge, `${t.x},${t.y}`).toBeUndefined();
+      expect(b.flat, `${t.x},${t.y}`).toBe(true);
+      expect(railLevel(b, t.x)).toBe(0);
+    }
+  });
+
+  it('a curve on open ground has no bed, with or without a view', () => {
+    const track = new TrackGraph(SIZE, SIZE);
+    track.place(4, ROW, 'curve', 1, 'branch');
+    expect(railProfile(slope(), track, undefined, under([12], [9])).size).toBe(0);
+  });
+
+  it('with nothing dug, a view changes nothing', () => {
+    const m = slope(),
+      track = lineOf(5, 15);
+    expect(railProfile(m, track, undefined, under([]))).toEqual(railProfile(m, track));
+  });
+
+  it('a bridge deck beside a tunnel takes the floor as its abutment', () => {
+    const m = slope(),
+      track = lineOf(9, 13);
+    const beds = railProfile(m, track, (x) => x === 10, under([11, 12, 13]));
+    expect(beds.get(key(11))).toMatchObject({ bridge: true });
+    expect(railLevel(beds.get(key(12))!, 12)).toBe(0);
   });
 });

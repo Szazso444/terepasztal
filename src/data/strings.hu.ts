@@ -117,6 +117,9 @@ export const HU: Strings = {
     downgradedTo: (name: string, level: number) => `${name} visszaminősítve: ${level}. szint`,
     renamed: (was: string, now: string) => `Átnevezve: ${was} → ${now}`,
     recoloured: (train: string, colour: string) => `${train} színkódja: ${colour}`,
+    groundMoved: 'Föld átalakítva',
+    tunnelDug: 'Alagút fúrva',
+    tunnelFilled: 'Ásott csempe betöltve',
     builtOver: 'Azóta más épült oda.',
     trainOn: (train: string) => `${train} áll a sínen.`,
     trainAt: (train: string, station: string) => `${train} a peronon áll: ${station}.`,
@@ -370,6 +373,44 @@ export const HU: Strings = {
     mountainLine: 'A hegyi sínnek meglévő vonalat kell folytatnia',
     needBridge: 'A vízhez híd kell',
     tooSteep: 'Túl meredek: az egyenes sín csempénként legfeljebb egy szintet emelkedhet',
+    groundLimit: 'A föld itt nem mozdulhat tovább',
+    groundBesideWater: 'Vizet érintő föld nem süllyeszthető',
+    groundBesideLevel: 'Ez megbillentené a talajt a mellette álló építmény alatt',
+    groundMovesWater: 'Ez megmozdítaná a vizet: a víz nem emelhető és nem süllyeszthető',
+    groundUp: (tiles: number, cost: string) => `Emelés: ${tiles} csempe, ${cost}`,
+    groundDown: (tiles: number, cost: string) => `Süllyesztés: ${tiles} csempe, ${cost}`,
+    digBesideWater: 'Vizet érintő föld nem ásható ki',
+    digAtEdge: 'A fúró egy csempényire marad a térkép szélétől',
+    digPlan: (dug: number, cut: number, raised: number, portals: number, cost: string) =>
+      `Fúró: ${[
+        dug ? `ásás ${dug}` : '',
+        cut ? `bevágás ${cut}` : '',
+        raised ? `emelés ${raised}` : '',
+        portals ? `${portals} kapu` : '',
+        cost,
+      ]
+        .filter(Boolean)
+        .join(', ')}`,
+    digStone: (n: number) => `${n} kő`,
+    stoneLost: 'Ezt a követ egy készlet sem veszi át',
+    stoneSome: (n: number) => `A készletbe csak ${n} fér`,
+    digNothing: 'Már ki van ásva',
+    digRefused: (tiles: number, reason: string) =>
+      tiles === 1
+        ? `1 csempe nem megy: ${reason}`
+        : `${tiles} csempe nem megy, az első oka: ${reason}`,
+    backFill: (refund: string) => `Visszatöltés: ${refund} vissza`,
+    overTunnel: 'E csempe alatt alagút fut',
+    inCutting: 'A bevágásba csak sín kerülhet',
+    cutStraight: 'A bevágásba csak egyenes sín kerülhet',
+    portalFront: 'Itt nyílik egy alagút: erre a csempére csak sín kerülhet',
+    notDug: 'Odabent az egész elemnek kiásott föld kell',
+    drillLine: 'A fúró keskeny nyomtávot, mellék-, fő- és törzsvonalat fektet',
+    groundStays: 'Itt nem mozdul semmi',
+    groundRefused: (tiles: number, reason: string) =>
+      tiles === 1
+        ? `1 csempe nem mozdulhat: ${reason}`
+        : `${tiles} csempe nem mozdulhat, az első oka: ${reason}`,
     notLevel: 'Sík terep kell: csak egyenes sín mehet emelkedőre',
     notSmooth:
       'Az ívekhez és váltókhoz egyenletes terep kell: emelkedőre csak egyenes és keresztezés mehet, hacsak nem tartja hídpálya az elem minden csempéjét',
@@ -458,6 +499,7 @@ export const HU: Strings = {
     services: 'Szolgáltatások',
     trackTools: 'Sín',
     electrification: 'Villamosítás',
+    ground: 'Talaj',
     rawMaterials: 'Nyersanyagok',
     processing: 'Feldolgozás',
     power: 'Áram',
@@ -478,6 +520,17 @@ export const HU: Strings = {
     downgradeHint:
       'Egy vonallal lejjebb teszi a sínt: Törzsvonalból Fővonal, Fővonalból Mellékvonal. Ingyenes.',
     upgradeCost: 'a különbözet',
+    drill: 'Fúró',
+    drillHint:
+      'Tengerszinten vájja a hegyet, és amíg be van kapcsolva, minden hegy üveggé válik. A sínes eszközök ilyenkor a kiásott csempékre és a bevágásokba fektetnek. A kapuk maguktól készülnek ott, ahol a vonal kibukkan.',
+    drillCost: 'csempénként',
+    raise: 'Emelés',
+    lower: 'Süllyesztés',
+    raiseHint:
+      'Egy szinttel emeli a talajt csempénként, és a lejtő miatt a körülötte lévőket is. Minden elmozduló csempe pénzbe kerül.',
+    lowerHint:
+      'Egy szinttel süllyeszti a talajt csempénként, és a lejtő miatt a körülötte lévőket is. Minden elmozduló csempe pénzbe kerül. A tengerszintig levitt kő fűvé válik.',
+    groundCost: 'csempénként és szintenként',
     select: 'Kijelölés',
     roads: 'Utak',
     road: 'Út',
@@ -501,6 +554,8 @@ export const HU: Strings = {
       run: 'Húzás: szakasz lefektetése, a fordulóknál ívvel',
       drag: 'Húzás: szakasz lefektetése',
       reclass: 'Kattintás: egy elem · Húzás: a vonal mentén',
+      ground: 'Kattintás: egy csempe · Húzás: a vonal mentén',
+      dig: 'Húzás: vonal ásása, egy kanyarral',
       click: 'Kattintás: lerakás',
       paint: 'Húzás: festés',
       turn: 'R: forgatás',
@@ -534,6 +589,10 @@ export const HU: Strings = {
         'Szabad fű-, erdő-, homok- vagy sík dombcsempére. Távvezeték-oszlopokat láncolj belőle a sínekig.',
       reclass:
         'Kattints egy elemre, vagy húzd végig a vonalon. Ami nem illeszkedik, az marad, és pirossal látszik.',
+      ground:
+        'Szárazföldi csempére, amelyen nincs semmi és nincs lelőhely, a tengerszint és a 16. szint között. A vizet nem lehet mozdítani, az alagút fölötti föld pedig a tető fölött marad.',
+      drill:
+        'Olyan földbe, amelyen nincs semmi, a Dízelkorszaktól, minden vonalhoz a Maglev és a Hyperloop kivételével. Vizet nem érhet, és a térkép szélére sem kerülhet.',
       road: 'Fűre, erdőbe, homokra vagy dombra, épületre soha: az épülettel az utcai ajtajánál találkozik. Keskeny nyomtáv, Mellékvonal vagy Fővonal sima egyenes sínjét derékszögben keresztezi, útátjáróként; Törzsvonalat soha.',
     },
     trackDesc: {

@@ -301,7 +301,7 @@ export class Fleet {
     const out: GateInfo[] = [];
     const need = t.length;
     for (const g of depot.gateTiles()) {
-      const piece = this.track.get(g.x, g.y);
+      const piece = this.builder.gateTrack(g);
       const info: GateInfo = {
         x: g.x,
         y: g.y,
@@ -383,7 +383,7 @@ export class Fleet {
   depotClasses(depot: Station): Set<TrackClass> {
     const out = new Set<TrackClass>();
     for (const g of depot.gateTiles()) {
-      const p = this.track.get(g.x, g.y);
+      const p = this.builder.gateTrack(g);
       if (!p) continue;
       const toStation = DIRS.find((d) => depot.covers(g.x + DIR_DX[d], g.y + DIR_DY[d]));
       const entry =
@@ -806,7 +806,10 @@ export class Fleet {
       chooseNext: (t) => this.chooseNext(t),
       biomeAt: (x, y) => {
         const d = biomeDef(biomeAt(this.map, x, y));
-        return { speedMul: d.speedMul, waterUseMul: d.waterUseMul };
+        return {
+          speedMul: this.builder.underground.isDug(x, y) ? 1 : d.speedMul,
+          waterUseMul: d.waterUseMul,
+        };
       },
       gradeAt: (s) => railGrade(this.railBeds, this.map.w, s.x, s.y, s.in, s.out),
       framed: this.framed,

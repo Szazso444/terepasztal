@@ -1,5 +1,7 @@
 import { DIRS, DIR_DX, DIR_DY, tileToWorld } from '../engine/iso';
 import { Terrain, TERRAIN_NAMES, inBounds, terrainAt, type GameMap } from '../world/tiles';
+import { NO_LEVEL, levelAt, tileLevels } from '../world/elevation';
+import { reshape, type Reshape } from '../world/reshape';
 import type { RegionState } from '../world/regions';
 import {
   TrackGraph,
@@ -72,6 +74,17 @@ import {
   type RoadLinks,
 } from './roads';
 import { hasDoors, streetDoors, type Door, type PlaceAt } from './doors';
+import {
+  DRILL_AGE,
+  TUNNEL_COVER,
+  Underground,
+  drillLine,
+  faceTo,
+  touchesWater,
+  type DigPlan,
+  type DigWork,
+  type Portal,
+} from './underground';
 import type { BuildLog, PieceSpec } from './buildLog';
 import type { Work } from './upgrade';
 
@@ -111,6 +124,37 @@ export interface PlacementCheck {
   reason?: string;
   /** the key of the store that pays `cost` (`Builder.payerAt`); absent when nothing is paid */
   payer?: string;
+}
+
+/**
+ * What Raise or Lower would do, as `reshape` gives it. `moved` is what `reshapeGround` writes, and
+ * holds tiles that only keep their level: a ghost or a count compares `to` with the level there.
+ * `cost` is in money, under `money`, and refused tiles cost nothing.
+ */
+export interface GroundCheck extends PlacementCheck {
+  moved: Reshape['moved'];
+  refused: Reshape['refused'];
+}
+
+/** A tile a raise or lower writes: its entry in the ground level plane and its terrain, each way. */
+export interface GroundChange {
+  x: number;
+  y: number;
+  /** the tile's entry in the plane, each way */
+  was: number;
+  now: number;
+  /** the tile only keeps the level it has (`Reshape`) */
+  held?: boolean;
+  terrainWas: Terrain;
+  terrainNow: Terrain;
+}
+
+/** A tile back-filled, as it stood: dug at `floor`, or a cut when that is undefined. */
+export interface FilledTile {
+  x: number;
+  y: number;
+  floor: number | undefined;
+  portals: Portal[];
 }
 
 /**
@@ -188,13 +232,28 @@ export class Builder {
   onTrackChanged: ((x: number, y: number) => void) | null = null;
   /**
    * The rendered hill decides what its ground carries: `straight` rails climb at most one level
-   * per tile, `level` pieces and structures need a level tile. Unset means level everywhere.
+   * per tile, `level` pieces and structures need a level tile. Unset means level everywhere, and
+   * no link is too steep (`cliffAt`).
    */
   groundCheck: ((x: number, y: number, need: 'straight' | 'level') => boolean) | null = null;
+  /**
+   * The Drill is on: track and signals go on dug tiles, on cuts, and on the open tile a portal looks
+   * at, so one drag lays a line out of a tunnel. Off, a dug tile takes neither, as it has a surface
+   * over it, and a cut still takes both. UI state, set by the build controller: the tick must
+   * never read it.
+   */
+  insideMode = false;
   onStationChanged: ((s: Station, removed: boolean) => void) | null = null;
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
   onSupplyChanged: ((x: number, y: number) => void) | null = null;
+  /**
+   * The terrain the ground tools gave a tile, by key, as it stands now. `map.terrain` holds it for
+   * the game; the save holds it from here, as a load reads terrain back from the chunks.
+   */
+  terrainEdits = new Map<number, Terrain>();
+  /** fired when a raise, a lower or a dig, or the undo or redo of one, wrote these changes */
+  onGroundChanged: ((changes: readonly GroundChange[]) => void) | null = null;
   /** fired when an undo gave a tile back the props track or a structure took off it */
   onPropsBack: ((x: number, y: number) => void) | null = null;
   /** fired when a road is laid on or taken off a tile (`placeRoad`, `removeRoad`) */
@@ -225,6 +284,8 @@ export class Builder {
     readonly stores: StoreRegistry,
     /** the roads on the map (src/sim/roads.ts); a line's probe shares its builder's */
     readonly roads: Roads = new Roads(track),
+    /** what the Drill has made (src/sim/underground.ts); a line's probe shares its builder's */
+    readonly underground: Underground = new Underground(map.w, map.h),
   ) {
     this.buildings = new BuildingMap(map.w, map.h);
   }
@@ -317,11 +378,25 @@ export class Builder {
     const payer = this.stores.nearest(x, y).find((s) => s.key === c.payer);
     return !!payer && payer.spend(c.cost);
   }
-  /** Give back the refund share of `cost` to the store that supplies (x, y), else the nearest. */
+  /** The store that takes in goods from (x, y): the one that supplies it, else the nearest. */
+  private intakeAt(x: number, y: number): ResourceStore | undefined {
+    return this.stores.supplierFor(x, y) ?? this.stores.nearest(x, y, Infinity)[0];
+  }
+  /** The stone of a dig goes to the store for the dug tile with the lowest key (`dig`). */
+  private stoneStore(c: DigWork) {
+    if (!c.dig.length) return undefined;
+    const at = c.dig.reduce((a, t) => (this.key(t.x, t.y) < this.key(a.x, a.y) ? t : a));
+    return this.intakeAt(at.x, at.y);
+  }
+  /** How much of the stone `c` brings in a store has room for: the ghost says if it is not all. */
+  stoneTaken(c: DigPlan): number {
+    const store = this.stoneStore(c);
+    return store ? Math.min(c.stone, Math.max(0, store.cap('stone') - store.get('stone'))) : 0;
+  }
+  /** Give back the refund share of `cost` to the store that takes in goods from (x, y). */
   private refund(cost: Cost, x: number, y: number) {
     if (this.free) return;
-    const to = this.stores.supplierFor(x, y) ?? this.stores.nearest(x, y, Infinity)[0];
-    to?.refund(cost, rules.refundRate);
+    this.intakeAt(x, y)?.refund(cost, rules.refundRate);
   }
   /**
    * A station was placed, removed or changed (a level, an upgrade begun): it is told, then the
@@ -340,17 +415,40 @@ export class Builder {
     return this.free || this.regions.isTileUnlocked(x, y);
   }
   /**
+   * Why the Drill's work on (x, y) keeps off what stands on the surface, or null on open ground: a
+   * dug tile has the mountain over it, and a cut takes rail alone.
+   */
+  private drilled(x: number, y: number): string | null {
+    if (this.underground.isDug(x, y)) return STR.build.overTunnel;
+    return this.underground.isCut(x, y) ? STR.build.inCutting : null;
+  }
+  /**
+   * Why (x, y) takes nothing but rail, or null: the Drill's work on it, or a portal looking out at
+   * it, as a portal has to be able to carry a line out for as long as it stands. Every check of
+   * what stands off the rails asks this; track and signals ask `drilled`, as such a tile stays
+   * open ground under them.
+   */
+  private railsOnly(x: number, y: number): string | null {
+    return this.drilled(x, y) ?? (this.underground.fronted(x, y) ? STR.build.portalFront : null);
+  }
+  /**
    * Track beside (x, y); with a station kind given, beside its footprint turned to `rot` (beside
    * any of its tiles, so a station of two tiles is served from either).
    */
   hasAdjacentTrack(x: number, y: number, defId?: string, rot = 0) {
-    if (defId !== undefined)
-      return stationGates(defId, x, y, rot).some((g) => this.track.has(g.x, g.y));
-    return DIRS.some((d) => this.track.has(x + DIR_DX[d], y + DIR_DY[d]));
+    if (defId !== undefined) return stationGates(defId, x, y, rot).some((g) => this.gateTrack(g));
+    return DIRS.some((d) => this.gateTrack({ x: x + DIR_DX[d], y: y + DIR_DY[d] }));
+  }
+  /**
+   * The track a station on the surface meets on tile `g`. There is none on a dug tile: the rail
+   * inside runs under the ground, behind the wall of the tunnel. A cut lies open, and serves.
+   */
+  gateTrack(g: { x: number; y: number }): TrackPiece | undefined {
+    return this.underground.isDug(g.x, g.y) ? undefined : this.track.get(g.x, g.y);
   }
   /** Track tiles serving a station: its platforms (a depot's gates with track on them). */
   platformTiles(s: Station): { x: number; y: number }[] {
-    const gates = s.gateTiles().filter((p) => this.track.has(p.x, p.y));
+    const gates = s.gateTiles().filter((p) => this.gateTrack(p));
     if (!s.def.depot) return gates;
     // rails through the shed serve it too
     for (const t of s.footprint()) if (this.track.has(t.x, t.y)) gates.push(t);
@@ -358,6 +456,7 @@ export class Builder {
   }
   /** Station whose platform set contains this track tile (if any). */
   stationForTrackTile(x: number, y: number): Station | undefined {
+    if (this.underground.isDug(x, y)) return undefined;
     return this.stations.find((s) => s.gateTiles().some((g) => g.x === x && g.y === y));
   }
   isOrphaned(s: Station) {
@@ -501,13 +600,17 @@ export class Builder {
     return out;
   }
 
-  /** Services can serve a platform or the rail directly within their advertised radius. */
+  /**
+   * Services can serve a platform or the rail directly within their advertised radius. A stop
+   * stands on the surface, so its radius reaches no rail inside (`gateTrack`).
+   */
   serviceAt(x: number, y: number) {
     let fuel = false,
       water = false;
+    const rail = this.gateTrack({ x, y });
     for (const d of this.decor.values()) {
       const def = decorDef(d.id);
-      if (Math.max(Math.abs(x - d.x), Math.abs(y - d.y)) > (def.radius ?? 0)) continue;
+      if (!rail || Math.max(Math.abs(x - d.x), Math.abs(y - d.y)) > (def.radius ?? 0)) continue;
       fuel ||= !!def.fuel;
       water ||= !!def.water;
     }
@@ -525,7 +628,8 @@ export class Builder {
       if (!def.fuel && !def.water) continue;
       const r = def.radius ?? 0;
       for (let y = d.y - r; y <= d.y + r; y++)
-        for (let x = d.x - r; x <= d.x + r; x++) if (this.track.has(x, y)) keys.add(this.key(x, y));
+        for (let x = d.x - r; x <= d.x + r; x++)
+          if (this.gateTrack({ x, y })) keys.add(this.key(x, y));
     }
     for (const s of this.stations)
       if (!s.def.stockpile && (s.refuelsFuel || s.refuelsWater))
@@ -570,9 +674,10 @@ export class Builder {
     return null;
   }
   /**
-   * Can a piece with its anchor at (x,y) be laid? Checks every footprint tile, that a piece on rock
-   * or a mountain continues a line, the ground under it, then that each open edge meeting existing
-   * track joins a line of the same network.
+   * Can a piece with its anchor at (x,y) be laid? Checks every footprint tile, that its whole
+   * footprint is on the right side of the ground (`insideRefusal`), that a piece on rock or a
+   * mountain continues a line, the ground under it, then that each open edge meeting existing track
+   * joins a line of the same network.
    */
   checkTrack(x: number, y: number, item: TrackItem, rot = 0): PlacementCheck {
     const c = this.trackRules(x, y, item, rot, true);
@@ -590,6 +695,11 @@ export class Builder {
     replace: boolean,
   ): PlacementCheck {
     const kind = item.kind;
+    if (this.insideMode) {
+      if (!drillLine(item)) return { ok: false, cost: {}, reason: STR.build.drillLine };
+      if (this.lineLocked(DRILL_AGE))
+        return { ok: false, cost: {}, reason: STR.build.tierLocked(DRILL_AGE) };
+    }
     if ((item.cls === 'narrow' || item.cls2 === 'narrow') && !rules.narrowUnlocked)
       return { ok: false, cost: {}, reason: STR.build.narrowLocked };
     if (this.lineLocked(itemAge(item)))
@@ -601,6 +711,11 @@ export class Builder {
       const why = this.checkTrackTile(t.x, t.y, kind, !wide, replace, clear);
       if (why) return { ok: false, cost: {}, reason: why };
     }
+    const inside = this.insideRefusal(tiles);
+    if (inside) return { ok: false, cost: {}, reason: inside };
+    // the relief carves a cut along one axis, so nothing but a straight runs through one
+    if (kind !== 'straight' && tiles.some((t) => this.underground.isCut(t.x, t.y)))
+      return { ok: false, cost: {}, reason: STR.build.cutStraight };
     // class compatibility with the neighbours the new piece would open onto
     const probe = new TrackGraph(this.map.w, this.map.h);
     probe.place(x, y, kind, rot, item.cls, item.cls2);
@@ -615,27 +730,37 @@ export class Builder {
     }
     // Rock and mountain take track only as the continuation of a line, so a mountain line is
     // always drawn up from its foot or from track already on the mountain. The ground under it
-    // is asked next, as anywhere.
+    // is asked next, as anywhere. Nothing climbs on a tile the Drill made, so it asks none of this:
+    // a junction can be laid in a mountain before the line reaches it, and a cut is the way in.
     if (
-      tiles.some((t) => stone(terrainAt(this.map, t.x, t.y))) &&
+      tiles.some((t) => stone(terrainAt(this.map, t.x, t.y)) && !this.drilled(t.x, t.y)) &&
       !continuesLine(this.track, probe, tiles)
     )
       return { ok: false, cost: {}, reason: STR.build.mountainLine };
     // Straights and crossings may climb. Curves and switches need smooth ground on every tile, or a bridge platform under every tile: then
-    // they sit at the deck, the level of the rails they meet off the bridge.
+    // they sit at the deck, the level of the rails they meet off the bridge. A dug or cut tile asks
+    // nothing of the ground: its rail stands on a bed of its own. Off a deck every tile of a wide
+    // piece stands at one rail level, as one piece cannot bend.
     const members = tiles.map((t) => ({ ...t, links: probe.get(t.x, t.y)?.links ?? [] })),
       // Members of a wide piece are parts of a curve or switch, whatever their links look like.
-      climbs = !wide && members.some((m) => climbAxes(m.links).length > 0);
-    if (this.groundCheck && !climbs && !tiles.every((t) => this.groundCheck!(t.x, t.y, 'level'))) {
-      if (!tiles.every((t) => this.bridgeAt(t.x, t.y)))
-        return { ok: false, cost: {}, reason: STR.build.notSmooth };
-      if (supportedDeck(this.map, members, (bx, by) => !!this.bridgeAt(bx, by)) === null)
+      climbs = !wide && members.some((m) => climbAxes(m.links).length > 0),
+      bedded = (t: { x: number; y: number }) => !!this.drilled(t.x, t.y),
+      deck = tiles.every((t) => this.bridgeAt(t.x, t.y));
+    if (
+      this.groundCheck &&
+      !climbs &&
+      (!tiles.every((t) => bedded(t) || this.groundCheck!(t.x, t.y, 'level')) ||
+        (!deck && new Set(tiles.map((t) => this.railAt(t.x, t.y))).size > 1))
+    ) {
+      if (!deck) return { ok: false, cost: {}, reason: STR.build.notSmooth };
+      const under = this.underground;
+      if (supportedDeck(this.map, members, (bx, by) => !!this.bridgeAt(bx, by), under) === null)
         return { ok: false, cost: {}, reason: STR.build.deckLevels };
     }
     for (const t of tiles) {
       const p = probe.get(t.x, t.y);
       if (!p) continue;
-      if (climbs && this.groundCheck && !this.groundCheck(t.x, t.y, 'straight'))
+      if (climbs && this.groundCheck && !bedded(t) && !this.groundCheck(t.x, t.y, 'straight'))
         return { ok: false, cost: {}, reason: STR.build.tooSteep };
       for (const [a, b] of p.links)
         for (const d of [a, b]) {
@@ -649,11 +774,54 @@ export class Builder {
           // the standard lines join each other; a separate network joins only itself
           if (!classesJoin(mine, theirs))
             return { ok: false, cost: {}, reason: STR.build.gaugeBreak };
+          // a link that stands already stays, on any step; only a new one is judged
+          if (this.groundCheck && !this.track.opensTo(t.x, t.y, d) && this.cliffAt(t, nx, ny))
+            return { ok: false, cost: {}, reason: STR.build.tooSteep };
         }
     }
     let mul = 0;
     for (const t of tiles) mul = Math.max(mul, this.terrainMul(t.x, t.y));
     return { ok: true, cost: this.priced(pieceCost(kind, item.cls, item.cls2), mul) };
+  }
+  /**
+   * Why a piece on `tiles`, every tile of its footprint, may not go there as the Drill stands, or
+   * null. On, it stands wholly on dug tiles, or wholly outside on cuts and the tiles portals look
+   * at, so no wall cuts through a curve or a switch and none stands across the mouth of a tunnel.
+   * Off, no tile may be dug: rail off the Drill runs on the surface, and a dug tile has none to
+   * give.
+   */
+  private insideRefusal(tiles: readonly { x: number; y: number }[]): string | null {
+    const { underground: under } = this,
+      dug = tiles.filter((t) => under.isDug(t.x, t.y)).length;
+    if (!this.insideMode) return dug ? STR.build.overTunnel : null;
+    if (dug === tiles.length) return null;
+    const outside = tiles.every((t) => under.isCut(t.x, t.y) || under.fronted(t.x, t.y));
+    return !dug && outside ? null : STR.build.notDug;
+  }
+  /** The level rail stands at on (x, y): the bed on a dug or cut tile, else the ground. */
+  private railAt(x: number, y: number): number {
+    return this.underground.bedAt(x, y) ?? levelAt(this.map, x, y);
+  }
+  /**
+   * Rail takes a level a tile, and generated ground steps up to four: is the edge between `t` and
+   * (nx, ny) too steep for a link? Each side counts at its rail: a dug or cut tile at its bed, so
+   * the ground over it does not bind the link, and open ground at its level. The sides of a dug
+   * tile are the wall of the tunnel: the way out of one, to a cut or to open ground, is a portal on
+   * exactly that face, at the floor. Elsewhere rail takes the step, at most one, or a viaduct
+   * crosses it: a platform on the lower tile carries the rail level off the higher one. A platform
+   * only on the higher tile carries nothing across, as the bare ground below sets the rail's foot.
+   */
+  private cliffAt(t: { x: number; y: number }, nx: number, ny: number): boolean {
+    const under = this.underground,
+      n = { x: nx, y: ny },
+      step = Math.abs(this.railAt(t.x, t.y) - this.railAt(nx, ny)),
+      dug = under.isDug(t.x, t.y);
+    if (dug !== under.isDug(nx, ny)) {
+      const [inner, outer] = dug ? [t, n] : [n, t];
+      return step > 0 || !under.hasPortal(inner.x, inner.y, faceTo(inner, outer));
+    }
+    const lo = this.railAt(t.x, t.y) <= this.railAt(nx, ny) ? t : n;
+    return step > 1 && !this.bridgeAt(lo.x, lo.y);
   }
   refundFor(p: TrackPiece): Cost {
     return this.free
@@ -923,9 +1091,18 @@ export class Builder {
   private probe(): Builder {
     const track = new TrackGraph(this.track.w, this.track.h);
     for (const [k, p] of this.track.pieces) track.pieces.set(k, p);
-    const b = new Builder(this.map, this.regions, track, this.economy, this.stores, this.roads);
+    const b = new Builder(
+      this.map,
+      this.regions,
+      track,
+      this.economy,
+      this.stores,
+      this.roads,
+      this.underground,
+    );
     b.free = this.free;
     b.groundCheck = this.groundCheck;
+    b.insideMode = this.insideMode;
     b.stations.push(...this.stations);
     for (const [k, d] of this.decor) b.decor.set(k, d);
     for (const [k, w] of this.buildings) b.buildings.set(k, w);
@@ -942,6 +1119,8 @@ export class Builder {
     for (const { x: tx, y: ty } of stationFootprint(defId, x, y, rot)) {
       if (!inBounds(this.map, tx, ty)) return { ok: false, cost: {}, reason: STR.build.offMap };
       if (!this.unlocked(tx, ty)) return { ok: false, cost: {}, reason: STR.build.locked };
+      const drilled = this.railsOnly(tx, ty);
+      if (drilled) return { ok: false, cost: {}, reason: drilled };
       const bad = unbuildable(terrainAt(this.map, tx, ty));
       if (bad) return { ok: false, cost: {}, reason: bad };
       if (
@@ -1124,7 +1303,12 @@ export class Builder {
     if (this.decorAt(x, y) || this.buildingAt(x, y)) return STR.build.occupied;
     if (onRails(defId)) {
       if (!this.track.railOn(x, y)) return STR.build.needTrackHere;
+      // what stands on the rails goes where a piece of track would
+      const inside = this.insideRefusal([{ x, y }]);
+      if (inside) return inside;
     } else {
+      const drilled = this.railsOnly(x, y);
+      if (drilled) return drilled;
       const bad = unbuildable(terrainAt(this.map, x, y));
       if (bad) return bad;
       if (this.stationAt(x, y)) return STR.build.occupied;
@@ -1227,6 +1411,8 @@ export class Builder {
     if (!this.free && !inSupplyMode(def))
       return { ok: false, cost: {}, reason: STR.build.supplyLocked };
     for (const { x: tx, y: ty } of tiles) {
+      const drilled = this.railsOnly(tx, ty);
+      if (drilled) return { ok: false, cost: {}, reason: drilled };
       const t = terrainAt(this.map, tx, ty);
       // Bridge platforms stand on water or carry a rail level across a dip in the land.
       const bad = def.bridge && t === Terrain.Water ? null : unbuildable(t);
@@ -1258,6 +1444,276 @@ export class Builder {
     return !!this.map.props.get(this.key(x, y))?.some((p) => p.kind === kind);
   }
 
+  // ------------------------------------------------------------------ ground
+  /** A road, a station, a works or a deposit lies on (x, y). */
+  private builtOn(x: number, y: number) {
+    return (
+      this.roads.has(x, y) ||
+      !!this.stationAt(x, y) ||
+      !!this.buildingAt(x, y) ||
+      this.hasDeposit(x, y, 'coal') ||
+      this.hasDeposit(x, y, 'oil')
+    );
+  }
+  /**
+   * Something stands on (x, y) that Raise, Lower and the Drill leave alone. The track of a dug tile
+   * and what stands on it run under the ground, so they do not hold it; a cut lies open, and holds
+   * it.
+   */
+  private surfaceTaken(x: number, y: number) {
+    const dug = this.underground.isDug(x, y),
+      decor = this.decorAt(x, y);
+    return (
+      (this.track.has(x, y) && !dug) ||
+      this.builtOn(x, y) ||
+      (!!decor && !(dug && onRails(decor.id))) ||
+      this.underground.isCut(x, y)
+    );
+  }
+  /** Nothing on (x, y) but rail and what stands on it: a portal may look out at it. */
+  private railOnly(x: number, y: number) {
+    const decor = this.decorAt(x, y);
+    return !this.builtOn(x, y) && (!decor || onRails(decor.id));
+  }
+  /** Raise and Lower leave (x, y) alone: what stands on it, or a portal looking out at it. */
+  private groundTaken(x: number, y: number) {
+    return this.surfaceTaken(x, y) || this.underground.fronted(x, y);
+  }
+  /**
+   * What stands on (x, y) needs level ground, as `groundCheck` asks it when it is placed: a station,
+   * depot, works or house, or track that is no plain straight. Rail on a platform or on a tile the
+   * Drill made stands on a bed of its own, and a platform stands on any ground.
+   */
+  private needsLevel(x: number, y: number) {
+    if (this.stationAt(x, y)) return true;
+    const works = this.buildingAt(x, y),
+      decor = this.decorAt(x, y),
+      p = this.track.get(x, y);
+    if (works && !buildingDef(works.id).bridge) return true;
+    if (decor && !decorDef(decor.id).onTrack && !decorDef(decor.id).anyTile) return true;
+    if (!p || this.bridgeAt(x, y) || this.drilled(x, y)) return false;
+    return !!p.unit || p.links.length > 1 || !climbAxes(p.links).length;
+  }
+  /** A side of (x, y) holds a piece that needs level ground: the level of (x, y) may not change. */
+  holdsLevel(x: number, y: number) {
+    return (
+      this.needsLevel(x + 1, y) ||
+      this.needsLevel(x - 1, y) ||
+      this.needsLevel(x, y + 1) ||
+      this.needsLevel(x, y - 1)
+    );
+  }
+  /** Why the refused tile (x, y) of a raise or lower may not move. */
+  private groundRefusal({ x, y }: { x: number; y: number }, delta: 1 | -1): string {
+    if (!inBounds(this.map, x, y)) return STR.build.offMap;
+    if (!this.unlocked(x, y)) return STR.build.locked;
+    if (terrainAt(this.map, x, y) === Terrain.Water) return STR.build.groundMovesWater;
+    if (this.groundTaken(x, y)) return STR.build.occupied;
+    if (delta < 0 && touchesWater(this.map, x, y)) return STR.build.groundBesideWater;
+    if (this.holdsLevel(x, y)) return STR.build.groundBesideLevel;
+    return STR.build.groundLimit;
+  }
+  /**
+   * What Raise (`delta` 1) or Lower (-1) of `tiles` would move and cost. The action is whole: any
+   * tile it would move that may not refuses it. A tile with anything on it stays, a tile touching
+   * water stays on a lower so a raised lake cannot run out, a tile beside a piece that needs level
+   * ground stays, and a tile may not fall under the cover of a dug tile. A tile that only keeps its
+   * level (`moved` in `Reshape`) is free, and asks none of this.
+   */
+  checkGround(tiles: readonly { x: number; y: number }[], delta: 1 | -1): GroundCheck {
+    const levels = tileLevels(this.map);
+    const { moved, refused } = reshape(
+      this.map,
+      levels,
+      tiles,
+      delta,
+      (x, y) =>
+        !this.unlocked(x, y) ||
+        this.groundTaken(x, y) ||
+        (delta < 0 && touchesWater(this.map, x, y)) ||
+        this.holdsLevel(x, y),
+      (x, y) => {
+        const floor = this.underground.floorAt(x, y);
+        return floor === undefined ? 0 : floor + TUNNEL_COVER;
+      },
+    );
+    if (refused.length)
+      return {
+        ok: false,
+        cost: {},
+        reason: this.groundRefusal(refused[0], delta),
+        moved,
+        refused,
+      };
+    let steps = 0;
+    for (const m of moved) steps += Math.abs(m.to - levels[this.key(m.x, m.y)]);
+    const cost = this.priced({ money: rules.groundCost * steps }, 1);
+    if (hasPrice(cost) && !this.economy.canAfford(cost.money))
+      return { ok: false, cost, reason: STR.build.funds, moved, refused };
+    return { ok: true, cost, moved, refused };
+  }
+  /**
+   * Raise or lower `tiles` by one level and pay for it; false, with nothing moved or paid, when
+   * `checkGround` refuses. Every tile of `moved` is written, so the plane holds settled levels;
+   * stone that comes down to level 0 turns to Grass, so a lowered mountain is ground that can be
+   * built on. It goes in the build log, with what was paid, as one change (`setGround`).
+   */
+  reshapeGround(tiles: readonly { x: number; y: number }[], delta: 1 | -1): boolean {
+    const c = this.checkGround(tiles, delta);
+    if (!c.ok || !c.moved.length) return false;
+    const paid = c.cost.money ?? 0;
+    if (paid > 0 && !this.economy.spend(paid)) return false;
+    const { map } = this;
+    const changes = c.moved.map((m): GroundChange => {
+      const k = this.key(m.x, m.y),
+        terrain = map.terrain[k] as Terrain,
+        turns = m.to === 0 && levelAt(map, m.x, m.y) !== 0 && stone(terrain);
+      return {
+        x: m.x,
+        y: m.y,
+        was: map.groundLevel?.[k] ?? NO_LEVEL,
+        now: m.to,
+        held: m.to === levelAt(map, m.x, m.y),
+        terrainWas: terrain,
+        terrainNow: turns ? Terrain.Grass : terrain,
+      };
+    });
+    this.log?.ground(changes, paid);
+    this.setGround(changes, true);
+    sfx('build.place');
+    return true;
+  }
+  /**
+   * Write `changes` forward, or back as an undo does. A tile that changes terrain changes what the
+   * stations round it harvest.
+   */
+  setGround(changes: readonly GroundChange[], forward: boolean) {
+    const { map } = this;
+    const plane = (map.groundLevel ??= new Uint8Array(map.w * map.h).fill(NO_LEVEL));
+    let turned = false;
+    for (const c of changes) {
+      const k = this.key(c.x, c.y),
+        terrain = forward ? c.terrainNow : c.terrainWas;
+      plane[k] = forward ? c.now : c.was;
+      if (map.terrain[k] !== terrain) {
+        turned = true;
+        this.terrainEdits.set(k, terrain);
+      }
+      map.terrain[k] = terrain;
+    }
+    if (turned) this.refreshHarvest();
+    this.onGroundChanged?.(changes);
+  }
+
+  // ------------------------------------------------------------------ the Drill
+  /**
+   * What the Drill would do with the drag `tiles` (`Underground.plan`), at the build price. The
+   * plan asks `surfaceTaken` of each tile it would write and of each the ground would lift, so rail
+   * on the surface refuses the drag and rail inside a dug tile does not; it asks `railOnly` of the
+   * tile each new portal looks at. Short of money, the check refuses with the plan's lists full, for
+   * the ghost (`DigPlan`).
+   */
+  checkDig(tiles: readonly { x: number; y: number }[]): DigPlan {
+    const plan = this.underground.plan(
+      this.map,
+      tileLevels(this.map),
+      tiles,
+      (x, y) => this.unlocked(x, y) && !this.surfaceTaken(x, y),
+      (x, y) => this.railOnly(x, y),
+      (x, y) => this.holdsLevel(x, y),
+    );
+    if (!plan.ok) {
+      const [t] = plan.refused;
+      const uncharted = inBounds(this.map, t.x, t.y) && !this.unlocked(t.x, t.y);
+      return uncharted ? { ...plan, reason: STR.build.locked } : plan;
+    }
+    const cost = this.priced(plan.cost, 1),
+      stone = this.free ? 0 : plan.stone;
+    if (hasPrice(cost) && !this.economy.canAfford(cost.money))
+      return { ...plan, ok: false, cost, stone, reason: STR.build.funds };
+    return { ...plan, cost, stone };
+  }
+  /**
+   * Dig the drag `tiles` and pay for it; false, with nothing dug or paid, when `checkDig` refuses
+   * or there is nothing to dig. The raise is written in full, as `reshapeGround` writes its own,
+   * and a tile of the drag that really comes up turns to Rock, the ridge the tunnel makes; the slope
+   * round it keeps its ground. Stone goes to the store that takes in goods from the dug tile with
+   * the lowest key, so it does not hang on which way the drag ran.
+   * It goes in the build log, with what was paid, as one change (`setDug`).
+   */
+  dig(tiles: readonly { x: number; y: number }[]): boolean {
+    const c = this.checkDig(tiles);
+    if (!c.ok || !(c.dig.length || c.cut.length || c.portals.length)) return false;
+    const paid = c.cost.money ?? 0;
+    if (paid > 0 && !this.economy.spend(paid)) return false;
+    const { map } = this,
+      digging = new Set(c.dig.map((t) => this.key(t.x, t.y)));
+    const changes = c.raise.map((m): GroundChange => {
+      const k = this.key(m.x, m.y),
+        terrain = map.terrain[k] as Terrain,
+        ridge = digging.has(k) && m.to > levelAt(map, m.x, m.y) && !stone(terrain);
+      return {
+        x: m.x,
+        y: m.y,
+        was: map.groundLevel?.[k] ?? NO_LEVEL,
+        now: m.to,
+        held: m.to === levelAt(map, m.x, m.y),
+        terrainWas: terrain,
+        terrainNow: ridge ? Terrain.Rock : terrain,
+      };
+    });
+    this.log?.dig(c, changes, paid);
+    this.setDug(c, changes, true);
+    if (c.stone > 0) this.stoneStore(c)?.add('stone', c.stone);
+    sfx('build.place');
+    return true;
+  }
+  /**
+   * Back-fill a dug or cut tile with no track on it and refund the refund share of what it cost,
+   * with each portal it takes: those on it, and the one that looks out at a cut. The ground stays
+   * as the dig left it, and the stone stays in the stock. False, with nothing changed, for any
+   * other tile.
+   */
+  fillDug(x: number, y: number): boolean {
+    const back = this.fillRefund(x, y);
+    if (back === null) return false;
+    const { underground: under } = this,
+      floor = under.floorAt(x, y),
+      portals = under.portalsOf(x, y),
+      tile: FilledTile = { x, y, floor, portals };
+    this.log?.fill(tile, -back);
+    this.setFilled(tile, true);
+    // it comes back as it went: it was never earned
+    this.economy.money += back;
+    sfx('build.remove');
+    return true;
+  }
+  /** What a back-fill of (x, y) gives back, in money; null where `fillDug` would do nothing. */
+  fillRefund(x: number, y: number): number | null {
+    const { underground: under } = this;
+    if ((under.floorAt(x, y) === undefined && !under.isCut(x, y)) || this.track.has(x, y))
+      return null;
+    const price = { money: rules.drillCost + rules.portalCost * under.portalsOf(x, y).length };
+    return this.priced(price, rules.refundRate).money ?? 0;
+  }
+  /** Write a dig forward, or back as an undo does. */
+  setDug(work: DigWork, changes: readonly GroundChange[], forward: boolean) {
+    if (forward) this.underground.apply(work);
+    else this.underground.unapply(work);
+    if (changes.length) this.setGround(changes, forward);
+  }
+  /** Write a back-fill forward, or back as an undo does. */
+  setFilled(t: FilledTile, forward: boolean) {
+    const { underground: under } = this;
+    if (forward) {
+      under.fill(t.x, t.y);
+      return;
+    }
+    if (t.floor === undefined) under.cut(t.x, t.y);
+    else under.dig(t.x, t.y, t.floor);
+    for (const p of t.portals) under.addPortal(p);
+  }
+
   // ------------------------------------------------------------------ electrification
   checkSupply(x: number, y: number, kind: SupplyKind): PlacementCheck {
     if (!inBounds(this.map, x, y)) return { ok: false, cost: {}, reason: STR.build.offMap };
@@ -1265,6 +1721,9 @@ export class Builder {
     if (!this.free && SUPPLY_DEFS[kind].tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(SUPPLY_DEFS[kind].tier) };
     if (!this.track.has(x, y)) return { ok: false, cost: {}, reason: STR.build.needTrackHere };
+    // wire goes where the rail does: on a dug tile with the Drill on, else on the surface
+    const inside = this.insideRefusal([{ x, y }]);
+    if (inside) return { ok: false, cost: {}, reason: inside };
     if (this.catenary?.supplyAt(x, y) === kind)
       return { ok: false, cost: {}, reason: STR.build.sameSupply };
     return this.affordable(this.priced(SUPPLY_DEFS[kind].cost, 1), x, y);
@@ -1352,6 +1811,8 @@ export class Builder {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     if (roads.has(x, y)) return STR.build.roadHere;
+    const drilled = this.railsOnly(x, y);
+    if (drilled) return drilled;
     const deck = this.bridgeAt(x, y);
     const bad = unbuildable(terrainAt(this.map, x, y));
     // a platform stands on water or on land, never on rock or a mountain (`buildingRules`)

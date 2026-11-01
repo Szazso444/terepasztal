@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Builder } from '../sim/build';
 import { Economy } from '../sim/economy';
+import { NO_LEVEL } from '../world/elevation';
 import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
 import { Terrain } from '../world/tiles';
@@ -28,6 +29,45 @@ function harness() {
   const editor = new Editor(map, builder, world as never, {} as LevelData);
   return { map, builder, editor };
 }
+
+describe('the editor over what the tools changed', () => {
+  it('painting a tile in the editor clears its stored level and dug state', () => {
+    const { map, builder, editor } = harness();
+    map.groundLevel = new Uint8Array(W * W).fill(NO_LEVEL);
+    map.groundLevel[4 * W + 4] = 3;
+    map.groundLevel[4 * W + 5] = 3;
+    builder.underground.dig(4, 4, 0);
+    builder.underground.addPortal({ x: 4, y: 4, face: 'E', floor: 0 });
+    builder.terrainEdits.set(4 * W + 4, Terrain.Rock);
+    editor.paint(4, 4, Terrain.Sand);
+    expect(map.groundLevel[4 * W + 4]).toBe(NO_LEVEL);
+    expect(map.groundLevel[4 * W + 5]).toBe(3);
+    expect(builder.underground.isDug(4, 4)).toBe(false);
+    expect(builder.underground.portals()).toEqual([]);
+    expect(builder.terrainEdits.has(4 * W + 4)).toBe(false);
+  });
+
+  it('clears them on a tile that has the terrain already', () => {
+    const { map, builder, editor } = harness();
+    map.groundLevel = new Uint8Array(W * W).fill(NO_LEVEL);
+    map.groundLevel[4 * W + 4] = 3;
+    builder.underground.dig(5, 5, 0);
+    editor.paint(4, 4, Terrain.Grass);
+    editor.paint(5, 5, Terrain.Grass);
+    expect(map.groundLevel[4 * W + 4]).toBe(NO_LEVEL);
+    expect(builder.underground.empty).toBe(true);
+  });
+
+  it('a filled map keeps none of them', () => {
+    const { map, builder, editor } = harness();
+    map.groundLevel = new Uint8Array(W * W).fill(NO_LEVEL);
+    builder.underground.dig(5, 5, 0);
+    builder.underground.cut(6, 5);
+    editor.fillAll(Terrain.Sand);
+    expect(map.groundLevel).toBeUndefined();
+    expect(builder.underground.empty).toBe(true);
+  });
+});
 
 describe('the editor over a bridge platform', () => {
   it('paints terrain over a platform with a road, leaving neither road nor platform', () => {

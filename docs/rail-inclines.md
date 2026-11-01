@@ -51,6 +51,8 @@ A crossing on a climb holds both lines level at its centre, so the two rails mee
 | Incline transition / decline transition | a level change on one or both edges                   | bends slightly (vertical curve)                    |
 | Incline / decline                       | a level tile between two transitions of one staircase | straight grade, no bend                            |
 | Bridge                                  | a bridge platform under the rail                      | carries the higher abutment's level across the dip |
+| Dug                                     | a tile the Drill dug under the ground                 | at the tile's floor; the ground keeps its shape    |
+| Cut                                     | a tile leading down from a portal to open ground      | at the floor below; the relief carves down to it   |
 
 A run of transitions and inclines climbs from the level before it to the level after it: a
 vertical curve over the first and last tile, a constant grade between. A crest or dip inside a run

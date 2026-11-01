@@ -29,7 +29,9 @@ import {
   type PropInstance,
   type PropKind,
   idx,
+  inBounds,
 } from '../world/tiles';
+import { EDGE_STRIP_TILES } from '../world/edgeStrip';
 import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
 import { MATERIAL_COLORS, Material, materialAt } from './landscapeModel';
@@ -40,9 +42,9 @@ import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import { clearedByPaving, scatterFor } from './scatter';
-import { levelAt } from '../world/elevation';
+import { levelAt, tileLevels } from '../world/elevation';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
-import { DEFAULT_RELIEF } from './terrainRelief';
+import { DEFAULT_RELIEF, heightFactor, RELIEF_MAX } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
 import { doorstepChanges, pavingDoorsteps, type PavingDoor } from './townPaving';
 import { PAL, type RGB } from '../art/palette';
@@ -87,7 +89,12 @@ import { RoadWalk, roadWalks } from './roadWalk';
 import { crossingAxis, levelCrossingFrame } from './levelCrossing';
 import { AtmosphereTint, setOwnTint } from './atmosphere';
 import { cullByChunk } from './chunkCull';
-import { surfaceVersions } from './fx';
+import { blockOfTile, type StripMesh } from './edgeStripMesh';
+import { EdgeStripView } from './edgeStripView';
+import { insideAt, surfaceVersions, type TileRect } from './fx';
+import { NOTHING_DUG, TunnelGlass, type DugView } from './tunnelGlass';
+import { canvasPortalArt } from './tunnelPortalArt';
+import { layerPortals, TunnelPortals } from './tunnelPortals';
 
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
 /** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
@@ -156,6 +163,14 @@ const CUT_BY_TRACK: ReadonlySet<PropKind> = new Set<PropKind>(['wheat']);
 function illustrated(f: FrameInfo) {
   return f.texture.frame.width / f.w > 1;
 }
+
+/**
+ * The structures that stand on a rail: signals and catenary. On a dug tile they are inside the
+ * mountain, where the Drill's glass shows them; anything else stays over the surface (a notice).
+ */
+const ON_THE_RAIL = /^(decor|supply):/;
+/** How many tiles from a cutting or a portal no peak picture stands. */
+const PEAK_CLEAR = 2;
 
 /** What fits one building to the ground, beside its picture (`setStructure`). */
 interface GroundFitSprites {
@@ -256,6 +271,17 @@ export class WorldRenderer {
   readonly buildingLife: BuildingLife;
   /** out-of-map void ring */
   readonly border = new Container();
+  /** The edge strip behind the map, under the ground, and before it, over all that stands. */
+  readonly stripBack = new Container();
+  readonly stripFront = new Container();
+  /** The strip's blocks, each shown while the region beside it is revealed. */
+  private readonly strip = new EdgeStripView(this.stripBack, this.stripFront, (region) =>
+    this.regions.isRevealed(region),
+  );
+  /** Hears what tiles past the map the strip stands on now, whenever that changes. */
+  onStripReach: ((reach: TileRect[]) => void) | null = null;
+  /** The void ring's sprites by the strip block that stands on them (`ringKey`). */
+  private ringBlocks = new Map<number, Sprite[]>();
   private trackSprites = new Map<number, Sprite>();
   /** The frame each track sprite shows (`setTrack`): a plain straight takes a level crossing. */
   private trackFrames = new Map<number, string>();
@@ -285,6 +311,24 @@ export class WorldRenderer {
   occupied: (x: number, y: number) => boolean = () => false;
   /** Tiles that must render flat (track / station on hill). */
   private flattened = new Set<number>();
+  /** The Drill's work as the game keeps it; handed in before anything is placed on it. */
+  underground: DugView = NOTHING_DUG;
+  /** The store and its version as what stands on it last followed them (`followDug`). */
+  private followed = { under: NOTHING_DUG as DugView, version: 0 };
+  /** The portals in the ordinary view; the glass shows them as outlines. */
+  readonly portals: TunnelPortals;
+  /** The Drill's view of the mountains (`setGlass`), under the track and all that stands. */
+  private readonly glassLayer = new Container();
+  /** Its part that stands in front of a rail: over the track, under the objects. */
+  private readonly glassOver = new Container();
+  private glass: TunnelGlass | null = null;
+  private glassOn = false;
+  /** The tiles' levels while none moves: the sheet reads each of them several times. */
+  private glassLevels: Uint8Array | null = null;
+  /** Counts what the glass follows of the ground: a level moved, a tile flattened, a cut carved. */
+  private sheetMoves = 0;
+  /** The landscape's state when the portals last read the ground: failed, it stands differently. */
+  private portalsFailed = false;
   /** Rail profile over each straight track tile (world/railProfile.ts). */
   private railBeds = new Map<number, RailBed>();
   /** Track tiles whose rail bends or climbs: the piece is a mesh that follows the profile. */
@@ -384,32 +428,54 @@ export class WorldRenderer {
       this.surfaces.destroy();
       for (const fit of this.groundFits.values()) showWeeds(fit, null);
       this.wheat.destroy();
+      this.portals.destroy();
     });
     roadWalks.set(this.objects, this.roadWalk);
     // the ground lights stand on the surface, and move only when it does
     surfaceVersions.set(this.lights, () => this.landscape.surfaceVersion);
     this.objects.sortableChildren = true;
     this.piers.sortableChildren = true;
+    this.portals = new TunnelPortals({
+      layer: this.objects,
+      under: () => this.underground,
+      glass: () => this.glassOn,
+      levelPx: () => this.levelPx,
+      lift: (x, y) => -this.groundAt(x, y).dz,
+      rail: (x, y) => (inBounds(map, x, y) ? this.trackSprites.get(idx(map, x, y)) : undefined),
+      railMesh: (x, y) => (inBounds(map, x, y) ? this.trackMeshes.get(idx(map, x, y)) : undefined),
+      bare: (x, y) => !inBounds(map, x, y) || !this.trackSprites.has(idx(map, x, y)),
+    });
+    if (typeof document !== 'undefined') this.portals.art = canvasPortalArt(atlas);
+    // the cars, and what follows them, find the portals by the layer they stand in
+    layerPortals.set(this.objects, this.portals);
+    const inside = (x: number, y: number) => this.portals.inside(x, y);
+    insideAt.set(this.overlay, inside);
+    insideAt.set(this.lights, inside);
     this.root.addChild(
       this.border,
+      this.stripBack,
       this.landscape.root,
       this.ground,
       this.waterDetails,
       this.contactGround,
+      this.glassLayer,
       this.piers,
       this.platforms,
       this.track,
       this.crossings,
+      this.glassOver,
       this.lights,
       this.harvest.layer,
       this.objects,
       this.fog,
+      this.stripFront,
       this.overlay,
     );
     // Pixi's culler measured every child of these layers each frame; they are culled by chunk
     // instead (chunkCull.ts), keeping their children, and so the depth order, as they are
     cullByChunk(this.root, [
       this.border,
+      this.stripBack,
       this.landscape.root,
       this.ground,
       this.contactGround,
@@ -420,6 +486,7 @@ export class WorldRenderer {
       this.lights,
       this.objects,
       this.fog,
+      this.stripFront,
       this.overlay,
     ]);
     this.buildBorder();
@@ -714,6 +781,7 @@ export class WorldRenderer {
   /** Re-texture a ground tile (after flattening a hill, etc). */
   refreshGround(x: number, y: number) {
     this.landscape.invalidate(x, y);
+    this.portals.touch(x, y);
     // the water painted there may have moved under a bridge: it is drawn again (animate)
     if (!this.bridgeWaterChanged && this.nearTexturedBridge(x, y)) this.bridgeWaterChanged = true;
     const i = idx(this.map, x, y);
@@ -781,11 +849,22 @@ export class WorldRenderer {
 
   /** Re-tile after terrain edits: ground texture, props, and objects standing on the tile. */
   retile(x: number, y: number) {
-    if (!this.isBuilt(x, y)) return;
-    this.refreshGround(x, y);
-    this.rebuildProps(x, y);
-    const t = this.trackSprites.get(idx(this.map, x, y));
-    if (t) this.placeTrackSprite(t, x, y);
+    this.retileMany([{ x, y }]);
+  }
+  /**
+   * Re-tile every tile of `tiles` (`retile`). The ground of all of them is invalidated before any
+   * prop or track sprite reads the height, so the relief is built once and not once for each tile
+   * that has something standing on it.
+   */
+  retileMany(tiles: readonly { x: number; y: number }[]) {
+    this.noteLevels(tiles);
+    const built = tiles.filter((t) => this.isBuilt(t.x, t.y));
+    for (const t of built) this.refreshGround(t.x, t.y);
+    for (const { x, y } of built) {
+      this.rebuildProps(x, y);
+      const t = this.trackSprites.get(idx(this.map, x, y));
+      if (t) this.placeTrackSprite(t, x, y);
+    }
   }
 
   setFlattened(x: number, y: number, flat: boolean) {
@@ -793,6 +872,7 @@ export class WorldRenderer {
     if (this.flattened.has(i) === flat) return;
     if (flat) this.flattened.add(i);
     else this.flattened.delete(i);
+    this.sheetMoves++;
     this.refreshGround(x, y);
     this.showProps(i);
     this.wheat.near(x, y);
@@ -864,6 +944,7 @@ export class WorldRenderer {
     const s = new Sprite(f.texture);
     s.anchor.set(f.anchorX, f.anchorY);
     if (isTree(p.kind)) s.scale.set(TREE_SCALE);
+    s.renderable = !(this.glassOn && levelAt(this.map, x, y) > 0);
     const wp = tileToWorld(x + p.ox, y + p.oy);
     s.position.set(Math.round(wp.x), Math.round(wp.y + this.elevationOf(x + p.ox, y + p.oy)));
     s.zIndex = depthKey(x + p.ox, y + p.oy, 10);
@@ -947,6 +1028,7 @@ export class WorldRenderer {
       this.fog.addChild(g);
       this.fogShapes.set(i, g);
     }
+    this.showEdgeStrip();
   }
 
   /** Apply camera transform. */
@@ -963,6 +1045,9 @@ export class WorldRenderer {
   }
 
   animate(dt: number) {
+    this.strip.update(dt);
+    this.followDug();
+    this.glass?.update(this.view);
     if (this.landscape.flush()) {
       this.refreshSummits();
       this.harvest.refresh();
@@ -989,7 +1074,7 @@ export class WorldRenderer {
       for (const [id, a] of this.structureAnchors) {
         const s = this.structures.get(id);
         if (!s) continue;
-        const p = this.surfacePoint(a.x, a.y);
+        const p = this.standPoint(id, a.x, a.y);
         s.position.set(p.x + a.dx, p.y + a.dy);
         const footing = this.footings.get(id);
         if (footing) this.fitPlinth(footing, s);
@@ -1005,6 +1090,11 @@ export class WorldRenderer {
             !this.landscape.isPainted(i % this.map.w, Math.floor(i / this.map.w));
       }
     }
+    if (this.portalsFailed !== this.landscape.failed) {
+      this.portalsFailed = this.landscape.failed;
+      this.portals.mark();
+    }
+    this.portals.update();
     // Bridges follow the water painted round them: a tile whose water changed is drawn again.
     if (this.bridgeWaterChanged || this.texturedFailed !== this.landscape.failed)
       this.setTexturedBridges(this.texturedTiles);
@@ -1206,6 +1296,12 @@ export class WorldRenderer {
         const v = Math.round(255 * k);
         sp.tint = (v << 16) | (v << 8) | Math.min(255, Math.round(v * 1.1));
         ch.c.addChild(sp);
+        const block = this.ringKey(
+          blockOfTile(x, y, w, h, (tx, ty) => this.regions.regionIndex(tx, ty)),
+        );
+        const under = this.ringBlocks.get(block);
+        if (under) under.push(sp);
+        else this.ringBlocks.set(block, [sp]);
         ch.minX = Math.min(ch.minX, pt.x - HALF_W);
         ch.maxX = Math.max(ch.maxX, pt.x + HALF_W);
         ch.minY = Math.min(ch.minY, pt.y - HALF_H);
@@ -1213,6 +1309,46 @@ export class WorldRenderer {
       }
     for (const ch of chunks.values())
       ch.c.cullArea = new Rectangle(ch.minX, ch.minY, ch.maxX - ch.minX, ch.maxY - ch.minY);
+  }
+
+  /** One number for a strip block: its region and its layer. */
+  private ringKey({ region, front }: { region: number; front: boolean }) {
+    return region * 2 + (front ? 1 : 0);
+  }
+  /**
+   * Takes in the ground past the map (edgeStripView.ts). A block stands in place of the void ring
+   * under it, which stays until the block has faded in, and for as long as it does not show.
+   */
+  setEdgeStrip(meshes: StripMesh[]) {
+    this.strip.onCover = (region, front, covered) => {
+      for (const sp of this.ringBlocks.get(this.ringKey({ region, front })) ?? [])
+        sp.visible = !covered;
+    };
+    this.strip.set(meshes);
+    this.reportStripReach();
+  }
+  /** The strip goes on from the regions in view and from no others. */
+  private showEdgeStrip() {
+    this.strip.refresh();
+    this.reportStripReach();
+  }
+  /** Tells what stands past the map now: each region in view, out to the strip's far edge. */
+  private reportStripReach() {
+    if (!this.onStripReach) return;
+    const { w, h } = this.map;
+    const W = EDGE_STRIP_TILES;
+    const reach = [...this.strip.regions()].map((i): TileRect => {
+      const r = this.regions.regionRect(i);
+      const x1 = r.x + r.w,
+        y1 = r.y + r.h;
+      return {
+        x0: r.x > 0 ? r.x : -W,
+        y0: r.y > 0 ? r.y : -W,
+        x1: x1 < w ? x1 : w + W,
+        y1: y1 < h ? y1 : h + W,
+      };
+    });
+    this.onStripReach(reach);
   }
 
   /** Multiply-tint every ground and prop sprite (seasons). Water and void are left alone. */
@@ -1234,14 +1370,16 @@ export class WorldRenderer {
         const key = `terrain/mountain_${this.map.variant[k] % 3}`,
           f = this.atlas.get(key),
           style = this.landscape.style,
-          // With a match set, lit like the ground it stands on (the painter's height light).
+          matched = style.summitMatch !== undefined,
+          // With a match set, its rock lit like the ground it stands on (the painter's height
+          // light) and the season's tint baked in, snow taking its share of it as the ground's
+          // snow does, so a cap is no brighter than the snow round it.
           texture = this.surfaces.summit(
             key,
             f,
             style.summitMatch ?? 0,
-            style.summitMatch === undefined
-              ? 1
-              : 1 + (style.heightLight ?? 0) * levelAt(this.map, x, y),
+            matched ? heightFactor(levelAt(this.map, x, y), style.heightLight ?? 0) : 1,
+            matched ? this.groundTint : 0xffffff,
           );
         if (s) s.texture = texture;
         else {
@@ -1249,18 +1387,40 @@ export class WorldRenderer {
           s.anchor.set(f.anchorX, f.anchorY);
           s.scale.set(1.05 + hash2(x + this.map.originX, y + this.map.originY, 27) * 0.3);
           s.zIndex = depthKey(x, y, 2);
+          s.renderable = !this.glassOn;
           this.objects.addChild(s);
           this.summitSprites.set(k, s);
         }
         const p = this.surfacePoint(x, y);
         s.position.set(p.x, p.y);
-        setOwnTint(s, this.groundTint);
+        setOwnTint(s, this.summitTint());
       }
+    this.clearPeaks();
+  }
+  /** No peak picture stands in a cutting or right beside a portal. */
+  private clearPeaks() {
+    const { w } = this.map,
+      under = this.underground,
+      portals = under.portals(),
+      open = (x: number, y: number) => {
+        for (let dy = -PEAK_CLEAR; dy <= PEAK_CLEAR; dy++)
+          for (let dx = -PEAK_CLEAR; dx <= PEAK_CLEAR; dx++)
+            if (under.isCut(x + dx, y + dy)) return true;
+        return portals.some(
+          (p) => Math.abs(p.x - x) <= PEAK_CLEAR && Math.abs(p.y - y) <= PEAK_CLEAR,
+        );
+      };
+    for (const [k, s] of this.summitSprites) s.visible = !open(k % w, Math.floor(k / w));
+  }
+  /** What a summit sprite is tinted by: nothing when its picture has the season baked in. */
+  private summitTint() {
+    return this.landscape.style.summitMatch === undefined ? this.groundTint : 0xffffff;
   }
   setSeasonTint(ground: number, props: number) {
     this.groundTint = ground;
     this.landscape.setTint(ground);
-    for (const s of this.summitSprites.values()) setOwnTint(s, ground);
+    // a summit picture has the season baked in, so it is made again
+    this.refreshSummits();
     this.propTint = props;
     for (let i = 0; i < this.groundSprites.length; i++) {
       const s = this.groundSprites[i];
@@ -1819,6 +1979,7 @@ export class WorldRenderer {
       this.refreshScatter(x, y, 0);
       this.wheat.near(x, y);
       this.trackUnderRoad(x, y);
+      this.portals.touch(x, y);
       return;
     }
     const f = this.atlas.get(frame);
@@ -1835,6 +1996,7 @@ export class WorldRenderer {
     this.refreshScatter(x, y, 0);
     this.wheat.near(x, y);
     this.trackUnderRoad(x, y);
+    this.portals.touch(x, y);
   }
   /**
    * The track on tile (x, y) changed: where a road lies on it, its level crossing's deck follows,
@@ -1901,6 +2063,9 @@ export class WorldRenderer {
       if (bed) this.railBeds.set(k, bed);
       else this.railBeds.delete(k);
       this.landscape.invalidate(x, y);
+      this.portals.touch(x, y);
+      // the relief carves a cut under its rail; an ordinary bed leaves the sheet as it is
+      if (this.underground.isCut(x, y)) this.sheetMoves++;
       const s = this.trackSprites.get(k);
       if (s) this.placeTrackSprite(s, x, y);
     }
@@ -1955,7 +2120,7 @@ export class WorldRenderer {
     if (!bed || bed.flat || this.landscape.failed) {
       mesh?.destroy();
       meshes.delete(i);
-      s.renderable = true;
+      s.renderable = !this.railUnder(i);
       standOnGround(s, p.x, p.y, { ...LEVEL_GROUND, dz: this.railAt(x, y).dz });
       return;
     }
@@ -1972,7 +2137,22 @@ export class WorldRenderer {
     }
     mesh.tint = s.tint;
     mesh.position.set(p.x, p.y);
+    mesh.renderable = !this.railUnder(i);
     s.renderable = false;
+  }
+  /** Does the rail on tile `i` lie inside a mountain with no glass to show it? */
+  private railUnder(i: number) {
+    const { w } = this.map;
+    return !this.glassOn && this.underground.floorAt(i % w, Math.floor(i / w)) !== undefined;
+  }
+  /** Show the rails as the glass and the dug tiles say. */
+  private showRails() {
+    for (const [i, s] of this.trackSprites) {
+      const mesh = this.trackMeshes.get(i),
+        shown = !this.railUnder(i);
+      if (mesh) mesh.renderable = shown;
+      else s.renderable = shown;
+    }
   }
   /**
    * The piece's texture on a grid whose vertices are lifted to the rail profile under them. Every
@@ -2041,8 +2221,7 @@ export class WorldRenderer {
     }
     // texture, anchor and size: a reused sprite never keeps the size of the frame it showed
     const building = this.setSpriteFrame(s, frame);
-    const p = tileToWorld(x, y);
-    s.position.set(p.x + dx, p.y + this.elevationOf(x, y) + dy);
+    this.seatOnRail(s, id, x, y, dx, dy);
     s.zIndex = depthKey(x, y, layer);
     // only a building has window lights and a ground fit; drop those of a building shown before
     if (!building) this.dropBuildingDressing(id);
@@ -2292,6 +2471,9 @@ export class WorldRenderer {
    */
   setAtmosphereTint(color: number) {
     this.atmosphere.apply(color);
+    // the front of the edge strip stands over the night overlay, as the objects do; its back lies
+    // under it, and the two take the same colour
+    this.stripFront.tint = color;
   }
   /** A structure's window lights, ground fit, yard and plinth, which only a building has. */
   private dropBuildingDressing(id: string) {
@@ -2358,8 +2540,113 @@ export class WorldRenderer {
     const p = tileToWorld(x, y);
     return { x: p.x, y: p.y + this.elevationOf(x, y) };
   }
+  /** World pixel position of the Drill's floor under a tile centre: what a room stands on. */
+  floorPoint(x: number, y: number) {
+    return tileToWorld(x, y);
+  }
+  /** The floor structure `id` on (x, y) stands on inside the mountain; undefined if it is not. */
+  private floorUnder(id: string, x: number, y: number) {
+    return ON_THE_RAIL.test(id)
+      ? this.underground.floorAt(Math.round(x), Math.round(y))
+      : undefined;
+  }
+  /** Where structure `id` stands on (x, y): on the bed of a dug tile, else on the surface. */
+  private standPoint(id: string, x: number, y: number) {
+    const floor = this.floorUnder(id, x, y);
+    if (floor === undefined) return this.surfacePoint(x, y);
+    const p = tileToWorld(x, y);
+    return { x: p.x, y: p.y - floor * this.levelPx };
+  }
+  /** Put structure `id` where it stands, shown or not as the Drill's work and the glass say. */
+  private seatOnRail(s: Sprite, id: string, x: number, y: number, dx: number, dy: number) {
+    const p = this.standPoint(id, x, y);
+    s.position.set(p.x + dx, p.y + dy);
+    s.renderable = this.glassOn || this.floorUnder(id, x, y) === undefined;
+  }
+  /**
+   * Called every frame: when the Drill's store changed, what stands on it follows. A tile dug or
+   * filled moves no structure by itself, and a dig that moves no ground repaints nothing.
+   */
+  private followDug() {
+    const under = this.underground,
+      seen = this.followed;
+    if (seen.under === under && seen.version === under.version) return;
+    seen.under = under;
+    seen.version = under.version;
+    for (const [id, a] of this.structureAnchors) {
+      const s = this.structures.get(id);
+      if (s && ON_THE_RAIL.test(id)) this.seatOnRail(s, id, a.x, a.y, a.dx, a.dy);
+    }
+    this.showRails();
+    this.clearPeaks();
+    this.portals.mark();
+  }
+  private levelsForGlass() {
+    return (this.glassLevels ??= tileLevels(this.map));
+  }
+  /**
+   * The tiles of a re-tile: the levels the glass holds go if one of them moved. Paving and rail
+   * edits repaint the ground too, and move no level, so they cost the glass nothing.
+   */
+  private noteLevels(tiles: readonly { x: number; y: number }[]) {
+    const held = this.glassLevels;
+    if (!held) return;
+    if (tiles.every((t) => held[idx(this.map, t.x, t.y)] === levelAt(this.map, t.x, t.y))) return;
+    this.glassLevels = null;
+    this.sheetMoves++;
+  }
+  private makeGlass() {
+    const { map, atlas } = this;
+    const glass = new TunnelGlass({
+      atlas,
+      under: () => this.underground,
+      levelPx: () => this.levelPx,
+      level: (x, y) =>
+        x < 0 || y < 0 || x >= map.w || y >= map.h ? 0 : this.levelsForGlass()[y * map.w + x],
+      cut: (x, y) => this.underground.isCut(x, y),
+      shown: (x, y) => this.isBuilt(x, y),
+      lift: (x, y) => -this.elevationOf(x, y),
+      ground: () =>
+        this.sheetMoves * 2 + (this.landscape.failed ? 1 : 0) + this.builtRegions.size * 2 ** 32,
+      // a raised tile stands up to RELIEF_MAX px over its place on the ground
+      rows: (view) => viewTileRows(view, RELIEF_MAX, map.w, map.h),
+    });
+    this.glassLayer.addChild(glass.root);
+    this.glassOver.addChild(glass.over);
+    return glass;
+  }
+  /**
+   * The Drill's view: `on`, every mountain is glass (tunnelGlass.ts), and `preview` lists the tiles
+   * the drag would take. Peaks, props and scatter on raised tiles do not draw while it is on, and
+   * rails, signals and catenary on dug tiles draw only then, as they stand inside; a portal is then
+   * only an outline, and no car is masked.
+   */
+  setGlass(on: boolean, preview: readonly { x: number; y: number }[] = []) {
+    this.glass ??= this.makeGlass();
+    if (on !== this.glassOn) {
+      this.glassOn = on;
+      this.glass.show(on);
+      for (const s of this.summitSprites.values()) s.renderable = !on;
+      const levels = on ? this.levelsForGlass() : null,
+        hidden = (k: number) => !!levels && levels[k] > 0;
+      for (const [k, list] of this.propSprites) for (const s of list) s.renderable = !hidden(k);
+      for (const [k, list] of this.scatterSprites)
+        for (const { s } of list) s.renderable = !hidden(k);
+      for (const [id, a] of this.structureAnchors) {
+        const s = this.structures.get(id);
+        if (s && this.floorUnder(id, a.x, a.y) !== undefined) s.renderable = on;
+      }
+      this.showRails();
+      this.portals.showAll();
+    }
+    if (on) this.glass.setPreview(preview);
+  }
   tileAtSurface(x: number, y: number) {
     return this.landscape.failed ? worldToTileInt(x, y) : this.landscape.tileAtWorld(x, y);
+  }
+  /** The tile of the Drill's floor under a world point: the glass shows the rooms, not the hill. */
+  tileAtFloor(x: number, y: number) {
+    return worldToTileInt(x, y);
   }
 }
 

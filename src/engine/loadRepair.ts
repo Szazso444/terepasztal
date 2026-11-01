@@ -4,6 +4,7 @@ import { stationFootprint } from '../sim/stations';
 import { buildingDef } from '../sim/buildings';
 import { onRails } from '../sim/mountainTrack';
 import type { SaveGame } from '../sim/save';
+import { Underground } from '../sim/underground';
 
 /**
  * The load repair: ground a load generates need not be what was built on, and whatever the player
@@ -12,12 +13,14 @@ import type { SaveGame } from '../sim/save';
  * can call it; `Game` only applies what it answers (`applyTileRepairs`) and redraws the tiles. It
  * changes the map in memory and never the text a save stores for a chunk: the store keeps the
  * ground as generated. A road is the one thing the ground is not bent for: one on ground that
- * cannot hold it is taken off (`repairBuiltRoads`).
+ * cannot hold it is taken off (`repairBuiltRoads`). The ground over a dug tile stays as it is:
+ * what stands on such a tile stands inside the mountain, and the mountain over it is not what it
+ * stands on.
  */
 
 /** The saved objects the repair reads: what stands on the map. */
 export type BuiltObjects = Pick<SaveGame, 'track' | 'stations'> &
-  Partial<Pick<SaveGame, 'decor' | 'buildings' | 'roads'>>;
+  Partial<Pick<SaveGame, 'decor' | 'buildings' | 'roads' | 'underground'>>;
 
 /** A tile to give `terrain` in place of the one the map holds. */
 export interface TileRepair {
@@ -75,12 +78,15 @@ function platformKeys(map: GameMap, built: BuiltObjects): Set<number> {
  */
 function repairedGround(map: GameMap, built: BuiltObjects): Map<number, Terrain> {
   const platforms = platformKeys(map, built);
+  const under = Underground.fromJSON(built.underground, map.w, map.h);
   // the terrain each repaired tile has after the objects met so far
   const after = new Map<number, Terrain>();
   const stand = (x: number, y: number, standing: Standing) => {
     if (!inBounds(map, x, y)) return;
     const i = y * map.w + x;
     const now = after.get(i) ?? (map.terrain[i] as Terrain);
+    // water that came back over a tunnel is still no ground to keep
+    if (under.isDug(x, y) && now !== Terrain.Water) return;
     const to = groundFor(standing, now);
     if (to !== now) after.set(i, to);
   };

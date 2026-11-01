@@ -141,6 +141,9 @@ const EN = {
     downgradedTo: (name: string, level: number) => `Downgraded ${name} to level ${level}`,
     renamed: (was: string, now: string) => `Renamed ${was} to ${now}`,
     recoloured: (train: string, colour: string) => `Marked ${train} ${colour}`,
+    groundMoved: 'Reshaped the ground',
+    tunnelDug: 'Dug a tunnel',
+    tunnelFilled: 'Filled a dug tile',
     /** why an undo or a redo cannot be done */
     builtOver: 'Something else has been built there since.',
     trainOn: (train: string) => `${train} stands on the track.`,
@@ -462,6 +465,65 @@ const EN = {
     mountainLine: 'Mountain track must continue an existing line',
     needBridge: 'Water needs a bridge',
     tooSteep: 'Too steep for rails: straight track climbs one level per tile at most',
+    /** Raise or Lower would take a tile past the top, the bottom or the cover of a tunnel */
+    groundLimit: 'The ground can go no further here',
+    /** Lower on a tile that touches water, or pulling one down */
+    groundBesideWater: 'Ground touching water cannot be lowered',
+    /** Raise, Lower or a dig's raise would tilt the ground under a piece that needs it level */
+    groundBesideLevel: 'This would tilt the ground under what stands beside it',
+    /** Raise or Lower on a water tile, or one that would have to move the water beside it */
+    groundMovesWater: 'This would move the water: water cannot be raised or lowered',
+    /** the Raise and Lower tools' line: how many tiles move, with the neighbours they take along, and the price */
+    groundUp: (tiles: number, cost: string) =>
+      `Raise: ${tiles} ${tiles === 1 ? 'tile' : 'tiles'}, ${cost}`,
+    groundDown: (tiles: number, cost: string) =>
+      `Lower: ${tiles} ${tiles === 1 ? 'tile' : 'tiles'}, ${cost}`,
+    /** a Drill drag over a tile touching water, on a side or a corner */
+    digBesideWater: 'Ground touching water cannot be dug',
+    /** a Drill drag over the last row of the map, where the next ring may bring water */
+    digAtEdge: 'The Drill keeps one tile off the edge of the map',
+    /** the Drill's line: what the drag makes, a count of 0 left out, and the money */
+    digPlan: (dug: number, cut: number, raised: number, portals: number, cost: string) =>
+      `Drill: ${[
+        dug ? `dig ${dug}` : '',
+        cut ? `cut ${cut}` : '',
+        raised ? `raise ${raised}` : '',
+        portals ? `${portals} ${portals === 1 ? 'portal' : 'portals'}` : '',
+        cost,
+      ]
+        .filter(Boolean)
+        .join(', ')}`,
+    /** the stone a dig brings in */
+    digStone: (n: number) => `${n} stone`,
+    /** beside the stone: no store has room for it, or for all of it */
+    stoneLost: 'No store takes this stone',
+    stoneSome: (n: number) => `Only ${n} fits in the store`,
+    /** the Drill over tiles dug already */
+    digNothing: 'Dug already',
+    /** how many tiles of the drag refuse; `reason` is the first one's, the others may differ */
+    digRefused: (tiles: number, reason: string) =>
+      tiles === 1 ? `1 tile refuses: ${reason}` : `${tiles} tiles refuse, the first: ${reason}`,
+    /** Demolish over a dug or cut tile with no track on it */
+    backFill: (refund: string) => `Back-fill: ${refund} back`,
+    /** anything tried on a dug tile from outside: it has the mountain over it */
+    overTunnel: 'A tunnel runs under this tile',
+    /** anything but rail tried on a cut tile */
+    inCutting: 'A cutting takes rail only',
+    /** a curve, a switch or a crossing tried on a cut tile */
+    cutStraight: 'A cutting takes straight rail only',
+    /** anything but rail tried on the open tile a portal looks out at */
+    portalFront: 'A tunnel opens here: this tile takes rail only',
+    /** with the Drill on: track or a signal on open ground, or a piece across a tunnel's mouth */
+    notDug: 'Inside, the whole piece needs dug ground',
+    /** Maglev or Hyperloop track tried with the Drill on */
+    drillLine: 'The Drill lays Narrow Gauge, Branch, Main and Trunk Line',
+    /** Raise or Lower over ground that stays where it is */
+    groundStays: 'Nothing moves here',
+    /** how many tiles of the action refuse; `reason` is the first one's, the others may differ */
+    groundRefused: (tiles: number, reason: string) =>
+      tiles === 1
+        ? `1 tile cannot move: ${reason}`
+        : `${tiles} tiles cannot move, the first: ${reason}`,
     notLevel: 'Needs level ground: only straight track can climb a slope',
     notSmooth:
       'Curves and switches need smooth ground: only straights and crossings climb a slope, unless bridge platforms support every tile of the piece',
@@ -591,6 +653,7 @@ const EN = {
     /** the types of Tools */
     trackTools: 'Track',
     electrification: 'Electrification',
+    ground: 'Ground',
     /** the types of Works */
     rawMaterials: 'Raw materials',
     processing: 'Processing',
@@ -616,6 +679,19 @@ const EN = {
     downgradeHint: 'Lowers track one line: Trunk to Main, Main to Branch. Free.',
     /** Upgrade's cost line: the price depends on the piece */
     upgradeCost: 'the difference',
+    raise: 'Raise',
+    lower: 'Lower',
+    raiseHint:
+      'Raises the ground one level a tile, and the tiles around it as far as the slope needs. Every tile that moves costs money.',
+    lowerHint:
+      'Lowers the ground one level a tile, and the tiles around it as far as the slope needs. Every tile that moves costs money. Stone brought down to sea level turns to grass.',
+    /** Raise and Lower's cost line: the price depends on how far the slope spreads */
+    groundCost: 'per tile and level',
+    drill: 'Drill',
+    drillHint:
+      'Digs into a mountain at sea level, and turns every mountain to glass while it is on. Track tools then lay on dug tiles and in cuttings. Portals make themselves where a line comes out.',
+    /** the Drill's cost line: the ghost over the map has the sum */
+    drillCost: 'per tile',
     select: 'Select',
     /** the toolbar category of roads, and the road tool in it (#328) */
     roads: 'Roads',
@@ -645,6 +721,9 @@ const EN = {
       drag: 'Drag: lay a stretch',
       /** Upgrade and Downgrade lay nothing: they work on track that stands */
       reclass: 'Click: one piece · Drag: along the line',
+      ground: 'Click: one tile · Drag: along a line',
+      /** the whole of a Drill drag is dug at once, when the button comes up */
+      dig: 'Drag: dig a line, with one turn',
       click: 'Click: place',
       paint: 'Drag: paint',
       turn: 'R: turn',
@@ -681,6 +760,10 @@ const EN = {
         'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
       reclass:
         'Click a piece or drag along the line. A piece that does not fit stays as it was, shown in red.',
+      ground:
+        'On land with nothing built on it and no deposit, from sea level up to level 16. Water cannot be moved, and ground over a tunnel stays above its roof.',
+      drill:
+        'Into ground with nothing on it, from the Diesel Age on, for every line but Maglev and Hyperloop. Not touching water, and not on the edge of the map.',
       road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight Narrow Gauge, Branch or Main Line track at right angles, as a level crossing; never Trunk Line.',
     },
     trackDesc: {

@@ -7,7 +7,7 @@
     "trackCostMul": 1,
     "waterUseMul": 1,
     "speedMul": 1,
-    "snowLevel": 4
+    "snowLevel": 14
   },
   {
     "id": "forest",
@@ -17,7 +17,7 @@
     "trackCostMul": 1.2,
     "waterUseMul": 1,
     "speedMul": 1,
-    "snowLevel": 4
+    "snowLevel": 14
   },
   {
     "id": "desert",
@@ -27,7 +27,7 @@
     "trackCostMul": 1,
     "waterUseMul": 1.5,
     "speedMul": 1,
-    "snowLevel": 5
+    "snowLevel": 16
   },
   {
     "id": "taiga",
@@ -37,7 +37,7 @@
     "trackCostMul": 1.1,
     "waterUseMul": 1,
     "speedMul": 0.9,
-    "snowLevel": 3
+    "snowLevel": 12
   },
   {
     "id": "swamp",
@@ -47,7 +47,7 @@
     "trackCostMul": 2,
     "waterUseMul": 1,
     "speedMul": 0.8,
-    "snowLevel": 4
+    "snowLevel": 14
   },
   {
     "id": "ocean",
@@ -57,7 +57,7 @@
     "trackCostMul": 1,
     "waterUseMul": 1,
     "speedMul": 1,
-    "snowLevel": 4
+    "snowLevel": 14
   },
   {
     "id": "lake",
@@ -67,7 +67,7 @@
     "trackCostMul": 1,
     "waterUseMul": 1,
     "speedMul": 1,
-    "snowLevel": 4
+    "snowLevel": 14
   },
   {
     "id": "river",
@@ -77,7 +77,7 @@
     "trackCostMul": 1,
     "waterUseMul": 1,
     "speedMul": 1,
-    "snowLevel": 4
+    "snowLevel": 14
   },
   {
     "id": "beach",
@@ -87,7 +87,7 @@
     "trackCostMul": 1,
     "waterUseMul": 1,
     "speedMul": 1,
-    "snowLevel": 4
+    "snowLevel": 14
   },
   {
     "id": "mountain",
@@ -97,6 +97,6 @@
     "trackCostMul": 1.5,
     "waterUseMul": 1,
     "speedMul": 0.9,
-    "snowLevel": 4
+    "snowLevel": 14
   }
 ]

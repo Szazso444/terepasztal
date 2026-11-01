@@ -796,6 +796,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     season,
   };
   d.build.onToolChanged = (t) => {
+    toolbar.bar.drilling = d.build.drilling;
     toolbar.setActive(t);
     buildInfo.show(toolbar.item(t));
     // what is built stands still under the pointer

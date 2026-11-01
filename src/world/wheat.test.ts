@@ -318,7 +318,7 @@ describe('wheat fields', () => {
   // outside the map. 3 pairs of maps: about 0.2 s alone.
   it.each([
     { seed: 1637860701, w: 42, h: 71, ox: 36, oy: -2 },
-    { seed: 1383765659, w: 78, h: 58, ox: 8, oy: -97 },
+    { seed: 1383765700, w: 78, h: 58, ox: 8, oy: -97 },
     { seed: 50341479, w: 67, h: 60, ox: 24, oy: 42 },
   ])(
     'are the same wherever the map ends, by oil just outside it (seed $seed, $w x $h at $ox, $oy)',

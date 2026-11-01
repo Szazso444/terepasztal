@@ -5,8 +5,8 @@ import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import type { LandscapeMap } from './landscapeModel';
 
 export const RELIEF_STEP = 10;
-/** Highest surface point in world pixels for any supported style (four half-side levels). */
-export const RELIEF_MAX = 90;
+/** Highest surface point in world pixels for any supported style (sixteen levels, with room). */
+export const RELIEF_MAX = 200;
 /** World pixels a vertical tile side spans: 2:1 iso at a 30° camera elevation. */
 export const TILE_SIDE_PX = (32 * Math.SQRT2 * Math.sqrt(3)) / 2;
 export interface ReliefStyle {
@@ -23,6 +23,12 @@ export interface ReliefStyle {
   shape?: 'corners' | 'terraces';
   /** Terrace bank width in tiles, centred on the shared edge (default 0.5). */
   bank?: number;
+  /**
+   * Terraces: a cell with a tile at this level or higher runs its banks across the whole tile
+   * instead of `bank`, so tall ground leans in broad slopes (shipped: 3). It reaches only a map
+   * with a generated level plane (`TerrainRelief.softFrom`); the other maps keep their terraces.
+   */
+  softFrom?: number;
   /** A soft light along the top of a slope and a soft shadow at its foot. */
   rims?: boolean;
   /** Steep slopes show rock (default); false keeps them grassy and lets light alone shape them. */
@@ -46,9 +52,9 @@ export interface ReliefStyle {
 }
 /**
  * The shipped style, approved 2026-09-27: terraces. Every hill tile is a level plateau at its own
- * level, a level is a quarter of a tile side, neighbouring tiles differ by at most one level, and
- * the change happens in a rounded bank half a tile wide at the shared edge. Banks show rock; slope
- * tops catch light and their feet sit in soft shadow. (Earlier: corner slopes, { step: 10,
+ * level, a level is a quarter of a tile side, neighbouring tiles differ by up to `maxStep` levels,
+ * and the change happens in a rounded bank half a tile wide at the shared edge. Banks show rock;
+ * slope tops catch light and their feet sit in soft shadow. (Earlier: corner slopes, { step: 10,
  * maxRise: 1, faces: false }, then { step: side/4, maxRise: 2, faces: true }.)
  */
 export const DEFAULT_RELIEF: ReliefStyle = {
@@ -57,6 +63,7 @@ export const DEFAULT_RELIEF: ReliefStyle = {
   faces: true,
   shape: 'terraces',
   bank: 0.5,
+  softFrom: 3,
   rims: true,
   bankGrass: { tone: 'dark', amount: 1 },
   heightLight: 0.06,
@@ -71,6 +78,11 @@ export interface TerrainRelief {
   style: ReliefStyle;
   /** Terraces only: the level of each tile. */
   tiles?: Uint8Array;
+  /**
+   * Terraces only: the level from which a cell's banks run the whole tile (`ReliefStyle.softFrom`),
+   * set on a map with a generated level plane and absent on any other.
+   */
+  softFrom?: number;
   /** Terraces with painted peaks: summit tiles, each carrying a rock peak. */
   peaks?: ReadonlySet<number>;
   /** Terraces only: straight track tiles and the rail profile over them; each carries a bed. */
@@ -225,7 +237,8 @@ function terraces(
   for (const [k, bed] of rails) if (!bed.bridge) beds.set(k, bed);
   const peaks = style.paintedPeaks ? summitTiles(map, corners) : undefined;
   if (peaks?.size) top += style.paintedPeaks! * style.step * PEAK_RIDGE;
-  return { corners, centres, style, tiles, rails: beds, peaks, top: top + 1 };
+  const softFrom = map.generatedLevel ? style.softFrom : undefined;
+  return { corners, centres, style, tiles, softFrom, rails: beds, peaks, top: top + 1 };
 }
 
 /**
@@ -329,8 +342,14 @@ export function reliefHeight(
 function levelOf(tiles: Uint8Array, w: number, h: number, tx: number, ty: number) {
   return tx < 0 || ty < 0 || tx >= w || ty >= h ? 0 : tiles[ty * w + tx];
 }
+/** The bank width of a soft cell: the whole tile. */
+const SOFT_BANK = 1;
 const smoothstep = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
-/** Flat at each tile's level; between tile centres, a rounded bank only near the shared edge. */
+/**
+ * Flat at each tile's level; between tile centres, a rounded bank only near the shared edge. With
+ * soft banks (`TerrainRelief.softFrom`) a cell with a tile at that level or higher ramps across
+ * the whole tile. An edge is soft when a cell beside it is, so cells meet exactly along it.
+ */
 function terraceHeight(map: LandscapeMap, relief: TerrainRelief, x: number, y: number) {
   // The painter calls this dozens of times per pixel, so it allocates nothing.
   const tiles = relief.tiles!,
@@ -345,8 +364,32 @@ function terraceHeight(map: LandscapeMap, relief: TerrainRelief, x: number, y: n
     b = inside ? tiles[k + 1] : levelOf(tiles, w, h, fx + 1, fy),
     c = inside ? tiles[k + w] : levelOf(tiles, w, h, fx, fy + 1),
     d = inside ? tiles[k + w + 1] : levelOf(tiles, w, h, fx + 1, fy + 1),
-    su = smoothstep((x - fx - 0.5) / bank + 0.5),
-    sv = smoothstep((y - fy - 0.5) / bank + 0.5),
+    soft = relief.softFrom;
+  // Bank widths at the cell's left, right, top and bottom edges.
+  let left = bank,
+    right = bank,
+    top = bank,
+    bottom = bank;
+  if (soft !== undefined) {
+    if (Math.max(a, b, c, d) >= soft) left = right = top = bottom = SOFT_BANK;
+    else {
+      // A hard cell takes the width of a soft cell's bank along the edge they share.
+      if (Math.max(levelOf(tiles, w, h, fx - 1, fy), levelOf(tiles, w, h, fx - 1, fy + 1)) >= soft)
+        left = SOFT_BANK;
+      if (Math.max(levelOf(tiles, w, h, fx + 2, fy), levelOf(tiles, w, h, fx + 2, fy + 1)) >= soft)
+        right = SOFT_BANK;
+      if (Math.max(levelOf(tiles, w, h, fx, fy - 1), levelOf(tiles, w, h, fx + 1, fy - 1)) >= soft)
+        top = SOFT_BANK;
+      if (Math.max(levelOf(tiles, w, h, fx, fy + 2), levelOf(tiles, w, h, fx + 1, fy + 2)) >= soft)
+        bottom = SOFT_BANK;
+    }
+  }
+  const u = x - fx,
+    v = y - fy,
+    // The bank that crosses the cell in x changes width from the top edge to the bottom edge, the
+    // one that crosses it in y from the left edge to the right edge.
+    su = smoothstep((u - 0.5) / (top + (bottom - top) * v) + 0.5),
+    sv = smoothstep((v - 0.5) / (left + (right - left) * u) + 0.5),
     step = relief.style.step,
     terrace =
       step * ((a + (b - a) * su) * (1 - sv) + (c + (d - c) * su) * sv) +
@@ -479,6 +522,68 @@ export function reliefTop(
   return top;
 }
 
+/**
+ * The factor ground at `level` paints lighter than ground level by: `heightLight` per level up to
+ * level 4, and 0.15 of that per level above, so tall mountains brighten gently instead of washing
+ * out.
+ */
+export function heightFactor(level: number, heightLight: number): number {
+  return 1 + heightLight * (level <= 4 ? level : 4 + (level - 4) * 0.15);
+}
+
+/** Up to this shade snow takes the light as it comes; above it the light is rolled off. */
+const SNOW_KNEE = 0.95;
+/** The most light snow ever takes, which leaves its red and green just under white. */
+const SNOW_MOST = 1.08;
+/**
+ * The light on snow under slope shade `shade`. Snow is near white, so ground light would clip it
+ * flat on every slope that faces the sun. It takes no height light, shaded slopes keep their shade
+ * and lit ones roll off below SNOW_MOST, so the form of a mountain stays under the snow.
+ */
+export function snowLight(shade: number): number {
+  if (shade <= SNOW_KNEE) return shade;
+  const room = SNOW_MOST - SNOW_KNEE;
+  return SNOW_KNEE + room * (1 - Math.exp((SNOW_KNEE - shade) / room));
+}
+
+/** What snow in full shade keeps of its red, green and blue: shade on snow reads cool. */
+const SNOW_SHADE = [0.84, 0.93, 1];
+/** How much of the season's tint snow takes: it stays snow, not the colour of autumn grass. */
+const SNOW_SEASON = 0.25;
+
+/**
+ * The light on colour channel `c` (0 red, 1 green, 2 blue) of snow under slope shade `shade`:
+ * snowLight, cooled in deep shade. The painted ground and the peak pictures both light their snow
+ * by it, so a cap on a top reads as the snow round it.
+ */
+export function snowChannelLight(shade: number, c: number): number {
+  return snowLight(shade) * (1 + (SNOW_SHADE[c] - 1) * smoothstep((1 - shade) / 0.35));
+}
+
+/**
+ * What snow makes of the season's tint on one channel, `season` 0 to 1 (the tint channel over 255):
+ * the share of the tint's pull that SNOW_SEASON allows. Ground and peak pictures use it alike.
+ */
+export function snowTint(season: number): number {
+  return 1 + (season - 1) * SNOW_SEASON;
+}
+
+/** A true top, which carries a peak picture, stands at this level or higher... */
+export const TOP_LEVEL = 7;
+/** ...and has no higher tile within this many tiles along either axis. */
+export const TOP_REACH = 3;
+/** Is tile (x, y) a true top: at level TOP_LEVEL or more, with no higher tile within TOP_REACH? */
+export function isTrueTop(map: LandscapeMap, relief: TerrainRelief, x: number, y: number) {
+  const tiles = relief.tiles;
+  if (!tiles) return true;
+  const here = tiles[y * map.w + x];
+  if (here < TOP_LEVEL) return false;
+  for (let dy = -TOP_REACH; dy <= TOP_REACH; dy++)
+    for (let dx = -TOP_REACH; dx <= TOP_REACH; dx++)
+      if (levelOf(tiles, map.w, map.h, x + dx, y + dy) > here) return false;
+  return true;
+}
+
 /** Corner levels of tile (x, y), lowest and highest. */
 function levelSpan(map: LandscapeMap, relief: TerrainRelief, x: number, y: number) {
   const stride = map.w + 1,
@@ -501,9 +606,9 @@ export function groundAllows(
 ) {
   if (x < 0 || y < 0 || x >= map.w || y >= map.h) return false;
   if (relief.tiles) {
-    // Terraces: neighbours never differ by more than a level, so a straight rail always fits
-    // (its bed climbs at most one level per tile). Level pieces and structures need a tile
-    // no bank reaches into: all four neighbours at its own level.
+    // Terraces: a straight rail always fits a tile on its own; a link across a step above one
+    // level is an edge between two tiles, which the builder refuses. Level pieces and structures
+    // need a tile no bank reaches into: all four neighbours at its own level.
     if (need === 'straight') return true;
     const here = relief.tiles[y * map.w + x];
     for (const [dx, dy] of [

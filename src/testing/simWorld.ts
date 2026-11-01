@@ -160,7 +160,12 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
     catenary.rebuild(builder.buildings.values(), power);
   };
   const refreshRails = () => {
-    fleet.railBeds = railProfile(map, track, (x, y) => !!builder.bridgeAt(x, y));
+    fleet.railBeds = railProfile(
+      map,
+      track,
+      (x, y) => !!builder.bridgeAt(x, y),
+      builder.underground,
+    );
   };
   builder.onSupplyChanged = () => catenary.rebuild(builder.buildings.values(), power);
   builder.onBuildingChanged = (b: Building) => {

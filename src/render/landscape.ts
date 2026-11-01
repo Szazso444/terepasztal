@@ -17,6 +17,7 @@ import {
   reliefCorners,
   reliefTileAtWorld,
   groundAllows,
+  isTrueTop,
   surfaceSlope,
   type TerrainRelief,
 } from './terrainRelief';
@@ -131,7 +132,7 @@ type WorkerError = Partial<Pick<ErrorEvent, 'message' | 'filename' | 'lineno' | 
  * script cannot load fires a bare event with none of them.
  */
 export function workerErrorText(event: WorkerError): string {
-  const what = event.message || 'a paint worker failed without a message (did its script load?)';
+  const what = event.message || 'a worker failed without a message (did its script load?)';
   return event.filename
     ? `${what} (${event.filename}:${event.lineno ?? 0}:${event.colno ?? 0})`
     : what;
@@ -841,6 +842,8 @@ export class Landscape {
     if (this.relief.style.paintedPeaks) return false;
     if (Math.min(...reliefCorners(this.map, this.relief, x, y)) < this.relief.style.step)
       return false;
+    // On generated ground, tall and often steep, only a true top carries a peak picture.
+    if (this.map.generatedLevel && !isTrueTop(this.map, this.relief, x, y)) return false;
     const rank = hash2(x + this.map.originX, y + this.map.originY, this.map.seed + 601);
     for (let dy = -2; dy <= 2; dy++)
       for (let dx = -2; dx <= 2; dx++) {

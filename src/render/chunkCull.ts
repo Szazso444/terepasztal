@@ -1,4 +1,4 @@
-import { Bounds, Matrix, getLocalBounds, type Container, type Renderer } from 'pixi.js';
+import { Bounds, Matrix, type Container, type Renderer } from 'pixi.js';
 import { worldToTile } from '../engine/iso';
 import { CHUNK_TILES } from '../world/chunks';
 
@@ -206,13 +206,7 @@ export class ChunkCull {
     child.updateLocalTransform();
     const t = child.localTransform;
     m.deep = !child.cullArea && child.children.length > 0;
-    if (
-      !child.cullArea &&
-      !m.deep &&
-      child.renderPipeId &&
-      !child.boundsArea &&
-      !child.effects?.length
-    ) {
+    if (!child.cullArea && !m.deep && child.renderPipeId && !child.boundsArea) {
       // a sprite, mesh or graphics alone: its own bounds through its transform, as Pixi measures it
       const b = child.bounds!;
       if (b.minX <= b.maxX && b.minY <= b.maxY) {
@@ -220,10 +214,10 @@ export class ChunkCull {
         return;
       }
     }
-    if (child.cullArea) {
-      bounds.clear();
-      bounds.addRect(child.cullArea, t);
-    } else getLocalBounds(child, bounds, t);
+    bounds.clear();
+    if (child.cullArea) bounds.addRect(child.cullArea, t);
+    else addBounds(child, t, 0);
+    if (!bounds.isValid) bounds.set(0, 0, 0, 0);
     m.minX = bounds.minX;
     m.minY = bounds.minY;
     m.maxX = bounds.maxX;
@@ -309,6 +303,30 @@ export class ChunkCull {
 interface Viewed {
   renderPipeId: string;
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
+}
+
+/** The transforms of a walk down a child's children, by depth. */
+const walk: Matrix[] = [];
+
+/**
+ * Add `c` and what stands in it to `bounds`, through `t`: Pixi's `getLocalBounds` without the mask.
+ * A mask only narrows what shows, so leaving it out draws too much, never too little. Pixi works one
+ * out from the mask up to the child it measures, and a stencil standing elsewhere in the layer has
+ * no such path: it warns, and intersects a box in the wrong space with the child's own.
+ */
+function addBounds(c: Container & Partial<Viewed>, t: Matrix, depth: number) {
+  if (c.boundsArea) {
+    bounds.addRect(c.boundsArea, t);
+    return;
+  }
+  if (c.renderPipeId) bounds.addBounds(c.bounds!, t);
+  const at = (walk[depth] ??= new Matrix());
+  for (const kid of c.children) {
+    if (!kid.visible || !kid.measurable) continue;
+    kid.updateLocalTransform();
+    at.appendFrom(kid.localTransform, t);
+    addBounds(kid, at, depth + 1);
+  }
 }
 
 /** `m`'s bounds: the box (x0, y0)-(x1, y1) through transform `t`. */

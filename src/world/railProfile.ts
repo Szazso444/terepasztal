@@ -29,6 +29,27 @@ export interface RailBed {
 /** What a profile reads levels from: the terrain, and the water levels where the map has them. */
 type Levels = Elevated;
 
+/**
+ * What a profile reads of the ground the Drill opened (`Underground` in src/sim gives it): the rail
+ * level of a tile dug under the ground, undefined for any other, and whether a tile is cut.
+ */
+export interface BedsUnder {
+  floorAt(x: number, y: number): number | undefined;
+  isCut(x: number, y: number): boolean;
+}
+/** A map the Drill has not been on. */
+const NOTHING_UNDER: BedsUnder = { floorAt: () => undefined, isCut: () => false };
+/** The rail in a cutting: one floor for now, level 0, so a cut leads down to that floor. */
+const CUT_FLOOR = 0;
+/** The level of the bed the Drill made on (x, y); undefined on open ground. */
+function drilledLevel(drilled: BedsUnder, x: number, y: number): number | undefined {
+  return drilled.floorAt(x, y) ?? (drilled.isCut(x, y) ? CUT_FLOOR : undefined);
+}
+/** The level rail stands at on (x, y): the bed the Drill made there, else the ground. */
+function railGround(map: Levels, drilled: BedsUnder, x: number, y: number): number {
+  return drilledLevel(drilled, x, y) ?? levelAt(map, x, y);
+}
+
 /** Rail height in levels at position `t` along the bed's axis. */
 export function railLevel(bed: RailBed, t: number): number {
   const spans = bed.spans;
@@ -64,24 +85,25 @@ export function climbAxes(links: readonly (readonly [number, number])[]): ('x' |
  * Deck level of a curve or switch carried by bridge platforms: the level of the rails it meets
  * off the bridge (neighbours across its links that stand on the ground), or its highest tile when
  * every neighbour is on a platform too. Null when the rails it meets disagree, or the deck would
- * sit below the ground under one of its tiles.
+ * sit below the ground under one of its tiles. A tile the Drill made counts at its bed.
  */
 export function supportedDeck(
   map: Levels,
   members: readonly { x: number; y: number; links: readonly (readonly [number, number])[] }[],
   bridgeAt: (x: number, y: number) => boolean,
+  drilled: BedsUnder = NOTHING_UNDER,
 ): number | null {
   const inside = new Set(members.map((m) => m.y * map.w + m.x)),
     meets = new Set<number>();
   let top = 0;
   for (const m of members) {
-    top = Math.max(top, levelAt(map, m.x, m.y));
+    top = Math.max(top, railGround(map, drilled, m.x, m.y));
     for (const link of m.links)
       for (const d of link) {
         const nx = m.x + DIR_DX[d],
           ny = m.y + DIR_DY[d];
         if (inside.has(ny * map.w + nx) || bridgeAt(nx, ny)) continue;
-        meets.add(levelAt(map, nx, ny));
+        meets.add(railGround(map, drilled, nx, ny));
       }
   }
   if (meets.size > 1) return null;
@@ -106,11 +128,16 @@ export function bedFor(bed: RailBed, x: number, y: number): RailBed {
  * and inclines climbs from the level before it to the level after it, easing in and out; a crest
  * or dip inside a run levels out at the tile that turns. Recomputed whole on every track change,
  * so pieces conform to their neighbours as the line is extended.
+ *
+ * A tile the Drill made (`drilled`) stands at its bed, whatever the ground over it does. A dug tile
+ * is flagged `bridge`, the inverse of a deck: the rail runs under the ground, which keeps its shape.
+ * A cut is not, so the relief carves the ground down to the rail.
  */
 export function railProfile(
   map: Levels,
   track: TrackGraph,
   bridgeAt: (x: number, y: number) => boolean = () => false,
+  drilled: BedsUnder = NOTHING_UNDER,
 ): Map<number, RailBed> {
   const beds = new Map<number, RailBed>(),
     axesAt = (x: number, y: number) => {
@@ -128,21 +155,33 @@ export function railProfile(
       const tiles: [number, number][] = [];
       for (let tx = x, ty = y; axesAt(tx, ty).includes(axis); tx += dx, ty += dy)
         tiles.push([tx, ty]);
-      lineProfile(map, track, tiles, axis, bridgeAt, beds);
+      lineProfile(map, track, tiles, axis, bridgeAt, drilled, beds);
     }
   }
-  // Curves and switches carried by bridge platforms sit at the deck (supportedDeck).
+  // Curves and switches sit at their bed on a tile the Drill made, and at the deck on bridge
+  // platforms (supportedDeck).
   for (const [k, p] of track.pieces) {
     const x = k % map.w,
       y = Math.floor(k / map.w);
-    if (beds.has(k) || !bridgeAt(x, y)) continue;
+    if (beds.has(k)) continue;
+    const level = drilledLevel(drilled, x, y);
+    if (level !== undefined) {
+      beds.set(k, {
+        axis: 'x',
+        spans: [{ from: x - 2, to: x + 2, a: level, b: level }],
+        bridge: drilled.floorAt(x, y) !== undefined || undefined,
+        flat: true,
+      });
+      continue;
+    }
+    if (!bridgeAt(x, y)) continue;
     const members = (p.unit ? track.unitTiles(p.unit.ax, p.unit.ay) : [{ x, y }]).map((t) => ({
       ...t,
       links: track.get(t.x, t.y)?.links ?? [],
     }));
     const deck =
-      supportedDeck(map, members, bridgeAt) ??
-      Math.max(...members.map((t) => levelAt(map, t.x, t.y)));
+      supportedDeck(map, members, bridgeAt, drilled) ??
+      Math.max(...members.map((t) => railGround(map, drilled, t.x, t.y)));
     beds.set(k, {
       axis: 'x',
       spans: [{ from: x - 2, to: x + 2, a: deck, b: deck }],
@@ -159,13 +198,15 @@ function lineProfile(
   tiles: [number, number][],
   axis: 'x' | 'y',
   bridgeAt: (x: number, y: number) => boolean,
+  drilled: BedsUnder,
   beds: Map<number, RailBed>,
 ) {
   const start = axis === 'x' ? tiles[0][0] : tiles[0][1],
     bridge = tiles.map(([x, y]) => bridgeAt(x, y)),
     // A crossing holds both lines level at its centre, so the two rails meet.
     pinned = tiles.map(([x, y]) => (track.get(x, y)?.links.length ?? 0) > 1),
-    terrain = tiles.map(([x, y]) => levelAt(map, x, y)),
+    // A tile the Drill made counts at its bed, so the line does not climb to the ground over it.
+    terrain = tiles.map(([x, y]) => railGround(map, drilled, x, y)),
     // A deck over water is never below the water's level.
     under = tiles.map(([x, y], i) =>
       map.terrain[y * map.w + x] === Terrain.Water ? terrain[i] : 0,
@@ -179,7 +220,7 @@ function lineProfile(
       bed: RailBed = {
         axis,
         spans: near,
-        bridge: bridge[i] || undefined,
+        bridge: bridge[i] || drilled.floorAt(x, y) !== undefined || undefined,
         flat: close.every((s) => s.a === s.b && s.a === levels[i]),
       },
       other = beds.get(k);

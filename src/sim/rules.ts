@@ -78,6 +78,14 @@ export interface Rules {
   /** price of the first ring of chunks around the start; each ring further multiplies it */
   chunkCost: number;
   chunkCostMul: number;
+  /** price of moving one level of ground with Raise or Lower, per tile per level */
+  groundCost: number;
+  /** price of digging one tile with the Drill */
+  drillCost: number;
+  /** price of a portal, which makes itself where a dug line breaks out onto a slope */
+  portalCost: number;
+  /** stone added to the stock by each tile dug */
+  drillStone: number;
   startStock: number;
 }
 
@@ -138,6 +146,10 @@ export const DEFAULT_RULES: Rules = {
   powerCap: 100,
   chunkCost: 12000,
   chunkCostMul: 1.6,
+  groundCost: 100,
+  drillCost: 500,
+  portalCost: 2000,
+  drillStone: 2,
   startStock: 1,
 };
 
@@ -270,6 +282,38 @@ export const RULE_META: RuleMeta[] = [
     step: 0.1,
   },
   { key: 'powerCap', label: 'Power battery', group: 'Economy', min: 0, max: 2000, step: 50 },
+  {
+    key: 'groundCost',
+    label: 'Raise or lower ground, per tile per level',
+    group: 'Economy',
+    min: 0,
+    max: 2000,
+    step: 10,
+  },
+  {
+    key: 'drillCost',
+    label: 'Drill, per tile dug',
+    group: 'Economy',
+    min: 0,
+    max: 5000,
+    step: 50,
+  },
+  {
+    key: 'portalCost',
+    label: 'Tunnel portal',
+    group: 'Economy',
+    min: 0,
+    max: 20000,
+    step: 100,
+  },
+  {
+    key: 'drillStone',
+    label: 'Stone from each tile dug',
+    group: 'Economy',
+    min: 0,
+    max: 20,
+    step: 1,
+  },
   {
     key: 'startStock',
     label: 'Starting goods x',

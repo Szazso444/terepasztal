@@ -162,6 +162,7 @@ function contested() {
         ],
       },
     ],
+    gateTrack: (t: { x: number; y: number }) => g.get(t.x, t.y),
   } as unknown as Builder);
   traffic.rebuildSections();
   return { g, traffic, key: (x: number) => 5 * g.w + x };
