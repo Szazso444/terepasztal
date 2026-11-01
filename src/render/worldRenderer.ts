@@ -1567,6 +1567,7 @@ export class WorldRenderer {
         parts = bridgeTileMeshes(
           {
             ...site,
+            waterline: this.waterDeck(site.x, site.y) + WATERLINE,
             ground,
             top: this.groundTop(site.x + from, site.y + from, site.x + to, site.y + to),
           },
