@@ -17,8 +17,8 @@ type Terrained = Pick<GameMap, 'w' | 'h' | 'terrain'>;
  * ground carry a piece that needs `need`?
  *
  * - Off the map nothing fits, whatever is needed.
- * - `straight` always fits: a tile's level differs from each neighbour's by at most one
- *   (`tileLevels`), so a straight rail climbs at most one level across the tile.
+ * - `straight` always fits a tile on its own. Neighbours may differ by up to `maxStep`, and a link
+ *   across a step above one is an edge between two tiles, which the builder refuses.
  * - `level` fits where no bank reaches into the tile: all four sides (north, south, east, west;
  *   diagonals do not count) stand at the tile's own level. A side off the map counts as level 0,
  *   so a tile on the map border fits only at level 0, and a border tile cannot rise above 1.
