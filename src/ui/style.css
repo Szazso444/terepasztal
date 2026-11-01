@@ -5410,13 +5410,14 @@ body.title-up #topbar .now-playing:not(.held) {
   padding: 0 3px;
 }
 /* what the last action came to, in the dock line beside the gate */
+.dp-rl-g:has(> .dp-notice) {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+/* on a line of its own: what it names must not be clipped by a long refusal beside it */
 .dp-rl > .k-note.dp-notice {
-  flex: 0 1 auto;
+  flex: 1 1 100%;
   min-width: 0;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
   color: var(--amber);
 }
 .dp-short:empty {

@@ -473,6 +473,8 @@ export class DepotScreen implements Screen {
       return;
     }
     this.clearDraft();
+    // it stands on the gate now: what was asked of that gate before it went no longer holds
+    if (res.depotId !== null) this.gates.delete(res.depotId);
     // the train it went out as is picked: Build another is a press away from here
     this.reveal = res;
     this.pick(res);
