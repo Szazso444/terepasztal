@@ -94,6 +94,8 @@ describe('water ripples (#555)', () => {
     const map = emptyMap(5, 64, 64, Terrain.Water);
     const w = world(map),
       camera = new Camera();
+    // the still water's glints alone; moving water draws more over them
+    w.movingWater = false;
     camera.setMapSize(64, 64);
     camera.viewW = 800;
     camera.viewH = 500;
