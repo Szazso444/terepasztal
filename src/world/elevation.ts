@@ -9,14 +9,16 @@ export type Elevated = Pick<GameMap, 'w' | 'h' | 'terrain'> &
 
 /**
  * The level tile `i` (`y * w + x`) stands at before its neighbours lower it: a hill 2, a mountain
- * and the ice that replaces it MAX_LEVEL, water the level of its surface (GameMap.waterSurface, 0 where the map has none), and
+ * MAX_LEVEL, ice the level it was laid at (in waterSurface, MAX_LEVEL where the map has none), water
+ * the level of its surface (GameMap.waterSurface, 0 where the map has none), and
  * any other ground 0. tileLevels and levelAt build every level from it; the renderer reads the
  * same rule through them.
  */
 export function levelTarget(map: Elevated, i: number): number {
   const t = map.terrain[i];
   if (t === Terrain.Water) return map.waterSurface?.[i] ?? 0;
-  return t === Terrain.Hill ? 2 : t === Terrain.Mountain || t === Terrain.Ice ? MAX_LEVEL : 0;
+  if (t === Terrain.Ice) return map.waterSurface?.[i] || MAX_LEVEL;
+  return t === Terrain.Hill ? 2 : t === Terrain.Mountain ? MAX_LEVEL : 0;
 }
 
 /**
