@@ -8,6 +8,7 @@ import { biomeAt, biomeDef } from '../sim/biomes';
 import { STR } from '../strings';
 import { levelAt } from '../world/elevation';
 import { TERRAIN_NAMES, Terrain, climateAt, terrainAt, type GameMap } from '../world/tiles';
+import { Headwater, MAX_DROP, headwaterAt, waterfallAt } from '../world/waterfalls';
 import { biomeTerm } from './biomeTooltip';
 import { line } from './tooltipContent';
 import {
@@ -15,6 +16,7 @@ import {
   num,
   richText,
   row,
+  term,
   text,
   title,
   type Block,
@@ -54,8 +56,10 @@ export function snowLevelAt(map: Readonly<GameMap>, x: number, y: number): numbe
 }
 
 /**
- * The terrain's name (with ", snow" on a snow tile), the Biome row, the Elevation row, the Snow
- * line row on a snow tile, one dim line about the terrain, then everything standing on it.
+ * The tile's name, by the first that holds: Waterfall, Headwater, the terrain's name (with ", snow"
+ * on a snow tile). The Biome row, the Elevation row, the Snow line row on a snow tile, a river's
+ * Drop, Source and Flow rows, one dim line about the terrain, then everything standing on it. The
+ * river's planes are the map's: a chunk stored without them shows none of these.
  */
 export function tileTip(s: TileSnapshot): TipDoc {
   const { map, x, y } = s;
@@ -64,15 +68,33 @@ export function tileTip(s: TileSnapshot): TipDoc {
   const name = TERRAIN_NAMES[terrain];
   const level = levelAt(map, x, y);
   const snowLevel = snowLevelAt(map, x, y);
-  const snow = terrain !== Terrain.Water && level >= snowLevel;
+  const snow = terrain !== Terrain.Water && terrain !== Terrain.Ice && level >= snowLevel;
   const terrainName = T.terrain[name] ?? name;
+  const fall = waterfallAt(map, x, y);
+  const head = headwaterAt(map, x, y);
+  const flow = map.flow?.[y * map.w + x] ?? 0;
+  const heading = fall
+    ? T.waterfall
+    : head
+      ? T.headwater
+      : snow
+        ? T.snow(terrainName)
+        : terrainName;
   const out: Block[] = [
-    title(snow ? T.snow(terrainName) : terrainName),
+    title(heading),
     row(T.biome, biomeTerm(biomeAt(map, x, y), s.weeklyAtLevel1)),
     row(T.elevationRow, richText(T.level(level))),
   ];
   if (snow) out.push(row(T.snowLine, richText(T.aboveLevel(snowLevel - 1))));
-  const about = terrain === Terrain.Water ? T.water : T.about[name];
+  if (fall) {
+    const about = T.dropAbout(fall.drop, MAX_DROP);
+    const tip = () => [title(T.waterfall), dim(...richText(about))];
+    out.push(row(T.dropRow, term(T.drop(fall.drop), tip)));
+  }
+  if (head) out.push(row(T.sourceRow, head === Headwater.Melt ? T.source.melt : T.source.spring));
+  if (flow) out.push(row(T.flowRow, richText(T.flow(flow))));
+  const water = !fall && head ? T.aboutHeadwater : T.water;
+  const about = terrain === Terrain.Water ? water : T.about[name];
   if (about) out.push(dim(...richText(about)));
   if (!s.charted) out.push(line(T.uncharted));
   if (s.track) out.push(line(T.track(s.track)));

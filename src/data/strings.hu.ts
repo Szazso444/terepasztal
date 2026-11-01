@@ -167,7 +167,10 @@ export const HU: Strings = {
       rock: 'Szikla',
       sand: 'Homok',
       mountain: 'Hegy',
+      ice: 'Gleccser',
     },
+    waterfall: 'Vízesés',
+    headwater: 'Forrás',
     snow: (terrain: string) => `${terrain}, hó`,
     about: {
       grass: 'Nyílt terep. A legtöbb épület és minden sín ide kerülhet.',
@@ -176,7 +179,18 @@ export const HU: Strings = {
       rock: 'Csupasz szikla. A kőfejtők számolnak vele; épület nem állhat rajta.',
       sand: 'Laza homok. Sín és épület is kerülhet ide.',
       mountain: 'Egy sziklamező kiemelkedő közepe. Épület nem állhat rajta.',
+      ice: 'Gleccserjég. Semmi sem építhető rá; olvadéka lent folyót indít.',
     },
+    aboutHeadwater: 'Itt ered egy folyó. Híd átívelheti; a szivattyúk merítenek belőle.',
+    dropRow: 'Esés',
+    drop: (n: number) => `${n} szint`,
+    dropAbout: (n: number, most: number) =>
+      `Egy folyó ${n} szintet esik itt, 1 és ${most} között. ` +
+      'A sín hídon, a felső szinten keresztezi; semmi sem építhető rá.',
+    sourceRow: 'Eredet',
+    source: { melt: 'olvadék egy gleccser alatt', spring: 'forrás a magaslaton' },
+    flowRow: 'Vízhozam',
+    flow: (n: number) => `${n} csempényi esőt gyűjt`,
     elevationRow: 'Magasság',
     level: (level: number) => `${level}. szint`,
     snowLine: 'Hóhatár',
@@ -381,6 +395,7 @@ export const HU: Strings = {
       water: 'Vízre semmi sem építhető.',
       rock: 'Sziklára semmi sem építhető.',
       mountain: 'Hegyre semmi sem építhető.',
+      ice: 'Jégre semmi sem építhető.',
     },
     standOn: { pump: 'Vízszivattyú csak fűre vagy erdőbe kerülhet.' },
     needGround: (grounds: readonly string[]) =>
