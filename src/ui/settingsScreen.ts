@@ -179,7 +179,15 @@ export class SettingsScreen implements Screen {
 
   private switchRow(
     label: string,
-    key: 'edgeScroll' | 'autosave' | 'dayNight' | 'smoke' | 'buildingLife' | 'showFps' | 'weather',
+    key:
+      | 'edgeScroll'
+      | 'autosave'
+      | 'dayNight'
+      | 'smoke'
+      | 'buildingLife'
+      | 'movingWater'
+      | 'showFps'
+      | 'weather',
     hint?: string,
   ) {
     const row = formRow(
@@ -361,6 +369,7 @@ export class SettingsScreen implements Screen {
               'buildingLife',
               STR.settings.buildingLifeHint,
             ),
+            this.switchRow(STR.settings.movingWater, 'movingWater', STR.settings.movingWaterHint),
             this.switchRow(STR.settings.weather, 'weather'),
             this.switchRow(STR.settings.showFps, 'showFps'),
             formRow(

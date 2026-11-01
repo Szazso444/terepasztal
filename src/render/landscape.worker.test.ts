@@ -102,7 +102,11 @@ beforeAll(async () => {
     height: CELL * 10,
     close() {},
   }));
-  vi.stubGlobal('fetch', async () => ({ ok: true, blob: async () => null }));
+  // the wild sheet stays away: the painter goes on with the plain materials
+  vi.stubGlobal('fetch', async (url: string) => ({
+    ok: !url.includes('wild-surfaces'),
+    blob: async () => null,
+  }));
   const self: { postMessage(m: Reply): void; onmessage?: (e: { data: object }) => Promise<void> } =
     { postMessage: (m) => void replies.push(m) };
   vi.stubGlobal('self', self);

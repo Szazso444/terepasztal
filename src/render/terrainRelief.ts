@@ -77,7 +77,21 @@ export interface TerrainRelief {
   rails?: ReadonlyMap<number, RailBed>;
   /** Highest surface point of this relief in world pixels; the painter searches below it. */
   top: number;
+  /**
+   * Terraces on a map with glaciers: how far each tile's ground stands above its level, in levels.
+   * The moraine banks beside the ice (GLACIER_BANK). The rules read none of this: it is looks.
+   */
+  lift?: Float32Array;
+  /**
+   * With `lift`: which of NARROW a tile's shared edges take instead of the style's bank, in two
+   * bits for its edge to x + 1 and two for its edge to y + 1 (0 the style's).
+   */
+  narrow?: Uint8Array;
 }
+/** How far a moraine bank stands above the ice (the Ice channel of the art demo). */
+const GLACIER_BANK = 0.3;
+/** Bank widths at a glacier: an ice step and an ice front, and the ice's edge against its bank. */
+const NARROW = [0, 0.12, 0.24];
 export type HillFamily = 'flat' | 'slope' | 'shoulder' | 'saddle' | 'ridge' | 'plateau' | 'peak';
 
 /**
@@ -224,7 +238,38 @@ function terraces(
   for (const [k, bed] of rails) if (!bed.bridge) beds.set(k, bed);
   const peaks = style.paintedPeaks ? summitTiles(map, corners) : undefined;
   if (peaks?.size) top += style.paintedPeaks! * style.step * PEAK_RIDGE;
-  return { corners, centres, style, tiles, rails: beds, peaks, top: top + 1 };
+  const banks = glacierBanks(map, tiles);
+  if (banks) top += GLACIER_BANK * style.step;
+  return { corners, centres, style, tiles, rails: beds, peaks, top: top + 1, ...banks };
+}
+
+/**
+ * The relief of the map's glaciers (the Ice channel): the land beside the ice stands GLACIER_BANK
+ * above it, and where the ice drops a level, or ends over its melt, it does so in one clean step.
+ * Undefined on a map with no ice.
+ */
+function glacierBanks(map: LandscapeMap, tiles: Uint8Array) {
+  const { w, h, terrain } = map;
+  if (!terrain.includes(Terrain.Ice)) return undefined;
+  const lift = new Float32Array(w * h);
+  const narrow = new Uint8Array(w * h);
+  const land = (i: number) => terrain[i] !== Terrain.Ice && terrain[i] !== Terrain.Water;
+  /** The width's index for the edge between tiles a and b; 0 where neither is ice. */
+  const width = (a: number, b: number) => {
+    const ice = terrain[a] === Terrain.Ice || terrain[b] === Terrain.Ice;
+    if (!ice) return 0;
+    return land(a) || land(b) ? 2 : tiles[a] !== tiles[b] ? 1 : 0;
+  };
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const k = y * w + x;
+      if (x + 1 < w) narrow[k] |= width(k, k + 1);
+      if (y + 1 < h) narrow[k] |= width(k, k + w) << 2;
+      if (terrain[k] !== Terrain.Ice) continue;
+      for (const n of [k - 1, k + 1, k - w, k + w])
+        if (n >= 0 && n < w * h && land(n)) lift[n] = GLACIER_BANK;
+    }
+  return { lift, narrow };
 }
 
 /**
@@ -329,6 +374,13 @@ function levelOf(tiles: Uint8Array, w: number, h: number, tx: number, ty: number
   return tx < 0 || ty < 0 || tx >= w || ty >= h ? 0 : tiles[ty * w + tx];
 }
 const smoothstep = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+/** The bank width across a cell: the narrower of its two edges along `shift` (`narrow`). */
+function bankOf(edges: Uint8Array, p: number, q: number, shift: number, bank: number) {
+  const m = (edges[p] >> shift) & 3;
+  const n = (edges[q] >> shift) & 3;
+  const narrow = !m ? n : !n ? m : Math.min(m, n);
+  return narrow ? NARROW[narrow] : bank;
+}
 /** Flat at each tile's level; between tile centres, a rounded bank only near the shared edge. */
 function terraceHeight(map: LandscapeMap, relief: TerrainRelief, x: number, y: number) {
   // The painter calls this dozens of times per pixel, so it allocates nothing.
@@ -340,12 +392,16 @@ function terraceHeight(map: LandscapeMap, relief: TerrainRelief, x: number, y: n
     fy = Math.floor(y),
     inside = fx >= 0 && fy >= 0 && fx + 1 < w && fy + 1 < h,
     k = fy * w + fx,
-    a = inside ? tiles[k] : levelOf(tiles, w, h, fx, fy),
-    b = inside ? tiles[k + 1] : levelOf(tiles, w, h, fx + 1, fy),
-    c = inside ? tiles[k + w] : levelOf(tiles, w, h, fx, fy + 1),
-    d = inside ? tiles[k + w + 1] : levelOf(tiles, w, h, fx + 1, fy + 1),
-    su = smoothstep((x - fx - 0.5) / bank + 0.5),
-    sv = smoothstep((y - fy - 0.5) / bank + 0.5),
+    lift = inside ? relief.lift : undefined,
+    a = (inside ? tiles[k] : levelOf(tiles, w, h, fx, fy)) + (lift ? lift[k] : 0),
+    b = (inside ? tiles[k + 1] : levelOf(tiles, w, h, fx + 1, fy)) + (lift ? lift[k + 1] : 0),
+    c = (inside ? tiles[k + w] : levelOf(tiles, w, h, fx, fy + 1)) + (lift ? lift[k + w] : 0),
+    d =
+      (inside ? tiles[k + w + 1] : levelOf(tiles, w, h, fx + 1, fy + 1)) +
+      (lift ? lift[k + w + 1] : 0),
+    edges = lift ? relief.narrow! : undefined,
+    su = smoothstep((x - fx - 0.5) / (edges ? bankOf(edges, k, k + w, 0, bank) : bank) + 0.5),
+    sv = smoothstep((y - fy - 0.5) / (edges ? bankOf(edges, k, k + 1, 2, bank) : bank) + 0.5),
     step = relief.style.step,
     terrace =
       step * ((a + (b - a) * su) * (1 - sv) + (c + (d - c) * su) * sv) +
@@ -431,7 +487,7 @@ function terraceCaps(map: LandscapeMap, relief: TerrainRelief) {
     tiles = relief.tiles!,
     step = relief.style.step,
     top = new Float32Array(w * h);
-  for (let k = 0; k < w * h; k++) top[k] = tiles[k];
+  for (let k = 0; k < w * h; k++) top[k] = tiles[k] + (relief.lift?.[k] ?? 0);
   for (const [k, bed] of relief.rails ?? [])
     for (const b of bed.cross ? [bed, bed.cross] : [bed])
       for (const s of b.spans) top[k] = Math.max(top[k], s.a, s.b);

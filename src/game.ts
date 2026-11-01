@@ -1229,7 +1229,10 @@ export class Game implements UiHost {
     audio.applyMusic();
     if (!this.settings.weather && this.weather) this.weather.visible = 0;
     if (this.world) this.applySeason();
-    if (this.world) this.world.buildingLife.enabled = this.settings.buildingLife;
+    if (this.world) {
+      this.world.buildingLife.enabled = this.settings.buildingLife;
+      this.world.movingWater = this.settings.movingWater;
+    }
     if (this.ui) this.hud.setToggles(this.settings.weather, this.settings.dayNight);
     if (this.fleet) this.fleet.signals.level = this.settings.signalling ?? 'auto';
   }
@@ -2441,6 +2444,8 @@ export class Game implements UiHost {
     this.glows.update(this.builder.stations, this.fleet.trains, night);
     this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
     this.peopleRenderer.update(this.people, dt * this.clock.speed);
+    this.world.wind = this.weather.wind;
+    this.world.rain = this.weather.kind === 'rain' ? this.weather.visible : 0;
     this.world.buildingLife.update(
       this.clock.speed ? dt : 0,
       this.weather.wind,
