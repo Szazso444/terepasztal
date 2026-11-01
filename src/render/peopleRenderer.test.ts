@@ -256,7 +256,7 @@ describe('the size of a walker', () => {
           person = walker(5.3, 6.7);
         for (const state of states) {
           person.state = state;
-          if (state !== 'idle') person.x += STEP_TILES;
+          if (state !== 'idle') person.x += STEP_TILES * 1.5;
           drawer.update(people(emptyMap(1, W, H), [person]), 0.2);
           const s = layer.children[0] as Sprite;
           expect(layer.children).toHaveLength(1);
@@ -338,12 +338,13 @@ describe('the steps of a walker', () => {
   });
 
   it('takes as many frames over a tile at 1x as at 3x', () => {
-    // 0.2 tiles a second drawn 60 times a second: game speed 3 is three times the ground a frame
-    const perFrame = 0.2 / 60,
-      at1x = framesAlong(perFrame, 300),
-      at3x = framesAlong(perFrame * 3, 100),
+    // about 0.2 tiles a second drawn 60 times a second, never landing on a pose's edge: game
+    // speed 3 is three times the ground a frame, over the same 300 frames' ground
+    const perFrame = 1 / 301,
+      at1x = framesAlong(perFrame, 301),
+      at3x = framesAlong(perFrame * 3, 101),
       changes = (frames: number[]) => frames.filter((f, i) => i > 0 && f !== frames[i - 1]).length;
-    expect(changes(at1x)).toBe(Math.floor((299 * perFrame) / STEP_TILES));
+    expect(changes(at1x)).toBe(Math.floor((300 * perFrame) / STEP_TILES));
     expect(changes(at3x)).toBe(changes(at1x));
     // and the same frame stands on the same spot of ground at both speeds
     at3x.forEach((f, i) => expect(f).toBe(at1x[i * 3]));
@@ -416,7 +417,7 @@ describe('the steps of a walker', () => {
     const person = { ...walker(5, 5), outfit: 2 },
       seen = walking(person, isOldWalker);
     expect(seen.draw().key).toBe('people/walker_2_f0');
-    person.x += STEP_TILES;
+    person.x += STEP_TILES * 1.5;
     expect(seen.draw().key).toBe('people/walker_2_f1');
   });
 });
@@ -498,7 +499,7 @@ describe('a walker drawn from the atlas registry', () => {
         sim = people(emptyMap(1, W, H), crowd);
       drawer.update(sim);
       // a pose further on is the old walker's other frame
-      for (const person of crowd) person.x += step * STEP_TILES;
+      for (const person of crowd) person.x += step * STEP_TILES * 1.5;
       drawer.update(sim);
       const sprites = layer.children as Sprite[];
       expect(sprites).toHaveLength(4);
