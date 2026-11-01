@@ -803,16 +803,21 @@ export class Builder {
    * (nx, ny) too steep for a link? Each side counts at its rail: a dug or cut tile at its bed, so
    * the ground over it does not bind the link, and open ground at its level. The sides of a dug
    * tile are the wall of the tunnel: the way out of one, to a cut or to open ground, is a portal on
-   * exactly that face, at the floor. Elsewhere rail takes the step, at most one.
+   * exactly that face, at the floor. Elsewhere rail takes the step, at most one, or a viaduct
+   * crosses it: a platform on the lower tile carries the rail level off the higher one. A platform
+   * only on the higher tile carries nothing across, as the bare ground below sets the rail's foot.
    */
   private cliffAt(t: { x: number; y: number }, nx: number, ny: number): boolean {
     const under = this.underground,
       n = { x: nx, y: ny },
       step = Math.abs(this.railAt(t.x, t.y) - this.railAt(nx, ny)),
       dug = under.isDug(t.x, t.y);
-    if (dug === under.isDug(nx, ny)) return step > 1;
-    const [inner, outer] = dug ? [t, n] : [n, t];
-    return step > 0 || !under.hasPortal(inner.x, inner.y, faceTo(inner, outer));
+    if (dug !== under.isDug(nx, ny)) {
+      const [inner, outer] = dug ? [t, n] : [n, t];
+      return step > 0 || !under.hasPortal(inner.x, inner.y, faceTo(inner, outer));
+    }
+    const lo = this.railAt(t.x, t.y) <= this.railAt(nx, ny) ? t : n;
+    return step > 1 && !this.bridgeAt(lo.x, lo.y);
   }
   refundFor(p: TrackPiece): Cost {
     return this.free

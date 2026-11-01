@@ -775,6 +775,107 @@ describe('rail on the steps of generated ground', () => {
   });
 });
 
+// ---------------------------------------------------------------- viaducts
+
+describe('a viaduct across a cliff', () => {
+  const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
+  const ROW = 20;
+  const platform = BUILDING_DEFS.find((d) => d.bridge)!;
+
+  /** Level 4, with a valley at level 0 from 20 to 24, and platforms from `from` to `to`. */
+  function valley(from: number, to: number) {
+    const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass),
+      raw = Uint8Array.from({ length: SIZE * SIZE }, (_, i) =>
+        i % SIZE >= 20 && i % SIZE <= 24 ? 0 : 4,
+      );
+    map.generatedLevel = tileLevels({ ...map, generatedLevel: raw });
+    const track = new TrackGraph(SIZE, SIZE),
+      regions = new RegionState(map);
+    for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
+    const builder = new Builder(map, regions, track, electricAge(), storeWith({}).stores);
+    builder.free = true;
+    builder.groundCheck = (x, y, need) => groundAllowsOn(map, x, y, need);
+    expect(levelAt(map, 19, ROW)).toBe(4);
+    expect(levelAt(map, 20, ROW)).toBe(0);
+    for (let x = from; x <= to; x++)
+      expect(builder.placeBuilding(x, ROW, platform.id), `platform on ${x}`).not.toBeNull();
+    const rail = () => railProfile(map, track, (x, y) => !!builder.bridgeAt(x, y));
+    return { track, builder, rail };
+  }
+  const levelsOf = (beds: ReturnType<typeof railProfile>, xs: number[]) =>
+    xs.map((x) => beds.get(ROW * SIZE + x)!.spans[0].a);
+  const row = (from: number, to: number) =>
+    Array.from({ length: to - from + 1 }, (_, i) => from + i);
+
+  it('runs level from the cliff top with platforms on the valley floor', () => {
+    const { builder, rail } = valley(20, 24);
+    expect(builder.placeTrack(19, ROW, STRAIGHT, 1)).toBe(true);
+    const c = builder.checkTrack(20, ROW, STRAIGHT, 1);
+    expect(c.ok, c.reason).toBe(true);
+    for (const x of row(20, 25)) expect(builder.placeTrack(x, ROW, STRAIGHT, 1)).toBe(true);
+    expect(levelsOf(rail(), row(19, 25))).toEqual(row(19, 25).map(() => 4));
+    expect(row(19, 25).every((x) => rail().get(ROW * SIZE + x)!.flat)).toBe(true);
+  });
+
+  it('runs on with platforms past both feet of the cliff too', () => {
+    const { builder, rail } = valley(18, 26);
+    for (const x of row(17, 27)) {
+      const c = builder.checkTrack(x, ROW, STRAIGHT, 1);
+      expect(c.ok, `${x}: ${c.reason}`).toBe(true);
+      expect(builder.placeTrack(x, ROW, STRAIGHT, 1)).toBe(true);
+    }
+    expect(levelsOf(rail(), row(17, 27))).toEqual(row(17, 27).map(() => 4));
+  });
+
+  it('is laid from the valley towards the cliff as well', () => {
+    const { builder } = valley(20, 24);
+    expect(builder.placeTrack(20, ROW, STRAIGHT, 1)).toBe(true);
+    expect(builder.checkTrack(19, ROW, STRAIGHT, 1).ok).toBe(true);
+    expect(builder.placeTrack(24, ROW, STRAIGHT, 1)).toBe(true);
+    expect(builder.checkTrack(25, ROW, STRAIGHT, 1).ok).toBe(true);
+  });
+
+  it('refuses a platform on the cliff top with bare ground at the foot', () => {
+    const { builder } = valley(16, 19);
+    expect(builder.placeTrack(19, ROW, STRAIGHT, 1)).toBe(true);
+    expect(builder.checkTrack(20, ROW, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+    expect(builder.placeTrack(20, ROW + 2, STRAIGHT, 1)).toBe(true);
+    expect(builder.placeBuilding(19, ROW + 2, platform.id)).not.toBeNull();
+    expect(builder.checkTrack(19, ROW + 2, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+  });
+
+  it('leaves the wall of a dug tile to its portal', () => {
+    const { builder } = valley(20, 24);
+    // the valley's platform faces a dug tile on the cliff, with no portal on that face
+    builder.underground.dig(19, ROW, 0);
+    expect(builder.placeTrack(20, ROW, STRAIGHT, 1)).toBe(true);
+    builder.insideMode = true;
+    expect(builder.checkTrack(19, ROW, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+    builder.underground.addPortal({ x: 19, y: ROW, face: 'E', floor: 0 });
+    expect(builder.checkTrack(19, ROW, STRAIGHT, 1).ok).toBe(true);
+  });
+
+  it('counts a cut at its bed: a platform above it holds nothing up', () => {
+    const { builder } = valley(20, 20);
+    builder.underground.cut(19, ROW + 2);
+    expect(builder.placeTrack(19, ROW + 2, STRAIGHT, 1)).toBe(true);
+    expect(builder.placeBuilding(18, ROW + 2, platform.id)).not.toBeNull();
+    expect(builder.checkTrack(18, ROW + 2, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+  });
+});
+
 // ---------------------------------------------------------------- inside
 
 describe('track inside', () => {
