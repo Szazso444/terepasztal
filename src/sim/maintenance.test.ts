@@ -164,6 +164,8 @@ function cut(w: SimWorld, x: number) {
   w.builder.removeTrack(x, 30);
   w.builder.free = false;
 }
+/** The tile of the depot gate the line of `workLine` starts at. */
+const GATE = 6;
 /** A train on no track at all: it looks on the board, and finds a piece claimed or not. */
 const onlooker = () => new Train([{ uid: 90, level: 1, def: locoDef('adler') }]);
 /** Steps the world until `done` holds; throws after `limit` game seconds. */
@@ -382,6 +384,103 @@ describe('a maintenance train choosing work', () => {
     expect(searches.mock.calls.length).toBe(1);
     until(w, repairing(t));
     expect(t.headTile).toEqual({ x: 20, y: 30 });
+  });
+});
+
+describe('a maintenance train with no work', () => {
+  const free = (w: SimWorld) =>
+    w.fleet.dispatchCheck(
+      [w.inventory.add('adler', 0).uid],
+      [w.inventory.add('maint_wagon_branch', 0).uid],
+      [],
+      null,
+      'maintenance',
+    ).reason;
+
+  it('stops its own length and a tile short of the gate, on the line it comes home by', () => {
+    rules.trackWearMul = 0;
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    depotWith(w, startStock(), { x: 4, y: 30 });
+    line(w, 6, 30, 50);
+    wearDown(w, 40, 0.2);
+    const t = maintTrain(w, []);
+    until(w, () => healthAt(w, 40) >= 1);
+    until(w, () => t.state === 'idle');
+    expect(t.headTile).toEqual({ x: GATE + Math.ceil(t.length) + 1, y: 30 });
+  });
+
+  it('leaves the gate open after a repair, on a depot with one line', () => {
+    const { w, stops } = workLine();
+    wearDown(w, 40, 0.2);
+    const t = maintTrain(w, stops);
+    until(w, () => healthAt(w, 40) >= 1);
+    until(w, () => t.state === 'idle');
+    expect(free(w)).toBeNull();
+    const next = maintTrain(w, stops, 'schedule');
+    const from = next.distance;
+    until(w, () => next.distance > from + 5, 120);
+  });
+
+  it('rolled out with nothing to do, it clears the gate too', () => {
+    const { w, stops } = workLine();
+    const t = maintTrain(w, stops);
+    expect(t.state).toBe('moving');
+    until(w, () => t.state === 'idle');
+    expect(t.headTile!.x).toBeGreaterThan(GATE + Math.ceil(t.length));
+    expect(free(w)).toBeNull();
+    expect(typeof maintTrain(w, stops, 'schedule')).toBe('object');
+  });
+
+  it('stands at the gate when the line holds no place clear of it', () => {
+    rules.trackWearMul = 0;
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    depotWith(w, startStock(), { x: 4, y: 30 });
+    line(w, 6, 30, 10);
+    const t = maintTrain(w, []);
+    expect(t.state).toBe('idle');
+    expect(t.headTile).toEqual({ x: GATE, y: 30 });
+    expect(t.parkAt).toEqual({ x: GATE, y: 30 });
+  });
+
+  it('waits on no platform', () => {
+    const { w, stops } = workLine();
+    station(w, 'warehouse', 8, 29);
+    const t = maintTrain(w, stops);
+    until(w, () => t.state === 'idle');
+    const platforms = w.builder.stations.flatMap((s) => w.builder.platformTiles(s));
+    const under = t.occupancyKeys(w.track.w);
+    expect(platforms.filter((p) => under.includes(w.track.key(p.x, p.y)))).toEqual([]);
+  });
+
+  it('a second train waits behind the first, and both stay put', () => {
+    const { w, stops } = workLine();
+    const first = maintTrain(w, stops);
+    until(w, () => first.state === 'idle');
+    const second = maintTrain(w, stops);
+    until(w, () => second.state === 'idle');
+    const a = first.headTile!;
+    const b = second.headTile!;
+    expect(new Set(first.occupancyKeys(w.track.w)).has(w.track.key(b.x, b.y))).toBe(false);
+    const from = w.clock.time;
+    until(w, () => w.clock.time > from + 65);
+    expect(first.headTile).toEqual(a);
+    expect(second.headTile).toEqual(b);
+    expect(first.blocked || second.blocked).toBe(false);
+  });
+
+  it('keeps its place through a save', () => {
+    const { w, stops } = workLine();
+    const t = maintTrain(w, stops);
+    const saved = JSON.parse(JSON.stringify(t.toJSON())) as ReturnType<Train['toJSON']>;
+    const back = Train.fromJSON(saved, w.track);
+    expect(back.parkAt).toEqual(t.parkAt);
+    w.fleet.trains[0] = back;
+    until(w, () => back.state === 'idle');
+    expect(back.headTile).toEqual(back.parkAt);
+    expect(
+      Train.fromJSON({ ...saved, parkAt: { x: 'a', y: 1 } } as unknown as typeof saved, w.track)
+        .parkAt,
+    ).toBeNull();
   });
 });
 
@@ -609,9 +708,10 @@ describe('a maintenance train at work', () => {
     wearDown(w, 40, 0.2);
     const t = maintTrain(w, stops);
     until(w, () => healthAt(w, 40) >= 1);
-    const gates = () => w.builder.depots().flatMap((d) => w.builder.platformTiles(d));
-    until(w, () => t.state === 'idle' && gates().some((g) => g.x === t.headTile!.x));
+    until(w, () => t.state === 'idle');
     const home = t.headTile;
+    expect(home).toEqual(t.parkAt);
+    expect(home!.x).toBeGreaterThanOrEqual(GATE + Math.ceil(t.length) + 1);
     expect(t.maint).toBeNull();
     const looks = vi.spyOn(w.fleet.maintenance, 'pick');
     const from = w.clock.time;
@@ -622,6 +722,32 @@ describe('a maintenance train at work', () => {
     wearDown(w, 30, 0.2);
     until(w, repairing(t), 60);
     expect(t.headTile).toEqual({ x: 30, y: 30 });
+  });
+
+  it('looks for work on the way too, every 30 seconds', () => {
+    const { w, stops } = workLine();
+    wearDown(w, 80, 0.2);
+    const t = maintTrain(w, stops);
+    until(w, () => healthAt(w, 80) >= 1, 900);
+    until(w, () => t.state === 'moving' && t.parkAt !== null);
+    wearDown(w, 85, 0.2);
+    const looks = vi.spyOn(w.fleet.maintenance, 'pick');
+    const from = w.clock.time;
+    until(w, () => t.maint?.ax === 85, 31);
+    expect(t.parkAt).toBeNull();
+    expect(looks.mock.calls.length).toBeLessThanOrEqual(2);
+    expect(w.clock.time - from).toBeGreaterThan(0);
+    until(w, repairing(t));
+    expect(t.headTile).toEqual({ x: 85, y: 30 });
+  });
+
+  it('on the way home with nothing new it runs on to its place', () => {
+    const { w, stops } = workLine();
+    wearDown(w, 80, 0.2);
+    const t = maintTrain(w, stops);
+    until(w, () => healthAt(w, 80) >= 1, 900);
+    until(w, () => t.state === 'idle', 900);
+    expect(t.headTile).toEqual(t.parkAt);
   });
 
   it('with no depot in reach it stands and looks again', () => {

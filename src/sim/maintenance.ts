@@ -4,16 +4,13 @@
  * target, gives the nearest it can reach. The claims are the jobs the trains hold (`Train.maint`),
  * so they come back with a save and end with the train.
  */
-import { DIR_DX, DIR_DY, DIRS } from '../engine/iso';
+import { DIR_DX, DIR_DY, DIRS, opposite } from '../engine/iso';
 import type { PathSegment } from '../world/pathfinding';
 import type { TrackGraph, TrackPiece } from '../world/track';
 import type { Builder } from './build';
 import { rules } from './rules';
 import type { Station } from './stations';
 import type { Train } from './trains';
-
-/** Game seconds between two looks for work of a train with none. */
-export const MAINT_LOOK_EVERY = 30;
 
 /** A piece a train looks after. */
 export interface MaintJob {
@@ -23,6 +20,15 @@ export interface MaintJob {
   /** 0 unusable, 1 degraded, 2 close to degraded */
   tier: 0 | 1 | 2;
   /** the tile the train stands on */
+  x: number;
+  y: number;
+}
+
+/** How far along the line out of a gate a train looks for a place to wait. */
+const LINE_OUT_TILES = 64;
+
+/** A tile of the map. */
+interface Tile {
   x: number;
   y: number;
 }
@@ -67,16 +73,79 @@ export class MaintenanceBoard {
   release(t: Train): void {
     t.maint = null;
   }
-  /** The nearest depot the train can reach, and the way there. */
-  depot(t: Train, track: TrackGraph): { depot: Station; path: PathSegment[] } | null {
+  /**
+   * Where a train with no work waits, and the way there; null with no depot in reach. It heads for
+   * the nearest depot and stops its own length and one tile short of the gate, on plain track, so
+   * that a train like it can still roll out. A train already nearer the gate than that runs out
+   * along the line until its near end stands that far off. Only with no such track does it stand
+   * at the gate.
+   */
+  park(t: Train, track: TrackGraph): { at: Tile; path: PathSegment[] } | null {
     const gates = new Map<number, Station>();
     for (const d of this.builder.depots())
       for (const p of this.builder.platformTiles(d)) gates.set(track.key(p.x, p.y), d);
     if (!gates.size) return null;
     const path = this.search(t, track, (x, y) => gates.has(track.key(x, y)));
     if (!path) return null;
-    const end = path[path.length - 1];
-    return { depot: gates.get(track.key(end.x, end.y))!, path };
+    const gate = path[path.length - 1];
+    const len = Math.ceil(t.length);
+    const clear = this.standsClear(t, track);
+    const home = path.map(({ x, y }) => ({ x, y })).reverse();
+    for (let i = len + 1; i < home.length; i++)
+      if (clear(home, i, i + len)) return { at: home[i], path: path.slice(0, path.length - i) };
+    const out = this.lineOut(t, track, gates.get(track.key(gate.x, gate.y))!, gate);
+    for (let i = 2 * len + 1; i < out.length; i++) {
+      if (!clear(out, i - len, i)) continue;
+      const { x, y } = out[i];
+      const way = this.search(t, track, (tx, ty) => tx === x && ty === y);
+      if (way) return { at: out[i], path: way };
+      break;
+    }
+    return { at: { x: gate.x, y: gate.y }, path };
+  }
+  /**
+   * The test of a stretch of `way` (`from` to `to`, as far as it goes) for a train to stand on:
+   * plain track, no platform, switch or crossing, and clear of where another train waits.
+   */
+  private standsClear(t: Train, track: TrackGraph) {
+    const platforms = new Set<number>();
+    for (const s of this.builder.stations)
+      for (const p of this.builder.platformTiles(s)) platforms.add(track.key(p.x, p.y));
+    const others = this.waiting(t);
+    const taken = new Set<number>();
+    for (const o of others) {
+      taken.add(track.key(o.parkAt!.x, o.parkAt!.y));
+      if (o.state === 'idle') for (const k of o.occupancyKeys(track.w)) taken.add(k);
+    }
+    const back = Math.max(0, ...others.map((o) => Math.ceil(o.length))) + 1;
+    const plain = ({ x, y }: Tile) => {
+      const kind = track.get(x, y)?.kind;
+      return kind !== 'switch' && kind !== 'crossing' && !platforms.has(track.key(x, y));
+    };
+    return (way: readonly Tile[], from: number, to: number) =>
+      way.slice(from, to + 1).every(plain) &&
+      !way.slice(Math.max(0, from - back), to + 2).some((p) => taken.has(track.key(p.x, p.y)));
+  }
+  /** The other trains waiting for work, or on their way to wait. */
+  private waiting(t: Train): Train[] {
+    return this.trains().filter((o) => o !== t && o.parkAt);
+  }
+  /** The tiles of the line out of a gate, straight on at a switch, as far as the train may run. */
+  private lineOut(t: Train, track: TrackGraph, depot: Station, gate: Tile): Tile[] {
+    const tiles: Tile[] = [{ x: gate.x, y: gate.y }];
+    const links = track.get(gate.x, gate.y)?.links ?? [];
+    let entry = depot.gateEntry(gate, links);
+    while (entry !== undefined && tiles.length <= LINE_OUT_TILES) {
+      const at = tiles[tiles.length - 1];
+      const exits = track.exits(at.x, at.y, entry);
+      const leave = exits.find((e) => e === opposite(entry!)) ?? exits[0];
+      if (leave === undefined || !track.connected(at.x, at.y, leave)) break;
+      const next = { x: at.x + DIR_DX[leave], y: at.y + DIR_DY[leave] };
+      entry = opposite(leave);
+      if (!t.canUse(track.get(next.x, next.y)!, entry)) break;
+      tiles.push(next);
+    }
+    return tiles;
   }
   /**
    * The way to the nearest target from either end of the train, one search whichever it turns out

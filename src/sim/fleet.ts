@@ -330,11 +330,7 @@ export class Fleet {
         info.reason = STR.compat.gateNoTrack(g.x, g.y);
         continue;
       }
-      const toStation = DIRS.find((d) => depot.covers(g.x + DIR_DX[d], g.y + DIR_DY[d]));
-      const entry =
-        toStation !== undefined && piece.links.some((l) => l.includes(toStation))
-          ? toStation
-          : piece.links[0]?.[0];
+      const entry = depot.gateEntry(g, piece.links);
       if (entry === undefined) {
         info.reason = STR.compat.gateNoTrack(g.x, g.y);
         continue;

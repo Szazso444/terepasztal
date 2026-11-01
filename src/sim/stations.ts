@@ -1,4 +1,5 @@
 import { content, dataName, type StationDef, type Cost } from '../data/content';
+import { DIR_DX, DIR_DY, DIRS, type Dir } from '../engine/iso';
 import { LANGUAGE } from '../strings';
 import type { LevelStation } from '../world/level';
 import { weekSeconds } from './rules';
@@ -457,6 +458,13 @@ export class Station {
   /** Tiles where track may serve the station (`stationGates`). */
   gateTiles(): { x: number; y: number }[] {
     return gatesOf(this.def, this.x, this.y, this.rot);
+  }
+  /** The edge of a gate's piece on the station's side, or its first link's: a train entering there runs out of the gate. */
+  gateEntry(g: { x: number; y: number }, links: readonly (readonly Dir[])[]): Dir | undefined {
+    const toStation = DIRS.find((d) => this.covers(g.x + DIR_DX[d], g.y + DIR_DY[d]));
+    return toStation !== undefined && links.some((l) => l.includes(toStation))
+      ? toStation
+      : links[0]?.[0];
   }
   /** Chebyshev distance from the footprint to a tile. */
   distTo(x: number, y: number) {

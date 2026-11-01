@@ -3,7 +3,7 @@ import type { TrackGraph, TrackPiece } from '../world/track';
 import { curveFactor } from '../world/trackGeom';
 import { findPath, walkBack, type PathSegment, type PathStart } from '../world/pathfinding';
 import { lineSpeedCap, approachCap } from './lineSpeed';
-import { MAINT_LOOK_EVERY, type MaintenanceBoard, type MaintJob } from './maintenance';
+import type { MaintenanceBoard, MaintJob } from './maintenance';
 import {
   consistAccess,
   consistGauge,
@@ -196,13 +196,19 @@ function owedJSON(owed: { food: number; sand: number }): {
 } {
   return { owed: { ...owed } };
 }
-/** A maintenance train's job and repair debt as its save holds them: only when it has them. */
+/** A maintenance train's job, waiting place and repair debt in its save: only when it has them. */
 function maintJSON(
   maint: MaintJob | null,
+  parkAt: { x: number; y: number } | null,
   repairOwed: Record<string, number>,
-): { maint?: MaintJob; repairOwed?: Record<string, number> } {
+): {
+  maint?: MaintJob;
+  parkAt?: { x: number; y: number };
+  repairOwed?: Record<string, number>;
+} {
   return {
     ...(maint && { maint: { ...maint } }),
+    ...(parkAt && { parkAt: { ...parkAt } }),
     ...(Object.keys(repairOwed).length && { repairOwed: { ...repairOwed } }),
   };
 }
@@ -212,6 +218,12 @@ function maintOf(v: MaintJob | undefined): MaintJob | null {
   const { ax, ay, tier, x, y } = v;
   const tiles = [ax, ay, x, y].every(Number.isInteger);
   return tiles && (tier === 0 || tier === 1 || tier === 2) ? { ax, ay, tier, x, y } : null;
+}
+/** A waiting place as a file holds it: null unless a whole tile. */
+function parkAtOf(v: { x: number; y: number } | undefined): { x: number; y: number } | null {
+  if (typeof v !== 'object' || v === null) return null;
+  const { x, y } = v;
+  return Number.isInteger(x) && Number.isInteger(y) ? { x, y } : null;
 }
 /** What repairs left owing as a file holds it: the finite amounts above 0. */
 function repairOwedOf(v: Record<string, number> | undefined): Record<string, number> {
@@ -899,6 +911,8 @@ export class Train {
   }
   /** the piece it looks after (`MaintenanceBoard`), kept until the job is done or left */
   maint: MaintJob | null = null;
+  /** the tile it waits on with no job, or heads for to wait (`MaintenanceBoard.park`) */
+  parkAt: { x: number; y: number } | null = null;
   /** what its repairs have cost short of a whole unit, by resource */
   repairOwed: Record<string, number> = {};
   /** at work with no store able to pay the next units: it stands and waits (not saved) */
@@ -907,7 +921,7 @@ export class Train {
   get maintaining() {
     return this.mode === 'maintenance' && !this.job;
   }
-  /** A maintenance train not heading for its depot is bound for its job, or nowhere. */
+  /** A maintenance train on no refuelling detour is bound for its job, its waiting place or nowhere. */
   private get boundForWork() {
     return this.maintaining && this.detour === null;
   }
@@ -1777,7 +1791,10 @@ export class Train {
   // ------------------------------------------------------------ routing
   /** The tiles the train is bound for: its job's, or the platforms of its stop or detour. */
   private boundTiles(builder: Builder): { x: number; y: number }[] {
-    if (this.boundForWork) return this.maint ? [this.maint] : [];
+    if (this.boundForWork) {
+      const to = this.maint ?? this.parkAt;
+      return to ? [to] : [];
+    }
     const id = this.detour ?? this.route[this.routeIndex % this.route.length];
     const target = builder.stationById(id);
     return target ? builder.platformTiles(target) : [];
@@ -2225,7 +2242,8 @@ export class Train {
     }
     switch (this.state) {
       case 'moving':
-        this.tickMove(gdt, ctx);
+        if (this.lookingOnTheWay) this.tickMaintenance(gdt, ctx);
+        if (this.state === 'moving') this.tickMove(gdt, ctx);
         break;
       case 'loading':
         this.tickLoad(gdt, ctx);
@@ -2324,12 +2342,18 @@ export class Train {
 
   /**
    * A maintenance train's own step, in place of the route logic: at work it mends the piece at the
-   * repair rate, paid as it goes, and at 100 % takes the next job; with no job it stands and looks
-   * again every `MAINT_LOOK_EVERY` game seconds. When no store can pay it waits at the piece.
+   * repair rate, paid as it goes, and at 100 % takes the next job; with no job it looks again every
+   * `trackLookSeconds` game seconds, standing or on its way to wait. When no store can pay it waits
+   * at the piece.
    */
   tickMaintenance(gdt: number, ctx: TickCtx): void {
+    if (this.state === 'moving') {
+      this.stateTime = 0;
+      this.takeJob(ctx);
+      return;
+    }
     if (this.state === 'idle') {
-      if (this.stateTime >= MAINT_LOOK_EVERY && !this.leaveBroken(ctx)) this.nextWork(ctx);
+      if (this.stateTime >= rules.trackLookSeconds && !this.leaveBroken(ctx)) this.nextWork(ctx);
       return;
     }
     if (!this.maintaining) {
@@ -2370,21 +2394,40 @@ export class Train {
     this.repairOwed = owed;
     return true;
   }
-  /** The next job, or with none the way to the nearest depot, or with no depot in reach a stand. */
+  /** On its way to wait, is it time to look for work again? */
+  private get lookingOnTheWay() {
+    return (
+      this.boundForWork &&
+      this.parkAt !== null &&
+      !this.holding &&
+      !this.serviceStop &&
+      this.stateTime >= rules.trackLookSeconds
+    );
+  }
+  /** Take the next job, if there is one it can reach. */
+  private takeJob(ctx: TickCtx): boolean {
+    const found = ctx.maintenance.pick(this, ctx.track);
+    if (!found) return false;
+    this.parkAt = null;
+    if (!this.setOff(found.path, ctx)) this.startWork();
+    return true;
+  }
+  /**
+   * The next job. With none it goes to wait by the nearest depot (`MaintenanceBoard.park`), or
+   * stands where it is with no depot in reach. A train already waiting stays: it may have made way
+   * for another, and going back would only put it in the way again.
+   */
   private nextWork(ctx: TickCtx) {
     this.detour = null;
     this.serviceStop = null;
-    const found = ctx.maintenance.pick(this, ctx.track);
-    if (found) {
-      if (!this.setOff(found.path, ctx)) this.startWork();
+    if (this.takeJob(ctx)) return;
+    if (this.state === 'idle' && this.parkAt) {
+      this.idle();
       return;
     }
-    const home = ctx.maintenance.depot(this, ctx.track);
-    if (home) this.detour = home.depot.id;
-    if (!home || !this.setOff(home.path, ctx)) {
-      this.detour = null;
-      this.idle(ENGLISH.trainNote.noWork);
-    }
+    const spot = ctx.maintenance.park(this, ctx.track);
+    this.parkAt = spot?.at ?? null;
+    if (!spot || !this.setOff(spot.path, ctx)) this.idle(ENGLISH.trainNote.noWork);
   }
   /** Follow a way from either end of the train; false when it stands where the way ends. */
   private setOff(path: PathSegment[], ctx: TickCtx): boolean {
@@ -2417,12 +2460,13 @@ export class Train {
     if (!this.holding && ['moving', 'idle', 'noRoute'].includes(this.state)) this.nextWork(ctx);
   }
   /**
-   * The train leaves the Maintenance mode: its job is off. At work, or running to the job on a way
-   * of its own, it drops the way and stands free to plan again; a detour, a service stop or a
+   * The train leaves the Maintenance mode: its job is off. At work, or running to the job or to wait
+   * on a way of its own, it drops the way and stands free to plan again; a detour, a service stop or a
    * back-off it is on ends as usual.
    */
   leaveWork(): void {
     this.maint = null;
+    this.parkAt = null;
     this.repairUnpaid = false;
     const onItsWay =
       this.state === 'moving' && !this.holding && !this.serviceStop && this.detour === null;
@@ -2520,7 +2564,8 @@ export class Train {
       this.detour ?? this.route[this.routeIndex % this.route.length],
     );
     if (!this.path) {
-      if (this.boundForWork) this.startWork();
+      if (this.boundForWork && this.maint) this.startWork();
+      else if (this.boundForWork) this.idle(ENGLISH.trainNote.noWork);
       else if (target) this.arrive(target, 'track' in ctx ? ctx : undefined);
       else this.setState('noRoute');
       return;
@@ -2832,9 +2877,11 @@ export class Train {
         return;
       }
       if (this.boundForWork) {
-        // at the job's tile, or at the end of a way that failed track cut short
-        if (this.maint?.x === seg.x && this.maint.y === seg.y) this.startWork();
-        else this.setState('noRoute');
+        // at the job's tile, at its waiting place, or at the end of a way failed track cut short
+        const to = this.maint ?? this.parkAt;
+        if (to?.x !== seg.x || to.y !== seg.y) this.setState('noRoute');
+        else if (this.maint) this.startWork();
+        else this.idle(ENGLISH.trainNote.noWork);
         return;
       }
       if (want && st === want) this.arrive(want, ctx);
@@ -3817,8 +3864,9 @@ export class Train {
       dropped: this.dropped,
       // the food and sand it owes the next store; a file without them owes nothing
       ...owedJSON(this.owed),
-      // the job it holds and what its repairs left owing; a file without them has neither
-      ...maintJSON(this.maint, this.repairOwed),
+      // the job it holds, where it waits and what its repairs left owing; a file without them has
+      // none of these
+      ...maintJSON(this.maint, this.parkAt, this.repairOwed),
     };
   }
 
@@ -3889,6 +3937,7 @@ export class Train {
     t.dropped = j.dropped === true;
     t.owed = { food: owedOf(j.owed?.food), sand: owedOf(j.owed?.sand) };
     t.maint = maintOf(j.maint);
+    t.parkAt = parkAtOf(j.parkAt);
     t.repairOwed = repairOwedOf(j.repairOwed);
     // a yielding train looks again only every two seconds: until then what it last found holds
     if (t.state === 'yielding') {

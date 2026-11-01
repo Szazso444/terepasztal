@@ -494,6 +494,10 @@ export const HU_RULES: Record<string, { label: string; hint?: string }> = {
     label: 'Vonatos javítás ideje (játékmásodperc)',
     hint: 'az elem teljes életének javításáért',
   },
+  trackLookSeconds: {
+    label: 'Karbantartó vonat munkakeresése (játékmásodperc)',
+    hint: 'milyen gyakran néz újra körül a munka nélküli vonat',
+  },
   trackHandRepairMul: {
     label: 'Kézi javítás ára x',
     hint: 'a vonatos javítás árának többszöröse',
