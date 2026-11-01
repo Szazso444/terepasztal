@@ -136,8 +136,11 @@ describe('what the edge strip shows', () => {
     const generate: MapGenerator = (s, p) => generateMap(s, p, 'simple');
     const spec = world(base.chunks);
     const strip = stripOf(spec, generate);
-    const req = edgeStripRequest(spec)!;
-    const grown = buildMap(4242, req.grown, base.chunks, generate).map;
+    // the grown map as the game gets there, by no road of the strip's own
+    const save = { world: spec, track: [], stations: [], trains: [], camera: { x: 0, y: 0 } };
+    const after = expandSave(save as unknown as SaveGame, 1).world;
+    if (after?.kind !== 'generated') throw new Error('not grown');
+    const grown = buildMap(4242, after.params, after.chunks ?? {}, generate).map;
     const levels = tileLevels(grown);
     for (const { x, y } of stripTiles(SIZE, SIZE)) {
       const t = edgeTile(strip, x, y);
@@ -145,14 +148,28 @@ describe('what the edge strip shows', () => {
       if (t.terrain !== want.terrain || t.level !== want.level)
         expect([x, y, t]).toEqual([x, y, want]);
     }
+    // the store has its say: with no chunks stored the strip comes out otherwise
+    const bare = stripOf(world({}), generate);
+    const differs = stripTiles(SIZE, SIZE).filter(({ x, y }) => {
+      const a = edgeTile(strip, x, y);
+      const b = edgeTile(bare, x, y);
+      return a.terrain !== b.terrain || a.level !== b.level;
+    });
+    expect(differs.length).toBeGreaterThan(0);
   });
 
-  it('leaves the store as it was', () => {
+  it('leaves the store as it was, the request and the world alike', () => {
     const base = buildMap(4242, params, {}, ridge);
+    const before = structuredClone(base.chunks);
     const spec = world(base.chunks);
-    const keys = Object.keys(base.chunks);
-    stripOf(spec, ridge);
-    expect(spec.kind === 'generated' && Object.keys(spec.chunks ?? {})).toEqual(keys);
+    const req = edgeStripRequest(spec)!;
+    edgeStripOf(req, ridge);
+    expect(req.chunks).toEqual(before);
+    expect(base.chunks).toEqual(before);
+    // the build has more chunks than the map: they are not kept anywhere
+    expect(Object.keys(before).length).toBeLessThan(
+      Object.keys(buildMap(4242, req.grown, before, ridge).chunks).length,
+    );
   });
 
   it('keeps a stored chunk past the map, which the growth will read', () => {
@@ -185,6 +202,41 @@ describe('what the edge strip shows', () => {
     const strip = stripOf(world(base.chunks), ridge);
     expect(edgeTile(strip, 20, -5)).toEqual({ terrain: Terrain.Water, level: 2 });
     expect(edgeTile(strip, 20, SIZE + 3)).toEqual({ terrain: Terrain.Grass, level: 0 });
+  });
+});
+
+describe('the parameters of the strip', () => {
+  /** A world's own tuning, none of it the default. */
+  const own: MapGenParams = {
+    ...params,
+    waterLevel: DEFAULT_MAP_PARAMS.waterLevel + 0.05,
+    hillLevel: DEFAULT_MAP_PARAMS.hillLevel + 0.05,
+    rockLevel: DEFAULT_MAP_PARAMS.rockLevel + 0.05,
+    forestDensity: DEFAULT_MAP_PARAMS.forestDensity + 0.05,
+  };
+
+  it('are the parameters of the grown save, not the defaults', () => {
+    const spec = world({}, own);
+    const req = edgeStripRequest(spec)!;
+    const save = { world: spec, track: [], stations: [], trains: [], camera: { x: 0, y: 0 } };
+    const after = expandSave(save as unknown as SaveGame, 1).world;
+    if (after?.kind !== 'generated') throw new Error('not grown');
+    expect(req.grown).toEqual({ ...DEFAULT_MAP_PARAMS, ...after.params });
+    expect(req.grown.waterLevel).toBe(own.waterLevel);
+  });
+
+  it('change what the strip holds', () => {
+    const generate: MapGenerator = (s, p) => generateMap(s, p, 'simple');
+    const plain = stripOf(world({}), generate);
+    const tuned = stripOf(world({}, { ...own, waterLevel: 0.7 }), generate);
+    expect(Buffer.compare(plain.terrain, tuned.terrain)).not.toBe(0);
+  });
+
+  it('take the size and the origin of the world, on a world not at the origin', () => {
+    const shifted: MapGenParams = { ...params, w: 96, h: 64, originX: 32, originY: -32 };
+    const req = edgeStripRequest(world({}, shifted))!;
+    expect([req.w, req.h]).toEqual([96, 64]);
+    expect(req.grown).toMatchObject({ w: 160, h: 128, originX: 0, originY: -64 });
   });
 });
 

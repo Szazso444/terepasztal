@@ -180,7 +180,7 @@ export function climateAt(map: ClimateMap, x: number, y: number): Biome {
 export function climateAtIndex(map: Pick<ClimateMap, 'biome' | 'climate'>, i: number): Biome {
   return (map.climate ?? map.biome)[i] as Biome;
 }
-export function regionOf(map: GameMap, x: number, y: number) {
+export function regionOf(map: Pick<GameMap, 'regionSize' | 'regionsX'>, x: number, y: number) {
   return Math.floor(y / map.regionSize) * map.regionsX + Math.floor(x / map.regionSize);
 }
 /**
