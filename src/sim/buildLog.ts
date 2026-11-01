@@ -577,7 +577,9 @@ export function stepLabel(ops: readonly BuildOp[]): string {
         buildingLevel({ ...first.building, level: first.was.level }) + 1,
       );
     case 'deck':
-      return H.raised(buildingDef(first.building.id).name);
+      return (first.now ?? -1) < (first.was ?? -1)
+        ? H.lowered(buildingDef(first.building.id).name)
+        : H.raised(buildingDef(first.building.id).name);
     case 'name':
       return H.renamed(first.shown, first.now);
     default:

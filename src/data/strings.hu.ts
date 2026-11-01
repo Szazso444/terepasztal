@@ -104,6 +104,7 @@ export const HU: Strings = {
     track: 'sín',
     road: 'út',
     raised: (name: string) => `${name} megemelve`,
+    lowered: (name: string) => `${name} leengedve`,
     upgradedTo: (name: string, level: number) => `${name} fejlesztve: ${level}. szint`,
     downgradedTo: (name: string, level: number) => `${name} visszaminősítve: ${level}. szint`,
     renamed: (was: string, now: string) => `Átnevezve: ${was} → ${now}`,
@@ -375,6 +376,8 @@ export const HU: Strings = {
     raise: {
       none: 'Itt nincs híd',
       highest: 'Ez a híd már a legmagasabb',
+      lowest: 'Ez a híd már a legalacsonyabb',
+      roadOnRaised: 'Az út a partok szintjén marad: előbb engedd le ezt a hidat',
       road: 'Az út a partok szintjén marad: ez a híd nem emelhető',
       station: 'Állomás áll ezen a hídon: nem emelhető',
       ramp: 'Az útban lévő ív, kitérő vagy keresztezés nem emelkedhet: ide nem érne fel a felhajtó',
@@ -425,6 +428,7 @@ export const HU: Strings = {
     bridgeDragHint: 'húzd a híd sínnel együtt lefektetéséhez',
     raiseHint: (cost: string) => `Kattints: a híd egy szinttel feljebb · ${cost}`,
     raiseFree: 'Kattints: a híd egy szinttel feljebb',
+    lowerHint: 'Jobb klikk: egy szinttel lejjebb',
     runPieces: (n: number, kind: string) => `${n} x ${kind}`,
     runCurves: (n: number) => `+${n} ív`,
     dragTurn: 'R: fordulás a másik saroknál',
@@ -493,7 +497,7 @@ export const HU: Strings = {
       track: 'Fűre, erdőbe, homokra vagy dombra. Sziklára nem; vízhez híd kell.',
       bridge: 'Csak vízcsempére, mindkét parton sínhez csatlakozva.',
       bridgePlatform:
-        'Víz fölött híd, szárazföldön vagy megemelve völgyhíd. Húzd, és sínnel együtt fekszik le; a hídra kattintva megemeled.',
+        'Víz fölött híd, szárazföldön vagy megemelve völgyhíd. Húzd, és sínnel együtt fekszik le; a hídra kattintva megemeled, jobb klikkel leengeded.',
       station:
         'Fűre, erdőbe, homokra vagy sík dombcsempére, egyik oldalán sínnel; az a sín lesz a peron.',
       stationOn: {
