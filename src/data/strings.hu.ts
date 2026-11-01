@@ -342,6 +342,10 @@ export const HU: Strings = {
     groundLimit: 'A föld itt nem mozdulhat tovább',
     groundBesideWater: 'Vizet érintő föld nem süllyeszthető',
     groundMovesWater: 'Ez megmozdítaná a vizet: a víz nem emelhető és nem süllyeszthető',
+    groundUp: (tiles: number, cost: string) => `Emelés: ${tiles} csempe, ${cost}`,
+    groundDown: (tiles: number, cost: string) => `Süllyesztés: ${tiles} csempe, ${cost}`,
+    groundStays: 'Itt nem mozdul semmi',
+    groundRefused: (tiles: number, reason: string) => `${tiles} csempe nem mozdulhat: ${reason}`,
     notLevel: 'Sík terep kell: csak egyenes sín mehet emelkedőre',
     notSmooth:
       'Az ívekhez és váltókhoz egyenletes terep kell: emelkedőre csak egyenes és keresztezés mehet, hacsak nem tartja hídpálya az elem minden csempéjét',
@@ -430,6 +434,7 @@ export const HU: Strings = {
     services: 'Szolgáltatások',
     trackTools: 'Sín',
     electrification: 'Villamosítás',
+    ground: 'Talaj',
     rawMaterials: 'Nyersanyagok',
     processing: 'Feldolgozás',
     power: 'Áram',
@@ -450,6 +455,13 @@ export const HU: Strings = {
     downgradeHint:
       'Egy vonallal lejjebb teszi a sínt: Törzsvonalból Fővonal, Fővonalból Mellékvonal. Ingyenes.',
     upgradeCost: 'a különbözet',
+    raise: 'Emelés',
+    lower: 'Süllyesztés',
+    raiseHint:
+      'Egy szinttel emeli a talajt csempénként, és a lejtő miatt a körülötte lévőket is. Minden elmozduló csempe pénzbe kerül.',
+    lowerHint:
+      'Egy szinttel süllyeszti a talajt csempénként, és a lejtő miatt a körülötte lévőket is. Minden elmozduló csempe pénzbe kerül. A tengerszintig levitt kő fűvé válik.',
+    groundCost: 'csempénként és szintenként',
     select: 'Kijelölés',
     roads: 'Utak',
     road: 'Út',
@@ -473,6 +485,7 @@ export const HU: Strings = {
       run: 'Húzás: szakasz lefektetése, a fordulóknál ívvel',
       drag: 'Húzás: szakasz lefektetése',
       reclass: 'Kattintás: egy elem · Húzás: a vonal mentén',
+      ground: 'Kattintás: egy csempe · Húzás: a vonal mentén',
       click: 'Kattintás: lerakás',
       paint: 'Húzás: festés',
       turn: 'R: forgatás',
@@ -506,6 +519,8 @@ export const HU: Strings = {
         'Szabad fű-, erdő-, homok- vagy sík dombcsempére. Távvezeték-oszlopokat láncolj belőle a sínekig.',
       reclass:
         'Kattints egy elemre, vagy húzd végig a vonalon. Ami nem illeszkedik, az marad, és pirossal látszik.',
+      ground:
+        'Szárazföldi csempére, amelyen nincs semmi. A vizet nem lehet mozdítani, és az alagút fölötti föld a tető fölött marad.',
       road: 'Fűre, erdőbe, homokra vagy dombra, épületre soha: az épülettel az utcai ajtajánál találkozik. Keskeny nyomtáv, Mellékvonal vagy Fővonal sima egyenes sínjét derékszögben keresztezi, útátjáróként; Törzsvonalat soha.',
     },
     trackDesc: {
