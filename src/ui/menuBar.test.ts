@@ -190,6 +190,12 @@ describe('the menu bar and the document', () => {
     expect(entry('View').blurred).toBe(0);
   });
 
+  it('gives the keys back when a second click closes the menu', () => {
+    openView();
+    openView();
+    expect(entry('View').blurred).toBe(1);
+  });
+
   it('folds the entries asked for, in the order, and gives the labels back', () => {
     const folded = () => element(bar.root).kids.filter((c) => c.kids[0].on.has('folded'));
     bar.setFolded(2);

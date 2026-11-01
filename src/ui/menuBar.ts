@@ -131,10 +131,9 @@ export class MenuBar {
   private clicked(id: MenuId) {
     const run = this.state.click(id);
     this.draw();
-    if (!run) return;
-    this.actions?.[run]();
-    // the keys go back to the game: Enter would run it again
-    this.entries.get(id)?.blur();
+    if (run) this.actions?.[run]();
+    // the keys go back to the game unless a menu is open: Enter would press it again
+    if (!this.state.open) this.entries.get(id)?.blur();
   }
 
   private picked(action: MenuAction) {
