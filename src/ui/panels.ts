@@ -41,7 +41,6 @@ import {
   type SlotMeta,
 } from '../sim/save';
 import { contentIsCustom } from '../data/content';
-import type { Gacha } from '../gacha/gacha';
 import type { Crafting } from '../gacha/crafting';
 import type { Inventory } from '../gacha/inventory';
 import type { Screen, ScreenManager } from './modal';
@@ -73,7 +72,6 @@ import { ContentScreen } from './contentScreen';
 import { SettingsScreen } from './settingsScreen';
 import { SavedGamesScreen, type SavedTab } from './savedGamesScreen';
 import { CreditsScreen } from './creditsScreen';
-import { GachaScreen } from './gachaScreen';
 import { CraftingScreen } from './craftingScreen';
 import { RosterScreen } from './rosterScreen';
 import { InspectScreen } from './inspectScreen';
@@ -128,7 +126,6 @@ export interface PlayUiDomains {
   fleet: Fleet;
   builder: Builder;
   contracts: ContractBoard;
-  gacha: Gacha;
   crafting: Crafting;
   trade: TradeDesk;
   towns: TownRegistry;
@@ -239,7 +236,7 @@ export interface UiHost {
   applySeason(force?: boolean): void;
   /** ask for a town's name; `fresh` marks a just-founded town (its default name is offered) */
   renameTown(t: Town, fresh?: boolean): void;
-  /** money, tickets and the selected store filled, for testing */
+  /** money and the selected store filled, for testing */
   cheat(): void;
 
   // ------------------------------------------------------------ storage and reloads
@@ -287,7 +284,6 @@ export interface PlayUi {
   readonly tuningScreen: TuningScreen;
   readonly contentScreen: ContentScreen;
   readonly settingsScreen: SettingsScreen;
-  readonly gachaScreen: GachaScreen;
   readonly craftingScreen: CraftingScreen;
   readonly rosterScreen: RosterScreen;
   readonly contractsScreen: ContractsScreen;
@@ -483,15 +479,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     }),
     d.namePrompt,
   );
-  const gachaScreen = new GachaScreen(
-    d.gacha,
-    d.economy,
-    d.commands,
-    () => d.clock.time,
-    toast,
-    d.atlas,
-    () => d.clock.day,
-  );
   const craftingScreen = new CraftingScreen(
     d.crafting,
     d.economy,
@@ -575,7 +562,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   const minimap = new Minimap(d.map, d.regions, d.camera, (wx, wy) => host.centerCamera(wx, wy));
   const debug = new DebugPanel(host.seed, {
     giveMoney: () => (d.economy.money += 10000),
-    giveTickets: () => (d.economy.tickets += 10),
     nextAge: () => d.economy.setAge(d.economy.tier + 1),
     giveResources: () => {
       const store = stores.selected;
@@ -1228,7 +1214,6 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     tuningScreen,
     contentScreen,
     settingsScreen,
-    gachaScreen,
     craftingScreen,
     rosterScreen,
     contractsScreen,

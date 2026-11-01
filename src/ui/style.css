@@ -1401,24 +1401,6 @@ html[lang='hu'] .tb-cats .tt-term {
   color: var(--text-dim);
   text-align: center;
 }
-.cols {
-  display: flex;
-  gap: 8px;
-  padding: 8px;
-  flex: 1;
-  min-height: 0;
-}
-.col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: var(--stone-dark);
-  border: 1px solid var(--border-dark);
-  box-shadow:
-    inset 1px 1px 0 #000,
-    inset -1px -1px 0 var(--border-light);
-}
 .col-title {
   font-family: var(--font-title);
   text-transform: uppercase;
@@ -1427,57 +1409,6 @@ html[lang='hu'] .tb-cats .tt-term {
   color: var(--amber);
   padding: 4px 8px;
   border-bottom: 1px solid var(--border-dark);
-}
-.col-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 6px 8px;
-}
-.col-foot {
-  padding: 6px 8px;
-  border-top: 1px solid var(--border-dark);
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 6px;
-  margin: 2px 0;
-  border: 1px solid var(--border-dark);
-  background: var(--stone);
-  cursor: pointer;
-}
-.item:hover {
-  background: var(--stone-light);
-}
-.item.selected {
-  border-color: var(--amber);
-  background: var(--stone-light);
-}
-.item.disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-/* a row that is not picked by a click; its own buttons act */
-.item.static {
-  cursor: default;
-}
-.item .name {
-  font-weight: bold;
-}
-.item .sub {
-  color: var(--text-dim);
-  font-size: 11px;
-}
-.item .stat {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  white-space: nowrap;
 }
 .rarity-N {
   color: var(--rarity-common);
@@ -2312,181 +2243,11 @@ html[lang='hu'] .btn.tp-tab {
   font-size: 12px;
 }
 
-/* ---- gacha ---- */
-.gacha {
-  flex-direction: column;
-}
-.gacha-stage {
-  flex: 1;
-  overflow: auto;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.gacha-idle {
-  text-align: center;
-  padding: 30px 0 10px;
-}
-.gacha-banner-name {
-  font-family: var(--font-title);
-  font-size: 26px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--amber);
-}
-.gacha-pool {
-  padding: 8px;
-  border-top: 1px solid var(--border-dark);
-  line-height: 1.6;
-}
-.gacha-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-}
-.gcard {
-  position: relative;
-  height: 200px;
-  perspective: 600px;
-  cursor: pointer;
-}
-.gcard-back,
-.gcard-front {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
-  border: 1px solid var(--border-dark);
-  box-shadow:
-    inset 1px 1px 0 var(--border-light),
-    inset -1px -1px 0 var(--border-dark);
-  background: var(--stone);
-  transition: transform 0.45s ease;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.gcard-back {
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-title);
-  font-size: 48px;
-  color: var(--text-dim);
-  background: repeating-linear-gradient(45deg, var(--stone) 0 6px, var(--stone-dark) 6px 12px);
-}
-.gcard-front {
-  transform: rotateY(180deg);
-}
-.gcard.flipped .gcard-back {
-  transform: rotateY(-180deg);
-}
-.gcard.flipped .gcard-front {
-  transform: rotateY(0deg);
-}
-.gcard.flipped.rarity-R .gcard-front {
-  border-color: var(--rarity-uncommon);
-}
-.gcard.flipped.rarity-SR .gcard-front {
-  border-color: var(--rarity-rare);
-}
-.gcard.flipped.rarity-L .gcard-front {
-  border-color: var(--rarity-legendary);
-}
-.gcard.flipped.rarity-SSR .gcard-front {
-  border-color: var(--rarity-epic);
-  animation: ssr-pulse 1.2s ease-in-out 2;
-}
-@keyframes ssr-pulse {
-  0%,
-  100% {
-    box-shadow:
-      inset 1px 1px 0 var(--border-light),
-      inset -1px -1px 0 var(--border-dark);
-  }
-  50% {
-    box-shadow: 0 0 0 3px var(--amber-dark);
-  }
-}
-.gcard-rarity {
-  font-family: var(--font-title);
-  font-size: 18px;
-  letter-spacing: 2px;
-}
-.gcard-name {
-  font-weight: bold;
-  font-size: 13px;
-}
-.gcard-kind {
-  color: var(--text-dim);
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 1px;
-}
-.gcard-era {
-  font-family: var(--font-title);
-  font-style: italic;
-  font-size: 11px;
-  color: var(--text-dim);
-  flex: 1;
-}
-.gcard-dupe {
-  font-size: 11px;
-  color: var(--cyan);
-}
-.gcard-dupe.new {
-  color: #a6c47a;
-}
-.gcard-forced {
-  font-size: 10px;
-  color: var(--amber);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
 /* ---- sprite previews ---- */
 .sprite-preview {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   display: block;
-}
-.gcard-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-.gcard-art {
-  width: 72px;
-  height: 64px;
-  object-fit: contain;
-  background: var(--border-dark);
-  border: 1px solid var(--border-dark);
-}
-/* the model image (public/assets/portraits): full card width, 3:2, era text below */
-.gacha-featured {
-  padding: 6px 8px;
-  border: 1px solid var(--border-dark);
-  background: var(--stone-dark);
-}
-.gacha-featured-row {
-  display: flex;
-  gap: 12px;
-  margin-top: 4px;
-}
-.gfeat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 8px;
-  border: 1px solid var(--border-dark);
-  background: var(--stone);
-  color: var(--text);
-}
-.gfeat .sprite-preview {
-  width: 72px;
-  height: 64px;
-  object-fit: contain;
 }
 
 #topbar .stat.weather {
@@ -2876,10 +2637,6 @@ table.market td {
   background: rgba(4, 4, 6, 0.35);
 }
 
-.gcard-art {
-  object-fit: contain;
-  max-width: 100%;
-}
 .signal-diagram {
   white-space: pre-wrap;
   color: #8fd3c4;

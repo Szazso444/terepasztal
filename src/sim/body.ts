@@ -6,6 +6,7 @@
  * the trains alike.
  */
 import type { Vec2 } from '../engine/iso';
+import { gearSegments, type Gear } from './gear';
 
 export type VehicleSize = 'tiny' | 'small' | 'medium' | 'large';
 export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
@@ -26,8 +27,34 @@ export const DEFAULT_PIVOT = 0.7;
 /** a three-tile body keeps its bogies nearer the middle: less overhang swing on a curve */
 export const LARGE_PIVOT = 0.58;
 export const DEFAULT_LATERAL_PLAY = 0.35;
+/**
+ * A truck with a longer half wheelbase than this (tiles) stands on the rail as a chord, not as a
+ * tangent: an engine unit under a boiler, four coupled axles and a pilot truck in one frame.
+ */
+export const LONG_TRUCK = 0.2;
+/**
+ * How much more an engine's coupled drivers count than its other wheel groups (leading and trailing
+ * trucks, a fixed carrying axle) in the line its body is fitted along, and in the fit that holds it
+ * to its tender: 1 is every group alike; more, and the body follows its drivers through a curve
+ * more closely while its trucks and its tender still pull on it.
+ */
+export const DRIVER_WEIGHT: number = 1;
+/**
+ * How hard the drawbar holds an engine and its tender together against their wheels holding to the
+ * rail: the coupling points' parting weighs this many times as much as a wheel group's distance
+ * from the rail. On the tightest curve a Black Five's gap stays within 0.01 tile of the straight's
+ * (posed apart it opened from 0.09 to 0.40), its wheels at most 0.094 tile beside the rail.
+ */
+export const DRAWBAR_STIFFNESS = 3;
+/**
+ * Beyond about this far beside the rail (tiles) a coupled pair's wheels resist the drawbar ever
+ * harder, and the gap opens a little instead (an engine with a long overhang over a short tender).
+ */
+export const WHEEL_PLAY = 0.1;
 
-export type PartKind = 'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre';
+/** `rear`: the rear half of a hinged body (its front half is `body`) */
+export type PartKind =
+  'body' | 'engine' | 'tender' | 'cradle' | 'frame' | 'nose' | 'centre' | 'rear';
 /** two-axle bogie, three-axle bogie, or the wheeled engine unit of a Meyer frame */
 export type BogieKind = 'bogie' | 'bogie3' | 'bogie4' | 'engine_unit';
 /** axles under each kind of bogie */
@@ -50,6 +77,37 @@ export interface SegmentSpec {
   front: number;
   /** drawn back to front (the rear engine unit of a Garratt) */
   mirror?: boolean;
+  /** each pivot's distance behind the segment's front, front to rear (default: W centred) */
+  at?: number[];
+  /** wheel group of each pivot (default: `bogie` for all) */
+  kinds?: BogieKind[];
+  /** pivots that carry the body but draw no truck (a cab hung between two snouts) */
+  hidden?: boolean[];
+  /** which of the part's trucks (its index in the gear table) each pivot is; -1: none, a fixed axle */
+  truck?: number[];
+  /** half the wheelbase of each pivot's truck, tiles (0: unknown or a single axle) */
+  half?: number[];
+  /**
+   * Axles fixed in the frame (coupled drivers, a rigid tender's axles, small stock's baked axles):
+   * distance behind the segment's front, front to rear. The frame stands on the rail at the first
+   * and the last of them; the pivots then swivel and slide under it.
+   */
+  rigid?: number[];
+  /** the coupled drivers among the fixed axles (default: all of them), as `rigid` */
+  drivers?: number[];
+  /** pivots that carry the frame with its fixed axles (a Mallet's front engine): its supports
+   *  are then the fixed axles' middle and these */
+  carry?: number[];
+  /** a half of a hinged body: this end of it (as the vehicle runs) rests on the part next to it */
+  hinge?: 'front' | 'rear';
+  /**
+   * The body rides pinned on its wheel groups (a model that brings its own trucks): its axis is the
+   * line that fits the rail points of its fixed axles and trucks best, its outermost groups stand as
+   * far apart through the air as they are on the body, and it is not shifted sideways towards the
+   * arc. On two trucks they never leave their sockets; with more groups (a steam engine's drivers,
+   * leading and trailing trucks) each is a little off, none far.
+   */
+  pinned?: boolean;
 }
 export interface VehicleSpec {
   L: number;
@@ -77,10 +135,41 @@ export interface BodyFields {
   bogieAxles?: number;
   maxLateralPlay?: number;
   type?: string;
+  /** The engine's own running gear as its model draws it (src/data/gear.json) and its own length in
+   *  tiles: together they replace the size's length and the plan's segments. */
+  gear?: Gear;
+  lengthTiles?: number;
+  /** The sprite is a rendered model: the generic trucks are not drawn under it. */
+  spriteGear?: boolean;
+  /** Trucks rendered as sprites of their own, by part: their indices in the gear table. Each is drawn
+   *  at its own place on the rail; the others (and all of them without this) are part of the body. */
+  truckSprites?: Record<string, number[]>;
 }
 
 export function vehicleSpec(def: BodyFields): VehicleSpec {
   const size = def.size ?? 'small';
+  if (def.gear && def.lengthTiles) {
+    const segments = gearSegments(def.gear, def.lengthTiles);
+    if (def.spriteGear)
+      for (const g of segments) {
+        g.pinned = true;
+        if (g.at) {
+          const own = def.truckSprites?.[g.part];
+          g.hidden = g.at.map(
+            (_, k) => (g.hidden?.[k] ?? false) || !own?.includes(g.truck?.[k] ?? -1),
+          );
+        }
+      }
+    const parts = new Set(segments.map((s) => s.part));
+    return {
+      L: def.lengthTiles,
+      size,
+      plan: parts.has('tender') ? 'tender' : parts.has('cradle') ? 'garratt' : 'rigid',
+      segments,
+      drawBogies: segments.some((s) => s.nb > 0 && !(s.hidden ?? []).every(Boolean)),
+      maxLateralPlay: def.maxLateralPlay ?? DEFAULT_LATERAL_PLAY,
+    };
+  }
   const L = def.length ?? SIZE_LEN[size];
   // the engine units of a tender engine and a Garratt were sized for their class's length; a
   // body of its own length keeps their share of it (exactly 1 without one)
@@ -276,6 +365,10 @@ export interface BogiePose {
   /** Rail position of the independently moving sprite, also used during interpolation. */
   drawX: number;
   drawY: number;
+  /** carries the body without a drawn truck */
+  hidden?: boolean;
+  /** the part's truck this is (its index in the gear table), where the gear table names it */
+  truck?: number;
 }
 export interface SegmentPose {
   part: PartKind;
@@ -289,6 +382,8 @@ export interface SegmentPose {
   /** sideways shift applied to centre the body on the track, and what remains */
   delta: number;
   residualGap: number;
+  /** furthest a fixed axle between the frame's end axles sits from the rail */
+  wheelGap: number;
 }
 export interface VehiclePose {
   /** vehicle centre on the track and the tangent there */
@@ -296,6 +391,41 @@ export interface VehiclePose {
   y: number;
   heading: number;
   segments: SegmentPose[];
+}
+
+/**
+ * Where a wheel group stands whose middle is at `arc` (`hw`: half its wheelbase, 0 for one axle):
+ * on the rail there, turned along the chord through the rail under its end axles. A truck has no
+ * tangent of its own: following the rail's tangent at its middle, it swung at full rate the moment
+ * its middle met the curve (the turning rate jumped from nothing to the curve's in one tick); along
+ * its axles' chord its turning starts as its leading axle enters and is full once its trailing one
+ * is in, as a real truck's. A long truck cannot follow a curve along its length: at its middle its
+ * end axles run wide. It stands on the chord through the rail 0.7 of its half wheelbase either side
+ * of its middle instead, so its end axles and its middle ones are equally near the rail (a quarter
+ * as far off as the tangent's ends).
+ */
+export function truckStand(pl: Polyline, arc: number, hw: number) {
+  const long = hw > LONG_TRUCK;
+  const q = long ? hw * Math.SQRT1_2 : hw,
+    A = pl.at(arc + q),
+    B = pl.at(arc - q);
+  const P = long ? { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 } : pl.at(arc);
+  if (q <= 0 || Math.hypot(A.x - B.x, A.y - B.y) < 1e-9) {
+    const tg = pl.tangent(arc);
+    return { x: P.x, y: P.y, angle: Math.atan2(tg.y, tg.x) };
+  }
+  return { x: P.x, y: P.y, angle: Math.atan2(A.y - B.y, A.x - B.x) };
+}
+
+/**
+ * Which of a segment's fixed axles (as `rigid`, mapped by `flip`) are an engine's coupled drivers,
+ * that weigh DRIVER_WEIGHT in its fit: its `drivers` if listed, else all its fixed axles; none on a
+ * tender or a wagon.
+ */
+function driverTest(seg: SegmentSpec, flip: (a: number[]) => number[]) {
+  if (seg.part !== 'engine' || DRIVER_WEIGHT === 1) return () => false;
+  const dr = flip(seg.drivers?.length ? seg.drivers : (seg.rigid ?? []));
+  return (x: number) => dr.some((d) => Math.abs(d - x) < 1e-9);
 }
 
 /**
@@ -307,68 +437,185 @@ export function poseSegment(
   arcFront: number,
   seg: SegmentSpec,
   sideways = TOL.sideways,
+  reversed = false,
 ): SegmentPose {
   const { L, W, nb } = seg;
-  const arcs: number[] = [];
-  const first = arcFront - (L - W) / 2;
-  for (let i = 0; i < nb; i++) arcs.push(first - (W / (nb - 1)) * i);
-  const A = pl.at(arcs[0]);
-  const B = pl.at(arcs[nb - 1]);
-  let axx = A.x - B.x;
-  let axy = A.y - B.y;
-  const al = Math.hypot(axx, axy);
-  if (al < 1e-9) {
-    const t = pl.tangent(arcFront - L / 2);
-    axx = t.x;
-    axy = t.y;
+  // positions in track order: a reversed vehicle or a mirrored segment meets its rear first
+  const back = reversed !== !!seg.mirror;
+  const flip = (a: number[]) => (back ? a.map((x) => L - x).reverse() : a);
+  const t = seg.at
+    ? flip(seg.at)
+    : Array.from({ length: nb }, (_, i) => (L - W) / 2 + (W / (nb - 1)) * i);
+  const kinds = seg.kinds ? (back ? [...seg.kinds].reverse() : seg.kinds) : null;
+  const hidden = seg.hidden ? (back ? [...seg.hidden].reverse() : seg.hidden) : null;
+  const truck = seg.truck ? (back ? [...seg.truck].reverse() : seg.truck) : null;
+  const half = seg.half ? (back ? [...seg.half].reverse() : seg.half) : null;
+  const stand = (arc: number, hw: number) => truckStand(pl, arc, hw);
+  /** half the wheelbase of the truck whose pivot is `g` behind the segment's front (0: a fixed axle) */
+  const halfOf = (g: number) => {
+    const i = half ? t.findIndex((v) => Math.abs(v - g) < 1e-9) : -1;
+    return i >= 0 ? half![i] : 0;
+  };
+  const rig = seg.rigid && seg.rigid.length >= 2 ? flip(seg.rigid) : null;
+  const drives = driverTest(seg, flip);
+  const carry = seg.carry?.length ? flip(seg.carry) : null;
+  // the frame's two supports: its end fixed axles (or their middle and a carrying unit), else its
+  // outer pivots
+  const ends =
+    rig && carry
+      ? [
+          Math.min(carry[0], (rig[0] + rig[rig.length - 1]) / 2),
+          Math.max(carry[carry.length - 1], (rig[0] + rig[rig.length - 1]) / 2),
+        ]
+      : rig
+        ? [rig[0], rig[rig.length - 1]]
+        : t.length >= 2
+          ? [t[0], t[t.length - 1]]
+          : null;
+  let axx: number;
+  let axy: number;
+  let cx: number;
+  let cy: number;
+  // a pinned body sits on every wheel group it has: its fixed axles and its trucks. Its outermost
+  // groups stand this much further apart along the rail than on the body (a chord is shorter than
+  // its arc), measured from their middle.
+  const groups = seg.pinned ? [...(rig ?? []), ...t] : [];
+  const span = groups.length >= 2 ? [Math.min(...groups), Math.max(...groups)] : (ends ?? [0, 0]);
+  const pinned = seg.pinned && groups.length >= 2 && span[1] - span[0] > 1e-6;
+  const mid = (span[0] + span[1]) / 2;
+  let stretch = 1;
+  if (pinned) {
+    const h = (span[1] - span[0]) / 2;
+    let a = h;
+    for (let k = 0; k < 8; k++) {
+      const P = stand(arcFront - mid + a, halfOf(span[0]));
+      const Q = stand(arcFront - mid - a, halfOf(span[1]));
+      const chord = Math.hypot(P.x - Q.x, P.y - Q.y);
+      if (chord < 1e-9) break;
+      a *= (2 * h) / chord;
+    }
+    stretch = a / h;
+  }
+  /** where a point `t` behind the segment's front stands along the rail */
+  const arcOf = (t: number) => arcFront - mid - (t - mid) * stretch;
+  if (pinned) {
+    // the line that fits the rail points of all groups best: two groups are met exactly, more
+    // share what a rigid body cannot follow of the curve
+    const pts = groups.map((g) => stand(arcOf(g), halfOf(g)));
+    // a boiler on engine units and trucks alone (no fixed axles) leans on each group as many times
+    // as it has axles: its long units stay under it, the short trucks at its ends give. An engine's
+    // coupled drivers weigh DRIVER_WEIGHT each, its other groups one.
+    const wt = groups.map((g, n) => {
+      if (rig) return n < rig.length && drives(rig[n]) ? DRIVER_WEIGHT : 1;
+      if (t.length <= 2) return 1;
+      const i = t.findIndex((v) => Math.abs(v - g) < 1e-9);
+      return i >= 0 ? BOGIE_AXLES[kinds?.[i] ?? seg.bogie] : 1;
+    });
+    const wn = wt.reduce((a, b) => a + b, 0);
+    const mx = pts.reduce((a, p, i) => a + wt[i] * p.x, 0) / wn;
+    const my = pts.reduce((a, p, i) => a + wt[i] * p.y, 0) / wn;
+    let sxx = 0;
+    let sxy = 0;
+    let syy = 0;
+    pts.forEach((p, i) => {
+      sxx += wt[i] * (p.x - mx) * (p.x - mx);
+      sxy += wt[i] * (p.x - mx) * (p.y - my);
+      syy += wt[i] * (p.y - my) * (p.y - my);
+    });
+    const th = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+    axx = Math.cos(th);
+    axy = Math.sin(th);
+    // towards the front: from the rearmost group to the foremost
+    const F = pl.at(arcOf(span[0]));
+    const R = pl.at(arcOf(span[1]));
+    if ((F.x - R.x) * axx + (F.y - R.y) * axy < 0) {
+      axx = -axx;
+      axy = -axy;
+    }
+    // the groups' middle on the body stands on the middle of their rail points
+    const gm = groups.reduce((a, g, i) => a + wt[i] * g, 0) / wn;
+    cx = mx + axx * (gm - L / 2);
+    cy = my + axy * (gm - L / 2);
+  } else if (ends) {
+    const A = pl.at(arcOf(ends[0]));
+    const B = pl.at(arcOf(ends[1]));
+    axx = A.x - B.x;
+    axy = A.y - B.y;
+    const al = Math.hypot(axx, axy);
+    if (al < 1e-9) {
+      const tg = pl.tangent(arcFront - L / 2);
+      axx = tg.x;
+      axy = tg.y;
+    } else {
+      axx /= al;
+      axy /= al;
+    }
+    const sm = (ends[0] + ends[1]) / 2;
+    cx = (A.x + B.x) / 2 - axx * (L / 2 - sm);
+    cy = (A.y + B.y) / 2 - axy * (L / 2 - sm);
   } else {
-    axx /= al;
-    axy /= al;
+    const P = pl.at(arcFront - L / 2);
+    const tg = pl.tangent(arcFront - L / 2);
+    axx = tg.x;
+    axy = tg.y;
+    cx = P.x;
+    cy = P.y;
   }
   const nxx = -axy;
   const nxy = axx;
-  let cx = (A.x + B.x) / 2;
-  let cy = (A.y + B.y) / 2;
   // centre the body on the track, not on its own bogies: the mean gap over the body's length
   // pulls a long body out towards the arc (where its middle bogie runs) rather than leaving it
   // on the chord between the outer bogies
   let eMin = Infinity;
   let eMax = -Infinity;
   let eSum = 0;
-  for (let k = 0; k <= 6; k++) {
-    const t = (k / 6 - 0.5) * L;
-    const S = { x: cx + axx * t, y: cy + axy * t };
-    const N = pl.nearest(S, arcFront - L / 2 + t).p;
+  const K = 12;
+  for (let k = 0; k <= K; k++) {
+    const u = ((k + 0.5) / (K + 1) - 0.5) * L;
+    const S = { x: cx + axx * u, y: cy + axy * u };
+    const N = pl.nearest(S, arcFront - L / 2 + u).p;
     const e = (N.x - S.x) * nxx + (N.y - S.y) * nxy;
     if (e < eMin) eMin = e;
     if (e > eMax) eMax = e;
     eSum += e;
   }
-  const want = nb > 2 ? eSum / 7 : (eMin + eMax) / 2;
-  const delta = Math.max(-sideways, Math.min(sideways, want));
+  const want = t.length > 2 ? eSum / (K + 1) : (eMin + eMax) / 2;
+  // a frame on fixed axles does not float sideways: it stands where they are, and so does a body
+  // pinned on its supports
+  const delta = rig || seg.pinned ? 0 : Math.max(-sideways, Math.min(sideways, want));
   cx += nxx * delta;
   cy += nxy * delta;
   const residualGap = Math.max(Math.abs(eMax - delta), Math.abs(eMin - delta));
+  let wheelGap = 0;
+  if (rig)
+    for (const r of rig) {
+      const u = L / 2 - r;
+      const S = { x: cx + axx * u, y: cy + axy * u };
+      const N = pl.nearest(S, arcOf(r)).p;
+      wheelGap = Math.max(wheelGap, Math.hypot(N.x - S.x, N.y - S.y));
+    }
   const bogies: BogiePose[] = [];
-  for (let i = 0; i < nb; i++) {
-    const P = pl.at(arcs[i]);
-    const socket = W / 2 - (W / (nb - 1)) * i;
+  for (let i = 0; i < t.length; i++) {
+    const arc = arcOf(t[i]);
+    const P = stand(arc, half?.[i] ?? 0);
+    const socket = L / 2 - t[i];
     const skx = cx + axx * socket;
     const sky = cy + axy * socket;
     const rx = P.x - skx;
     const ry = P.y - sky;
-    const tg = pl.tangent(arcs[i]);
     const along = rx * axx + ry * axy;
     const across = rx * nxx + ry * nxy;
     bogies.push({
       x: P.x,
       y: P.y,
-      angle: Math.atan2(tg.y, tg.x),
-      kind: seg.bogie,
+      angle: P.angle,
+      kind: kinds?.[i] ?? seg.bogie,
       foreAft: Math.abs(along),
       lateral: Math.abs(across),
       drawX: P.x,
       drawY: P.y,
+      hidden: hidden?.[i] || undefined,
+      truck: truck?.[i],
     });
   }
   return {
@@ -381,6 +628,7 @@ export function poseSegment(
     bogies,
     delta,
     residualGap,
+    wheelGap,
   };
 }
 
@@ -392,11 +640,405 @@ export function poseVehicle(
   reversed = false,
 ): VehiclePose {
   const segments = spec.segments.map((s) =>
-    poseSegment(pl, arcFront - (reversed ? spec.L - s.front - s.L : s.front), s),
+    poseSegment(
+      pl,
+      arcFront - (reversed ? spec.L - s.front - s.L : s.front),
+      s,
+      TOL.sideways,
+      reversed,
+    ),
   );
+  // two halves on one truck each, hinged to each other (spec order: front half first)
+  const paired = new Set<number>();
+  spec.segments.forEach((s, i) => {
+    const f = spec.segments[i - 1];
+    if (s.hinge !== 'front' || f?.hinge !== 'rear') return;
+    if (poseHalves(pl, arcFront, spec, reversed, i - 1, i, segments)) paired.add(i - 1).add(i);
+  });
+  // a hinged half hangs on the end of the part it is hinged to (spec order: front part first), and
+  // stands on its own truck: its axis runs from that truck's rail point to the carrying part's end
+  spec.segments.forEach((s, i) => {
+    if (!s.hinge || paired.has(i)) return;
+    const host = segments[s.hinge === 'front' ? i - 1 : i + 1];
+    const seg = segments[i];
+    const truck = seg.bogies.filter((b) => !b.hidden);
+    if (!host || !truck.length) return;
+    const hx = Math.cos(host.angle),
+      hy = Math.sin(host.angle);
+    // the carrying part's end that faces this half
+    const ends = [1, -1].map((k) => ({
+      x: host.x + (k * hx * host.L) / 2,
+      y: host.y + (k * hy * host.L) / 2,
+    }));
+    const E =
+      Math.hypot(ends[0].x - seg.x, ends[0].y - seg.y) <
+      Math.hypot(ends[1].x - seg.x, ends[1].y - seg.y)
+        ? ends[0]
+        : ends[1];
+    const ox = Math.cos(seg.angle),
+      oy = Math.sin(seg.angle);
+    // which of its own ends is the hinge: the one towards the carrying part
+    const side = (E.x - seg.x) * ox + (E.y - seg.y) * oy >= 0 ? 1 : -1;
+    // its own support: the truck furthest from the joint
+    const T = truck.reduce((a, b) =>
+      Math.hypot(b.x - E.x, b.y - E.y) > Math.hypot(a.x - E.x, a.y - E.y) ? b : a,
+    );
+    // Solve the support's rail position as well as the body's angle. Merely
+    // rotating towards its old position leaves the socket sliding along the truck.
+    const supportIndex = s.truck?.indexOf(T.truck ?? -1) ?? -1;
+    if (supportIndex >= 0 && s.at) {
+      const back = reversed !== !!s.mirror;
+      const behind = back ? s.L - s.at[supportIndex] : s.at[supportIndex];
+      const distance = Math.abs((side * s.L) / 2 - (s.L / 2 - behind));
+      const hw = s.half?.[supportIndex] ?? 0;
+      const stand = (arc: number) => truckStand(pl, arc, hw);
+      const guess = arcFront - (reversed ? spec.L - s.front - s.L : s.front) - behind;
+      let arc = pl.nearest(T, guess).arc;
+      const error = (u: number) => {
+        const p = stand(u);
+        return Math.hypot(p.x - E.x, p.y - E.y) - distance;
+      };
+      for (let n = 0; n < 16; n++) {
+        const e = error(arc);
+        if (Math.abs(e) < 1e-8) break;
+        const derivative = (error(arc + 0.001) - error(arc - 0.001)) / 0.002;
+        if (Math.abs(derivative) < 1e-6) break;
+        arc = Math.max(
+          0,
+          Math.min(pl.length, arc - Math.max(-0.25, Math.min(0.25, e / derivative))),
+        );
+      }
+      if (Math.abs(error(arc)) < 1e-6) {
+        Object.assign(T, stand(arc));
+        T.drawX = T.x;
+        T.drawY = T.y;
+        T.foreAft = T.lateral = 0;
+      }
+    }
+    let ax = (E.x - T.x) * side,
+      ay = (E.y - T.y) * side;
+    const al = Math.hypot(ax, ay);
+    if (al < 1e-9) return;
+    ax /= al;
+    ay /= al;
+    seg.x = E.x - (side * ax * seg.L) / 2;
+    seg.y = E.y - (side * ay * seg.L) / 2;
+    seg.angle = Math.atan2(ay, ax);
+  });
+  // an engine and its tender are coupled by a drawbar: on a curve the tender stays at the engine's
+  // rear end instead of standing where its arc puts it
+  spec.segments.forEach((s, i) => {
+    if (s.part !== 'tender' || !s.pinned || s.hinge) return;
+    const k = [i - 1, i + 1].find((j) => spec.segments[j]?.part === 'engine');
+    const e = k === undefined ? undefined : spec.segments[k];
+    if (k === undefined || !e?.pinned || e.hinge) return;
+    coupleTender(pl, arcFront, spec, reversed, k, i, segments);
+  });
   const mid = pl.at(arcFront - spec.L / 2);
   const tg = pl.tangent(arcFront - spec.L / 2);
   return { x: mid.x, y: mid.y, heading: Math.atan2(tg.y, tg.x), segments };
+}
+
+/**
+ * Pose a body of two halves hinged to each other, each on one truck of its own (the DDA40X), as an
+ * articulated bus runs. The joint J stays on the track's centre line at its own place along the
+ * track; each half is the chord from J to its truck, the truck standing on the rail as far from J
+ * through the air as its socket is from the joint on the body. Both halves stay that close to the
+ * curve, the joint over the rail, their ends meeting at J, and every truck in its socket. The rule
+ * knows no front or rear: run tail first, the pose is the same. Returns false (the halves are then
+ * left to the other rules) when a half lacks its one truck and its joint.
+ */
+function poseHalves(
+  pl: Polyline,
+  arcFront: number,
+  spec: VehicleSpec,
+  reversed: boolean,
+  fi: number,
+  ri: number,
+  segments: SegmentPose[],
+) {
+  const halves = [fi, ri].map((i) => {
+    const s = spec.segments[i];
+    if (!s.at || s.at.length !== 2 || !s.truck) return null;
+    const j = s.truck.indexOf(-1);
+    if (j < 0 || s.truck[1 - j] < 0) return null;
+    const k = 1 - j,
+      front = arcFront - (reversed ? spec.L - s.front - s.L : s.front),
+      back = reversed !== !!s.mirror,
+      arc = (t: number) => front - (back ? s.L - t : t);
+    return {
+      i,
+      s,
+      joint: arc(s.at[j]),
+      truck: arc(s.at[k]),
+      d: Math.abs(s.at[k] - s.at[j]),
+      hw: s.half?.[k] ?? 0,
+      truckNo: s.truck[k],
+    };
+  });
+  if (!halves[0] || !halves[1]) return false;
+  const hs = halves as NonNullable<(typeof halves)[number]>[];
+  // the joint's place along the track: where both halves put it (the same point on straight track)
+  const aJ = (hs[0].joint + hs[1].joint) / 2;
+  const J = pl.at(aJ);
+  for (const h of hs) {
+    const sgn = h.truck > aJ ? 1 : -1;
+    const stand = (u: number) => truckStand(pl, u, h.hw);
+    const error = (u: number) => {
+      const p = stand(u);
+      return Math.hypot(p.x - J.x, p.y - J.y) - h.d;
+    };
+    // the truck's arc: as far from J through the air as its socket is on the body
+    let u = aJ + sgn * h.d;
+    for (let n = 0; n < 20; n++) {
+      const e = error(u);
+      if (Math.abs(e) < 1e-10) break;
+      const der = (error(u + 0.001) - error(u - 0.001)) / 0.002;
+      if (Math.abs(der) < 1e-6) break;
+      u = Math.max(0, Math.min(pl.length, u - Math.max(-0.25, Math.min(0.25, e / der))));
+    }
+    const P = stand(u);
+    // the half's axis, towards the front in track order; its joint end at J
+    let ax = (P.x - J.x) * sgn,
+      ay = (P.y - J.y) * sgn;
+    const al = Math.hypot(ax, ay);
+    if (al < 1e-9) {
+      const tg = pl.tangent(aJ);
+      ax = tg.x;
+      ay = tg.y;
+    } else {
+      ax /= al;
+      ay /= al;
+    }
+    const pose = segments[h.i];
+    pose.x = J.x + (sgn * ax * h.s.L) / 2;
+    pose.y = J.y + (sgn * ay * h.s.L) / 2;
+    pose.angle = Math.atan2(ay, ax);
+    // the truck in its socket (off the rail only where the track runs out under it)
+    const sx = J.x + sgn * ax * h.d,
+      sy = J.y + sgn * ay * h.d;
+    for (const b of pose.bogies) {
+      const isTruck = b.truck === h.truckNo;
+      b.x = b.drawX = isTruck ? sx : J.x;
+      b.y = b.drawY = isTruck ? sy : J.y;
+      b.angle = isTruck ? P.angle : pose.angle;
+      b.foreAft = b.lateral = 0;
+    }
+    pose.delta = 0;
+    pose.wheelGap = 0;
+    // how far the half's length stands off the rail
+    let gap = 0;
+    const K = 12;
+    for (let k = 0; k <= K; k++) {
+      const v = ((k + 0.5) / (K + 1) - 0.5) * h.s.L;
+      const S = { x: pose.x + ax * v, y: pose.y + ay * v };
+      const N = pl.nearest(S, aJ + sgn * (h.s.L / 2) + v).p;
+      gap = Math.max(gap, Math.hypot(N.x - S.x, N.y - S.y));
+    }
+    pose.residualGap = gap;
+  }
+  return true;
+}
+
+/**
+ * Couple a tender to its engine as a drawbar does. On a curve a long engine's rear end swings out
+ * past the rail (a Black Five's cab hangs 0.6 tile behind its last driver), while a tender posed on
+ * its own arc stays on the rail: posed apart, the two drifted up to 0.4 tile apart where the straight
+ * gap is 0.09. Coupled, the engine's coupling point (half the gap behind its rear end, on its centre
+ * line) and the tender's (half the gap ahead of its front) are held together, and the two bodies take
+ * the pose that keeps them together and every wheel group of both nearest the rail: the engine keeps
+ * its place along the track, the tender is drawn along, and the misfit a rigid pair cannot avoid on a
+ * tight curve is shared by all their wheels instead of opening the gap. On straight track nothing
+ * changes.
+ */
+function coupleTender(
+  pl: Polyline,
+  arcFront: number,
+  spec: VehicleSpec,
+  reversed: boolean,
+  ei: number,
+  ti: number,
+  segments: SegmentPose[],
+) {
+  const se = spec.segments[ei],
+    st = spec.segments[ti];
+  const fronts = [se, st].map((s) => arcFront - (reversed ? spec.L - s.front - s.L : s.front));
+  // +1: the engine runs ahead of its tender (in track order); -1: tender first
+  const sgn = fronts[0] > fronts[1] ? 1 : -1;
+  const gap = Math.max(0, sgn > 0 ? fronts[0] - se.L - fronts[1] : fronts[1] - st.L - fronts[0]);
+  const de = se.L / 2 + gap / 2,
+    dt = st.L / 2 + gap / 2;
+  /** each wheel group's place along the body (tiles ahead of its centre, track order) and arc */
+  const groupsOf = (s: SegmentSpec, front: number) => {
+    const back = reversed !== !!s.mirror;
+    const drives = driverTest(s, (a) => a);
+    const nr = s.rigid?.length ?? 0;
+    return [...(s.rigid ?? []), ...(s.at ?? [])].map((t, i) => {
+      const tt = back ? s.L - t : t;
+      // a row's weight in the least squares: the square root of the group's
+      const w = i < nr && nr >= 2 && drives(t) ? Math.sqrt(DRIVER_WEIGHT) : 1;
+      return { u: s.L / 2 - tt, arc: front - tt, w };
+    });
+  };
+  const ge = groupsOf(se, fronts[0]),
+    gt = groupsOf(st, fronts[1]);
+  if (!ge.length || !gt.length) return;
+  const E = segments[ei],
+    T = segments[ti];
+  const ax0 = Math.cos(E.angle),
+    ay0 = Math.sin(E.angle);
+  const x0 = E.x,
+    y0 = E.y;
+  // unknowns: each body's centre and angle
+  const p = [E.x, E.y, E.angle, T.x, T.y, T.angle];
+  const N = 6;
+  const n = 3 + ge.length + gt.length;
+  const r = new Float64Array(n);
+  const jac = Array.from({ length: n }, () => new Float64Array(N));
+  /** sideways distance of a body point from the rail (signed) and the rail's normal there */
+  const off = (x: number, y: number, g: { arc: number }) => {
+    const q = pl.nearest({ x, y }, g.arc, 0.35);
+    g.arc = q.arc;
+    const tg = pl.tangent(q.arc);
+    const nx = -tg.y,
+      ny = tg.x;
+    // a wheel further off the rail costs ever more: past WHEEL_PLAY the gap gives instead
+    const d = (x - q.p.x) * nx + (y - q.p.y) * ny,
+      k = d / WHEEL_PLAY,
+      slope = 1 + 3 * k * k;
+    return { d: d * (1 + k * k), nx: nx * slope, ny: ny * slope };
+  };
+  const K = DRAWBAR_STIFFNESS;
+  // a body on two wheel groups stands exactly on both (its trucks never leave their sockets): the
+  // drawbar does not pull it off them, the other body gives instead. So does a boiler on engine units
+  // and trucks alone (the Big Boy): drawn along by its tender, a boiler longer than the whole curve
+  // flipped between leaning on the curve's entry and on its exit (a 21 degree jolt in one step); the
+  // best fit of its own wheel groups turns smoothly.
+  const articulated = (s: SegmentSpec) => !s.rigid?.length && (s.at?.length ?? 0) > 2;
+  const fixE = ge.length <= 2 || articulated(se),
+    fixT = gt.length <= 2 || articulated(st);
+  // a boiler on units and trucks alone keeps its fit, its short end trucks on the rail nearest their
+  // sockets (along the fit's arcs, a boiler turned across the curve left them half a tile beside it);
+  // its long units keep their places along the rail and turn with it
+  const short = (s: SegmentSpec) => (k: number) => (s.half?.[k] ?? 0) <= LONG_TRUCK;
+  if (articulated(se)) reseat(pl, se, segments[ei], ge, fronts[0], reversed, short(se));
+  if (articulated(st)) reseat(pl, st, segments[ti], gt, fronts[1], reversed, short(st));
+  if (fixE && fixT) return;
+  const residuals = () => {
+    const [cx, cy, te, tx, ty, tt] = p;
+    const ax = Math.cos(te),
+      ay = Math.sin(te),
+      bx = Math.cos(tt),
+      by = Math.sin(tt);
+    // the engine keeps the place the track gives it along its length
+    r[0] = 10 * ((cx - x0) * ax0 + (cy - y0) * ay0);
+    jac[0].set([10 * ax0, 10 * ay0, 0, 0, 0, 0]);
+    // the drawbar: the engine's coupling point (half the gap behind its rear end) and the tender's
+    // (half the gap ahead of its front) are one
+    r[1] = K * (cx - sgn * ax * de - (tx + sgn * bx * dt));
+    r[2] = K * (cy - sgn * ay * de - (ty + sgn * by * dt));
+    jac[1].set([K, 0, K * sgn * de * ay, -K, 0, K * sgn * dt * by]);
+    jac[2].set([0, K, -K * sgn * de * ax, 0, -K, -K * sgn * dt * bx]);
+    let row = 3;
+    for (const g of ge) {
+      const o = off(cx + ax * g.u, cy + ay * g.u, g);
+      r[row] = g.w * o.d;
+      jac[row].set([g.w * o.nx, g.w * o.ny, g.w * (-ay * o.nx + ax * o.ny) * g.u, 0, 0, 0]);
+      row++;
+    }
+    for (const g of gt) {
+      const o = off(tx + bx * g.u, ty + by * g.u, g);
+      r[row] = g.w * o.d;
+      jac[row].set([0, 0, 0, g.w * o.nx, g.w * o.ny, g.w * (-by * o.nx + bx * o.ny) * g.u]);
+      row++;
+    }
+  };
+  const A = Array.from({ length: N }, () => new Float64Array(N + 1));
+  for (let it = 0; it < 16; it++) {
+    residuals();
+    // a body that stands on two groups keeps its pose
+    for (const row of jac) {
+      if (fixE) row.fill(0, 0, 3);
+      if (fixT) row.fill(0, 3, 6);
+    }
+    // Gauss-Newton step: (JᵀJ) δ = −Jᵀr
+    for (let a = 0; a < N; a++) {
+      for (let b = 0; b < N; b++) {
+        let s = 0;
+        for (let q = 0; q < n; q++) s += jac[q][a] * jac[q][b];
+        A[a][b] = s + (a === b ? 1e-9 : 0);
+      }
+      let s = 0;
+      for (let q = 0; q < n; q++) s += jac[q][a] * r[q];
+      A[a][N] = -s;
+    }
+    for (let c = 0; c < N; c++) {
+      let piv = c;
+      for (let q = c + 1; q < N; q++) if (Math.abs(A[q][c]) > Math.abs(A[piv][c])) piv = q;
+      [A[c], A[piv]] = [A[piv], A[c]];
+      if (Math.abs(A[c][c]) < 1e-14) return;
+      for (let q = 0; q < N; q++) {
+        if (q === c) continue;
+        const f = A[q][c] / A[c][c];
+        for (let w = c; w <= N; w++) A[q][w] -= f * A[c][w];
+      }
+    }
+    let step = 0;
+    for (let c = 0; c < N; c++) {
+      const d = Math.max(-0.2, Math.min(0.2, A[c][N] / A[c][c]));
+      p[c] += d;
+      step = Math.max(step, Math.abs(d));
+    }
+    if (step < 1e-10) break;
+  }
+  [E.x, E.y, E.angle, T.x, T.y, T.angle] = p;
+  if (!fixE) reseat(pl, se, E, ge, fronts[0], reversed);
+  if (!fixT) reseat(pl, st, T, gt, fronts[1], reversed);
+}
+
+/**
+ * Put a moved pinned segment's trucks back on the rail beside their sockets, and measure again how
+ * far its fixed axles stand off the rail.
+ */
+function reseat(
+  pl: Polyline,
+  s: SegmentSpec,
+  pose: SegmentPose,
+  groups: { u: number; arc: number }[],
+  front: number,
+  reversed: boolean,
+  only?: (k: number) => boolean,
+) {
+  const ax = Math.cos(pose.angle),
+    ay = Math.sin(pose.angle);
+  const back = reversed !== !!s.mirror;
+  const nr = s.rigid?.length ?? 0;
+  pose.wheelGap = 0;
+  if (nr >= 2)
+    for (let k = 0; k < nr; k++) {
+      const u = groups[k].u;
+      const S = { x: pose.x + ax * u, y: pose.y + ay * u };
+      const N = pl.nearest(S, groups[k].arc, 0.6).p;
+      pose.wheelGap = Math.max(pose.wheelGap, Math.hypot(N.x - S.x, N.y - S.y));
+    }
+  // pose.bogies are in track order; the groups list the pivots in spec order after the axles
+  const at = s.at ?? [];
+  const order = at.map((t, k) => ({ t: back ? s.L - t : t, k })).sort((a, b) => a.t - b.t);
+  order.forEach(({ t, k }, i) => {
+    const b = pose.bogies[i];
+    if (!b || (only && !only(k))) return;
+    const u = s.L / 2 - t;
+    const S = { x: pose.x + ax * u, y: pose.y + ay * u };
+    const q = pl.nearest(S, groups[nr + k]?.arc ?? front - t, 0.6);
+    const { x, y, angle } = truckStand(pl, q.arc, s.half?.[k] ?? 0);
+    const rx = x - S.x,
+      ry = y - S.y;
+    b.x = b.drawX = x;
+    b.y = b.drawY = y;
+    b.angle = angle;
+    b.foreAft = Math.abs(rx * ax + ry * ay);
+    b.lateral = Math.abs(-rx * ay + ry * ax);
+  });
 }
 
 /** Front arc offsets of every vehicle behind the head (vehicle 0's front is at 0). */
@@ -444,6 +1086,218 @@ export function screenAngle(angle: number) {
   const c = Math.cos(angle);
   const s = Math.sin(angle);
   return Math.atan2((c + s) * 0.5, c - s);
+}
+/** Screen pixels a height of one tile side spans (slope.ts UP_PX, terrainRelief's TILE_SIDE_PX). */
+export const UP_TILE_PX = (32 * Math.SQRT2 * Math.sqrt(3)) / 2;
+
+/**
+ * The box a drawn part fills, for swinging its picture between two facings: tiles from the part's
+ * anchor on the rail. `u0`..`u1` along the heading (rear end, front end), `w` half its width, `h`
+ * its height over the rail.
+ */
+export interface PartBox {
+  u0: number;
+  u1: number;
+  w: number;
+  h: number;
+}
+
+/** A swing mesh: six fans of seven points (each of the box's three seen faces in two halves). */
+export const SWING_FAN = 7;
+export const SWING_FANS = 6;
+export const SWING_VERTS = SWING_FANS * SWING_FAN;
+/**
+ * Sines of the angle between a face's two edges on the screen: below the first the face counts as
+ * seen edge on, from the second up it is swung as itself (fifteen and thirty degrees off its edge).
+ */
+export const SWING_EDGE_ON = [0.26, 0.5] as const;
+
+const polyA = new Float64Array(16),
+  polyB = new Float64Array(16);
+
+/** Keeps the part of a convex polygon (n points in `src`) where k·cross(e, p − j) ≥ 0. */
+function clipHalf(
+  src: Float64Array,
+  n: number,
+  dst: Float64Array,
+  jx: number,
+  jy: number,
+  ex: number,
+  ey: number,
+  k: number,
+) {
+  let m = 0;
+  for (let i = 0; i < n; i++) {
+    const ax = src[2 * i],
+      ay = src[2 * i + 1],
+      bx = src[2 * ((i + 1) % n)],
+      by = src[2 * ((i + 1) % n) + 1],
+      da = k * (ex * (ay - jy) - ey * (ax - jx)),
+      db = k * (ex * (by - jy) - ey * (bx - jx));
+    if (da >= 0) {
+      dst[2 * m] = ax;
+      dst[2 * m + 1] = ay;
+      m++;
+    }
+    if (da >= 0 !== db >= 0) {
+      const t = da / (da - db);
+      dst[2 * m] = ax + (bx - ax) * t;
+      dst[2 * m + 1] = ay + (by - ay) * t;
+      m++;
+    }
+  }
+  return m;
+}
+
+/**
+ * The picture of a part drawn for heading `drawn`, swung to the heading `angle` a few degrees off.
+ *
+ * A flat picture cannot be turned as a whole: turned on the screen its uprights lean, sheared along
+ * its length its width breathes with every degree. What turns is a box. A camera sees three faces of
+ * it (top, near side, near end), each flat, and each face's picture goes to the same face seen at
+ * the true heading by a map of its own: the side keeps its uprights, the top turns like a footprint,
+ * the end swings across. The three maps agree along the box's edges, so the picture does not tear,
+ * and each runs on past its face over what is drawn beyond it (a chimney, a buffer, the wheels).
+ *
+ * Each face fills the angle between two of the three edges that meet at the box's near top corner,
+ * and is drawn in two halves either side of that angle's middle line. A face seen nearly edge on
+ * (its two edges almost in one line) has next to no picture of its own, and its map would fling what
+ * is drawn beside the box far off: there the middle line stays as it is drawn, and the halves only
+ * follow the edges they share with the other faces (SWING_EDGE_ON).
+ *
+ * `rect` is the sprite as it is shown: left, top, right, bottom in pixels from its anchor (the rail
+ * point under the part). Writes `SWING_VERTS` points to `src` (where each is in the picture) and `dst`
+ * (where it is drawn), x and y interleaved: `SWING_FANS` fans of `SWING_FAN`, a fan's unused points
+ * repeating its last. Exact for every point of the box's three seen faces.
+ */
+export function swingMesh(
+  box: PartBox,
+  drawn: number,
+  angle: number,
+  rect: readonly [number, number, number, number],
+  src: Float32Array,
+  dst: Float32Array,
+) {
+  const c0 = Math.cos(drawn),
+    s0 = Math.sin(drawn),
+    c1 = Math.cos(angle),
+    s1 = Math.sin(angle);
+  // the corner the three seen faces share: top, near end, near side (near: lower on the screen)
+  const un = c0 + s0 >= 0 ? box.u1 : box.u0,
+    uf = c0 + s0 >= 0 ? box.u0 : box.u1,
+    wn = c0 - s0 >= 0 ? box.w : -box.w,
+    du = uf - un,
+    up = box.h * UP_TILE_PX;
+  // where that corner is drawn, and where it belongs
+  const jx = 32 * (un * (c0 - s0) - wn * (s0 + c0)),
+    jy = 16 * (un * (c0 + s0) + wn * (c0 - s0)) - up,
+    kx = 32 * (un * (c1 - s1) - wn * (s1 + c1)),
+    ky = 16 * (un * (c1 + s1) + wn * (c1 - s1)) - up;
+  // the three edges from it: along the body to the far end, across to the far side, down to the rail;
+  // as drawn (x, y) and as they belong (x, y)
+  const E = [
+    [32 * du * (c0 - s0), 16 * du * (c0 + s0), 32 * du * (c1 - s1), 16 * du * (c1 + s1)],
+    [64 * wn * (s0 + c0), -32 * wn * (c0 - s0), 64 * wn * (s1 + c1), -32 * wn * (c1 - s1)],
+    [0, up, 0, up],
+  ];
+  // faces: top (far end, far side), near side (far end, down), near end (far side, down); each
+  // with the edge it does not touch
+  const FACES = [
+    [0, 1, 2],
+    [0, 2, 1],
+    [1, 2, 0],
+  ];
+  for (let face = 0; face < 3; face++) {
+    const e1 = E[FACES[face][0]],
+      e2 = E[FACES[face][1]],
+      e3 = E[FACES[face][2]],
+      l1 = Math.hypot(e1[0], e1[1]),
+      l2 = Math.hypot(e2[0], e2[1]),
+      turn = e1[0] * e2[1] - e1[1] * e2[0],
+      sine = l1 > 0 && l2 > 0 ? turn / (l1 * l2) : 0,
+      cosine = l1 > 0 && l2 > 0 ? (e1[0] * e2[0] + e1[1] * e2[1]) / (l1 * l2) : -1;
+    // the middle line of the face's angle, as long as the shorter edge; where the edges run in one
+    // line it stands square to them, away from the third edge
+    let mx = l1 > 0 && l2 > 0 ? e1[0] / l1 + e2[0] / l2 : 0,
+      my = l1 > 0 && l2 > 0 ? e1[1] / l1 + e2[1] / l2 : 0,
+      ml = Math.hypot(mx, my);
+    if (ml < 1e-4) {
+      mx = -e1[1];
+      my = e1[0];
+      if (mx * e3[0] + my * e3[1] > 0) {
+        mx = -mx;
+        my = -my;
+      }
+      ml = Math.hypot(mx, my);
+    }
+    const len = Math.max(1, Math.min(l1, l2));
+    mx = (mx / (ml || 1)) * len;
+    my = (my / (ml || 1)) * len;
+    // where the face's own map takes that line, and how far the face is trusted with it: fully when
+    // it is seen thirty degrees or more off its edge, not at all within fifteen
+    const trust =
+      cosine > 0
+        ? 1
+        : Math.min(
+            1,
+            Math.max(
+              0,
+              (Math.abs(sine) - SWING_EDGE_ON[0]) / (SWING_EDGE_ON[1] - SWING_EDGE_ON[0]),
+            ),
+          );
+    let nx = mx,
+      ny = my;
+    if (trust > 0) {
+      const a = (mx * e2[1] - my * e2[0]) / turn,
+        b = (e1[0] * my - e1[1] * mx) / turn;
+      nx = mx + trust * (a * e1[2] + b * e2[2] - mx);
+      ny = my + trust * (a * e1[3] + b * e2[3] - my);
+    }
+    for (let half = 0; half < 2; half++) {
+      // this half's two edges, as drawn and as they belong
+      const ax = half ? mx : e1[0],
+        ay = half ? my : e1[1],
+        bx = half ? e2[0] : mx,
+        by = half ? e2[1] : my,
+        ax1 = half ? nx : e1[2],
+        ay1 = half ? ny : e1[3],
+        bx1 = half ? e2[2] : nx,
+        by1 = half ? e2[3] : ny,
+        det = ax * by - ay * bx,
+        base = (face * 2 + half) * SWING_FAN * 2;
+      let n = 0;
+      if (Math.abs(det) > 1e-9) {
+        const k = det > 0 ? 1 : -1;
+        polyA[0] = rect[0];
+        polyA[1] = rect[1];
+        polyA[2] = rect[2];
+        polyA[3] = rect[1];
+        polyA[4] = rect[2];
+        polyA[5] = rect[3];
+        polyA[6] = rect[0];
+        polyA[7] = rect[3];
+        n = clipHalf(polyA, 4, polyB, jx, jy, ax, ay, k);
+        n = clipHalf(polyB, n, polyA, jx, jy, bx, by, -k);
+      }
+      for (let i = 0; i < SWING_FAN; i++) {
+        const at = base + 2 * i;
+        if (n < 3) {
+          // nothing of the picture lies here
+          src[at] = src[at + 1] = dst[at] = dst[at + 1] = 0;
+          continue;
+        }
+        const p = Math.min(i, n - 1),
+          qx = polyA[2 * p] - jx,
+          qy = polyA[2 * p + 1] - jy,
+          a = (qx * by - qy * bx) / det,
+          b = (ax * qy - ay * qx) / det;
+        src[at] = polyA[2 * p];
+        src[at + 1] = polyA[2 * p + 1];
+        dst[at] = kx + a * ax1 + b * bx1;
+        dst[at + 1] = ky + a * ay1 + b * by1;
+      }
+    }
+  }
 }
 /** Runtime rotation that turns the sprite drawn for facing f into the exact heading. */
 export function residualRotation(angle: number, f: number) {

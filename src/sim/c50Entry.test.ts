@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { content } from '../data/content';
-import { bannerPool, validateBanners } from '../gacha/gacha';
 import { craftPool, craftSize, craftTier } from '../gacha/crafting';
 import { isRetired, locoDef } from '../gacha/items';
 import { OWN_LENGTH, SIZE_LEN, vehicleSpec } from './body';
@@ -29,17 +28,10 @@ describe('the MÁV C-50 (c50-role: a common narrow diesel, found, not handed out
     expect(content.locomotives.filter((l) => l.starter).map((l) => l.id)).not.toContain('c50');
   });
 
-  it('is found by crafting in the Diesel age and by pulling the Diesel Era banner, and nowhere else', () => {
+  it('is found by crafting in the Diesel age, and nowhere else', () => {
     expect(craftTier('c50')).toBe(1);
     expect(craftPool('loco', 1)).toContain('c50');
     for (const t of [0, 2]) expect(craftPool('loco', t)).not.toContain('c50');
-    const holding = content.gacha.banners.filter((b) => bannerPool(b).includes('c50'));
-    expect(holding.map((b) => b.id)).toEqual(['diesel_era']);
-    expect(holding.map((b) => b.tier)).toEqual([1]);
-  });
-
-  it('leaves every banner offering every rarity', () => {
-    expect(validateBanners()).toEqual([]);
   });
 
   it('has the stats of a common narrow diesel, beside BM-50 and Muki', () => {

@@ -35,7 +35,7 @@ it("keeps a common door height across packed building levels, before the author'
     expect(door, key).toBeCloseTo(DOOR_PX, 5);
     checked++;
   }
-  expect(checked).toBeGreaterThan(8);
+  expect(checked).toBeGreaterThan(6);
 });
 
 /**
@@ -56,7 +56,6 @@ const BASELINE = {
     warehouse: 11,
     farm: 12,
     lumber: 12,
-    windmill: 13,
     grinder: 12,
   } as Record<string, number>,
   /** door aperture / illustrated frame height */
@@ -66,7 +65,6 @@ const BASELINE = {
     townhouse: 68 / 251,
     warehouse: 53 / 191,
     farm: 47 / 262,
-    windmill: 38 / 240,
   } as Record<string, number>,
   /** declared scale of outdoor equipment with no door */
   declared: {
@@ -115,6 +113,7 @@ const MODELS = new Set([
   'ironworks',
   'diesel_refinery',
   'wire_mill',
+  'windmill',
 ]);
 /** The pick a frame has: its family's multiplier, else none. */
 const pickOf = (frame: string) => PICK[structureFamily(frame)] ?? 1;
@@ -215,9 +214,8 @@ describe('building scale', () => {
 
   it("is a door's height over the door in the picture, whoever stands beside it", () => {
     expect(structureScale('structures/townhouse_s1')).toBe(DOOR_PX / DOOR_REFERENCE_PX.townhouse);
-    expect(structureScale('structures/windmill_lv2')).toBe(DOOR_PX / DOOR_REFERENCE_PX.windmill);
-    // a measured door: 38 of the windmill's 240 px
-    expect(structureScale('structures/windmill', 240)).toBeCloseTo(DOOR_PX / 38, 9);
+    // a measured door: 68 of the townhouse's 251 px
+    expect(structureScale('structures/townhouse', 251)).toBeCloseTo(DOOR_PX / 68, 9);
   });
 
   it("draws a 3D model's family at the size it is packed, at every level, height and pick", () => {
@@ -279,7 +277,7 @@ describe("the author's size pick", () => {
   });
 
   it('leaves a family it does not name as the references give it', () => {
-    for (const family of ['townhouse', 'windmill', 'pump', 'hydro_plant', 'oil_derrick']) {
+    for (const family of ['townhouse', 'pump', 'hydro_plant', 'oil_derrick']) {
       expect(AUTHOR_SCALE[family], family).toBeUndefined();
       const frame = `structures/${family}_lv2`;
       expect(structureScale(frame), frame).toBe(referenceScale(frame));
@@ -317,9 +315,11 @@ describe('the Fuel Pump', () => {
 
 it('requires an explicit calibration or declared estimate for every illustrated structure', () => {
   // but the depot's: its 3D model's pictures are packed at the size they are drawn, and an axis
-  // frame or the plain `depot_1` has no reference (`keep a wide station's axis frames`)
+  // frame or the plain `depot_1` has no reference (`keep a wide station's axis frames`); and the
+  // windmill's sails, no building but a part of one, drawn at the mill's scale (buildingLife.ts)
   for (const key of Object.keys(atlas.frames))
-    if (!/^structures\/depot_(r[01]|1$)/.test(key)) expect(hasScaleReference(key), key).toBe(true);
+    if (!/^structures\/(depot_(r[01]|1$)|windmill_sails$)/.test(key))
+      expect(hasScaleReference(key), key).toBe(true);
 });
 
 /** Node has no ImageData or canvas: enough of both for the atlas packer to run. */

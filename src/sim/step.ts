@@ -39,8 +39,6 @@ export const PASSENGER_CATCHMENT = 7;
 export const CITY_CHECK_SECONDS = 10;
 /** Checks of the next age's goals per in-game day, in play mode only: once an in-game hour. */
 export const AGE_CHECKS_PER_DAY = 24;
-/** Tickets granted when a day ends on which at least one contract was completed. */
-export const DAILY_TICKETS = 1;
 
 /**
  * Track pieces of the regular class the starting wood, stone and iron pay for (spec §16): about
@@ -130,8 +128,6 @@ export interface StepHooks {
   refreshCity?: () => void;
   /** every step after the weather: the game re-tints and sets production when the season turns */
   season?: () => void;
-  /** a day ended with completed contracts and DAILY_TICKETS were granted for it */
-  dailyTicket?: () => void;
 }
 
 /**
@@ -169,7 +165,7 @@ function catchment(houses: Iterable<House>, s: Station): number {
  * session.
  */
 export class SimStep {
-  /** the day the last step ran in; a step in another day settles the daily ticket */
+  /** the day the last step ran in */
   lastDay = 1;
   /** game time at or after which the next step calls the city hook */
   nextCityCheck = 0;
@@ -271,11 +267,6 @@ export class SimStep {
       builder.wear.daily();
       // a piece that failed of time closes now, not at the next train's hit
       builder.wear.flush();
-      if (contracts.completedToday > 0) {
-        economy.tickets += DAILY_TICKETS;
-        this.hooks.dailyTicket?.();
-      }
-      contracts.completedToday = 0;
     }
   }
 }

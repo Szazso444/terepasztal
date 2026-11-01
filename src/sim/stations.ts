@@ -435,11 +435,18 @@ export class Station {
   }
   /** footprint width along x */
   get w() {
-    return stationSpan(this.def, this.rot).w;
+    return this.span().w;
   }
   /** footprint depth along y */
   get h() {
-    return stationSpan(this.def, this.rot).h;
+    return this.span().h;
+  }
+  /** The span for the current rotation, kept: `covers` runs for every station and every car. */
+  private spanOf: { rot: number; w: number; h: number } | null = null;
+  private span() {
+    if (this.spanOf?.rot !== this.rot)
+      this.spanOf = { rot: this.rot, ...stationSpan(this.def, this.rot) };
+    return this.spanOf;
   }
   /** every tile the station stands on (x, y is the top-left corner) */
   footprint(): { x: number; y: number }[] {

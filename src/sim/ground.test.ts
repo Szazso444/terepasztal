@@ -142,13 +142,12 @@ function partsOf(world: SaveParts['world'], supply: SupplyMode = 'simple'): Save
   return {
     seed: world.seed,
     clock: { time: 900, speedIndex: 1 },
-    economy: { money: 5000, tickets: 2, tier: 1, granted: [0], earned: 100 },
+    economy: { money: 5000, tier: 1, earned: 100 },
     track: [[3, 4, 'straight', 1, 'branch', 'branch']],
     stations: [],
     trains: [],
     contracts: { contracts: [] },
     inventory: { items: [], nextUid: 1 },
-    gacha: {},
     camera: { x: 0, y: 0, zoomIndex: 2 },
     lastDay: 3,
     decor: [],
@@ -475,7 +474,7 @@ describe('the saves stored when this version first runs', () => {
     // the step from v8 drops the reputation, so the save loads; the file itself still holds it
     const file = JSON.stringify({
       ...oldFile(small(1), 8),
-      economy: { money: 1, tickets: 0, tier: 0, granted: [], reputation: 7 },
+      economy: { money: 1, tier: 0, reputation: 7 },
     });
     const raw = file.replace('"reputation":7', '"reputation":1e999');
     expect(parseSave(raw)).not.toBeNull();
