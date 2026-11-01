@@ -75,9 +75,9 @@ export const blankPortalArt: PortalArt = {
 };
 
 const K = TUNNEL_R;
-/** The width of the floor of a cutting: from under the wall to the edge of the ballast. */
-const WALL = 0.45,
-  BALLAST = 0.27;
+/** How far the far wall of a cutting stands from the rail, and the ballast's edge, tiles. */
+export const CUT_WALL = 0.45;
+const BALLAST = 0.27;
 /** How light each face stands: the S face takes the sun, the E face less, the wall between. */
 const E_LIGHT = 0.82,
   WALL_LIGHT = 0.92;
@@ -217,24 +217,29 @@ function drawCutting(c: CanvasRenderingContext2D, fit: FaceFit, swatch: HTMLCanv
   const { run, ds, wall } = fit,
     { hi, mid, lo } = ROCK;
   if (!run) return;
-  path(c, [q(-WALL - 0.03, 0), q(-BALLAST, 0), q(-BALLAST, 0, -run), q(-WALL - 0.03, 0, -run)]);
+  path(c, [
+    q(-CUT_WALL - 0.03, 0),
+    q(-BALLAST, 0),
+    q(-BALLAST, 0, -run),
+    q(-CUT_WALL - 0.03, 0, -run),
+  ]);
   c.fillStyle = rgb(mix(mid, lo, 0.68));
   c.fill();
   for (let i = 0; i < 90 * run; i++) {
-    const a = q(-WALL + noise(i + 0.2) * (WALL - BALLAST), 0, -noise(i + 0.7) * run);
+    const a = q(-CUT_WALL + noise(i + 0.2) * (CUT_WALL - BALLAST), 0, -noise(i + 0.7) * run);
     c.fillStyle = rgb(mix(mid, noise(i) < 0.5 ? lo : hi, noise(i + 0.4) * 0.6), 0.8);
     c.fillRect(a.x, a.y, 1.1, 0.7);
   }
   c.save();
   path(c, [
-    ...ds.map((d, i) => q(-WALL, wall[i], d)),
-    ...[...ds].reverse().map((d) => q(-WALL, 0, d)),
+    ...ds.map((d, i) => q(-CUT_WALL, wall[i], d)),
+    ...[...ds].reverse().map((d) => q(-CUT_WALL, 0, d)),
   ]);
   c.clip();
   layBrick(c, swatch, q(0, 0, 1), WALL_LIGHT);
   shadeFoot(
     c,
-    ds.map((d) => q(-WALL, 0, d)),
+    ds.map((d) => q(-CUT_WALL, 0, d)),
     5,
     0.6,
   );
@@ -283,8 +288,8 @@ export function canvasPortalArt(atlas: AtlasRegistry): PortalArt {
           [
             ...us.map((u, i) => q(u, top[i] + 3)),
             ...us.map((u, i) => q(u, base[i] - 3)),
-            ...ds.map((d, i) => q(-WALL, wall[i] + 3, d)),
-            q(-WALL - 0.03, -2, -run),
+            ...ds.map((d, i) => q(-CUT_WALL, wall[i] + 3, d)),
+            q(-CUT_WALL - 0.03, -2, -run),
             q(-BALLAST, -2, -run),
             q(-ring, OPEN_CROWN + 8),
             q(ring, OPEN_CROWN + 8),
@@ -301,7 +306,7 @@ export function canvasPortalArt(atlas: AtlasRegistry): PortalArt {
         ds
           .map((d, i) => ({ d, top: wall[i] }))
           .filter((p) => p.top >= 2)
-          .map((p) => q(-WALL, p.top, p.d)),
+          .map((p) => q(-CUT_WALL, p.top, p.d)),
       );
       layCoping(
         c,

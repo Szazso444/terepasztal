@@ -311,6 +311,8 @@ describe('a face that looks away', () => {
     expect(within(line, rail(9.4))).toBe(false);
     // and the top of a car out in the open stands clear
     expect(within(line, { ...rail(8), y: rail(8).y - 30 })).toBe(true);
+    // while a car inside is gone to its roof, though the ground over it is lower than the car
+    expect(within(line, { ...rail(11), y: rail(11).y - 50 })).toBe(false);
   });
   it('a column that starts on the bank at the foot of the hill still hides the rail', () => {
     // the ground leans up across the last half tile before the plane, over the rail

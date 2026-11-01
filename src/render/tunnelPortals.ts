@@ -4,6 +4,7 @@ import { depthKey, DIR_DX, DIR_DY, HALF_H, HALF_W, tileToWorld } from '../engine
 import type { Portal } from '../sim/underground';
 import {
   blankPortalArt,
+  CUT_WALL,
   planePoint,
   type FaceFit,
   type Picture,
@@ -32,8 +33,6 @@ const THROAT_TINTS = [0xb4b4b4, 0x707070, 0x383838];
 /** Half the width of a portal's face, and the step its height is read at, tiles. */
 const SPAN = 0.6,
   STEP = 0.04;
-/** How far the far wall of a cutting stands from the rail. */
-const WALL = 0.45;
 /** How far from the rail the side of a car meets the plane of a portal, tiles. */
 const CAR_SIDE = 0.2;
 /** Past this far inside a car has nothing left outside: the opening alone shows it. */
@@ -48,8 +47,11 @@ const MASK_REACH = 400;
 const HILL_COLUMN = 4,
   HILL_OUT = 7,
   HILL_IN = 3;
-/** How far along the screen's up and down a hill is walked to find its top, tiles. */
-const HILL_WALK = 8,
+/** The tallest car, px over the rail, and how far inside the hill's line has cleared it, tiles. */
+const CAR_TOP = 56,
+  INTO_THE_HILL = 0.6;
+/** The walk toward the camera: past this even the highest level stands under the view, tiles. */
+const HILL_WALK = 5,
   HILL_STEP = 0.25;
 
 /** How high the arch stands `u` tiles from the middle of the opening, px over the rail. */
@@ -110,7 +112,7 @@ function groundBy(host: PortalHost, p: Portal) {
     ) - floor;
 }
 
-/** Reads the ground round a face on +x or +y. Pure: tests hand it their own ground. */
+/** How the ground stands round a face on +x or +y, now. */
 export function fitFace(host: PortalHost, p: Portal): FaceFit {
   const ground = groundBy(host, p),
     { dx, dy } = planeOf(p),
@@ -139,7 +141,7 @@ export function fitFace(host: PortalHost, p: Portal): FaceFit {
   }
   for (let d = 0; d >= -run - 1e-6; d -= STEP) {
     ds.push(d);
-    wall.push(Math.max(0, ground(-WALL - 0.12, d), ground(-WALL - 0.3, d)));
+    wall.push(Math.max(0, ground(-CUT_WALL - 0.12, d), ground(-CUT_WALL - 0.3, d)));
   }
   return {
     mirror: p.face === 'S',
@@ -175,6 +177,8 @@ export function hillLine(host: PortalHost, p: Portal): Pt[] {
       at = (t: number) => rail + 2 * t * HALF_H - (host.lift(x0 + t, y0 + t) - floor);
     let topmost = at(0);
     for (let t = HILL_STEP; t <= HILL_WALK; t += HILL_STEP) topmost = Math.min(topmost, at(t));
+    // in the mountain a roof stands under the ground, though the cover may be lower than a car
+    if (s < 0) topmost = Math.min(topmost, rail - CAR_TOP * Math.min(1, -s / INTO_THE_HILL));
     columns.push({ x: s * screen, y: topmost < rail - 1 ? topmost : MASK_REACH });
   }
   const [first] = columns,
@@ -207,7 +211,7 @@ interface Standing {
 /** A tile's key in `lanes`; the tiles round the map's edge stay apart from the rest. */
 const laneKey = (x: number, y: number) => (y + 8) * 65536 + x + 8;
 
-/** Which portal each map tile's car reads, by the layer the cars stand in (`surfaceVersions`). */
+/** The portals by the layer the cars stand in, so the trains find them (as `surfaceVersions`). */
 export const layerPortals = new WeakMap<Container, TunnelPortals>();
 
 export class TunnelPortals {
