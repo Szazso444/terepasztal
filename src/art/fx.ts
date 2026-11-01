@@ -170,10 +170,25 @@ function spark(): PixelBuf {
   return b;
 }
 
+/** A headwater's spring: a ripple ring grown `k` of 4 steps around a bright dot. */
+function spring(k: number): PixelBuf {
+  const b = new PixelBuf(22, 12);
+  const [cx, cy] = [11, 6];
+  const r = 3 + k * 2;
+  for (let y = 0; y < 12; y++)
+    for (let x = 0; x < 22; x++) {
+      const d = Math.hypot(x + 0.5 - cx, (y + 0.5 - cy) * 2);
+      if (Math.abs(d - r) < 0.8) b.set(x, y, [205, 226, 224], 170 - k * 40);
+      else if (d < 1.6) b.set(x, y, [224, 221, 210], 230);
+    }
+  return b;
+}
+
 export function generateFxAtlas(): AtlasImage {
   const ab = new AtlasBuilder();
   const rd = rainDrop();
   ab.add('fx/rain', rd.toImageData(), 2, 9);
+  for (let k = 0; k < 4; k++) ab.add(`fx/headwater_f${k}`, spring(k).toImageData(), 11, 6);
   for (let i = 0; i < 3; i++) {
     const fp = fogPatch(20 + i);
     ab.add(`fx/fog_${i}`, fp.toImageData(), fp.w / 2, fp.h / 2);

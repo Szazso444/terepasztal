@@ -28,6 +28,14 @@ function groundTile(shades: RGB[], seed: number, tufts = 0.006, deco?: Deco): Pi
 }
 
 // biome ground palettes (kept local: they are only used by the tile generators)
+/** Foam, held under the cursor's white as every painted highlight is. */
+const FOAM: RGB = [224, 221, 210];
+const ICE: RGB[] = [
+  [200, 211, 216],
+  [188, 201, 208],
+  [176, 190, 199],
+];
+const CREVASSE: RGB = [120, 142, 156];
 const PLAINS: RGB[] = [
   [128, 148, 74],
   [140, 160, 82],
@@ -257,6 +265,85 @@ function waterTile(seed: number, phase: number): PixelBuf {
   return b;
 }
 
+/** Running water: the sea's colours a shade lighter, with long bright dashes that travel with the frame. */
+function riverTile(seed: number, phase: number): PixelBuf {
+  const b = new PixelBuf(TILE_W, TILE_H);
+  for (let y = 0; y < TILE_H; y++)
+    for (let x = 0; x < TILE_W; x++) {
+      if (!inDiamond(x, y, HALF_W, HALF_H, HALF_W, HALF_H)) continue;
+      let c = shade(pickShade(x, y, PAL.water, seed), 1.08);
+      const cellX = x >> 3;
+      const cellY = y >> 1;
+      if (hash2(cellX, cellY, seed + 7) > 0.72) {
+        const gx = ((cellX << 3) + Math.floor(hash2(cellX, cellY, seed + 8) * 5) + phase * 4) % 64;
+        if (y === cellY << 1 && x >= gx && x < gx + 6) c = shade(PAL.water[3], 1.22);
+      }
+      b.set(x, y, c);
+    }
+  return b;
+}
+
+/** A tile of sea-shore sand: a wet band along its lower edges, and a broken line of foam. */
+function beachTile(seed: number): PixelBuf {
+  const b = new PixelBuf(TILE_W, TILE_H);
+  for (let y = 0; y < TILE_H; y++)
+    for (let x = 0; x < TILE_W; x++) {
+      if (!inDiamond(x, y, HALF_W, HALF_H, HALF_W, HALF_H)) continue;
+      let c = pickShade(x, y, PAL.sand, seed);
+      const fromEdge = TILE_H - 1 - y - Math.abs(x - HALF_W) / 2;
+      if (fromEdge < 5) c = shade(c, 0.86);
+      if (fromEdge >= 2 && fromEdge < 3 && hash2(x >> 2, y, seed + 3) > 0.45) c = FOAM;
+      b.set(x, y, c);
+    }
+  return b;
+}
+
+/** Glacier ice: the placeholder under the painter, blue-grey with two crevasse strokes. */
+function glacierTile(seed: number): PixelBuf {
+  const b = new PixelBuf(TILE_W, TILE_H);
+  for (let y = 0; y < TILE_H; y++)
+    for (let x = 0; x < TILE_W; x++) {
+      if (!inDiamond(x, y, HALF_W, HALF_H, HALF_W, HALF_H)) continue;
+      let c = pickShade(x, y, ICE, seed);
+      for (let k = 0; k < 2; k++) {
+        const cx = 18 + Math.floor(hash2(k, seed, 5) * 28);
+        const cy = 9 + Math.floor(hash2(k, seed, 6) * 14);
+        const along = x - cx;
+        if (Math.abs(along) < 7 && Math.abs(y - cy - Math.round(along / 3)) < 1) c = CREVASSE;
+      }
+      b.set(x, y, c);
+    }
+  return b;
+}
+
+/**
+ * A waterfall, the upper tile with its cascade: over an edge that faces the view (E, S) a steep
+ * sheet of white water down the rounded bank, ELEV_PX a level, and over one that faces away only
+ * spray along that edge. The frame is the tile's diamond and what hangs below it.
+ */
+function waterfallTile(edge: 'n' | 'e' | 's' | 'w', drop: number, seed: number): PixelBuf {
+  const fall = drop * ELEV_PX;
+  const b = new PixelBuf(TILE_W, TILE_H + fall);
+  const near = edge === 'e' || edge === 's';
+  for (let y = 0; y < TILE_H; y++)
+    for (let x = 0; x < TILE_W; x++) {
+      if (!inDiamond(x, y, HALF_W, HALF_H, HALF_W, HALF_H)) continue;
+      let c = shade(pickShade(x, y, PAL.water, seed), 1.08);
+      const far = edge === 'n' ? y + (x - HALF_W) / 2 : y - (x - HALF_W) / 2;
+      if (!near && far < 4 && hash2(x >> 1, y, seed + 3) > 0.4) c = FOAM;
+      b.set(x, y, c);
+    }
+  if (!near) return b;
+  const xs = edge === 'e' ? [HALF_W, TILE_W] : [0, HALF_W];
+  for (let x = xs[0]; x < xs[1]; x++) {
+    const top = Math.floor(TILE_H - 1 - Math.abs(x - HALF_W) / 2);
+    const streak = hash2(x >> 2, 1, seed) > 0.35;
+    for (let dy = 0; dy < fall; dy++)
+      b.set(x, top + dy, streak || dy > fall * 0.6 ? FOAM : shade(PAL.water[3], 1.2));
+  }
+  return b;
+}
+
 /** Out-of-map fog: subdued slate-teal, distinct from both ocean and buildable land. */
 function voidTile(seed: number): PixelBuf {
   const b = new PixelBuf(TILE_W, TILE_H);
@@ -449,6 +536,18 @@ export function generateTerrainAtlas(): AtlasImage {
       groundAnchor.ay,
     );
     ab.add(
+      `terrain/beach_${v}`,
+      beachTile(550 + v).toImageData(),
+      groundAnchor.ax,
+      groundAnchor.ay,
+    );
+    ab.add(
+      `terrain/glacier_${v}`,
+      glacierTile(1300 + v).toImageData(),
+      groundAnchor.ax,
+      groundAnchor.ay,
+    );
+    ab.add(
       `terrain/plains_${v}`,
       plainsTile(900 + v).toImageData(),
       groundAnchor.ax,
@@ -481,6 +580,21 @@ export function generateTerrainAtlas(): AtlasImage {
         groundAnchor.ax,
         groundAnchor.ay,
       );
+    for (let f = 0; f < 4; f++)
+      ab.add(
+        `terrain/river_${v}_f${f}`,
+        riverTile(650 + v, f).toImageData(),
+        groundAnchor.ax,
+        groundAnchor.ay,
+      );
+    for (const edge of ['n', 'e', 's', 'w'] as const)
+      for (let drop = 1; drop <= 4; drop++)
+        ab.add(
+          `terrain/waterfall_${edge}_${drop}_${v}`,
+          waterfallTile(edge, drop, 1400 + v).toImageData(),
+          groundAnchor.ax,
+          groundAnchor.ay,
+        );
     ab.add(`terrain/hill_${v}`, hillTile(700 + v).toImageData(), HALF_W, HALF_H + ELEV_PX);
     ab.add(
       `terrain/mountain_${v}`,
