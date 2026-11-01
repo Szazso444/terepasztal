@@ -873,7 +873,11 @@ describe('a maintenance train at work', () => {
 function sidedLine(sidings = true) {
   rules.trackWearMul = 0;
   const w = simWorld({ terrain: 'grass', size: 96 });
-  depotWith(w, { ...startStock(), wood: 1000, stone: 1000, iron: 1000 }, { x: 4, y: 30 });
+  const store = depotWith(
+    w,
+    { ...startStock(), wood: 1000, stone: 1000, iron: 1000 },
+    { x: 4, y: 30 },
+  );
   line(w, 6, 30, 90);
   if (sidings) {
     for (const x of [36, 37, 46, 47]) w.track.remove(x, 30);
@@ -886,6 +890,7 @@ function sidedLine(sidings = true) {
   }
   return {
     w,
+    store,
     west: station(w, 'warehouse', 12, 29).id,
     near: station(w, 'warehouse', 39, 29).id,
     east: station(w, 'warehouse', 70, 29).id,
@@ -1146,6 +1151,35 @@ describe('a maintenance train in traffic', () => {
     until(w, () => healthAt(w, 41) >= rules.trackCloseAt, 100);
   });
 
+  /** A worker on the failed piece at 42 that no store can pay, and a train it holds up. */
+  function unpaid() {
+    const { w, store, west, near } = sidedLine();
+    rules.trackRepairPrice = 10;
+    wearDown(w, 42, 0);
+    const t = maintTrain(w, []);
+    until(w, repairing(t));
+    for (const k of Object.keys(w.builder.wear.repairDue(w.track.get(42, 30)!, 1)))
+      store.amounts.set(k, 0);
+    until(w, () => t.repairUnpaid);
+    return { w, t, other: maintTrain(w, [near, west], 'schedule') };
+  }
+
+  it('unpaid on an urgent job it ranks last', () => {
+    const { w, t } = unpaid();
+    expect(t.maint?.tier).toBe(0);
+    expect(trafficRank(t, w.track)).toBe(0);
+  });
+
+  it('unpaid on an urgent job it gives way like any job', () => {
+    const { w, t, other } = unpaid();
+    const left = healthAt(w, 42);
+    until(w, () => other.blockedBy === t.id, 120);
+    until(w, () => t.state !== 'repairing', other.blockedTime + rules.trackYieldSeconds + 3);
+    expect(t.maint).toBeNull();
+    expect(t.yieldCount).toBe(1);
+    expect(healthAt(w, 42)).toBe(left);
+  });
+
   it('a job let go takes its unpaid note with it', () => {
     const { w, stops } = workLine();
     wearDown(w, 40, 0.2);
@@ -1169,7 +1203,8 @@ function stoppedBy(w: SimWorld, x: number, from: number, to: number) {
 
 describe('a maintenance train and a train stopped at the break', () => {
   const SLOW = { timeout: 60_000 };
-  const tilesUnder = (w: SimWorld, t: Train) => t.occupancyKeys(w.track.w).map((k) => k % w.track.w);
+  const tilesUnder = (w: SimWorld, t: Train) =>
+    t.occupancyKeys(w.track.w).map((k) => k % w.track.w);
 
   /** The worker mends the piece, and the stopped train goes on over it by itself. */
   function bothGoOn(w: SimWorld, x: number, stopped: Train) {

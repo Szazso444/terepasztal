@@ -17,7 +17,7 @@ export interface MaintJob {
   /** the piece's anchor */
   ax: number;
   ay: number;
-  /** 0 unusable, 1 degraded, 2 close to degraded, as the piece stood when picked (`urgentJob`) */
+  /** 0 unusable, 1 degraded, 2 close to degraded, as the piece stood when picked (`urgentWork`) */
   tier: 0 | 1 | 2;
   /** the tile the train stands on */
   x: number;
@@ -42,11 +42,14 @@ function tierOf(p: TrackPiece): MaintJob['tier'] | null {
 }
 
 /**
- * Does this job go before other trains and hold its ground against them? While its piece is
+ * Does this train's job go before other trains and hold its ground against them? While its piece is
  * unusable, whatever the piece was when picked; and a job begun on an unusable piece until the piece
- * is out of degraded, so the first repair does not end it. A piece that is gone asks for nothing.
+ * is out of degraded, so the first repair does not end it. A piece that is gone asks for nothing,
+ * and a job no store can pay is no work done: it holds no traffic.
  */
-export function urgentJob(job: MaintJob, track: TrackGraph): boolean {
+export function urgentWork(t: Train, track: TrackGraph): boolean {
+  const job = t.maint;
+  if (!job || t.repairUnpaid) return false;
   const piece = track.get(job.ax, job.ay);
   const now = piece ? tierOf(piece) : null;
   return now === 0 || (now === 1 && job.tier === 0);

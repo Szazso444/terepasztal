@@ -47,7 +47,7 @@ import { sfx } from '../engine/audio';
 import { ENGLISH, STR } from '../strings';
 import { biomeDef, biomeAt } from './biomes';
 import { daySeconds, rules } from './rules';
-import { MaintenanceBoard, urgentJob } from './maintenance';
+import { MaintenanceBoard, urgentWork } from './maintenance';
 import { Traffic } from './traffic';
 import { Junctions } from './junctions';
 import { Signals, HEADWAY } from './signals';
@@ -1320,7 +1320,7 @@ export class Fleet {
     return { theirs, bound, sidings };
   }
   /**
-   * A train at work on a job not urgent (`urgentJob`) gives way (spec, section 6): once a train has
+   * A train at work on a job not urgent (`urgentWork`) gives way (spec, section 6): once a train has
    * been held for `trackYieldSeconds`, by it or at a signal with it on the route ahead, it lets the
    * job go, its health as it stands, and pulls aside as an idle train does (`makeWay`). Where the
    * way ends it idles, and looks for work again. With no way aside it works on, and looks again
@@ -1332,7 +1332,7 @@ export class Fleet {
       (t) =>
         t.state === 'repairing' &&
         t.maint !== null &&
-        !urgentJob(t.maint, this.track) &&
+        !urgentWork(t, this.track) &&
         t.asideRetry <= now,
     );
     if (!held.length || !workers.length) return;
@@ -1363,8 +1363,8 @@ export class Fleet {
   private workBehind(ctx: TickCtx) {
     for (const t of this.trains) {
       if (t.state !== 'moving' || !t.blocked || t.speed > 0 || t.holding) continue;
-      if (!t.maint || !urgentJob(t.maint, this.track)) continue;
-      if (t.blockedBy !== null && this.byId(t.blockedBy)?.noWayOn) t.workBehind(ctx);
+      if (!urgentWork(t, this.track) || t.blockedBy === null) continue;
+      if (this.byId(t.blockedBy)?.noWayOn) t.workBehind(ctx);
     }
   }
   /**
@@ -1419,11 +1419,11 @@ export class Fleet {
 const MUTUAL_GRACE = 4;
 /**
  * Which train of a jam backs off first, among those equally able to clear it: one on a job that is
- * not urgent (`urgentJob`), then the rest, and last one on a job that is.
+ * not urgent (`urgentWork`), then the rest, and last one on a job that is.
  */
 function backOffOrder(t: Train, track: TrackGraph) {
   if (!t.maint) return 1;
-  return urgentJob(t.maint, track) ? 2 : 0;
+  return urgentWork(t, track) ? 2 : 0;
 }
 /** tiles a jammed train's head moves before its note no longer says it is jammed */
 const JAM_MOVED = 0.5;
