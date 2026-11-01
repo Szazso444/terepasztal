@@ -25,6 +25,8 @@ import {
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { simWorld, line, station } from '../testing/simWorld';
 import { depotWith } from '../testing/storeFixtures';
+import { withModelsOff } from '../testing/modelFixtures';
+import { locoDef, wagonDef } from '../gacha/items';
 import { rules, DEFAULT_RULES } from '../sim/rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from '../sim/supply';
 import { resetTrainIds } from '../sim/trains';
@@ -827,75 +829,85 @@ describe('TrainRenderer running gear on a simulated train', () => {
 
   // slow because it builds a world, steps a Garratt through 800 sim steps and checks its gear after
   // each: 0.7 s alone
-  it('a Garratt run out and back turns every part with its own motion, and only when it moves', () => {
-    const w = simWorld({ seed: 7, size: 64, terrain: 'grass' });
-    const RUN = 14,
-      x = 10,
-      y = 20;
-    depotWith(w, { coal: 400, water: 400 }, { x, y });
-    line(w, x + 2, y, x + 2 + RUN);
-    const quarry = station(w, 'quarry', x + 8, y - 1);
-    const warehouse = station(w, 'warehouse', x + RUN, y - 1);
-    quarry.store('stone', 40);
-    const loco = w.inventory.add('gmam', 0);
-    const hopper = w.inventory.add('wood_hopper', 0);
-    const made = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
-    if (typeof made === 'string') throw new Error(`fleet.create: ${made}`);
-    const train = made;
+  // the drawing without a model behind it: the shipped Garratt's row, not its rendered model
+  // (trainRenderer.model.test.ts has those)
+  it(
+    'a Garratt run out and back turns every part with its own motion, and only when it moves',
+    () =>
+      withModelsOff([locoDef('gmam'), wagonDef('wood_hopper')], () => {
+        const w = simWorld({ seed: 7, size: 64, terrain: 'grass' });
+        const RUN = 14,
+          x = 10,
+          y = 20;
+        depotWith(w, { coal: 400, water: 400 }, { x, y });
+        line(w, x + 2, y, x + 2 + RUN);
+        const quarry = station(w, 'quarry', x + 8, y - 1);
+        const warehouse = station(w, 'warehouse', x + RUN, y - 1);
+        quarry.store('stone', 40);
+        const loco = w.inventory.add('gmam', 0);
+        const hopper = w.inventory.add('wood_hopper', 0);
+        const made = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
+        if (typeof made === 'string') throw new Error(`fleet.create: ${made}`);
+        const train = made;
 
-    const n = 8,
-      { atlas, keyOf } = gearAtlas(n),
-      layer = new Container(),
-      renderer = new TrainRenderer(atlas, layer),
-      oracle = new GearOracle(),
-      seen = { noseFirst: 0, tailFirst: 0, turned: 0, mirroredRun: 0, bogieRun: 0, cargo: 0 };
-    let wasReversed = train.reversed;
-    for (let tick = 0; tick < TICKS; tick++) {
-      if (tick > 0) {
-        w.clock.time += SIM_STEP;
-        w.fleet.tick(SIM_STEP, w.clock.time);
-      }
-      const before = oracle.centres;
-      renderer.update(w.fleet.trains, 1);
-      const read: Parameters<GearOracle['frame']>[4] = [];
-      let at = 0;
-      train.vehicleSpecs.forEach((spec, v) => {
-        const isWagon = v >= train.locos.length,
-          load = isWagon && loadKind(train.wagons[v - train.locos.length].def) !== 'none',
-          shown = spritesAt(layer, at, spec, load);
-        at = shown.next;
-        for (const x of shown.sprites)
-          if (x.s.visible)
-            read.push({ vehicle: v, name: x.name, seg: x.seg, key: keyOf(x.s), s: x.s });
-        // a cargo overlay keeps its still frame
-        if (shown.load?.visible) {
-          expect(keyOf(shown.load), `tick ${tick}: cargo on vehicle ${v}`).not.toMatch(/_w\d+$/);
-          seen.cargo++;
+        const n = 8,
+          { atlas, keyOf } = gearAtlas(n),
+          layer = new Container(),
+          renderer = new TrainRenderer(atlas, layer),
+          oracle = new GearOracle(),
+          seen = { noseFirst: 0, tailFirst: 0, turned: 0, mirroredRun: 0, bogieRun: 0, cargo: 0 };
+        let wasReversed = train.reversed;
+        for (let tick = 0; tick < TICKS; tick++) {
+          if (tick > 0) {
+            w.clock.time += SIM_STEP;
+            w.fleet.tick(SIM_STEP, w.clock.time);
+          }
+          const before = oracle.centres;
+          renderer.update(w.fleet.trains, 1);
+          const read: Parameters<GearOracle['frame']>[4] = [];
+          let at = 0;
+          train.vehicleSpecs.forEach((spec, v) => {
+            const isWagon = v >= train.locos.length,
+              load = isWagon && loadKind(train.wagons[v - train.locos.length].def) !== 'none',
+              shown = spritesAt(layer, at, spec, load);
+            at = shown.next;
+            for (const x of shown.sprites)
+              if (x.s.visible)
+                read.push({ vehicle: v, name: x.name, seg: x.seg, key: keyOf(x.s), s: x.s });
+            // a cargo overlay keeps its still frame
+            if (shown.load?.visible) {
+              expect(keyOf(shown.load), `tick ${tick}: cargo on vehicle ${v}`).not.toMatch(
+                /_w\d+$/,
+              );
+              seen.cargo++;
+            }
+          });
+          const rise = oracle.frame(`tick ${tick}`, n, train.distance, train.vehiclePoses, read);
+          if (rise === 0 && before.length)
+            // nothing moves while the distance stands still: no motion goes uncounted
+            train.vehiclePoses.forEach((v, i) =>
+              v.segments.forEach((s, si) => {
+                const p = before[i][si];
+                expect(
+                  Math.hypot(s.x - p.x, s.y - p.y),
+                  `tick ${tick}: vehicle ${i} part ${si} moved`,
+                ).toBeLessThan(1e-9);
+              }),
+            );
+          if (rise > 0) {
+            seen[train.reversed ? 'tailFirst' : 'noseFirst']++;
+            if (train.vehiclePoses.some((v) => v.segments.some((s) => s.mirror)))
+              seen.mirroredRun++;
+            if (read.some((x) => x.name.startsWith('bogie'))) seen.bogieRun++;
+          } else if (train.reversed !== wasReversed) seen.turned++;
+          wasReversed = train.reversed;
         }
-      });
-      const rise = oracle.frame(`tick ${tick}`, n, train.distance, train.vehiclePoses, read);
-      if (rise === 0 && before.length)
-        // nothing moves while the distance stands still: no motion goes uncounted
-        train.vehiclePoses.forEach((v, i) =>
-          v.segments.forEach((s, si) => {
-            const p = before[i][si];
-            expect(
-              Math.hypot(s.x - p.x, s.y - p.y),
-              `tick ${tick}: vehicle ${i} part ${si} moved`,
-            ).toBeLessThan(1e-9);
-          }),
-        );
-      if (rise > 0) {
-        seen[train.reversed ? 'tailFirst' : 'noseFirst']++;
-        if (train.vehiclePoses.some((v) => v.segments.some((s) => s.mirror))) seen.mirroredRun++;
-        if (read.some((x) => x.name.startsWith('bogie'))) seen.bogieRun++;
-      } else if (train.reversed !== wasReversed) seen.turned++;
-      wasReversed = train.reversed;
-    }
-    // not vacuous: it ran both ways, turned round standing, and its mirrored unit and bogies ran
-    expect(
-      Object.values(seen).every((k) => k > 0),
-      JSON.stringify(seen),
-    ).toBe(true);
-  }, 30_000);
+        // not vacuous: it ran both ways, turned round standing, and its mirrored unit and bogies ran
+        expect(
+          Object.values(seen).every((k) => k > 0),
+          JSON.stringify(seen),
+        ).toBe(true);
+      }),
+    30_000,
+  );
 });

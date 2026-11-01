@@ -29,6 +29,10 @@ import type { PropInstance } from '../world/tiles';
  * an heir store all land in one difference of what each store holds, so a step gives back and takes
  * back exactly what happened, store by store, whatever a cap or a network did to it.
  *
+ * A train's stops are no part of a step: a station that leaves, by a demolish or by an undo, leaves
+ * the schedules, programs and jobs that name it as they are, and they work again when it comes
+ * back. Only a train at its platform, or on a piece, holds a step.
+ *
  * A contract is not undoable, but one that lapses because its station left (`ContractBoard.tick`)
  * comes back with the station while its deadline is ahead: whole, with a train, or the undo is
  * refused until a train can take it. A deadline passed is the end of it either way.
@@ -475,8 +479,9 @@ export class BuildStep implements HistoryStep {
     for (const op of this.ops) {
       if (op.op === 'track' && (forward ? op.was : op.now)) rails.push(...op.tiles);
       if (op.op !== 'station' || op.built === forward) continue;
-      const bound = fleet.trainBoundFor(op.station);
-      if (bound) return STR.history.routedTo(bound.name, op.station.name);
+      // a train at its platform stands in the way; a stop or a job on a route does not
+      const at = fleet.trainAt(op.station);
+      if (at) return STR.history.trainAt(at.name, op.station.name);
       rails.push(...op.station.footprint());
     }
     const train = fleet.trainOn(rails);

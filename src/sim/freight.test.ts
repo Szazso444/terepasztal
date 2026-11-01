@@ -16,6 +16,7 @@ import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { Inventory } from '../gacha/inventory';
 import { locoDef, wagonDef } from '../gacha/items';
+import { rowLengths } from '../testing/modelFixtures';
 import { STR } from '../strings';
 import { forAll } from '../testing/property';
 import { storeWith } from '../testing/storeFixtures';
@@ -151,6 +152,10 @@ describe('the route modes', () => {
 // ------------------------------------------------------------------ ranking an empty train
 
 describe('an empty freight train choosing a stop', () => {
+  // the twins stand on whole tiles, as far from the middle of its first car as each other: a car
+  // of a whole number of tiles
+  rowLengths(locoDef('f7'));
+
   it('never picks a store, however much it holds, and picks a producer instead', () => {
     rules.warehouseCap = 45;
     const w = world();
@@ -849,6 +854,9 @@ describe('where a loaded freight train is bound, over generated lines', () => {
 // ---- ranking an empty train
 
 describe('an empty freight train ranking producers, over generated piles', () => {
+  // as in 'an empty freight train choosing a stop'
+  rowLengths(locoDef('f7'));
+
   interface Twins {
     /** units of stone in each: equal, so the haul is too */
     stored: number;

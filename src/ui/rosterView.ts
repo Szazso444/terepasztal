@@ -1,7 +1,19 @@
 /**
  * What the Roster screen decides, apart from drawing it: which copies a filter leaves, in what
- * order, and whether a copy can level up. DOM-free, so it runs under Node.
+ * order, what a card says, and whether a copy can level up. DOM-free, so it runs under Node.
  */
+import {
+  LEVEL_CAP,
+  itemDef,
+  levelMul,
+  type Item,
+  type LocoDef,
+  type WagonDef,
+} from '../gacha/items';
+import { cargoDef } from '../sim/cargo';
+import { runsOn } from '../sim/compat';
+import { STR } from '../strings';
+import { dim, good, quiet, richText, text, title, vehicle, type TipDoc } from './tooltipDoc';
 
 export type KindFilter = 'all' | 'loco' | 'wagon';
 export type SortKey = 'rarity' | 'name' | 'level' | 'newest';
@@ -66,9 +78,94 @@ export function rosterItems<T extends RosterEntry>(items: readonly T[], f: Roste
   return out;
 }
 
+/**
+ * The filters with those that would hide this copy let go; the others stay, so the list it opens
+ * on is still the one the player left.
+ */
+export function revealFilters(f: RosterFilters, e: RosterEntry): RosterFilters {
+  return {
+    ...f,
+    kind: f.kind === 'all' || f.kind === e.kind ? f.kind : 'all',
+    rarity: f.rarity === 'all' || f.rarity === e.rarity ? f.rarity : 'all',
+    size: f.size === 'all' || f.size === (e.size ?? 'small') ? f.size : 'all',
+    freeOnly: f.freeOnly && e.assigned === null,
+  };
+}
+
 /** Is any filter on? The count then says how many of all there are. */
 export function filtered(f: RosterFilters): boolean {
   return f.kind !== 'all' || f.rarity !== 'all' || f.size !== 'all' || f.freeOnly;
+}
+
+/** What a copy's card says, in the Roster and as a tooltip: the one place that words it. */
+export interface RosterCard {
+  defId: string;
+  name: string;
+  /** its level, as a tag */
+  level: string;
+  era: string;
+  /** what it does at its level, and the lines it runs on */
+  lines: string[];
+  /** the train it is in, or that it is free */
+  where: string;
+  inService: boolean;
+  /** how many copies there are, or that it can rise no further */
+  stock: string;
+  /** its in-cab signalling, fitted or built in; none without */
+  fitted: string | null;
+}
+
+/** The card of a copy: `train` is the name of the train it is in, `copies` how many there are. */
+export function rosterCard(
+  it: Pick<Item, 'defId' | 'kind' | 'level' | 'inCab'>,
+  train: string | null,
+  copies: number,
+): RosterCard {
+  const d = itemDef(it.defId);
+  const m = levelMul(it.level);
+  const lines: string[] = [];
+  if (it.kind === 'loco') {
+    const ld = d as LocoDef;
+    lines.push(
+      `${STR.depot.speed} ${(ld.speed * m).toFixed(2)} · ${STR.depot.power} ${Math.round(ld.power * m)} t`,
+      `${STR.depot.weight} ${ld.weight} t · ${STR.roster.crew} ${ld.crew}`,
+      STR.roster.fuelLine(ld),
+    );
+    if (ld.controlClass) lines.push(STR.depot.controlClass(ld.controlClass));
+  } else {
+    const wd = d as WagonDef;
+    lines.push(
+      `${STR.roster.capacity} ${Math.round(wd.capacity * m)} · ${STR.depot.weight} ${wd.weight} t`,
+      (wd.accepts ?? []).map((c) => cargoDef(c).name).join(', '),
+    );
+    if (wd.service) lines.push(STR.roster.serviceLine(wd.service, wd.serviceCap ?? 0));
+  }
+  // its train class and the lines it may run on
+  lines.push(runsOn(d as LocoDef | WagonDef));
+  return {
+    defId: it.defId,
+    name: d.name,
+    level: STR.roster.lv(it.level),
+    era: d.era,
+    lines: lines.filter(Boolean),
+    where: train !== null ? STR.roster.assignedTo(train) : STR.roster.inDepot,
+    inService: train !== null,
+    stock: it.level >= LEVEL_CAP ? STR.roster.maxLevel : STR.roster.copies(copies),
+    fitted: it.kind === 'loco' && (it.inCab || (d as LocoDef).inCab) ? STR.roster.hasInCab : null,
+  };
+}
+
+/** The same card as a tooltip. */
+export function rosterCardTip(c: RosterCard): TipDoc {
+  return [
+    title(c.name, ' ', quiet(c.level)),
+    vehicle(c.defId),
+    dim(c.era),
+    ...c.lines.map((l) => text(...richText(l))),
+    c.inService ? good(c.where) : dim(c.where),
+    dim(c.stock),
+    ...(c.fitted ? [dim(c.fitted)] : []),
+  ];
 }
 
 export type LevelUp = 'max' | 'noSpare' | 'ready';

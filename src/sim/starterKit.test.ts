@@ -26,8 +26,8 @@ import {
   startDepotCentre,
   startDepotKind,
 } from './startDepot';
-import { gaugeLine, gaugeOf, vehicleAccess } from './compat';
-import { vehicleSpec } from './body';
+import { gaugeLine, gaugeOf, vehicleAccess, verdictOf } from './compat';
+import { SIZE_LEN, vehicleSpec } from './body';
 import { cargoDef } from './cargo';
 import type { TrackClass } from '../world/track';
 import { rules, DEFAULT_RULES } from './rules';
@@ -338,33 +338,25 @@ function cannotHaul(locos: LocoDef[], wagons: WagonDef[]): string[] {
 describe('the starter engines of a new game', () => {
   const STARTER_WAGONS = content.wagons.filter((w) => w.starter);
 
-  it('are the Rocket, the MÁV 490 and Orenstein & Koppel: weak, middling and strong', () => {
-    // the author's decision (startkit-engines): a tiny field engine, the middling Rocket and the
-    // strong 490; the Rocket stays first in the file, so the depot lists it first
-    expect(STARTER_LOCOS.map((l) => l.id)).toEqual(['rocket', 'mav490', 'orenstein_koppel']);
-    expect(content.locomotives.slice(0, 3).map((l) => l.id)).toEqual([
-      'rocket',
-      'mav490',
-      'orenstein_koppel',
-    ]);
+  it('are the Rocket and the MÁV 490: middling and strong', () => {
+    // the author's decision (Orenstein & Koppel retired with the 3D models): the middling Rocket
+    // and the strong 490; the Rocket stays first in the file, so the depot lists it first
+    expect(STARTER_LOCOS.map((l) => l.id)).toEqual(['rocket', 'mav490']);
+    expect(content.locomotives.slice(0, 2).map((l) => l.id)).toEqual(['rocket', 'mav490']);
     expect(locoDef('mav490').name).toBe('MÁV 490');
-    expect(locoDef('orenstein_koppel').name).toBe('Orenstein & Koppel');
     const power = (id: string) => locoDef(id).power;
-    expect(power('orenstein_koppel')).toBeLessThan(power('rocket'));
     expect(power('rocket')).toBeLessThan(power('mav490'));
     for (const l of STARTER_LOCOS) {
       expect(l.power, l.id).toBeGreaterThanOrEqual(30);
       expect(l.power, l.id).toBeLessThanOrEqual(60);
     }
-    // plain small tank engines: no field of the body, so each has the Rocket's rigid body
-    for (const id of ['mav490', 'orenstein_koppel']) {
-      const def = locoDef(id);
-      expect(def.body, id).toBe('steam_std');
-      expect(def.size, id).toBe('small');
-      expect(def.rarity, id).toBe('N');
-      for (const field of ['plan', 'bogies', 'bogieAxles', 'pivotRatio', 'bogieStyle'])
-        expect(def, `${id}.${field}`).not.toHaveProperty(field);
-    }
+    // a plain small tank engine: no field of the body
+    const tank = locoDef('mav490');
+    expect(tank.body).toBe('steam_std');
+    expect(tank.size).toBe('small');
+    expect(tank.rarity).toBe('N');
+    for (const field of ['plan', 'bogies', 'bogieAxles', 'pivotRatio', 'bogieStyle'])
+      expect(tank, field).not.toHaveProperty(field);
   });
 
   it('hands out each of them with the inventory in the order of the file', () => {
@@ -372,15 +364,21 @@ describe('the starter engines of a new game', () => {
     expect(inventory.free('loco').map((i) => i.defId)).toEqual(STARTER_LOCOS.map((l) => l.id));
   });
 
-  it("run on narrow track as plain rigid bodies, with the Rocket's length", () => {
-    const rocket = vehicleSpec(locoDef('rocket'));
+  it('run on narrow track, each on the running gear and at the length of its model', () => {
     for (const l of STARTER_LOCOS) {
       expect(vehicleAccess(l, 'narrow'), l.id).toBeNull();
+      expect(verdictOf(l, 'narrow').reason, l.id).toBeNull();
       const spec = vehicleSpec(l);
-      expect(spec.plan, l.id).toBe('rigid');
-      expect(spec.segments.length, l.id).toBe(1);
-      expect(spec.L, l.id).toBe(rocket.L);
+      expect(spec.L, l.id).toBe(l.lengthTiles);
+      // about a tile, as a starter engine always was: they have to fit a starter network
+      expect(spec.L, l.id).toBeLessThanOrEqual(SIZE_LEN.small + 0.1);
     }
+    // the Rocket with its tender, the 490 a tank engine of one body
+    expect(vehicleSpec(locoDef('rocket')).segments.map((s) => s.part)).toEqual([
+      'engine',
+      'tender',
+    ]);
+    expect(vehicleSpec(locoDef('mav490')).segments.map((s) => s.part)).toEqual(['body']);
   });
 
   it('are told apart on screen: no two share a body and a paint', () => {

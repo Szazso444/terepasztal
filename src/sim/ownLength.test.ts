@@ -52,6 +52,7 @@ import { buildTrafficScenario, SCENARIO_GDT } from '../testing/trafficScenario';
 import { Rng, hash2, hashString } from '../engine/rng';
 import { locoFrame, wagonFrame } from '../art/frames';
 import { storeWith } from '../testing/storeFixtures';
+import { withoutModel } from '../testing/modelFixtures';
 
 // A locomotive is as long on the track as its own model (issue #344): an optional `length` on its
 // entry, in tiles over the buffers, wins over its size class's. Here: an entry without one is laid
@@ -131,8 +132,9 @@ function classSpec(def: BodyFields): VehicleSpec {
   };
 }
 
-/** How long the issue says a body is: its entry's own length, or its size class's without one. */
-const specLength = (def: BodyFields) => def.length ?? SIZE_LEN[def.size ?? 'small'];
+/** How long a body is: its measured model's, else its entry's own length, else its size class's. */
+const specLength = (def: BodyFields) =>
+  (def.gear && def.lengthTiles) || (def.length ?? SIZE_LEN[def.size ?? 'small']);
 
 /** A body of any size and plan, with or without its own pivots, bogies and axles. */
 function genBody(rng: Rng): BodyFields {
@@ -152,11 +154,11 @@ function genLength(rng: Rng): number {
 describe('a body without a length of its own', () => {
   it('is laid out exactly as before, for every shipped vehicle', () => {
     for (const d of [...content.locomotives, ...content.wagons]) {
-      // an entry that has been given its model's length is laid out by it, and without it as before
-      const own = (d as BodyFields).length;
-      if (own === undefined) expect(vehicleSpec(d), d.id).toEqual(classSpec(d));
-      else expect(vehicleSpec(d).L, d.id).toBe(own);
-      expect(vehicleSpec({ ...d, length: undefined }), d.id).toEqual(classSpec(d));
+      const bare = withoutModel(d);
+      // a measured model is laid out by its own gear; its row, and a row without one, as before
+      if (d.gear && d.lengthTiles) expect(vehicleSpec(d).L, d.id).toBe(d.lengthTiles);
+      else expect(vehicleSpec(d), d.id).toEqual(classSpec(d));
+      expect(vehicleSpec({ ...bare, length: undefined }), d.id).toEqual(classSpec(bare));
     }
   });
 
@@ -242,9 +244,12 @@ function straightLine() {
   return track;
 }
 
-/** A shipped regular-gauge locomotive with a length of its own. */
+/**
+ * A shipped locomotive's row with a length of its own, its plan's parts in proportion: a measured
+ * model keeps its measured length, so the rule is tried on the row without the model.
+ */
 function ownLoco(id: string, length: number): LocoDef {
-  return { ...locoDef(id), length };
+  return { ...withoutModel(locoDef(id)), length };
 }
 
 const REGULAR_LOCOS = content.locomotives.filter((d) => d.gauge !== 'narrow' && !d.retired);
@@ -336,7 +341,7 @@ describe('what reads a vehicle length', () => {
 
   it('measures track-class access at the length of the model', () => {
     const base = locoDef('f7');
-    const own: LocoDef = { ...base, id: 'own_length_probe', length: 3.4 };
+    const own: LocoDef = { ...ownLoco('f7', 3.4), id: 'own_length_probe' };
     for (const cls of TRACK_CLASSES) {
       expect(verdictOf(own, cls), cls).toEqual(measure(vehicleSpec(own), cls));
       expect(verdictOf(own, cls), cls).not.toEqual(verdictOf(base, cls));
@@ -583,10 +588,15 @@ describe('a consist of locomotives with lengths of their own, through curves', (
             const s = spec.segments[j];
             expect(p.L, `car ${i} part ${j}`).toBe(s.L);
             headings.push(p.angle);
-            // the end of the part that leads, and its bogies back from it at their places
+            // the end of the part that leads, and its bogies back from it at their places; a body
+            // pinned on its trucks stands them as it poses on this trail (its model's length, and
+            // through a curve a little further apart than on the body: a chord is short of its arc)
             const lead = reversed ? arc(u0 + s.front + s.L) : arc(u0 + s.front);
+            const posed = poseVehicle(pl, arc(reversed ? u0 + lengths[i] : u0), spec, reversed);
             p.bogies.forEach((b, k) => {
-              const rail = pl.at(lead - (s.L - s.W) / 2 - (s.W / (s.nb - 1)) * k);
+              const rail = s.pinned
+                ? posed.segments[j].bogies[k]
+                : pl.at(lead - (s.L - s.W) / 2 - (s.W / (s.nb - 1)) * k);
               expect(far(b, rail), `car ${i} part ${j} bogie ${k}`).toBeLessThan(1e-9);
             });
           });
@@ -757,7 +767,8 @@ describe('a depot gate', () => {
         // the oracle: the tiles from the gate on before the first one another train stands on
         let usable = stub;
         if (standing !== null) {
-          const other = new Train([{ uid: 50, level: 1, def: locoDef(REGULAR_LOCOS[0].id) }]);
+          // a tile long, so that it stands on the last tile of any stub
+          const other = new Train([{ uid: 50, level: 1, def: ownLoco(REGULAR_LOCOS[0].id, 1) }]);
           expect(other.spawnAt(track, 12 + standing, ROW, Dir.E)).toBe(true);
           fleet.trains.push(other);
           seeTrains(fleet);
@@ -924,7 +935,7 @@ describe('a save from before a model had a length', () => {
         length: genLength(rng),
       }),
       ({ line, base, wagons, length }) => {
-        const probe: LocoDef = { ...locoDef(base), id: PROBE };
+        const probe: LocoDef = { ...withoutModel(locoDef(base)), id: PROBE };
         delete probe.length;
         content.locomotives.push(probe);
         try {
@@ -1021,7 +1032,11 @@ describe('a size', () => {
         const loco = table === 'locomotives';
         const has = (key: string) => hash2(hashString(key), atlas) < 0.5;
         const own = entry.length;
+        // a measured model keeps its measured length: the rule is tried on the row without it
+        const { gear, lengthTiles } = entry;
         try {
+          delete entry.gear;
+          delete entry.lengthTiles;
           delete entry.length;
           const before = sizeJobs(entry, loco, has);
           entry.length = length;
@@ -1031,6 +1046,8 @@ describe('a size', () => {
         } finally {
           if (own === undefined) delete entry.length;
           else entry.length = own;
+          if (gear) entry.gear = gear;
+          if (lengthTiles) entry.lengthTiles = lengthTiles;
         }
       },
       { format: (c) => `${c.table}[${c.at}] (${content[c.table][c.at].id}) at ${c.length} tiles` },

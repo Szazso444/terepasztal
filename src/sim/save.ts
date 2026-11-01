@@ -20,6 +20,7 @@ import { CHUNK_TILES } from './expand';
 import { generatorOf, groundOf, lacksGround, worldWithinBound } from './ground';
 import { wrapRotation } from './rotation';
 import { alertSettingsFrom, defaultAlertSettings, type AlertSettings } from './alerts';
+import { DEFAULT_VOLUMES, type Volumes } from '../engine/audioGroups';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
@@ -186,10 +187,8 @@ export interface SaveGame extends Pick<SaveParts, SaveCore>, Partial<Omit<SavePa
   [extra: string]: unknown;
 }
 
-export interface Settings {
-  master: number;
-  sfx: number;
-  music: number;
+export interface Settings extends Volumes {
+  /** retired: a settings file that has it is migrated into `sfx` and `soundGroups` */
   ambient?: number;
   edgeScroll: boolean;
   autosave: boolean;
@@ -242,15 +241,45 @@ function retireAutoContracts(s: Partial<Settings>) {
     s.contractPolicy = uniformContractPolicy(s.autoContracts === false ? 'prompt' : 'accept');
   delete s.autoContracts;
 }
+/** What `ambient` held when a settings file had none: the default it had. */
+const OLD_AMBIENT = 0.35;
+/**
+ * Turn the retired `ambient` volume into the volume groups, at the same loudness. Effects played
+ * at `sfx`, and ambience at `ambient` beside it; now everything is under Effects, each group its
+ * share of it. `sfx` stays Effects while it is the louder, as it is by default. An `ambient` above
+ * it takes that place, as no group goes over 100%: otherwise the wind would drop.
+ */
+function groupVolumes(s: Partial<Settings>) {
+  const ambient = s.ambient ?? OLD_AMBIENT;
+  const old = s.sfx !== undefined || s.ambient !== undefined;
+  delete s.ambient;
+  if (!old || isRecord(s.soundGroups)) return;
+  const sfx = s.sfx ?? DEFAULT_VOLUMES.sfx;
+  const effects = Math.max(sfx, ambient);
+  const { weather } = DEFAULT_VOLUMES.soundGroups;
+  // nothing to take a share of: the groups stand at their defaults for when Effects comes back up
+  const share = (level: number, silent: number) => (effects > 0 ? level / effects : silent);
+  s.sfx = effects;
+  s.soundGroups = {
+    weather: share(ambient, weather),
+    environment: share(ambient, weather),
+    ui: share(sfx, 1),
+    building: share(sfx, 1),
+    trains: share(sfx, 1),
+    events: share(sfx, 1),
+  };
+}
 /**
  * Bring stored settings to the current shape. Runs on the stored object before defaults are
- * merged in, so a missing policy is still visible. The retired `autoContracts` flag becomes a
- * per-rarity policy; then, once, settings written while every offer was accepted by default move
- * to the new default: a policy that accepts every rarity (a missing entry read as accept then),
- * or none at all, becomes `DEFAULT_CONTRACT_POLICY` for every rarity. Any other policy is the
- * player's own choice and stays, its missing entries filled with the accept they meant.
+ * merged in, so a missing policy is still visible. The retired `ambient` volume becomes the volume
+ * groups, and the retired `autoContracts` flag a per-rarity policy; then, once, settings written
+ * while every offer was accepted by default move to the new default: a policy that accepts every
+ * rarity (a missing entry read as accept then), or none at all, becomes `DEFAULT_CONTRACT_POLICY`
+ * for every rarity. Any other policy is the player's own choice and stays, its missing entries
+ * filled with the accept they meant.
  */
 export function migrateSettings<T extends Partial<Settings>>(s: T): T {
+  groupVolumes(s);
   retireAutoContracts(s);
   const v = s.contractPolicyVersion;
   if (typeof v === 'number' && v >= CONTRACT_POLICY_VERSION) return s;
@@ -267,10 +296,7 @@ export function migrateSettings<T extends Partial<Settings>>(s: T): T {
   return s;
 }
 export const DEFAULT_SETTINGS: Settings = {
-  master: 0.8,
-  sfx: 0.8,
-  music: 0.5,
-  ambient: 0.35,
+  ...DEFAULT_VOLUMES,
   edgeScroll: true,
   autosave: true,
   dayNight: true,
@@ -1068,6 +1094,8 @@ function prefersReducedMotion() {
 function settingsFrom(stored: Partial<Settings>): Settings {
   const s = { ...DEFAULT_SETTINGS, ...stored };
   if (s.contractPolicy) s.contractPolicy = { ...s.contractPolicy };
+  s.soundGroups = { ...DEFAULT_VOLUMES.soundGroups, ...stored.soundGroups };
+  s.soundOff = { ...stored.soundOff };
   s.alerts = alertSettingsFrom(stored.alerts);
   s.language = languageOf(stored.language);
   // Building life starts off for a player who asked for less motion; a stored choice stands
