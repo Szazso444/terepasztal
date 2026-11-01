@@ -1453,7 +1453,12 @@ export class Game implements UiHost {
   /** Every straight line conforms to its neighbours: inclines, transitions, bridge decks. */
   private refreshRails() {
     this.railsDirty = false;
-    const beds = railProfile(this.map, this.track, (x, y) => !!this.builder.bridgeAt(x, y));
+    const beds = railProfile(
+      this.map,
+      this.track,
+      (x, y) => !!this.builder.bridgeAt(x, y),
+      this.builder.underground,
+    );
     this.fleet.railBeds = beds;
     if (this.world.setRailBeds(beds)) this.refreshBridges();
   }
