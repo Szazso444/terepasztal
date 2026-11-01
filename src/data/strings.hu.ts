@@ -119,7 +119,7 @@ export const HU: Strings = {
     recoloured: (train: string, colour: string) => `${train} színkódja: ${colour}`,
     builtOver: 'Azóta más épült oda.',
     trainOn: (train: string) => `${train} áll a sínen.`,
-    routedTo: (train: string, station: string) => `${train} útvonala ide vezet: ${station}.`,
+    trainAt: (train: string, station: string) => `${train} a peronon áll: ${station}.`,
     contractNoTrain: (contract: string) => `Egyik vonat sem tudja újra vállalni: ${contract}.`,
     short: (store: string, what: string) => `${store}: hiányzik ${what}.`,
   },

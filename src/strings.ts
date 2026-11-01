@@ -144,7 +144,7 @@ const EN = {
     /** why an undo or a redo cannot be done */
     builtOver: 'Something else has been built there since.',
     trainOn: (train: string) => `${train} stands on the track.`,
-    routedTo: (train: string, station: string) => `${train} is routed to ${station}.`,
+    trainAt: (train: string, station: string) => `${train} is at the platform of ${station}.`,
     contractNoTrain: (contract: string) => `No train can take up ${contract} again.`,
     short: (store: string, what: string) => `${store} is short of ${what}.`,
   },
