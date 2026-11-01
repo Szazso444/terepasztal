@@ -10,6 +10,7 @@ import type { SupplyMode } from './supply';
 import type { SignalLevel } from './signals';
 import type { PeopleJSON } from './people';
 import type { RoadJSON } from './roads';
+import type { GroundLevelJSON, UndergroundJSON } from './underground';
 import type { StoreJSON } from './stores';
 import type { BuildingJSON } from './buildings';
 import type { ChunkStore, MapGenerator } from '../world/chunks';
@@ -35,7 +36,7 @@ export type WorldSpec =
     }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 24;
+export const SAVE_VERSION = 25;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -136,6 +137,16 @@ export interface SaveParts {
   people: PeopleJSON;
   /** v20: road tiles [x, y], level crossings included (`Roads.toJSON`) */
   roads: RoadJSON;
+  /**
+   * v25: the tiles dug with the Drill, the cuttings and the portals (`Underground.toJSON`); absent
+   * is an empty store. Optional here until the game writes it, so a part left out still compiles.
+   */
+  underground?: UndergroundJSON;
+  /**
+   * v25: the ground levels the player set, the tiles of `GameMap.groundLevel` that are not
+   * NO_LEVEL; absent is a map as generated. Optional here for the same reason as `underground`.
+   */
+  groundLevel?: GroundLevelJSON;
 }
 /** The fields every format version since v1 has; the others arrived later and may be missing. */
 type SaveCore =
@@ -696,6 +707,12 @@ export const MIGRATIONS: Migration[] = [
         delete world.level.start.tickets;
     },
   },
+  {
+    from: 24,
+    note: 'no ground was raised or lowered, and nothing was dug: the ground stays as generated',
+    quiet: true,
+    run: () => {},
+  },
 ];
 /**
  * The oldest format that loads without a word: only quiet steps (`Migration.quiet`) stand between
@@ -733,6 +750,8 @@ const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
   supply: true,
   people: true,
   roads: true,
+  underground: true,
+  groundLevel: true,
 };
 /** The names a type declares, without the `string` and `number` of an index signature. */
 type DeclaredKey<T> = keyof {

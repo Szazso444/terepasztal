@@ -63,10 +63,12 @@ import { levelFromMap, mapFromLevel } from '../world/level';
 import { RegionState } from '../world/regions';
 import { TrackGraph, type TrackTuple } from '../world/track';
 import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
+import { NO_LEVEL } from '../world/elevation';
 import { hash2, type Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { generatorOf, groundOf, type GeneratedWorld } from './ground';
 import { expandSave } from './expand';
+import { Underground, groundLevelFromJSON, groundLevelToJSON } from './underground';
 import { PROP_KINDS, chunkKey, mapChunks, type MapGenerator } from '../world/chunks';
 
 // trains.ts plays sounds; the load-code oracles below build trains under Node
@@ -133,6 +135,18 @@ function fullParts(): SaveParts {
       [4, 7],
       [4, 8],
     ],
+    underground: {
+      dug: [
+        [6, 5, 0],
+        [7, 5, 0],
+      ],
+      cuts: [[8, 5]],
+      portals: [{ x: 7, y: 5, face: 'E', floor: 0 }],
+    },
+    groundLevel: [
+      [2, 3, 5],
+      [3, 3, 4],
+    ],
   };
 }
 
@@ -152,7 +166,7 @@ describe('the migration registry', () => {
     for (const m of MIGRATIONS) expect(m.note.trim().length).toBeGreaterThan(0);
   });
 
-  it('has no step that leaves the file as it found it', () => {
+  it('has no step that leaves the file as it found it, bar the ones that fill in nothing', () => {
     // An empty step tells the player a default was filled in and leaves the load code to keep
     // the promise. Each step meets a file of its own version with nothing optional in it, the
     // offer values the step from v10 rewrites (1.5 days, three offers) and the ones the step from
@@ -162,7 +176,9 @@ describe('the migration registry', () => {
     // rotation for the steps that fill a works', and past the step that builds the world
     // description, a generated world with no ground stored for the step that starts its store, and
     // a wide straight and a transition for the step from v21 that lays the six lines.
-    for (const m of MIGRATIONS) {
+    // The step from v24 fills in nothing: a file without the underground or the ground levels is
+    // a map as generated with nothing dug, so there is nothing to put there.
+    for (const m of MIGRATIONS.filter((e) => e.from !== 24)) {
       const file: SaveGame = {
         ...oldestSave(),
         ...(m.from > 2 ? { world: generatedWorldOf(96, 96) } : {}),
@@ -274,6 +290,8 @@ const DECLARED: Record<keyof Declared<SaveGame>, true> = {
   supply: true,
   people: true,
   roads: true,
+  underground: true,
+  groundLevel: true,
   loadedFrom: true,
   migrationNotes: true,
 };
@@ -915,6 +933,47 @@ describe('buildSave', () => {
     const j = buildSave(fullParts());
     const read = readSaveText(JSON.stringify(j));
     expect(read).toEqual({ save: j });
+  });
+});
+
+describe('the underground and the ground levels', () => {
+  const w = 16;
+  const h = 12;
+
+  it('round-trips dug tiles, cuts, portals and groundLevel through a written save', () => {
+    const parts = fullParts();
+    const read = readSaveText(JSON.stringify(buildSave(parts)));
+    if (!('save' in read)) throw new Error('refused');
+    expect(read.save.underground).toEqual(parts.underground);
+    expect(read.save.groundLevel).toEqual(parts.groundLevel);
+    const store = Underground.fromJSON(read.save.underground, w, h);
+    expect(store.toJSON()).toEqual(parts.underground);
+    const plane = groundLevelFromJSON(read.save.groundLevel, w, h)!;
+    expect(groundLevelToJSON(plane, w)).toEqual(parts.groundLevel);
+    expect(plane[3 * w + 2]).toBe(5);
+    expect(plane[0]).toBe(NO_LEVEL);
+  });
+
+  it('a v24 save loads with no plane and an empty store', () => {
+    const read = readSaveText(JSON.stringify({ ...oldestSave(), version: 24 }));
+    if (!('save' in read)) throw new Error('refused');
+    expect(read.save.version).toBe(SAVE_VERSION);
+    // the step fills in nothing and the player is told nothing
+    expect(read.save.loadedFrom).toBeUndefined();
+    expect(read.save.underground).toBeUndefined();
+    expect(read.save.groundLevel).toBeUndefined();
+    expect(Underground.fromJSON(read.save.underground, w, h).empty).toBe(true);
+    expect(groundLevelFromJSON(read.save.groundLevel, w, h)).toBeUndefined();
+  });
+
+  it('loads an older save with no plane and an empty store as well', () => {
+    for (const version of [SAVE_MIN_VERSION, 12, 23]) {
+      const read = readSaveText(JSON.stringify({ ...oldestSave(), version }));
+      if (!('save' in read)) throw new Error('refused');
+      expect(read.save.version, `v${version}`).toBe(SAVE_VERSION);
+      expect(read.save.underground, `v${version}`).toBeUndefined();
+      expect(read.save.groundLevel, `v${version}`).toBeUndefined();
+    }
   });
 });
 
@@ -3390,8 +3449,9 @@ describe('a file with one field every version has taken out or retyped', () => {
           money: economy.money,
           tier: from < 9 ? Math.min(2, economy.tier) : economy.tier,
         });
-        // what the file held of tickets is gone, whatever the version it came from
-        if (from < SAVE_VERSION) expect(save.economy).not.toHaveProperty('tickets');
+        // what the file held of tickets is gone, whatever the version it came from before v24
+        // (the step from v23 drops them; a file of v24 or later is not touched by it)
+        if (from < 24) expect(save.economy).not.toHaveProperty('tickets');
         for (const key of ['track', 'stations', 'trains'] as const)
           expect(save[key], key).toHaveLength((file[key] as unknown[]).length);
 

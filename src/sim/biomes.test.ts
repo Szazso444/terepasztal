@@ -129,7 +129,7 @@ describe('the biome table', () => {
     });
   });
 
-  it('keeps snow for the last levels under the top, lower in taiga and highest in desert', () => {
+  it('snow starts at 14 in plains, 16 in the desert, 12 in the coldest climate', () => {
     const lines = Object.fromEntries(BIOME_DEFS.map((d) => [d.id, d.snowLevel]));
     expect(lines).toEqual({
       plains: 14,
