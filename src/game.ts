@@ -1120,14 +1120,19 @@ export class Game implements UiHost {
     this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.world.overlay.addChild(this.fog.patches);
     this.app.stage.addChild(this.world.root, this.fog.haze, this.rain.root, this.overview.root);
-    this.glows = new Glows(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
+    this.glows = new Glows(
+      this.atlas,
+      this.world.overlay,
+      (x, y) => this.world.surfacePoint(x, y),
+      (x, y) => this.world.railAt(x, y).dz,
+    );
     this.groundLights = new GroundLights(
       this.atlas,
       this.world.lights,
       (x, y) => this.world.surfacePoint(x, y),
       (x, y) => inBounds(this.map, x, y),
     );
-    this.smoke = new Smoke(this.atlas, this.world.overlay);
+    this.smoke = new Smoke(this.atlas, this.world.overlay, (x, y) => this.world.railAt(x, y).dz);
     this.floaters = new Floaters(this.atlas, this.world.overlay, (x, y) =>
       this.world.surfacePoint(x, y),
     );
