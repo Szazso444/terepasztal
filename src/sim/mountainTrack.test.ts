@@ -1663,6 +1663,31 @@ describe('track inside', () => {
       else expect(report.cls).not.toBeNull();
     });
 
+    it.each([
+      ['dug', false],
+      ['cut', true],
+      ['open', true],
+    ] as const)('a service stop reaches rail on a %s tile by its radius: %s', (kind, serves) => {
+      const stops = DECOR_DEFS.filter((d) => d.fuel || d.water);
+      expect(stops.length).toBeGreaterThan(1);
+      for (const def of stops) {
+        const w = ground(() => 0),
+          { builder, under, track } = w;
+        if (kind === 'dug') under.dig(20, ROW, 0);
+        if (kind === 'cut') under.cut(20, ROW);
+        track.place(20, ROW, 'straight', 1);
+        expect(def.radius, def.id).toBeGreaterThan(0);
+        expect(builder.placeDecor(20, ROW + 1, def.id, 0), def.id).not.toBeNull();
+        const at = builder.serviceAt(20, ROW),
+          listed = builder.serviceTiles().filter((t) => t.x === 20 && t.y === ROW);
+        expect(at, def.id).toEqual({
+          fuel: serves && !!def.fuel,
+          water: serves && !!def.water,
+        });
+        expect(listed, def.id).toEqual(serves ? [{ x: 20, y: ROW, ...at }] : []);
+      }
+    });
+
     it('does not make a platform of a gate inside: the line through it is one section', () => {
       const sections = (kind: Kind) => {
         const w = beside('quarry', kind),

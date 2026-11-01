@@ -580,13 +580,17 @@ export class Builder {
     return out;
   }
 
-  /** Services can serve a platform or the rail directly within their advertised radius. */
+  /**
+   * Services can serve a platform or the rail directly within their advertised radius. A stop
+   * stands on the surface, so its radius reaches no rail inside (`gateTrack`).
+   */
   serviceAt(x: number, y: number) {
     let fuel = false,
       water = false;
+    const rail = this.gateTrack({ x, y });
     for (const d of this.decor.values()) {
       const def = decorDef(d.id);
-      if (Math.max(Math.abs(x - d.x), Math.abs(y - d.y)) > (def.radius ?? 0)) continue;
+      if (!rail || Math.max(Math.abs(x - d.x), Math.abs(y - d.y)) > (def.radius ?? 0)) continue;
       fuel ||= !!def.fuel;
       water ||= !!def.water;
     }
@@ -604,7 +608,8 @@ export class Builder {
       if (!def.fuel && !def.water) continue;
       const r = def.radius ?? 0;
       for (let y = d.y - r; y <= d.y + r; y++)
-        for (let x = d.x - r; x <= d.x + r; x++) if (this.track.has(x, y)) keys.add(this.key(x, y));
+        for (let x = d.x - r; x <= d.x + r; x++)
+          if (this.gateTrack({ x, y })) keys.add(this.key(x, y));
     }
     for (const s of this.stations)
       if (!s.def.stockpile && (s.refuelsFuel || s.refuelsWater))
