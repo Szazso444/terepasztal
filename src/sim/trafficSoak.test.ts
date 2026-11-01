@@ -613,3 +613,91 @@ describe('scheduled single-track lines, tick by tick', () => {
     check('disrupted lines', outcome);
   }, 30_000);
 });
+
+describe('a train through a tunnel', () => {
+  const ROW = 20;
+  const WEST = 8;
+  const EAST = 40;
+  const PEAK_X = 24;
+  /** A square hill of 7 on the line, a level a tile down each side to level 0, 7 tiles off. */
+  const hillLevel = (x: number, y: number) =>
+    Math.max(0, 7 - Math.max(Math.abs(x - PEAK_X), Math.abs(y - ROW)));
+  type Ground = 'flat' | 'tunnel' | 'over the hill';
+
+  /**
+   * One train running to and fro between a quarry and a warehouse on one line, on flat ground, or
+   * through the hill by a dug tunnel, or up and over it. The stations stand off the hill in every
+   * case, and nothing else differs. It is laid from the west end, with the Drill on inside.
+   */
+  function tunnelRun(ground: Ground, ticks: number) {
+    const w = simWorld({ size: 64, terrain: 'grass', seed: 4242 });
+    w.builder.free = true;
+    for (let i = 0; i < w.regions.unlocked.length; i++) w.regions.own(i);
+    if (ground !== 'flat')
+      w.map.groundLevel = Uint8Array.from({ length: w.map.w * w.map.h }, (_, i) =>
+        hillLevel(i % w.map.w, Math.floor(i / w.map.w)),
+      );
+    if (ground === 'tunnel') {
+      const drag = Array.from({ length: 15 }, (_, i) => ({ x: PEAK_X - 7 + i, y: ROW }));
+      expect(w.builder.dig(drag), w.builder.checkDig(drag).reason).toBe(true);
+      expect(w.builder.underground.portals()).toHaveLength(2);
+      const dug = drag.filter((t) => w.builder.underground.isDug(t.x, t.y)).map((t) => t.x);
+      const [first, last] = [dug[0], dug[dug.length - 1]];
+      line(w, WEST, ROW, first - 1);
+      w.builder.insideMode = true;
+      line(w, first, ROW, last);
+      w.builder.insideMode = false;
+      line(w, last + 1, ROW, EAST);
+      // the rail a train runs on stands level at the floor, the ground over it where it was
+      for (let x = first; x <= last; x++) {
+        const bed = w.fleet.railBeds.get(ROW * w.map.w + x);
+        expect(bed, `column ${x}`).toMatchObject({ bridge: true, flat: true });
+      }
+    } else line(w, WEST, ROW, EAST);
+    const depot = station(w, 'depot', WEST - 2, ROW);
+    const quarry = station(w, 'quarry', WEST + 2, ROW - 1);
+    const warehouse = station(w, 'warehouse', EAST - 2, ROW - 1);
+    const store = w.stores.byKey(`st:${depot.id}`)!;
+    for (const r of ['coal', 'water', 'oil']) store.add(r, 1e7);
+    const t = w.fleet.create(
+      [w.inventory.add('f7', 0).uid],
+      [w.inventory.add('wood_hopper', 0).uid],
+      [stop(quarry.id), stop(warehouse.id)],
+      undefined,
+      'schedule',
+      depot.id,
+    );
+    if (typeof t === 'string') throw new Error(t);
+    t.coal = t.coalCap;
+    t.water = 1000;
+    t.oil = 1e6;
+    const step = new SimStep(w);
+    const ctx = { mode: 'play' as const, weather: false, stockCap: () => 1e9 };
+    /** The tile the head stands on, tick by tick. */
+    const path: string[] = [];
+    const rec = new Recorder(ticks);
+    for (let tick = 0; tick < ticks; tick++) {
+      w.clock.time += SIM_STEP;
+      step.run(SIM_STEP, ctx);
+      path.push(`${t.headTile?.x},${t.headTile?.y}`);
+      rec.add(tick, tickState(w.fleet, tick % 100 === 99));
+    }
+    return { t, path, outcome: rec.done(`${t.state} ${r6(t.distance)}`) };
+  }
+
+  // slow because three whole SimStep worlds run 2400 ticks: under a second alone, so 30 s
+  it('a train crosses a tunnel on the same path and time as the same line on flat ground', () => {
+    const TICKS = 2400;
+    const flat = tunnelRun('flat', TICKS);
+    const tunnel = tunnelRun('tunnel', TICKS);
+    // not vacuous: the train ran the whole way, through the tunnel and back
+    expect(flat.t.distance).toBeGreaterThan(2 * (EAST - WEST - 4));
+    expect(new Set(flat.path).has(`${PEAK_X},${ROW}`)).toBe(true);
+    expect(tunnel.path).toEqual(flat.path);
+    expect(tunnel.outcome).toEqual(flat.outcome);
+    // and the check can see a hill: the same line up and over runs slower
+    const over = tunnelRun('over the hill', TICKS);
+    expect(over.outcome.digest).not.toBe(flat.outcome.digest);
+    expect(over.t.distance).toBeLessThan(flat.t.distance);
+  }, 30_000);
+});
