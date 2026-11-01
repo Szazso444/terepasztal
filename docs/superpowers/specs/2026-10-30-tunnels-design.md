@@ -72,8 +72,8 @@ lowered mountain is flat ground that can be built on (the author accepted this).
 **The top goes to 16.** `MAX_LEVEL` in `src/world/elevation.ts` becomes 16. A Mountain tile with no stored level keeps its old target of 4, so old saves, levels and the editor stay as they are,
 and four things that lean on it stay as they are or follow it:
 
-- Water stays at 0 to 4: `MAX_DROP` in `src/world/waterfalls.ts` and the chunk codec's limit of 4
-  on a water side get their own constant, or map generation moves.
+- Water stays at 0 to 4: `MAX_WATER_LEVEL` in `src/world/waterfalls.ts`, which `MAX_DROP` follows.
+  The chunk codec's checks against 4 count compass sides, not levels, and stay.
 - `RELIEF_MAX` in `src/render/terrainRelief.ts` goes from 90 to 200, which adds about 8% to a chunk
   canvas.
 - `snowLevel` in `src/data/biomes.json` goes to 14 (plains and most climates), 16 where it was 5
@@ -110,8 +110,9 @@ width per cell, and cells still meet exactly.
 ground is painted for the flat and breaks on a slope, so a raised forest tile paints as grass under
 the forest's trees; its terrain stays Forest. Peak pictures stand only on true tops.
 
-**What it leaves alone.** Water, the map border, and what is built: a mountain falls away toward
-them.
+**What it leaves alone.** Water and what is built: a mountain falls away toward them. A mountain's
+level does not read the map border, as a level must not depend on map size. The read cap at the
+border does the falling away, so a mountain ends in a cliff at the edge until the map grows.
 
 **Rivers start in the mountains.** A low-frequency massif noise lifts the elevation field before
 terrain and rivers read it, so the river plan drains away from the massifs and rock lies where the
