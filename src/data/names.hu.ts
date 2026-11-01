@@ -28,6 +28,12 @@ export const HU_NAMES = {
     c50: {
       era: 'Az 1950-es évek magyar 760 mm-es keskeny nyomtávú dízele, százszámra épült erdei és mezőgazdasági vasutaknak.',
     },
+    maint_loco_narrow: {
+      era: 'Kicsi, sárga munkadízel a keskeny nyomtávra. Lassú, olcsó, a javítókocsi tolására épült.',
+    },
+    maint_loco_branch: {
+      era: 'Sárga munkadízel, amely a pályafenntartó kocsit húzza a vonalon. Lassú és olcsó.',
+    },
     adler: { era: '1835, Nürnberg és Fürth között. Németország első vasúti mozdonya.' },
     john_bull: { era: '1831, Camden & Amboy. Egy évszázadot futott, és ma is gőzt ad.' },
     mav375: {
@@ -169,6 +175,14 @@ export const HU_NAMES = {
       era: 'Fedett kocsi gabonának és árunak a keskeny nyomtávon.',
     },
     narrow_coach: { name: 'Keskeny személykocsi', era: 'Nyitott peronos személykocsi fapadokkal.' },
+    maint_wagon_narrow: {
+      name: 'Keskeny pályafenntartó kocsi',
+      era: 'Kavics, talpfa és javítóbrigád egy sárga garatkocsiban. Rendben tartja a keskeny nyomtávot.',
+    },
+    maint_wagon_branch: {
+      name: 'Pályafenntartó kocsi',
+      era: 'Sárga kavicsszóró kocsi javítóbrigáddal. A mellékvonaltól a törzsvonalig javítja a kopott pályát.',
+    },
   },
   cargo: {
     water: { name: 'Víz' },

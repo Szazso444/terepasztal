@@ -1115,6 +1115,10 @@ export class Train {
   private cartSaving(kind: 'coal' | 'fuel' | 'battery') {
     return 1 - Math.min(PHYS.cartSavingCap, PHYS.cartSaving * this.cartsFor(kind).length);
   }
+  /** Does the train haul a maintenance wagon? Only then may it take the Maintenance mode. */
+  get hasMaintenanceWagon(): boolean {
+    return this.wagons.some((w) => w.def.maintenance === true);
+  }
   /** Tonnes hauled: wagons plus payload. */
   get weight() {
     let w = 0;

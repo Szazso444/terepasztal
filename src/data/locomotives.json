@@ -803,5 +803,42 @@
     "size": "small",
     "controlClass": "emd",
     "gauge": "narrow"
+  },
+  {
+    "id": "maint_loco_narrow",
+    "class": "corvette",
+    "name": "Narrow Maintenance Locomotive",
+    "rarity": "N",
+    "type": "diesel",
+    "era": "A small yellow works diesel for the narrow gauge. Slow, cheap, built to push a repair wagon.",
+    "body": "diesel_switcher",
+    "paint": "yellow",
+    "speed": 0.7,
+    "power": 30,
+    "weight": 5,
+    "crew": 1,
+    "fuelCap": 50,
+    "fuelPerTile": 0.045,
+    "size": "small",
+    "controlClass": "emd",
+    "gauge": "narrow"
+  },
+  {
+    "id": "maint_loco_branch",
+    "class": "frigate",
+    "name": "Maintenance Locomotive",
+    "rarity": "N",
+    "type": "diesel",
+    "era": "A yellow works diesel that pulls the maintenance wagon along the line. Slow and cheap.",
+    "body": "diesel_switcher",
+    "paint": "yellow",
+    "speed": 1,
+    "power": 45,
+    "weight": 22,
+    "crew": 1,
+    "fuelCap": 90,
+    "fuelPerTile": 0.06,
+    "size": "small",
+    "controlClass": "emd"
   }
 ]

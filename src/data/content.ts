@@ -148,6 +148,8 @@ export interface WagonDef {
   service?: 'coal' | 'fuel' | 'battery';
   /** refuelling wagons: units of that fuel (or power) the cart adds to the consist's tanks */
   serviceCap?: number;
+  /** a maintenance wagon: a train hauling one may take the Maintenance routing mode */
+  maintenance?: boolean;
   /** train class: the smallest line it runs on (missing: Corvette on narrow gauge, else Frigate) */
   class?: TrainClass;
   /** track gauge (default regular) */
