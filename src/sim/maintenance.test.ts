@@ -7,6 +7,7 @@ import { line, simWorld, station, type SimWorld } from '../testing/simWorld';
 import { Dir } from '../engine/iso';
 import { findPath } from '../world/pathfinding';
 import { classRank, consistAccess, consistGauge, gaugeOf, trafficRank } from './compat';
+import { Commands } from './commands';
 import type { Contract } from './contracts';
 import { DEFAULT_RULES, rules } from './rules';
 import { SimStep, startStock, type StepContext } from './step';
@@ -645,6 +646,32 @@ describe('a maintenance train at work', () => {
     expect(t.state).toBe('moving');
     expect(t.pathTotal).toBe(way);
     t.holding = false;
+  });
+
+  it('given a stop list it leaves the mode and frees its claim', () => {
+    const { w, stops } = workLine();
+    const commands = new Commands({
+      fleet: w.fleet,
+      builder: w.builder,
+      economy: w.economy,
+      trade: w.trade,
+      inventory: w.inventory,
+      towns: w.towns,
+      houses: w.houses,
+      contracts: w.contracts,
+      contractJobs: w.contractJobs,
+      clock: w.clock,
+    });
+    wearDown(w, 40, 0.2);
+    const t = maintTrain(w, stops);
+    until(w, repairing(t));
+    expect(commands.setSchedule(t, stops.map(defaultStop))).toEqual({ ok: true });
+    expect(t.mode).toBe('schedule');
+    expect(t.maint).toBeNull();
+    expect(t.state).not.toBe('repairing');
+    const next = maintTrain(w, stops);
+    expect(next.maint?.ax).toBe(40);
+    until(w, () => t.atStation?.id === stops[0], 120);
   });
 
   it('a train that loses its wagon drops the job', () => {
