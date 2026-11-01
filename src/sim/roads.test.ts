@@ -195,7 +195,7 @@ describe('laying a road', () => {
     expect(farm).not.toBeNull();
     expect(w.builder.placeBuilding(20, 20, 'windmill')).not.toBeNull();
     expect(w.builder.placeDecor(5, 5, 'townhouse', 0)).not.toBeNull();
-    expect(w.builder.placeDecor(7, 5, 'water_tower', 0)).not.toBeNull();
+    expect(w.builder.spawnDecor(7, 5, 'water_tower', 0)).not.toBeNull();
     const taken = [
       ...depot.footprint(),
       ...farm.footprint(),

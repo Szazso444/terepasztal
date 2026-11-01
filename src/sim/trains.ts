@@ -1,4 +1,4 @@
-import { type Vec2, Dir, DIR_DX, DIR_DY } from '../engine/iso';
+import { type Vec2, Dir, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 import type { TrackGraph, TrackPiece } from '../world/track';
 import { curveFactor } from '../world/trackGeom';
 import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
@@ -556,12 +556,28 @@ export interface RetreatSave {
 }
 /** Reserves an escape for the train being resumed, as `TickCtx.reserveRecovery` does. */
 export type ReserveEscape = (path: PathSegment[], group: number[]) => boolean;
+/** What a stop fills (`Train.refuel`). */
+export interface Fill {
+  fuel: boolean;
+  water: boolean;
+  /** coal tanks, when not as `fuel` says */
+  coal?: boolean;
+  /** oil or diesel tanks, when not as `fuel` says */
+  liquid?: boolean;
+  fuelFrac?: number;
+  waterFrac?: number;
+}
 /** The track tile of a fuel or water service a train is heading to, and what it hands out. */
 export interface ServiceStop {
   x: number;
   y: number;
   fuel: boolean;
   water: boolean;
+  /**
+   * The tile the head stops on when that is not the service's: past the tile a fuel building
+   * faces, so that the tender stands there (`Train.runOn`).
+   */
+  end?: { x: number; y: number };
 }
 
 /** Where an idle train may stand to make way (`Train.planAside`), as tile keys. */
@@ -727,9 +743,8 @@ export class Train {
       this.water < this.waterCap * 0.9 &&
       (this.water / this.waterCap < 0.5 ||
         this.water / Math.max(1e-6, this.waterRate) < remaining * 1.6 + 12);
-    const hasFuel = (store: ResourceStore) =>
-      (!coalNeed || store.get('coal') + store.get('wood') / 2 > 0.1) &&
-      (!oilNeed || store.get(dieselFuelId()) > 0.1);
+    const hasCoal = (store: ResourceStore) => store.get('coal') + store.get('wood') / 2 > 0.1;
+    const hasLiquid = (store: ResourceStore) => store.get(dieselFuelId()) > 0.1;
     const fuelRange = Math.min(
       coalNeed ? this.coal / Math.max(1e-6, this.coalRate) : Infinity,
       oilNeed ? this.oil / Math.max(1e-6, this.oilRate) : Infinity,
@@ -742,7 +757,8 @@ export class Train {
       const store = this.serviceStoreAt(ctx, p.x, p.y);
       return (
         !!store &&
-        ((wantsFuel && p.fuel && hasFuel(store)) ||
+        ((wantsFuel &&
+          ((coalNeed && p.coal && hasCoal(store)) || (oilNeed && p.liquid && hasLiquid(store)))) ||
           (wantsWater && p.water && store.get('water') > 0.1))
       );
     });
@@ -754,7 +770,8 @@ export class Train {
     const end = this.path?.[this.path.length - 1];
     if (end && target(end.x, end.y) && remaining * 1.6 + 2 < this.rangeTiles) {
       const supply = points.get(end.y * ctx.track.w + end.x)!;
-      if (((!coalNeed && !oilNeed) || supply.fuel) && (!waterNeed || supply.water)) return false;
+      if ((!coalNeed || supply.coal) && (!oilNeed || supply.liquid) && (!waterNeed || supply.water))
+        return false;
     }
     const reverse = this.reversedTrail();
     const rear = reverse.trail[reverse.trail.length - 1]?.seg;
@@ -775,14 +792,48 @@ export class Train {
     if (!best) return false;
     if (best.flip) this.reverseConsist();
     const last = best.route[best.route.length - 1];
-    this.serviceStop = points.get(last.y * ctx.track.w + last.x)!;
+    const { x, y, fuel, water, faced } = points.get(last.y * ctx.track.w + last.x)!;
+    const path = faced ? this.runOn(ctx.track, best.route) : best.route;
+    const stopOn = path[path.length - 1];
+    this.serviceStop = {
+      x,
+      y,
+      fuel,
+      water,
+      ...(stopOn !== last ? { end: { x: stopOn.x, y: stopOn.y } } : {}),
+    };
     this.atStation?.occupants.delete(this.id);
     this.atStation = null;
-    this.setPath(best.route, ctx.map, ctx.track);
+    this.setPath(path, ctx.map, ctx.track);
     this.trackVersion = ctx.track.version;
     this.setState('moving');
     this.lastMessage = ENGLISH.trainNote.service;
     return true;
+  }
+  /**
+   * `route`, which ends on the tile a fuel building faces, run on until the tender stands there,
+   * or the engine when it has none: the head stops on a tile's centre, so whole tiles, which leaves
+   * it within half a tile. Where the line ends sooner the train stops at its end.
+   */
+  private runOn(track: TrackGraph, route: PathSegment[]): PathSegment[] {
+    const L = this.vehicleSpecs[0]?.L ?? 0;
+    const out = [...route];
+    for (let i = Math.round(L * (this.locoDef.plan === 'tender' ? 0.8 : 0.5)); i > 0; i--) {
+      const last = out[out.length - 1];
+      if (!track.connected(last.x, last.y, last.out)) break;
+      const x = last.x + DIR_DX[last.out];
+      const y = last.y + DIR_DY[last.out];
+      const entry = opposite(last.out);
+      if (!this.canUse(track.get(x, y)!, entry)) break;
+      const exits = track.exits(x, y, entry);
+      out.push({ x, y, in: entry, out: exits.find((e) => e === last.out) ?? exits[0] ?? last.out });
+    }
+    return out;
+  }
+  /** The tile the train's way to its service ends on: the service's own once its track is gone. */
+  private serviceEnd(track: TrackGraph) {
+    const s = this.serviceStop;
+    return s?.end && track.has(s.x, s.y) ? s.end : s;
   }
   /**
    * The store a fuel or water point on a track tile fills from: on the platforms of a depot or a
@@ -1447,18 +1498,24 @@ export class Train {
     return null;
   }
   /**
-   * Fill tanks from what a store holds: coal or wood, oil or diesel, water, and power for the
-   * battery (only the grid holds power: `fillUp` charges the battery there). `mul` > 1 charges
-   * extra (emergency delivery).
+   * Whether a station can fill this consist's fuel tanks: a coaling stage no diesel's, a Fuel Pump
+   * no steam engine's, a depot or a warehouse every one.
    */
-  refuel(
-    store: ResourceStore,
-    opts: { fuel: boolean; water: boolean; fuelFrac?: number; waterFrac?: number },
-    mul = 1,
-  ) {
+  fuelsAt(s: Station) {
+    return (
+      s.refuelsFuel && (!this.hasSteam || s.refuelsCoal) && (!this.hasDiesel || s.refuelsLiquid)
+    );
+  }
+  /**
+   * Fill tanks from what a store holds: coal or wood, oil or diesel, water, and power for the
+   * battery (only the grid holds power: `fillUp` charges the battery there). `fuel` fills them
+   * all; `coal` and `liquid` say so for one kind of tank (a coaling stage, a Fuel Pump). `mul` > 1
+   * charges extra (emergency delivery).
+   */
+  refuel(store: ResourceStore, opts: Fill, mul = 1) {
     const taken: Record<string, number> = {};
     const coalTarget = this.coalCap * (opts.fuelFrac ?? 1);
-    if (opts.fuel && this.coalCap > 0 && this.coal < coalTarget - 1e-6) {
+    if ((opts.coal ?? opts.fuel) && this.coalCap > 0 && this.coal < coalTarget - 1e-6) {
       const order = this.fuelPreference === 'coal' ? ['coal', 'wood'] : ['wood', 'coal'];
       for (const kind of order) {
         const per = kind === 'coal' ? 1 : 0.5; // coal-equivalent per unit
@@ -1473,7 +1530,7 @@ export class Train {
       }
     }
     const oilTarget = this.oilCap * (opts.fuelFrac ?? 1);
-    if (opts.fuel && this.oilCap > 0 && this.oil < oilTarget - 1e-6) {
+    if ((opts.liquid ?? opts.fuel) && this.oilCap > 0 && this.oil < oilTarget - 1e-6) {
       const liquid = dieselFuelId();
       const got = store.take(liquid, (oilTarget - this.oil) * mul) / mul;
       this.oil = Math.min(this.oilCap, this.oil + got);
@@ -1500,12 +1557,7 @@ export class Train {
    * Fill up at a store: the tanks from it (`refuel`), the battery from the grid, and the crew
    * settles what it owes there (`settle`). Returns what was taken.
    */
-  fillUp(
-    store: ResourceStore,
-    grid: ResourceStore,
-    what: { fuel: boolean; water: boolean; fuelFrac?: number; waterFrac?: number },
-    mul = 1,
-  ) {
+  fillUp(store: ResourceStore, grid: ResourceStore, what: Fill, mul = 1) {
     const taken = this.refuel(store, what, mul);
     if (what.fuel && this.batteryCap > 0)
       for (const [k, v] of Object.entries(
@@ -2552,8 +2604,9 @@ export class Train {
       this.path = null;
       this.speed = 0;
       if (this.serviceStop) {
-        const service = ctx.builder.serviceAt(seg.x, seg.y);
-        const store = this.serviceStoreAt(ctx, seg.x, seg.y);
+        const { x, y } = this.serviceStop;
+        const service = ctx.builder.serviceAt(x, y);
+        const store = this.serviceStoreAt(ctx, x, y);
         const taken = store ? this.fillUp(store, ctx.stores.grid, service) : {};
         for (const [k, v] of Object.entries(taken)) bump(this.trip.fuel, 'refuel_' + k, v);
         this.serviceStop = null;
@@ -2698,6 +2751,8 @@ export class Train {
       const taken = store
         ? this.fillUp(store, ctx.stores.grid, {
             fuel: all || st.refuelsFuel,
+            coal: all || st.refuelsCoal,
+            liquid: all || st.refuelsLiquid,
             water: all || st.refuelsWater,
           })
         : {};
@@ -3310,7 +3365,7 @@ export class Train {
     const head = this.trail[this.trail.length - 1]?.seg;
     if (!head) return false;
     const keys = new Set<number>();
-    const service = this.serviceStop;
+    const service = this.serviceEnd(track);
     if (service) keys.add(service.y * track.w + service.x);
     else if (this.route.length) {
       const target = builder.stationById(
@@ -3387,7 +3442,7 @@ export class Train {
   private leadsOn(builder: Builder, path: readonly PathSegment[]): boolean {
     const end = path[path.length - 1];
     if (this.state === 'yielding' || !end) return !!end;
-    const service = this.serviceStop;
+    const service = this.serviceEnd(builder.track);
     if (service) return end.x === service.x && end.y === service.y;
     if (!this.route.length) return false;
     const target = builder.stationById(

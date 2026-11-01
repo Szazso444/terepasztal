@@ -81,7 +81,7 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
     trail?: number[][];
     retreat?: { path: { x: number; y: number }[] } | null;
     way?: { path: { x: number; y: number }[] } | null;
-    serviceStop?: { x: number; y: number } | null;
+    serviceStop?: { x: number; y: number; end?: { x: number; y: number } } | null;
     want?: number[][] | null;
   }[]) {
     if (t.head) {
@@ -96,6 +96,7 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
       ...(t.retreat?.path ?? []),
       ...(t.way?.path ?? []),
       ...(t.serviceStop ? [t.serviceStop] : []),
+      ...(t.serviceStop?.end ? [t.serviceStop.end] : []),
     ]) {
       s.x += d;
       s.y += d;

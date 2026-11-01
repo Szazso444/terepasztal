@@ -525,6 +525,8 @@ const EN = {
      */
     besideWater: { pump: 'A water pump needs water right beside it.' } as Record<string, string>,
     needTrack: 'Must touch track',
+    /** a water tower, a coaling stage or a Fuel Pump turned away from the track beside it */
+    facesTrack: 'Its front must face the track',
     depotLocked: (n: number) => `Next depot unlocks at ${n} owned chunks`,
     townTooClose: (d: number) => `Town stations keep ${d} tiles apart`,
     needTrackHere: 'Signals stand on track',

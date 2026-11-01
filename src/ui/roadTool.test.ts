@@ -193,7 +193,7 @@ describe('the street door marks', () => {
     h.builder.free = true;
     expect(h.builder.placeDecor(10, 10, 'townhouse', 0)).not.toBeNull();
     expect(h.builder.placeBuilding(20, 10, 'windmill', 1)).not.toBeNull();
-    expect(h.builder.placeDecor(10, 20, 'fuel_stop', 2)).not.toBeNull();
+    expect(h.builder.placeDecor(10, 20, 'townhouse', 2)).not.toBeNull();
     standStation(h, 20, 20);
     h.builder.free = false;
     return h;
@@ -271,7 +271,7 @@ describe('a tile on a building', () => {
     h.builder.free = true;
     expect(h.builder.placeDecor(10, 10, 'townhouse', 0)).not.toBeNull();
     expect(h.builder.placeBuilding(20, 10, 'windmill', 1)).not.toBeNull();
-    expect(h.builder.placeDecor(10, 20, 'fuel_stop', 2)).not.toBeNull();
+    expect(h.builder.placeDecor(10, 20, 'townhouse', 2)).not.toBeNull();
     standStation(h, 20, 20);
     h.builder.free = false;
     h.b.setTool({ kind: 'road' });

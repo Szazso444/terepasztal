@@ -233,8 +233,8 @@ describe('a structure sprite switching frames', () => {
   it('takes its new frame size, lights and ground shadow, never the frame before', () => {
     const { world, lights, patches, families } = renderer();
     const s = world.setStructure('decor:0,0', 0, 0, 'structures/water_tower');
-    // the equipment estimate 0.7 times the author's pick of 1.3
-    expect(s.scale.x).toBeCloseTo(0.7 * 1.3, 9);
+    // a 3D model's family, packed at the size it is drawn
+    expect(s.scale.x).toBeCloseTo(1, 9);
     expect([lights(), patches()]).toEqual([1, 1]);
     // the same sprite shows a frame with no scale reference: scale 1, no lights, no shadow
     expect(world.setStructure('decor:0,0', 0, 0, 'structures/power_line')).toBe(s);
@@ -242,7 +242,7 @@ describe('a structure sprite switching frames', () => {
     expect([lights(), patches()]).toEqual([0, 0]);
     // and back to a building, turned this time: its unturned frame's size and lights
     world.setStructure('decor:0,0', 0, 0, 'structures/water_tower_r2');
-    expect(s.scale.x).toBeCloseTo(0.7 * 1.3, 9);
+    expect(s.scale.x).toBeCloseTo(1, 9);
     expect([lights(), patches()]).toEqual([1, 1]);
     expect(families.at(-1)).toBe('water_tower');
     world.setStructure('decor:0,0', 0, 0, 'structures/depot_r1');
@@ -908,10 +908,10 @@ describe('a ghost sprite switching frames', () => {
     const { world } = renderer();
     const g = new Sprite();
     const steps: [string, number][] = [
-      ['structures/water_tower', 0.7 * 1.3],
-      ['structures/water_tower_r2', 0.7 * 1.3],
+      ['structures/water_tower', 1],
+      ['structures/water_tower_r2', 1],
       ['terrain/ghost_ok', 1],
-      ['structures/water_tower_r2', 0.7 * 1.3],
+      ['structures/water_tower_r2', 1],
       ['props/oak_2', TREE_SCALE],
       ['structures/depot_r1', 1],
     ];
