@@ -1953,7 +1953,7 @@ const EN = {
     size: 'Size',
     description: 'Description shown in the level list',
     start: 'Player start',
-    startTier: 'Start age (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic, 5 hyper)',
+    startTier: 'Start age',
     brush: 'Terrain brush',
     brushHint:
       'Pick a terrain in the toolbar, drag to paint. Painting clears anything built on the tile.',

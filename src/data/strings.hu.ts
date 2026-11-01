@@ -1742,7 +1742,7 @@ export const HU: Strings = {
     size: 'Méret',
     description: 'A pályalistában látható leírás',
     start: 'Játékos indulása',
-    startTier: 'Kezdő korszak (0 gőz, 1 dízel, 2 villamos, 3 atom, 4 mágneses, 5 hiper)',
+    startTier: 'Kezdő korszak',
     brush: 'Terepecset',
     brushHint:
       'Válassz terepet az eszköztáron, és húzd a festéshez. A festés mindent eltüntet, ami a csempén áll.',

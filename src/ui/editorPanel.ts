@@ -1,8 +1,21 @@
-import { el, btn } from './dom';
+import { el } from './dom';
+import {
+  actionButton,
+  buttonRow,
+  formRow,
+  labelValue,
+  note,
+  numberField,
+  pasteBox,
+  segmented,
+  textField,
+  well,
+  type TextField,
+} from './kit';
 import { STR } from '../strings';
 import type { Editor } from '../editor/editor';
 import { Terrain, TERRAIN_NAMES } from '../world/tiles';
-import { LAST_AGE } from '../sim/ages';
+import { AGE_COUNT, LAST_AGE, ageDef } from '../sim/ages';
 import { SUPPLY_MODES, DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 
 export interface EditorActions {
@@ -16,16 +29,35 @@ export interface EditorActions {
   regenerate(): void;
 }
 
+/** The ages a level can start in, in order, each by the name the player reads everywhere. */
+export function startAges(): { tier: number; name: string }[] {
+  return Array.from({ length: AGE_COUNT }, (_, tier) => {
+    const id = ageDef(tier).id;
+    return { tier, name: STR.ages.name[id] ?? id };
+  });
+}
+
+/** The age a level's start shows: a tier outside the ages is shown as the nearest one. */
+export function shownStartAge(tier: number): number {
+  return Math.min(LAST_AGE, Math.max(0, Math.round(tier) || 0));
+}
+
+/** The brush sizes the painter offers. */
+const BRUSHES = [1, 2, 3];
+
 /** Right-hand panel for the level editor: metadata, start block, brush size, file actions. */
 export class EditorPanel {
   readonly root = el('div', { id: 'editor-panel', class: 'panel' });
-  private body = el('div', { class: 'panel-body' });
-  private status = el('div', { class: 'sub dim' });
+  private body = el('div', { class: 'panel-body k-edp' });
+  private status = el('p', { class: 'k-p bad' });
+  // the box outlives a redraw of the panel: what is pasted in it stays
+  private transfer = pasteBox({ placeholder: STR.settings.transferHint });
 
   constructor(
     private readonly editor: Editor,
     private readonly actions: EditorActions,
   ) {
+    this.transfer.classList.add('ed-xfer');
     this.root.append(el('div', { class: 'panel-title', text: STR.editor.title }), this.body);
     this.render();
   }
@@ -35,119 +67,115 @@ export class EditorPanel {
   }
 
   render() {
-    const b = this.body;
-    b.innerHTML = '';
     const l = this.editor.level;
-    const field = (label: string, input: HTMLElement) =>
-      el('div', { class: 'kv' }, el('span', { class: 'k', text: label }), input);
-    const text = (value: string, on: (v: string) => void, width = '150px') => {
-      const i = el('input', {
-        class: 'text',
-        type: 'text',
-        value,
-        style: `width:${width}`,
-      }) as HTMLInputElement;
-      i.addEventListener('change', () => on(i.value));
-      return i;
-    };
-    const num = (value: number, on: (v: number) => void, min = 0, max = 1e9) => {
-      const i = el('input', {
-        class: 'text',
-        type: 'number',
-        value: String(value),
-        min: String(min),
-        max: String(max),
-        style: 'width:90px',
-      }) as HTMLInputElement;
-      i.addEventListener('change', () => on(Math.max(min, Math.min(max, Number(i.value) || 0))));
-      return i;
-    };
-    b.append(
-      field(
-        STR.editor.name,
-        text(l.name, (v) => (l.name = v.trim() || l.name)),
-      ),
-      field(STR.editor.size, el('span', { class: 'v', text: `${l.w} x ${l.h}` })),
-    );
-    const desc = el('textarea', {
-      class: 'text',
-      style: 'width:100%;height:44px;margin:4px 0',
-      placeholder: STR.editor.description,
-    }) as HTMLTextAreaElement;
+
+    // the level: its name, its size and the description the level list shows
+    const name: TextField = textField({
+      value: l.name,
+      onClear: () => (name.input.value = l.name),
+    });
+    name.input.addEventListener('change', () => {
+      l.name = name.input.value.trim() || l.name;
+      name.input.value = l.name;
+    });
+    const desc = pasteBox({ placeholder: STR.editor.description });
+    desc.classList.add('ed-desc');
     desc.value = l.description;
     desc.addEventListener('change', () => (l.description = desc.value));
-    b.append(desc);
-    b.append(el('div', { class: 'col-title', text: STR.editor.start }));
-    // production chain the level is played in
-    const supply = el('select', { class: 'text', style: 'width:90px' }) as HTMLSelectElement;
-    for (const m of SUPPLY_MODES)
-      supply.append(el('option', { value: m, text: STR.menu.supplyModes[m] ?? m }));
-    supply.value = l.start.supply ?? DEFAULT_SUPPLY;
-    supply.addEventListener('change', () => (l.start.supply = supply.value as SupplyMode));
-    b.append(
-      field(
-        STR.hud.money,
-        num(l.start.money, (v) => (l.start.money = v)),
+
+    // the start: money, the age by name, the production chain the level is played in
+    const age = el('select', { class: 'text ed-age', 'aria-label': STR.editor.startTier });
+    for (const a of startAges()) age.append(el('option', { value: String(a.tier), text: a.name }));
+    age.value = String(shownStartAge(l.start.tier));
+    age.addEventListener('change', () => (l.start.tier = Number(age.value)));
+    const supply = segmented({
+      options: SUPPLY_MODES.map((m) => ({ id: m, label: STR.menu.supplyModes[m] ?? m })),
+      value: l.start.supply ?? DEFAULT_SUPPLY,
+      cls: 'small',
+      onChange: (id) => (l.start.supply = id as SupplyMode),
+    });
+
+    // the brush: its size, a fill of one terrain, a new map
+    const brush = segmented({
+      options: BRUSHES.map((n) => ({ id: String(n), label: String(n) })),
+      value: String(this.editor.brushSize),
+      cls: 'small',
+      onChange: (id) => (this.editor.brushSize = Number(id)),
+    });
+
+    this.body.replaceChildren(
+      well(
+        null,
+        formRow(STR.editor.name, name.root),
+        labelValue(STR.editor.size, `${l.w} x ${l.h}`),
+        el('div', { class: 'k-xfer' }, desc),
       ),
-      field(
-        STR.editor.startTier,
-        num(l.start.tier, (v) => (l.start.tier = v), 0, LAST_AGE),
-      ),
-      field(STR.menu.supply, supply),
-    );
-    b.append(el('div', { class: 'col-title', text: STR.editor.brush }));
-    const brushRow = el('div', { class: 'row', style: 'margin-top:2px' });
-    for (const n of [1, 2, 3]) {
-      const bb = btn(
-        String(n),
-        () => {
-          this.editor.brushSize = n;
-          this.render();
-        },
-        `small ${this.editor.brushSize === n ? 'active' : ''}`,
-      );
-      brushRow.append(bb);
-    }
-    b.append(brushRow);
-    b.append(el('div', { class: 'sub dim', text: STR.editor.brushHint }));
-    const fillRow = el('div', { class: 'row' });
-    for (const t of [Terrain.Grass, Terrain.Water, Terrain.Rock]) {
-      fillRow.append(btn(STR.editor.fill(TERRAIN_NAMES[t]), () => this.actions.fill(t), 'small'));
-    }
-    fillRow.append(btn(STR.editor.regenerate, () => this.actions.regenerate(), 'small'));
-    b.append(fillRow);
-    b.append(el('div', { class: 'col-title', text: STR.editor.file }));
-    b.append(
-      el(
-        'div',
-        { class: 'row' },
-        btn(STR.editor.save, () => this.actions.save(), 'accent'),
-        btn(STR.editor.saveAs, () => this.actions.saveAs(), 'small'),
-        btn(STR.editor.playTest, () => this.actions.playTest(), 'accent'),
-      ),
-    );
-    const area = el('textarea', {
-      class: 'text',
-      style: 'width:100%;height:60px;font-family:var(--font-mono);font-size:10px',
-      spellcheck: 'false',
-    }) as HTMLTextAreaElement;
-    b.append(
-      el(
-        'div',
-        { class: 'row' },
-        btn(STR.settings.exportSave, () => (area.value = this.actions.exportJson()), 'small'),
-        btn(
-          STR.settings.importSave,
-          () => {
-            if (area.value.trim() && !this.actions.importJson(area.value.trim()))
-              this.setStatus(STR.editor.badLevel);
-          },
-          'small',
+      well(
+        STR.editor.start,
+        formRow(
+          STR.hud.money,
+          numberField({
+            label: STR.hud.money,
+            value: l.start.money,
+            min: 0,
+            max: 1e9,
+            step: 100,
+            bigStep: 1000,
+            free: true,
+            cls: 'small ed-money',
+            onChange: (v) => {
+              l.start.money = v;
+            },
+          }),
         ),
-        btn(STR.editor.exit, () => this.actions.exit(), 'small'),
+        formRow(STR.editor.startTier, age),
+        formRow(STR.menu.supply, supply),
       ),
-      area,
-      this.status,
+      well(
+        STR.editor.brush,
+        formRow(STR.editor.size, brush),
+        note(STR.editor.brushHint),
+        buttonRow(
+          ...[Terrain.Grass, Terrain.Water, Terrain.Rock].map((t) =>
+            actionButton(STR.editor.fill(TERRAIN_NAMES[t]), () => this.actions.fill(t), {
+              cls: 'small',
+            }),
+          ),
+          actionButton(STR.editor.regenerate, () => this.actions.regenerate(), { cls: 'small' }),
+        ),
+      ),
+      well(
+        STR.editor.file,
+        buttonRow(
+          actionButton(STR.editor.save, () => this.actions.save(), { cls: 'pri', icon: 'save' }),
+          actionButton(STR.editor.saveAs, () => this.actions.saveAs(), {
+            cls: 'small',
+            icon: 'saveas',
+          }),
+          actionButton(STR.editor.playTest, () => this.actions.playTest(), { cls: 'pri' }),
+        ),
+        el('div', { class: 'k-xfer' }, this.transfer),
+        buttonRow(
+          actionButton(
+            STR.settings.exportSave,
+            () => (this.transfer.value = this.actions.exportJson()),
+            {
+              cls: 'small',
+              icon: 'export',
+            },
+          ),
+          actionButton(
+            STR.settings.importSave,
+            () => {
+              const json = this.transfer.value.trim();
+              if (json && !this.actions.importJson(json)) this.setStatus(STR.editor.badLevel);
+            },
+            { cls: 'small', icon: 'import' },
+          ),
+          actionButton(STR.editor.exit, () => this.actions.exit(), { cls: 'small' }),
+        ),
+        this.status,
+      ),
     );
   }
 }

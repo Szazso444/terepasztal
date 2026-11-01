@@ -5596,3 +5596,34 @@ body.title-up #topbar .now-playing:not(.held) {
   margin: 6px 14px;
   overflow-x: auto;
 }
+
+/* ---- the level editor panel, in the kit's wells (editorPanel.ts) ---- */
+#editor-panel .k-edp {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+}
+/* the name field takes a width of its own: a control column does not stretch it */
+#editor-panel .k-ctl .k-field {
+  flex: none;
+  width: 150px;
+}
+#editor-panel .ed-age {
+  width: 140px;
+  height: 24px;
+}
+#editor-panel .k-num.ed-money input {
+  width: 84px;
+}
+#editor-panel .ed-desc,
+#editor-panel .ed-xfer {
+  height: 54px;
+}
+/* a description is prose; the level a pasted file is not */
+#editor-panel .ed-desc {
+  font: 12px/1.4 var(--font-body);
+}
+#editor-panel .k-p:empty {
+  display: none;
+}

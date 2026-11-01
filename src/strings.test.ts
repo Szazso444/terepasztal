@@ -103,11 +103,10 @@ describe('the ages the player reads about', () => {
     AGE_DEFS.forEach((a, i) => expect(a.id).toBe(AGE_ORDER[i]));
   });
 
-  it('labels each age by its index, the editor included', () => {
+  it('labels each age by its index', () => {
     for (let t = 0; t < AGE_ORDER.length; t++)
       expect(STR.hud.ageUp(t)).toContain(STR.ages.name[AGE_ORDER[t]]);
     expect(STR.hud.ageUp(3)).toContain('Nuclear Age');
-    for (const [t, id] of AGE_ORDER.entries()) expect(STR.editor.startTier).toContain(`${t} ${id}`);
   });
 
   it('names the population goal after the residents it counts', () => {
