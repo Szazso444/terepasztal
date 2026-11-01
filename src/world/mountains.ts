@@ -1,8 +1,9 @@
 import { hash2 } from '../engine/rng';
 import { MAX_LEVEL } from './elevation';
+import type { MapGenParams } from './mapgen';
 import { fbm, valueNoise } from './noise';
 import type { Rect as Span } from './rivers';
-import { Terrain, type GameMap } from './tiles';
+import { Terrain, climateAtIndex, lowGround, type GameMap } from './tiles';
 
 /**
  * Generated mountains (docs/superpowers/specs/2026-10-30-tunnels-design.md, section 3a).
@@ -29,7 +30,10 @@ export const SCULPT_REACH = 32;
 /** A tile deeper than this into a massif, or further than this from water, reads as this. */
 const DISTANCE_CAP = 16;
 
-/** massifAt above this is a massif: about 38% of all tiles. */
+/**
+ * massifAt above this is a massif: 37.9% of all tiles over 400 seeds. The noise is broad, so one map
+ * of 160 x 160 can stand far from that, with 18 points of spread between maps.
+ */
 export const MASSIF_LINE = 0.59;
 
 /** The two sides of a chamfer distance: 5 along a side, 7 across a corner, in whole numbers. */
@@ -161,9 +165,26 @@ function towerLevel(wx: number, wy: number, e: number, s: number): number {
 /** How many rings of Rock stand around a Mountain tile. */
 const RING = 2;
 
+/** The level rock starts at on a massif with the rockLevel slider at ROCK_SLIDER, its default. */
+const ROCK_FROM = 6;
+const ROCK_SLIDER = 0.76;
+/** How many levels the rock line moves for the whole of the slider's scale, 0 to 1. */
+const ROCK_SLIDE = 10;
+/** How far above the rock line mountain starts. */
+const MOUNTAIN_ABOVE_ROCK = 4;
+/** The noise above which a slope is wooded with forestDensity at FOREST_SLIDER, its default. */
+const FOREST_FROM = 0.47;
+const FOREST_SLIDER = 0.56;
+
 /** What the sculpt reads of the field map generation works on. */
 export type SculptField = Pick<GameMap, 'w' | 'h' | 'originX' | 'originY' | 'terrain'> &
   Pick<Partial<GameMap>, 'waterSurface'>;
+
+/** What the cover reads besides: the climate of each tile. */
+export type CoverField = SculptField & Pick<GameMap, 'biome'> & Pick<Partial<GameMap>, 'climate'>;
+
+/** The map's sliders that move the cover's lines. */
+export type CoverSliders = Pick<MapGenParams, 'rockLevel' | 'forestDensity'>;
 
 /**
  * Chamfer distances up to DISTANCE_CAP tiles over the `w` x `h` plane `a`, which holds SIDE times
@@ -295,23 +316,28 @@ export function sculptMountains(
 }
 
 /**
- * What grows on the massifs among the tiles of `span`, outside `keepClear`: forest low down, then
- * grass, then rock from level 6 and mountain from level 10, the lines wobbling by a noise, with
+ * What grows on the massifs among the tiles of `span`, outside `keepClear`: what the tile's climate
+ * makes of low ground (lowGround), wooded where a noise says so on the slopes, then rock from
+ * level 6 and mountain from level 10 at the default sliders, the lines wobbling by a noise, with
  * rock at any height on a step of 3 or more. `levels` is sculptMountains' plane, read a tile
  * around `span`. So what the elevation lift made of the ground under a mountain goes: a valley
- * floor is grass, not a rock field. Water stays water, and so does the ground beside water above
- * level 1, whose level holds that water up (rivers.ts). A Mountain tile keeps two rings of Rock,
- * as it does wherever it stands: the tiles RING or more inside `span` get them, read off `span`.
- * Writes the terrain of `field`.
+ * floor is grass or desert sand, not a rock field. Water stays water, and so does the ground beside
+ * water above level 1, whose level holds that water up (rivers.ts). A Mountain tile keeps two rings
+ * of Rock, as it does wherever it stands: the tiles RING or more inside `span` get them, read off
+ * `span`. Writes the terrain of `field`.
  */
 export function coverMountains(
-  field: SculptField,
+  field: CoverField,
   levels: Uint8Array,
   span: Span,
   keepClear: Span,
   seed: number,
+  sliders: CoverSliders,
 ) {
   const { w, h, originX, originY, terrain, waterSurface } = field;
+  const rockFrom = ROCK_FROM + ROCK_SLIDE * (sliders.rockLevel - ROCK_SLIDER);
+  const mountainFrom = rockFrom + MOUNTAIN_ABOVE_ROCK;
+  const forestFrom = FOREST_FROM + (sliders.forestDensity - FOREST_SLIDER);
   const kept = (x: number, y: number) =>
     x >= keepClear.x0 && y >= keepClear.y0 && x < keepClear.x1 && y < keepClear.y1;
   const holdsWater = (i: number) => terrain[i] === Terrain.Water && (waterSurface?.[i] ?? 0) > 1;
@@ -332,11 +358,12 @@ export function coverMountains(
         Math.abs(v - levels[i - w]),
         Math.abs(v - levels[i + w]),
       );
-      let t = Terrain.Grass;
-      if (wobbled >= 10) t = Terrain.Mountain;
-      else if (wobbled >= 6 || steep >= 3) t = Terrain.Rock;
-      else if (v >= 1 && fbm(wx / 9, wy / 9, seed + 22, 3) > 0.47) t = Terrain.Forest;
-      terrain[i] = t;
+      if (wobbled >= mountainFrom) terrain[i] = Terrain.Mountain;
+      else if (wobbled >= rockFrom || steep >= 3) terrain[i] = Terrain.Rock;
+      else {
+        const wooded = v >= 1 && fbm(wx / 9, wy / 9, seed + 22, 3) > forestFrom;
+        terrain[i] = lowGround(climateAtIndex(field, i), wooded);
+      }
     }
   const inner = { x0: span.x0 + RING, y0: span.y0 + RING, x1: span.x1 - RING, y1: span.y1 - RING };
   for (let y = Math.max(0, span.y0); y < Math.min(h, span.y1); y++)

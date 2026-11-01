@@ -55,6 +55,17 @@ export const BIOME_NAMES = [
 /** The climates, ids 0 to CLIMATES - 1: the biomes generation picks before any landform rule. */
 export const CLIMATES = 6;
 
+/**
+ * What climate `b` makes of low land, `wooded` where it has the trees for a forest: sand in the
+ * desert, grass in a swamp and on an island, grass or forest elsewhere. Map generation asks it of
+ * the ground below the hills (Field.genGround) and of the low part of a massif (coverMountains).
+ */
+export function lowGround(b: Biome, wooded: boolean): Terrain {
+  if (b === Biome.Desert) return Terrain.Sand;
+  if (b === Biome.Swamp || b === Biome.Ocean) return Terrain.Grass;
+  return wooded ? Terrain.Forest : Terrain.Grass;
+}
+
 export type PropKind =
   | 'tree'
   | 'pine'

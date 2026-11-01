@@ -6,6 +6,7 @@ import {
   Biome,
   CLIMATES,
   climateAtIndex,
+  lowGround,
   startRegion,
   type GameMap,
   type PropInstance,
@@ -143,6 +144,13 @@ interface FieldSeeds {
   biome: number;
   island: number;
   massif: number;
+}
+
+/** The moisture above which climate `b` grows a forest; on the plains it is the map's slider. */
+function forestMoisture(b: Biome, forestDensity: number): number {
+  if (b === Biome.Forest) return 0.42;
+  if (b === Biome.Taiga) return 0.55;
+  return forestDensity + 0.08;
 }
 
 /**
@@ -387,25 +395,12 @@ class Field {
         else if (e < params.waterLevel + 0.025) t = Terrain.Sand;
         else if (e > params.rockLevel) t = Terrain.Rock;
         else if (e > params.hillLevel) t = b === Biome.Swamp ? Terrain.Grass : Terrain.Hill;
-        else
-          switch (b) {
-            case Biome.Desert:
-              t = Terrain.Sand;
-              break;
-            case Biome.Forest:
-              t = m > 0.42 ? Terrain.Forest : Terrain.Grass;
-              break;
-            case Biome.Taiga:
-              t = m > 0.55 ? Terrain.Forest : Terrain.Grass;
-              break;
-            case Biome.Swamp: {
-              const wet = fbm((x + ox) / 5 + 700, (y + oy) / 5 + 700, seeds.biome + 7, 2);
-              t = wet > 0.66 ? Terrain.Water : Terrain.Grass;
-              break;
-            }
-            default:
-              t = m > params.forestDensity + 0.08 ? Terrain.Forest : Terrain.Grass;
-          }
+        else if (
+          b === Biome.Swamp &&
+          fbm((x + ox) / 5 + 700, (y + oy) / 5 + 700, seeds.biome + 7, 2) > 0.66
+        )
+          t = Terrain.Water;
+        else t = lowGround(b, m > forestMoisture(b, params.forestDensity));
         ground[i] = t;
       }
   }
@@ -423,19 +418,7 @@ class Field {
     if (e < params.waterLevel + 0.025) return Terrain.Sand;
     if (e > params.rockLevel) return Terrain.Rock;
     if (e > params.hillLevel) return b === Biome.Swamp ? Terrain.Grass : Terrain.Hill;
-    switch (b) {
-      case Biome.Desert:
-        return Terrain.Sand;
-      case Biome.Forest:
-        return m > 0.42 ? Terrain.Forest : Terrain.Grass;
-      case Biome.Taiga:
-        return m > 0.55 ? Terrain.Forest : Terrain.Grass;
-      case Biome.Swamp:
-      case Biome.Ocean:
-        return Terrain.Grass;
-      default:
-        return m > params.forestDensity + 0.08 ? Terrain.Forest : Terrain.Grass;
-    }
+    return lowGround(b, m > forestMoisture(b, params.forestDensity));
   }
 }
 
@@ -609,7 +592,7 @@ export function generateMapPlanes(
   const scy = start.y0 + rs / 2;
   const f = new Field(w, h, ox, oy, seeds, params, scx, scy, rs);
   // the passes after the rivers run on the map and the tiles around it they read, each on a band
-  // narrower than the one it reads: the terrain LATE_REACH tiles out, the mountains MOUNTAIN_REACH
+  // narrower than the one it reads: the terrain LATE_REACH tiles out, the mountains MOUNTAIN_FIELD
   // tiles out, the sea shore 4 and the oil and wheat field centres 2
   const inMap: Span = { x0: MARGIN, y0: MARGIN, x1: MARGIN + mw, y1: MARGIN + mh };
   const late = grow(inMap, LATE_REACH);
@@ -656,7 +639,7 @@ export function generateMapPlanes(
   // the cover reads the levels a tile around the tiles it covers
   const keepClear = grow(start, 4);
   const raised = sculptMountains(field, grow(mountains, 1), keepClear, seeds.massif);
-  coverMountains(field, raised, mountains, keepClear, seeds.massif);
+  coverMountains(field, raised, mountains, keepClear, seeds.massif, params);
   startResources(field, start, { pond: plan.pond, river });
   // a patch painted over a lake's tile leaves land there
   for (let y = start.y0; y < start.y1; y++)

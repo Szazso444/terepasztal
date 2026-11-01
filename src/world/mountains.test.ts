@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DIR_DX, DIR_DY } from '../engine/iso';
 import { tileLevels, levelAt, MAX_LEVEL } from './elevation';
-import { generateMapPlanes, type MapPlanes } from './mapgen';
+import { DEFAULT_MAP_PARAMS, generateMapPlanes, type MapPlanes } from './mapgen';
 import {
   MASSIF_LINE,
   MOUNTAIN_SHAPES,
@@ -10,10 +10,11 @@ import {
   massifAt,
   sculptMountains,
   shapeAt,
+  type CoverField,
+  type CoverSliders,
   type MountainShape,
-  type SculptField,
 } from './mountains';
-import { Terrain, startRegion } from './tiles';
+import { Biome, Terrain, startRegion } from './tiles';
 import { MAX_WATER_LEVEL } from './waterfalls';
 
 /** Twenty worlds of 160 x 160, generated once for the tests that read them. */
@@ -31,11 +32,11 @@ const raisedTiles = ({ map }: MapPlanes) => {
 };
 
 /** A field of grass, `w` x `w`, with `water` tiles. */
-const flat = (w: number, water: (x: number, y: number) => boolean = () => false): SculptField => {
+const flat = (w: number, water: (x: number, y: number) => boolean = () => false): CoverField => {
   const terrain = new Uint8Array(w * w);
   for (let y = 0; y < w; y++)
     for (let x = 0; x < w; x++) if (water(x, y)) terrain[y * w + x] = Terrain.Water;
-  return { w, h: w, originX: 0, originY: 0, terrain };
+  return { w, h: w, originX: 0, originY: 0, terrain, biome: new Uint8Array(w * w) };
 };
 const NOWHERE = { x0: 0, y0: 0, x1: 0, y1: 0 };
 
@@ -101,14 +102,24 @@ describe('coverMountains', () => {
   for (let y = 8; y < W - 8; y++)
     for (let x = 8; x < W - 8; x++) if (massifAt(x, y, SEED) > MASSIF_LINE) massif.push(y * W + x);
   const span = { x0: 0, y0: 0, x1: W, y1: W };
-  const covered = (level: number, keep = NOWHERE, water = (_x: number, _y: number) => false) => {
+  const covered = (
+    level: number,
+    keep = NOWHERE,
+    water = (_x: number, _y: number) => false,
+    sliders: CoverSliders = DEFAULT_MAP_PARAMS,
+    climate = Biome.Plains,
+  ) => {
     const f = flat(W, water);
     f.terrain.fill(Terrain.Sand);
+    f.biome.fill(climate);
     for (let i = 0; i < W * W; i++)
       if (water(i % W, Math.floor(i / W))) f.terrain[i] = Terrain.Water;
-    coverMountains(f, new Uint8Array(W * W).fill(level), span, keep, SEED);
+    coverMountains(f, new Uint8Array(W * W).fill(level), span, keep, SEED, sliders);
     return f.terrain;
   };
+  const onMassif = (terrain: Uint8Array, ...t: Terrain[]) =>
+    massif.filter((i) => t.includes(terrain[i] as Terrain)).length;
+  const dry = () => false;
 
   it('finds a massif to test on', () => {
     expect(massif.length).toBeGreaterThan(1000);
@@ -131,19 +142,52 @@ describe('coverMountains', () => {
     for (const i of massif) expect(floor[i]).toBe(Terrain.Grass);
   });
 
+  it('holds no stone below level 5 at the default sliders', () => {
+    expect(onMassif(covered(4), Terrain.Rock, Terrain.Mountain)).toBe(0);
+  });
+
+  it('makes what the climate makes of the low ground, and the same stone', () => {
+    const under = (b: Biome, level: number) => covered(level, NOWHERE, dry, undefined, b);
+    expect(onMassif(under(Biome.Desert, 0), Terrain.Sand)).toBe(massif.length);
+    expect(onMassif(under(Biome.Desert, 1), Terrain.Sand)).toBe(massif.length);
+    expect(onMassif(under(Biome.Swamp, 1), Terrain.Forest)).toBe(0);
+    expect(onMassif(under(Biome.Ocean, 1), Terrain.Forest)).toBe(0);
+    expect(under(Biome.Forest, 1)).toEqual(covered(1));
+    expect(under(Biome.Taiga, 1)).toEqual(covered(1));
+    expect(under(Biome.Desert, 8)).toEqual(covered(8));
+    expect(under(Biome.Desert, 16)).toEqual(covered(16));
+  });
+
+  it('moves the forest with the forestDensity slider, lower for more', () => {
+    const forest = (forestDensity: number) =>
+      onMassif(covered(1, NOWHERE, dry, { ...DEFAULT_MAP_PARAMS, forestDensity }), Terrain.Forest);
+    expect(forest(0.4)).toBeGreaterThan(forest(DEFAULT_MAP_PARAMS.forestDensity));
+    expect(forest(DEFAULT_MAP_PARAMS.forestDensity)).toBeGreaterThan(forest(0.7));
+  });
+
+  it('moves the rock and mountain lines with the rockLevel slider, lower for more', () => {
+    const at = (level: number, rockLevel: number, t: Terrain) =>
+      onMassif(covered(level, NOWHERE, dry, { ...DEFAULT_MAP_PARAMS, rockLevel }), t);
+    const usual = DEFAULT_MAP_PARAMS.rockLevel;
+    expect(at(5, 0.6, Terrain.Rock)).toBeGreaterThan(at(5, usual, Terrain.Rock));
+    expect(at(5, usual, Terrain.Rock)).toBeGreaterThan(at(5, 0.9, Terrain.Rock));
+    expect(at(9, 0.6, Terrain.Mountain)).toBeGreaterThan(at(9, usual, Terrain.Mountain));
+    expect(at(9, usual, Terrain.Mountain)).toBeGreaterThan(at(9, 0.9, Terrain.Mountain));
+  });
+
   it('puts rock on a cliff at any height', () => {
     const f = flat(W);
     const levels = new Uint8Array(W * W).fill(1);
     const i = massif[0];
     levels[i + 1] = 4;
-    coverMountains(f, levels, span, NOWHERE, SEED);
+    coverMountains(f, levels, span, NOWHERE, SEED, DEFAULT_MAP_PARAMS);
     expect(f.terrain[i]).toBe(Terrain.Rock);
   });
 
   it('gives a Mountain tile two rings of Rock, on the ground outside the massif too', () => {
     const f = flat(W);
     f.terrain.fill(Terrain.Sand);
-    coverMountains(f, new Uint8Array(W * W).fill(16), span, NOWHERE, SEED);
+    coverMountains(f, new Uint8Array(W * W).fill(16), span, NOWHERE, SEED, DEFAULT_MAP_PARAMS);
     const stone = (t: number) => t === Terrain.Rock || t === Terrain.Mountain;
     let bare = 0;
     for (let y = 10; y < W - 10; y++)
@@ -162,7 +206,7 @@ describe('coverMountains', () => {
     f.terrain[i + 1] = Terrain.Water;
     f.waterSurface = new Uint8Array(W * W);
     f.waterSurface[i + 1] = 2;
-    coverMountains(f, new Uint8Array(W * W), span, NOWHERE, SEED);
+    coverMountains(f, new Uint8Array(W * W), span, NOWHERE, SEED, DEFAULT_MAP_PARAMS);
     expect(f.terrain[i]).toBe(Terrain.Hill);
   });
 
@@ -210,6 +254,57 @@ describe('the mountains of generated worlds', () => {
     expect(tall.length).toBeGreaterThanOrEqual(18);
   }, 120_000);
 
+  /** Whether each tile of the map is on a massif. */
+  const massifTiles = ({ map, massifSeed }: MapPlanes) =>
+    Uint8Array.from({ length: map.w * map.h }, (_, i) => {
+      const wx = (i % map.w) + map.originX;
+      const wy = Math.floor(i / map.w) + map.originY;
+      return massifAt(wx, wy, massifSeed) > MASSIF_LINE ? 1 : 0;
+    });
+
+  it('grows no forest on a desert massif, whose low ground is sand', () => {
+    let desert = 0;
+    let sand = 0;
+    for (const planes of worlds()) {
+      const { seed, terrain, climate } = planes.map;
+      massifTiles(planes).forEach((on, i) => {
+        if (!on || climate![i] !== Biome.Desert) return;
+        desert++;
+        if (terrain[i] === Terrain.Sand) sand++;
+        if (terrain[i] === Terrain.Forest) expect.fail(`forest at ${i} of seed ${seed}`);
+      });
+    }
+    expect(desert).toBeGreaterThan(1000);
+    expect(sand / desert).toBeGreaterThan(0.6);
+  }, 120_000);
+
+  it('moves the ground of generated massifs with the sliders', () => {
+    const world = (p: Partial<CoverSliders>) => generateMapPlanes(SEEDS[0], { w: 96, h: 96, ...p });
+    const forest = (planes: MapPlanes) =>
+      massifTiles(planes).reduce(
+        (n, on, i) => n + (on && planes.map.terrain[i] === Terrain.Forest ? 1 : 0),
+        0,
+      );
+    // the rock slider moves the rivers as well, and with them how much of a massif stands, so a
+    // count of stone says little: the line shows in how much of the ground at levels 4 and 5 is
+    const stoneShare = (planes: MapPlanes) => {
+      const { terrain, generatedLevel: g } = planes.map;
+      let ground = 0;
+      let stone = 0;
+      massifTiles(planes).forEach((on, i) => {
+        if (!on || g![i] < 4 || g![i] > 5 || terrain[i] === Terrain.Water) return;
+        ground++;
+        if (terrain[i] === Terrain.Rock || terrain[i] === Terrain.Mountain) stone++;
+      });
+      return stone / ground;
+    };
+    const usual = world({});
+    expect(forest(world({ forestDensity: 0.4 }))).toBeGreaterThan(forest(usual));
+    expect(forest(world({ forestDensity: 0.7 }))).toBeLessThan(forest(usual));
+    expect(stoneShare(world({ rockLevel: 0.68 }))).toBeGreaterThan(stoneShare(usual));
+    expect(stoneShare(world({ rockLevel: 0.9 }))).toBeLessThan(stoneShare(usual));
+  }, 30_000);
+
   it('uses all three shapes over 40 seeds, hill the most', () => {
     // the shape is a noise over world tiles, so 40 seeds are cheap read directly, on a massif
     const seen: Record<MountainShape, number> = { hill: 0, ridge: 0, tower: 0 };
@@ -221,11 +316,39 @@ describe('the mountains of generated worlds', () => {
     }
     const total = seen.hill + seen.ridge + seen.tower;
     for (const shape of ['hill', 'ridge', 'tower'] as const)
-      expect(Math.abs(seen[shape] / total - MOUNTAIN_SHAPES[shape]), shape).toBeLessThan(0.1);
+      expect(Math.abs(seen[shape] / total - MOUNTAIN_SHAPES[shape]), shape).toBeLessThan(0.04);
     expect(seen.hill).toBeGreaterThan(seen.ridge);
     expect(seen.ridge).toBeGreaterThan(seen.tower);
     expect(seen.tower).toBeGreaterThan(0);
   });
+
+  it('makes each shape stand as its own kind of ground', () => {
+    // what the ground of each shape's tiles does: a tower is steep and short, a ridge long and even
+    const made = { hill: [0, 0, 0], ridge: [0, 0, 0], tower: [0, 0, 0] };
+    for (const planes of worlds()) {
+      const { w, h, terrain, generatedLevel: g, originX, originY } = planes.map;
+      for (let y = 1; y < h - 1; y++)
+        for (let x = 1; x < w - 1; x++) {
+          const i = y * w + x;
+          if (terrain[i] === Terrain.Water) continue;
+          const wx = x + originX;
+          const wy = y + originY;
+          if (massifAt(wx, wy, planes.massifSeed) <= MASSIF_LINE) continue;
+          const v = g![i];
+          const step = Math.max(...[i - 1, i + 1, i - w, i + w].map((n) => Math.abs(v - g![n])));
+          const seen = made[shapeAt(wx, wy, planes.massifSeed)];
+          seen[0]++;
+          if (step >= 3) seen[1]++;
+          if (v >= 12) seen[2]++;
+        }
+    }
+    const steep = (s: MountainShape) => made[s][1] / made[s][0];
+    const tall = (s: MountainShape) => made[s][2] / made[s][0];
+    expect(steep('tower')).toBeGreaterThan(2 * steep('hill'));
+    expect(steep('hill')).toBeGreaterThan(1.5 * steep('ridge'));
+    expect(tall('hill')).toBeGreaterThan(2 * tall('tower'));
+    expect(tall('ridge')).toBeGreaterThan(2 * tall('tower'));
+  }, 120_000);
 
   it('leaves water, the map border and the start chunk at their old levels', () => {
     for (const { map } of worlds()) {
@@ -300,26 +423,51 @@ describe('the mountains of generated worlds', () => {
       }
     return heads;
   };
-  const nearMassif = (p: MapPlanes, x: number, y: number, reach: number) => {
-    for (let dy = -reach; dy <= reach; dy++)
-      for (let dx = -reach; dx <= reach; dx++) {
-        const wx = x + dx + p.map.originX;
-        const wy = y + dy + p.map.originY;
-        if (massifAt(wx, wy, p.massifSeed) > MASSIF_LINE) return true;
+  /** The map's tiles within `reach` tiles of a massif along either axis, as 1s on a plane. */
+  const nearMassifs = ({ map, massifSeed }: MapPlanes, reach: number) => {
+    const { w, h, originX, originY } = map;
+    const near = new Uint8Array(w * h);
+    for (let y = -reach; y < h + reach; y++)
+      for (let x = -reach; x < w + reach; x++) {
+        if (massifAt(x + originX, y + originY, massifSeed) <= MASSIF_LINE) continue;
+        for (let ny = Math.max(0, y - reach); ny <= Math.min(h - 1, y + reach); ny++)
+          near.fill(1, ny * w + Math.max(0, x - reach), ny * w + Math.min(w, x + reach + 1));
       }
-    return false;
+    return near;
   };
 
-  it('starts most rivers in the mountains: over 20 seeds, 70% of river heads lie within 6 tiles of a massif', () => {
+  // A massif and the tiles around it hold more than half of the land, so most heads would lie near
+  // one by chance alone. What the lift adds is the gap between the two shares, so this reads both,
+  // over 60 worlds: three ranges of seeds fixed ahead of the result, as one range of 20 can read
+  // several points apart from the next. Do not pick seeds by the result. Over these seeds 64.9% of
+  // the heads and 54.6% of the land lie near a massif, and rivers take 7.2% of all tiles.
+  it('starts rivers near the massifs: over 60 seeds, 60% of river heads lie within 6 tiles of one, 10 points over the land', () => {
+    const seeds = [
+      ...Array.from({ length: 20 }, (_, i) => 7000 + i * 53),
+      ...Array.from({ length: 20 }, (_, i) => 40000 + i * 211),
+      ...Array.from({ length: 20 }, (_, i) => 900000 + i * 1009),
+    ];
     let heads = 0;
-    let near = 0;
-    for (const planes of worlds())
+    let headsNear = 0;
+    let land = 0;
+    let landNear = 0;
+    for (const seed of seeds) {
+      const planes = generateMapPlanes(seed, { w: SIZE, h: SIZE });
+      const { w, terrain } = planes.map;
+      const near = nearMassifs(planes, 6);
       for (const { x, y } of riverHeads(planes)) {
         heads++;
-        if (nearMassif(planes, x, y, 6)) near++;
+        headsNear += near[y * w + x];
       }
-    expect(heads).toBeGreaterThan(200);
-    expect(near / heads).toBeGreaterThanOrEqual(0.7);
+      terrain.forEach((t, i) => {
+        if (t === Terrain.Water) return;
+        land++;
+        landNear += near[i];
+      });
+    }
+    expect(heads).toBeGreaterThan(1000);
+    expect(headsNear / heads).toBeGreaterThanOrEqual(0.6);
+    expect(headsNear / heads - landNear / land).toBeGreaterThanOrEqual(0.1);
   }, 120_000);
 
   it('keeps every river at water level 4 or under, flowing downhill', () => {
