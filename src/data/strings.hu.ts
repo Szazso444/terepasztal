@@ -343,6 +343,7 @@ export const HU: Strings = {
     tooSteep: 'Túl meredek: az egyenes sín csempénként legfeljebb egy szintet emelkedhet',
     groundLimit: 'A föld itt nem mozdulhat tovább',
     groundBesideWater: 'Vizet érintő föld nem süllyeszthető',
+    groundBesideLevel: 'Ez megbillentené a talajt a mellette álló építmény alatt',
     groundMovesWater: 'Ez megmozdítaná a vizet: a víz nem emelhető és nem süllyeszthető',
     groundUp: (tiles: number, cost: string) => `Emelés: ${tiles} csempe, ${cost}`,
     groundDown: (tiles: number, cost: string) => `Süllyesztés: ${tiles} csempe, ${cost}`,

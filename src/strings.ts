@@ -426,6 +426,8 @@ const EN = {
     groundLimit: 'The ground can go no further here',
     /** Lower on a tile that touches water, or pulling one down */
     groundBesideWater: 'Ground touching water cannot be lowered',
+    /** Raise, Lower or a dig's raise would tilt the ground under a piece that needs it level */
+    groundBesideLevel: 'This would tilt the ground under what stands beside it',
     /** Raise or Lower on a water tile, or one that would have to move the water beside it */
     groundMovesWater: 'This would move the water: water cannot be raised or lowered',
     /** the Raise and Lower tools' line: how many tiles move, with the neighbours they take along, and the price */
