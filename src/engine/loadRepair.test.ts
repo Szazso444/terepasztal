@@ -1271,7 +1271,9 @@ const roadsOf = (list: unknown): BuiltObjects['roads'] => list as BuiltObjects['
 describe('a road on ground that cannot hold one', () => {
   it('is tried on every ground there is', () => {
     // a ground added to the game is one more for the tests below to try, not one they miss
-    expect([...ALL].sort()).toEqual(TERRAIN_NAMES.map((_, t) => t));
+    // but glacier ice, which no save holds anything on: nothing can be built there (#358)
+    const grounds = TERRAIN_NAMES.map((_, t) => t).filter((t) => t !== Terrain.Ice);
+    expect([...ALL].sort()).toEqual(grounds);
     expect(NO_LAND.every((t) => ALL.includes(t as (typeof ALL)[number]))).toBe(true);
   });
 

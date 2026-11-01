@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { generateMap, DEFAULT_MAP_PARAMS, type MapGenParams } from './mapgen';
 import { tileLevels } from './elevation';
 import { groundAllowsAt, groundAllowsOn, type GroundNeed } from './slope';
-import { Terrain, startRegion, type GameMap } from './tiles';
+import { Biome, Terrain, startRegion, type GameMap } from './tiles';
 import { buildRelief, groundAllows } from '../render/terrainRelief';
 import type { LandscapeMap } from '../render/landscapeModel';
 import { Rng } from '../engine/rng';
@@ -429,6 +429,9 @@ describe('mountains sit inside rock', () => {
               ny = y + dy;
             if (nx < 0 || ny < 0 || nx >= m.w || ny >= m.h) continue;
             if (stone(m.terrain[ny * m.w + nx])) continue;
+            // a glacier's ice and its melt are laid over the mountain once it has risen (glaciers.ts)
+            if (m.terrain[ny * m.w + nx] === Terrain.Ice) continue;
+            if (m.biome[ny * m.w + nx] === Biome.River) continue;
             if (Math.floor(nx / rs) === rx && Math.floor(ny / rs) === ry) continue;
             bad.push(`${x},${y} beside ${nx},${ny}`);
           }

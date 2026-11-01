@@ -143,6 +143,10 @@ export interface Drainage {
   exits: Exit[];
   /** whether the start chunk's water patch was laid as a lake */
   pond: boolean;
+  /** the tile each tile drains into; -1 where it leaves the core or is the sea, -2 outside it */
+  down: Int32Array;
+  /** the rain each tile gathered */
+  acc: Float32Array;
 }
 
 /** A core tile on its edge whose water leaves the core across it. */
@@ -571,7 +575,7 @@ export function drain(p: DrainInput): Drainage {
     }
   }
   exits.sort((a, b) => a.tile - b.tile);
-  return { kind, surface, flow, dir, exits, pond };
+  return { kind, surface, flow, dir, exits, pond, down, acc };
 }
 
 /** The Dir of the side a tile `delta` away (along a row of `w`) lies on. */
