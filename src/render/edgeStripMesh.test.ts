@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  OVER_MAP_ALPHA,
   blockOfTile,
   cornerLevel,
   meshBuffers,
@@ -10,6 +11,7 @@ import {
 } from './edgeStripMesh';
 import { EDGE_STRIP_TILES, frameIndex, inEdgeStrip, type EdgeStrip } from '../world/edgeStrip';
 import { Terrain } from '../world/tiles';
+import { worldToTile } from '../engine/iso';
 
 const W = EDGE_STRIP_TILES;
 
@@ -197,6 +199,97 @@ describe('the lines of the strip', () => {
   });
 });
 
+describe('the layer before the map, over the map', () => {
+  /** A map of 8 x 8 with a ridge of `level` along column x = 9, before its lower right edge. */
+  const ridge = (level: number) =>
+    stripOf(8, 8, (x) => ({ level: x === 9 || x === 10 ? level : 0 }));
+  const front = (strip: EdgeStrip, regionOf: typeof quarters = oneRegion) =>
+    stripBlocks(strip, regionOf)
+      .filter((b) => b.front)
+      .flatMap((b) => b.tiles);
+  /** Whether a point on screen lies on the map's ground at level 0, as a map of 8 x 8 has it. */
+  const onMap = (x: number, y: number) => {
+    const t = worldToTile(x, y);
+    return t.x > -0.5 && t.y > -0.5 && t.x < 7.5 && t.y < 7.5;
+  };
+  const middleOf = (shape: readonly (readonly [number, number])[]) => [
+    shape.reduce((n, p) => n + p[0], 0) / shape.length,
+    shape.reduce((n, p) => n + p[1], 0) / shape.length,
+  ];
+  const areaOf = (shape: readonly (readonly [number, number])[]) =>
+    Math.abs(
+      shape.reduce((n, p, i) => {
+        const q = shape[(i + 1) % shape.length];
+        return n + p[0] * q[1] - q[0] * p[1];
+      }, 0),
+    ) / 2;
+
+  it('fills nothing over the map, and all that lies past its edge', () => {
+    const tiles = front(ridge(8));
+    const cut = tiles.filter((t) => t.surface[0] !== t.corners);
+    expect(cut.length).toBeGreaterThan(0);
+    for (const t of tiles)
+      for (const shape of t.surface) {
+        const [x, y] = middleOf(shape);
+        expect(onMap(x, y), `tile ${t.x}, ${t.y}`).toBe(false);
+      }
+    // what the cut takes is what lies on the map: a tile wholly on it keeps nothing
+    expect(cut.some((t) => t.surface.length === 0)).toBe(true);
+  });
+
+  it('keeps a tile whole where it lies past the edge', () => {
+    for (const t of front(stripOf(8, 8))) expect(t.surface).toEqual([t.corners]);
+    // the near slope of the ridge comes down past the edge, whole
+    const near = front(ridge(2)).find((t) => t.x === 11 && t.y === 3)!;
+    expect(near.surface).toEqual([near.corners]);
+  });
+
+  it('cuts a tile along the edge and leaves its size as it was past it', () => {
+    const t = front(ridge(2)).find((t) => t.x === 9 && t.y === 3)!;
+    const [top, right, bottom, left] = t.corners;
+    const whole = areaOf([top, bottom, left]) + areaOf([top, right, bottom]);
+    const kept = t.surface.reduce((n, s) => n + areaOf(s), 0);
+    expect(kept).toBeGreaterThan(0);
+    expect(kept).toBeLessThanOrEqual(whole);
+  });
+
+  it('leaves the layer behind the map as it is', () => {
+    const back = stripBlocks(ridge(8), oneRegion)
+      .filter((b) => !b.front)
+      .flatMap((b) => b.tiles);
+    for (const t of back) {
+      expect(t.surface).toEqual([t.corners]);
+      expect(t.over).toEqual([]);
+    }
+  });
+
+  it('parts its lines at the edge: those over the map from those past it', () => {
+    const tiles = front(ridge(8));
+    const stretches = (lines: number[]) =>
+      Array.from({ length: lines.length / 4 }, (_, i) => lines.slice(i * 4, i * 4 + 4));
+    const over = tiles.flatMap((t) => stretches(t.over));
+    expect(over.length).toBeGreaterThan(0);
+    for (const [x0, y0, x1, y1] of over) expect(onMap((x0 + x1) / 2, (y0 + y1) / 2)).toBe(true);
+    for (const [x0, y0, x1, y1] of tiles.flatMap((t) => stretches(t.lines)))
+      expect(onMap((x0 + x1) / 2, (y0 + y1) / 2)).toBe(false);
+  });
+
+  it('hides what lies behind a block before it over the map, where no fill does it', () => {
+    // a ridge before the lower right edge, and a peak on it in the next region, in front on screen
+    const ridgeOnly = stripOf(8, 8, (x) => ({ level: x >= 8 ? 6 : 0 }));
+    const peak = stripOf(8, 8, (x, y) => ({ level: x < 8 ? 0 : y >= 5 ? 16 : 6 }));
+    const tile = (s: EdgeStrip) => front(s, quarters).find((t) => t.x === 8 && t.y === 3)!;
+    expect(tile(peak).over.length).toBeLessThan(tile(ridgeOnly).over.length);
+    // past the edge the block of the peak has fills of its own, and may not show at all
+    expect(tile(peak).lines).toEqual(tile(ridgeOnly).lines);
+  });
+
+  it('draws no line over the map brighter than one past the edge', () => {
+    expect(OVER_MAP_ALPHA).toBeLessThanOrEqual(1);
+    expect(OVER_MAP_ALPHA).toBeGreaterThan(0);
+  });
+});
+
 describe('the flat form of a block', () => {
   const strip = () =>
     stripOf(8, 8, (x, y) =>
@@ -208,12 +301,16 @@ describe('the flat form of a block', () => {
     for (const b of blocks()) {
       const m = stripMesh(b);
       const walls = b.tiles.reduce((n, t) => n + (t.wallX ? 1 : 0) + (t.wallY ? 1 : 0), 0);
-      expect(m.colors).toHaveLength(b.tiles.length + walls);
-      expect(m.quads).toHaveLength(m.colors.length * 8);
+      const surfaces = b.tiles.reduce((n, t) => n + t.surface.length, 0);
+      expect(m.colors).toHaveLength(surfaces + walls);
+      expect(m.sizes).toHaveLength(m.colors.length);
+      expect(m.points).toHaveLength(m.sizes.reduce((n, s) => n + s * 2, 0));
       expect([m.region, m.front]).toEqual([b.region, b.front]);
       // the last shape is the surface of the block's last tile, top corner first
-      const [top, right, bottom, left] = b.tiles.at(-1)!.corners;
-      expect(m.quads.subarray(-8)).toEqual(
+      const last = b.tiles.at(-1)!;
+      if (last.surface[0] !== last.corners) continue;
+      const [top, right, bottom, left] = last.corners;
+      expect(m.points.subarray(-8)).toEqual(
         Float32Array.from([...top, ...right, ...bottom, ...left]),
       );
     }
@@ -235,20 +332,21 @@ describe('the flat form of a block', () => {
       const m = stripMesh(b);
       let from = 0,
         r = 0;
-      for (const water of [false, true])
-        for (let past = 1; past <= W; past++) {
-          const want = b.tiles
-            .filter((t) => t.water === water && t.past === past)
-            .flatMap((t) => t.lines);
-          if (!want.length) continue;
-          const to = from + want.length;
-          expect(m.runs[r]).toBe(to);
-          expect(m.runs[r + 1]).toBe(water ? 0x6fb4e6 : 0xffffff);
-          expect(m.runs[r + 2]).toBeCloseTo(0.5 * stripFade(past));
-          expect(m.lines.subarray(from, to)).toEqual(Float32Array.from(want));
-          from = to;
-          r += 3;
-        }
+      for (const over of [false, true])
+        for (const water of [false, true])
+          for (let past = 1; past <= W; past++) {
+            const want = b.tiles
+              .filter((t) => t.water === water && t.past === past)
+              .flatMap((t) => (over ? t.over : t.lines));
+            if (!want.length) continue;
+            const to = from + want.length;
+            expect(m.runs[r]).toBe(to);
+            expect(m.runs[r + 1]).toBe(water ? 0x6fb4e6 : 0xffffff);
+            expect(m.runs[r + 2]).toBeCloseTo(0.5 * stripFade(past) * (over ? OVER_MAP_ALPHA : 1));
+            expect(m.lines.subarray(from, to)).toEqual(Float32Array.from(want));
+            from = to;
+            r += 3;
+          }
       expect(m.lines).toHaveLength(from);
       expect(m.runs).toHaveLength(r);
     }
@@ -256,13 +354,13 @@ describe('the flat form of a block', () => {
 
   it('crosses to another thread whole, its buffers handed over', () => {
     const meshes = stripMeshes(strip(), quarters);
-    const want = meshes.map((m) => ({ ...m, quads: m.quads.slice(), lines: m.lines.slice() }));
+    const want = meshes.map((m) => ({ ...m, points: m.points.slice(), lines: m.lines.slice() }));
     const buffers = meshBuffers(meshes);
-    expect(buffers).toHaveLength(meshes.length * 4);
+    expect(buffers).toHaveLength(meshes.length * 5);
     const moved = structuredClone(meshes, { transfer: buffers });
     expect(moved.map((m) => m.region)).toEqual(want.map((m) => m.region));
-    expect(moved[0].quads).toEqual(want[0].quads);
+    expect(moved[0].points).toEqual(want[0].points);
     expect(moved[0].lines).toEqual(want[0].lines);
-    expect(meshes[0].quads.length).toBe(0);
+    expect(meshes[0].points.length).toBe(0);
   });
 });

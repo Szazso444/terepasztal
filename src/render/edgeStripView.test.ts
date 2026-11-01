@@ -217,11 +217,11 @@ describe('the worker itself', () => {
     expect(answer.some((m) => m.front)).toBe(true);
     expect(answer.some((m) => !m.front)).toBe(true);
     for (const m of answer) {
-      expect(m.quads.length).toBeGreaterThan(0);
-      expect(Number.isFinite(m.quads[0])).toBe(true);
+      expect(m.points.length).toBeGreaterThan(0);
+      expect(Number.isFinite(m.points[0])).toBe(true);
     }
-    expect(posted[0].options!.transfer).toHaveLength(answer.length * 4);
-    expect(posted[0].options!.transfer).toContain(answer[0].quads.buffer);
+    expect(posted[0].options!.transfer).toHaveLength(answer.length * 5);
+    expect(posted[0].options!.transfer).toContain(answer[0].points.buffer);
     expect(errors).not.toHaveBeenCalled();
   }, 30_000);
 
@@ -248,7 +248,7 @@ describe('the worker itself', () => {
     vi.stubGlobal('Worker', Bridged);
     const answer = await buildEdgeStrip(request(), GRID);
     expect(answer).not.toBeNull();
-    expect(answer![0].quads).toBeInstanceOf(Float32Array);
+    expect(answer![0].points).toBeInstanceOf(Float32Array);
   }, 30_000);
 });
 

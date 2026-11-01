@@ -11,7 +11,8 @@ import { workerErrorText } from './landscape';
  *
  * It lies in two layers: what lies behind the map (past its two upper edges) under the ground, and
  * what lies before it (past its two lower edges) over the map, so a mountain in front of the map
- * stands in front of it as it will when the map grows. A block of tiles shows while the edge region
+ * stands in front of it as it will when the map grows, solid past the map's edge and in lines alone
+ * over the map's tiles, which stay in sight. A block of tiles shows while the edge region
  * beside it does (`EdgeStripView.refresh`): the strip goes on from the ground in view, never from
  * the dark of a region still hidden. A block is drawn when it first has to show, a few a frame, and
  * fades in.
@@ -30,9 +31,12 @@ export const STRIP_FRAME_BUDGET_MS = 4;
  * of them beforehand rather than painted over.
  */
 function drawMesh(g: Graphics, mesh: StripMesh) {
-  const { quads, colors, lines, runs } = mesh;
-  for (let i = 0; i < colors.length; i++)
-    g.poly(Array.from(quads.subarray(i * 8, (i + 1) * 8))).fill(colors[i]);
+  const { points, sizes, colors, lines, runs } = mesh;
+  for (let i = 0, from = 0; i < colors.length; i++) {
+    const to = from + sizes[i] * 2;
+    g.poly(Array.from(points.subarray(from, to))).fill(colors[i]);
+    from = to;
+  }
   let at = 0;
   for (let r = 0; r < runs.length; r += 3) {
     for (; at < runs[r]; at += 4)

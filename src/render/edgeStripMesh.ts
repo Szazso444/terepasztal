@@ -14,6 +14,11 @@ import { DEFAULT_RELIEF } from './terrainRelief';
  * both show, and when that block does not show, nothing of it may hide anything. The page gets
  * `StripMesh`es, flat arrays that cross from the worker without a copy, and only draws them
  * (edgeStripView.ts).
+ *
+ * The layer before the map rises over the map's own ground on screen, and every map tile has to stay
+ * in sight. So its fills are cut along the map's outline at level 0 and only what lies past it stays
+ * solid; over the map the lines alone go on. No fill is left there to paint over the blocks behind,
+ * so what shows over the map is worked out over the whole layer, not block by block.
  */
 
 /** The fill of ground, near the map: a shade over the page's own #0a0a0c, so a shape reads on it. */
@@ -26,15 +31,21 @@ const GROUND_LINE = 0xffffff;
 const WATER_LINE = 0x6fb4e6;
 /** The alpha of a tile's sides right beside the map. */
 const LINE_ALPHA = 0.5;
+/** Of that, what a line keeps over the map: its ground is lighter than the dark past the edge. */
+export const OVER_MAP_ALPHA = 0.8;
 /** World pixels per level, as the painted ground has it. */
 const STEP = DEFAULT_RELIEF.step;
 /** Width in world pixels of the columns hidden lines are worked out in: a quarter of a tile side. */
 const COLUMN = 8;
 /** How far under what stands in front (world pixels) a line still shows: its own tile's edge. */
 const SLACK = 0.5;
+/** The least a piece of a cut fill is worth drawing, in square pixels. */
+const MIN_PIECE = 0.25;
 
 /** A point on screen, in world pixels. */
 type Point = readonly [number, number];
+/** A shape on screen, its corners in order. */
+type Shape = readonly Point[];
 
 /** One tile of the strip, ready to draw. */
 export interface StripTile {
@@ -50,8 +61,12 @@ export interface StripTile {
   /** whether the side towards +x, and the one towards +y, faces the map: a wall stands on it */
   wallX: boolean;
   wallY: boolean;
-  /** the lines to draw for it, each as x0, y0, x1, y1: what shows of its sides */
+  /** the lines to draw for it, each as x0, y0, x1, y1: what shows of its sides past the map */
   lines: number[];
+  /** those of its lines that lie over the map's ground on screen (the layer before the map) */
+  over: number[];
+  /** what stays filled of its surface: all of it, but for what lies over the map's ground */
+  surface: Shape[];
 }
 
 /**
@@ -134,6 +149,123 @@ class Horizon {
   }
 }
 
+/** Which side of the line `a` to `b` a point lies: above 0 on the side the map's outline holds. */
+function sideOf(a: Point, b: Point, p: Point) {
+  return (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]);
+}
+
+/** The map's ground on screen at level 0: its corners, clockwise. */
+function mapOutline(w: number, h: number): Point[] {
+  return [
+    [0, 0],
+    [w, 0],
+    [w, h],
+    [0, h],
+  ].map(([x, y]) => {
+    const p = tileToWorld(x - 0.5, y - 0.5);
+    return [p.x, p.y];
+  });
+}
+
+/** What lies of `shape`, which is convex, on the side of `a` to `b` that `keep` (1 or -1) names. */
+function clipped(shape: Shape, a: Point, b: Point, keep: number): Shape {
+  const out: Point[] = [];
+  shape.forEach((p, i) => {
+    const q = shape[(i + 1) % shape.length],
+      sp = sideOf(a, b, p) * keep,
+      sq = sideOf(a, b, q) * keep;
+    if (sp >= 0) out.push(p);
+    if ((sp > 0 && sq < 0) || (sp < 0 && sq > 0)) {
+      const u = sp / (sp - sq);
+      out.push([p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u]);
+    }
+  });
+  return out;
+}
+
+/** The size of a shape on screen, in square pixels. */
+function areaOf(shape: Shape) {
+  let twice = 0;
+  shape.forEach((p, i) => {
+    const q = shape[(i + 1) % shape.length];
+    twice += p[0] * q[1] - q[0] * p[1];
+  });
+  return Math.abs(twice) / 2;
+}
+
+/** What is left of `shape`, which is convex, past the map's outline, in convex pieces. */
+function pastOutline(shape: Shape, outline: readonly Point[]): Shape[] {
+  const out: Shape[] = [];
+  let rest = shape;
+  outline.forEach((a, i) => {
+    const b = outline[(i + 1) % outline.length];
+    if (rest.length < 3) return;
+    const past = clipped(rest, a, b, -1);
+    if (past.length >= 3 && areaOf(past) >= MIN_PIECE) out.push(past);
+    rest = clipped(rest, a, b, 1);
+  });
+  return out;
+}
+
+/**
+ * What stays solid of the surface of a tile before the map. On screen a tile's left and right
+ * corners stand a tile apart, and its top and bottom both between them, whatever the heights: the
+ * line from top to bottom always cuts it in two triangles, which a cut can follow.
+ */
+function solidSurface(corners: StripTile['corners'], outline: readonly Point[]): Shape[] {
+  const past = outline.some((a, i) => {
+    const b = outline[(i + 1) % outline.length];
+    return corners.every((p) => sideOf(a, b, p) <= 0);
+  });
+  if (past) return [corners];
+  const [top, right, bottom, left] = corners;
+  return [
+    pastOutline([top, bottom, left], outline),
+    pastOutline([top, right, bottom], outline),
+  ].flat();
+}
+
+/** The stretch of the line `a` to `b` inside `outline`, as parts of it from 0 to 1; null if none. */
+function insideStretch(a: Point, b: Point, outline: readonly Point[]): [number, number] | null {
+  let from = 0,
+    to = 1;
+  outline.forEach((p, i) => {
+    const q = outline[(i + 1) % outline.length],
+      sa = sideOf(p, q, a),
+      sb = sideOf(p, q, b);
+    if (sa <= 0 && sb <= 0) to = -1;
+    else if (sa < 0) from = Math.max(from, sa / (sa - sb));
+    else if (sb < 0) to = Math.min(to, sa / (sa - sb));
+  });
+  return from < to ? [from, to] : null;
+}
+
+/**
+ * Sorts `lines` by the outline: the stretches inside it go to `inside` when given, those outside to
+ * `outside` when given.
+ */
+function sortLines(
+  lines: readonly number[],
+  outline: readonly Point[],
+  inside: number[] | null,
+  outside: number[] | null,
+) {
+  for (let i = 0; i < lines.length; i += 4) {
+    const a: Point = [lines[i], lines[i + 1]],
+      b: Point = [lines[i + 2], lines[i + 3]],
+      at = (u: number) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u],
+      stretch = insideStretch(a, b, outline);
+    if (!stretch) {
+      outside?.push(...a, ...b);
+      continue;
+    }
+    const [from, to] = stretch;
+    inside?.push(...at(from), ...at(to));
+    if (from > 0) outside?.push(...a, ...at(from));
+    if (to < 1) outside?.push(...at(to), ...b);
+  }
+}
+
 /** Works out what shows of the sides of `tiles`, one block's, in order from the back to the front. */
 function hideLines(horizon: Horizon, tiles: StripTile[]) {
   horizon.clear();
@@ -188,26 +320,30 @@ export function stripBlocks(
   const { w, h } = strip;
   const W = EDGE_STRIP_TILES;
   const inMap = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h;
+  const outline = mapOutline(w, h);
   const tiles: StripTile[] = [];
   for (let y = -W; y < h + W; y++)
     for (let x = -W; x < w + W; x++) {
       if (!inEdgeStrip(x, y, w, h)) continue;
       const front = x >= 0 && y >= 0;
+      const corners: StripTile['corners'] = [
+        cornerPoint(strip, x, y),
+        cornerPoint(strip, x + 1, y),
+        cornerPoint(strip, x + 1, y + 1),
+        cornerPoint(strip, x, y + 1),
+      ];
       tiles.push({
         x,
         y,
         water: edgeTile(strip, x, y).terrain === Terrain.Water,
         past: Math.max(-x, -y, x - (w - 1), y - (h - 1)),
         front,
-        corners: [
-          cornerPoint(strip, x, y),
-          cornerPoint(strip, x + 1, y),
-          cornerPoint(strip, x + 1, y + 1),
-          cornerPoint(strip, x, y + 1),
-        ],
+        corners,
         wallX: !front && inMap(x + 1, y),
         wallY: !front && inMap(x, y + 1),
         lines: [],
+        over: [],
+        surface: front ? solidSurface(corners, outline) : [corners],
       });
     }
   tiles.sort((a, b) => a.x + a.y - (b.x + b.y));
@@ -221,6 +357,15 @@ export function stripBlocks(
   }
   const horizon = new Horizon(strip);
   for (const block of blocks.values()) hideLines(horizon, block.tiles);
+  const layer = tiles.filter((t) => t.front);
+  const whole = layer.map((t) => ({ ...t, lines: [] }));
+  hideLines(horizon, whole);
+  layer.forEach((t, i) => {
+    const past: number[] = [];
+    sortLines(t.lines, outline, null, past);
+    sortLines(whole[i].lines, outline, t.over, null);
+    t.lines = past;
+  });
   // the tiles are in order, so each block is, and the first of a block says where it stands
   const depth = (b: StripBlock) => b.tiles[0].x + b.tiles[0].y;
   return [...blocks.values()].sort((a, b) => depth(a) - depth(b));
@@ -239,8 +384,10 @@ export const stripFade = (past: number) => 1 - (past - 1) / EDGE_STRIP_TILES;
 export interface StripMesh {
   region: number;
   front: boolean;
-  /** the shapes to fill, each four corners, eight numbers: walls and tiles, back to front */
-  quads: Float32Array;
+  /** the corners of the shapes to fill, x then y of each: walls and tiles, back to front */
+  points: Float32Array;
+  /** how many corners each shape has */
+  sizes: Uint8Array;
   /** the colour of each shape */
   colors: Uint32Array;
   /** the lines, each as x0, y0, x1, y1 */
@@ -250,19 +397,17 @@ export interface StripMesh {
 }
 
 /** The shapes of a tile: its walls down to the ground, whose foot the map covers, and its surface. */
-function tileShapes(t: StripTile): { color: number; quad: number[] }[] {
+function tileShapes(t: StripTile): { color: number; shape: Shape }[] {
   const color = faded(t.water ? WATER_FILL : GROUND_FILL, stripFade(t.past));
-  const [top, right, bottom, left] = t.corners;
+  const [, right, bottom, left] = t.corners;
   const ground = (dx: number, dy: number): Point => {
     const p = tileToWorld(t.x + dx, t.y + dy);
     return [p.x, p.y];
   };
-  const out: { color: number; quad: number[] }[] = [];
-  if (t.wallX)
-    out.push({ color, quad: [...right, ...bottom, ...ground(0.5, 0.5), ...ground(0.5, -0.5)] });
-  if (t.wallY)
-    out.push({ color, quad: [...left, ...bottom, ...ground(0.5, 0.5), ...ground(-0.5, 0.5)] });
-  out.push({ color, quad: [...top, ...right, ...bottom, ...left] });
+  const out: { color: number; shape: Shape }[] = [];
+  if (t.wallX) out.push({ color, shape: [right, bottom, ground(0.5, 0.5), ground(0.5, -0.5)] });
+  if (t.wallY) out.push({ color, shape: [left, bottom, ground(0.5, 0.5), ground(-0.5, 0.5)] });
+  for (const shape of t.surface) out.push({ color, shape });
   return out;
 }
 
@@ -270,14 +415,20 @@ function tileShapes(t: StripTile): { color: number; quad: number[] }[] {
 function lineRuns(tiles: StripTile[]) {
   const lines: number[] = [];
   const runs: number[] = [];
-  for (const water of [false, true])
-    for (let past = 1; past <= EDGE_STRIP_TILES; past++) {
-      const from = lines.length;
-      for (const t of tiles)
-        if (t.past === past && t.water === water) for (const v of t.lines) lines.push(v);
-      if (lines.length > from)
-        runs.push(lines.length, water ? WATER_LINE : GROUND_LINE, LINE_ALPHA * stripFade(past));
-    }
+  for (const over of [false, true])
+    for (const water of [false, true])
+      for (let past = 1; past <= EDGE_STRIP_TILES; past++) {
+        const from = lines.length;
+        for (const t of tiles)
+          if (t.past === past && t.water === water)
+            for (const v of over ? t.over : t.lines) lines.push(v);
+        if (lines.length > from)
+          runs.push(
+            lines.length,
+            water ? WATER_LINE : GROUND_LINE,
+            LINE_ALPHA * stripFade(past) * (over ? OVER_MAP_ALPHA : 1),
+          );
+      }
   return { lines, runs };
 }
 
@@ -288,7 +439,8 @@ export function stripMesh({ region, front, tiles }: StripBlock): StripMesh {
   return {
     region,
     front,
-    quads: Float32Array.from(shapes.flatMap((s) => s.quad)),
+    points: Float32Array.from(shapes.flatMap((s) => s.shape.flat())),
+    sizes: Uint8Array.from(shapes, (s) => s.shape.length),
     colors: Uint32Array.from(shapes, (s) => s.color),
     lines: Float32Array.from(lines),
     runs: Float32Array.from(runs),
@@ -306,6 +458,6 @@ export function stripMeshes(
 /** The buffers of `meshes`, to hand over rather than copy. */
 export function meshBuffers(meshes: StripMesh[]): ArrayBuffer[] {
   return meshes.flatMap((m) =>
-    [m.quads, m.colors, m.lines, m.runs].map((a) => a.buffer as ArrayBuffer),
+    [m.points, m.sizes, m.colors, m.lines, m.runs].map((a) => a.buffer as ArrayBuffer),
   );
 }
