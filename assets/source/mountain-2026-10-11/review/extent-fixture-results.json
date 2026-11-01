@@ -1,0 +1,14 @@
+{
+  "passed": 15,
+  "properties": [
+    "all four directions",
+    "requested and returned scales",
+    "opaque corner exclusion",
+    "wrong stone radius rejected",
+    "lower diamond spill rejected",
+    "non-square rejected",
+    "upper diamond spill rejected",
+    "box enlargement rejected",
+    "centre shift rejected"
+  ]
+}

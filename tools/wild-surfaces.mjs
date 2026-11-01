@@ -16,8 +16,11 @@ import { PNG } from 'pngjs';
 import { resample } from './illustrated-sprites.mjs';
 
 const WATER = 'assets/source/water-2026-10-11';
+const MOUNTAIN = 'assets/source/mountain-2026-10-11';
 /** Water and foam stay under this (fall-geometry.json, `whiteMaximum`). */
 const FOAM_CAP = [0xe0, 0xdd, 0xd2];
+/** Snow and ice stay under this: darker than the cursor and selection colours. */
+const SNOW_CAP = [0xdc, 0xe1, 0xe4];
 
 const CELLS = [
   { name: 'river', source: `${WATER}/river-water.png`, cap: FOAM_CAP },
@@ -25,6 +28,13 @@ const CELLS = [
   { name: 'beach', source: `${WATER}/beach-sand.png`, cap: FOAM_CAP },
   { name: 'fall-lit', source: `${WATER}/fall-sheet-lit.png`, cap: FOAM_CAP },
   { name: 'fall-shade', source: `${WATER}/fall-sheet-shade.png`, cap: FOAM_CAP },
+  { name: 'snow', source: `${MOUNTAIN}/snow.png`, cap: SNOW_CAP },
+  { name: 'high-rock', source: `${MOUNTAIN}/mountain-rock-high.png`, cap: SNOW_CAP },
+  { name: 'alpine', source: `${MOUNTAIN}/alpine-ground.png`, cap: SNOW_CAP },
+  { name: 'ice', source: `${MOUNTAIN}/glacier-ice.png`, cap: SNOW_CAP },
+  { name: 'moraine', source: `${MOUNTAIN}/moraine.png`, cap: SNOW_CAP },
+  { name: 'cliff-lit', source: `${MOUNTAIN}/ice-cliff-lit.png`, cap: SNOW_CAP },
+  { name: 'cliff-shade', source: `${MOUNTAIN}/ice-cliff-shade.png`, cap: SNOW_CAP },
 ];
 const CELL = 512;
 const KNEE = 14;
