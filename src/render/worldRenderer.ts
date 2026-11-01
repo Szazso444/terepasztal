@@ -443,6 +443,7 @@ export class WorldRenderer {
       lift: (x, y) => -this.groundAt(x, y).dz,
       rail: (x, y) => (inBounds(map, x, y) ? this.trackSprites.get(idx(map, x, y)) : undefined),
       railMesh: (x, y) => (inBounds(map, x, y) ? this.trackMeshes.get(idx(map, x, y)) : undefined),
+      bare: (x, y) => !inBounds(map, x, y) || !this.trackSprites.has(idx(map, x, y)),
     });
     if (typeof document !== 'undefined') this.portals.art = canvasPortalArt(atlas);
     // the cars, and what follows them, find the portals by the layer they stand in
@@ -2539,6 +2540,10 @@ export class WorldRenderer {
     const p = tileToWorld(x, y);
     return { x: p.x, y: p.y + this.elevationOf(x, y) };
   }
+  /** World pixel position of the Drill's floor under a tile centre: what a room stands on. */
+  floorPoint(x: number, y: number) {
+    return tileToWorld(x, y);
+  }
   /** The floor structure `id` on (x, y) stands on inside the mountain; undefined if it is not. */
   private floorUnder(id: string, x: number, y: number) {
     return ON_THE_RAIL.test(id)
@@ -2638,6 +2643,10 @@ export class WorldRenderer {
   }
   tileAtSurface(x: number, y: number) {
     return this.landscape.failed ? worldToTileInt(x, y) : this.landscape.tileAtWorld(x, y);
+  }
+  /** The tile of the Drill's floor under a world point: the glass shows the rooms, not the hill. */
+  tileAtFloor(x: number, y: number) {
+    return worldToTileInt(x, y);
   }
 }
 

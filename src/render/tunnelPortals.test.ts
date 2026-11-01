@@ -38,6 +38,7 @@ function stage(lift: (x: number, y: number) => number = () => 0, size = 40) {
     layer = new Container(),
     rails = new Map<string, Sprite>(),
     view = { glass: false },
+    bare = new Set<string>(),
     host: PortalHost = {
       layer,
       under: () => under,
@@ -46,6 +47,7 @@ function stage(lift: (x: number, y: number) => number = () => 0, size = 40) {
       lift,
       rail: (x, y) => rails.get(`${x},${y}`),
       railMesh: () => undefined,
+      bare: (x, y) => bare.has(`${x},${y}`),
     },
     portals = new TunnelPortals(host);
   portals.art = art;
@@ -68,7 +70,21 @@ function stage(lift: (x: number, y: number) => number = () => 0, size = 40) {
       portals.dress(s, x, y);
       return s;
     };
-  return { under, layer, rails, view, host, portals, dig, portal, rail, sprites, picture, car };
+  return {
+    under,
+    layer,
+    rails,
+    view,
+    bare,
+    host,
+    portals,
+    dig,
+    portal,
+    rail,
+    sprites,
+    picture,
+    car,
+  };
 }
 /** A line along y = 10: dug from x = 3 to 10, a portal on E at the end. */
 function east() {
@@ -376,6 +392,24 @@ describe('what a car shows', () => {
       expect(t.car(x, 10).zIndex).toBeGreaterThan(building);
     }
     expect(t.car(12.4, 10).zIndex).toBeGreaterThan(semaphore);
+  });
+  it('puts no car out of sight when the track under it goes', () => {
+    const t = east();
+    const before = [t.car(5, 10), t.car(8, 10)];
+    expect(before[0].visible).toBe(false);
+    expect(before[1].mask).toBeTruthy();
+    t.bare.add('5,10').add('8,10');
+    const after = [t.car(5, 10), t.car(8, 10)];
+    for (const s of after) {
+      expect(s.visible).toBe(true);
+      expect(s.mask).toBeFalsy();
+    }
+    expect(t.portals.inside(5, 10)).toBe(false);
+  });
+  it('a car on a tile back-filled stands in plain sight too', () => {
+    const t = east();
+    t.under.fill(5, 10);
+    expect(t.car(5, 10).visible).toBe(true);
   });
   it('inside is true on a dug tile, and never in the glass', () => {
     const t = east();

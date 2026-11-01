@@ -103,6 +103,8 @@ export interface PortalHost {
   /** The picture of the rail on (x, y), and the mesh that stands for it on a climbing line. */
   rail(x: number, y: number): Sprite | undefined;
   railMesh(x: number, y: number): Mesh | undefined;
+  /** No rail lies on (x, y): a car left there stands where a car without track stands. */
+  bare(x: number, y: number): boolean;
 }
 
 /** How the ground stands round a portal, px over its rail: `inside` tiles behind its plane. */
@@ -476,10 +478,15 @@ export class TunnelPortals {
     for (const { rail, mask } of this.cutRails) if (!rail.destroyed) rail.mask = on ? null : mask;
   }
 
-  /** Is (x, y) under a mountain, in the view where nothing shows there? */
+  /**
+   * Is (x, y) under a mountain, in the view where nothing shows there? A dug tile whose track was
+   * taken away has no car in it: a train left there stands in plain sight, as on the surface.
+   */
   inside(x: number, y: number) {
     if (this.host.glass()) return false;
-    return this.host.under().floorAt(Math.floor(x + 0.5), Math.floor(y + 0.5)) !== undefined;
+    const tx = Math.floor(x + 0.5),
+      ty = Math.floor(y + 0.5);
+    return this.host.under().floorAt(tx, ty) !== undefined && !this.host.bare(tx, ty);
   }
 
   /**
@@ -490,11 +497,16 @@ export class TunnelPortals {
    * end is behind the plane, and only with both behind it has nothing left outside.
    */
   dress(s: Container, x: number, y: number, half = 0, angle = 0) {
-    if (this.host.glass()) {
+    const tx = Math.floor(x + 0.5),
+      ty = Math.floor(y + 0.5);
+    if (
+      this.host.glass() ||
+      (this.host.under().floorAt(tx, ty) !== undefined && this.host.bare(tx, ty))
+    ) {
       if (s.mask) s.mask = null;
       return;
     }
-    const near = this.lanes.get(laneKey(Math.floor(x + 0.5), Math.floor(y + 0.5)));
+    const near = this.lanes.get(laneKey(tx, ty));
     if (!near || Math.hypot(near.x - x, near.y - y) >= REACH) {
       if (s.mask) s.mask = null;
       if (this.inside(x, y)) s.visible = false;
