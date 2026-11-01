@@ -234,7 +234,10 @@ export class Builder {
     return y * this.map.w + x;
   }
   stationAt(x: number, y: number): Station | undefined {
-    return this.stations.find((s) => s.covers(x, y));
+    // a plain loop: the train renderer asks for every sprite, every frame
+    const list = this.stations;
+    for (let i = 0; i < list.length; i++) if (list[i].covers(x, y)) return list[i];
+    return undefined;
   }
   depots() {
     return this.stations.filter((s) => s.def.depot);
@@ -375,18 +378,22 @@ export class Builder {
    */
   crewSites(): { x: number; y: number; crew: number }[] {
     const out: { x: number; y: number; crew: number }[] = [];
-    const add = (x: number, y: number, crew: number) => {
+    this.eachCrew((x, y, crew) => {
       if (crew > 0) out.push({ x, y, crew });
-    };
+    });
+    return out;
+  }
+  private eachCrew(add: (x: number, y: number, crew: number) => void) {
     for (const s of this.stations) add(s.x, s.y, s.crew);
     for (const d of this.decor.values()) add(d.x, d.y, decorDef(d.id).crew);
     for (const b of this.buildings.values()) if (!b.work) add(b.x, b.y, buildingDef(b.id).crew);
-    return out;
   }
   /** Crew of everything built, `crewSites` added up (trains add their own). */
   crewTotal() {
     let n = 0;
-    for (const c of this.crewSites()) n += c.crew;
+    this.eachCrew((_x, _y, crew) => {
+      if (crew > 0) n += crew;
+    });
     return n;
   }
   warehouseLevels() {

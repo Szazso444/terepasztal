@@ -1158,12 +1158,13 @@ export class Train {
   }
   /** Poses of every body segment and bogie, in car order (loco first). */
   vehiclePoses: VehiclePose[] = [];
-  private accessCache: { key: string; access: ConsistAccess; cls: TrainClass | null } | null = null;
+  private accessCache: { of: object; access: ConsistAccess; cls: TrainClass | null } | null = null;
   private consistInfo() {
-    const key = [...this.locos.map((l) => l.def.id), ...this.wagons.map((w) => w.def.id)].join(',');
-    if (!this.accessCache || this.accessCache.key !== key) {
+    // kept with the bodies: the same record means the same vehicles
+    const of = this.bodies();
+    if (this.accessCache?.of !== of) {
       const defs = [...this.locos.map((l) => l.def), ...this.wagons.map((w) => w.def)];
-      this.accessCache = { key, access: consistAccess(defs), cls: trainClassOf(defs) };
+      this.accessCache = { of, access: consistAccess(defs), cls: trainClassOf(defs) };
     }
     return this.accessCache;
   }
@@ -1232,23 +1233,56 @@ export class Train {
     }
     return out;
   }
-  /** Tile keys under the consist. */
-  occupancyKeys(w: number): number[] {
-    const out: number[] = [];
+  /** Tile keys under the consist. Shared until the train moves: read only. */
+  occupancyKeys(w: number): readonly number[] {
+    const trail = this.trail;
+    const n = trail.length;
+    const kept = this.occupiedKept;
+    if (
+      kept &&
+      kept.w === w &&
+      kept.trail === trail &&
+      kept.n === n &&
+      kept.last === trail[n - 1] &&
+      kept.length === this.length
+    )
+      return kept.keys;
+    const keys: number[] = [];
     for (const p of this.occupancyPoints()) {
       const k = Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5);
-      if (!out.includes(k)) out.push(k);
+      if (!keys.includes(k)) keys.push(k);
     }
-    return out;
+    this.occupiedKept = {
+      w,
+      trail,
+      n,
+      last: trail[n - 1],
+      length: this.length,
+      keys,
+    };
+    return keys;
   }
+  /** What the kept `occupancyKeys` were worked out from: several passes of a tick ask for them. */
+  private occupiedKept: {
+    w: number;
+    trail: TrailPoint[];
+    n: number;
+    last: TrailPoint | undefined;
+    length: number;
+    keys: number[];
+  } | null = null;
   // ------------------------------------------------------------ fuel
   /** Tanks are pooled per type over every unit (a standby unit's tank is filled and kept). */
   private sumBy(type: LocoType, f: (l: LocoSlot) => number) {
-    return this.locos.filter((l) => l.def.type === type).reduce((a, l) => a + f(l), 0);
+    let sum = 0;
+    for (const l of this.locos) if (l.def.type === type) sum += f(l);
+    return sum;
   }
   /** Only the pulling units burn. */
   private burnBy(type: LocoType, f: (l: LocoSlot) => number) {
-    return this.locos.filter((l) => l.def.type === type && l.engaged).reduce((a, l) => a + f(l), 0);
+    let sum = 0;
+    for (const l of this.locos) if (l.def.type === type && l.engaged) sum += f(l);
+    return sum;
   }
   get coalCap() {
     return (
