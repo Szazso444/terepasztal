@@ -29,6 +29,7 @@ import {
   type PropInstance,
   type PropKind,
   idx,
+  inBounds,
 } from '../world/tiles';
 import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
@@ -1482,6 +1483,8 @@ export class WorldRenderer {
   private texturedParts = new Map<number, { key: string; under: Container; near: Container }>();
   /** Tiles behind a raised deck, on which nothing that grows is drawn (`setRaisedDecks`). */
   private behindDecks = new Set<number>();
+  /** The top of each raised deck in world px up, by tile: what the pointer and ghosts stand on. */
+  private deckTops = new Map<number, number>();
   /**
    * The raised decks now, each with its top in world px up. Decks are drawn under what stands on
    * the map, so what grows behind one would stand on it: each clears the tiles behind it, as far
@@ -1491,6 +1494,7 @@ export class WorldRenderer {
     const { w, h } = this.map,
       was = this.behindDecks,
       now = new Set<number>();
+    this.deckTops = new Map(decks.map((d) => [idx(this.map, d.x, d.y), d.top]));
     for (const d of decks) {
       const reach = Math.ceil((d.top - this.bridgeGround(d.x, d.y)) / TILE_H);
       for (let a = 0; a <= reach; a++)
@@ -2420,11 +2424,27 @@ export class WorldRenderer {
 
   /** World pixel position of the top surface of a tile centre (for placing sprites). */
   surfacePoint(x: number, y: number) {
-    const p = tileToWorld(x, y);
-    return { x: p.x, y: p.y + this.elevationOf(x, y) };
+    const p = tileToWorld(x, y),
+      top = inBounds(this.map, x, y) ? this.deckTops?.get(idx(this.map, x, y)) : undefined;
+    return { x: p.x, y: p.y + (top === undefined ? this.elevationOf(x, y) : -top) };
   }
   tileAtSurface(x: number, y: number) {
-    return this.landscape.failed ? worldToTileInt(x, y) : this.landscape.tileAtWorld(x, y);
+    return (
+      this.raisedDeckAt(x, y) ??
+      (this.landscape.failed ? worldToTileInt(x, y) : this.landscape.tileAtWorld(x, y))
+    );
+  }
+  /** The raised deck drawn over a world point, the nearest to the camera where several are. */
+  private raisedDeckAt(wx: number, wy: number) {
+    const w = this.map.w;
+    let best: { x: number; y: number } | null = null;
+    for (const [k, top] of this.deckTops ?? []) {
+      const x = k % w,
+        y = Math.floor(k / w),
+        t = worldToTileInt(wx, wy + top);
+      if (t.x === x && t.y === y && (!best || x + y > best.x + best.y)) best = { x, y };
+    }
+    return best;
   }
 }
 
