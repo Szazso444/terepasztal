@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
  * `Commands` (`src/sim/commands.ts`): routing mode, signal direction, name, in-cab fitting, fuel
  * preference, stop list and money.
  */
-const COMMANDED = new Set(['mode', 'rot', 'name', 'inCab', 'fuelPreference', 'schedule', 'money']);
+const COMMANDED = new Set(['mode', 'rot', 'name', 'inCab', 'schedule', 'money']);
 /**
  * Calls that change the purse, a store or a stop list past the commands: spending, earning,
  * store moves, and a train's stops handed to the fleet as they are.
