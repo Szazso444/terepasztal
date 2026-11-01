@@ -21,6 +21,9 @@ const RAIN_WETS = 0.08;
 /** A ripple's life in seconds, and the rain it needs. */
 const RIPPLE_LIFE = 1.1;
 const RIPPLE_RAIN = 0.12;
+/** The most rings on the water at once, and a ring's picture in canvas px. */
+const MAX_RINGS = 300;
+const RING_PICTURE = 40;
 /** The puddle's picture: canvas px wide, and how many there are. */
 const PICTURE = 128;
 const VARIANTS = 5;
@@ -70,6 +73,27 @@ export function puddleAt(map: GameMap, x: number, y: number): PuddleSite | null 
     width: 14 + 22 * lot(x, y, 505),
     variant: Math.floor(lot(x, y, 506) * VARIANTS),
     phase: lot(x, y, 507),
+  };
+}
+
+/** How many rings the rain makes on the water at once, over a view of `area` square world px. */
+export const ringCount = (area: number) =>
+  Math.max(40, Math.min(MAX_RINGS, Math.round(7.5e-4 * area)));
+
+/**
+ * Ring `i` at time `t`: where in the view it starts, 0..1 each way, how far through its life it is,
+ * and how faint it is. Each ring comes back at a new place every time round.
+ */
+export function ringAt(i: number, t: number) {
+  const period = 0.9 + 0.6 * lot(i, 3, 501),
+    phase = t / period + lot(i, 4, 502),
+    turn = Math.floor(phase),
+    age = phase - turn;
+  return {
+    u: lot(i, turn, 503),
+    v: lot(i, turn, 504),
+    age,
+    alpha: (1 - age) * (1 - age) * (0.6 + 0.4 * lot(i, turn, 505)),
   };
 }
 
@@ -144,6 +168,28 @@ function rippleCanvas() {
   return c;
 }
 
+/** A thin pale ring, for the water. */
+function waterRingCanvas() {
+  const c = document.createElement('canvas');
+  c.width = RING_PICTURE;
+  c.height = RING_PICTURE / 2;
+  const g = c.getContext('2d')!;
+  g.strokeStyle = 'rgba(228,239,243,1)';
+  g.lineWidth = 3.4;
+  g.beginPath();
+  g.ellipse(
+    RING_PICTURE / 2,
+    RING_PICTURE / 4,
+    RING_PICTURE * 0.42,
+    RING_PICTURE * 0.2,
+    0,
+    0,
+    6.2832,
+  );
+  g.stroke();
+  return c;
+}
+
 const textureOf = (resource: HTMLCanvasElement) =>
   new Texture({
     source: new ImageSource({ resource, scaleMode: 'linear', autoGenerateMipmaps: true }),
@@ -174,6 +220,9 @@ export class Puddles {
   private pictures: Texture[] | null = null;
   private ring: Texture | null = null;
   private t = 0;
+  private readonly waterRings = new Container();
+  private readonly rings: Sprite[] = [];
+  private ringPicture: Texture | null = null;
 
   constructor(
     private readonly map: GameMap,
@@ -223,9 +272,49 @@ export class Puddles {
     return cell;
   }
 
-  /** The ground `dt` game seconds on under `rain` (0..1), the puddles in `view` (world px). */
-  update(dt: number, rain: number, view: View) {
+  /** Rings where the rain falls on water: each picks a spot in the view and shows if it is water. */
+  private ringTheWater(rain: number, view: View, zoom: number) {
+    const n = rain > RIPPLE_RAIN ? ringCount(view.w * view.h) : 0,
+      radius = 3.4 / Math.min(1, Math.sqrt(zoom));
+    if (n && !this.waterRings.parent) this.layer.addChild(this.waterRings);
+    this.waterRings.visible = n > 0;
+    for (let i = 0; i < n; i++) {
+      let s = this.rings[i];
+      if (!s) {
+        this.ringPicture ??= textureOf(waterRingCanvas());
+        s = new Sprite(this.ringPicture);
+        s.anchor.set(0.5);
+        this.waterRings.addChild(s);
+        this.rings[i] = s;
+      }
+      const r = ringAt(i, this.t),
+        x = view.x + r.u * view.w,
+        y = view.y + r.v * view.h,
+        tile = worldToTile(x, y),
+        tx = Math.round(tile.x),
+        ty = Math.round(tile.y),
+        water =
+          tx >= 0 &&
+          ty >= 0 &&
+          tx < this.map.w &&
+          ty < this.map.h &&
+          terrainAt(this.map, tx, ty) === Terrain.Water;
+      s.visible = water;
+      if (!water) continue;
+      s.position.set(x, y);
+      s.scale.set((radius * (0.3 + 0.7 * Math.sqrt(r.age)) * 2) / (RING_PICTURE * 0.84));
+      s.alpha = r.alpha * Math.min(1, rain * 1.4) * 0.9;
+    }
+    for (let i = n; i < this.rings.length; i++) this.rings[i].visible = false;
+  }
+
+  /**
+   * The ground `dt` game seconds on under `rain` (0..1), the puddles and the rings on the water in
+   * `view` (world px), drawn at `zoom`.
+   */
+  update(dt: number, rain: number, view: View, zoom = 1) {
     this.t += dt;
+    this.ringTheWater(rain, view, zoom);
     this.wetness = nextWetness(this.wetness, rain, dt);
     const wet = this.wetness;
     if (wet < DRY) {

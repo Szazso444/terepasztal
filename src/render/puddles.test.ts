@@ -1,10 +1,24 @@
 import { Container } from 'pixi.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Biome, Terrain, type GameMap } from '../world/tiles';
-import { Puddles, nextWetness, puddleAt } from './puddles';
+import { Puddles, nextWetness, puddleAt, ringAt, ringCount } from './puddles';
 import { rainVelocity, streakRotation } from './fx';
 
 const SIZE = 64;
+
+beforeEach(() => {
+  const context = new Proxy(
+    { createLinearGradient: () => ({ addColorStop: () => undefined }) },
+    {
+      get: (t, k) => (t as Record<string | symbol, unknown>)[k] ?? (() => undefined),
+      set: () => true,
+    },
+  );
+  vi.stubGlobal('document', {
+    createElement: () => ({ width: 0, height: 0, getContext: () => context }),
+  });
+});
+afterEach(() => vi.unstubAllGlobals());
 
 function field(biome = Biome.Plains, terrain = Terrain.Grass): GameMap {
   const n = SIZE * SIZE;
@@ -93,20 +107,6 @@ describe('the wet ground', () => {
 describe('the puddles on the map', () => {
   const VIEW = { x: -400, y: 0, w: 800, h: 600 };
 
-  beforeEach(() => {
-    const context = new Proxy(
-      { createLinearGradient: () => ({ addColorStop: () => undefined }) },
-      {
-        get: (t, k) => (t as Record<string | symbol, unknown>)[k] ?? (() => undefined),
-        set: () => true,
-      },
-    );
-    vi.stubGlobal('document', {
-      createElement: () => ({ width: 0, height: 0, getContext: () => context }),
-    });
-  });
-  afterEach(() => vi.unstubAllGlobals());
-
   const setup = (free = (_x: number, _y: number) => true) => {
     const layer = new Container();
     const puddles = new Puddles(field(), layer, () => ({ x: 0, y: 0 }), free);
@@ -123,9 +123,9 @@ describe('the puddles on the map', () => {
     const { layer, puddles } = setup();
     for (let i = 0; i < 30; i++) puddles.update(1, 0.9, VIEW);
     expect(layer.children.length).toBeGreaterThan(0);
-    expect(layer.children.length).toBeLessThan(((SIZE / 8) * SIZE) / 8);
+    expect(layer.children.length).toBeLessThan(((SIZE / 8) * SIZE) / 8 + 1);
     for (let i = 0; i < 800; i++) puddles.update(1, 0, VIEW);
-    expect(layer.children).toHaveLength(0);
+    expect(layer.children.filter((c) => c.visible)).toHaveLength(0);
   });
 
   it('leave a tile something stands on, and find a cell anew when it changes', () => {
@@ -133,13 +133,59 @@ describe('the puddles on the map', () => {
     const { layer, puddles } = setup((x, y) => !busy.has(y * SIZE + x));
     for (let i = 0; i < 30; i++) puddles.update(1, 0.9, VIEW);
     const count = () =>
-      layer.children.reduce((sum, c) => sum + (c as Container).children.length, 0);
+      layer.children.slice(1).reduce((sum, c) => sum + (c as Container).children.length, 0);
     const before = count();
     for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) busy.add(y * SIZE + x);
     for (let y = 0; y < SIZE; y += 8) for (let x = 0; x < SIZE; x += 8) puddles.invalidate(x, y);
     puddles.update(1, 0.9, VIEW);
     expect(before).toBeGreaterThan(0);
     expect(count()).toBe(0);
+  });
+});
+
+describe('rings on the water', () => {
+  it('scale with the view, within bounds', () => {
+    expect(ringCount(1000)).toBe(40);
+    expect(ringCount(1400 * 1000)).toBeGreaterThan(40);
+    expect(ringCount(1e9)).toBe(300);
+  });
+
+  it('stay in the view, fade out as they grow, and move on each time round', () => {
+    const places = new Set<string>();
+    for (let t = 0; t < 30; t += 0.21) {
+      const r = ringAt(5, t);
+      expect(r.u).toBeGreaterThanOrEqual(0);
+      expect(r.u).toBeLessThan(1);
+      expect(r.age).toBeLessThan(1);
+      expect(r.alpha).toBeLessThanOrEqual(1);
+      places.add(`${r.u},${r.v}`);
+    }
+    expect(places.size).toBeGreaterThan(5);
+  });
+
+  it('are none on a map without water, and none when the rain stops', () => {
+    const layer = new Container();
+    const puddles = new Puddles(
+      field(),
+      layer,
+      () => ({ x: 0, y: 0 }),
+      () => false,
+    );
+    puddles.update(0.1, 0.9, { x: -400, y: 0, w: 800, h: 600 });
+    const rings = (on: Container) =>
+      (on.children[0] as Container).children.filter((c) => c.visible).length;
+    expect(rings(layer)).toBe(0);
+    const sea = new Container();
+    const onSea = new Puddles(
+      field(Biome.Ocean, Terrain.Water),
+      sea,
+      () => ({ x: 0, y: 0 }),
+      () => false,
+    );
+    onSea.update(0.1, 0.9, { x: -400, y: 0, w: 800, h: 600 });
+    expect(rings(sea)).toBeGreaterThan(0);
+    onSea.update(0.1, 0, { x: -400, y: 0, w: 800, h: 600 });
+    expect(sea.children[0].visible).toBe(false);
   });
 });
 

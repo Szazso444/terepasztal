@@ -80,6 +80,7 @@ import { ContractBoard, contractTitle } from './sim/contracts';
 import { Rng } from './engine/rng';
 import { DayNight, Glows, Smoke, GroundLights, Rain, Fog, nightness } from './render/fx';
 import { Storm } from './render/storm';
+import { ValleyMist } from './render/valleyMist';
 import {
   Weather,
   SEASON_FX,
@@ -272,6 +273,7 @@ export class Game implements UiHost {
   glows!: Glows;
   smoke!: Smoke;
   storm!: Storm;
+  valleyMist!: ValleyMist;
   /** the halo over whatever finished an upgrade, and the shimmer along track relaid as high speed */
   halos!: Halos;
   /** a bar over each building being upgraded */
@@ -1131,7 +1133,8 @@ export class Game implements UiHost {
     this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.rain.setWorld(this.map.w, this.map.h);
-    this.world.overlay.addChild(this.fog.patches);
+    this.valleyMist = new ValleyMist(this.map);
+    this.world.overlay.addChild(this.valleyMist.root, this.fog.patches);
     this.app.stage.addChild(
       this.world.root,
       this.storm.shade,
@@ -2443,7 +2446,18 @@ export class Game implements UiHost {
       this.weather.wind,
       this.camera,
     );
-    this.world.puddles.update(dt * this.clock.speed, rainI, this.camera.viewRect());
+    this.world.puddles.update(
+      dt * this.clock.speed,
+      this.viewTarget === 0 ? rainI : 0,
+      this.camera.viewRect(),
+      this.camera.zoom,
+    );
+    this.valleyMist.update(
+      this.clock.speed ? dt : 0,
+      this.viewTarget === 0 ? fogI : 0,
+      this.camera.viewRect(),
+      this.weather.wind,
+    );
     this.fog.update(
       dt,
       this.viewTarget === 0 ? fogI : 0,
