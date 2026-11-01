@@ -22,7 +22,7 @@ You write only these paths (`tools/agents/ownership.json`):
 - `tools/video-sprites/**`
 - `art-src/**`
 - `assets/**`
-- `public/assets/*.{png,json}`
+- `public/assets/*.{png,webp,json}`
 - `public/assets/track-materials/**`
 - `public/assets/portraits/**`
 - `docs/art-direction/**`
