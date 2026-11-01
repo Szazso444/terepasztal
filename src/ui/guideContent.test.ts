@@ -305,7 +305,7 @@ describe('what the pages say is what the game does', () => {
     expect(ages).toContain('engine recipes: ');
     expect(ages).toContain('wagon recipes: ');
     expect(ages).toContain('no age locks them');
-    expect(ages).toContain('buildings from the steam age rise to level 2');
+    expect(ages).toContain('steam age buildings rise to level 2');
     expect(ages).toContain('tools: semaphore');
     expect(pageWords(page('stations'))).toContain('some stop earlier: charcoal kiln at level 3');
   });

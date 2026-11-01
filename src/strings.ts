@@ -188,7 +188,7 @@ const EN = {
       wagons: 'Wagon recipes: {list}',
       contracts: 'Contracts: {list}',
       /** the level the buildings of the first age may reach: later ones start lower */
-      level: (age: string, n: number) => `Buildings from the ${age} rise to level ${n}`,
+      level: (age: string, n: number) => `${age} buildings rise to level ${n}`,
       trackCount: (n: number) => `${n} kinds of track`,
       stationsCount: (n: number) => `${n} stations`,
       servicesCount: (n: number) => `${n} kinds of building`,

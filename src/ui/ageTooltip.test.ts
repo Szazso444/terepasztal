@@ -287,7 +287,7 @@ describe('what each age brings', () => {
     const lines = card(tip(), 'diesel').map(blockText);
     expect(lines.some((l) => l.startsWith('Engine recipes: '))).toBe(true);
     expect(lines.some((l) => l.startsWith('Wagon recipes: '))).toBe(true);
-    expect(lines).toContain('Buildings from the Steam Age rise to level 2');
+    expect(lines).toContain('Steam Age buildings rise to level 2');
   });
 
   it('lists what the bar calls tools as tools, not as town and services', () => {
