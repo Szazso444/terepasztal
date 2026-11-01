@@ -27,6 +27,7 @@ import {
   stopSummary,
   togglePick,
   trainRowText,
+  wagonSizeLine,
   wagonStats,
   type StationInput,
   type TrainRowInput,
@@ -197,6 +198,11 @@ describe('the lines of a vehicle in the stock', () => {
       `${STR.roster.carries.mineral} · ${STR.roster.size.small} · 32u · 8t`,
     );
     expect(wagonStats(wagon, 1.16)).toContain('37u');
+  });
+
+  it('shows no capacity on a wagon card for a wagon that holds nothing', () => {
+    expect(wagonSizeLine(32, 8)).toBe(`${STR.roster.capacity} 32 · ${STR.depot.weight} 8 t`);
+    expect(wagonSizeLine(0, 8)).toBe(`${STR.depot.weight} 8 t`);
   });
 
   it('gives a refuelling cart what it adds instead', () => {

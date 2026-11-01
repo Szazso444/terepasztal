@@ -32,6 +32,7 @@ import type { Fleet } from '../sim/fleet';
 import type { Commands } from '../sim/commands';
 import type { AtlasRegistry } from '../engine/atlas';
 import { decorateSegmented, fragment, ScrollKeep, switchLine, vehicleArt } from './economyParts';
+import { wagonSizeLine } from './depotView';
 import { rarityClass } from './rarityClass';
 import {
   KIND_FILTERS,
@@ -259,7 +260,7 @@ export class RosterScreen implements Screen {
     } else {
       const wd = d as WagonDef;
       stats.push(
-        `${STR.roster.capacity} ${Math.round(wd.capacity * m)} · ${STR.depot.weight} ${wd.weight} t`,
+        wagonSizeLine(Math.round(wd.capacity * m), wd.weight),
         (wd.accepts ?? []).map((c) => cargoDef(c).name).join(', '),
       );
       if (wd.service) stats.push(STR.roster.serviceLine(wd.service, wd.serviceCap ?? 0));

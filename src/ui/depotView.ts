@@ -159,6 +159,12 @@ export function serviceResource(service: 'coal' | 'fuel' | 'battery'): string {
   return service === 'battery' ? 'power' : service === 'fuel' ? 'oil' : 'coal';
 }
 
+/** A wagon card's line of capacity and weight: a wagon that holds nothing has no capacity to show. */
+export function wagonSizeLine(capacity: number, weight: number): string {
+  const tonnes = `${STR.depot.weight} ${weight} t`;
+  return capacity > 0 ? `${STR.roster.capacity} ${capacity} · ${tonnes}` : tonnes;
+}
+
 /** What a wagon row says about the wagon; a refuelling cart says what it adds instead. */
 export function wagonStats(
   d: {
