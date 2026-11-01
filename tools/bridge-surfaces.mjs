@@ -149,12 +149,37 @@ function mortarRows(p) {
   return starts;
 }
 
+/**
+ * The deck planks as a repeat. The painted pad's seams lean a little across it and end where the
+ * pad ends, so its top is sheared until they run straight along the texture, cut to one square of
+ * whole planks (`PLANKS`, seam rows and all), and its two ends crossfaded over the wood past them,
+ * where no butt joint falls. Every pixel is the painting's; the square is then scaled by one factor.
+ */
+const PLANKS = { lean: 3 / 120, top: 4, side: 442, left: 10, fade: 60 };
+function plankDeck(flat, size) {
+  const { lean, top, side, left, fade } = PLANKS,
+    o = new PNG({ width: side, height: side }),
+    a = [0, 0, 0, 0],
+    b = [0, 0, 0, 0];
+  for (let y = 0; y < side; y++)
+    for (let x = 0; x < side; x++) {
+      const at = (sx, s) => sample(flat, sx, top + y + lean * (sx - flat.width / 2), s),
+        k = Math.min(1, x / fade);
+      at(left + x, a);
+      if (k < 1) at(left + x + side, b);
+      for (let c = 0; c < 3; c++)
+        o.data[(y * side + x) * 4 + c] = Math.round(k < 1 ? a[c] * k + b[c] * (1 - k) : a[c]);
+      o.data[(y * side + x) * 4 + 3] = 255;
+    }
+  return resize(o, size, size);
+}
+
 mkdirSync(OUT, { recursive: true });
 const write = (name, png) =>
   writeFileSync(join(OUT, `bridge-surface-${name}.png`), PNG.sync.write(png));
 // Dressed flags and deck planks: one repeat covers one tile.
 write('stone-top', resize(slabTop('stone-pad', 512), 128, 128));
-write('wood-top', resize(slabTop('wood-pad', 512), 128, 128));
+write('wood-top', plankDeck(slabTop('wood-pad', 512), 128));
 // Coursed masonry from the pier: two courses in running bond, one block long. The courses
 // without a joint of their own get one at the repeat seam.
 const pier = uprightFace('stone-pier', 110, 128),
