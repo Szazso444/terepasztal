@@ -29,6 +29,7 @@ import {
   type PropInstance,
   type PropKind,
   idx,
+  inBounds,
 } from '../world/tiles';
 import { EDGE_STRIP_TILES } from '../world/edgeStrip';
 import type { RegionState } from '../world/regions';
@@ -90,8 +91,10 @@ import { AtmosphereTint, setOwnTint } from './atmosphere';
 import { cullByChunk } from './chunkCull';
 import { blockOfTile, type StripMesh } from './edgeStripMesh';
 import { EdgeStripView } from './edgeStripView';
-import { surfaceVersions, type TileRect } from './fx';
+import { insideAt, surfaceVersions, type TileRect } from './fx';
 import { NOTHING_DUG, TunnelGlass, type DugView } from './tunnelGlass';
+import { canvasPortalArt } from './tunnelPortalArt';
+import { layerPortals, TunnelPortals } from './tunnelPortals';
 
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
 /** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
@@ -166,6 +169,8 @@ function illustrated(f: FrameInfo) {
  * mountain, where the Drill's glass shows them; anything else stays over the surface (a notice).
  */
 const ON_THE_RAIL = /^(decor|supply):/;
+/** How many tiles from a cutting or a portal no peak picture stands. */
+const PEAK_CLEAR = 2;
 
 /** What fits one building to the ground, beside its picture (`setStructure`). */
 interface GroundFitSprites {
@@ -308,6 +313,10 @@ export class WorldRenderer {
   private flattened = new Set<number>();
   /** The Drill's work as the game keeps it; handed in before anything is placed on it. */
   underground: DugView = NOTHING_DUG;
+  /** The store and its version as what stands on it last followed them (`followDug`). */
+  private followed = { under: NOTHING_DUG as DugView, version: 0 };
+  /** The portals in the ordinary view; the glass shows them as outlines. */
+  readonly portals: TunnelPortals;
   /** The Drill's view of the mountains (`setGlass`), under the track and all that stands. */
   private readonly glassLayer = new Container();
   /** Its part that stands in front of a rail: over the track, under the objects. */
@@ -417,12 +426,28 @@ export class WorldRenderer {
       this.surfaces.destroy();
       for (const fit of this.groundFits.values()) showWeeds(fit, null);
       this.wheat.destroy();
+      this.portals.destroy();
     });
     roadWalks.set(this.objects, this.roadWalk);
     // the ground lights stand on the surface, and move only when it does
     surfaceVersions.set(this.lights, () => this.landscape.surfaceVersion);
     this.objects.sortableChildren = true;
     this.piers.sortableChildren = true;
+    this.portals = new TunnelPortals({
+      layer: this.objects,
+      under: () => this.underground,
+      glass: () => this.glassOn,
+      levelPx: () => this.levelPx,
+      lift: (x, y) => -this.groundAt(x, y).dz,
+      rail: (x, y) => (inBounds(map, x, y) ? this.trackSprites.get(idx(map, x, y)) : undefined),
+      railMesh: (x, y) => (inBounds(map, x, y) ? this.trackMeshes.get(idx(map, x, y)) : undefined),
+    });
+    if (typeof document !== 'undefined') this.portals.art = canvasPortalArt(atlas);
+    // the cars, and what follows them, find the portals by the layer they stand in
+    layerPortals.set(this.objects, this.portals);
+    const inside = (x: number, y: number) => this.portals.inside(x, y);
+    insideAt.set(this.overlay, inside);
+    insideAt.set(this.lights, inside);
     this.root.addChild(
       this.border,
       this.stripBack,
@@ -1016,8 +1041,10 @@ export class WorldRenderer {
 
   animate(dt: number) {
     this.strip.update(dt);
+    this.followDug();
     this.glass?.update(this.view);
     if (this.landscape.flush()) {
+      this.portals.mark();
       this.refreshSummits();
       this.harvest.refresh();
       for (const [i, s] of this.trackSprites)
@@ -1059,6 +1086,7 @@ export class WorldRenderer {
             !this.landscape.isPainted(i % this.map.w, Math.floor(i / this.map.w));
       }
     }
+    this.portals.update();
     // Bridges follow the water painted round them: a tile whose water changed is drawn again.
     if (this.bridgeWaterChanged || this.texturedFailed !== this.landscape.failed)
       this.setTexturedBridges(this.texturedTiles);
@@ -1359,6 +1387,22 @@ export class WorldRenderer {
         s.position.set(p.x, p.y);
         setOwnTint(s, this.summitTint());
       }
+    this.clearPeaks();
+  }
+  /** No peak picture stands in a cutting or right beside a portal. */
+  private clearPeaks() {
+    const { w } = this.map,
+      under = this.underground,
+      portals = under.portals(),
+      open = (x: number, y: number) => {
+        for (let dy = -PEAK_CLEAR; dy <= PEAK_CLEAR; dy++)
+          for (let dx = -PEAK_CLEAR; dx <= PEAK_CLEAR; dx++)
+            if (under.isCut(x + dx, y + dy)) return true;
+        return portals.some(
+          (p) => Math.abs(p.x - x) <= PEAK_CLEAR && Math.abs(p.y - y) <= PEAK_CLEAR,
+        );
+      };
+    for (const [k, s] of this.summitSprites) s.visible = !open(k % w, Math.floor(k / w));
   }
   /** What a summit sprite is tinted by: nothing when its picture has the season baked in. */
   private summitTint() {
@@ -1927,6 +1971,7 @@ export class WorldRenderer {
       this.refreshScatter(x, y, 0);
       this.wheat.near(x, y);
       this.trackUnderRoad(x, y);
+      this.portals.railChanged(x, y);
       return;
     }
     const f = this.atlas.get(frame);
@@ -1943,6 +1988,7 @@ export class WorldRenderer {
     this.refreshScatter(x, y, 0);
     this.wheat.near(x, y);
     this.trackUnderRoad(x, y);
+    this.portals.railChanged(x, y);
   }
   /**
    * The track on tile (x, y) changed: where a road lies on it, its level crossing's deck follows,
@@ -2063,7 +2109,7 @@ export class WorldRenderer {
     if (!bed || bed.flat || this.landscape.failed) {
       mesh?.destroy();
       meshes.delete(i);
-      s.renderable = true;
+      s.renderable = !this.railUnder(i);
       standOnGround(s, p.x, p.y, { ...LEVEL_GROUND, dz: this.railAt(x, y).dz });
       return;
     }
@@ -2080,7 +2126,22 @@ export class WorldRenderer {
     }
     mesh.tint = s.tint;
     mesh.position.set(p.x, p.y);
+    mesh.renderable = !this.railUnder(i);
     s.renderable = false;
+  }
+  /** Does the rail on tile `i` lie inside a mountain with no glass to show it? */
+  private railUnder(i: number) {
+    const { w } = this.map;
+    return !this.glassOn && this.underground.floorAt(i % w, Math.floor(i / w)) !== undefined;
+  }
+  /** Show the rails as the glass and the dug tiles say. */
+  private showRails() {
+    for (const [i, s] of this.trackSprites) {
+      const mesh = this.trackMeshes.get(i),
+        shown = !this.railUnder(i);
+      if (mesh) mesh.renderable = shown;
+      else s.renderable = shown;
+    }
   }
   /**
    * The piece's texture on a grid whose vertices are lifted to the rail profile under them. Every
@@ -2149,9 +2210,7 @@ export class WorldRenderer {
     }
     // texture, anchor and size: a reused sprite never keeps the size of the frame it showed
     const building = this.setSpriteFrame(s, frame);
-    const p = this.standPoint(id, x, y);
-    s.position.set(p.x + dx, p.y + dy);
-    s.renderable = this.glassOn || this.floorUnder(id, x, y) === undefined;
+    this.seatOnRail(s, id, x, y, dx, dy);
     s.zIndex = depthKey(x, y, layer);
     // only a building has window lights and a ground fit; drop those of a building shown before
     if (!building) this.dropBuildingDressing(id);
@@ -2483,6 +2542,30 @@ export class WorldRenderer {
     const p = tileToWorld(x, y);
     return { x: p.x, y: p.y - floor * this.levelPx };
   }
+  /** Put structure `id` where it stands, shown or not as the Drill's work and the glass say. */
+  private seatOnRail(s: Sprite, id: string, x: number, y: number, dx: number, dy: number) {
+    const p = this.standPoint(id, x, y);
+    s.position.set(p.x + dx, p.y + dy);
+    s.renderable = this.glassOn || this.floorUnder(id, x, y) === undefined;
+  }
+  /**
+   * Called every frame: when the Drill's store changed, what stands on it follows. A tile dug or
+   * filled moves no structure by itself, and a dig that moves no ground repaints nothing.
+   */
+  private followDug() {
+    const under = this.underground,
+      seen = this.followed;
+    if (seen.under === under && seen.version === under.version) return;
+    seen.under = under;
+    seen.version = under.version;
+    for (const [id, a] of this.structureAnchors) {
+      const s = this.structures.get(id);
+      if (s && ON_THE_RAIL.test(id)) this.seatOnRail(s, id, a.x, a.y, a.dx, a.dy);
+    }
+    this.showRails();
+    this.clearPeaks();
+    this.portals.mark();
+  }
   private levelsForGlass() {
     return (this.glassLevels ??= tileLevels(this.map));
   }
@@ -2519,7 +2602,8 @@ export class WorldRenderer {
   /**
    * The Drill's view: `on`, every mountain is glass (tunnelGlass.ts), and `preview` lists the tiles
    * the drag would take. Peaks, props and scatter on raised tiles do not draw while it is on, and
-   * signals and catenary on dug tiles draw only then, as they stand inside.
+   * rails, signals and catenary on dug tiles draw only then, as they stand inside; a portal is then
+   * only an outline, and no car is masked.
    */
   setGlass(on: boolean, preview: readonly { x: number; y: number }[] = []) {
     this.glass ??= this.makeGlass();
@@ -2536,6 +2620,8 @@ export class WorldRenderer {
         const s = this.structures.get(id);
         if (s && this.floorUnder(id, a.x, a.y) !== undefined) s.renderable = on;
       }
+      this.showRails();
+      this.portals.showAll();
     }
     if (on) this.glass.setPreview(preview);
   }

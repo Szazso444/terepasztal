@@ -172,6 +172,8 @@ function renderer() {
     objects,
     contactGround,
     underground: NOTHING_DUG,
+    followed: { under: NOTHING_DUG, version: 0 },
+    portals: { mark: () => undefined, update: () => undefined },
     city: new Set(),
     paved: (tile: number) => cityOf(world).has(tile),
     doorsteps: [],

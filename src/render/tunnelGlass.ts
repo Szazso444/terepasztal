@@ -235,7 +235,8 @@ function openSide(view: DugView, t: DugTile, face: Face) {
     view.floorAt(t.x + DIR_DX[d], t.y + DIR_DY[d]) === t.floor || view.hasPortal(t.x, t.y, face)
   );
 }
-const FACE_DIR: Record<Face, number> = { N: 0, E: 1, S: 2, W: 3 };
+/** The direction a portal's face looks in. */
+export const FACE_DIR: Record<Face, number> = { N: 0, E: 1, S: 2, W: 3 };
 /** How much of the room behind a wall shows through it. */
 const WALL_ALPHA = 0.75;
 

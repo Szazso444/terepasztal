@@ -19,6 +19,7 @@ import {
 import { FrameKeys, type KeysByFacing } from './frameKeys';
 import { pitchOnRail, tiltOnRail, LEVEL_GROUND, type Ground } from './slope';
 import { PhaseCounter, WheelRolls, phaseIndex, phaseKey } from './runningGear';
+import { layerPortals, type TunnelPortals } from './tunnelPortals';
 import { advanceSpin, spinPhase } from './wheelSpin';
 import { spriteFacing, snapTrainPixel } from './spriteFacing';
 import {
@@ -112,6 +113,8 @@ export class TrainRenderer {
   /** vehicles standing inside an engine shed are not drawn */
   hideAt: ((x: number, y: number) => boolean) | null = null;
   private readonly frameKeys: FrameKeys;
+  /** The portals in the layer: a car near one is masked, and one inside is hidden. */
+  private readonly portals: TunnelPortals | undefined;
   private hoverSince = 0;
   private clock = 0;
   /** wheel-phase frames per still frame, and each train's wheel roll (`runningGear.ts`) */
@@ -132,6 +135,7 @@ export class TrainRenderer {
   ) {
     this.frameKeys = new FrameKeys(atlas);
     this.phases = new PhaseCounter(atlas);
+    this.portals = layerPortals.get(layer);
     layer.on('destroyed', () => this.surfaces.destroy());
   }
 
@@ -251,6 +255,7 @@ export class TrainRenderer {
     pitchOnRail(s, Math.round(wp.x), Math.round(wp.y), g.dz, along, cos, sin);
     s.zIndex = depthKey(x, y, layer);
     s.visible = !(this.hideAt && this.hideAt(Math.floor(x + 0.5), Math.floor(y + 0.5)));
+    this.portals?.dress(s, x, y);
     return key;
   }
 
@@ -286,6 +291,7 @@ export class TrainRenderer {
     tiltOnRail(s, snapTrainPixel(wp.x), snapTrainPixel(wp.y), g.dz, along, cos, sin);
     s.zIndex = depthKey(x, y, layer);
     s.visible = !(this.hideAt && this.hideAt(Math.floor(x + 0.5), Math.floor(y + 0.5)));
+    this.portals?.dress(s, x, y);
     return { key, frame: fr, flip: !drawn };
   }
 
@@ -484,6 +490,7 @@ export class TrainRenderer {
         light.skew.copyFrom(s.skew);
         light.zIndex = s.zIndex + 0.01;
         light.visible = s.visible;
+        light.mask = s.mask;
       } else {
         const light = this.windowLights.get(s);
         if (light) light.visible = false;
@@ -614,6 +621,7 @@ export class TrainRenderer {
         light.skew.copyFrom(s.skew);
         light.zIndex = s.zIndex + 0.01;
         light.visible = s.visible;
+        light.mask = s.mask;
       } else {
         const light = this.modelLights.get(s);
         if (light) light.visible = false;
@@ -822,6 +830,7 @@ export class TrainRenderer {
       // under the night's colour where the layer has one (atmosphere.ts)
       setOwnTint(g, tint);
       g.visible = true;
+      this.portals?.dress(g, (ax + bx) / 2, (ay + by) / 2);
       // just over the farther body and under the nearer body and its trucks; side by side across
       // the screen neither covers the gap
       const mid = depthKey((ax + bx) / 2, (ay + by) / 2, 15);

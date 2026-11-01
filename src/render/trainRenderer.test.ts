@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Container, Point, Texture, type Matrix, type Sprite } from 'pixi.js';
 import { TrainRenderer } from './trainRenderer';
+import { layerPortals, type TunnelPortals } from './tunnelPortals';
 import { MAX_PHASES, WHEEL_CYCLE_TILES } from './runningGear';
 import type { Ground } from './slope';
 import { DEFAULT_RELIEF } from './terrainRelief';
@@ -89,6 +90,54 @@ function draw(heading: number, rise: number) {
     bogies = (layer.children[1] as Container).children as Sprite[];
   return { body, bogies, seg: pose.segments[0], ground, bodyFrame: asked[0] };
 }
+
+describe('TrainRenderer at a portal', () => {
+  /** A train on a straight, drawn over a layer whose portals dress with `dress`. */
+  function atPortal(dress: (s: Container, x: number, y: number) => void) {
+    const spec = vehicleSpec({ size: 'medium' }),
+      rail = new Polyline([
+        { x: -4, y: 0 },
+        { x: 4, y: 0 },
+      ]),
+      pose = poseVehicle(rail, 4 + spec.L / 2, spec),
+      def = { id: 'test', type: 'diesel', body: 'box', paint: 'iron', size: 'medium' } as LocoDef,
+      train = {
+        id: 1,
+        locos: [{ def }],
+        wagons: [],
+        reversed: false,
+        vehicleSpecs: [spec],
+        vehiclePoses: [pose],
+        prevVehiclePoses: [pose],
+      } as unknown as Train,
+      layer = new Container();
+    layerPortals.set(layer, { dress } as unknown as TunnelPortals);
+    new TrainRenderer(fakeAtlas().atlas, layer).update([train], 1);
+    return { layer };
+  }
+  it('dresses the body and every bogie where each stands', () => {
+    const dressed: Container[] = [],
+      { layer } = atPortal((s) => dressed.push(s)),
+      body = layer.children[0],
+      bogies = (layer.children[1] as Container).children;
+    expect(dressed).toContain(body);
+    for (const b of bogies) expect(dressed).toContain(b);
+  });
+  it('a hidden body hides its bogies, and a body sorted near a portal keeps them under it', () => {
+    const { layer } = atPortal((s) => {
+        s.visible = false;
+        s.zIndex = 5000;
+      }),
+      body = layer.children[0] as Sprite,
+      under = layer.children[1] as Container;
+    expect(under.children.length).toBeGreaterThan(0);
+    for (const b of under.children) {
+      expect(b.visible).toBe(false);
+      expect(b.zIndex).toBe(body.zIndex - 1);
+    }
+    expect(under.zIndex).toBe(body.zIndex - 1);
+  });
+});
 
 function transform(s: Sprite): Matrix {
   s.updateLocalTransform();

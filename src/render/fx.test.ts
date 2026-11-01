@@ -5,7 +5,7 @@ import { tileToWorld } from '../engine/iso';
 import { Rng } from '../engine/rng';
 import type { Station } from '../sim/stations';
 import type { Train } from '../sim/trains';
-import { DayNight, Fog, Glows, GroundLights, Smoke, surfaceVersions } from './fx';
+import { DayNight, Fog, Glows, GroundLights, insideAt, Smoke, surfaceVersions } from './fx';
 
 const ATLAS = {
   get: () => ({ texture: Texture.EMPTY, anchorX: 0.5, anchorY: 0.5 }),
@@ -261,6 +261,37 @@ describe('Glows', () => {
     expect(layer.children[0].x).toBe(Math.round(w.x));
     expect(layer.children[0].y).toBe(Math.round(w.y) - 8);
     expect(layer.children[0].scale.x).toBe(1);
+  });
+});
+
+describe('Inside a mountain', () => {
+  it('a lamp does not shine, and shines again out in the open', () => {
+    const layer = new Container();
+    let dug = true;
+    insideAt.set(layer, () => dug);
+    const glows = new Glows(ATLAS, layer, (x, y) => ({ x, y }));
+    glows.update([], [engine({})], 1);
+    expect(layer.children[0].visible).toBe(false);
+    dug = false;
+    glows.update([], [engine({})], 1);
+    expect(layer.children[0].visible).toBe(true);
+  });
+  it('an engine leaves no smoke', () => {
+    const layer = new Container();
+    insideAt.set(layer, () => true);
+    new Smoke(ATLAS, layer).update([engine({})], 0.001, true);
+    expect(layer.children).toHaveLength(0);
+  });
+  it('a train lights no ground over it', () => {
+    const layer = new Container();
+    insideAt.set(layer, () => true);
+    new GroundLights(
+      ATLAS,
+      layer,
+      (x, y) => ({ x, y }),
+      () => true,
+    ).update([], [engine({})], 1);
+    expect(layer.children.filter((c) => c.visible)).toHaveLength(0);
   });
 });
 
