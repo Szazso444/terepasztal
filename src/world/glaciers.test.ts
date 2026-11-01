@@ -3,7 +3,7 @@ import { DIR_DX, DIR_DY, type Dir } from '../engine/iso';
 import { DEFAULT_RELIEF, TILE_SIDE_PX, buildRelief } from '../render/terrainRelief';
 import { buildMap, encodeMap } from './chunks';
 import { MAX_LEVEL, levelTarget, tileLevels } from './elevation';
-import { GlacierKind, ICE_TILES, MELT_TILES, traceGlaciers } from './glaciers';
+import { GlacierKind, ICE_LOW, ICE_TILES, MELT_TILES, traceGlaciers } from './glaciers';
 import { emptyMap, generateMap, type MapGenParams } from './mapgen';
 import { WaterKind, type Drainage } from './rivers';
 import { Biome, Terrain, type GameMap } from './tiles';
@@ -51,7 +51,7 @@ describe('glaciers in generated worlds', () => {
     ...STONY_SEEDS.map((seed) => ({ seed, params: STONY })),
   ];
 
-  it('stand at level 4 in the Mountain biome and read like the Mountain they replace', () => {
+  it('stand at the snow line or a level below it, like the Mountain they replace', () => {
     let ice = 0;
     for (const { seed, params } of cases) {
       const m = generateMap(seed, { w: 160, h: 160, ...params });
@@ -64,13 +64,13 @@ describe('glaciers in generated worlds', () => {
       for (let i = 0; i < m.w * m.h; i++) {
         if (m.terrain[i] !== Terrain.Ice) continue;
         ice++;
-        expect(levelTarget(m, i)).toBe(MAX_LEVEL);
+        expect(levelTarget(m, i)).toBeGreaterThanOrEqual(ICE_LOW);
         expect(m.biome[i]).toBe(Biome.Mountain);
         // the edge of a map holds levels down (tileLevels); the world beyond it does not
         const x = i % m.w;
         const y = (i - x) / m.w;
         if (Math.min(x, y, m.w - 1 - x, m.h - 1 - y) < MAX_LEVEL) continue;
-        expect(levels[i], `seed ${seed}, tile ${i}`).toBe(MAX_LEVEL);
+        expect(levels[i], `seed ${seed}, tile ${i}`).toBe(levelTarget(m, i));
       }
       for (let y = 0; y < m.h; y++)
         for (let x = 0; x < m.w; x++) {
@@ -121,7 +121,7 @@ describe('glaciers in generated worlds', () => {
       for (const a of iceAreas(generateMap(seed, { w: 160, h: 160, ...params })))
         largest = Math.max(largest, a.length);
     expect(largest).toBeGreaterThan(0);
-    expect(largest).toBeLessThanOrEqual(5 * (1 + ICE_TILES));
+    expect(largest).toBeLessThanOrEqual(10 * (1 + ICE_TILES));
   }, 60_000);
 
   it('never come to a chunk that was stored without them', () => {
@@ -218,10 +218,13 @@ describe('traceGlaciers on a hand-made drainage', () => {
     expect(plane[top * W + 20]).toBe(GlacierKind.Ice);
     expect(plane[(top - ICE_TILES) * W + 20]).toBe(GlacierKind.Ice);
     expect(plane[(top - ICE_TILES - 1) * W + 20]).toBe(GlacierKind.None);
-    expect(plane[(top + 1) * W + 20]).toBe(GlacierKind.Head);
+    // the ice runs a tile further down, a level lower, then its melt starts
+    expect(plane[(top + 1) * W + 20]).toBe(GlacierKind.Ice);
+    expect(p.drainage.surface[(top + 1) * W + 20]).toBe(ICE_LOW);
+    expect(plane[(top + 2) * W + 20]).toBe(GlacierKind.Head);
     expect(plane[33 * W + 20]).toBe(GlacierKind.Melt);
     // the melt has its water level, flow and way down
-    const melt = (top + 1) * W + 20;
+    const melt = (top + 2) * W + 20;
     expect(p.drainage.surface[melt]).toBe(levels[melt]);
     expect(p.drainage.flow[melt]).toBe(Math.round(p.drainage.acc[melt]));
     expect(p.drainage.dir[melt]).toBe(3);
@@ -237,7 +240,7 @@ describe('traceGlaciers on a hand-made drainage', () => {
     acc[side] = acc[32 * W + 20];
     const plane = traceGlaciers(p);
     expect(plane[side]).toBe(GlacierKind.None);
-    expect(plane[32 * W + 20]).toBe(GlacierKind.Melt);
+    expect(plane[33 * W + 20]).toBe(GlacierKind.Melt);
   });
 
   it('keeps out of what `keepOut` marks', () => {
