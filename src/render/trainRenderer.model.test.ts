@@ -255,7 +255,8 @@ describe('TrainRenderer with a rendered model', () => {
     // its body comes first, then the sprite of its load
     const plain = layer.children.filter((c) => c instanceof Sprite);
     expect(plain).toHaveLength(2);
-    expect(keyOf(plain[0])).toMatch(/^rolling\/wagon_wgn_f\d+$/);
+    // this atlas has every frame, so the wagon's own model name wins over its single sprite
+    expect(keyOf(plain[0])).toMatch(/^rolling\/wagon_wgn_(body_)?f\d+$/);
   });
 
   it('shows its body and wheels under the night colour, once, and its windows at their own', () => {
