@@ -169,18 +169,22 @@ describe('the step from v23', () => {
     expect('save' in read && read.save.economy.money).toBe(12345);
   });
 
-  it('is quiet: the file loads with no note and no mark of another format', () => {
+  it('is quiet: it adds no note, and the steps after it say theirs alone', () => {
     expect(step().quiet).toBe(true);
     const j = parseSave(text(v23()))!;
-    expect(j.loadedFrom).toBeUndefined();
-    expect(j.migrationNotes).toBeUndefined();
+    const told = MIGRATIONS.filter((m) => !m.quiet && m.from >= LAST_GACHA_FORMAT);
+    expect(told.length).toBeGreaterThan(0);
+    expect(j.migrationNotes).toHaveLength(told.length);
+    expect(j.migrationNotes?.join(' ')).not.toMatch(/gacha|ticket/i);
   });
 
   it('leaves its note out of what an older file is told, and tells the rest', () => {
-    const j = migrate(v23({ version: LAST_GACHA_FORMAT - 1, trains: [{ id: 1 }] }));
-    expect(j.loadedFrom).toBe(LAST_GACHA_FORMAT - 1);
-    expect(j.migrationNotes).toHaveLength(1);
-    expect(j.migrationNotes?.[0].startsWith(`v${LAST_GACHA_FORMAT - 1}→`)).toBe(true);
+    const from = LAST_GACHA_FORMAT - 1;
+    const j = migrate(v23({ version: from, trains: [{ id: 1 }] }));
+    const told = MIGRATIONS.filter((m) => !m.quiet && m.from >= from);
+    expect(j.loadedFrom).toBe(from);
+    expect(j.migrationNotes).toHaveLength(told.length);
+    expect(j.migrationNotes?.[0].startsWith(`v${from}→`)).toBe(true);
     expect(j.migrationNotes?.join(' ')).not.toMatch(/gacha/i);
   });
 
@@ -244,11 +248,12 @@ describe('the line Continue shows for an old file', () => {
     return continueText({ meta, live: false }, NOW);
   };
 
-  it('is the line the same save shows in this format', () => {
-    const now: SaveGame = { ...v23(), version: SAVE_VERSION };
-    delete now.gacha;
-    expect(line(v23())).toEqual(line(now));
-    expect(line(v23()).format).toBeNull();
+  it('is the line the same save shows in the next format, but for the steps after it', () => {
+    const next: SaveGame = { ...v23(), version: LAST_GACHA_FORMAT + 1 };
+    delete next.gacha;
+    // the gacha step is quiet: what marks the file is the later step that has something to tell
+    expect(line(v23())).toEqual({ ...line(next), format: formatNote(LAST_GACHA_FORMAT) });
+    expect(line(v23()).format).toBe(formatNote(LAST_GACHA_FORMAT));
   });
 
   it('still marks a file some step has to tell the player about', () => {
@@ -262,6 +267,6 @@ describe('the quiet versions', () => {
   it('start past the last step that has something to tell', () => {
     const told = MIGRATIONS.filter((m) => !m.quiet).map((m) => m.from);
     expect(SAVE_QUIET_VERSION).toBe(Math.max(...told) + 1);
-    expect(SAVE_QUIET_VERSION).toBeLessThanOrEqual(LAST_GACHA_FORMAT);
+    expect(SAVE_QUIET_VERSION).toBeLessThanOrEqual(SAVE_VERSION);
   });
 });

@@ -46,6 +46,7 @@ import { DEFAULT_RELIEF } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
 import { doorstepChanges, pavingDoorsteps, type PavingDoor } from './townPaving';
 import { PAL, type RGB } from '../art/palette';
+import type { WearState } from '../sim/wear';
 import BRIDGE_KIT_JSON from './bridgeKit.json';
 import {
   bridgeTileMeshes,
@@ -219,6 +220,18 @@ function placeGroundFit(fit: GroundFitSprites, s: Sprite) {
   fit.foot.zIndex = s.zIndex + 0.005;
   fit.weeds.position.copyFrom(s.position);
   fit.weeds.zIndex = s.zIndex + 0.02;
+}
+
+/** What worn track is painted over: a rust that multiplies the ballast's colour. */
+const WEAR_TINT: Record<WearState, number> = {
+  healthy: 0xffffff,
+  degraded: 0xd8b070,
+  unusable: 0xb05040,
+};
+/** Two colours multiplied channel by channel, as a tint does. */
+function multiplyColour(a: number, b: number): number {
+  const ch = (shift: number) => Math.round((((a >> shift) & 255) * ((b >> shift) & 255)) / 255);
+  return (ch(16) << 16) | (ch(8) << 8) | ch(0);
 }
 
 /**
@@ -1292,6 +1305,15 @@ export class WorldRenderer {
     const i = idx(this.map, x, y);
     if (color === 0xffffff) this.trackHighlight.delete(i);
     else this.trackHighlight.set(i, color);
+    this.retintTrack(i);
+  }
+  /** The wear state of the track piece on tile `i`; the game sets it (`TrackWear`). */
+  trackWearAt: (i: number) => WearState = () => 'healthy';
+  /** Tint the track on these tiles again, after their wear changed. */
+  retintTracks(tiles: readonly { x: number; y: number }[]) {
+    for (const t of tiles) this.retintTrack(idx(this.map, t.x, t.y));
+  }
+  private retintTrack(i: number) {
     for (const s of [
       this.trackSprites.get(i),
       this.trackMeshes.get(i),
@@ -1303,6 +1325,11 @@ export class WorldRenderer {
   private trackColour(i: number) {
     const hl = this.trackHighlight.get(i);
     if (hl !== undefined) return hl;
+    const colour = this.nightColour(i);
+    const rust = WEAR_TINT[this.trackWearAt(i)];
+    return rust === 0xffffff ? colour : multiplyColour(colour, rust);
+  }
+  private nightColour(i: number) {
     // ballast is light; darken it with the night so the line does not glow through the dark
     const k = 1 - 0.55 * this.trackNight;
     const local = MATERIAL_COLORS[materialAt(this.map, i % this.map.w, Math.floor(i / this.map.w))];

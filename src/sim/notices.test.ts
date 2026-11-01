@@ -14,6 +14,9 @@ vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
+/** The wear of a world with no track, for a case that builds its builder by hand. */
+const NO_WEAR = { failedPieces: () => [] } as never;
+
 /** The train fields `Notices.refresh` reads; each case below sets what makes it report. */
 function train(state: string, more: Partial<Train> = {}): Train {
   return {
@@ -56,6 +59,7 @@ function refreshed(pieces: {
     trains: pieces.trains ?? [],
     builder,
     power: { edges: () => [] } as unknown as PowerGrid,
+    wear: NO_WEAR,
     stuck: pieces.stuck,
   });
   return n.list;
@@ -102,6 +106,7 @@ describe('every notice has an alert type', () => {
       trains: [],
       builder: { stations: [], buildings: new Map(), stores: { choices: () => [] } } as never,
       power: { edges: () => [] } as never,
+      wear: NO_WEAR,
     });
     expect(n.list.map((m) => m.type)).toEqual(['note']);
   });
@@ -130,6 +135,7 @@ describe('the derived notices that are new', () => {
       trains: [],
       builder: w.builder,
       power: w.power,
+      wear: w.builder.wear,
       contracts: {
         board: {
           get active() {

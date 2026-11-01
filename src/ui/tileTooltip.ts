@@ -10,6 +10,7 @@ import { CARGO } from '../sim/cargo';
 import { STATION_DEFS, harvests } from '../sim/stations';
 import { inSupplyMode } from '../sim/supply';
 import { STR } from '../strings';
+import type { WearState } from '../sim/wear';
 import { levelAt } from '../world/elevation';
 import {
   TERRAIN_NAMES,
@@ -49,6 +50,8 @@ export interface TileSnapshot {
   charted: boolean;
   /** the kind of track piece on it, if any */
   track: string | null;
+  /** the wear of the track piece on it: health in percent and its state; null without track */
+  wear: { percent: number; state: WearState } | null;
   /** the decor on it: its name and the lines its panel shares with the tooltip (`DecorPanel.lines`) */
   decor: { name: string; lines: readonly string[] } | null;
   /** the kind of each prop on it */
@@ -149,6 +152,7 @@ export function tileTip(s: TileSnapshot): TipDoc {
   for (const g of tileGoods(terrain, s.props)) out.push(goodLine(g, s.weeklyAtLevel1));
   if (!s.charted) out.push(line(T.uncharted));
   if (s.track) out.push(line(T.track(s.track)));
+  if (s.wear) out.push(line(T.wear(s.wear.percent, STR.wear.state[s.wear.state])));
   if (s.decor) {
     out.push(text(s.decor.name));
     for (const l of s.decor.lines) out.push(line(l));

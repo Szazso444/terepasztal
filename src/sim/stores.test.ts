@@ -564,7 +564,7 @@ describe('works and harvesters at their store', () => {
       0,
       undefined,
     ]);
-    w.notices.refresh({ trains: [], builder: w.builder, power: w.power });
+    w.notices.refresh({ trains: [], builder: w.builder, power: w.power, wear: w.builder.wear });
     const notice = w.notices.list.find((n) => n.key === `b${kiln.x},${kiln.y}:in`);
     expect(notice?.text).toBe(STR.notice.noStore(buildingDef('kiln').name, rules.buildReach));
   });

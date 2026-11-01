@@ -11,6 +11,7 @@ import type { SignalLevel } from './signals';
 import type { PeopleJSON } from './people';
 import type { RoadJSON } from './roads';
 import type { StoreJSON } from './stores';
+import type { WearJSON } from './wear';
 import type { BuildingJSON } from './buildings';
 import type { ChunkStore, MapGenerator } from '../world/chunks';
 import { HU_MIGRATIONS } from '../data/names.hu';
@@ -36,17 +37,17 @@ export type WorldSpec =
     }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 24;
+export const SAVE_VERSION = 25;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
  */
 export function convertOneTileRegular(track: SaveGame['track']): SaveGame['track'] {
-  return track.map(([x, y, kind, rot, cls, cls2]) =>
+  return track.map(([x, y, kind, rot, cls, cls2, ...health]) =>
     (kind === 'curve' || kind === 'switch') &&
     ((cls as string | undefined) ?? 'regular') === 'regular'
-      ? [x, y, kind, rot, 'narrow', cls2]
-      : [x, y, kind, rot, cls, cls2],
+      ? [x, y, kind, rot, 'narrow', cls2, ...health]
+      : [x, y, kind, rot, cls, cls2, ...health],
   );
 }
 /** oldest version `readSave` still accepts; missing fields get defaults */
@@ -73,7 +74,10 @@ export interface SaveParts {
     /** pre-v9 field, ignored */
     reputation?: number;
   };
-  /** anchor tiles: x, y, kind, rotation, class (v9), second class of crossings (v9) */
+  /**
+   * anchor tiles: x, y, kind, rotation, class (v9), second class of crossings (v9); v25: the
+   * share of its HP a worn piece has left, written only below 1
+   */
   track: TrackTuple[];
   /**
    * v15: each with the upgrade under way (`work`), null for none; v16: `rot` one of the four
@@ -137,6 +141,8 @@ export interface SaveParts {
   people: PeopleJSON;
   /** v20: road tiles [x, y], level crossings included (`Roads.toJSON`) */
   roads: RoadJSON;
+  /** v25: which first-time track warnings the player has had (`TrackWear.toJSON`) */
+  wear: WearJSON;
 }
 /** The fields every format version since v1 has; the others arrived later and may be missing. */
 type SaveCore =
@@ -722,6 +728,11 @@ export const MIGRATIONS: Migration[] = [
         delete world.level.start.tickets;
     },
   },
+  {
+    from: 24,
+    note: 'track wears: every piece starts with full health, and no wear warning has been shown',
+    run: (j) => (j.wear = { degraded: false, unusable: false }),
+  },
 ];
 /**
  * The oldest format that loads without a word: only quiet steps (`Migration.quiet`) stand between
@@ -759,6 +770,7 @@ const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
   supply: true,
   people: true,
   roads: true,
+  wear: true,
 };
 /** The names a type declares, without the `string` and `number` of an index signature. */
 type DeclaredKey<T> = keyof {

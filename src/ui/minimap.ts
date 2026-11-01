@@ -8,6 +8,8 @@ import { STR } from '../strings';
 
 export interface MinimapMarks {
   track: { x: number; y: number }[];
+  /** the tiles of track that are closed for wear */
+  broken: { x: number; y: number }[];
   stations: { x: number; y: number }[];
   trains: { x: number; y: number }[];
 }
@@ -138,6 +140,7 @@ export class Minimap {
       );
     };
     for (const t of marks.track) dot(t.x, t.y, '#c8ced0', 1);
+    for (const t of marks.broken) dot(t.x, t.y, '#d8503c', 2);
     for (const s of marks.stations) dot(s.x, s.y, '#66ccd6', 3);
     for (const t of marks.trains) dot(t.x, t.y, '#e8aa48', 3);
     const r = this.cam.viewRect();

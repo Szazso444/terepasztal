@@ -270,6 +270,9 @@ export class BuildController {
       case 'reclass':
         this.updateReclassTool(t, inMap);
         break;
+      case 'repair':
+        this.updateRepairTool(t, inMap);
+        break;
       case 'road':
         this.updateRoadTool(t, inMap);
         break;
@@ -895,7 +898,42 @@ export class BuildController {
     );
   }
 
-  /** The Upgrade / Downgrade tool's diamonds: the frame carries the colour. */
+  /**
+   * Repair: mend the piece under the cursor on a press, and every piece the cursor enters while the
+   * button stays down, as the Upgrade tool walks a stroke. The piece under the cursor is outlined
+   * whole, green when its price can be paid and red when no store holds it, with the price in the
+   * status line. Mending is not an undo step: the price paid is gone for good.
+   */
+  private updateRepairTool(t: { x: number; y: number }, inMap: boolean) {
+    const inp = this.input;
+    const track = this.builder.track;
+    if (this.ghost) this.ghost.visible = false;
+    this.ghostDiamond.visible = false;
+    const mend = (steps: { tile: { x: number; y: number } }[]) => {
+      for (const s of steps) this.builder.repairTrack([s.tile]);
+    };
+    const down = inp.buttons.has(0);
+    if (!down) mend(this.stroke.release());
+    if (!inMap) {
+      this.stroke.stop();
+      for (const g of this.lineGhosts) g.visible = false;
+      return;
+    }
+    if (down) mend(this.stroke.move(t, (p) => track.get(p.x, p.y)?.kind === 'crossing'));
+    const check = this.builder.checkRepair([t]);
+    if (!check.pieces.length) {
+      this.showReclassMarks([]);
+      this.status(track.get(t.x, t.y) ? STR.build.repairNothing : STR.build.repairIdle);
+      return;
+    }
+    const frame = check.ok ? 'terrain/ghost_ok' : 'terrain/ghost_bad';
+    const [anchor] = check.pieces;
+    this.showReclassMarks(track.unitTiles(anchor.x, anchor.y).map((u) => ({ ...u, frame })));
+    const price = STR.build.repairCost(fmtCost(check.cost));
+    this.status(check.ok ? price : `${price} (${check.reason})`);
+  }
+
+  /** The diamonds of the Upgrade, Downgrade and Repair tools: the frame carries the colour. */
   private showReclassMarks(marks: { x: number; y: number; frame: string }[]) {
     if (!marks.length) {
       for (const g of this.lineGhosts) g.visible = false;

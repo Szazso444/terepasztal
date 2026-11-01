@@ -18,6 +18,7 @@ import {
 } from '../world/track';
 import { DIR_DX as DDX, DIR_DY as DDY, opposite } from '../engine/iso';
 import { SUPPLY_DEFS, type Catenary, type SupplyKind } from './catenary';
+import { TrackWear } from './wear';
 import {
   content,
   dataName,
@@ -201,6 +202,8 @@ export class Builder {
   onRoadChanged: ((x: number, y: number) => void) | null = null;
   /** electrification overlay (set by the game) */
   catenary: Catenary | null = null;
+  /** the wear of the track (src/sim/wear.ts) */
+  readonly wear: TrackWear;
   /** fired once when a producing station or a works building is newly placed (not on load or upgrade) */
   onIndustryPlaced: ((x: number, y: number) => void) | null = null;
   /** fired when a station loses (true) or regains (false) its last platform tile */
@@ -227,6 +230,7 @@ export class Builder {
     readonly roads: Roads = new Roads(track),
   ) {
     this.buildings = new BuildingMap(map.w, map.h);
+    this.wear = new TrackWear(track, this);
   }
 
   // ------------------------------------------------------------------ helpers
@@ -311,10 +315,13 @@ export class Builder {
       .join(', ');
     return { ok: false, cost, reason: STR.build.noStoreInReach(rules.buildReach, what) };
   }
-  /** Pay what a check approved for work at (x, y), from the store it named (`payer`). */
-  pay(c: PlacementCheck, x: number, y: number) {
+  /**
+   * Pay what a check approved for work at (x, y), from the store it named (`payer`), which stands
+   * within `reach` tiles.
+   */
+  pay(c: PlacementCheck, x: number, y: number, reach = rules.buildReach) {
     if (this.free || !hasPrice(c.cost)) return true;
-    const payer = this.stores.nearest(x, y).find((s) => s.key === c.payer);
+    const payer = this.stores.nearest(x, y, reach).find((s) => s.key === c.payer);
     return !!payer && payer.spend(c.cost);
   }
   /** Give back the refund share of `cost` to the store that supplies (x, y), else the nearest. */
@@ -328,6 +335,7 @@ export class Builder {
    * stores are derived again, as they follow the stations (`StoreRegistry.refresh`).
    */
   private stationChanged(s: Station, removed: boolean) {
+    this.wear.invalidateGates();
     this.onStationChanged?.(s, removed);
     this.stores.refresh();
   }
@@ -813,6 +821,47 @@ export class Builder {
       c.changes.map((p) => ({ x: p.x, y: p.y })),
       dir,
     );
+    return true;
+  }
+  /**
+   * What mending the pieces on `tiles` by hand would cost: every one that is not whole, once
+   * however many of its tiles are given, at the hand price, paid from the nearest store that holds
+   * it, however far (`StoreRegistry.payerAnywhere`). `pieces` holds their anchors.
+   */
+  checkRepair(tiles: { x: number; y: number }[]): PlacementCheck & {
+    pieces: { x: number; y: number }[];
+  } {
+    const pieces: { x: number; y: number }[] = [];
+    const cost: Cost = {};
+    const seen = new Set<object>();
+    for (const t of tiles) {
+      const p = this.track.get(t.x, t.y);
+      if (!p || seen.has(p.wear)) continue;
+      seen.add(p.wear);
+      if (p.wear.health >= 1) continue;
+      pieces.push(this.track.anchorOf(t.x, t.y));
+      for (const [k, v] of Object.entries(this.wear.repairCost(p, 1 - p.wear.health, true)))
+        cost[k] = (cost[k] ?? 0) + v;
+    }
+    if (!pieces.length) return { ok: false, cost: {}, pieces, reason: STR.build.repairNothing };
+    if (this.free || !hasPrice(cost)) return { ok: true, cost, pieces };
+    const at = tiles[0];
+    const payer = this.stores.payerAnywhere(cost, at.x, at.y);
+    if (payer) return { ok: true, cost, pieces, payer: payer.key };
+    const miss = this.stores.nearest(at.x, at.y, Infinity)[0]?.missing(cost) ?? cost;
+    const what = Object.entries(miss)
+      .filter(([, v]) => v > 0)
+      .map(([k, v]) => `${v} ${cargoWord(k)}`)
+      .join(', ');
+    return { ok: false, cost, pieces, reason: STR.build.repairNoStore(what) };
+  }
+  /** Mend the pieces on `tiles` at once, paying the price `checkRepair` named. */
+  repairTrack(tiles: { x: number; y: number }[]): boolean {
+    const c = this.checkRepair(tiles);
+    const at = tiles[0];
+    if (!c.ok || !this.pay(c, at.x, at.y, Infinity)) return false;
+    for (const { x, y } of c.pieces) this.wear.restore(x, y, 1 - this.track.get(x, y)!.wear.health);
+    sfx('build.place');
     return true;
   }
   /** Compatibility: lay a Branch Line piece by kind. */
@@ -1577,11 +1626,12 @@ export class Builder {
 
   /** Lay `piece` with its anchor at (x, y), over what stands there; null lifts what stands there. */
   setTrack(x: number, y: number, piece: PieceSpec | null) {
-    this.trackChanged(
-      piece
-        ? this.track.place(x, y, piece.kind, piece.rot, piece.cls, piece.cls2, piece.form ?? 'turn')
-        : this.track.removeAt(x, y),
-    );
+    const tiles = piece
+      ? this.track.place(x, y, piece.kind, piece.rot, piece.cls, piece.cls2, piece.form ?? 'turn')
+      : this.track.removeAt(x, y);
+    // a piece that comes back as it stood comes back as worn as it was
+    if (piece?.health !== undefined) this.wear.setHealth(x, y, piece.health);
+    this.trackChanged(tiles);
   }
   setSupply(x: number, y: number, kind: SupplyKind | null) {
     if (kind) this.catenary?.set(x, y, kind);
