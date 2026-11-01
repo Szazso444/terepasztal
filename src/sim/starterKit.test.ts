@@ -129,7 +129,7 @@ function regularLine(w: ReturnType<typeof newGame>) {
  * diesel burns the chain's diesel fuel, an electric draws on the wire and needs nothing.
  */
 function burns(def: LocoDef): string[][] {
-  if (def.type === 'steam') return [['coal', 'wood'], ['water']];
+  if (def.type === 'steam') return [['coal'], ['water']];
   if (def.type === 'diesel') return [[dieselFuelId()]];
   return [];
 }

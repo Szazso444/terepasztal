@@ -35,7 +35,7 @@ export type WorldSpec =
     }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 24;
+export const SAVE_VERSION = 25;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -694,6 +694,17 @@ export const MIGRATIONS: Migration[] = [
       const world: unknown = j.world;
       if (isRecord(world) && isRecord(world.level) && isRecord(world.level.start))
         delete world.level.start.tickets;
+    },
+  },
+  {
+    from: 24,
+    note: 'wood is no longer an engine fuel: a steam engine that burned wood now burns coal, with the same energy in its tanks',
+    run: (j) => {
+      for (const t of Array.isArray(j.trains) ? j.trains : [])
+        if (isRecord(t) && isRecord(t.tanks)) {
+          delete t.tanks.kind;
+          delete t.tanks.pref;
+        }
     },
   },
 ];

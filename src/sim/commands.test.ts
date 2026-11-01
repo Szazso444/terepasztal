@@ -334,17 +334,6 @@ describe('setSchedule', () => {
   });
 });
 
-describe('setFuelPreference', () => {
-  it('sets the solid fuel a steam train takes first', () => {
-    const w = world();
-    const t = train(w, 20);
-    expect(w.commands.setFuelPreference(t, 'wood')).toEqual({ ok: true });
-    expect(t.fuelPreference).toBe('wood');
-    expect(w.commands.setFuelPreference(t, 'coal')).toEqual({ ok: true });
-    expect(t.fuelPreference).toBe('coal');
-  });
-});
-
 describe('renameTown', () => {
   /** A Townhouse with its town, in a running game: the world starts in the editor's mode. */
   function founded() {

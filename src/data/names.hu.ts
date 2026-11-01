@@ -475,4 +475,5 @@ export const HU_MIGRATIONS: Record<number, string> = {
   20: 'a közös készlet a kezdő fűtőházba került; minden raktár megtartja a saját áruját',
   21: 'a hat vonaltípus váltotta fel a sínosztályokat: a széles és a nagysebességű sín Mellékvonal lett, az átmenetek Mellékvonal-egyenesek',
   22: 'a vonatok színkódot kaptak: a régebbi mentések minden vonata az első színt kapja',
+  24: 'a fa többé nem mozdonyüzemanyag: a fával fűtött gőzmozdonyok ezentúl szénnel mennek, a tartályukban ugyanannyi energiával',
 };

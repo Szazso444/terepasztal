@@ -612,11 +612,8 @@ export class Train {
   wagons: WagonSlot[] = [];
   schedule: StopPlan[] = [];
   routeIndex = 0;
-  /** coal-equivalent units in the steam tanks (wood counts half) */
+  /** coal in the steam tanks */
   coal = 0;
-  /** which solid fuel is in the tanks, for display */
-  fuelKind: 'coal' | 'wood' = 'coal';
-  fuelPreference: 'coal' | 'wood' = 'coal';
   /** what the diesel tanks hold: oil in the simple production chain, diesel in the full one */
   oilKind: 'oil' | 'diesel' = 'oil';
   oil = 0;
@@ -741,7 +738,7 @@ export class Train {
       this.water < this.waterCap * 0.9 &&
       (this.water / this.waterCap < 0.5 ||
         this.water / Math.max(1e-6, this.waterRate) < remaining * 1.6 + 12);
-    const hasCoal = (store: ResourceStore) => store.get('coal') + store.get('wood') / 2 > 0.1;
+    const hasCoal = (store: ResourceStore) => store.get('coal') > 0.1;
     const hasLiquid = (store: ResourceStore) => store.get(dieselFuelId()) > 0.1;
     const fuelRange = Math.min(
       coalNeed ? this.coal / Math.max(1e-6, this.coalRate) : Infinity,
@@ -1147,7 +1144,6 @@ export class Train {
   cartMatched(w: WagonSlot) {
     const svc = w.def.service;
     if (!svc) return true;
-    if (svc === 'coal' && this.fuelKind !== 'coal') return false;
     return this.locos.some((l) => l.def.type === serviceLocoType(svc));
   }
   /** Refuelling carts of a kind with a matching engine aboard. */
@@ -1505,7 +1501,7 @@ export class Train {
     );
   }
   /**
-   * Fill tanks from what a store holds: coal or wood, oil or diesel, water, and power for the
+   * Fill tanks from what a store holds: coal, oil or diesel, water, and power for the
    * battery (only the grid holds power: `fillUp` charges the battery there). `fuel` fills them
    * all; `coal` and `liquid` say so for one kind of tank (a coaling stage, a Fuel Pump). `mul` > 1
    * charges extra (emergency delivery).
@@ -1514,18 +1510,9 @@ export class Train {
     const taken: Record<string, number> = {};
     const coalTarget = this.coalCap * (opts.fuelFrac ?? 1);
     if ((opts.coal ?? opts.fuel) && this.coalCap > 0 && this.coal < coalTarget - 1e-6) {
-      const order = this.fuelPreference === 'coal' ? ['coal', 'wood'] : ['wood', 'coal'];
-      for (const kind of order) {
-        const per = kind === 'coal' ? 1 : 0.5; // coal-equivalent per unit
-        const need = (coalTarget - this.coal) / per;
-        if (need <= 0.01) break;
-        const got = store.take(kind, need * mul) / mul;
-        if (got > 0) {
-          if (this.coal < 1e-6) this.fuelKind = kind as 'coal' | 'wood';
-          this.coal = Math.min(this.coalCap, this.coal + got * per);
-          taken[kind] = (taken[kind] ?? 0) + got;
-        }
-      }
+      const got = store.take('coal', (coalTarget - this.coal) * mul) / mul;
+      this.coal = Math.min(this.coalCap, this.coal + got);
+      if (got > 0) taken.coal = got;
     }
     const oilTarget = this.oilCap * (opts.fuelFrac ?? 1);
     if ((opts.liquid ?? opts.fuel) && this.oilCap > 0 && this.oil < oilTarget - 1e-6) {
@@ -1571,8 +1558,7 @@ export class Train {
    */
   drainTo(store: ResourceStore | null, grid: ResourceStore) {
     if (store) {
-      if (this.coal > 0)
-        store.add(this.fuelKind, this.fuelKind === 'coal' ? this.coal : this.coal * 2);
+      if (this.coal > 0) store.add('coal', this.coal);
       if (this.oil > 0) store.add(this.oilKind, this.oil);
       if (this.water > 0) store.add('water', this.water);
     }
@@ -2542,11 +2528,7 @@ export class Train {
       const burn = step * ecoMul;
       if (this.coalRate > 0) {
         this.coal -= this.coalRate * burn;
-        bump(
-          this.trip.fuel,
-          this.fuelKind,
-          (this.coalRate * burn) / (this.fuelKind === 'coal' ? 1 : 0.5),
-        );
+        bump(this.trip.fuel, 'coal', this.coalRate * burn);
       }
       if (this.waterRate > 0) {
         const wb = this.waterRate * burn * bio.waterUseMul;
@@ -3519,8 +3501,6 @@ export class Train {
         oil: this.oil,
         water: this.water,
         battery: this.battery,
-        kind: this.fuelKind,
-        pref: this.fuelPreference,
         oilKind: this.oilKind,
       },
       trip: this.trip,
@@ -3638,8 +3618,6 @@ export class Train {
     t.oil = j.tanks.oil;
     t.water = j.tanks.water;
     t.battery = Math.min(t.batteryCap, j.tanks.battery);
-    t.fuelKind = j.tanks.kind;
-    t.fuelPreference = j.tanks.pref;
     t.oilKind = j.tanks.oilKind === 'diesel' ? 'diesel' : 'oil';
     t.trip = { ...newTrip(0), ...j.trip };
     t.lastTrip = j.lastTrip ? { ...newTrip(0), ...j.lastTrip } : null;

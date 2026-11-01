@@ -166,6 +166,22 @@ describe('where a train refuels', () => {
   });
 });
 
+describe('coal is the only solid fuel', () => {
+  it('an engine at a store with wood and no coal does not refuel', () => {
+    const w = grass();
+    const { t, town } = service(w, 'fuel_stop', 0, 'general');
+    town.amounts.set('coal', 0);
+    town.amounts.set('wood', 1000);
+    t.coal = t.coalCap * 0.3;
+    t.water = t.waterCap;
+    expect(detour(w, t)).toBe(false);
+    const coal = t.coal;
+    t.fillUp(town, w.stores.grid, { fuel: true, water: false });
+    expect(t.coal).toBe(coal);
+    expect(town.get('wood')).toBe(1000);
+  });
+});
+
 describe('each building hands out its own', () => {
   it('the water tower fills water only', () => {
     const w = grass();

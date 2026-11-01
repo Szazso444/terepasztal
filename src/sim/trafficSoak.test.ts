@@ -79,6 +79,9 @@ function tickState(fleet: Fleet, full: boolean): string {
       // the colour code is the player's mark on a train: it moves nothing, and the goldens are older
       const saved: Partial<ReturnType<Train['toJSON']>> = t.toJSON();
       delete saved.colour;
+      // the same for the fields a tank held when wood was a fuel: nothing here burned it
+      const { oilKind, ...tanks } = saved.tanks!;
+      Object.assign(saved, { tanks: { ...tanks, kind: 'coal', pref: 'coal', oilKind } });
       parts.push(roundedJSON(saved));
     }
   }
