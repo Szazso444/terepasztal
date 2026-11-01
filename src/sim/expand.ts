@@ -8,7 +8,7 @@ export const CHUNK_TILES = 32;
 type Frame = Pick<MapGenParams, 'w' | 'h' | 'originX' | 'originY'>;
 
 /** The frame of a world after `ring` rings: a size larger by 2 rings and an origin shifted by one. */
-function grownFrame(p: Frame, ring: number) {
+export function grownFrame(p: Frame, ring: number) {
   const d = ring * CHUNK_TILES;
   return {
     w: p.w + 2 * d,
