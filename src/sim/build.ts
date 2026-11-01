@@ -129,6 +129,8 @@ export function unbuildable(t: Terrain): string | null {
       return STR.build.nothingOn.rock;
     case Terrain.Mountain:
       return STR.build.nothingOn.mountain;
+    case Terrain.Ice:
+      return STR.build.nothingOn.ice;
     default:
       return null;
   }
@@ -548,6 +550,8 @@ export class Builder {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
     const t = terrainAt(this.map, x, y);
+    // no track on a glacier, of any kind: the one ground it never crosses
+    if (t === Terrain.Ice) return STR.build.nothingOn.ice;
     if (t === Terrain.Water && kind !== 'bridge' && !this.bridgeAt(x, y))
       return STR.build.needBridge;
     if (t !== Terrain.Water && kind === 'bridge') return STR.build.bridgeOnWater;
