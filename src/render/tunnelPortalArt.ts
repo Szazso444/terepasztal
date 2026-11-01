@@ -75,6 +75,11 @@ export const blankPortalArt: PortalArt = {
 };
 
 const K = TUNNEL_R;
+/**
+ * The longest side of a portal's picture, texels. At full density that is 341 world px: a face with
+ * about nine tiles of cutting. A longer cutting takes a lower density, not a larger picture.
+ */
+export const PICTURE_MAX = 1024;
 /** How far the far wall of a cutting stands from the rail, and the ballast's edge, tiles. */
 export const CUT_WALL = 0.45;
 const BALLAST = 0.27;
@@ -106,11 +111,12 @@ function canvasOver(points: readonly Pt[], mirror: boolean) {
     y = Math.floor(Math.min(...ys)) - 3,
     w = Math.ceil(Math.max(...xs)) + 3 - x,
     h = Math.ceil(Math.max(...ys)) + 3 - y,
+    k = Math.min(K, PICTURE_MAX / Math.max(w, h)),
     canvas = document.createElement('canvas');
-  canvas.width = w * K;
-  canvas.height = h * K;
+  canvas.width = Math.min(PICTURE_MAX, Math.ceil(w * k));
+  canvas.height = Math.min(PICTURE_MAX, Math.ceil(h * k));
   const c = canvas.getContext('2d')!;
-  c.setTransform(K * flip, 0, 0, K, -x * K, -y * K);
+  c.setTransform(k * flip, 0, 0, k, -x * k, -y * k);
   return {
     c,
     /** The picture, mipmapped: at a far zoom the brick would shimmer. */
@@ -124,7 +130,7 @@ function canvasOver(points: readonly Pt[], mirror: boolean) {
       }),
       x,
       y,
-      scale: 1 / K,
+      scale: 1 / k,
     }),
   };
 }
