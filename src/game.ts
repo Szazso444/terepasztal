@@ -23,7 +23,7 @@ import {
 } from './engine/saveMessages';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
-import { mapFromLevel, type LevelData } from './world/level';
+import { layableTrack, mapFromLevel, type LevelData } from './world/level';
 import { rules, applyGameRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
 import { ageDef, LAST_AGE, railAge, type AgeSnapshot } from './sim/ages';
@@ -566,8 +566,9 @@ export class Game implements UiHost {
 
   /** Place a level's pre-built content into a fresh world (no economy). */
   placeLevelContent(level: LevelData) {
-    const track = liftLegacyTrack(
-      level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track),
+    const { track, buildings } = layableTrack(
+      liftLegacyTrack(level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track)),
+      level.buildings,
     );
     for (const [x, y, kind, rot, cls, cls2] of track) {
       if (!inBounds(this.map, x, y)) continue;
@@ -589,7 +590,7 @@ export class Game implements UiHost {
       this.onDecorChanged(d, false);
     }
     this.houses.finishAll();
-    for (const bj of level.buildings ?? []) {
+    for (const bj of buildings) {
       const b = buildingFromLevel(bj);
       if (!inBounds(this.map, b.x, b.y)) continue;
       this.builder.buildings.set(b.y * this.map.w + b.x, b);
