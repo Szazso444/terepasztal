@@ -337,7 +337,7 @@ export class WorldRenderer {
   movingWater = true;
   /** The wind the water moves in (`Weather`); the game sets it each frame. */
   wind: WaterWind | undefined;
-  private waterMotion!: WaterMotion;
+  private waterMotion: WaterMotion | undefined;
   private view: { x: number; y: number; w: number; h: number } | null = null;
   /** The wheat fields' pictures (#444), one per field tile's sprite. */
   private wheat: WheatFields;
@@ -407,7 +407,7 @@ export class WorldRenderer {
       this.landscape.root,
       this.ground,
       this.waterDetails,
-      this.waterMotion.root,
+      this.waterMotion!.root,
       this.contactGround,
       this.piers,
       this.platforms,
@@ -1074,7 +1074,7 @@ export class WorldRenderer {
             .stroke({ color: 0xb7d1be, width: 0.6, alpha: 0.04 + 0.055 * (1 + Math.sin(phase)) });
         }
     }
-    this.waterMotion.update(
+    this.waterMotion?.update(
       dt,
       this.waterClock,
       this.movingWater ? this.view : null,
