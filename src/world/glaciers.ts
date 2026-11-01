@@ -18,14 +18,16 @@ import { Terrain } from './tiles';
  * from the other end: from its tile with the most rain the land's drainage is followed down, as
  * far as MELT_TILES tiles, to the water it reaches, and the way is laid the same.
  *
- * So a glacier is a tile wide and 1 to 1 + ICE_TILES tiles long; channels side by side make wider
- * ice, rarely. The trace runs on the river plan's tiles (mapgen.ts) and only there: the short
+ * The ice is the Ice channel of the approved art demo (the author, 2026-10-12): it does not stop at
+ * the snow line but runs on down the way while the land stands at ICE_LOW or more, stepping down a
+ * level as the land does, and only below that does its melt start. So a glacier is a tile wide and
+ * a few tiles longer than ICE_TILES; channels side by side make wider ice, rarely. The trace runs on the river plan's tiles (mapgen.ts) and only there: the short
  * local streams beyond the plan's region have no glaciers.
  *
  * The tiles are laid over the ground after the mountains have risen (raiseMountains), which they
- * must not change: a Mountain tile keeps its level as Ice (levelTarget), and a melt tile's water
- * stands at the level of the land it replaces, or lower where the water upstream of it already
- * came down, as water never rises downstream.
+ * must not change: an Ice tile keeps the level of the Mountain it replaces (its waterSurface holds
+ * it, levelTarget), and a melt tile's water stands at the level of the land it replaces, or lower
+ * where the water upstream of it already came down, as water never rises downstream.
  */
 
 /**
@@ -35,6 +37,8 @@ import { Terrain } from './tiles';
 export const MELT_TILES = 20;
 /** The most ice above the trace's top tile. */
 export const ICE_TILES = 4;
+/** The lowest land the ice runs down over: one level below the snow line. */
+export const ICE_LOW = MAX_LEVEL - 1;
 /** How far a trace keeps from the core's edge: the ground beyond it may change after the plan. */
 const EDGE = 4;
 
@@ -68,6 +72,8 @@ interface Trace {
   /** each melt tile's water level */
   levels: number[];
   ice: number[];
+  /** each ice tile's level */
+  iceLevels: number[];
 }
 
 /** The four sides of a tile as offsets along a row of `w`. */
@@ -116,14 +122,25 @@ export function traceGlaciers(p: GlacierInput): Uint8Array {
     }
     if (level < surface[s]) return false;
     const ice = [top];
+    const iceLevels: number[] = [MAX_LEVEL];
+    // the ice runs on down the mountain as far as its land stands high
+    while (
+      melt.length &&
+      heights[heights.length - 1] >= ICE_LOW &&
+      terrain[melt[melt.length - 1]] === Terrain.Mountain
+    ) {
+      ice.unshift(melt.pop()!);
+      iceLevels.unshift(heights.pop()!);
+    }
     for (let k = 0; k < ICE_TILES; k++) {
       const next = uphill(ice[ice.length - 1], (n) => levels[n] >= MAX_LEVEL && !ice.includes(n));
       if (next < 0) break;
       ice.push(next);
+      iceLevels.push(MAX_LEVEL);
     }
     for (const t of way) taken[t] = 1;
     for (const t of ice) taken[t] = 1;
-    traces.push({ source: s, melt, levels: heights, ice });
+    traces.push({ source: s, melt, levels: heights, ice, iceLevels });
     return true;
   };
   for (let y = iy0; y < iy1; y++)
@@ -173,7 +190,7 @@ export function traceGlaciers(p: GlacierInput): Uint8Array {
       const k = to >= 0 ? kind[to] : WaterKind.Land;
       if (k === WaterKind.River || k === WaterKind.Lake || k === WaterKind.Sea) lay(to, way);
     }
-  // A melt tile that comes down early can pull an ice tile beside it off the snow line: such a
+  // A melt tile that comes down early can pull an ice tile beside it below its level: such a
   // glacier is left out, and the tiles around it stay land.
   const kept = checkLevels(p, traces);
   const plane = new Uint8Array(w * h);
@@ -185,12 +202,15 @@ export function traceGlaciers(p: GlacierInput): Uint8Array {
       dir[i] = sideOf(down[i] - i, w) + 1;
     });
     if (!t.melt.length && kind[t.source] === WaterKind.River) plane[t.source] = GlacierKind.Head;
-    for (const i of t.ice) plane[i] = GlacierKind.Ice;
+    t.ice.forEach((i, k) => {
+      plane[i] = GlacierKind.Ice;
+      surface[i] = t.iceLevels[k];
+    });
   }
   return plane;
 }
 
-/** The traces of `traces` whose ice stays at MAX_LEVEL with the kept traces' water on the map. */
+/** The traces of `traces` whose ice keeps its levels with the kept traces' water on the map. */
 function checkLevels(p: GlacierInput, traces: Trace[]): Trace[] {
   const { w, h, terrain, drainage: d } = p;
   let kept = traces;
@@ -203,7 +223,7 @@ function checkLevels(p: GlacierInput, traces: Trace[]): Trace[] {
         s[i] = g.levels[k];
       });
     const levels = tileLevels({ w, h, terrain: t, waterSurface: s });
-    const next = kept.filter((g) => g.ice.every((i) => levels[i] >= MAX_LEVEL));
+    const next = kept.filter((g) => g.ice.every((i, k) => levels[i] >= g.iceLevels[k]));
     if (next.length === kept.length) return kept;
     kept = next;
   }
