@@ -256,6 +256,10 @@ class TooltipLayer implements TipView<TipContent> {
     );
   }
 
+  empty(content: TipContent) {
+    return !content.length;
+  }
+
   open(level: number, content: TipContent, anchor: Point) {
     const body = el('div', { class: 'tt-body' }, ...content);
     const track = circle('tt-ring-track');
@@ -270,8 +274,6 @@ class TooltipLayer implements TipView<TipContent> {
     ring.setAttribute('aria-hidden', 'true');
     ring.append(track, arc);
     const box = el('div', { class: 'tt panel', role: 'tooltip' }, body, ring);
-    // a term with nothing to say right now (a menu entry whose menu is open) opens no box
-    if (!content.length) box.style.display = 'none';
     const d: Drawn = {
       box,
       body,
