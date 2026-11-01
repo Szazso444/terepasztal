@@ -76,8 +76,11 @@ export function emergencyRefuel(
   );
 }
 
-/** The routing buttons: the stop list, then every dynamic mode the simulation offers. */
-const ROUTE_BUTTONS: readonly RouteMode[] = ['schedule', ...DYNAMIC_MODES];
+/**
+ * The routing buttons: the stop list, every dynamic mode the simulation offers, then Maintenance,
+ * which a train takes only with a maintenance wagon.
+ */
+const ROUTE_BUTTONS: readonly RouteMode[] = ['schedule', ...DYNAMIC_MODES, 'maintenance'];
 
 type Tab = 'overview' | 'stops' | 'consist';
 type Wagon = Train['wagons'][number];
@@ -478,7 +481,15 @@ export class TrainScreen implements Screen {
       'div',
       { class: 'k-inrow dp-modes' },
       segmented({
-        options: ROUTE_BUTTONS.map((m) => ({ id: m, label: STR.train.mode[m] })),
+        options: ROUTE_BUTTONS.map((m) => {
+          const off = m === 'maintenance' && !t.hasMaintenanceWagon;
+          return {
+            id: m,
+            label: STR.train.mode[m],
+            disabled: off,
+            title: off ? STR.fleet.needMaintenanceWagon : undefined,
+          };
+        }),
         value: t.mode,
         onChange: (id) => {
           this.accepted(this.commands.setTrainMode(t, id as RouteMode));
@@ -613,7 +624,7 @@ export class TrainScreen implements Screen {
   /** A wagon's line: its cargo against its capacity and the weight, or empty. */
   private wagonNow(w: Wagon): string {
     const cap = w.def.capacity * levelMul(w.level);
-    if (w.def.service) return wagonStats(w.def, levelMul(w.level));
+    if (w.def.service || w.def.capacity <= 0) return wagonStats(w.def, levelMul(w.level));
     return w.cargo
       ? `${cargoDef(w.cargo).name} ${Math.round(w.amount)}/${Math.round(cap)} · ${(w.def.weight + w.amount * cargoDef(w.cargo).weight).toFixed(1)} t`
       : `${STR.depot.empty} · ${Math.round(cap)} u · ${w.def.weight} t`;
@@ -670,11 +681,15 @@ export class TrainScreen implements Screen {
     const m = levelMul(w.level);
     const cap = Math.round(w.def.capacity * m);
     const cart = w.def.service;
+    // a wagon that holds nothing has no capacity to show
+    const holds = w.def.capacity > 0;
     const parts: (HTMLElement | null)[] = [
       sectionHeader(w.def.name, STR.train.wagonOf(i + 1, t.wagons.length)),
       el('div', { class: 'dp-big' }, vehicleSprite(this.atlas, w.def.id, 2)),
       this.rarityRow(w.def.rarity),
-      cart ? null : labelValue(STR.roster.level, levelGain(w.level, m, STR.train.capacity)),
+      cart || !holds
+        ? null
+        : labelValue(STR.roster.level, levelGain(w.level, m, STR.train.capacity)),
       labelValue(STR.train.carries, STR.roster.carries[w.def.carries] ?? w.def.carries),
       labelValue(STR.train.size, STR.roster.size[w.def.size ?? 'small']),
     ];
@@ -682,7 +697,7 @@ export class TrainScreen implements Screen {
       parts.push(
         labelValue(STR.train.refuelCart, `+${w.def.serviceCap ?? 0} ${serviceResource(cart)}`),
       );
-    else {
+    else if (holds) {
       parts.push(labelValue(STR.roster.capacity, `${cap} u`));
       parts.push(
         bindMeter(this.live, meter(STR.train.cargoAboard, '', 0), () => {

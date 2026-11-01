@@ -170,9 +170,12 @@ export function wagonStats(
   return [
     STR.roster.carries[d.carries] ?? d.carries,
     STR.roster.size[d.size ?? 'small'],
-    `${Math.round(d.capacity * mul)}u`,
+    // a wagon that holds nothing has no capacity to show
+    d.capacity > 0 ? `${Math.round(d.capacity * mul)}u` : null,
     `${d.weight}t`,
-  ].join(' · ');
+  ]
+    .filter((p) => p !== null)
+    .join(' · ');
 }
 
 // ---------------------------------------------------------------- the stop editor

@@ -526,7 +526,7 @@ export class DepotScreen implements Screen {
     for (const w of t.wagons) {
       const sub = el('span');
       this.live.text(sub, () => {
-        if (w.def.service) return wagonStats(w.def, levelMul(w.level));
+        if (w.def.service || w.def.capacity <= 0) return wagonStats(w.def, levelMul(w.level));
         const cap = Math.round(w.def.capacity * levelMul(w.level));
         return w.cargo
           ? `${cargoDef(w.cargo).name} ${Math.round(w.amount)}/${cap}`

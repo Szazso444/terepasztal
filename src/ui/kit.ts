@@ -393,6 +393,8 @@ export function meter(label: string, value: string, share: number, tone = ''): H
 export interface SegOption {
   id: string;
   label: string;
+  /** greyed out and not pressable; the title says why */
+  disabled?: boolean;
   title?: string;
 }
 
@@ -408,7 +410,9 @@ export function segmented(o: {
   const buttons = o.options.map((opt) => {
     const b = el('button', { type: 'button', role: 'radio', text: opt.label });
     if (opt.title) b.title = opt.title;
+    if (opt.disabled) b.disabled = true;
     onPress(b, () => {
+      if (opt.disabled) return;
       value = pickOption(o.options, opt.id, value);
       show();
       o.onChange(value);

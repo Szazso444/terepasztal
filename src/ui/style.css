@@ -3444,6 +3444,13 @@ table.market td {
 .k-seg > button:hover {
   color: var(--text);
 }
+.k-seg > button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.k-seg > button:disabled:hover {
+  color: var(--text-dim);
+}
 .k-seg > button.on {
   background: var(--iron);
   color: var(--amber);

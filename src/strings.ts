@@ -2107,6 +2107,7 @@ const EN = {
       transport: 'Transport',
       contract: 'Contract',
       freight: 'Freight',
+      maintenance: 'Maintenance',
     } as Record<string, string>,
     modeHint: {
       schedule: 'Static: follows the stop list below exactly.',
@@ -2114,6 +2115,8 @@ const EN = {
       contract: 'Dynamic: carries accepted contracts from origin to destination.',
       freight:
         'Dynamic: fullest producer first, tops up at another producer while room is left. The goods go to the nearest store with room (depot, warehouse or Townhouse); nothing is taken out of a store. Re-plans at every stop and refuels on its own.',
+      maintenance:
+        'Dynamic: looks after the track. Needs a maintenance wagon in the train; the train leaves this mode when the wagon is taken off.',
     } as Record<string, string>,
     coal: 'Coal',
     wood: 'Wood',
@@ -2275,6 +2278,7 @@ const EN = {
     wagonUnavailable: 'Wagon unavailable',
     tooHeavy: (w: number, p: number) => `Wagons weigh ${w} t, engines haul ${p} t`,
     needTwoStops: 'Route needs at least two stations',
+    needMaintenanceWagon: 'Maintenance needs a maintenance wagon in the train',
     missingStation: 'Missing station',
     noPlatform: (n: string) => `${n} has no platform track`,
     platformBusy: (n: string) => `A train stands on every platform at ${n}`,

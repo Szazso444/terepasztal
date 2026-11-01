@@ -1896,6 +1896,7 @@ export const HU: Strings = {
       transport: 'Utasszállítás',
       contract: 'Szerződés',
       freight: 'Teherfuvar',
+      maintenance: 'Karbantartás',
     },
     modeHint: {
       schedule: 'Statikus: pontosan a lenti megállólistát követi.',
@@ -1903,6 +1904,8 @@ export const HU: Strings = {
       contract: 'Dinamikus: az elfogadott szerződéseket viszi a kiindulási helyről a célba.',
       freight:
         'Dinamikus: előbb oda megy, ahol a legtöbb áru áll, majd egy másik termelőnél tölt rá, amíg van hely. Az áru a legközelebbi olyan készletbe megy, ahol még van hely (fűtőház, raktár vagy városháza); készletből nem visz el semmit. Minden megállóban újratervez, és magától tankol.',
+      maintenance:
+        'Dinamikus: a pályát gondozza. Karbantartó kocsi kell hozzá a vonatban; ha a kocsit leveszik, a vonat kilép ebből az üzemmódból.',
     },
     coal: 'Szén',
     wood: 'Fa',
@@ -2056,6 +2059,7 @@ export const HU: Strings = {
     wagonUnavailable: 'A kocsi nem elérhető',
     tooHeavy: (w: number, p: number) => `A kocsik ${w} t-t nyomnak, a mozdonyok ${p} t-t bírnak`,
     needTwoStops: 'Az útvonalhoz legalább két állomás kell',
+    needMaintenanceWagon: 'A karbantartó üzemmódhoz karbantartó kocsi kell a vonatban',
     missingStation: 'Hiányzó állomás',
     noPlatform: (n: string) => `${n}: nincs peronvágány`,
     platformBusy: (n: string) => `${n}: minden peronon vonat áll`,

@@ -588,9 +588,12 @@ export class Fleet {
    * train without a route idles and asks again, as a roaming train does. A contract job keeps its
    * two stops: the new mode takes over when the train goes back to its own program. The program
    * `schedule` checks is the one the train goes back to (`Train.program`), also after a job
-   * closed and before the train has taken its program up again.
+   * closed and before the train has taken its program up again. `maintenance` is refused for a
+   * train without a maintenance wagon (`leaveMaintenance` is the way out when it loses it).
    */
   setMode(t: Train, mode: RouteMode): { ok: true } | { ok: false; message: string } {
+    if (mode === 'maintenance' && !t.hasMaintenanceWagon)
+      return { ok: false, message: STR.fleet.needMaintenanceWagon };
     if (mode === 'schedule') {
       if (t.program.length < 2) return { ok: false, message: STR.fleet.needTwoStops };
       t.mode = mode;
@@ -599,6 +602,13 @@ export class Fleet {
     t.mode = mode;
     if (!t.job) this.replan(t);
     return { ok: true };
+  }
+  /**
+   * A train that lost its maintenance wagon leaves the mode: back to its own stop list, or to
+   * freight when it has fewer than two stops.
+   */
+  private leaveMaintenance(t: Train) {
+    this.setMode(t, t.program.length >= 2 ? 'schedule' : 'freight');
   }
   /** Point a roaming train at the stop it would pick now (see `setMode`). */
   private replan(t: Train) {
@@ -820,6 +830,8 @@ export class Fleet {
    * reach and leave again.
    */
   chooseNext(t: Train): number | null {
+    // a maintenance train picks track to mend, not stations
+    if (t.mode === 'maintenance') return null;
     const head = t.poses[0] ?? { x: 0, y: 0 };
     const dist = (s: Station) => Math.abs(s.cx - head.x) + Math.abs(s.cy - head.y);
     const between = (a: Station, b: Station) => Math.abs(a.cx - b.cx) + Math.abs(a.cy - b.cy);
@@ -1061,6 +1073,8 @@ export class Fleet {
     this.gridBegin();
     this.traffic.assign(this.trains, now);
     const ctx = this.ctx(now, speedFactor);
+    for (const t of this.trains)
+      if (t.mode === 'maintenance' && !t.hasMaintenanceWagon) this.leaveMaintenance(t);
     for (const t of this.trains) {
       const before = t.atStation;
       t.tick(gdt, ctx);

@@ -155,9 +155,10 @@ export function consistPhysics(
  * the fullest producer or warehouse and hauls its goods on (producer goods into the nearest
  * warehouse or a depot, warehouse goods into a depot), `transport` carries passengers between
  * town stations, `contract` works the contracts handed to it; all three pick their stops on the
- * fly.
+ * fly. `maintenance` looks after the track and needs a maintenance wagon; it is no dynamic mode of
+ * the depot's menu (`DYNAMIC_MODES`), since a train takes it only once it has the wagon.
  */
-export type RouteMode = 'schedule' | 'freight' | 'transport' | 'contract';
+export type RouteMode = 'schedule' | 'freight' | 'transport' | 'contract' | 'maintenance';
 export const DYNAMIC_MODES: RouteMode[] = ['freight', 'transport', 'contract'];
 /** What a train does at one stop of its looped schedule. */
 export interface StopPlan {
@@ -2898,6 +2899,8 @@ export class Train {
     for (const w of this.wagons) {
       if (stop.load === 'none') break;
       if (budget <= 0) break;
+      // a wagon that holds nothing (the maintenance wagon) is never waited on
+      if (w.def.capacity <= 0) continue;
       if (w.cargo && w.amount >= w.def.capacity * levelMul(w.level) - 1e-3) continue;
       const options = produced.filter(
         (c) => (w.def.accepts ?? []).includes(c) && (!w.cargo || w.cargo === c) && taker(c),
@@ -3671,7 +3674,7 @@ export class Train {
         }
       : null;
     // the migration steps map the old mode names to the current ones and fill the battery
-    t.mode = DYNAMIC_MODES.includes(j.mode) ? j.mode : 'schedule';
+    t.mode = DYNAMIC_MODES.includes(j.mode) || j.mode === 'maintenance' ? j.mode : 'schedule';
     t.coal = j.tanks.coal;
     t.oil = j.tanks.oil;
     t.water = j.tanks.water;
