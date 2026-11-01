@@ -65,8 +65,8 @@ export const ease = (value: number, target: number, dt: number, tau: number) =>
 
 /** A plume is this many puffs overlapping into one column, and one pinned at the pot's mouth. */
 export const PLUME_PUFFS = 16;
-/** Of the house chimneys about this share is lit; a works chimney always smokes. */
-export const PLUME_LIT = 1 / 3;
+/** Of the house chimneys about this share is lit, the author's pick; a works chimney always smokes. */
+export const PLUME_LIT = 2 / 3;
 
 export interface PuffShape {
   /** world px up from the pot */

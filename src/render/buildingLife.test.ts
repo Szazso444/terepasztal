@@ -175,7 +175,7 @@ describe('the smoke of a chimney', () => {
     expect(plume.visible).toBe(false);
   });
 
-  it('lights about a third of the house chimneys, the same ones every time', () => {
+  it('lights about two in three of the house chimneys, the same ones every time', () => {
     const { life } = setup();
     let lit = 0;
     const N = 300;
@@ -184,8 +184,8 @@ describe('the smoke of a chimney', () => {
       life.place(`h${i}`, building(40 * i, 17 * i), 'structures/townhouse', 1);
       lit += sites.get(`h${i}`)?.plumes.length ?? 0;
     }
-    expect(lit).toBeGreaterThan(N * 0.22);
-    expect(lit).toBeLessThan(N * 0.45);
+    expect(lit).toBeGreaterThan(N * 0.55);
+    expect(lit).toBeLessThan(N * 0.78);
     const again = sites.get('h7')?.plumes.length;
     life.place('h7', building(40 * 7, 17 * 7), 'structures/townhouse', 1);
     expect(sites.get('h7')?.plumes.length).toBe(again);
