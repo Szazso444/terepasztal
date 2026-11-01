@@ -1239,6 +1239,40 @@ describe('a maintenance train and a train stopped at the break', () => {
     run(w, 3, () => expect(t.state).toBe('moving'));
   });
 
+  it.each(['noFuel', 'stranded'] as const)('a worker gone %s drops its claim', SLOW, (how) => {
+    const { w } = sidedLine(false);
+    wearDown(w, 50, 0);
+    const first = maintTrain(w, []);
+    until(w, () => first.headTile!.x > 30, 120);
+    expect(first.maint?.ax).toBe(50);
+    if (how === 'noFuel') {
+      first.coal = 0;
+      first.water = 0;
+    } else cut(w, first.headTile!.x);
+    until(w, () => first.state === how, 30);
+    expect(first.maint).toBeNull();
+    if (how !== 'noFuel') return;
+    // the piece is on the board: the next worker takes it, and works from behind the stopped one
+    const next = maintTrain(w, []);
+    expect(next.maint?.ax).toBe(50);
+    until(w, repairing(next), 120);
+    until(w, () => healthAt(w, 50) >= 1, 120);
+  });
+
+  it('a worker that stopped and gets fuel again looks for work', SLOW, () => {
+    const { w } = sidedLine(false);
+    wearDown(w, 50, 0.2);
+    const t = maintTrain(w, []);
+    until(w, () => t.headTile!.x > 30, 120);
+    const fuel = { coal: t.coal, water: t.water };
+    t.coal = 0;
+    t.water = 0;
+    until(w, () => t.state === 'noFuel', 30);
+    Object.assign(t, fuel);
+    until(w, repairing(t), 120);
+    expect(t.maint?.ax).toBe(50);
+  });
+
   it('with a way round the train it takes that and reaches the job', SLOW, () => {
     rules.trackWearMul = 0;
     const w = simWorld({ terrain: 'grass', size: 96 });

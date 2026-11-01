@@ -2350,7 +2350,10 @@ export class Train {
           this.stateTime = 0;
           if (this.state === 'overweight' && this.weight > this.power) break;
           if (this.state !== 'overweight' && this.fuelProblem(ctx, 0.05)) break;
-          if (this.path) this.setState('moving');
+          // it gave its job up when it stopped: it looks again
+          if (this.boundForWork && !this.maint && !this.parkAt && !this.serviceStop)
+            this.nextWork(ctx);
+          else if (this.path) this.setState('moving');
           else if (this.dispatch(ctx.track, ctx.builder, ctx.map)) this.onPathReady(ctx);
           else this.setState('noRoute');
         }
@@ -2580,6 +2583,11 @@ export class Train {
   }
   private setState(s: TrainState) {
     if (s !== 'moving') this.clearHold();
+    // a train that cannot go on gives its job back: the claim does not outlive the work
+    if (STOPS_WORK.includes(s)) {
+      this.maint = null;
+      this.repairUnpaid = false;
+    }
     // the way an idle train wants aside is its own (`wantAside`): never a later yield's way on
     if (s !== this.state && (s === 'idle' || this.state === 'idle')) this.wantTiles = null;
     this.state = s;
