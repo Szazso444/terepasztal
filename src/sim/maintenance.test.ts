@@ -9,7 +9,7 @@ import { findPath } from '../world/pathfinding';
 import { classRank, consistAccess, consistGauge, gaugeOf, trafficRank } from './compat';
 import { Commands } from './commands';
 import type { Contract } from './contracts';
-import { DEFAULT_RULES, rules } from './rules';
+import { daySeconds, DEFAULT_RULES, rules } from './rules';
 import { SimStep, startStock, type StepContext } from './step';
 import { defaultStop, Train, type RouteMode, type StopPlan } from './trains';
 import { locoDef, wagonDef } from '../gacha/items';
@@ -720,6 +720,34 @@ describe('a maintenance train at work', () => {
     until(w, () => t.mode !== 'maintenance');
     expect(t.maint).toBeNull();
     expect(t.state).not.toBe('repairing');
+  });
+
+  it('pays its crew at the nearest store on finishing a job, however far', () => {
+    const { w, store, stops } = workLine();
+    store.add('food', 100);
+    const food = store.get('food');
+    wearDown(w, 80, 0.2);
+    const t = maintTrain(w, stops);
+    until(w, repairing(t));
+    t.owed.food = 5;
+    until(w, () => t.maint === null);
+    expect(t.owed.food).toBeLessThan(1);
+    expect(store.get('food')).toBeLessThan(food - 4);
+  });
+
+  it('pays its crew on reaching its waiting place, and as it waits there', () => {
+    const { w, store, stops } = workLine();
+    store.add('food', 100);
+    const t = maintTrain(w, stops);
+    t.owed.food = 5;
+    until(w, () => t.state === 'idle');
+    const paid = store.get('food');
+    expect(t.owed.food).toBeLessThan(1);
+    const from = w.clock.time;
+    until(w, () => w.clock.time > from + 3 * daySeconds(), 3 * daySeconds() + 1);
+    expect(t.state).toBe('idle');
+    expect(t.hungry).toBe(false);
+    expect(store.get('food')).toBeLessThan(paid);
   });
 
   it('a piece taken away under the job ends it', () => {

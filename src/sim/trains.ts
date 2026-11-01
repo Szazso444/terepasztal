@@ -1608,7 +1608,7 @@ export class Train {
   /**
    * Food and sand the train owes: its crew eats `rules.wheatPerCrew` a week each, and in the full
    * production chain it spreads sand on every tile it runs. Both are taken at the next store it
-   * fills up at (`settle`).
+   * fills up at (`settle`), and from a worker as it finishes a job or waits (`payCrew`).
    */
   owed = { food: 0, sand: 0 };
   /** Food the crew eats in a game day. */
@@ -2414,7 +2414,14 @@ export class Train {
       ctx.builder.wear.restore(job.ax, job.ay, share);
       if (piece.wear.health < 1) return;
     }
+    this.payCrew(ctx);
     this.nextWork(ctx);
+  }
+  /** It calls at no station: the crew settles at the nearest store, however far (`settle`). */
+  private payCrew(ctx: TickCtx) {
+    const head = this.headTile;
+    const store = head && ctx.stores.nearest(head.x, head.y, Infinity)[0];
+    if (store) this.settle(store);
   }
   /**
    * Add what `share` of the piece comes to, and pay the whole units of it from the nearest store
@@ -2467,12 +2474,15 @@ export class Train {
     this.serviceStop = null;
     if (this.takeJob(ctx)) return;
     if (this.state === 'idle' && this.parkAt) {
+      this.payCrew(ctx);
       this.idle();
       return;
     }
     const spot = ctx.maintenance.park(this, ctx.track);
     this.parkAt = spot?.at ?? null;
-    if (!spot || !this.setOff(spot.path, ctx)) this.idle(ENGLISH.trainNote.noWork);
+    if (spot && this.setOff(spot.path, ctx)) return;
+    this.payCrew(ctx);
+    this.idle(ENGLISH.trainNote.noWork);
   }
   /** Follow a way from either end of the train; false when it stands where the way ends. */
   private setOff(path: PathSegment[], ctx: TickCtx): boolean {
@@ -2939,7 +2949,10 @@ export class Train {
         const to = this.maint ?? this.parkAt;
         if (to?.x !== seg.x || to.y !== seg.y) this.setState('noRoute');
         else if (this.maint) this.startWork();
-        else this.idle(ENGLISH.trainNote.noWork);
+        else {
+          this.payCrew(ctx);
+          this.idle(ENGLISH.trainNote.noWork);
+        }
         return;
       }
       if (want && st === want) this.arrive(want, ctx);
