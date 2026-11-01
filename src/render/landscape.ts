@@ -132,7 +132,7 @@ type WorkerError = Partial<Pick<ErrorEvent, 'message' | 'filename' | 'lineno' | 
  * script cannot load fires a bare event with none of them.
  */
 export function workerErrorText(event: WorkerError): string {
-  const what = event.message || 'a paint worker failed without a message (did its script load?)';
+  const what = event.message || 'a worker failed without a message (did its script load?)';
   return event.filename
     ? `${what} (${event.filename}:${event.lineno ?? 0}:${event.colno ?? 0})`
     : what;

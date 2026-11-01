@@ -365,6 +365,14 @@ export class Rain {
   }
 }
 
+/** Whole tiles from (`x0`, `y0`) up to but not including (`x1`, `y1`). */
+export interface TileRect {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
 /** Drifting fog patches in world space around the camera plus a light screen haze. */
 export class Fog {
   readonly patches = new Container();
@@ -376,19 +384,21 @@ export class Fog {
     this.patches.addChild(this.clip);
     this.patches.mask = this.clip;
   }
-  /** Clip fog to the map plus its void ring so patches never float over the page background. */
-  setWorld(w: number, h: number, border: number) {
-    const b = border + 0.5;
-    const pts = [
-      tileToWorld(-b, -b),
-      tileToWorld(w - 1 + b, -b),
-      tileToWorld(w - 1 + b, h - 1 + b),
-      tileToWorld(-b, h - 1 + b),
-    ];
-    this.clip
-      .clear()
-      .poly(pts.flatMap((p) => [p.x, p.y]))
-      .fill(0xffffff);
+  /**
+   * Clip fog to the map plus its void ring, and to the tiles of `reach`, the edge strip in view, so
+   * patches never float over the page background.
+   */
+  setWorld(w: number, h: number, border: number, reach: readonly TileRect[] = []) {
+    const shape = (r: TileRect) =>
+      [
+        tileToWorld(r.x0 - 0.5, r.y0 - 0.5),
+        tileToWorld(r.x1 - 0.5, r.y0 - 0.5),
+        tileToWorld(r.x1 - 0.5, r.y1 - 0.5),
+        tileToWorld(r.x0 - 0.5, r.y1 - 0.5),
+      ].flatMap((p) => [p.x, p.y]);
+    this.clip.clear();
+    const map = { x0: -border, y0: -border, x1: w + border, y1: h + border };
+    for (const r of [map, ...reach]) this.clip.poly(shape(r)).fill(0xffffff);
   }
   update(
     dt: number,

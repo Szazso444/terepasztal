@@ -30,7 +30,7 @@ import {
   type PropKind,
   idx,
 } from '../world/tiles';
-import type { EdgeStrip } from '../world/edgeStrip';
+import { EDGE_STRIP_TILES } from '../world/edgeStrip';
 import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
 import { MATERIAL_COLORS, Material, materialAt } from './landscapeModel';
@@ -87,8 +87,9 @@ import { RoadWalk, roadWalks } from './roadWalk';
 import { crossingAxis, levelCrossingFrame } from './levelCrossing';
 import { AtmosphereTint, setOwnTint } from './atmosphere';
 import { cullByChunk } from './chunkCull';
-import { drawEdgeStrip, type StripShape } from './edgeStripView';
-import { surfaceVersions } from './fx';
+import { blockOfTile, type StripMesh } from './edgeStripMesh';
+import { EdgeStripView } from './edgeStripView';
+import { surfaceVersions, type TileRect } from './fx';
 
 export type BridgeStyle = 'textured' | 'kit' | 'procedural';
 /** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
@@ -258,8 +259,14 @@ export class WorldRenderer {
   /** The edge strip behind the map, under the ground, and before it, over all that stands. */
   readonly stripBack = new Container();
   readonly stripFront = new Container();
-  /** The strip's blocks, each shown while the region beside it is (`showEdgeStrip`). */
-  private stripShapes: StripShape[] = [];
+  /** The strip's blocks, each shown while the region beside it is revealed. */
+  private readonly strip = new EdgeStripView(this.stripBack, this.stripFront, (region) =>
+    this.regions.isRevealed(region),
+  );
+  /** Hears what tiles past the map the strip stands on now, whenever that changes. */
+  onStripReach: ((reach: TileRect[]) => void) | null = null;
+  /** The void ring's sprites by the strip block that stands on them (`ringKey`). */
+  private ringBlocks = new Map<number, Sprite[]>();
   private trackSprites = new Map<number, Sprite>();
   /** The frame each track sprite shows (`setTrack`): a plain straight takes a level crossing. */
   private trackFrames = new Map<number, string>();
@@ -971,6 +978,7 @@ export class WorldRenderer {
   }
 
   animate(dt: number) {
+    this.strip.update(dt);
     if (this.landscape.flush()) {
       this.refreshSummits();
       this.harvest.refresh();
@@ -1214,6 +1222,12 @@ export class WorldRenderer {
         const v = Math.round(255 * k);
         sp.tint = (v << 16) | (v << 8) | Math.min(255, Math.round(v * 1.1));
         ch.c.addChild(sp);
+        const block = this.ringKey(
+          blockOfTile(x, y, w, h, (tx, ty) => this.regions.regionIndex(tx, ty)),
+        );
+        const under = this.ringBlocks.get(block);
+        if (under) under.push(sp);
+        else this.ringBlocks.set(block, [sp]);
         ch.minX = Math.min(ch.minX, pt.x - HALF_W);
         ch.maxX = Math.max(ch.maxX, pt.x + HALF_W);
         ch.minY = Math.min(ch.minY, pt.y - HALF_H);
@@ -1223,20 +1237,44 @@ export class WorldRenderer {
       ch.c.cullArea = new Rectangle(ch.minX, ch.minY, ch.maxX - ch.minX, ch.maxY - ch.minY);
   }
 
-  /** Shows the ground past the map (edgeStripView.ts), in place of the void ring it stands on. */
-  setEdgeStrip(strip: EdgeStrip) {
-    this.stripShapes = drawEdgeStrip(
-      strip,
-      (x, y) => this.regions.regionIndex(x, y),
-      this.stripBack,
-      this.stripFront,
-    );
-    this.border.visible = false;
-    this.showEdgeStrip();
+  /** One number for a strip block: its region and its layer. */
+  private ringKey({ region, front }: { region: number; front: boolean }) {
+    return region * 2 + (front ? 1 : 0);
+  }
+  /**
+   * Takes in the ground past the map (edgeStripView.ts). A block stands in place of the void ring
+   * under it, which stays until the block has faded in, and for as long as it does not show.
+   */
+  setEdgeStrip(meshes: StripMesh[]) {
+    this.strip.onCover = (region, front, covered) => {
+      for (const sp of this.ringBlocks.get(this.ringKey({ region, front })) ?? [])
+        sp.visible = !covered;
+    };
+    this.strip.set(meshes);
+    this.reportStripReach();
   }
   /** The strip goes on from the regions in view and from no others. */
   private showEdgeStrip() {
-    for (const s of this.stripShapes) s.shape.visible = this.regions.isRevealed(s.region);
+    this.strip.refresh();
+    this.reportStripReach();
+  }
+  /** Tells what stands past the map now: each region in view, out to the strip's far edge. */
+  private reportStripReach() {
+    if (!this.onStripReach) return;
+    const { w, h } = this.map;
+    const W = EDGE_STRIP_TILES;
+    const reach = [...this.strip.regions()].map((i): TileRect => {
+      const r = this.regions.regionRect(i);
+      const x1 = r.x + r.w,
+        y1 = r.y + r.h;
+      return {
+        x0: r.x > 0 ? r.x : -W,
+        y0: r.y > 0 ? r.y : -W,
+        x1: x1 < w ? x1 : w + W,
+        y1: y1 < h ? y1 : h + W,
+      };
+    });
+    this.onStripReach(reach);
   }
 
   /** Multiply-tint every ground and prop sprite (seasons). Water and void are left alone. */
@@ -2322,6 +2360,9 @@ export class WorldRenderer {
    */
   setAtmosphereTint(color: number) {
     this.atmosphere.apply(color);
+    // the front of the edge strip stands over the night overlay, as the objects do; its back lies
+    // under it, and the two take the same colour
+    this.stripFront.tint = color;
   }
   /** A structure's window lights, ground fit, yard and plinth, which only a building has. */
   private dropBuildingDressing(id: string) {
