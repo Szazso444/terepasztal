@@ -12,6 +12,7 @@ import {
   type PropKind,
 } from './tiles';
 import { DRY, FLOW_CAP, KEEP_OUT, LAKE_CLEARANCE, LOW, WaterKind, drain } from './rivers';
+import { GlacierKind, traceGlaciers } from './glaciers';
 import { markWaterfalls } from './waterfalls';
 
 /** Smooth value noise built from the coordinate hash. */
@@ -756,6 +757,7 @@ export function generateMapPlanes(
   for (let y = start.y0; y < start.y1; y++)
     for (let x = start.x0; x < start.x1; x++)
       if (terrain[y * w + x] !== Terrain.Water) lake[y * w + x] = 0;
+  layGlaciers(field, plan, late, river);
   const shore = cropPlane(terrain, w, mw, mh);
   // After the start chunk's patches, which it never reaches: the Ocean climate lies at least 5
   // tiles outside the start chunk (genRaw keeps the sea out of the start zone, and smoothing moves
@@ -1149,6 +1151,11 @@ interface RiverPlan {
   /** whether the start chunk's water patch is a lake of the plan */
   pond: boolean;
   /**
+   * GlacierKind of each of its tiles. A melt tile's water level, flow and side are in the planes
+   * above, and its `kind` is land: it is laid over the ground after the mountains have risen
+   */
+  glacier: Uint8Array;
+  /**
    * the ground the plan generated, kept with the latest plan only, for the map asked for with it
    * (Field.adopt): the region and PLAN_MARGIN tiles around it
    */
@@ -1254,6 +1261,22 @@ function riverPlan(
     start: { chunk, pond: { x: px, y: py } },
     near: grow(chunk, rs),
   });
+  // the mountains as raiseMountains will raise them, for the glaciers to find the snow line
+  const relief = { w, h: w, terrain: new Uint8Array(ground) };
+  for (let i = 0; i < w * w; i++) {
+    const k = d.kind[i];
+    if (k === WaterKind.River || k === WaterKind.Lake) relief.terrain[i] = Terrain.Water;
+    else if (k === WaterKind.Dry) relief.terrain[i] = land[i];
+  }
+  raiseMountains(relief, core);
+  const glacier = traceGlaciers({
+    w,
+    h: w,
+    core,
+    terrain: relief.terrain,
+    keepOut: mark,
+    drainage: d,
+  });
   const crop = <P extends Uint8Array | Uint16Array>(src: P, out: P): P => {
     for (let y = 0; y < size; y++)
       out.set(src.subarray((y + M) * w + M, (y + M) * w + M + size), y * size);
@@ -1274,6 +1297,7 @@ function riverPlan(
       flow: e.flow,
     })),
     pond: d.pond,
+    glacier: crop(glacier, new Uint8Array(size * size)),
   };
   for (const kept of plans) kept.plan.field = undefined;
   plan.field = f;
@@ -1448,6 +1472,31 @@ function riverWater(
   return { kind, surface, flow, dir };
 }
 
+/**
+ * The plan's glaciers on the tiles of `s`, over the risen mountains: each melt tile turns to river
+ * (`river`) and each ice tile, a Mountain until now, to Ice. Their planes came with the plan's.
+ */
+function layGlaciers(map: GameMap, plan: RiverPlan, s: Span, river: Uint8Array) {
+  const { w, terrain, originX, originY } = map;
+  for (let y = Math.max(s.y0, plan.y0 - originY); y < s.y1; y++) {
+    const py = y + originY - plan.y0;
+    if (py >= plan.size) break;
+    for (let x = Math.max(s.x0, plan.x0 - originX); x < s.x1; x++) {
+      const px = x + originX - plan.x0;
+      if (px >= plan.size) break;
+      const g = plan.glacier[py * plan.size + px];
+      if (!g) continue;
+      const i = y * w + x;
+      if (g === GlacierKind.Ice) {
+        if (terrain[i] === Terrain.Mountain) terrain[i] = Terrain.Ice;
+      } else {
+        terrain[i] = Terrain.Water;
+        river[i] = 1;
+      }
+    }
+  }
+}
+
 /** The Dir of the side a tile `delta` away (along a row of `w`) lies on. */
 const sideOf = (delta: number, w: number) =>
   delta === -w ? Dir.N : delta === 1 ? Dir.E : delta === w ? Dir.S : Dir.W;
@@ -1456,7 +1505,7 @@ const sideOf = (delta: number, w: number) =>
  * Large stone fields rise in the middle: rock tiles two deep inside a field become mountains, on
  * the tiles of `s` (which reads the rock 2 tiles around it).
  */
-function raiseMountains(map: GameMap, s: Span) {
+function raiseMountains(map: Pick<GameMap, 'w' | 'h' | 'terrain'>, s: Span) {
   const { w, h, terrain } = map;
   const isRock = (x: number, y: number) =>
     x >= 0 && y >= 0 && x < w && y < h && terrain[y * w + x] === Terrain.Rock;
@@ -1548,7 +1597,7 @@ function biomeRules(map: GameMap, river: Uint8Array, sea: Uint8Array, s: Span): 
       if (t === Terrain.Water) {
         if (river[i]) biome[i] = Biome.River;
         else if (!sea[i]) biome[i] = Biome.Lake;
-      } else if (t === Terrain.Mountain || t === Terrain.Rock) {
+      } else if (t === Terrain.Mountain || t === Terrain.Ice || t === Terrain.Rock) {
         if (steps[i] <= MOUNTAIN_REACH) biome[i] = Biome.Mountain;
       } else if (t === Terrain.Sand) {
         let shore = false;
@@ -1581,7 +1630,7 @@ function stepsToMountain(map: GameMap, s: Span): Uint8Array {
   let tail = 0;
   for (let y = y0; y < y1; y++)
     for (let x = x0, i = y * w + x; x < x1; x++, i++)
-      if (terrain[i] === Terrain.Mountain) {
+      if (terrain[i] === Terrain.Mountain || terrain[i] === Terrain.Ice) {
         steps[i] = 0;
         queue[tail++] = i;
       }

@@ -7,6 +7,8 @@ export const enum Terrain {
   Sand = 5,
   /** the raised heart of a large stone field; nothing can be built on it */
   Mountain = 6,
+  /** a glacier: ice where a river would run above the snow line (glaciers.ts); nothing stands on it */
+  Ice = 7,
 }
 export const TERRAIN_NAMES = [
   'grass',
@@ -16,6 +18,7 @@ export const TERRAIN_NAMES = [
   'rock',
   'sand',
   'mountain',
+  'ice',
 ] as const;
 
 /**
