@@ -1103,6 +1103,20 @@ export class Game implements UiHost {
       if (bridgeTilesTouched((nx, ny) => !!this.builder.bridgeAt(nx, ny), x, y))
         this.bridgesDirty = true;
     };
+    // a raise or lower, and its undo and redo: the ground is painted again where it moved and on
+    // the ring round it, whose corners it shares, and the rail beds are worked out again
+    this.builder.onGroundChanged = (tiles) => {
+      const seen = new Set<number>();
+      for (const t of tiles)
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            const x = t.x + dx,
+              y = t.y + dy;
+            if (!inBounds(this.map, x, y) || !seen.add(y * this.map.w + x)) continue;
+            this.world.retile(x, y);
+          }
+      this.railsDirty = true;
+    };
     this.world.harvest.canStand = (x, y, id, rot) => this.builder.checkStation(x, y, id, rot).ok;
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
