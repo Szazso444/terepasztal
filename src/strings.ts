@@ -541,6 +541,10 @@ const EN = {
     free: 'free',
     rotate: 'R: rotate',
     dragHint: 'drag to lay a line',
+    /** the Bridge tool over a free tile, and over a bridge it can raise */
+    bridgeDragHint: 'drag to lay a bridge with its rail',
+    raiseHint: (cost: string) => `Click: raise this bridge one height · ${cost}`,
+    raiseFree: 'Click: raise this bridge one height',
     /** a dragged run's straights, its crossings and curves told apart */
     runPieces: (n: number, kind: string) => `${n} x ${kind}`,
     runCurves: (n: number) => `+${n} curve${n === 1 ? '' : 's'}`,
@@ -624,7 +628,8 @@ const EN = {
     place: {
       track: 'On grass, forest, sand or hill. Not on rock; water needs a bridge.',
       bridge: 'Only on a water tile, joining track on both banks.',
-      bridgePlatform: 'On water. Lay track on the platform after building it.',
+      bridgePlatform:
+        'A Bridge over water, a Viaduct on land or once raised. Drag to lay it with its rail; click a bridge to raise it.',
       station:
         'On grass, forest, sand or a level hill tile with track touching one side; that track becomes the platform.',
       /**
@@ -731,6 +736,10 @@ const EN = {
     /** shown where the input a works waits for cannot be named */
     unknownInput: '?',
     or: 'or',
+    /** a span by where it stands: a Bridge over water at height 0, else a Viaduct */
+    bridgeName: (material: 'wood' | 'stone', viaduct: boolean) =>
+      `${material === 'wood' ? 'Wooden' : 'Stone'} ${viaduct ? 'Viaduct' : 'Bridge'}`,
+    deckHeight: 'Height',
     bridgeCapacity: 'Bridge capacity',
     /** "half speed" is `BRIDGE_SLOW_FACTOR` in src/sim/bridges.ts; reword it if that changes. */
     bridgeLimit: (capacity: number, slowAbove: number) =>
@@ -739,7 +748,7 @@ const EN = {
     recipeLine: '{input} → {output}',
     recipeAlt: '{input} (or {alt}) → {output}',
     bridgeHint:
-      'Lay track on this platform. Connected straight rails form a continuous span. The weakest platform sets the route limit; upgrade every platform for a heavier train.',
+      'Connected straight rails form a continuous span. The weakest platform sets the route limit; upgrade every platform for a heavier train. With the Bridge tool, click a bridge to raise it.',
   },
   upgrade: {
     /**
