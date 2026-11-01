@@ -1513,7 +1513,12 @@ describe('the Depot', () => {
   type Open = ReturnType<typeof open>;
 
   const stockRow = (root: FakeEl, name: string) => {
-    const row = root.all.find((e) => e.classList.contains('dp-li') && e.text().includes(name));
+    const row = root.all.find(
+      (e) =>
+        e.classList.contains('dp-li') &&
+        !e.classList.contains('dp-train') &&
+        e.text().includes(name),
+    );
     if (!row) throw new Error(`no row ${name}`);
     return row;
   };
