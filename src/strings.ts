@@ -426,6 +426,16 @@ const EN = {
     groundBesideWater: 'Ground touching water cannot be lowered',
     /** Raise or Lower on a water tile, or one that would have to move the water beside it */
     groundMovesWater: 'This would move the water: water cannot be raised or lowered',
+    /** the Raise and Lower tools' line: how many tiles move, with the neighbours they take along, and the price */
+    groundUp: (tiles: number, cost: string) =>
+      `Raise: ${tiles} ${tiles === 1 ? 'tile' : 'tiles'}, ${cost}`,
+    groundDown: (tiles: number, cost: string) =>
+      `Lower: ${tiles} ${tiles === 1 ? 'tile' : 'tiles'}, ${cost}`,
+    /** Raise or Lower over ground that stays where it is */
+    groundStays: 'Nothing moves here',
+    /** how many tiles of the action refuse, and why the first does */
+    groundRefused: (tiles: number, reason: string) =>
+      `${tiles} ${tiles === 1 ? 'tile' : 'tiles'} cannot move: ${reason}`,
     notLevel: 'Needs level ground: only straight track can climb a slope',
     notSmooth:
       'Curves and switches need smooth ground: only straights and crossings climb a slope, unless bridge platforms support every tile of the piece',
@@ -555,6 +565,7 @@ const EN = {
     /** the types of Tools */
     trackTools: 'Track',
     electrification: 'Electrification',
+    ground: 'Ground',
     /** the types of Works */
     rawMaterials: 'Raw materials',
     processing: 'Processing',
@@ -580,6 +591,14 @@ const EN = {
     downgradeHint: 'Lowers track one line: Trunk to Main, Main to Branch. Free.',
     /** Upgrade's cost line: the price depends on the piece */
     upgradeCost: 'the difference',
+    raise: 'Raise',
+    lower: 'Lower',
+    raiseHint:
+      'Raises the ground one level a tile, and the tiles around it as far as the slope needs. Every tile that moves costs money.',
+    lowerHint:
+      'Lowers the ground one level a tile, and the tiles around it as far as the slope needs. Every tile that moves costs money. Stone brought down to sea level turns to grass.',
+    /** Raise and Lower's cost line: the price depends on how far the slope spreads */
+    groundCost: 'per tile and level',
     select: 'Select',
     /** the toolbar category of roads, and the road tool in it (#328) */
     roads: 'Roads',
@@ -609,6 +628,7 @@ const EN = {
       drag: 'Drag: lay a run',
       /** Upgrade and Downgrade lay nothing: they work on track that stands */
       reclass: 'Click: one piece · Drag: along the line',
+      ground: 'Click: one tile · Drag: along a line',
       click: 'Click: place',
       paint: 'Drag: paint',
       turn: 'R: turn',
@@ -645,6 +665,8 @@ const EN = {
         'On a free grass, forest, sand or level hill tile. Chain Power Line poles from it to reach the rails.',
       reclass:
         'Click a piece or drag along the line. A piece that does not fit stays as it was, shown in red.',
+      ground:
+        'On land with nothing built on it. Water cannot be moved, and ground over a tunnel stays above its roof.',
       road: 'On grass, forest, sand or hill, never on a building: it meets one at its street door. Crosses plain straight Narrow Gauge, Branch or Main Line track at right angles, as a level crossing; never Trunk Line.',
     },
     trackDesc: {

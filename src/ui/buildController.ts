@@ -7,7 +7,8 @@ import type { Input } from '../engine/input';
 import { itemKey, footprintOf, isUnitKind, type TrackItem } from '../world/track';
 import type { SupplyKind } from '../sim/catenary';
 import { inBounds } from '../world/tiles';
-import type { Builder, PlacementCheck } from '../sim/build';
+import { levelAt } from '../world/elevation';
+import type { Builder, GroundCheck, PlacementCheck } from '../sim/build';
 import type { WorldRenderer } from '../render/worldRenderer';
 import type { Station } from '../sim/stations';
 import type { Tool } from './toolbar';
@@ -39,6 +40,7 @@ import {
   type RoadStrokeCheck,
 } from './roadStroke';
 import { doorReachTiles } from './roadDoors';
+import { fmtMoney } from './numberFormat';
 
 const OK_TINT = 0x9be8ff;
 const BAD_TINT = 0xff6a5a;
@@ -47,6 +49,8 @@ const REPLACE_TINT = 0xffc860;
 const DOOR_TINT = 0xfff08a;
 /** frames between two looks at the street doors while the road tool is in hand (#409) */
 const DOOR_MARK_FRAMES = 30;
+/** frames between two looks at the same Raise or Lower: the ground may have changed under it */
+const GROUND_LOOK_FRAMES = 30;
 
 type Tile = { x: number; y: number };
 
@@ -138,6 +142,12 @@ export class BuildController {
   private placingRoot: (Tile & { key: string }) | null = null;
   /** the tile of a locked placing root: its label and lit tiles stay there */
   private placingHeld: Tile | null = null;
+  /** what Raise or Lower was last judged for (tool, stroke and tiles), and how many frames ago */
+  private groundSeen = '';
+  private groundAge = 0;
+  /** the diamonds and the status line of that look */
+  private groundMarks: { x: number; y: number; frame: string }[] = [];
+  private groundStatus = '';
   /** the counted tiles of the label's breakdown, kept from frame to frame */
   private readonly placingCells = new HarvestCells();
 
@@ -162,6 +172,7 @@ export class BuildController {
     this.stroke.stop();
     this.reclassLeft.clear();
     this.dragStart = null;
+    this.groundSeen = '';
     this.clearGhost();
     this.dropPlacing();
     if (t.kind !== 'none') this.select(null);
@@ -272,6 +283,9 @@ export class BuildController {
         break;
       case 'road':
         this.updateRoadTool(t, inMap);
+        break;
+      case 'ground':
+        this.updateGroundTool(t, inMap);
         break;
       case 'terrain':
         this.updateTerrainTool(t, inMap);
@@ -750,6 +764,95 @@ export class BuildController {
     this.roadPlacement(one, t);
     this.status(hoverStatus(one.steps[0], !!this.builder.bridgeAt(t.x, t.y)));
   }
+  /**
+   * Raise and Lower: press and drag a straight run, let go to move it; a press let go where it
+   * started is one tile. Each tile of the run goes one level, with the neighbours the slope rule
+   * takes along, and the whole action refuses if any tile may not move (`Builder.reshapeGround`).
+   * The ground shows what the release would do: a diamond on every tile that moves, red on those
+   * that refuse, with the tiles, the price and the reason in the status line. Money is not a
+   * store's, so no payer is named on the build card (`placement` stays empty).
+   */
+  private updateGroundTool(t: Tile, inMap: boolean) {
+    const tool = this.tool as { kind: 'ground'; delta: 1 | -1 };
+    const inp = this.input;
+    if (this.ghost) this.ghost.visible = false;
+    this.ghostDiamond.visible = false;
+    // a level keeps no raised or lowered ground
+    if (this.editor) return;
+    if (inp.buttonPressed.has(0)) this.dragStart = inMap ? { x: t.x, y: t.y } : null;
+    if (this.dragStart && inp.buttons.has(0)) {
+      this.lookAtGround(strokeTiles(this.dragStart, this.roadEnd(t)), tool.delta);
+      return;
+    }
+    if (this.dragStart && inp.buttonReleased.has(0)) {
+      const tiles = strokeTiles(this.dragStart, this.roadEnd(t));
+      this.dragStart = null;
+      this.groundSeen = '';
+      for (const g of this.lineGhosts) g.visible = false;
+      this.act(() => this.builder.reshapeGround(tiles, tool.delta));
+      return;
+    }
+    // the button is up: a stroke whose release fell over a panel moves nothing, and is over
+    this.dragStart = null;
+    if (!inMap) {
+      this.groundSeen = '';
+      for (const g of this.lineGhosts) g.visible = false;
+      this.status('');
+      return;
+    }
+    this.lookAtGround([t], tool.delta);
+  }
+
+  /**
+   * Show what Raise or Lower of `tiles` would do. `Builder.checkGround` reads the levels of the
+   * whole map, so it is asked again only when the tiles change, and every GROUND_LOOK_FRAMES
+   * frames for what changed under them (an undo, a build): not on every move of the pointer.
+   */
+  private lookAtGround(tiles: Tile[], delta: 1 | -1) {
+    const first = tiles[0],
+      last = tiles[tiles.length - 1];
+    const seen = `${delta} ${first.x},${first.y} ${last.x},${last.y}`;
+    if (seen !== this.groundSeen || ++this.groundAge >= GROUND_LOOK_FRAMES) {
+      this.groundSeen = seen;
+      this.groundAge = 0;
+      this.judgeGround(this.builder.checkGround(tiles, delta), delta);
+    }
+    this.showGhosts(this.groundMarks, true);
+    // the frame carries the colour, as the road tool's does
+    for (let i = 0; i < this.groundMarks.length; i++) this.lineGhosts[i].tint = 0xffffff;
+    this.status(this.groundStatus);
+  }
+
+  /**
+   * The marks and the status line of a check. A pinned tile (in `moved` with `to` equal to the
+   * level it has) stays where it is: it is neither marked nor counted.
+   */
+  private judgeGround(check: GroundCheck, delta: 1 | -1) {
+    const { map } = this.builder;
+    const marks = new Map<number, { x: number; y: number; frame: string }>();
+    const mark = (p: Tile, frame: string) =>
+      marks.set(p.y * map.w + p.x, { x: p.x, y: p.y, frame });
+    let moving = 0;
+    for (const m of check.moved)
+      if (levelAt(map, m.x, m.y) !== m.to) {
+        moving++;
+        mark(m, 'terrain/ghost_ok');
+      }
+    for (const r of check.refused) mark(r, 'terrain/ghost_bad');
+    this.groundMarks = [...marks.values()];
+    const money = check.cost.money ?? 0;
+    const price = money > 0 ? fmtMoney(money) : STR.build.free;
+    if (check.refused.length) {
+      this.groundStatus = STR.build.groundRefused(check.refused.length, check.reason ?? '');
+      return;
+    }
+    const line = !moving
+      ? STR.build.groundStays
+      : (delta > 0 ? STR.build.groundUp : STR.build.groundDown)(moving, price);
+    // short of funds: the price is shown, with the reason
+    this.groundStatus = check.ok ? line : [line, check.reason].join('   ');
+  }
+
   /** What the release of a road stroke from `start` would pay, and from where (`placeRoads`). */
   private roadPlacement(stroke: RoadStrokeCheck, start: Tile) {
     if (!stroke.laid) return;

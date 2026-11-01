@@ -59,6 +59,8 @@ export type Tool =
   | { kind: 'reclass'; dir: ReclassDir }
   /** lay roads by dragging (#328) */
   | { kind: 'road' }
+  /** raise or lower the ground one level a tile, by a click or a drag along a line */
+  | { kind: 'ground'; delta: 1 | -1 }
   | { kind: 'remove' };
 
 /** One placeable thing: what the bar shows and what the info panel describes. */
@@ -143,6 +145,8 @@ export function toolKey(t: Tool): string {
       return `reclass:${t.dir}`;
     case 'road':
       return 'road';
+    case 'ground':
+      return `ground:${t.delta > 0 ? 'up' : 'down'}`;
     case 'remove':
       return 'remove';
     default:
@@ -300,6 +304,20 @@ export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
     group: 'track',
     hot: dir === 'up' ? 'U' : 'Shift+U',
   });
+  const groundItem = (delta: 1 | -1): ToolItem => ({
+    key: `ground:${delta > 0 ? 'up' : 'down'}`,
+    tool: { kind: 'ground', delta },
+    name: delta > 0 ? STR.toolbar.raise : STR.toolbar.lower,
+    cost: {},
+    // money, per tile that moves: the ghost over the map has the sum
+    costText: STR.toolbar.groundCost,
+    frame: '',
+    icon: delta > 0 ? 'up' : 'down',
+    desc: delta > 0 ? STR.toolbar.raiseHint : STR.toolbar.lowerHint,
+    tier: 0,
+    place: STR.toolbar.place.ground,
+    group: 'ground',
+  });
   const supplyItem = (k: SupplyKind): ToolItem => ({
     key: `supply:${k}`,
     tool: { kind: 'supply', supply: k },
@@ -385,10 +403,13 @@ export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
         reclassItem('down'),
         ...decor('electrification').map(decorItem),
         ...SUPPLY_KINDS.map(supplyItem),
+        groundItem(1),
+        groundItem(-1),
       ],
       groups: [
         { id: 'track', label: STR.toolbar.trackTools },
         { id: 'electrification', label: STR.toolbar.electrification },
+        { id: 'ground', label: STR.toolbar.ground },
       ],
     },
     {
@@ -604,11 +625,13 @@ export function controlsHint(item: ToolItem): string {
       ? f.run
       : t.kind === 'reclass'
         ? f.reclass
-        : t.kind === 'supply' || t.kind === 'road'
-          ? f.drag
-          : t.kind === 'terrain'
-            ? f.paint
-            : f.click;
+        : t.kind === 'ground'
+          ? f.ground
+          : t.kind === 'supply' || t.kind === 'road'
+            ? f.drag
+            : t.kind === 'terrain'
+              ? f.paint
+              : f.click;
   return [use, ...(toolRotations(t) > 1 ? [f.turn] : []), f.cancel].join(' · ');
 }
 
