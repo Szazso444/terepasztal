@@ -121,6 +121,8 @@ export interface DrainInput extends LevelScale {
   sea: Uint8Array;
   /** flags: KEEP_OUT, LOW, DRY */
   mark: Uint8Array;
+  /** added to `elev` for the order the flood reaches tiles in, and for nothing else; 0 without it */
+  wander?: Float32Array;
   /**
    * The start chunk and the tile its water patch is centred on: when the pass leaves fewer than
    * four water tiles in the chunk, the 3 x 3 tiles around it (within the chunk) are a lake, as
@@ -214,11 +216,11 @@ class TileHeap {
 /**
  * The rivers and lakes of `p.core`. Steps, each the demo's unless it says otherwise:
  *
- * 1. Drainage. A priority flood from the sea and the core's edge, lowest ground first, ties by
- *    tile index: each tile drains into the neighbour it was first reached from. Out of a basin
- *    that is the way over its lowest rim, so the drainage crosses a basin along one channel
- *    rather than filling it flat (the demo filled it; the basins it would fill are the lakes
- *    below). A tile's spill level is the highest ground on its way out.
+ * 1. Drainage. A priority flood from the sea and the core's edge, lowest ground first (the ground
+ *    moved by `wander`), ties by tile index: each tile drains into the neighbour it was first
+ *    reached from. Out of a basin that is the way over its lowest rim, so the drainage crosses a
+ *    basin along one channel rather than filling it flat (the demo filled it; the basins it would
+ *    fill are the lakes below). A tile's spill level is the highest ground on its way out.
  * 2. Lakes, only on the lowest ground: a tile whose spill level stands LAKE_DEPTH steps over it
  *    and less than a step over the sea (not where KEEP_OUT), or the ground's own inland water (not
  *    where DRY); with no ground within LAKE_CLEARANCE tiles at step 2 or more, or Hill or Rock; in
@@ -248,7 +250,7 @@ class TileHeap {
  *    changes. So water never rises downstream, and drops one level at a time.
  */
 export function drain(p: DrainInput): Drainage {
-  const { w, core, elev, ground, land, sea, mark } = p;
+  const { w, core, elev, ground, land, sea, mark, wander } = p;
   const n = w * p.h;
   const { x0, y0, x1, y1 } = core;
   const inCore = (x: number, y: number) => x >= x0 && y >= y0 && x < x1 && y < y1;
@@ -262,6 +264,9 @@ export function drain(p: DrainInput): Drainage {
   let on = 0;
   const heap = new TileHeap();
   let seas = 0;
+  // land kept out drains last, after everything else has found its way to the sea
+  const floodKey = (i: number) =>
+    elev[i] + (wander ? wander[i] : 0) + (mark[i] & KEEP_OUT ? 1e3 : 0);
   for (let y = y0; y < y1; y++)
     for (let x = x0, i = y * w + x; x < x1; x++, i++) {
       if (sea[i]) {
@@ -271,14 +276,13 @@ export function drain(p: DrainInput): Drainage {
       } else if (x === x0 || y === y0 || x === x1 - 1 || y === y1 - 1) {
         down[i] = -1;
         spill[i] = elev[i];
-        // land kept out drains last, after everything else has found its way to the sea
-        heap.push(mark[i] & KEEP_OUT ? elev[i] + 1e3 : elev[i], i);
+        heap.push(floodKey(i), i);
       }
     }
   const reach = (i: number, j: number) => {
     down[j] = i;
     spill[j] = Math.max(elev[j], spill[i]);
-    heap.push(mark[j] & KEEP_OUT ? elev[j] + 1e3 : elev[j], j);
+    heap.push(floodKey(j), j);
   };
   const visit = (i: number) => {
     order[on++] = i;

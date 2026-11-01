@@ -733,7 +733,7 @@ describe('waterfalls at the seam with a stored chunk', () => {
  * Worlds whose 160-tile map has water at level 2 beside another chunk (rivers.test.ts, found by
  * scanning seeds 1 to 100), so a stored chunk there lowers it.
  */
-const RAISED_WORLDS = [5, 36, 38, 61, 82, 95, 100];
+const RAISED_WORLDS = [1, 4, 36, 38, 61, 82, 89];
 
 describe('waterfalls of a world grown beside a chunk an older generator stored', () => {
   // Seven worlds of 160 tiles, each built twice: about 3 s alone

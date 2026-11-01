@@ -8,6 +8,8 @@ import {
   SCULPT_REACH,
   coverMountains,
   massifAt,
+  massifLift,
+  massifWander,
   sculptMountains,
   shapeAt,
   type CoverField,
@@ -39,6 +41,39 @@ const flat = (w: number, water: (x: number, y: number) => boolean = () => false)
   return { w, h: w, originX: 0, originY: 0, terrain, biome: new Uint8Array(w * w) };
 };
 const NOWHERE = { x0: 0, y0: 0, x1: 0, y1: 0 };
+
+describe('massifLift', () => {
+  it('leaves the start chunk alone: nothing at its corners or its middle over 400 seeds', () => {
+    const edge = 16;
+    for (let k = 0; k < 400; k++) {
+      const seed = 17 + k * 211;
+      for (const [dx, dy] of [
+        [0, 0],
+        [edge, edge],
+        [edge, -edge],
+        [-edge, edge],
+        [-edge, -edge],
+      ]) {
+        expect(massifLift(80 + dx, 80 + dy, dx, dy, seed), `${seed}`).toBe(0);
+        expect(massifWander(80 + dx, 80 + dy, dx, dy, seed), `${seed}`).toBe(0);
+      }
+    }
+  });
+
+  it('wanders only on the slope it makes', () => {
+    const seed = 4242;
+    let slope = 0;
+    for (let y = -200; y < 200; y += 3)
+      for (let x = -200; x < 200; x += 3) {
+        const wander = massifWander(x, y, x, y, seed);
+        // no slope where the lift is at its height or not begun, far from the start
+        const lift = massifLift(x, y, x, y, seed);
+        if (Math.hypot(x, y) > 70 && (lift === 0 || lift === 0.8)) expect(Math.abs(wander)).toBe(0);
+        if (wander !== 0) slope++;
+      }
+    expect(slope).toBeGreaterThan(100);
+  });
+});
 
 describe('sculptMountains', () => {
   const W = 240;
@@ -447,8 +482,8 @@ describe('the mountains of generated worlds', () => {
   // A massif and the tiles around it hold more than half of the land, so most heads would lie near
   // one by chance alone. What the lift adds is the gap between the two shares, so this reads both,
   // over 60 worlds: three ranges of seeds fixed ahead of the result, as one range of 20 can read
-  // several points apart from the next. Do not pick seeds by the result. Over these seeds 64.9% of
-  // the heads and 54.6% of the land lie near a massif, and rivers take 7.2% of all tiles.
+  // several points apart from the next. Do not pick seeds by the result. Over these seeds 66.6% of
+  // the heads and 54.2% of the land lie near a massif, and rivers take 7.4% of all tiles.
   it('starts rivers near the massifs: over 60 seeds, 60% of river heads lie within 6 tiles of one, 10 points over the land', () => {
     const seeds = [
       ...Array.from({ length: 20 }, (_, i) => 7000 + i * 53),
@@ -476,6 +511,41 @@ describe('the mountains of generated worlds', () => {
     expect(heads).toBeGreaterThan(1000);
     expect(headsNear / heads).toBeGreaterThanOrEqual(0.6);
     expect(headsNear / heads - landNear / land).toBeGreaterThanOrEqual(0.1);
+  }, 120_000);
+
+  /** River tiles, and those of them on a straight run of 8 tiles or more with one flow direction. */
+  const straightRuns = ({ map, river }: MapPlanes) => {
+    const { w, h, flowDir } = map;
+    const flowsOn = (x: number, y: number, side: number) =>
+      x >= 0 && y >= 0 && x < w && y < h && river[y * w + x] && flowDir![y * w + x] - 1 === side;
+    let tiles = 0;
+    let straight = 0;
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        if (!river[y * w + x]) continue;
+        tiles++;
+        const side = flowDir![y * w + x] - 1;
+        if (side < 0 || flowsOn(x - DIR_DX[side], y - DIR_DY[side], side)) continue;
+        let run = 1;
+        while (flowsOn(x + run * DIR_DX[side], y + run * DIR_DY[side], side)) run++;
+        if (run >= 8) straight += run;
+      }
+    return { tiles, straight };
+  };
+
+  // Water runs across tile sides, so a long even slope sends every stream down the same side, and
+  // rivers stand in straight parallel lines. Fixed ahead of the result, these seeds read 11.2% with
+  // no lift at all, 19.1% with the lift's slope along the grid around the start and no wander.
+  it('lets rivers wander on the slopes of the massifs: under 14.5% of river tiles run straight over 8 tiles or more', () => {
+    let tiles = 0;
+    let straight = 0;
+    for (let i = 0; i < 20; i++) {
+      const runs = straightRuns(generateMapPlanes(520000 + i * 877, { w: SIZE, h: SIZE }));
+      tiles += runs.tiles;
+      straight += runs.straight;
+    }
+    expect(tiles).toBeGreaterThan(10000);
+    expect(straight / tiles).toBeLessThan(0.145);
   }, 120_000);
 
   it('keeps every river at water level 4 or under, flowing downhill', () => {

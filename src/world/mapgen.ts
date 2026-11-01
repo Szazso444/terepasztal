@@ -16,7 +16,13 @@ import { DRY, FLOW_CAP, KEEP_OUT, LAKE_CLEARANCE, LOW, WaterKind, drain } from '
 import { markWaterfalls } from './waterfalls';
 import { tileLevels } from './elevation';
 import { NoiseRoom, fbm, fbmBlock } from './noise';
-import { SCULPT_REACH, coverMountains, massifLift, sculptMountains } from './mountains';
+import {
+  SCULPT_REACH,
+  coverMountains,
+  massifLift,
+  massifWander,
+  sculptMountains,
+} from './mountains';
 
 export interface MapGenParams {
   w: number;
@@ -1135,6 +1141,10 @@ function riverPlan(
         mark[y * w + x] |= near ? KEEP_OUT | DRY : KEEP_OUT;
       }
   const [px, py] = corners[Math.floor(hash2(seed, 3, 41) * 4) % 4];
+  const wander = new Float32Array(w * w);
+  for (let y = core.y0; y < core.y1; y++)
+    for (let x = core.x0; x < core.x1; x++)
+      wander[y * w + x] = massifWander(x + f.ox, y + f.oy, x - scx, y - scy, seeds.massif);
   const d = drain({
     waterLevel,
     hillLevel,
@@ -1146,6 +1156,7 @@ function riverPlan(
     land,
     sea,
     mark,
+    wander,
     start: { chunk, pond: { x: px, y: py } },
     near: grow(chunk, rs),
   });
@@ -1209,7 +1220,7 @@ function riverWater(
   seed: number,
   late: Span,
 ): FieldWater {
-  const { w, h, ox, oy, rs, elev, biome } = f;
+  const { w, h, ox, oy, rs, elev, biome, scx, scy, seeds } = f;
   const kind = new Uint8Array(w * h);
   const surface = new Uint8Array(w * h);
   const flow = new Uint16Array(w * h);
@@ -1287,8 +1298,12 @@ function riverWater(
         if (nx < 1 || ny < 1 || nx >= w - 1 || ny >= h - 1) continue;
         if (onCourse[ny * w + nx] === id) continue;
         f.need(nx, ny, ELEV);
-        // a little position-fixed noise so streams wander the same way every time
-        const ev = elev[ny * w + nx] + (hash2(nx + ox, ny + oy, seed + 80) - 0.5) * 0.02;
+        // a little position-fixed noise so streams wander the same way every time, as much as a
+        // massif's slope needs there
+        const ev =
+          elev[ny * w + nx] +
+          (hash2(nx + ox, ny + oy, seed + 80) - 0.5) * 0.02 +
+          massifWander(nx + ox, ny + oy, nx - scx, ny - scy, seeds.massif);
         if (ev < be) {
           be = ev;
           bx = nx;

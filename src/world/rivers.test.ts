@@ -794,7 +794,7 @@ interface Seam {
  * lowers it: found by scanning seeds 1 to 100. Should generation change and leave none, the seam
  * property fails on `lowered` and these want picking again.
  */
-const RAISED_WORLDS = [5, 36, 38, 61, 82, 95, 100];
+const RAISED_WORLDS = [1, 4, 36, 38, 61, 82, 89];
 const genSeam = (rng: Rng): Seam => {
   const near = rng.pick(['any', 'river', 'raised'] as const);
   const raised = near === 'raised';

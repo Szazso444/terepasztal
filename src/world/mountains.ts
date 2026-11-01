@@ -52,9 +52,32 @@ export function massifAt(wx: number, wy: number, seed: number): number {
 const LIFT = 0.8;
 const LIFT_FROM = MASSIF_LINE - 0.05;
 const LIFT_TO = MASSIF_LINE + 0.08;
-/** No lift this near the start chunk's centre along either axis, full lift this far out. */
-const LIFT_CLEAR = 20;
-const LIFT_FULL = 44;
+/** No lift this far from the start chunk's centre, full lift this far out, before the wobble. */
+const LIFT_CLEAR = 30;
+const LIFT_FULL = 54;
+/** How many tiles a noise moves those distances, end to end; it keeps the ring from a clean circle. */
+const LIFT_WOBBLE = 24;
+/** Past the corners of the start chunk, in tiles: no lift nearer, however the noise falls. */
+const LIFT_NONE = 23;
+/** How much a slope as steep as the lift gets moves a tile in the flood's order, end to end. */
+const WANDER = 0.18;
+
+/**
+ * How far out of the start the lift has come at world tile (`wx`, `wy`), `dx`, `dy` from the start
+ * chunk's centre, 0 to 1. The ring it rises on follows no line of the grid: a long straight slope
+ * sends every river down it side by side.
+ */
+function liftFade(wx: number, wy: number, dx: number, dy: number, seed: number): number {
+  const far = Math.hypot(dx, dy);
+  if (far <= LIFT_NONE) return 0;
+  if (far >= LIFT_FULL + LIFT_WOBBLE / 2) return 1;
+  const wobbled = far + LIFT_WOBBLE * (fbm(wx / 20, wy / 20, seed + 70, 3) - 0.5);
+  return clamp((wobbled - LIFT_CLEAR) / (LIFT_FULL - LIFT_CLEAR));
+}
+
+/** How far up the side of a massif world tile (`wx`, `wy`) stands, 0 to 1. */
+const liftRise = (wx: number, wy: number, seed: number) =>
+  clamp((massifAt(wx, wy, seed) - LIFT_FROM) / (LIFT_TO - LIFT_FROM));
 
 /**
  * What a massif adds to the elevation of world tile (`wx`, `wy`), `dx`, `dy` from the start chunk's
@@ -62,12 +85,25 @@ const LIFT_FULL = 44;
  * rises, and fading to nothing around the start chunk.
  */
 export function massifLift(wx: number, wy: number, dx: number, dy: number, seed: number): number {
-  const fade = clamp(
-    (Math.max(Math.abs(dx), Math.abs(dy)) - LIFT_CLEAR) / (LIFT_FULL - LIFT_CLEAR),
-  );
+  const fade = liftFade(wx, wy, dx, dy, seed);
   if (fade === 0) return 0;
-  const m = clamp((massifAt(wx, wy, seed) - LIFT_FROM) / (LIFT_TO - LIFT_FROM));
-  return LIFT * ease(m) * ease(fade);
+  return LIFT * ease(liftRise(wx, wy, seed)) * ease(fade);
+}
+
+/**
+ * What the drainage adds to the height of a tile on the slope massifLift makes, a number of its own
+ * for each tile and as large as the slope. Water runs across tile sides, so on a slope steeper than
+ * the ground's noise every stream takes the same side down it, tile after tile, and rivers run in
+ * straight parallel lines. The ground stays as it is: this moves only the order the flood reaches
+ * tiles in (rivers.ts), and so the way water takes.
+ */
+export function massifWander(wx: number, wy: number, dx: number, dy: number, seed: number): number {
+  const fade = liftFade(wx, wy, dx, dy, seed);
+  if (fade === 0) return 0;
+  const m = liftRise(wx, wy, seed);
+  if (m === 0) return 0;
+  const slope = 4 * m * (1 - m) * ease(fade) + 4 * fade * (1 - fade) * ease(m);
+  return WANDER * slope * (hash2(wx, wy, seed + 60) - 0.5);
 }
 
 /** The noise behind the shapes: wavelength about 90 tiles, on 0 to 1 around 0.5. */
