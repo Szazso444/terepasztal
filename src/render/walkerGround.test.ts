@@ -433,6 +433,7 @@ function propSprite(map: GameMap, x: number, y: number, p: PropInstance) {
     objects: new Container(),
     elevationOf: () => 0,
     propTint: 0xffffff,
+    treeSway: { add: () => undefined },
   });
   return (
     world as unknown as { propSprite(x: number, y: number, p: PropInstance): Sprite }
