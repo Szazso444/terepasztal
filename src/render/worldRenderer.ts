@@ -799,11 +799,21 @@ export class WorldRenderer {
 
   /** Re-tile after terrain edits: ground texture, props, and objects standing on the tile. */
   retile(x: number, y: number) {
-    if (!this.isBuilt(x, y)) return;
-    this.refreshGround(x, y);
-    this.rebuildProps(x, y);
-    const t = this.trackSprites.get(idx(this.map, x, y));
-    if (t) this.placeTrackSprite(t, x, y);
+    this.retileMany([{ x, y }]);
+  }
+  /**
+   * Re-tile every tile of `tiles` (`retile`). The ground of all of them is invalidated before any
+   * prop or track sprite reads the height, so the relief is built once and not once for each tile
+   * that has something standing on it.
+   */
+  retileMany(tiles: readonly { x: number; y: number }[]) {
+    const built = tiles.filter((t) => this.isBuilt(t.x, t.y));
+    for (const t of built) this.refreshGround(t.x, t.y);
+    for (const { x, y } of built) {
+      this.rebuildProps(x, y);
+      const t = this.trackSprites.get(idx(this.map, x, y));
+      if (t) this.placeTrackSprite(t, x, y);
+    }
   }
 
   setFlattened(x: number, y: number, flat: boolean) {

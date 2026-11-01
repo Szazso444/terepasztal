@@ -2540,3 +2540,48 @@ function paveChanged(was: TownPaving, is: TownPaving, i: number, j: number) {
     }
   return false;
 }
+
+describe('retiling many tiles', () => {
+  /** A world whose tiles (1, 1) to (3, 3) each hold an oak, with the landscape counting its calls. */
+  function oaks() {
+    const map = emptyMap(1, 6, 6, Terrain.Grass);
+    for (let y = 1; y <= 3; y++) for (let x = 1; x <= 3; x++) map.props.set(y * 6 + x, [oak(0, 0)]);
+    const world = new WorldRenderer(PROP_ATLAS, map, new RegionState(map));
+    const calls: string[] = [];
+    vi.spyOn(world.landscape, 'failed', 'get').mockReturnValue(false);
+    vi.spyOn(world.landscape, 'invalidate').mockImplementation(() => void calls.push('invalidate'));
+    vi.spyOn(world.landscape, 'elevation').mockImplementation(() => (calls.push('elevation'), 0));
+    return { world, calls };
+  }
+  const tiles = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ x: 1 + (i % 3), y: 1 + ((i / 3) | 0) }));
+
+  it('invalidates the ground of every tile before any prop reads a height', () => {
+    const { world, calls } = oaks();
+    world.retileMany(tiles(9));
+    const firstRead = calls.indexOf('elevation');
+    expect(calls.filter((c) => c === 'invalidate')).toHaveLength(9);
+    expect(firstRead).toBe(9);
+    expect(calls.lastIndexOf('invalidate')).toBeLessThan(firstRead);
+  });
+
+  it('draws the props again at the new height, as retile one by one does', () => {
+    const one = oaks(),
+      many = oaks();
+    for (const t of tiles(9)) one.world.retile(t.x, t.y);
+    many.world.retileMany(tiles(9));
+    const at = (w: WorldRenderer) =>
+      oaksDrawn(w)
+        .map(whereIs)
+        .sort((a, b) => a.z - b.z);
+    expect(at(many.world)).toEqual(at(one.world));
+    expect(at(many.world)).toHaveLength(9);
+  });
+
+  it('leaves a tile whose region is not built alone', () => {
+    const { world, calls } = oaks();
+    vi.spyOn(world, 'isBuilt').mockReturnValue(false);
+    world.retileMany(tiles(9));
+    expect(calls).toEqual([]);
+  });
+});
