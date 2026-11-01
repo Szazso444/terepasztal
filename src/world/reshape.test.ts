@@ -180,6 +180,162 @@ describe('reshape', () => {
     expect(act(map, [[5, 4]], 1).refused).toEqual([{ x: 5, y: 4 }]);
   });
 
+  it('a tile off the map refuses the whole action', () => {
+    const map = grassMap(9, 9);
+    const before = [...tileLevels(map)];
+    expect(
+      act(
+        map,
+        [
+          [4, 4],
+          [9, 4],
+        ],
+        1,
+      ),
+    ).toEqual({ moved: [], refused: [{ x: 9, y: 4 }] });
+    expect(act(map, [[-1, 4]], 1).refused).toEqual([{ x: -1, y: 4 }]);
+    expect(act(map, [[4, 9]], -1).refused).toEqual([{ x: 4, y: 9 }]);
+    // asked for twice it is listed once, beside what refuses on the map
+    const both = act(
+      map,
+      [
+        [4, -1],
+        [4, -1],
+        [3, 3],
+      ],
+      -1,
+    );
+    expect(both).toEqual({
+      moved: [],
+      refused: [
+        { x: 4, y: -1 },
+        { x: 3, y: 3 },
+      ],
+    });
+    expect([...tileLevels(map)]).toEqual(before);
+  });
+
+  describe('water at a surface above 0', () => {
+    /** Land at level 2, falling to 1 on the border, round a pool at surface 2 on (5, 5). */
+    function lake() {
+      const w = 11,
+        plane = new Uint8Array(w * w),
+        terrain = new Uint8Array(w * w).fill(Terrain.Grass),
+        waterSurface = new Uint8Array(w * w);
+      for (let y = 0; y < w; y++)
+        for (let x = 0; x < w; x++) {
+          const edge = x === 0 || y === 0 || x === w - 1 || y === w - 1;
+          plane[y * w + x] = edge ? 1 : 2;
+        }
+      const pool = 5 * w + 5;
+      plane[pool] = NO_LEVEL;
+      terrain[pool] = Terrain.Water;
+      waterSurface[pool] = 2;
+      const map: Elevated = { w, h: w, terrain, waterSurface, groundLevel: plane };
+      expect(tileLevels(map)[pool]).toBe(2);
+      return map;
+    }
+
+    it('land on the bank goes up to water + 1, and no further', () => {
+      const map = lake();
+      expect(act(map, [[4, 5]], 1).moved).toEqual([{ x: 4, y: 5, to: 3 }]);
+      expect(row(map, 5, 3, 6)).toEqual([2, 3, 2, 2]);
+      const before = [...tileLevels(map)];
+      expect(act(map, [[4, 5]], 1)).toEqual({ moved: [], refused: [{ x: 5, y: 5 }] });
+      expect([...tileLevels(map)]).toEqual(before);
+    });
+
+    it('a lower that would pull the water down refuses', () => {
+      const map = lake();
+      // the bank may stand one under the surface as far as this rule goes
+      expect(act(map, [[6, 5]], -1).refused).toEqual([]);
+      expect(row(map, 5, 4, 7)).toEqual([2, 2, 1, 2]);
+      const before = [...tileLevels(map)];
+      const pulled = act(map, [[6, 5]], -1);
+      expect(pulled.moved).toEqual([]);
+      expect(pulled.refused).toContainEqual({ x: 5, y: 5 });
+      expect([...tileLevels(map)]).toEqual(before);
+    });
+
+    it('a cliff of 4 above the water may not grow: the water would have to come down', () => {
+      const w = 12,
+        terrain = new Uint8Array(w * w).fill(Terrain.Grass),
+        waterSurface = new Uint8Array(w * w),
+        raw = new Uint8Array(w * w),
+        pool = 5 * w + 6;
+      raw.fill(3);
+      raw[pool] = NO_LEVEL;
+      terrain[pool] = Terrain.Water;
+      waterSurface[pool] = 7;
+      const generatedLevel = tileLevels({ w, h: w, terrain, waterSurface, generatedLevel: raw });
+      generatedLevel[pool] = NO_LEVEL;
+      const map: Elevated = { w, h: w, terrain, waterSurface, generatedLevel };
+      expect(tileLevels(map)[pool]).toBe(7);
+      expect(act(map, [[5, 5]], -1).refused).toEqual([{ x: 6, y: 5 }]);
+      // the same step is free to shrink
+      expect(act(map, [[5, 5]], 1).refused).toEqual([]);
+    });
+
+    it('water its banks hold under its surface refuses when the raise would free it', () => {
+      const w = 9,
+        terrain = new Uint8Array(w * w).fill(Terrain.Grass),
+        waterSurface = new Uint8Array(w * w),
+        pool = 4 * w + 4;
+      terrain[pool] = Terrain.Water;
+      waterSurface[pool] = 3;
+      const map: Elevated = { w, h: w, terrain, waterSurface };
+      expect(tileLevels(map)[pool]).toBe(1);
+      const sides: [number, number][] = [
+        [3, 4],
+        [5, 4],
+        [4, 3],
+        [4, 5],
+      ];
+      // while one side stands at 0 the water stays at 1
+      expect(act(map, sides.slice(0, 3), 1).refused).toEqual([]);
+      expect(tileLevels(map)[pool]).toBe(1);
+      const before = [...tileLevels(map)];
+      expect(act(map, [[4, 5]], 1)).toEqual({ moved: [], refused: [{ x: 4, y: 4 }] });
+      expect([...tileLevels(map)]).toEqual(before);
+    });
+  });
+
+  it('a lower undoes one raise, and after more it leaves settled ground', () => {
+    const map = grassMap(9, 9),
+      flat = [...tileLevels(map)];
+    act(map, [[4, 4]], 1);
+    act(map, [[4, 4]], -1);
+    expect([...tileLevels(map)]).toEqual(flat);
+    // three up and three down is no way back: the skirt of the mound stays as it was
+    for (let i = 0; i < 3; i++) act(map, [[4, 4]], 1);
+    expect(row(map, 4, 1, 7)).toEqual([0, 1, 2, 3, 2, 1, 0]);
+    act(map, [[4, 4]], -1);
+    expect(row(map, 4, 1, 7)).toEqual([0, 1, 2, 2, 2, 1, 0]);
+    act(map, [[4, 4]], -1);
+    expect(row(map, 4, 1, 7)).toEqual([0, 1, 2, 1, 2, 1, 0]);
+    act(map, [[4, 4]], -1);
+    expect(row(map, 4, 1, 7)).toEqual([0, 1, 1, 0, 1, 1, 0]);
+    const levels = tileLevels(map);
+    for (let y = 0; y < 9; y++)
+      for (let x = 0; x < 8; x++) {
+        expect(Math.abs(levels[y * 9 + x] - levels[y * 9 + x + 1])).toBeLessThanOrEqual(1);
+        expect(levelAt(map, x, y)).toBe(levels[y * 9 + x]);
+      }
+  });
+
+  it('holds nothing on the border: a border tile stays at 1 however its neighbours rise', () => {
+    // a mountain on the border stands at 1, the most a border tile takes, not at its target of 4
+    const w = 10,
+      terrain = new Uint8Array(w * w).fill(Terrain.Grass);
+    for (let y = 3; y <= 5; y++) terrain[y * w] = Terrain.Mountain;
+    const map: Elevated = { w, h: w, terrain },
+      levels = tileLevels(map);
+    expect(levels[4 * w]).toBe(1);
+    const result = act(map, [[1, 4]], 1);
+    expect(result.moved).toEqual([{ x: 1, y: 4, to: 1 }]);
+    expect([...tileLevels(map)]).toEqual([...applied(levels, result.moved, w)]);
+  });
+
   it('holds ground that a raise would free to rise', () => {
     // a block of mountain, level 1 at its foot because the grass beside it is level 0
     const w = 10,
@@ -198,7 +354,7 @@ describe('reshape', () => {
 
   // The property the editing tools stand on: a plane written with `moved` is settled. Planes of
   // random settled levels, with and without the generator's steps of up to 4, random tiles, fixed
-  // tiles and floors.
+  // tiles and floors, and water, whose surface may stand above the level its banks hold it at.
   it('leaves a settled plane settled, with levelAt and tileLevels agreeing', () => {
     let moved = 0,
       refused = 0;
@@ -208,12 +364,20 @@ describe('reshape', () => {
           h = rng.int(3, 12),
           steep = rng.chance(0.5),
           terrain = new Uint8Array(w * h).fill(Terrain.Grass),
-          raw = new Uint8Array(w * h);
-        for (let i = 0; i < w * h; i++) raw[i] = rng.chance(0.3) ? rng.int(0, MAX_LEVEL) : 0;
+          raw = new Uint8Array(w * h),
+          waterSurface = new Uint8Array(w * h);
+        for (let i = 0; i < w * h; i++) {
+          raw[i] = rng.chance(0.3) ? rng.int(0, MAX_LEVEL) : 0;
+          if (rng.chance(0.12)) {
+            terrain[i] = Terrain.Water;
+            waterSurface[i] = raw[i];
+          }
+        }
         const settled = tileLevels({
           w,
           h,
           terrain,
+          waterSurface,
           generatedLevel: steep ? raw : undefined,
           groundLevel: steep ? undefined : raw,
         });
@@ -231,6 +395,7 @@ describe('reshape', () => {
           w,
           h,
           terrain,
+          waterSurface,
           steep,
           settled,
           tiles,
@@ -239,13 +404,18 @@ describe('reshape', () => {
           leastAt,
         };
       },
-      ({ w, h, terrain, steep, settled, tiles, delta, fixedAt, leastAt }) => {
+      ({ w, h, terrain, waterSurface, steep, settled, tiles, delta, fixedAt, leastAt }) => {
+        // no plane sets a level on water: its surface does
+        const land = Uint8Array.from(settled, (v, i) =>
+          terrain[i] === Terrain.Water ? NO_LEVEL : v,
+        );
         const map: Elevated = {
           w,
           h,
           terrain,
-          generatedLevel: steep ? Uint8Array.from(settled) : undefined,
-          groundLevel: Uint8Array.from(settled),
+          waterSurface,
+          generatedLevel: steep ? Uint8Array.from(land) : undefined,
+          groundLevel: land,
         };
         const levels = tileLevels(map);
         expect([...levels]).toEqual([...settled]);
@@ -274,6 +444,7 @@ describe('reshape', () => {
           if (m.to < 0 || m.to > MAX_LEVEL) throw new Error(`level ${m.to} out of range`);
           if (m.to !== levels[k] && (fixedAt.has(k) || m.to < (leastAt.get(k) ?? 0)))
             throw new Error(`(${m.x}, ${m.y}) moved against its rules`);
+          if (terrain[k] === Terrain.Water) throw new Error(`water moved at (${m.x}, ${m.y})`);
           map.groundLevel![k] = m.to;
         }
         const after = tileLevels(map);

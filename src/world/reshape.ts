@@ -24,7 +24,8 @@ export interface Reshape {
  *
  * A tile refuses, and with it the whole action, when it has to move to a level above MAX_LEVEL or
  * below 0 or `least`, above 1 on the map's border, or when `fixed` says it may not move. Water
- * never moves either: its level is its surface, which a plane level would override.
+ * never moves either: its level is its surface, which a plane level would override. A tile of
+ * `tiles` off the map refuses too, as it can never move.
  *
  * Ground that no plane sets reads its terrain's level, held down by its neighbours. A raise can
  * free such a tile to rise (a mountain tile at 1 beside flat ground that comes up); to keep the
@@ -44,6 +45,7 @@ export function reshape(
     next = Uint8Array.from(levels),
     changed = new Set<number>(),
     refused = new Set<number>(),
+    outside: { x: number; y: number }[] = [],
     queue: number[] = [];
   const onBorder = (x: number, y: number) => x === 0 || y === 0 || x === w - 1 || y === h - 1;
   const neighbours = (k: number) => {
@@ -77,7 +79,10 @@ export function reshape(
   };
 
   for (const { x, y } of tiles) {
-    if (x < 0 || y < 0 || x >= w || y >= h) continue;
+    if (x < 0 || y < 0 || x >= w || y >= h) {
+      if (!outside.some((t) => t.x === x && t.y === y)) outside.push({ x, y });
+      continue;
+    }
     const k = y * w + x;
     // a tile asked for twice moves once
     if (!changed.has(k)) move(k, levels[k] + delta);
@@ -108,7 +113,8 @@ export function reshape(
     }
 
   const at = (k: number) => ({ x: k % w, y: Math.floor(k / w) });
-  if (refused.size) return { moved: [], refused: [...refused].sort((a, b) => a - b).map(at) };
+  if (refused.size || outside.length)
+    return { moved: [], refused: [...outside, ...[...refused].sort((a, b) => a - b).map(at)] };
   return {
     moved: [...changed, ...held].sort((a, b) => a - b).map((k) => ({ ...at(k), to: next[k] })),
     refused: [],
