@@ -14,7 +14,7 @@ import { vehicleLabels } from './labels';
 import { classBadge } from './lineBadge';
 import { renameField } from './renameField';
 import { TrainStops } from './scheduleEditor';
-import { spriteImg } from './spritePreview';
+import { frameForItem, spriteImg } from './spritePreview';
 import { ttDim, ttLabel } from './tooltip';
 import { emergencyRefuel } from './trainScreen';
 import {
@@ -361,8 +361,23 @@ export class TrainPanel {
       return c;
     };
     const strip = el('div', { class: 'tp-strip' });
-    for (const l of t.locos) strip.append(car(locoFrame(a, l.def, 3), l.def.name, null));
-    for (const w of t.wagons) strip.append(car(wagonFrame(a, w.def, 0), w.def.name, w.cargo));
+    // a body whose wheels are a layer of their own shows them only in the composed picture
+    for (const l of t.locos)
+      strip.append(
+        car(
+          l.def.wheels?.body?.layer ? frameForItem(l.def.id, 3) : locoFrame(a, l.def, 3),
+          l.def.name,
+          null,
+        ),
+      );
+    for (const w of t.wagons)
+      strip.append(
+        car(
+          w.def.wheels?.body?.layer ? frameForItem(w.def.id, 0) : wagonFrame(a, w.def, 0),
+          w.def.name,
+          w.cargo,
+        ),
+      );
     if (!t.wagons.length) strip.append(el('span', { class: 'tp-none', text: P.noWagons }));
     const ph = t.physics;
     const out: HTMLElement[] = [strip, this.section(P.engine)];

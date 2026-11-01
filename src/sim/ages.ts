@@ -4,12 +4,12 @@
  * number to reach (`{ kind, target }`) or a group of alternatives (`{ anyOf: [goal, ...] }`), met
  * once any one of them is. `ages.json` is not a content-editor table; `ageProblems` checks its
  * shape. `economy.tier` holds the index of the current age (0 steam, 1 diesel, 2 electric,
- * 3 nuclear, 4 magnetic, 5 hyper) and gates works, stations, decor, contract templates and gacha
- * banners through their `tier` fields. Stations, works and houses also gain one level per age from
- * the age they appear in (`levelCap` in src/sim/levels.ts).
+ * 3 nuclear, 4 magnetic, 5 hyper) and gates works, stations, decor and contract templates through
+ * their `tier` fields. Stations, works and houses also gain one level per age from the age they
+ * appear in (`levelCap` in src/sim/levels.ts).
  *
  * For now an age after Electric only raises the level cap of buildings: no rolling stock,
- * contract, recipe or banner belongs to one. Code that picks amounts or payouts by the age number
+ * contract or recipe belongs to one. Code that picks amounts or payouts by the age number
  * reads it through `railAge`, which stops at Electric.
  */
 import agesJson from '../data/ages.json';

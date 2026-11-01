@@ -48,7 +48,7 @@ describe('the notices the game pushes', () => {
 
   it('content a save lost is a note, and no toast of its own', () => {
     const g = standIn();
-    g.call('warnPruned', { dropped: [{ id: 'x', count: 1 }], money: 0, tickets: 0 });
+    g.call('warnPruned', { dropped: [{ id: 'x', count: 1 }], money: 0 });
     expect(g.toasts).toEqual([]);
     expect(g.pushed.map((n) => [n.key, n.type])).toEqual([['save:pruned', 'note']]);
   });

@@ -156,7 +156,6 @@ describe('the names of the data', () => {
     covers(HU_NAMES.stations, d.stations.defs, ['name', 'flavor']);
     covers(HU_NAMES.buildings, d.buildings, ['name', 'flavor']);
     covers(HU_NAMES.decor, d.decor, ['name', 'flavor']);
-    covers(HU_NAMES.banners, d.gacha.banners, ['name']);
     covers(HU_NAMES.contractTemplates, d.contracts.templates, ['name']);
     covers(HU_NAMES.contractRarities, d.contracts.rarities, ['name']);
     covers(HU_NAMES.biomes, biomeJson, ['name', 'desc']);
@@ -175,8 +174,9 @@ describe('the names of the data', () => {
     }
   });
 
-  it('has a note for every step of the save format', () => {
-    expect(Object.keys(HU_MIGRATIONS).map(Number)).toEqual(MIGRATIONS.map((m) => m.from));
+  it('has a note for every step of the save format the player is told of', () => {
+    const told = MIGRATIONS.filter((m) => !m.quiet).map((m) => m.from);
+    expect(Object.keys(HU_MIGRATIONS).map(Number)).toEqual(told);
   });
 });
 
@@ -471,7 +471,6 @@ const SAME_IN_BOTH = [
   'F',
   'FPS',
   'G',
-  'Gacha',
   'K',
   'M',
   'OK',
