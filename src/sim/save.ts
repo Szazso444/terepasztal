@@ -139,19 +139,19 @@ export interface SaveParts {
   roads: RoadJSON;
   /**
    * v25: the tiles dug with the Drill, the cuttings and the portals (`Underground.toJSON`); absent
-   * is an empty store. Optional here until the game writes it, so a part left out still compiles.
+   * in a file is an empty store.
    */
-  underground?: UndergroundJSON;
+  underground: UndergroundJSON;
   /**
    * v25: the ground levels the player set, the tiles of `GameMap.groundLevel` that are not
-   * NO_LEVEL; absent is a map as generated. Optional here for the same reason as `underground`.
+   * NO_LEVEL; absent in a file is a map as generated.
    */
-  groundLevel?: GroundLevelJSON;
+  groundLevel: GroundLevelJSON;
   /**
    * v25: the terrain the ground tools changed (`GroundTerrainJSON`), which the chunks do not hold;
-   * absent is the terrain as generated. Optional here for the same reason as `underground`.
+   * absent in a file is the terrain as generated.
    */
-  groundTerrain?: GroundTerrainJSON;
+  groundTerrain: GroundTerrainJSON;
 }
 /** The fields every format version since v1 has; the others arrived later and may be missing. */
 type SaveCore =

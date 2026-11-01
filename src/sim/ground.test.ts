@@ -169,6 +169,9 @@ function partsOf(world: SaveParts['world'], supply: SupplyMode = 'simple'): Save
     supply,
     people: { rng: 7 },
     roads: [],
+    underground: { dug: [], cuts: [], portals: [] },
+    groundLevel: [],
+    groundTerrain: [],
   };
 }
 /**
