@@ -18,7 +18,7 @@ import {
   type MapGenerator,
 } from './chunks';
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './mapgen';
-import { MAX_LEVEL, NO_LEVEL, levelAt, tileLevels } from './elevation';
+import { MAX_LEVEL, NO_LEVEL, levelAt, maxStep, tileLevels } from './elevation';
 import { bytesOf, oldChunkText, textOf, type OldVersion } from './oldChunkTexts';
 import { MAX_DROP, fallFeature } from './waterfalls';
 import { Dir } from '../engine/iso';
@@ -727,7 +727,13 @@ describe('the levels of a map built from stored chunks', () => {
   it('are filled from the old rule where no chunk sets one, so a map from version 5 chunks has the levels it had', () => {
     const seed = 20260912;
     const params = { w: 64, h: 32 };
-    const made = buildMap(seed, params, {});
+    // the world an older generator made, which stored no levels
+    const older: MapGenerator = (s, p) => {
+      const m = generateMap(s, p);
+      delete m.generatedLevel;
+      return m;
+    };
+    const made = buildMap(seed, params, {}, older);
     expect(made.map.generatedLevel).toBeUndefined();
     const had = tileLevels(made.map);
     expect(Math.max(...had)).toBeGreaterThanOrEqual(2);
@@ -1391,7 +1397,8 @@ describe('the seam between a stored chunk and a new one', () => {
             ]) {
               if (nx < 0 || ny < 0) continue;
               const n = ny * map.w + nx;
-              if (Math.abs(levels[k] - levels[n]) > 1) throw new Error(`a step of two at ${at}`);
+              if (Math.abs(levels[k] - levels[n]) > maxStep(map))
+                throw new Error(`too steep a step at ${at}`);
               // a pair across the seam whose terrains would stand more than a level apart
               if (stored(x, y) !== stored(nx, ny))
                 if (Math.abs(peak(map.terrain[k]) - peak(map.terrain[n])) > 1) steep++;
@@ -1589,6 +1596,28 @@ describe('chunk texts of every version (#392)', () => {
   const V6_GENERATED =
     'BgAADArocwAAOUQvcR4Qb3RdCjxBkI+u6PfnF9PI9ntMvf+nyPkEohffnQoZpCeKLRzE/NrlWJpVpPRtghPqIswmBOaB' +
     'cBxtcckNMBR2NUsM4r8vAg==';
+
+  // Version 6's text with real levels: the 12 x 10 tiles from chunk (0, -1)'s corner that map
+  // generation made for seed 7412 in the full chain, on the side of a mountain.
+  const V6_TALL =
+    'BgAADArocwABC0OvSAYPFrFEkMrMDKYOtSbdR98zWUD7Z/6X+K1Cjqvx79SLfwaqe1UKDBv6aS6ex11C626m39W70gbm' +
+    'i3vVv5vIO5lw8jIgVxKkukPoPT3x0y8WRBl5/7nc/QkLxvmPuepwAA==';
+  const TALL_LEVELS = [
+    0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 1, 0, 2, 2, 2, 2, 2, 3, 3, 1, 0, 0, 1, 1, 2, 3, 3,
+    3, 3, 4, 4, 2, 2, 1, 2, 2, 2, 3, 3, 4, 4, 4, 5, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 6, 3, 3, 3, 3,
+    3, 3, 4, 4, 5, 6, 6, 7, 3, 3, 3, 3, 4, 4, 5, 5, 6, 7, 8, 8, 3, 3, 4, 4, 4, 5, 6, 6, 8, 9, 10,
+    11, 4, 4, 4, 4, 5, 6, 7, 8, 10, 11, 12, 14, 4, 4, 5, 5, 6, 7, 8, 9, 11, 12, 12, 12,
+  ];
+
+  it('of version 6 with real levels decodes as it always has, and is written so again', () => {
+    const c = decodeChunk(V6_TALL)!;
+    expect([c.version, c.x0, c.y0, c.w, c.h]).toEqual([6, 0, 0, 12, 10]);
+    expect([...c.generatedLevel]).toEqual(TALL_LEVELS);
+    const m = emptyMap(7412, 12, 10, Terrain.Grass, 0, -CHUNK_TILES);
+    placeChunk(m, 0, -1, c);
+    expect([...m.generatedLevel!]).toEqual(TALL_LEVELS);
+    expect(encodeChunk(m, 0, -1)).toBe(V6_TALL);
+  });
 
   it('of version 5 decodes as it always has, with every generated level NO_LEVEL', () => {
     const c = decodeChunk(V5_SPELLED)!;

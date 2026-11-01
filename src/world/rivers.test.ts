@@ -6,7 +6,7 @@ import {
   type MapGenParams,
   type MapPlanes,
 } from './mapgen';
-import { levelTarget, tileLevels } from './elevation';
+import { levelTarget, maxStep, tileLevels } from './elevation';
 import { Biome, Terrain, startRegion, type GameMap } from './tiles';
 import {
   CHUNK_TILES,
@@ -140,9 +140,10 @@ function checkWater(small: MapPlanes, big: MapPlanes, seen: Seen) {
   for (let y = RING; y < RING + S.h; y++)
     for (let x = RING; x < RING + S.w; x++) {
       const i = y * w + x;
-      // neighbouring levels within one step, and water at its own level
-      if (Math.abs(levels[i] - levels[i - 1]) > 1 || Math.abs(levels[i] - levels[i - w]) > 1)
-        throw new Error(`a step of two at ${at(i)}`);
+      // neighbouring levels within a step, and water at its own level
+      const step = maxStep(m);
+      if (Math.abs(levels[i] - levels[i - 1]) > step || Math.abs(levels[i] - levels[i - w]) > step)
+        throw new Error(`too steep a step at ${at(i)}`);
       if (terrain[i] === Terrain.Water && levels[i] !== surface[i])
         throw new Error(`water at level ${levels[i]}, its own ${surface[i]}, at ${at(i)}`);
       if (terrain[i] !== Terrain.Water && surface[i])
@@ -793,7 +794,7 @@ interface Seam {
  * lowers it: found by scanning seeds 1 to 100. Should generation change and leave none, the seam
  * property fails on `lowered` and these want picking again.
  */
-const RAISED_WORLDS = [9, 36, 38, 61, 72, 90, 100];
+const RAISED_WORLDS = [5, 36, 38, 61, 82, 95, 100];
 const genSeam = (rng: Rng): Seam => {
   const near = rng.pick(['any', 'river', 'raised'] as const);
   const raised = near === 'raised';
@@ -815,6 +816,7 @@ function* shrinkSeam(c: Seam): Iterable<Seam> {
 /** The world's map as an older generator might have left it, to store a chunk of. */
 function stubChunk(c: Seam, like: GameMap): GameMap {
   const m = generateMap(c.seed, { w: like.w, h: like.h });
+  delete m.generatedLevel;
   m.props.clear();
   m.flow!.fill(0);
   m.flowDir!.fill(0);

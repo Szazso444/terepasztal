@@ -1,6 +1,6 @@
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './mapgen';
 import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
-import { MAX_LEVEL, NO_LEVEL, levelTarget, tileLevels } from './elevation';
+import { MAX_LEVEL, NO_LEVEL, levelTarget, maxStep, tileLevels } from './elevation';
 import { FLOW_CAP } from './rivers';
 import {
   FALL_BITS,
@@ -1375,7 +1375,7 @@ export function buildMap(
  * A stored river that runs into a new tile is left as it is, its waterfall too: a chunk stored
  * before CHUNK_VERSION 3 does not say which way its rivers run, and one stored before version 4
  * has no waterfalls. Coasts, lake edges and biome edges cut at the seam are accepted as they fall,
- * and the levels across it stay within one step (tileLevels).
+ * and the levels across it stay within a step (tileLevels; fitLevels on a map with a level plane).
  */
 function seam(map: GameMap, stored: Uint8Array) {
   const { w, h, terrain } = map;
@@ -1388,6 +1388,12 @@ function seam(map: GameMap, stored: Uint8Array) {
     const nx = x + DIR_DX[d - 1];
     const ny = y + DIR_DY[d - 1];
     return nx < 0 || ny < 0 || nx >= w || ny >= h ? -1 : ny * w + nx;
+  };
+  // a tile's generated level is its water's, and follows it down
+  const levels = map.generatedLevel;
+  const lower = (i: number, v: number) => {
+    surface[i] = v;
+    if (levels && levels[i] !== NO_LEVEL) levels[i] = v;
   };
   const fresh: number[] = [];
   for (let i = 0; i < w * h; i++) if (!stored[i] && terrain[i] === Terrain.Water) fresh.push(i);
@@ -1413,14 +1419,14 @@ function seam(map: GameMap, stored: Uint8Array) {
         if (n >= 0) v = Math.min(v, levelTarget(map, n) + 1);
       }
       if (v < surface[i]) {
-        surface[i] = v;
+        lower(i, v);
         changed = true;
       }
     }
     for (const i of fresh) {
       const n = flowDir[i] ? ahead(i, flowDir[i]) : -1;
       if (n >= 0 && !stored[n] && surface[n] > surface[i]) {
-        surface[n] = surface[i];
+        lower(n, surface[i]);
         changed = true;
       }
     }
@@ -1435,4 +1441,53 @@ function seam(map: GameMap, stored: Uint8Array) {
     } else fall = fallAt(map, i);
     feature[i] = (feature[i] & ~FALL_BITS) | fall;
   });
+  fitLevels(map, stored);
+}
+
+/**
+ * Fits the level plane's new tiles to the stored ones (1 in `stored`), which stay as they are: each
+ * new tile comes within maxStep a tile of every stored tile, so the plane holds settled levels on
+ * either side of the seam, whatever generator made each. A tile no chunk set a level for reads the
+ * old rule's level (as buildMap fills it in), and a new tile that needs fitting is given a level.
+ */
+function fitLevels(map: GameMap, stored: Uint8Array) {
+  const levels = map.generatedLevel;
+  if (!levels) return;
+  const { w, h, terrain, waterSurface } = map;
+  const step = maxStep(map);
+  const legacy = tileLevels({ w, h, terrain, waterSurface });
+  // the most and the least each tile may stand at, a tile's own where it is stored
+  const FREE = 1 << 20;
+  const most = new Int32Array(w * h).fill(FREE);
+  const least = new Int32Array(w * h).fill(-FREE);
+  for (let i = 0; i < w * h; i++)
+    if (stored[i]) most[i] = least[i] = levels[i] === NO_LEVEL ? legacy[i] : levels[i];
+  const reach = (i: number, n: number) => {
+    if (stored[i]) return false;
+    const m = Math.min(most[i], most[n] + step);
+    const l = Math.max(least[i], least[n] - step);
+    if (m === most[i] && l === least[i]) return false;
+    most[i] = m;
+    least[i] = l;
+    return true;
+  };
+  for (let changed = true; changed;) {
+    changed = false;
+    for (let y = 0; y < h; y++)
+      for (let x = 0, i = y * w; x < w; x++, i++) {
+        if (x && reach(i, i - 1)) changed = true;
+        if (y && reach(i, i - w)) changed = true;
+      }
+    for (let y = h - 1; y >= 0; y--)
+      for (let x = w - 1, i = y * w + x; x >= 0; x--, i--) {
+        if (x < w - 1 && reach(i, i + 1)) changed = true;
+        if (y < h - 1 && reach(i, i + w)) changed = true;
+      }
+  }
+  for (let i = 0; i < w * h; i++) {
+    if (stored[i]) continue;
+    const v = levels[i] === NO_LEVEL ? legacy[i] : levels[i];
+    const fit = Math.min(most[i], Math.max(least[i], v));
+    if (fit !== v) levels[i] = fit;
+  }
 }

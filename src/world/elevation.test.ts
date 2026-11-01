@@ -44,8 +44,8 @@ describe('tile elevation', () => {
     for (let y = 0; y < map.h; y++)
       for (let x = 0; x < map.w; x++) expect(levelAt(map, x, y)).toBe(levels[y * map.w + x]);
   }, 10_000);
-  it('keeps ordinary ground at sea level and neighbours within one level', () => {
-    const map = generateMap(7412, { w: 96, h: 96 }),
+  it('keeps ordinary ground at sea level and neighbours within one level with no level plane', () => {
+    const map = { ...generateMap(7412, { w: 96, h: 96 }), generatedLevel: undefined },
       levels = tileLevels(map);
     let raised = 0;
     for (let y = 0; y < map.h; y++)
@@ -63,6 +63,7 @@ describe('tile elevation', () => {
   it('stands water at its own level, and a map without the plane at level 0', () => {
     // a 5 x 5 plateau of hill with a pool at its middle raised to level 2
     const map = generateMap(1, { w: 32, h: 32 });
+    delete map.generatedLevel;
     map.terrain.fill(Terrain.Grass);
     for (let y = 10; y < 15; y++)
       for (let x = 10; x < 15; x++) map.terrain[y * 32 + x] = Terrain.Hill;
@@ -234,5 +235,42 @@ describe('tile elevation', () => {
         format: (m) => `${m.w} x ${m.h}: terrain ${m.terrain.join('')}, planes ${m.raw.join(',')}`,
       },
     );
+  });
+  it('agrees with tileLevels where a plane sets some tiles only', () => {
+    const palette = [Terrain.Grass, Terrain.Hill, Terrain.Mountain, Terrain.Water];
+    let unset = 0;
+    forAll(
+      (rng) => {
+        const w = rng.int(1, 12),
+          h = rng.int(1, 12);
+        const terrain = new Uint8Array(w * h);
+        const waterSurface = new Uint8Array(w * h);
+        const raw = new Uint8Array(w * h);
+        for (let i = 0; i < w * h; i++) {
+          terrain[i] = rng.pick(palette);
+          waterSurface[i] = rng.int(0, MAX_WATER_LEVEL);
+          raw[i] = rng.chance(0.4) ? NO_LEVEL : rng.int(0, MAX_LEVEL);
+        }
+        // the tiles the plane sets hold their settled level, the others stay unset
+        const settled = tileLevels({ w, h, terrain, waterSurface, generatedLevel: raw });
+        const generatedLevel = settled.map((v, i) => (raw[i] === NO_LEVEL ? NO_LEVEL : v));
+        return { w, h, terrain, waterSurface, generatedLevel, settled };
+      },
+      (m) => {
+        unset += m.generatedLevel.filter((v) => v === NO_LEVEL).length;
+        expect([...tileLevels(m)]).toEqual([...m.settled]);
+        for (let y = 0; y < m.h; y++)
+          for (let x = 0; x < m.w; x++)
+            if (levelAt(m, x, y) !== m.settled[y * m.w + x])
+              throw new Error(
+                `levelAt ${levelAt(m, x, y)}, ${m.settled[y * m.w + x]} at (${x}, ${y})`,
+              );
+      },
+      {
+        seeds: SEEDS.slice(0, 40),
+        format: (m) => `${m.w} x ${m.h}: terrain ${m.terrain.join('')}, plane ${m.generatedLevel}`,
+      },
+    );
+    expect(unset).toBeGreaterThan(0);
   });
 });
