@@ -15,6 +15,8 @@ function span(
   rail: boolean,
   /** Over land: the deck and fences only; the renderer stands piers on the ground below. */
   land = false,
+  /** Under narrow gauge: the deck and its fences pull in. */
+  narrow = false,
 ) {
   const b = new PixelBuf(96, 88);
   const pt = (l: number, w: number, z: number) => {
@@ -81,7 +83,7 @@ function span(
       cy: 0,
       angle: axis ? 0 : Math.PI / 2,
       len: 1,
-      wid: 0.68,
+      wid: narrow ? 0.6 : 0.68,
       z0: -4,
       h: 4,
       top: side,
@@ -117,7 +119,8 @@ function span(
     }
   }
   // Far fence belongs to the deck pass. Near fence belongs to the object pass.
-  const w = rail ? 0.32 : -0.32;
+  const fence = narrow ? 0.27 : 0.32,
+    w = rail ? fence : -fence;
   if (stone) {
     line(-0.5, w, 2, 0.5, w, 2, side[1], 3);
     for (const l of [-0.5, 0, 0.5]) line(l, w, 0, l, w, 4, side[0], 2);
@@ -181,13 +184,20 @@ export function addBridgeFrames(ab: AtlasBuilder) {
   for (const material of ['wood', 'stone'] as const) {
     ab.add(`structures/landpad_${material}`, pad(material).toImageData(), OX, OY);
     for (let axis = 0; axis < 2; axis++)
-      for (const rail of [false, true])
+      for (const rail of [false, true]) {
         ab.add(
           `structures/landspan_${material}_${axis}_${rail ? 'rail' : 'deck'}`,
           span(material, axis, 1, 0, 3, rail, true).toImageData(),
           OX,
           OY,
         );
+        ab.add(
+          `structures/narrowspan_${material}_${axis}_${rail ? 'rail' : 'deck'}`,
+          span(material, axis, 1, 0, 3, rail, true, true).toImageData(),
+          OX,
+          OY,
+        );
+      }
     const preview = new PixelBuf(160, 120);
     for (let phase = 0; phase < 3; phase++) {
       const edge = phase === 0 ? 1 : phase === 2 ? 2 : 0;

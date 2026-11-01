@@ -4,6 +4,7 @@
  * Each source is trimmed, measured against the tile it stands for, and resampled to the
  * illustrated density, then goes through the atlas cap pass (tools/atlas-cap.mjs). Geometry the
  * renderer needs (deck thickness, wall heights, shaft lengths) goes to src/render/bridgeKit.json.
+ * The narrow decks (assets/source/bridges-narrow-2026-10-11) join them: `narrowFrames`.
  * Uses pngjs (dev dependency) only.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -36,6 +37,24 @@ const PIECES = {
   'wood-brace-y': { kind: 'edge', thick: 0.05 },
   'wood-post': { kind: 'shaft', side: 0.07 },
 };
+
+/** The narrow decks: what each was painted on. A picture is scaled, never stretched to fit. */
+const NARROW_SOURCE = 'assets/source/bridges-narrow-2026-10-11';
+const NARROW_THICKNESS = 5;
+const NARROW = {
+  'stone-deck-x-narrow': {
+    file: 'raw/stone-deck-x-narrow-attempt-3.png',
+    guide: 'guides/stone-deck-x-narrow-centred.png',
+    scale: 15,
+    centre: [512, 512],
+  },
+  'stone-deck-y-narrow': { file: 'raw/stone-deck-y-narrow-attempt-1.png' },
+  'wood-deck-x-narrow': { file: 'raw/wood-deck-x-narrow-attempt-1.png' },
+  'wood-deck-y-narrow': { file: 'raw/wood-deck-y-narrow-attempt-1.png' },
+};
+/** Sleeper timber (`PAL.timber`), and how far the paintings' salmon timber is toned to it. */
+const TIMBER = [158, 116, 70];
+const TIMBER_TONE = 0.55;
 
 const opaque = (p, x, y) => p.data[(y * p.width + x) * 4 + 3] > 128;
 function bounds(p) {
@@ -120,10 +139,76 @@ function buildV2(dir) {
   return { frames, geometry };
 }
 
+/** Alpha from the geometry's edges: what a painting left half clear is solid, the rest clear. */
+export function hardenAlpha(p) {
+  for (let i = 3; i < p.data.length; i += 4) p.data[i] = p.data[i] >= 128 ? 255 : 0;
+  return p;
+}
+
+/** A timber painting toned towards sleeper timber, its light and shade kept. */
+export function toneTimber(p, amount = TIMBER_TONE) {
+  const light = (r, g, b) => 0.3 * r + 0.59 * g + 0.11 * b,
+    base = light(...TIMBER);
+  for (let i = 0; i < p.data.length; i += 4) {
+    const k = light(p.data[i], p.data[i + 1], p.data[i + 2]) / base;
+    for (let c = 0; c < 3; c++)
+      p.data[i + c] = Math.min(
+        255,
+        Math.round(p.data[i + c] + (TIMBER[c] * k - p.data[i + c]) * amount),
+      );
+  }
+  return p;
+}
+
+/**
+ * The anchor and scale of a deck painted on a guide of `scale` px a game px about `centre`, on a
+ * canvas `side` px wide: the guide is 1024 wide, so a larger return scales both. The painting's
+ * box is moved onto the guide's, and nothing else is done to it.
+ */
+export function narrowFit(painted, guide, side, scale, centre) {
+  const f = side / 1024;
+  return {
+    s: scale * f,
+    ax: centre[0] * f + (painted.left + painted.right) / 2 - (f * (guide.left + guide.right)) / 2,
+    ay: centre[1] * f + (painted.top + painted.bottom) / 2 - (f * (guide.top + guide.bottom)) / 2,
+  };
+}
+
+/** The four narrow decks, resampled by one factor both ways to the illustrated density. */
+function narrowFrames(dir) {
+  const geo = JSON.parse(readFileSync(join(dir, 'geometry.json'), 'utf8')),
+    frames = [],
+    geometry = {};
+  for (const [name, piece] of Object.entries(NARROW)) {
+    const src = hardenAlpha(PNG.sync.read(readFileSync(join(dir, piece.file)))),
+      guide = PNG.sync.read(readFileSync(join(dir, piece.guide ?? `guides/${name}.png`))),
+      { s, ax, ay } = narrowFit(
+        bounds(src),
+        bounds(guide),
+        src.width,
+        piece.scale ?? geo.scale,
+        piece.centre ?? [geo.centre.x, geo.centre.y],
+      ),
+      k = DENSITY / s,
+      png = resample(src, Math.round(src.width * k), Math.round(src.height * k));
+    frames.push({
+      key: `bridgekit/${name}`,
+      png: name.startsWith('wood') ? toneTimber(hardenAlpha(png)) : hardenAlpha(png),
+      ax: ax * k,
+      ay: ay * k,
+    });
+    geometry[name] = { thickness: NARROW_THICKNESS };
+  }
+  return { frames, geometry };
+}
+
 export function build(output = 'public/assets', dir = SOURCE) {
+  const narrow = existsSync(NARROW_SOURCE)
+    ? narrowFrames(NARROW_SOURCE)
+    : { frames: [], geometry: {} };
   if (existsSync(join(dir, 'guides'))) {
     const { frames, geometry } = buildV2(dir);
-    return write(output, frames, geometry);
+    return write(output, [...frames, ...narrow.frames], { ...geometry, ...narrow.geometry });
   }
   const frames = [],
     geometry = {};
@@ -172,7 +257,7 @@ export function build(output = 'public/assets', dir = SOURCE) {
       Object.entries(g).map(([key, v]) => [key, Math.round(v * 100) / 100]),
     );
   }
-  return write(output, frames, geometry);
+  return write(output, [...frames, ...narrow.frames], { ...geometry, ...narrow.geometry });
 }
 
 function write(output, frames, geometry) {

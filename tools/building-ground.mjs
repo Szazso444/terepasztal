@@ -196,7 +196,7 @@ export function atlasFrames(generate, root = '.') {
 
 /** `structures/` frames that are not buildings: bridges, track overlays, signals, markers. */
 const NOT_BUILDINGS =
-  /^(bridge_|span_|landspan_|landpad_|supply_|semaphore_|signal|power_line$|windmill_sails$|warn$|alert$|note$)/;
+  /^(bridge_|span_|landspan_|narrowspan_|landpad_|supply_|semaphore_|signal|power_line$|windmill_sails$|warn$|alert$|note$)/;
 
 /**
  * Every place def that has a picture, with the name its frames carry: a station by `art`, a works
