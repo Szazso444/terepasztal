@@ -207,8 +207,9 @@ export class Fleet {
    * Put a train on a free gate of the depot from which one of its stops can be reached, facing
    * away from the shed, with its route index at that stop. Tries every free gate and both ways
    * of standing on it. Returns the gate, or the reason nothing worked. A maintenance train goes to
-   * the track, not to a stop, so any gate it can run out through will do: a piece that failed
-   * between the depot and every stop is what it is sent for.
+   * the track, not to a stop: a piece that failed between the depot and every stop is what it is
+   * sent for. It takes the gate and way of standing from which the board has the most urgent job
+   * for it, and with no job in reach the first gate it can run out through.
    */
   private rollOut(
     t: Train,
@@ -225,10 +226,19 @@ export class Fleet {
       return out;
     };
     const maintenance = mode === 'maintenance';
-    if (maintenance)
+    if (maintenance) {
+      let best: { g: GateInfo; entry: number; tier: number } | null = null;
       for (const g of usable)
-        for (const entry of entries(g))
-          if (t.spawnAt(this.track, g.x, g.y, entry)) return { x: g.x, y: g.y };
+        for (const entry of entries(g)) {
+          if (!t.spawnAt(this.track, g.x, g.y, entry)) continue;
+          const tier = this.maintenance.peek(t, this.track)?.tier ?? Infinity;
+          if (!best || tier < best.tier) best = { g, entry, tier };
+        }
+      if (best) {
+        t.spawnAt(this.track, best.g.x, best.g.y, best.entry);
+        return { x: best.g.x, y: best.g.y };
+      }
+    }
     const stops = maintenance ? [] : t.schedule;
     for (let si = 0; si < stops.length; si++) {
       const st = this.builder.stationById(stops[si].stationId);

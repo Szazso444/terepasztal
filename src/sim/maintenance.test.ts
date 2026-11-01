@@ -227,6 +227,61 @@ describe('a maintenance train leaving a depot', () => {
     expect(w.fleet.create([loco], [wagon], [], undefined, 'maintenance')).toBe(check.reason);
   });
 
+  /** A depot in the middle of the map with a line of its own out of each side. */
+  function twoLines() {
+    rules.trackWearMul = 0;
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    depotWith(w, startStock(), { x: 30, y: 30 });
+    line(w, 10, 30, 29);
+    line(w, 32, 30, 60);
+    const loco = w.inventory.add('adler', 0).uid;
+    const wagon = w.inventory.add('maint_wagon_branch', 0).uid;
+    return { w, loco, wagon };
+  }
+  const send = (w: SimWorld, loco: number, wagon: number) => {
+    const t = w.fleet.create([loco], [wagon], [], undefined, 'maintenance');
+    if (typeof t === 'string') throw new Error(t);
+    return t;
+  };
+
+  it('takes the gate its work lies beyond', () => {
+    for (const x of [45, 20]) {
+      const { w, loco, wagon } = twoLines();
+      wearDown(w, x, 0);
+      const gate = w.fleet.dispatchCheck([loco], [wagon], [], null, 'maintenance').gate!;
+      expect(Math.sign(gate.x - 30.5)).toBe(Math.sign(x - 30.5));
+      const t = send(w, loco, wagon);
+      expect(t.maint?.ax).toBe(x);
+      until(w, () => healthAt(w, x) >= 1);
+    }
+  });
+
+  it('goes for the most urgent work beyond its gates', () => {
+    for (const [broken, worn] of [
+      [45, 20],
+      [20, 45],
+    ]) {
+      const { w, loco, wagon } = twoLines();
+      wearDown(w, worn, 0.2);
+      wearDown(w, broken, 0);
+      expect(send(w, loco, wagon).maint?.ax).toBe(broken);
+    }
+  });
+
+  it('with no work in reach takes the first gate it can run out through', () => {
+    const { w, loco, wagon } = twoLines();
+    expect(w.fleet.dispatchCheck([loco], [wagon], [], null, 'maintenance').gate).not.toBeNull();
+    expect(send(w, loco, wagon).maint).toBeNull();
+  });
+
+  it('claims nothing by asking', () => {
+    const { w, loco, wagon } = twoLines();
+    wearDown(w, 45, 0);
+    w.fleet.dispatchCheck([loco], [wagon], [], null, 'maintenance');
+    expect(w.fleet.maintenance.pick(onlooker(), w.track)).toBeNull();
+    expect(send(w, loco, wagon).maint?.ax).toBe(45);
+  });
+
   it('asks the preview the same question', () => {
     const { w, loco } = brokenLine();
     expect(w.fleet.previewSpawn([loco], [], null).gate).toBeNull();
@@ -449,6 +504,49 @@ describe('a maintenance train at work', () => {
     expect(healthAt(w, 40)).toBe(left);
   });
 
+  it('taken off the mode on the way to a job, it does not run on to it', () => {
+    const { w, stops } = workLine();
+    wearDown(w, 80, 0.2);
+    const t = maintTrain(w, stops);
+    until(w, () => t.headTile!.x > 26);
+    expect(w.fleet.setMode(t, 'schedule')).toEqual({ ok: true });
+    expect(t.maint).toBeNull();
+    let far = 0;
+    until(w, () => {
+      far = Math.max(far, t.headTile!.x);
+      return t.headTile!.x < 20;
+    });
+    expect(far).toBeLessThan(30);
+  });
+
+  it('taken off the mode for one with nothing to pick, it stops there and idles', () => {
+    const { w, stops } = workLine();
+    wearDown(w, 80, 0.2);
+    const t = maintTrain(w, stops);
+    until(w, () => t.headTile!.x > 26);
+    expect(w.fleet.setMode(t, 'freight')).toEqual({ ok: true });
+    expect(w.fleet.chooseNext(t)).toBeNull();
+    expect(t.state).toBe('idle');
+    expect(t.pathTotal).toBe(0);
+    const at = t.headTile!.x;
+    const from = w.clock.time;
+    until(w, () => w.clock.time > from + 5);
+    expect(t.headTile!.x).toBe(at);
+  });
+
+  it('backing off for a train, it finishes the move when taken off the mode', () => {
+    const { w, stops } = workLine();
+    wearDown(w, 80, 0.2);
+    const t = maintTrain(w, stops);
+    until(w, () => t.headTile!.x > 26);
+    t.holding = true;
+    const way = t.pathTotal;
+    t.leaveWork();
+    expect(t.state).toBe('moving');
+    expect(t.pathTotal).toBe(way);
+    t.holding = false;
+  });
+
   it('a train that loses its wagon drops the job', () => {
     const { w, stops } = workLine();
     wearDown(w, 40, 0);
@@ -578,6 +676,23 @@ describe('a maintenance train at work', () => {
     expect('repairOwed' in none).toBe(false);
     expect('maint' in none).toBe(false);
     expect(Train.fromJSON(none, w.track).maint).toBeNull();
+  });
+
+  it('a file with a broken job or debt loads without them', () => {
+    const { w, stops } = workLine();
+    const j = maintTrain(w, stops).toJSON();
+    const job = { ax: 40, ay: 30, tier: 1, x: 40, y: 30 } as const;
+    const load = (maint: unknown, repairOwed: unknown) =>
+      Train.fromJSON({ ...j, maint, repairOwed } as typeof j, w.track);
+    expect(load(job, { wood: 0.5 }).maint).toEqual(job);
+    expect(load({ ...job, tier: 3 }, undefined).maint).toBeNull();
+    expect(load({ ...job, ax: 'a' }, undefined).maint).toBeNull();
+    expect(load({ ...job, x: Number.NaN }, undefined).maint).toBeNull();
+    expect(load('job', undefined).maint).toBeNull();
+    expect(load(null, { wood: 0.5, iron: -1, stone: Number.NaN, sand: 'x' }).repairOwed).toEqual({
+      wood: 0.5,
+    });
+    expect(load(null, 'owed').repairOwed).toEqual({});
   });
 
   it('is offered no contract', () => {

@@ -206,6 +206,18 @@ function maintJSON(
     ...(Object.keys(repairOwed).length && { repairOwed: { ...repairOwed } }),
   };
 }
+/** A maintenance train's job as a file holds it: null unless whole. */
+function maintOf(v: MaintJob | undefined): MaintJob | null {
+  if (typeof v !== 'object' || v === null) return null;
+  const { ax, ay, tier, x, y } = v;
+  const tiles = [ax, ay, x, y].every(Number.isInteger);
+  return tiles && (tier === 0 || tier === 1 || tier === 2) ? { ax, ay, tier, x, y } : null;
+}
+/** What repairs left owing as a file holds it: the finite amounts above 0. */
+function repairOwedOf(v: Record<string, number> | undefined): Record<string, number> {
+  const owed = typeof v === 'object' && v !== null ? Object.entries(v) : [];
+  return Object.fromEntries(owed.filter(([, n]) => owedOf(n) > 0));
+}
 /** An amount owed as a file holds it: 0 unless a finite amount above 0. */
 const owedOf = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) && n > 0 ? n : 0);
 
@@ -2404,11 +2416,19 @@ export class Train {
   takeUpWork(ctx: TickCtx): void {
     if (!this.holding && ['moving', 'idle', 'noRoute'].includes(this.state)) this.nextWork(ctx);
   }
-  /** The train leaves the Maintenance mode: its job is off, and at work it stands free to go. */
+  /**
+   * The train leaves the Maintenance mode: its job is off. At work, or running to the job on a way
+   * of its own, it drops the way and stands free to plan again; a detour, a service stop or a
+   * back-off it is on ends as usual.
+   */
   leaveWork(): void {
     this.maint = null;
     this.repairUnpaid = false;
-    if (this.state === 'repairing') this.standAfterLoad();
+    const onItsWay =
+      this.state === 'moving' && !this.holding && !this.serviceStop && this.detour === null;
+    if (this.state !== 'repairing' && !onItsWay) return;
+    this.dropPath();
+    this.standAfterLoad();
   }
   /** Where a search for this train may start: its head, and its rear end for the train turned round. */
   pathEnds(): PathStart[] {
@@ -3868,8 +3888,8 @@ export class Train {
     t.nextFuelCheck = j.nextFuelCheck;
     t.dropped = j.dropped === true;
     t.owed = { food: owedOf(j.owed?.food), sand: owedOf(j.owed?.sand) };
-    t.maint = j.maint ?? null;
-    t.repairOwed = j.repairOwed ?? {};
+    t.maint = maintOf(j.maint);
+    t.repairOwed = repairOwedOf(j.repairOwed);
     // a yielding train looks again only every two seconds: until then what it last found holds
     if (t.state === 'yielding') {
       t.blockedBy = j.blockedBy;

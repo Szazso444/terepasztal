@@ -44,14 +44,22 @@ export class MaintenanceBoard {
   /** The train's next job, claimed for it, and the way there; null with nothing left it can reach. */
   pick(t: Train, track: TrackGraph): { job: MaintJob; path: PathSegment[] } | null {
     this.release(t);
+    const found = this.nearest(t, track);
+    if (found) t.maint = found.job;
+    return found;
+  }
+  /** The job `pick` would give a train standing where it stands, claiming nothing. */
+  peek(t: Train, track: TrackGraph): MaintJob | null {
+    return this.nearest(t, track)?.job ?? null;
+  }
+  /** One search per tier, stopping at the first that reaches a job. */
+  private nearest(t: Train, track: TrackGraph): { job: MaintJob; path: PathSegment[] } | null {
     for (const jobs of this.openJobs(track)) {
       if (!jobs.size) continue;
       const path = this.search(t, track, (x, y) => jobs.has(track.key(x, y)));
       if (!path) continue;
       const end = path[path.length - 1];
-      const job = jobs.get(track.key(end.x, end.y))!;
-      t.maint = job;
-      return { job, path };
+      return { job: jobs.get(track.key(end.x, end.y))!, path };
     }
     return null;
   }
