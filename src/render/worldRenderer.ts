@@ -337,6 +337,8 @@ export class WorldRenderer {
   movingWater = true;
   /** The wind the water moves in (`Weather`); the game sets it each frame. */
   wind: WaterWind | undefined;
+  /** How much rain shows, 0 to 1, for the rings on the water; the game sets it each frame. */
+  rain = 0;
   private waterMotion: WaterMotion | undefined;
   private view: { x: number; y: number; w: number; h: number } | null = null;
   /** The wheat fields' pictures (#444), one per field tile's sprite. */
@@ -1081,6 +1083,7 @@ export class WorldRenderer {
       () => viewTileRows(this.view!, RIPPLE_MARGIN, this.map.w, this.map.h),
       this.builtRegions.size,
       this.wind,
+      this.rain,
     );
     this.waterPhase += dt;
     if (this.waterPhase > 0.28) {

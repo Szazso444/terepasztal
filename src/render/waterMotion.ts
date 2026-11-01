@@ -1,4 +1,4 @@
-import { Container, Graphics, Texture, TilingSprite } from 'pixi.js';
+import { Container, Graphics, MeshSimple, Texture, TilingSprite } from 'pixi.js';
 import { DIR_DX, DIR_DY, tileToWorld, type Dir } from '../engine/iso';
 import { hash2 } from '../engine/rng';
 import type { GameMap } from '../world/tiles';
@@ -17,8 +17,11 @@ import { paintedWater } from './terrainMaterials';
  * The wind moves the still water (the Swell of the demo at its Gentle strength, the author's
  * default): fine crests and long swells lie across it and travel downwind, dark patches of gusts run
  * over them, and on the shores it blows toward each wave breaks into a line of foam that runs up and
- * draws back, leaving wet sand behind it. These layers lie on the ground plane, turned to the wind,
- * so the GPU moves them and a change of wind needs no new picture. In a calm only the ripples show.
+ * draws back, leaving wet sand behind it. The crests and gusts lie on the ground plane, turned to the
+ * wind, so the GPU moves them and a change of wind needs no new picture. The swells lie on a mesh over
+ * the view whose picture follows a travel time: they slow in the shallows, so near a shore they bunch
+ * up and turn to meet it. In a hard wind white caps form and fade, and rain rings the water. In a
+ * calm only the ripples show.
  *
  * The streaks are drawn by alpha bucket, a path a bucket, so a screen of river is a few draws.
  */
@@ -116,6 +119,9 @@ function painted(w: number, h: number, pixel: (x: number, y: number, out: number
   return Texture.from(c);
 }
 const smooth = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+/** The corner each side of a tile starts at, going round it clockwise. */
+const CORNER_X = [-0.5, 0.5, 0.5, -0.5];
+const CORNER_Y = [-0.5, -0.5, 0.5, 0.5];
 /** Ground px a tile side spans on the ground plane. */
 const TILE_GROUND = 32 * Math.SQRT2;
 /** Ground px between two swell crests in the picture: 1.12 tiles, the Gentle swell in a breeze. */
@@ -243,6 +249,54 @@ const EDGE_SAMPLES = 5;
 const FETCH = 7;
 /** The widest view, in world px, that still draws the shore's waves. */
 const SHORE_VIEW = 2600;
+/** Tile distance from land past which water is deep: swells there run as a plain train. */
+const DEEP = 6;
+/** Directions of wind a travel time is worked out for, round the compass. */
+const WIND_TURNS = 64;
+/** The swell's wavelength in tiles: the picture's period, SWELL_PERIOD ground px. */
+const SWELL_TILES = SWELL_PERIOD / TILE_GROUND;
+/** The wind strength from which white caps form. */
+const CAPS_FROM = 0.45;
+/**
+ * How long water `depth` tiles from land takes to cross a tile, deep water 1. Shallow water is
+ * slower, as the shallow-water wave speed has it.
+ */
+export function slowness(depth: number): number {
+  return 1 / Math.sqrt(Math.tanh(Math.max(0.4, depth) / 1.5));
+}
+/**
+ * Travel times of a swell over a `w` x `h` plane, by fast sweeping: where `depth` is DEEP or more
+ * it is the plain train along (`tx`, `ty`), and from there it runs on into the shallows at
+ * `slowness`, so its fronts bend toward the shore.
+ */
+export function travelTimes(depth: Uint8Array, w: number, h: number, tx: number, ty: number) {
+  const n = w * h;
+  const t = new Float32Array(n).fill(Infinity);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) if (depth[y * w + x] >= DEEP) t[y * w + x] = x * tx + y * ty;
+  const relax = (x: number, y: number) => {
+    const i = y * w + x;
+    if (depth[i] >= DEEP) return;
+    const a = Math.min(x > 0 ? t[i - 1] : Infinity, x < w - 1 ? t[i + 1] : Infinity);
+    const b = Math.min(y > 0 ? t[i - w] : Infinity, y < h - 1 ? t[i + w] : Infinity);
+    const f = slowness(depth[i]);
+    const low = Math.min(a, b);
+    if (low === Infinity) return;
+    const s =
+      Math.abs(a - b) >= f ? low + f : (a + b + Math.sqrt(2 * f * f - (a - b) * (a - b))) / 2;
+    if (s < t[i]) t[i] = s;
+  };
+  for (let pass = 0; pass < 2; pass++) {
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) relax(x, y);
+    for (let y = 0; y < h; y++) for (let x = w - 1; x >= 0; x--) relax(x, y);
+    for (let y = h - 1; y >= 0; y--) for (let x = 0; x < w; x++) relax(x, y);
+    for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) relax(x, y);
+  }
+  // a map with no deep water has only the plain train
+  for (let i = 0; i < n; i++) if (t[i] === Infinity) t[i] = (i % w) * tx + Math.floor(i / w) * ty;
+  return t;
+}
+
 /** The wind as the water reads it (`WindState`). */
 export type WaterWind = { strength: number; tile: { x: number; y: number } };
 const CALM: WaterWind = { strength: 0, tile: { x: 1, y: 0 } };
@@ -266,7 +320,15 @@ export class WaterMotion {
   /** The ground plane the wind's layers lie on, and those layers. */
   private plane = new Container();
   private crests: TilingSprite | null = null;
-  private swell: TilingSprite | null = null;
+  private swell: Texture | null = null;
+  /** The swells' mesh over the view, the block of tiles it covers, and each vertex's tile. */
+  private mesh: MeshSimple | null = null;
+  private block = { x0: 0, y0: 0, x1: -1, y1: -1, step: 0 };
+  private meshTiles = new Int32Array(0);
+  private depth = new Uint8Array(0);
+  private travel = new Float32Array(0);
+  private travelFor = -1;
+  private swellDir = { x: 1, y: 0 };
   private gusts: TilingSprite | null = null;
   private swellAt = 0;
   private crestAt = 0;
@@ -283,10 +345,13 @@ export class WaterMotion {
     energy: new Float32Array(0),
   };
   private energyFor = -1;
+  /** The first sample of each shore edge, by `tile * 4 + side`. */
+  private edges = new Map<number, number>();
   private wet: number[][] = Array.from({ length: BUCKETS }, () => []);
   private film: number[][] = Array.from({ length: BUCKETS }, () => []);
   private foam: number[][] = Array.from({ length: BUCKETS }, () => []);
   private clots: number[][] = Array.from({ length: BUCKETS }, () => []);
+  private caps: number[][] = Array.from({ length: BUCKETS }, () => []);
 
   constructor(
     private readonly map: GameMap,
@@ -308,9 +373,10 @@ export class WaterMotion {
   /** The wind's layers, on a plane turned and squashed as the tiles are. */
   private addWindLayers() {
     const crests = crestTexture();
-    const swell = swellTexture();
+    this.swell = swellTexture();
+    if (this.swell) this.swell.source.addressMode = 'repeat';
     const gusts = gustTexture();
-    if (!crests || !swell || !gusts) return;
+    if (!crests || !gusts) return;
     const { w, h } = this.map;
     const side = (w + h + 8) * TILE_GROUND;
     const make = (texture: Texture) => {
@@ -322,8 +388,7 @@ export class WaterMotion {
     this.gusts = make(gusts);
     this.gusts.tileScale.set(2);
     this.crests = make(crests);
-    this.swell = make(swell);
-    this.plane.addChild(this.gusts, this.crests, this.swell);
+    this.plane.addChild(this.gusts, this.crests);
     this.plane.rotation = Math.PI / 4;
     const squash = new Container();
     squash.scale.set(1, 0.5);
@@ -344,6 +409,7 @@ export class WaterMotion {
     const nys: number[] = [];
     const zs: number[] = [];
     const next: number[] = [];
+    this.edges.clear();
     const land = (x: number, y: number) =>
       x >= 0 && y >= 0 && x < w && y < h && terrain[y * w + x] !== Terrain.Water;
     for (let y = 0; y < h; y++)
@@ -354,6 +420,7 @@ export class WaterMotion {
           const dx = DIR_DX[d as Dir];
           const dy = DIR_DY[d as Dir];
           if (!land(x + dx, y + dy)) continue;
+          this.edges.set(i * 4 + d, xs.length);
           for (let k = 0; k < EDGE_SAMPLES; k++) {
             const along = (k + 0.5) / EDGE_SAMPLES - 0.5;
             const bx = x - dy * along;
@@ -387,6 +454,124 @@ export class WaterMotion {
       energy: new Float32Array(xs.length),
     };
     this.energyFor = -1;
+    this.rebuildDepth();
+  }
+
+  /** How far each tile lies from land, up to DEEP, for the swells and the white caps. */
+  private rebuildDepth() {
+    const { w, h, terrain } = this.map;
+    const depth = new Uint8Array(w * h).fill(DEEP);
+    let edge: number[] = [];
+    for (let i = 0; i < w * h; i++)
+      if (terrain[i] !== Terrain.Water) {
+        depth[i] = 0;
+        edge.push(i);
+      }
+    for (let d = 1; d < DEEP && edge.length; d++) {
+      const out: number[] = [];
+      for (const i of edge)
+        for (const n of [i - 1, i + 1, i - w, i + w])
+          if (n >= 0 && n < w * h && depth[n] === DEEP) {
+            depth[n] = d;
+            out.push(n);
+          }
+      edge = out;
+    }
+    this.depth = depth;
+    this.travelFor = -1;
+  }
+
+  /** The swells' travel times for this wind, to the nearest of WIND_TURNS. */
+  private swellTravel(wind: WaterWind) {
+    const turn = Math.round((Math.atan2(wind.tile.y, wind.tile.x) / (Math.PI * 2)) * WIND_TURNS);
+    if (turn === this.travelFor) return;
+    this.travelFor = turn;
+    const a = (turn / WIND_TURNS) * Math.PI * 2;
+    this.swellDir = { x: Math.cos(a), y: Math.sin(a) };
+    this.travel = travelTimes(this.depth, this.map.w, this.map.h, this.swellDir.x, this.swellDir.y);
+    this.block.step = 0;
+  }
+
+  /** The block of tiles under `view`, a vertex every few tiles as it widens. */
+  private swellMesh(view: View) {
+    const { map, block } = this;
+    const { w, h } = map;
+    const sx = (p: number, q: number) => p / 64 + q / 32;
+    const sy = (p: number, q: number) => q / 32 - p / 64;
+    const pad = 4;
+    const xs = [sx(view.x, view.y), sx(view.x + view.w, view.y), sx(view.x, view.y + view.h)];
+    xs.push(sx(view.x + view.w, view.y + view.h));
+    const ys = [sy(view.x, view.y), sy(view.x + view.w, view.y), sy(view.x, view.y + view.h)];
+    ys.push(sy(view.x + view.w, view.y + view.h));
+    const x0 = Math.max(0, Math.floor(Math.min(...xs)) - pad);
+    const x1 = Math.min(w - 1, Math.ceil(Math.max(...xs)) + pad);
+    const y0 = Math.max(0, Math.floor(Math.min(...ys)) - pad);
+    const y1 = Math.min(h - 1, Math.ceil(Math.max(...ys)) + pad);
+    const step = x1 - x0 > 110 ? 3 : x1 - x0 > 60 ? 2 : 1;
+    const inside =
+      block.step === step &&
+      x0 >= block.x0 &&
+      y0 >= block.y0 &&
+      x1 <= block.x1 &&
+      y1 <= block.y1 &&
+      block.x1 - block.x0 < 2.2 * (x1 - x0 + 1);
+    if (inside) return;
+    const bx0 = Math.max(0, x0 - 12);
+    const by0 = Math.max(0, y0 - 12);
+    const bx1 = Math.min(w - 1, x1 + 12);
+    const by1 = Math.min(h - 1, y1 + 12);
+    this.block = { x0: bx0, y0: by0, x1: bx1, y1: by1, step };
+    const cols = Math.ceil((bx1 - bx0) / step) + 1;
+    const rows = Math.ceil((by1 - by0) / step) + 1;
+    const vertices = new Float32Array(cols * rows * 2);
+    const uvs = new Float32Array(cols * rows * 2);
+    const tiles = new Int32Array(cols * rows);
+    const indices = new Uint32Array((cols - 1) * (rows - 1) * 6);
+    for (let r = 0; r < rows; r++)
+      for (let c = 0; c < cols; c++) {
+        const x = Math.min(w - 1, bx0 + c * step);
+        const y = Math.min(h - 1, by0 + r * step);
+        const k = r * cols + c;
+        const p = tileToWorld(x, y);
+        vertices[k * 2] = p.x;
+        vertices[k * 2 + 1] = p.y;
+        tiles[k] = y * w + x;
+      }
+    for (let r = 0, o = 0; r < rows - 1; r++)
+      for (let c = 0; c < cols - 1; c++) {
+        const a = r * cols + c;
+        indices[o++] = a;
+        indices[o++] = a + 1;
+        indices[o++] = a + cols;
+        indices[o++] = a + 1;
+        indices[o++] = a + cols + 1;
+        indices[o++] = a + cols;
+      }
+    this.meshTiles = tiles;
+    this.mesh?.destroy();
+    this.mesh = new MeshSimple({ texture: this.swell!, vertices, uvs, indices });
+    this.ripples.addChild(this.mesh);
+    this.ripples.setChildIndex(this.mask, this.ripples.children.length - 1);
+  }
+
+  /** Slides the swells' picture along their travel times. */
+  private moveSwell(alpha: number) {
+    const mesh = this.mesh;
+    if (!mesh) return;
+    mesh.alpha = alpha;
+    const uvs = mesh.geometry.uvs;
+    const { meshTiles, travel, swellDir, swellAt } = this;
+    const w = this.map.w;
+    const rows = SWELL_TILES * SWELL_ROWS;
+    const across = TILE_GROUND / 1024;
+    for (let k = 0; k < meshTiles.length; k++) {
+      const i = meshTiles[k];
+      const x = i % w;
+      const y = (i - x) / w;
+      uvs[k * 2] = (-swellDir.y * x + swellDir.x * y) * across;
+      uvs[k * 2 + 1] = (travel[i] - swellAt) / rows;
+    }
+    mesh.geometry.getBuffer('aUV').update();
   }
 
   /** How hard the waves reach each sample in this wind: the way it faces, and the water upwind. */
@@ -494,20 +679,30 @@ export class WaterMotion {
     }
   }
 
-  /** The still water ripples may show on: tiles of it with water on all four sides. */
+  /** The still water ripples may show on, out to the painted waterline on its shores. */
   private rebuildMask(tiles: number) {
     this.masked = tiles;
     const { map, mask } = this;
     const { w, h, terrain } = map;
     mask.clear();
     const water = (i: number) => terrain[i] === Terrain.Water;
-    for (let y = 1; y < h - 1; y++)
-      for (let x = 1; x < w - 1; x++) {
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
         const i = y * w + x;
         if (!water(i) || map.flowDir?.[i] || !this.built(x, y)) continue;
-        if (!water(i - 1) || !water(i + 1) || !water(i - w) || !water(i + w)) continue;
-        const p = tileToWorld(x, y);
-        mask.poly([p.x, p.y - 16, p.x + 32, p.y, p.x, p.y + 16, p.x - 32, p.y]);
+        const poly: number[] = [];
+        for (let d = 0; d < 4; d++) {
+          const first = this.edges.get(i * 4 + d);
+          if (first === undefined) {
+            const p = tileToWorld(x + CORNER_X[d], y + CORNER_Y[d]);
+            poly.push(p.x, p.y);
+          } else
+            for (let k = 0; k < EDGE_SAMPLES; k++) {
+              const p = tileToWorld(this.shore.x[first + k], this.shore.y[first + k]);
+              poly.push(p.x, p.y);
+            }
+        }
+        mask.poly(poly);
       }
     mask.fill(0xffffff);
   }
@@ -520,29 +715,33 @@ export class WaterMotion {
     rows: () => Rows,
     tiles: number,
     wind: WaterWind = CALM,
+    rain = 0,
   ) {
     this.root.visible = view !== null;
     if (!view) return;
     if (tiles !== this.masked) {
+      this.rebuildShore();
       if (this.layers.length) this.rebuildMask(tiles);
       this.masked = tiles;
-      this.rebuildShore();
     }
     const blown = smooth(wind.strength / 0.2);
-    if (this.crests && this.swell && this.gusts) {
+    if (this.crests && this.gusts) {
       const s = wind.strength;
       const turn = Math.atan2(-wind.tile.x, wind.tile.y);
-      for (const l of [this.crests, this.swell, this.gusts]) l.rotation = turn;
+      for (const l of [this.crests, this.gusts]) l.rotation = turn;
       // a tile downwind every so many seconds, the crests slower than the swell's crests, the
       // gusts' bands fastest; each keeps its own place as the wind changes
       this.crestAt += dt * (0.08 + 0.14 * s) * TILE_GROUND;
-      this.swellAt += dt * (((1.3 + 1.1 * s) / (3.4 + 1.2 * s)) * TILE_GROUND);
+      this.swellAt += dt * ((1.3 + 1.1 * s) / (3.4 + 1.2 * s));
       this.gustAt += dt * (40 + 200 * s) * 0.7;
       this.crests.tilePosition.y = this.crestAt;
-      this.swell.tilePosition.y = this.swellAt;
       this.gusts.tilePosition.y = this.gustAt;
       this.crests.alpha = blown * (0.5 + 0.3 * s);
-      this.swell.alpha = blown * (0.4 + 0.3 * s);
+      if (this.swell) {
+        this.swellTravel(wind);
+        this.swellMesh(view);
+        this.moveSwell(blown * (0.4 + 0.3 * s));
+      }
       this.gusts.alpha = blown * (0.05 + 0.06 * s);
     }
     if (this.layers.length) {
@@ -565,15 +764,17 @@ export class WaterMotion {
     this.since += dt;
     if (this.since < REFRESH) return;
     this.since = 0;
-    this.drawStreaks(clock, view, rows(), wind);
+    this.drawStreaks(clock, view, rows(), wind, rain);
   }
 
-  private drawStreaks(clock: number, view: View, rows: Rows, wind: WaterWind) {
-    const { map, strokes: g, fine, broad, falling, point, wet, film, foam, clots } = this;
-    for (const list of [fine, broad, falling, wet, film, foam, clots])
+  private drawStreaks(clock: number, view: View, rows: Rows, wind: WaterWind, rain: number) {
+    const { map, strokes: g, fine, broad, falling, point, wet, film, foam, clots, caps } = this;
+    for (const list of [fine, broad, falling, wet, film, foam, clots, caps])
       for (const b of list) b.length = 0;
     g.clear();
     this.drawShore(clock, view, wind);
+    this.drawCaps(clock, view, rows, wind);
+    this.rainRings(clock, view, rain);
     const { w, flowDir } = map;
     const inView: number[] = [];
     for (let y = rows.y0; y <= rows.y1; y++)
@@ -654,9 +855,72 @@ export class WaterMotion {
     draw(foam, 0xdceae6, 2.4, 0.26);
     draw(clots, 0xe0ece8, 1.6, 0.55);
     draw(foam, 0xe4eeea, 0.8, 0.8);
+    draw(caps, 0xe2ece8, 1.3, 0.75);
     draw(broad, STREAK, 1.9, 0.4);
     draw(fine, STREAK, 0.7, 0.4);
     draw(falling, FOAM, 1.1, 0.85);
+  }
+
+  /** White caps out on open water in a hard wind: each forms, drifts downwind and fades. */
+  private drawCaps(clock: number, view: View, rows: Rows, wind: WaterWind) {
+    const s = wind.strength;
+    if (s < CAPS_FROM || view.w > SHORE_VIEW) return;
+    const { map, caps, depth } = this;
+    const { w, terrain } = map;
+    const tox = wind.tile.x;
+    const toy = wind.tile.y;
+    const odds = (s - CAPS_FROM) * 0.55;
+    for (let y = rows.y0; y <= rows.y1; y++)
+      for (let x = rows.x0(y), x1 = rows.x1(y); x <= x1; x++) {
+        const i = y * w + x;
+        if (terrain[i] !== Terrain.Water || depth[i] < 2 || map.flowDir?.[i]) continue;
+        const wx = x + map.originX;
+        const wy = y + map.originY;
+        const period = 2.4 + 1.8 * hash2(wx, wy, 73);
+        const c = clock / period + hash2(wx, wy, 74);
+        const m = Math.floor(c);
+        const f = c - m;
+        if (f > 0.5 || hash2(wx + m, wy, 75) > odds) continue;
+        const a = smooth(f / 0.07) * (1 - smooth((f - 0.1) / 0.4));
+        const bucket = Math.min(BUCKETS - 1, Math.floor(a * BUCKETS));
+        if (bucket < 1) continue;
+        const along = hash2(wx, wy + m, 76) - 0.5 + 0.05 + 0.22 * f;
+        const side = hash2(wx + 1, wy + m, 77) - 0.5;
+        const px = x + tox * along - toy * side;
+        const py = y + toy * along + tox * side;
+        const l = 0.06 + 0.05 * hash2(wx, wy + m, 78) + 0.03 * s;
+        const p = tileToWorld(px + toy * l, py - tox * l);
+        const q = tileToWorld(px - toy * l, py + tox * l);
+        caps[bucket].push(p.x, p.y, q.x, q.y);
+      }
+  }
+
+  /** Rain on the water: rings that open and fade at places picked afresh for each drop. */
+  private rainRings(clock: number, view: View, rain: number) {
+    if (rain < 0.05) return;
+    const { map, strokes: g } = this;
+    const count = Math.min(300, Math.round(7.5e-4 * view.w * view.h * rain));
+    const rings: number[][] = [[], [], [], []];
+    for (let i = 0; i < count; i++) {
+      const period = 0.9 + 0.6 * hash2(i, 3, 501);
+      const ph = clock / period + hash2(i, 4, 502);
+      const c = Math.floor(ph);
+      const u = ph - c;
+      const x = view.x + hash2(i, c, 503) * view.w;
+      const y = view.y + hash2(i, c, 504) * view.h;
+      const tx = x / 64 + y / 32;
+      const ty = y / 32 - x / 64;
+      if (tx < 0 || ty < 0 || tx > map.w - 1 || ty > map.h - 1) continue;
+      if (paintedWater(map, tx, ty) < 0.9) continue;
+      const fade = (1 - u) * (1 - u) * (0.6 + 0.4 * hash2(i, c, 505));
+      rings[Math.min(3, Math.floor(fade * 4))].push(x, y, 3.4 * (0.3 + 0.7 * Math.sqrt(u)));
+    }
+    rings.forEach((list, q) => {
+      if (!list.length) return;
+      for (let k = 0; k < list.length; k += 3)
+        g.ellipse(list[k], list[k + 1], list[k + 2], list[k + 2] / 2);
+      g.stroke({ color: 0xe4eff3, width: 0.6, alpha: 0.1 + 0.11 * q });
+    });
   }
 
   /** The white water running down a fall's slope, and its flecks at the foot. */

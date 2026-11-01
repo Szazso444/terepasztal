@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Dir } from '../engine/iso';
 import { emptyMap } from '../world/mapgen';
 import { Terrain, type GameMap } from '../world/tiles';
-import { WaterMotion, channelPoint, inflow } from './waterMotion';
+import { WaterMotion, channelPoint, inflow, slowness, travelTimes } from './waterMotion';
 
 /** A river along row 3, flowing east, with a thinner one joining it from the north at column 4. */
 function river(): GameMap {
@@ -53,6 +53,31 @@ describe('the waves on a shore', () => {
   it('reach a shore the wind blows toward, over open water, and no other', () => {
     expect(Math.max(...motionOn(coast(), { x: 1, y: 0 }).energy)).toBeGreaterThan(0.5);
     expect(Math.max(...motionOn(coast(), { x: -1, y: 0 }).energy)).toBe(0);
+  });
+});
+
+describe('swells in the shallows', () => {
+  it('slow as the water shallows', () => {
+    expect(slowness(6)).toBeLessThan(1.02);
+    expect(slowness(1)).toBeGreaterThan(slowness(3));
+  });
+
+  it('run as a plain train over deep water', () => {
+    const w = 24;
+    const t = travelTimes(new Uint8Array(w * w).fill(6), w, w, 1, 0);
+    expect(t[5 * w + 7]).toBeCloseTo(7, 5);
+    expect(t[9 * w + 7]).toBeCloseTo(7, 5);
+  });
+
+  it('fall behind in the shallows beside a shore, so their fronts bend', () => {
+    const w = 40;
+    const depth = new Uint8Array(w * w).fill(6);
+    // a shore along the north of the map, shallowing over five tiles
+    for (let y = 0; y < 5; y++) for (let x = 0; x < w; x++) depth[y * w + x] = y;
+    const t = travelTimes(depth, w, w, 1, 0);
+    // at one x the swell reaches the shallows later than the deep water beside them
+    expect(t[1 * w + 20]).toBeGreaterThan(t[20 * w + 20]);
+    for (const v of t) expect(Number.isFinite(v)).toBe(true);
   });
 });
 
