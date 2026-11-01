@@ -89,7 +89,7 @@ import {
   seasonFromDate,
   type Season,
 } from './sim/weather';
-import { decorOffset, type Decor } from './sim/build';
+import { decorOffset, type Decor, type GroundChange } from './sim/build';
 import { wrapRotation } from './sim/rotation';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
 import { Dir, DIRS, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
@@ -1103,20 +1103,7 @@ export class Game implements UiHost {
       if (bridgeTilesTouched((nx, ny) => !!this.builder.bridgeAt(nx, ny), x, y))
         this.bridgesDirty = true;
     };
-    // a raise or lower, and its undo and redo: the ground is painted again where it moved and on
-    // the ring round it, whose corners it shares, and the rail beds are worked out again
-    this.builder.onGroundChanged = (tiles) => {
-      const seen = new Set<number>();
-      for (const t of tiles)
-        for (let dy = -1; dy <= 1; dy++)
-          for (let dx = -1; dx <= 1; dx++) {
-            const x = t.x + dx,
-              y = t.y + dy;
-            if (!inBounds(this.map, x, y) || !seen.add(y * this.map.w + x)) continue;
-            this.world.retile(x, y);
-          }
-      this.railsDirty = true;
-    };
+    this.builder.onGroundChanged = (changes) => this.onGroundChanged(changes);
     this.world.harvest.canStand = (x, y, id, rot) => this.builder.checkStation(x, y, id, rot).ok;
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
@@ -1469,6 +1456,30 @@ export class Game implements UiHost {
     const beds = railProfile(this.map, this.track, (x, y) => !!this.builder.bridgeAt(x, y));
     this.fleet.railBeds = beds;
     if (this.world.setRailBeds(beds)) this.refreshBridges();
+  }
+  /**
+   * A raise or lower, or the undo or redo of one: the ground is painted again where it moved and on
+   * the ring round it, whose corners it shares, all in one pass (`retileMany`); the rail beds are
+   * worked out again; and the survey maps are drawn again when stone turned to grass or back.
+   */
+  private onGroundChanged(changes: readonly GroundChange[]) {
+    const seen = new Set<number>(),
+      ring: { x: number; y: number }[] = [];
+    for (const c of changes)
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const x = c.x + dx,
+            y = c.y + dy;
+          if (!inBounds(this.map, x, y) || seen.has(y * this.map.w + x)) continue;
+          seen.add(y * this.map.w + x);
+          ring.push({ x, y });
+        }
+    this.world.retileMany(ring);
+    this.railsDirty = true;
+    if (changes.some((c) => c.terrainNow !== c.terrainWas)) {
+      this.minimap.rebuildBase();
+      this.overview.rebuildTerrain();
+    }
   }
   private onTrackChanged(x: number, y: number) {
     this.railsDirty = true;
