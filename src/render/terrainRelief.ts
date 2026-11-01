@@ -546,6 +546,28 @@ export function snowLight(shade: number): number {
   return SNOW_KNEE + room * (1 - Math.exp((SNOW_KNEE - shade) / room));
 }
 
+/** What snow in full shade keeps of its red, green and blue: shade on snow reads cool. */
+const SNOW_SHADE = [0.84, 0.93, 1];
+/** How much of the season's tint snow takes: it stays snow, not the colour of autumn grass. */
+const SNOW_SEASON = 0.25;
+
+/**
+ * The light on colour channel `c` (0 red, 1 green, 2 blue) of snow under slope shade `shade`:
+ * snowLight, cooled in deep shade. The painted ground and the peak pictures both light their snow
+ * by it, so a cap on a top reads as the snow round it.
+ */
+export function snowChannelLight(shade: number, c: number): number {
+  return snowLight(shade) * (1 + (SNOW_SHADE[c] - 1) * smoothstep((1 - shade) / 0.35));
+}
+
+/**
+ * What snow makes of the season's tint on one channel, `season` 0 to 1 (the tint channel over 255):
+ * the share of the tint's pull that SNOW_SEASON allows. Ground and peak pictures use it alike.
+ */
+export function snowTint(season: number): number {
+  return 1 + (season - 1) * SNOW_SEASON;
+}
+
 /** A true top, which carries a peak picture, stands at this level or higher... */
 export const TOP_LEVEL = 7;
 /** ...and has no higher tile within this many tiles along either axis. */

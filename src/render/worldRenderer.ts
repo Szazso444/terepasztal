@@ -1230,14 +1230,16 @@ export class WorldRenderer {
         const key = `terrain/mountain_${this.map.variant[k] % 3}`,
           f = this.atlas.get(key),
           style = this.landscape.style,
-          // With a match set, lit like the ground it stands on (the painter's height light).
+          matched = style.summitMatch !== undefined,
+          // With a match set, its rock lit like the ground it stands on (the painter's height
+          // light) and the season's tint baked in, snow taking its share of it as the ground's
+          // snow does, so a cap is no brighter than the snow round it.
           texture = this.surfaces.summit(
             key,
             f,
             style.summitMatch ?? 0,
-            style.summitMatch === undefined
-              ? 1
-              : heightFactor(levelAt(this.map, x, y), style.heightLight ?? 0),
+            matched ? heightFactor(levelAt(this.map, x, y), style.heightLight ?? 0) : 1,
+            matched ? this.groundTint : 0xffffff,
           );
         if (s) s.texture = texture;
         else {
@@ -1250,13 +1252,18 @@ export class WorldRenderer {
         }
         const p = this.surfacePoint(x, y);
         s.position.set(p.x, p.y);
-        setOwnTint(s, this.groundTint);
+        setOwnTint(s, this.summitTint());
       }
+  }
+  /** What a summit sprite is tinted by: nothing when its picture has the season baked in. */
+  private summitTint() {
+    return this.landscape.style.summitMatch === undefined ? this.groundTint : 0xffffff;
   }
   setSeasonTint(ground: number, props: number) {
     this.groundTint = ground;
     this.landscape.setTint(ground);
-    for (const s of this.summitSprites.values()) setOwnTint(s, ground);
+    // a summit picture has the season baked in, so it is made again
+    this.refreshSummits();
     this.propTint = props;
     for (let i = 0; i < this.groundSprites.length; i++) {
       const s = this.groundSprites[i];

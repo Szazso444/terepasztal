@@ -16,6 +16,7 @@ import {
   type Pebble,
   type Tuft,
 } from './groundFit';
+import { snowChannelLight, snowTint } from './terrainRelief';
 import { FIELD_RES, type FieldFrame, type FieldPicture } from './wheatField';
 
 // Reviewed regions on the packed, rectified source frames: x/y/width/height.
@@ -191,7 +192,8 @@ export interface GroundFitArt {
  */
 const SPRITE_ROCK = { mean: [118, 116, 109], std: [47.1, 37, 26] };
 const TERRAIN_ROCK = { mean: [138, 133, 119], std: [45.6, 36.5, 26.7] };
-const SPRITE_SNOW = [229, 219, 202];
+/** The lit snow of the pictures (229, 219, 202) in grey: snow at its brightest has shade 1. */
+const SPRITE_SNOW_LUM = (229 + 219 + 202) / 3;
 /** The painter's snow (landscape.worker.ts SNOW). */
 const TERRAIN_SNOW = [234, 239, 246];
 const unit = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
@@ -217,16 +219,19 @@ export class SurfaceAssets {
   }
   /**
    * `match` (0..1) recolours the illustration toward the terrain's own rock and snow, `light`
-   * multiplies it like the painter's height light, so the summit reads as the same stone as the
-   * banks under it.
+   * multiplies its rock like the painter's height light, so the summit reads as the same stone as
+   * the banks under it. Its snow takes no height light: it is lit and tinted as the painted ground's
+   * snow is (snowChannelLight, snowTint), so a cap is no brighter than the snow round it.
+   * `tint` (0xRRGGBB) is the season's ground tint, which the picture has baked in: snow takes a
+   * share of it, and the sprite shows the picture under no tint of its own.
    */
-  summit(key: string, f: FrameInfo, match = 0, light = 1) {
-    const id = `${key}|${match}|${light.toFixed(3)}`,
+  summit(key: string, f: FrameInfo, match = 0, light = 1, tint = 0xffffff) {
+    const id = `${key}|${match}|${light.toFixed(3)}|${tint}`,
       cached = this.summits.get(id);
     if (cached) return cached;
     const { canvas, ctx, pixels } = read(f),
       { width: w, height: h, data: p } = pixels;
-    if (match > 0 || light !== 1)
+    if (match > 0 || light !== 1 || tint !== 0xffffff)
       for (let k = 0; k < p.length; k += 4) {
         if (!p[k + 3]) continue;
         const r = p[k],
@@ -234,16 +239,20 @@ export class SurfaceAssets {
           b = p[k + 2],
           lum = (r + g + b) / 3,
           sat = Math.max(r, g, b) - Math.min(r, g, b),
-          // Snow: bright and nearly grey. It takes the painter's snow colour, shading kept.
-          snow = unit((lum - 175) / 25) * (1 - unit((sat - 35) / 20));
+          // Snow: bright and nearly grey. It takes the painter's snow colour, shading kept: its
+          // shade is how far it stands from the lit snow of the picture.
+          snow = unit((lum - 175) / 25) * (1 - unit((sat - 35) / 20)),
+          shade = lum / SPRITE_SNOW_LUM;
         for (let c = 0; c < 3; c++) {
           const v = p[k + c],
+            season = ((tint >> (16 - c * 8)) & 255) / 255,
             rock =
               ((v - SPRITE_ROCK.mean[c]) * TERRAIN_ROCK.std[c]) / SPRITE_ROCK.std[c] +
               TERRAIN_ROCK.mean[c],
-            ice = (v * TERRAIN_SNOW[c]) / SPRITE_SNOW[c],
-            target = rock + (ice - rock) * snow;
-          p[k + c] = Math.max(0, Math.min(255, (v + (target - v) * match) * light));
+            ice = TERRAIN_SNOW[c] * snowChannelLight(shade, c),
+            stone = (v + (rock - v) * match) * light * season,
+            cap = (v + (ice - v) * match) * snowTint(season);
+          p[k + c] = Math.max(0, Math.min(255, stone + (cap - stone) * snow));
         }
       }
     // A wide fade so the cap rises out of the rocky mountain top instead of sitting on it.

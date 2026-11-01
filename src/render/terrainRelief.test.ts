@@ -13,6 +13,8 @@ import {
   groundAllows,
   heightFactor,
   snowLight,
+  snowChannelLight,
+  snowTint,
   isTrueTop,
   RELIEF_MAX,
   DEFAULT_RELIEF,
@@ -550,6 +552,19 @@ describe('tall ground', () => {
       expect(snowLight(shade)).toBeLessThan(1.08);
       last = snowLight(shade);
     }
+  });
+
+  it('lights snow by channel: snowLight, cooler in deep shade, and takes a quarter of the season tint', () => {
+    for (const shade of [1, 1.4]) {
+      for (let c = 0; c < 3; c++) expect(snowChannelLight(shade, c)).toBe(snowLight(shade));
+    }
+    // in full shade red falls most and blue not at all
+    expect(snowChannelLight(0.6, 0)).toBeLessThan(snowChannelLight(0.6, 1));
+    expect(snowChannelLight(0.6, 1)).toBeLessThan(snowChannelLight(0.6, 2));
+    expect(snowChannelLight(0.6, 2)).toBe(0.6);
+    expect(snowTint(1)).toBe(1);
+    expect(snowTint(0.8)).toBeCloseTo(0.95, 10);
+    expect(snowTint(0)).toBe(0.75);
   });
 
   it('heightFactor is 1.24 at level 4 and 1.348 at level 16', () => {
