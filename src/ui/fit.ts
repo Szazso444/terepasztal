@@ -4,9 +4,6 @@
  * Node tests read them.
  */
 
-/** The room the top bar keeps for the now-playing widget, left of the weather (`Hud.nowPlaying`). */
-export const NOW_PLAYING_WIDTH = 190;
-
 /** A box's content width and its own, as `scrollWidth` and `clientWidth` give them. */
 export interface Measured {
   readonly scrollWidth: number;

@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  NOW_PLAYING_WIDTH,
-  compactLevel,
-  foldCount,
-  needsCompact,
-  topbarCompact,
-  type CompactLevel,
-} from './fit';
+import { compactLevel, foldCount, needsCompact, topbarCompact, type CompactLevel } from './fit';
 import { foldedEntries, type MenuId } from './menuBarModel';
 
 const box = (scrollWidth: number, clientWidth: number) => ({ scrollWidth, clientWidth });
@@ -132,9 +125,6 @@ describe('foldCount', () => {
     const at = (room: number) => foldCount(9, (n) => n * 40 < room);
     expect(at(90)).toBe(at(90));
     expect(at(90)).toBe(3);
-  });
-  it('keeps room for the now-playing widget', () => {
-    expect(NOW_PLAYING_WIDTH).toBe(190);
   });
 });
 

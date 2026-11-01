@@ -240,7 +240,8 @@ export function resourceTip(s: ResourceSnapshot): TipDoc {
   return [
     title(icon(s.id), resourceName(s.id)),
     row(STOCK_LABEL[s.id] ?? STR.res.have, stock),
-    ...(s.store ? [dim(STR.res.shownStore(s.store))] : []),
+    // power is the grid's, whichever store the bar shows
+    ...(s.store && s.id !== 'power' ? [dim(STR.res.shownStore(s.store))] : []),
     ...(s.total !== undefined ? [dim(STR.res.allStores(Math.floor(s.total)))] : []),
     ...(s.produced !== undefined ? [row(STR.res.producedDay, num(s.produced.toFixed(1)))] : []),
     ...(s.consumed !== undefined ? [row(STR.res.consumedDay, num(s.consumed.toFixed(1)))] : []),

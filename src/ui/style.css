@@ -5072,15 +5072,6 @@ body.title-up #topbar .now-playing:not(.held) {
     animation: none;
   }
 }
-/* below the width the bar is laid out for, the buttons stay and the title goes */
-@media (max-width: 1279px) {
-  #topbar .now-playing {
-    width: auto;
-  }
-  #topbar .now-playing .tt-term:last-child {
-    display: none;
-  }
-}
 
 /* ---- the Audio screen: rows stand in under the row they answer to ---- */
 .au-ctl {

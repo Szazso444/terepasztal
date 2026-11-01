@@ -962,6 +962,10 @@ describe('the resource tooltips', () => {
     expect(tip('Narrow Depot')).toContain(STR.res.shownStore('Narrow Depot'));
     expect(tip().join('\n')).not.toContain(STR.res.shownStore(''));
   });
+  it('power is the grid’s: its tooltip names no store, whichever the bar shows', () => {
+    const text = lines(resourceTip({ id: 'power', have: 30, cap: 100, store: 'Depot', tier: 0 }));
+    expect(text).not.toContain(STR.res.shownStore('Depot'));
+  });
   it('a building tooltip from a resource says what it costs and when it unlocks', () => {
     const ref = makersOf('oil')[0];
     const lines = buildingDefTip(ref, 0).map(blockText);
