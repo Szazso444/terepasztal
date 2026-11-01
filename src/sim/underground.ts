@@ -186,6 +186,10 @@ export class Underground {
   floorAt(x: number, y: number): number | undefined {
     return this.inside(x, y) ? this.dug.get(y * this.w + x) : undefined;
   }
+  /** The level of the rail on a dug or cut tile; undefined on open ground. */
+  bedAt(x: number, y: number): number | undefined {
+    return this.floorAt(x, y) ?? (this.isCut(x, y) ? DIG_FLOOR : undefined);
+  }
   portals(): readonly Portal[] {
     return this.list;
   }

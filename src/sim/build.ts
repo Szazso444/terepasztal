@@ -745,19 +745,16 @@ export class Builder {
   }
   /**
    * Rail takes a level a tile, and generated ground steps up to four: is the edge between `t` and
-   * (nx, ny) too steep for a link? A dug or cut tile on either side lays its rail at its bed, so
-   * the ground's step does not bind it.
+   * (nx, ny) too steep for a link? Each side counts at its rail: a dug or cut tile at its bed, so
+   * the ground over it does not bind the link, and open ground at its level. The rail inside is
+   * level, so a dug tile takes open ground at its own floor only: rail on the mountain beside a
+   * tunnel does not join it through the wall.
    */
   private cliffAt(t: { x: number; y: number }, nx: number, ny: number): boolean {
-    const under = this.underground;
-    if (
-      under.isDug(t.x, t.y) ||
-      under.isCut(t.x, t.y) ||
-      under.isDug(nx, ny) ||
-      under.isCut(nx, ny)
-    )
-      return false;
-    return Math.abs(levelAt(this.map, t.x, t.y) - levelAt(this.map, nx, ny)) > 1;
+    const under = this.underground,
+      rail = (x: number, y: number) => under.bedAt(x, y) ?? levelAt(this.map, x, y),
+      step = Math.abs(rail(t.x, t.y) - rail(nx, ny));
+    return step > (under.isDug(t.x, t.y) !== under.isDug(nx, ny) ? 0 : 1);
   }
   refundFor(p: TrackPiece): Cost {
     return this.free

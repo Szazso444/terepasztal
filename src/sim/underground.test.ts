@@ -59,6 +59,16 @@ describe('Underground', () => {
     expect(u.empty).toBe(true);
   });
 
+  it('gives the bed of a dug or cut tile, and none on open ground or off the map', () => {
+    const u = new Underground(8, 8);
+    u.dig(1, 1, 2);
+    u.cut(2, 1);
+    expect(u.bedAt(1, 1)).toBe(2);
+    expect(u.bedAt(2, 1)).toBe(0);
+    expect(u.bedAt(3, 1)).toBeUndefined();
+    expect(u.bedAt(-1, 1)).toBeUndefined();
+  });
+
   it('refuses a portal off the map, with a bad face or floor, or a second on the same face', () => {
     const u = new Underground(8, 8);
     expect(u.addPortal({ x: 2, y: 2, face: 'N', floor: 0 })).toBe(true);

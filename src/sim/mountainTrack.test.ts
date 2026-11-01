@@ -1157,6 +1157,70 @@ describe('track inside', () => {
       }
     });
 
+    it.each([
+      ['dug', 0, true],
+      ['dug', 1, false],
+      ['dug', 2, false],
+      ['dug', 4, false],
+      ['cut', 0, true],
+      ['cut', 1, true],
+      ['cut', 2, false],
+      ['cut', 4, false],
+    ] as const)('a %s tile and open ground at level %i join: %s', (kind, level, joins) => {
+      /** Plain ground with a tile at `level` at x 19, and the Drill's tile beside it at x 20. */
+      const world = () => {
+        const w = ground((x) => (x === 19 ? level : 0));
+        expect(levelAt(w.map, 19, ROW)).toBe(level);
+        if (kind === 'dug') w.under.dig(20, ROW, 0);
+        else w.under.cut(20, ROW);
+        return w;
+      };
+      const want = joins ? { ok: true } : { ok: false, reason: STR.build.tooSteep };
+      // the open tile's piece down first
+      const a = world();
+      expect(a.builder.placeTrack(19, ROW, STRAIGHT, 1)).toBe(true);
+      a.builder.insideMode = kind === 'dug';
+      expect(a.builder.checkTrack(20, ROW, STRAIGHT, 1)).toMatchObject(want);
+      // the Drill's piece down first
+      const b = world();
+      b.builder.insideMode = kind === 'dug';
+      expect(b.builder.placeTrack(20, ROW, STRAIGHT, 1)).toBe(true);
+      b.builder.insideMode = false;
+      expect(b.builder.checkTrack(19, ROW, STRAIGHT, 1)).toMatchObject(want);
+    });
+
+    it('rail on the mountain does not join a tunnel through the wall', () => {
+      const w = wall();
+      expect(levelAt(w.map, 18, ROW)).toBe(5);
+      w.under.dig(17, ROW, 0);
+      w.builder.insideMode = true;
+      expect(w.builder.placeTrack(17, ROW, STRAIGHT, 1)).toBe(true);
+      w.builder.insideMode = false;
+      expect(w.builder.checkTrack(18, ROW, STRAIGHT, 1)).toMatchObject({
+        ok: false,
+        reason: STR.build.tooSteep,
+      });
+      // the other way round: rail on the top first, and the tunnel comes to it
+      w.track.place(18, ROW + 1, 'straight', 1);
+      w.under.dig(17, ROW + 1, 0);
+      w.builder.insideMode = true;
+      expect(w.builder.checkTrack(17, ROW + 1, STRAIGHT, 1)).toMatchObject({
+        ok: false,
+        reason: STR.build.tooSteep,
+      });
+    });
+
+    it('a dug tile joins a dug tile and a cut at their floor', () => {
+      const w = hill();
+      w.under.cut(16, ROW);
+      w.under.dig(17, ROW, 0);
+      w.under.dig(18, ROW, 0);
+      expect(w.builder.placeTrack(16, ROW, STRAIGHT, 1)).toBe(true);
+      w.builder.insideMode = true;
+      expect(w.builder.placeTrack(17, ROW, STRAIGHT, 1)).toBe(true);
+      expect(w.builder.placeTrack(18, ROW, STRAIGHT, 1)).toBe(true);
+    });
+
     it('lifts the cliff rule for the tunnel only: the row beside it keeps its cliff', () => {
       const w = wall();
       w.under.dig(16, ROW, 0);
