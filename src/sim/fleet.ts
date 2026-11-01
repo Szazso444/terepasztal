@@ -310,7 +310,8 @@ export class Fleet {
   /**
    * Deployment check of every gate of a depot for a consist (spec §5): track present and of a
    * usable class, continuing onward for at least one more usable tile, with room for the whole
-   * consist before the first blocking feature, and nobody standing on the gate.
+   * consist before the first blocking feature, and nobody standing on the gate. A maintenance train
+   * waiting for work is no blocking feature: it moves off for the train (`makeWay`).
    */
   gateReport(t: Train, depot: Station): GateInfo[] {
     const out: GateInfo[] = [];
@@ -372,7 +373,7 @@ export class Fleet {
         if (!this.track.connected(cx, cy, out2)) break;
         const np = this.track.get(nx, ny)!;
         if (!t.access.classes.has(pieceClassFor(np, (out2 + 2) % 4))) break;
-        if (this.occupied(nx, ny, t.id)) break;
+        if (this.occupants(nx, ny, t.id).some((o) => !(o.maintaining && o.state === 'idle'))) break;
         cx = nx;
         cy = ny;
         cin = (out2 + 2) % 4;
@@ -389,6 +390,11 @@ export class Fleet {
       info.ok = true;
     }
     return out;
+  }
+  /** The trains on a tile, other than `self`. */
+  private occupants(x: number, y: number, self: number): Train[] {
+    const ids = this.occ.get(y * this.map.w + x) ?? [];
+    return ids.flatMap((id) => (id === self ? [] : (this.byId(id) ?? [])));
   }
   /** Classes of the track at a depot's gates (for greying the picker). */
   depotClasses(depot: Station): Set<TrackClass> {

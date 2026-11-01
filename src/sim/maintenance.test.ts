@@ -423,6 +423,43 @@ describe('a maintenance train with no work', () => {
     until(w, () => next.distance > from + 5, 120);
   });
 
+  it('a train longer than the gap rolls out past it, and it moves off', () => {
+    rules.trackWearMul = 0;
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    depotWith(w, { ...startStock(), wood: 1000, stone: 1000, iron: 1000 }, { x: 4, y: 30 });
+    line(w, 6, 30, 90);
+    const a = station(w, 'warehouse', 40, 29).id;
+    const b = station(w, 'warehouse', 60, 29).id;
+    const t = maintTrain(w, []);
+    until(w, () => t.state === 'idle', 120);
+    const parked = t.headTile!.x;
+    const loco = w.inventory.add('adler', 0).uid;
+    const flats = Array.from({ length: 6 }, () => w.inventory.add('flatbed', 0).uid);
+    expect(w.fleet.dispatchCheck([loco], flats, [a, b], null).reason).toBeNull();
+    const long = w.fleet.create([loco], flats, [a, b]);
+    if (typeof long === 'string') throw new Error(long);
+    expect(long.length).toBeGreaterThan(parked - GATE);
+    until(w, () => long.atStation?.id === a, 200);
+    expect(t.headTile!.x).not.toBe(parked);
+  });
+
+  it('a train that is not parked still shuts the run', () => {
+    rules.trackWearMul = 0;
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    depotWith(w, { ...startStock(), wood: 1000, stone: 1000, iron: 1000 }, { x: 4, y: 30 });
+    line(w, 6, 30, 90);
+    const a = station(w, 'warehouse', 40, 29).id;
+    const b = station(w, 'warehouse', 60, 29).id;
+    const other = maintTrain(w, [a, b], 'schedule');
+    until(w, () => other.headTile!.x >= 12, 60);
+    other.coal = 0;
+    other.water = 0;
+    until(w, () => other.state === 'noFuel', 30);
+    const loco = w.inventory.add('adler', 0).uid;
+    const flats = Array.from({ length: 6 }, () => w.inventory.add('flatbed', 0).uid);
+    expect(w.fleet.dispatchCheck([loco], flats, [a, b], null).reason).not.toBeNull();
+  });
+
   it('rolled out with nothing to do, it clears the gate too', () => {
     const { w, stops } = workLine();
     const t = maintTrain(w, stops);
