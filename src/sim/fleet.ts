@@ -1344,7 +1344,7 @@ export class Fleet {
     if (!held.length || !workers.length) return;
     const w = this.map.w;
     const routes = new Map(this.trains.map((o) => [o.id, o.pathTileKeys(w)]));
-    const sidings = this.sidingTiles();
+    let sidings: Set<number> | null = null;
     for (const t of workers) {
       const mine = t.occupancyKeys(w);
       const ids = held
@@ -1352,6 +1352,7 @@ export class Fleet {
         .map((o) => o.id);
       if (!ids.length) continue;
       t.asideRetry = now + ASIDE_RETRY;
+      sidings ??= this.sidingTiles();
       const plan = t.planAside(ctx, ids, this.asideSpots(t, routes, sidings));
       if (!plan || !t.retreat(ctx, ids, plan)) continue;
       this.maintenance.release(t);
