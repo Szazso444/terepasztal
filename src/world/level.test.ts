@@ -1,6 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { emptyMap } from './mapgen';
-import { LEVELS_KEY, getLevel, isLevel, levelFromMap, listLevels, saveLevel } from './level';
+import {
+  LEVELS_KEY,
+  getLevel,
+  isLevel,
+  layableTrack,
+  levelFromMap,
+  listLevels,
+  saveLevel,
+} from './level';
+import { TRACK_ITEMS, type TrackTuple } from './track';
 import type { LevelData } from './level';
 
 let stored: Map<string, string>;
@@ -49,5 +58,36 @@ describe('a new level', () => {
   it('starts with money, an age and the stock, and holds no ticket', () => {
     const level = levelFromMap(emptyMap(5, 32, 32), 'New line');
     expect(level.start).toEqual({ money: 25000, tier: 0, stockMul: 1 });
+  });
+});
+
+describe('a level file written by an older build', () => {
+  it('lays a bridge piece as a straight over a bridge, as an old save becomes', () => {
+    const { track, buildings } = layableTrack([[4, 8, 'bridge', 1, 'main']]);
+    expect(track).toEqual([[4, 8, 'straight', 1, 'main', undefined]]);
+    expect(buildings).toEqual([[4, 8, 'bridge_wood', 0]]);
+  });
+
+  it('keeps a bridge the file already holds on that tile', () => {
+    const { buildings } = layableTrack(
+      [[4, 8, 'bridge', 0, 'branch']],
+      [[4, 8, 'bridge_stone', 0]],
+    );
+    expect(buildings).toEqual([[4, 8, 'bridge_stone', 0]]);
+  });
+
+  it('leaves out a piece this build has no picture for', () => {
+    const { track } = layableTrack([
+      [1, 1, 'curve', 0, 'hyperloop'],
+      [2, 2, 'crossing', 0, 'narrow', 'trunk'],
+      [3, 3, 'straight', 0, 'branch'],
+    ]);
+    expect(track).toEqual([[3, 3, 'straight', 0, 'branch', undefined]]);
+  });
+
+  it('keeps every piece the build bar can lay, the default line included', () => {
+    const all = TRACK_ITEMS.map((it): TrackTuple => [0, 0, it.kind, 0, it.cls, it.cls2]);
+    expect(layableTrack(all).track).toHaveLength(all.length);
+    expect(layableTrack([[0, 0, 'straight', 0]]).track).toHaveLength(1);
   });
 });
