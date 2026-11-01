@@ -281,6 +281,8 @@ export class BuildController {
         this.dragStart = null;
         this.dragAxis = null;
       }
+      // the marks go with `clearGhostVisibility`; the Drill's preview stands in the glass
+      if (this.digSeen) this.endDigLook();
       this.clearGhostVisibility(false);
       return;
     }

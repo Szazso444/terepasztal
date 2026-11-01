@@ -270,6 +270,15 @@ describe('the Drill', () => {
     expect(h.under.empty).toBe(true);
   });
 
+  it('takes its preview out of the glass when the pointer goes over a panel', () => {
+    const h = harness();
+    h.b.setTool({ kind: 'drill' });
+    h.frame({ x: 24, y: MID });
+    expect(h.glass[h.glass.length - 1].preview).toHaveLength(1);
+    h.frame({ x: 24, y: MID }, { active: false });
+    expect(h.glass[h.glass.length - 1]).toEqual({ on: true, preview: [] });
+  });
+
   it('one stroke of the Drill is one step, and the back-fill another', () => {
     const h = harness();
     const acts: number[] = [];
