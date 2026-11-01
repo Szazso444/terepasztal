@@ -752,6 +752,246 @@
     "anchorY": 36
   },
   {
+    "key": "props/beech_0",
+    "group": "props",
+    "width": 32.5,
+    "height": 22.75,
+    "anchorX": 18.09,
+    "anchorY": 22.67
+  },
+  {
+    "key": "props/beech_1",
+    "group": "props",
+    "width": 39,
+    "height": 28,
+    "anchorX": 18.49,
+    "anchorY": 28
+  },
+  {
+    "key": "props/beech_2",
+    "group": "props",
+    "width": 48.25,
+    "height": 33.25,
+    "anchorX": 23.26,
+    "anchorY": 33.33
+  },
+  {
+    "key": "props/poplar_0",
+    "group": "props",
+    "width": 12,
+    "height": 29.25,
+    "anchorX": 6,
+    "anchorY": 29.33
+  },
+  {
+    "key": "props/poplar_1",
+    "group": "props",
+    "width": 16,
+    "height": 36,
+    "anchorX": 7.16,
+    "anchorY": 36
+  },
+  {
+    "key": "props/poplar_2",
+    "group": "props",
+    "width": 16.75,
+    "height": 42.75,
+    "anchorX": 7.73,
+    "anchorY": 42.67
+  },
+  {
+    "key": "props/apple_0",
+    "group": "props",
+    "width": 19,
+    "height": 17.25,
+    "anchorX": 9.4,
+    "anchorY": 17.33
+  },
+  {
+    "key": "props/apple_1",
+    "group": "props",
+    "width": 27,
+    "height": 21.5,
+    "anchorX": 13.07,
+    "anchorY": 21.33
+  },
+  {
+    "key": "props/apple_2",
+    "group": "props",
+    "width": 29.5,
+    "height": 25.25,
+    "anchorX": 15.22,
+    "anchorY": 25.33
+  },
+  {
+    "key": "props/maple_0",
+    "group": "props",
+    "width": 25.75,
+    "height": 22.75,
+    "anchorX": 12.13,
+    "anchorY": 22.67
+  },
+  {
+    "key": "props/maple_1",
+    "group": "props",
+    "width": 34,
+    "height": 28.25,
+    "anchorX": 16.61,
+    "anchorY": 28
+  },
+  {
+    "key": "props/maple_2",
+    "group": "props",
+    "width": 38.75,
+    "height": 33.5,
+    "anchorX": 19.08,
+    "anchorY": 33.33
+  },
+  {
+    "key": "props/larch_0",
+    "group": "props",
+    "width": 17.75,
+    "height": 22.75,
+    "anchorX": 9,
+    "anchorY": 22.67
+  },
+  {
+    "key": "props/larch_1",
+    "group": "props",
+    "width": 20,
+    "height": 28,
+    "anchorX": 10.17,
+    "anchorY": 28
+  },
+  {
+    "key": "props/larch_2",
+    "group": "props",
+    "width": 27,
+    "height": 33.25,
+    "anchorX": 13.19,
+    "anchorY": 33.33
+  },
+  {
+    "key": "props/acacia_0",
+    "group": "props",
+    "width": 35.5,
+    "height": 17.25,
+    "anchorX": 18.84,
+    "anchorY": 17.33
+  },
+  {
+    "key": "props/acacia_1",
+    "group": "props",
+    "width": 42,
+    "height": 21.5,
+    "anchorX": 20.46,
+    "anchorY": 21.33
+  },
+  {
+    "key": "props/acacia_2",
+    "group": "props",
+    "width": 60,
+    "height": 25.25,
+    "anchorX": 31.89,
+    "anchorY": 25.33
+  },
+  {
+    "key": "props/stump_0",
+    "group": "props",
+    "width": 10.25,
+    "height": 8,
+    "anchorX": 5.16,
+    "anchorY": 7.13
+  },
+  {
+    "key": "props/stump_1",
+    "group": "props",
+    "width": 10.5,
+    "height": 8,
+    "anchorX": 5.33,
+    "anchorY": 6.93
+  },
+  {
+    "key": "props/log_0",
+    "group": "props",
+    "width": 14.75,
+    "height": 8,
+    "anchorX": 7.35,
+    "anchorY": 5.53
+  },
+  {
+    "key": "props/log_1",
+    "group": "props",
+    "width": 12.5,
+    "height": 8,
+    "anchorX": 6.33,
+    "anchorY": 6.14
+  },
+  {
+    "key": "props/fern_0",
+    "group": "props",
+    "width": 16.25,
+    "height": 10,
+    "anchorX": 8.02,
+    "anchorY": 8.36
+  },
+  {
+    "key": "props/fern_1",
+    "group": "props",
+    "width": 15.25,
+    "height": 10,
+    "anchorX": 7.34,
+    "anchorY": 9.51
+  },
+  {
+    "key": "props/mushrooms_0",
+    "group": "props",
+    "width": 7.5,
+    "height": 6,
+    "anchorX": 3.72,
+    "anchorY": 5.81
+  },
+  {
+    "key": "props/mushrooms_1",
+    "group": "props",
+    "width": 7.5,
+    "height": 6,
+    "anchorX": 3.91,
+    "anchorY": 5.79
+  },
+  {
+    "key": "props/heather_0",
+    "group": "props",
+    "width": 16.75,
+    "height": 8,
+    "anchorX": 8.2,
+    "anchorY": 7.66
+  },
+  {
+    "key": "props/heather_1",
+    "group": "props",
+    "width": 16.75,
+    "height": 8,
+    "anchorX": 8.33,
+    "anchorY": 7.87
+  },
+  {
+    "key": "props/dryshrub_0",
+    "group": "props",
+    "width": 16.75,
+    "height": 12,
+    "anchorX": 8.91,
+    "anchorY": 11.83
+  },
+  {
+    "key": "props/dryshrub_1",
+    "group": "props",
+    "width": 22.25,
+    "height": 12,
+    "anchorX": 10.05,
+    "anchorY": 11.89
+  },
+  {
     "key": "rolling/bogie3_f0",
     "group": "wagons",
     "width": 24,

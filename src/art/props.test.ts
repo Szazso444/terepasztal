@@ -119,6 +119,43 @@ const painted = JSON.parse(readFileSync('public/assets/props.json', 'utf8')) as 
 };
 const luma = ([r, g, b]: number[]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
+describe('nature set fallbacks', () => {
+  const kinds = {
+    beech: 3,
+    poplar: 3,
+    apple: 3,
+    maple: 3,
+    larch: 3,
+    acacia: 3,
+    stump: 2,
+    log: 2,
+    fern: 2,
+    mushrooms: 2,
+    heather: 2,
+    dryshrub: 2,
+  };
+  const keys = Object.entries(kinds).flatMap(([kind, n]) =>
+    Array.from({ length: n }, (_, v) => `props/${kind}_${v}`),
+  );
+
+  it('stand where the paintings stand: the same size and anchor within a world px', () => {
+    for (const key of keys) {
+      const f = frames[key],
+        p = painted.frames[key],
+        r = painted.resolution;
+      expect(f, key).toBeDefined();
+      expect(p, key).toBeDefined();
+      for (const [got, want, what] of [
+        [f.w, p.w / r, 'w'],
+        [f.h, p.h / r, 'h'],
+        [f.ax, p.ax / r, 'ax'],
+        [f.ay, p.ay / r, 'ay'],
+      ] as const)
+        expect(Math.abs(got - want), `${key} ${what}`).toBeLessThanOrEqual(1);
+    }
+  });
+});
+
 describe('waterside tree fallbacks', () => {
   it('cover every waterside frame the partial props atlas paints', () => {
     expect(painted.partial).toBe(true);

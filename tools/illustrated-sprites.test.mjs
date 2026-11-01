@@ -320,6 +320,56 @@ describe('packing a measured tree, as a property', () => {
   });
 });
 
+const NATURE = 'assets/source/nature-2026-11-01';
+/** The nature set of #653, by its entries in coverage.json. */
+const NATURE_ENTRIES = JSON.parse(
+  readFileSync('assets/source/base-v1/coverage.json', 'utf8'),
+).categories.props.filter((e) => e.sourceDirectory === NATURE);
+
+describe('the nature set in the props atlas', () => {
+  const props = JSON.parse(readFileSync('public/assets/props.json', 'utf8'));
+  const trees = JSON.parse(readFileSync(`${NATURE}/trees.json`, 'utf8'));
+  const frameOf = (e, v) => props.frames[`props/${e.id.slice(6)}_${v}`];
+
+  it('has its thirty pictures, a frame for each', () => {
+    expect(NATURE_ENTRIES.flatMap((e) => e.generated)).toHaveLength(30);
+    for (const e of NATURE_ENTRIES)
+      e.generated.forEach((_, v) => expect(frameOf(e, v), e.id).toBeDefined());
+  });
+  it('stand their measured height at the scale they are drawn', () => {
+    for (const e of NATURE_ENTRIES)
+      e.generated.forEach((file, v) => {
+        const f = frameOf(e, v);
+        // a ground piece is measured over its whole silhouette, a tree from its foot up
+        const texels = e.treeScale ? f.h : f.ay;
+        const drawn = (texels * (e.treeScale ?? TREE_SCALE)) / props.resolution;
+        expect(Math.abs(drawn - trees[file].height), file).toBeLessThanOrEqual(0.5);
+      });
+  });
+  // slow: it decodes and resamples thirty 1254 px paintings, some five seconds alone
+  it('are what the packer makes of the paintings and their trees.json entries', () => {
+    const atlas = PNG.sync.read(readFileSync('public/assets/props.png'));
+    for (const e of NATURE_ENTRIES)
+      e.generated.forEach((file, v) => {
+        const key = `props/${e.id.slice(6)}_${v}`;
+        const input = PNG.sync.read(readFileSync(`${NATURE}/${file}`));
+        const made = packMeasuredTree(
+          input,
+          trees[file],
+          file,
+          e.treeScale ? { treeScale: e.treeScale } : {},
+        );
+        const f = frameOf(e, v);
+        const shipped = new PNG({ width: f.w, height: f.h });
+        PNG.bitblt(atlas, shipped, f.x, f.y, f.w, f.h, 0, 0);
+        expect(
+          shipped.data.equals(capFrame(key, made.png).png.data),
+          `${key}: run node tools/illustrated-sprites.mjs`,
+        ).toBe(true);
+      });
+  }, 40_000);
+});
+
 const WATERSIDE = 'assets/source/waterside-trees-2026-10-16';
 /**
  * The waterside trees of #460 and what Core's review of 2026-10-17 measured for them: the drawn
