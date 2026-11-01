@@ -21,7 +21,7 @@ import { DEFAULT_RELIEF } from './terrainRelief';
  * upper edges) under the ground, and what lies before it (past its two lower edges) over the map,
  * so a mountain in front of the map stands in front of it as it will when the map grows. Each tile
  * draws its back two sides, so every side is drawn once. A block of tiles shows while the edge
- * region beside it does (`revealed`): the strip goes on from the ground in view, never from the
+ * region beside it does (`showEdgeStrip`): the strip goes on from the ground in view, never from the
  * dark of a region still hidden.
  */
 
