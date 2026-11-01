@@ -1109,9 +1109,9 @@ describe('a maintenance train in traffic', () => {
     expect(healthAt(w, 42)).toBeLessThan(rules.trackDegradedAt);
     expect(t.state).toBe('repairing');
     expect(t.yieldCount).toBe(0);
-    until(w, () => t.maint === null, 200);
+    until(w, () => t.yieldCount === 1, 200);
     expect(healthAt(w, 42)).toBeGreaterThanOrEqual(rules.trackDegradedAt);
-    expect(t.yieldCount).toBe(1);
+    expect(t.maint?.ax).toBe(42);
   });
 
   /** Posts facing east at x 22 and x 44: a train held at the first while another is in the block. */
@@ -1133,8 +1133,8 @@ describe('a maintenance train in traffic', () => {
     until(w, () => other.blocked && other.speed === 0, 120);
     expect(other.blockedBy).toBeNull();
     expect(other.claimBlocker).toBeNull();
-    until(w, () => t.maint === null, 20);
-    expect(t.yieldCount).toBe(1);
+    until(w, () => t.yieldCount === 1, 20);
+    expect(t.maint?.ax).toBe(41);
   });
 
   it('a train held at a post with it nowhere on the route ahead leaves it at work', () => {
@@ -1184,17 +1184,17 @@ describe('a maintenance train in traffic', () => {
       20,
     );
     expect(held).toBeCloseTo(rules.trackYieldSeconds, 0);
-    // the job stays claimed by nobody, partial health stays
-    expect(t.maint).toBeNull();
+    // it keeps the job, and partial health stays
+    expect(t.maint?.ax).toBe(41);
     const left = healthAt(w, 41);
     expect(left).toBeGreaterThan(0.2);
-    expect(w.fleet.maintenance.peek(t, w.track)?.ax).toBe(41);
+    expect(w.fleet.maintenance.peek(t, w.track)).toBeNull();
     until(w, () => t.state === 'idle', 60);
     // in a siding, off the line
     expect(t.headTile!.x).toBe(47);
     expect(t.headTile!.y).toBeGreaterThan(31);
     expect(healthAt(w, 41)).toBe(left);
-    // it picks again after
+    // it comes back to it
     until(w, repairing(t), 120);
     expect(t.maint?.ax).toBe(41);
     expect(t.headTile).toEqual({ x: 41, y: 30 });
@@ -1225,13 +1225,88 @@ describe('a maintenance train in traffic', () => {
     until(w, () => t.headTile!.x > 20);
     const other = heldAt(w, west, near);
     until(w, repairing(t), 120);
+    const yields = t.yieldCount;
     other.release();
-    until(w, () => t.maint === null, 120);
-    expect(healthAt(w, 41)).toBeLessThan(rules.trackCloseAt);
+    until(w, () => t.yieldCount > yields, 120);
     // one trip, and the other train stands at its stop again
     other.t.schedule[0].waitFull = true;
     until(w, () => healthAt(w, 41) >= 1, 400);
-    expect(t.yieldCount).toBe(1);
+    expect(t.yieldCount).toBe(yields + 1);
+  });
+
+  /** A worker on the piece at 41, pulled aside into a siding for a train that then stands. */
+  function pulledAside(from = 0.2) {
+    const line = sidedLine();
+    const { w, west, near } = line;
+    rules.trackRepairSeconds = 200;
+    wearDown(w, 41, 0.2);
+    const t = maintTrain(w, []);
+    until(w, () => t.headTile!.x > 20);
+    const other = heldAt(w, west, near);
+    until(w, repairing(t), 120);
+    wearDown(w, 41, from);
+    const yields = t.yieldCount;
+    other.release();
+    until(w, () => t.yieldCount > yields, 120);
+    other.t.schedule[0].waitFull = true;
+    return { ...line, t, other };
+  }
+
+  it('pulled aside at 48 % it returns and ends at 100 %', () => {
+    const { w, t } = pulledAside(0.35);
+    const left = healthAt(w, 41);
+    // past the tiers: the board would not offer it again
+    expect(left).toBeGreaterThanOrEqual(rules.trackCloseAt);
+    expect(left).toBeLessThan(1);
+    const owed = { ...t.repairOwed };
+    until(w, () => t.state === 'idle', 60);
+    expect(t.maint?.ax).toBe(41);
+    expect(t.repairOwed).toEqual(owed);
+    until(w, repairing(t), 120);
+    expect(t.headTile).toEqual({ x: 41, y: 30 });
+    until(w, () => t.state !== 'repairing' && t.maint === null, 120);
+    expect(healthAt(w, 41)).toBe(1);
+  });
+
+  it('a second worker leaves the piece it pulled away from alone', () => {
+    const { w, t } = pulledAside();
+    until(w, () => t.state === 'idle', 60);
+    const second = maintTrain(w, []);
+    expect(second.maint).toBeNull();
+    until(w, () => healthAt(w, 41) >= 1, 200);
+    expect(second.state).not.toBe('repairing');
+    expect(second.maint).toBeNull();
+  });
+
+  it('it takes no nearer job until the piece is done', () => {
+    const { w, t } = pulledAside();
+    until(w, () => t.state === 'idle', 60);
+    wearDown(w, 44, 0.2);
+    until(w, repairing(t), 120);
+    expect(t.maint?.ax).toBe(41);
+    until(w, () => healthAt(w, 41) >= 1, 200);
+    expect(healthAt(w, 44)).toBe(0.2);
+    until(w, () => t.maint?.ax === 44, 30);
+  });
+
+  it('with no way back it stands, keeps the job and goes when there is one', () => {
+    const { w, t } = pulledAside();
+    until(w, () => t.state === 'idle', 60);
+    cut(w, 44);
+    run(w, 40, () => {
+      expect(t.state).toBe('idle');
+      expect(t.maint?.ax).toBe(41);
+    });
+    expect(t.blockedTime).toBe(0);
+    w.track.place(44, 30, 'straight', 1, 'branch');
+    until(w, repairing(t), 120);
+  });
+
+  it('a piece gone while it stands aside ends the job', () => {
+    const { w, t } = pulledAside();
+    until(w, () => t.state === 'idle', 60);
+    cut(w, 41);
+    until(w, () => t.maint === null, 30);
   });
 
   it('a train shuttling over the line does not keep it off the piece', () => {
@@ -1267,7 +1342,7 @@ describe('a maintenance train in traffic', () => {
     const left = healthAt(w, 42);
     until(w, () => other.blockedBy === t.id, 120);
     until(w, () => t.state !== 'repairing', other.blockedTime + rules.trackYieldSeconds + 3);
-    expect(t.maint).toBeNull();
+    expect(t.maint?.ax).toBe(42);
     expect(t.yieldCount).toBe(1);
     expect(healthAt(w, 42)).toBe(left);
   });

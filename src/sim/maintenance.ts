@@ -1,6 +1,7 @@
 /**
  * Maintenance trains: which piece each one looks after (spec, section 6). A train looks when it
- * starts, finishes or leaves a job, never per frame: one search per tier, every job of the tier a
+ * starts or finishes a job, never per frame, and keeps a job until the piece stands at 100 %: one
+ * search per tier, every job of the tier a
  * target, gives the nearest it can reach. The claims are the jobs the trains hold (`Train.maint`),
  * so they come back with a save and end with the train.
  */
@@ -71,6 +72,17 @@ export class MaintenanceBoard {
     if (found) t.maint = found.job;
     return found;
   }
+  /** Does the train hold a job with work left? A piece that is gone or whole is no job any more. */
+  unfinished(t: Train, track: TrackGraph): boolean {
+    const piece = t.maint && track.get(t.maint.ax, t.maint.ay);
+    return !!piece && piece.wear.health < 1;
+  }
+  /** The way back to the job the train holds, to the nearest tile it can work from; null with none. */
+  wayToJob(t: Train, track: TrackGraph): PathSegment[] | null {
+    const { ax, ay } = t.maint!;
+    const tiles = new Set(this.workTiles(track, ax, ay).map((p) => track.key(p.x, p.y)));
+    return tiles.size ? this.search(t, track, (x, y) => tiles.has(track.key(x, y))) : null;
+  }
   /** The job `pick` would give a train standing where it stands, claiming nothing. */
   peek(t: Train, track: TrackGraph): MaintJob | null {
     return this.nearest(t, track, t.pathEnds())?.job ?? null;
@@ -90,7 +102,7 @@ export class MaintenanceBoard {
     }
     return null;
   }
-  /** The train gives its job up: the piece is on the board again. */
+  /** The train has no job any more: the piece is on the board again. */
   release(t: Train): void {
     t.maint = null;
     t.repairUnpaid = false;
@@ -185,10 +197,24 @@ export class MaintenanceBoard {
     return ends.length ? t.pathTo(track, ends, isTarget) : null;
   }
   /**
-   * Every piece no train holds, tier by tier, keyed by the tile a train would stand on: any tile of
-   * a piece it may enter. An unusable piece it may not, so that is each sound tile through an open
-   * end; a piece with no sound neighbour waits for its neighbour's repair.
+   * The tiles a train works on a piece from: any tile of a piece it may enter. An unusable piece it
+   * may not, so that is each sound tile through an open end; a piece with no sound neighbour waits
+   * for its neighbour's repair.
    */
+  private workTiles(track: TrackGraph, ax: number, ay: number): Tile[] {
+    const tiles = track.unitTiles(ax, ay);
+    if (track.get(ax, ay)!.wear.health > 0) return tiles;
+    const out: Tile[] = [];
+    for (const { x, y } of tiles)
+      for (const d of DIRS) {
+        const nx = x + DIR_DX[d];
+        const ny = y + DIR_DY[d];
+        const next = track.connected(x, y, d) ? track.get(nx, ny) : undefined;
+        if (next && next.wear.health > 0) out.push({ x: nx, y: ny });
+      }
+    return out;
+  }
+  /** Every piece no train holds, tier by tier, keyed by the tile a train would stand on. */
   private openJobs(track: TrackGraph): Map<number, MaintJob>[] {
     const tiers: Map<number, MaintJob>[] = [new Map(), new Map(), new Map()];
     const claimed = new Set<number>();
@@ -196,19 +222,9 @@ export class MaintenanceBoard {
     for (const { x: ax, y: ay, piece } of track.anchors()) {
       const tier = tierOf(piece);
       if (tier === null || claimed.has(track.key(ax, ay))) continue;
-      const add = (x: number, y: number) => {
+      for (const { x, y } of this.workTiles(track, ax, ay)) {
         const k = track.key(x, y);
         if (!tiers[tier].has(k)) tiers[tier].set(k, { ax, ay, tier, x, y });
-      };
-      for (const { x, y } of track.unitTiles(ax, ay)) {
-        if (tier > 0) add(x, y);
-        else
-          for (const d of DIRS) {
-            const nx = x + DIR_DX[d];
-            const ny = y + DIR_DY[d];
-            const next = track.connected(x, y, d) ? track.get(nx, ny) : undefined;
-            if (next && next.wear.health > 0) add(nx, ny);
-          }
       }
     }
     return tiers;

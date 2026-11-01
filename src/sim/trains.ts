@@ -471,6 +471,8 @@ const EDGE_SLACK = 1e-6;
 const REROUTE_AFTER = 6;
 /** blocked this long: try rerouting again */
 const RETRY_EVERY = 20;
+/** seconds between a maintenance train's looks for its way back to a job it pulled away from */
+const BACK_EVERY = 4;
 /** states of a train that cannot work: it gives up its job (`Train.maint`) */
 const STOPS_WORK: readonly TrainState[] = ['stranded', 'noFuel', 'noPower'];
 /** states of a train standing with no way on (`Train.noWayOn`) */
@@ -2391,8 +2393,8 @@ export class Train {
   /**
    * A maintenance train's own step, in place of the route logic: at work it mends the piece at the
    * repair rate, paid as it goes, and at 100 % takes the next job; with no job it looks again every
-   * `trackLookSeconds` game seconds, standing or on its way to wait. When no store can pay it waits
-   * at the piece.
+   * `trackLookSeconds` game seconds, standing or on its way to wait, and standing with a job it
+   * pulled away from it comes back to that. When no store can pay it waits at the piece.
    */
   tickMaintenance(gdt: number, ctx: TickCtx): void {
     if (this.state === 'moving') {
@@ -2401,7 +2403,9 @@ export class Train {
       return;
     }
     if (this.state === 'idle') {
-      if (this.stateTime >= rules.trackLookSeconds && !this.leaveBroken(ctx)) this.nextWork(ctx);
+      if (this.maint) this.comeBack(gdt, ctx);
+      else if (this.stateTime >= rules.trackLookSeconds && !this.leaveBroken(ctx))
+        this.nextWork(ctx);
       return;
     }
     if (!this.maintaining) {
@@ -2449,6 +2453,29 @@ export class Train {
     this.repairOwed = owed;
     return true;
   }
+  /**
+   * Standing with a job it pulled away from, it looks for the way back every BACK_EVERY seconds and
+   * takes it once no train stands on it, holds it or is about to run over it. After
+   * `trackLookSeconds` it takes it as it is: a train parked on the way only moves off for a train
+   * on the way, and traffic control sees to the rest. With no way it stands and looks again.
+   */
+  private comeBack(gdt: number, ctx: TickCtx) {
+    const t = this.stateTime;
+    if (Math.floor(t / BACK_EVERY) === Math.floor((t - gdt) / BACK_EVERY)) return;
+    if (this.leaveBroken(ctx)) return;
+    const board = ctx.maintenance;
+    if (!board.unfinished(this, ctx.track)) {
+      this.nextWork(ctx);
+      return;
+    }
+    const way = board.wayToJob(this, ctx.track);
+    if (!way) return;
+    const taken = (s: PathSegment) =>
+      ctx.occupied(s.x, s.y, this.id) ||
+      ctx.claimedBy(s.x, s.y, this.id) !== null ||
+      ctx.reservedBy(s.x, s.y, this.id) !== 0;
+    if (t >= rules.trackLookSeconds || !way.some(taken)) this.backToJob(way, ctx);
+  }
   /** On its way to wait, is it time to look for work again? */
   private get lookingOnTheWay() {
     return (
@@ -2458,13 +2485,28 @@ export class Train {
       this.stateTime >= rules.trackLookSeconds
     );
   }
-  /** Take the next job, if there is one it can reach; `ahead`, past its head (`pick`). */
+  /**
+   * Take the next job, if there is one it can reach; `ahead`, past its head (`pick`). A job with
+   * work left stays its job: it goes back to that, or stands and looks for the way (`comeBack`).
+   */
   private takeJob(ctx: TickCtx, ahead = false): boolean {
+    if (ctx.maintenance.unfinished(this, ctx.track)) {
+      const way = ctx.maintenance.wayToJob(this, ctx.track);
+      if (way) this.backToJob(way, ctx);
+      else this.idle();
+      return true;
+    }
     const found = ctx.maintenance.pick(this, ctx.track, ahead);
     if (!found) return false;
     this.parkAt = null;
     if (!this.setOff(found.path, ctx)) this.startWork();
     return true;
+  }
+  /** Set off along a way to the job it holds: the way's end is the tile it works from now. */
+  private backToJob(way: PathSegment[], ctx: TickCtx) {
+    const end = way[way.length - 1];
+    this.maint = { ...this.maint!, x: end.x, y: end.y };
+    if (!this.setOff(way, ctx)) this.startWork();
   }
   /**
    * The next job. With none it goes to wait by the nearest depot (`MaintenanceBoard.park`), or

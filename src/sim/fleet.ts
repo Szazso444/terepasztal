@@ -628,7 +628,7 @@ export class Fleet {
    * closed and before the train has taken its program up again. `maintenance` is refused for a
    * train without a maintenance wagon (`leaveMaintenance` is the way out when it loses it); a train
    * given it looks for work at once, unless it has a wait of its own to end, and one that leaves it
-   * drops its job, whose repair so far stays.
+   * ends its job, whose repair so far stays.
    */
   setMode(t: Train, mode: RouteMode): { ok: true } | { ok: false; message: string } {
     if (mode === 'maintenance' && !t.hasMaintenanceWagon)
@@ -1327,10 +1327,10 @@ export class Fleet {
   }
   /**
    * A train at work on a job not urgent (`urgentWork`) gives way (spec, section 6): once a train has
-   * been held for `trackYieldSeconds`, by it or at a signal with it on the route ahead, it lets the
-   * job go, its health as it stands, and pulls aside as an idle train does (`makeWay`). Where the
-   * way ends it idles, and looks for work again. With no way aside it works on, and looks again
-   * every ASIDE_RETRY seconds.
+   * been held for `trackYieldSeconds`, by it or at a signal with it on the route ahead, it pulls
+   * aside as an idle train does (`makeWay`), its health as it stands. It keeps the job: where the
+   * way ends it idles and comes back as soon as it can (`Train.comeBack`). With no way aside it works
+   * on, and looks again every ASIDE_RETRY seconds.
    */
   private yieldWork(ctx: TickCtx, now: number) {
     const held = this.trains.filter((o) => o.blocked && o.blockedTime > rules.trackYieldSeconds);
@@ -1355,7 +1355,6 @@ export class Fleet {
       sidings ??= this.sidingTiles();
       const plan = t.planAside(ctx, ids, this.asideSpots(t, routes, sidings));
       if (!plan || !t.retreat(ctx, ids, plan)) continue;
-      this.maintenance.release(t);
       this.traffic.yielded(t, ids[0], now);
       this.rebuildOccupancy();
       this.rebuildReservations();
