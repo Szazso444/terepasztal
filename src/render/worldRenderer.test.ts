@@ -173,7 +173,7 @@ function renderer() {
     contactGround,
     underground: NOTHING_DUG,
     followed: { under: NOTHING_DUG, version: 0 },
-    portals: { mark: () => undefined, update: () => undefined },
+    portals: { mark: () => undefined, update: () => undefined, touch: () => undefined },
     city: new Set(),
     paved: (tile: number) => cityOf(world).has(tile),
     doorsteps: [],
@@ -2266,6 +2266,7 @@ describe('the town paving handed to the painter', () => {
       repainted: string[] = [];
     const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
     Object.assign(world, {
+      portals: { touch: () => undefined },
       map: emptyMap(3, 4, 4),
       wheat: new WheatFields(4, 4),
       city: new Set(),
@@ -2401,6 +2402,7 @@ describe('the paving of a town the simulation raises, as the game hands it over'
       repainted = new Set<number>();
     const world = Object.create(WorldRenderer.prototype) as WorldRenderer;
     Object.assign(world, {
+      portals: { touch: () => undefined },
       map: w.map,
       wheat: new WheatFields(w.map.w, w.map.h),
       city: new Set(),

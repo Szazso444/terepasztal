@@ -234,6 +234,7 @@ export class TrainRenderer {
     layer: number,
     roll?: number,
     ground = this.ground(x, y),
+    half = 0,
   ) {
     const f = facingOf(angle);
     const drawn = DRAWN_FACINGS.has(f);
@@ -255,7 +256,7 @@ export class TrainRenderer {
     pitchOnRail(s, Math.round(wp.x), Math.round(wp.y), g.dz, along, cos, sin);
     s.zIndex = depthKey(x, y, layer);
     s.visible = !(this.hideAt && this.hideAt(Math.floor(x + 0.5), Math.floor(y + 0.5)));
-    this.portals?.dress(s, x, y);
+    this.portals?.dress(s, x, y, half, angle);
     return key;
   }
 
@@ -274,6 +275,7 @@ export class TrainRenderer {
     layer: number,
     ground = this.ground(x, y),
     facings = 48,
+    half = 0,
   ): Placed {
     const f = spriteFacing(angle, facings);
     const drawn = (facings === 48 && DRAWN_FACINGS.has(f)) || this.atlas.has(frameFor(f));
@@ -291,7 +293,7 @@ export class TrainRenderer {
     tiltOnRail(s, snapTrainPixel(wp.x), snapTrainPixel(wp.y), g.dz, along, cos, sin);
     s.zIndex = depthKey(x, y, layer);
     s.visible = !(this.hideAt && this.hideAt(Math.floor(x + 0.5), Math.floor(y + 0.5)));
-    this.portals?.dress(s, x, y);
+    this.portals?.dress(s, x, y, half, angle);
     return { key, frame: fr, flip: !drawn };
   }
 
@@ -470,6 +472,7 @@ export class TrainRenderer {
         15,
         partRoll,
         this.bodyGround(seg, ps, alpha, x, y),
+        seg.L / 2,
       );
       const fr = this.atlas.get(key);
       // Procedural vehicle windows carry explicit amber palette pixels.
@@ -537,7 +540,17 @@ export class TrainRenderer {
         if (w.cargo && w.amount > 0.5) {
           const kind = loadKind(w.def, w.cargo);
           const thin = w.def.gauge === 'narrow';
-          this.pose(c.load, this.frameKeys.load(kind, thin), x, y, shown, 16);
+          this.pose(
+            c.load,
+            this.frameKeys.load(kind, thin),
+            x,
+            y,
+            shown,
+            16,
+            undefined,
+            undefined,
+            seg.L / 2,
+          );
           const col = (PAL as unknown as Record<string, RGB>)[cargoDef(w.cargo).color] ?? PAL.white;
           setOwnTint(c.load, hex(col));
         } else c.load.visible = false;
@@ -595,7 +608,7 @@ export class TrainRenderer {
         frameFor = (f: number) => `${stem}_${seg.part}_w${phase}_f${f}`;
       }
       const ground = this.bodyGround(seg, ps, alpha, x, y);
-      const placed = this.poseModel(s, frameFor, x, y, shown, 15, ground, facings);
+      const placed = this.poseModel(s, frameFor, x, y, shown, 15, ground, facings, seg.L / 2);
       const key = placed.key;
       const fr = placed.frame;
       // A rendered model brings its window panes as a frame of its own (`…_lit_f<n>`). Procedural
@@ -718,7 +731,17 @@ export class TrainRenderer {
         if (w.cargo && w.amount > 0.5) {
           const kind = loadKind(w.def, w.cargo);
           const thin = w.def.gauge === 'narrow';
-          this.poseModel(c.load, (f) => loadFrame(kind, f, thin), x, y, shown, 16);
+          this.poseModel(
+            c.load,
+            (f) => loadFrame(kind, f, thin),
+            x,
+            y,
+            shown,
+            16,
+            undefined,
+            undefined,
+            seg.L / 2,
+          );
           const col = (PAL as unknown as Record<string, RGB>)[cargoDef(w.cargo).color] ?? PAL.white;
           setOwnTint(c.load, hex(col));
         } else c.load.visible = false;
@@ -830,11 +853,12 @@ export class TrainRenderer {
       // under the night's colour where the layer has one (atmosphere.ts)
       setOwnTint(g, tint);
       g.visible = true;
-      this.portals?.dress(g, (ax + bx) / 2, (ay + by) / 2);
       // just over the farther body and under the nearer body and its trucks; side by side across
       // the screen neither covers the gap
       const mid = depthKey((ax + bx) / 2, (ay + by) / 2, 15);
       g.zIndex = apart ? Math.min(near - 1.05, Math.max(far + 0.02, mid)) : near + 0.02;
+      // after that: a portal has the last word, or a coupling at its mouth would draw over the dark
+      this.portals?.dress(g, (ax + bx) / 2, (ay + by) / 2);
     });
   }
 }

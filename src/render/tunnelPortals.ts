@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, type Mesh, type Texture } from 'pixi.js';
+import { Container, Graphics, Rectangle, Sprite, type Mesh, type Texture } from 'pixi.js';
 import { OPEN_CROWN, OPEN_SPRING, OPEN_W } from '../art/tunnelArt';
 import { depthKey, DIR_DX, DIR_DY, HALF_H, HALF_W, tileToWorld } from '../engine/iso';
 import type { Portal } from '../sim/underground';
@@ -37,22 +37,26 @@ const SPAN = 0.6,
 const CAR_SIDE = 0.2;
 /** Past this far inside a car has nothing left outside: the opening alone shows it. */
 const DEEP = 2;
-/** Up to this far in front of its plane a car stays under the dark (`dress`). */
-const UNDER_DARK = 1.9;
+/** How far in front of its plane a car stays under the dark; a longer one till its end is out. */
+const UNDER_DARK = 0.9;
 /** How much of the depth step a car in the throat takes per tile, keeping the near car on top. */
 const THROAT_DEPTH = 0.04;
 /** The world px a mask reaches, which is past any sprite near its portal. */
 const MASK_REACH = 400;
 /** The columns of the hill's line, world px apart, and how far they run. */
 const HILL_COLUMN = 4,
-  HILL_OUT = 7,
+  HILL_OUT = 8,
   HILL_IN = 3;
+/** The tiles of a cutting the hill's line cuts: the last one's sleepers reach 7.3, inside the line. */
+const HILL_RAILS = 7;
 /** The tallest car, px over the rail, and how far inside the hill's line has cleared it, tiles. */
 const CAR_TOP = 56,
   INTO_THE_HILL = 0.6;
 /** The walk toward the camera: past this even the highest level stands under the view, tiles. */
 const HILL_WALK = 5,
   HILL_STEP = 0.25;
+/** How far an edit moves the ground around it, tiles: as far as a paint follows one (landscape.ts). */
+const LEAN = 6;
 
 /** How high the arch stands `u` tiles from the middle of the opening, px over the rail. */
 function archHeight(u: number) {
@@ -186,11 +190,28 @@ export function hillLine(host: PortalHost, p: Portal): Pt[] {
   return [...columns, { x: last.x, y: -MASK_REACH }, { x: first.x, y: -MASK_REACH }];
 }
 
+/** The tiles round `p` an edit reaches it from: `out` tiles out, the walk toward the camera. */
+function tilesRead(p: Portal, out: number, walk: number) {
+  const { dx, dy } = planeOf(p),
+    ax = p.x + dx * out,
+    ay = p.y + dy * out,
+    bx = p.x - dx * HILL_IN,
+    by = p.y - dy * HILL_IN;
+  return {
+    x0: Math.min(ax, bx) - 1 - LEAN,
+    y0: Math.min(ay, by) - 1 - LEAN,
+    x1: Math.max(ax, bx) + 1 + LEAN + walk,
+    y1: Math.max(ay, by) + 1 + LEAN + walk,
+  };
+}
+
 /** A portal as it stands in the layer. */
 interface Standing {
   portal: Portal;
   /** the ground and rail it was made for: nothing is made again while this stands */
   fit: string;
+  /** the tiles an edit reaches it from */
+  reads: ReturnType<typeof tilesRead>;
   /** the plane: tile coordinates, the step out */
   x: number;
   y: number;
@@ -228,7 +249,10 @@ export class TunnelPortals {
   private readonly masks = new Container();
   /** Masks of portals taken down: a car may hold one until it is next dressed, so none is freed. */
   private readonly spare: Graphics[] = [];
+  /** The store or the ground as a whole changed: every portal looks again. */
   private stale = true;
+  /** Portals an edit reached: only these look again. */
+  private readonly touched = new Set<Standing>();
 
   constructor(private readonly host: PortalHost) {
     this.masks.includeInBuild = false;
@@ -237,43 +261,58 @@ export class TunnelPortals {
     host.layer.addChild(this.masks);
   }
 
-  /** Something a portal is made from changed: `update` looks at them again. */
+  /** Something every portal is made from changed: `update` looks at them all again. */
   mark() {
     this.stale = true;
   }
-  /** The rail on (x, y) changed: a portal looks again if its lane holds that tile. */
-  railChanged(x: number, y: number) {
-    if (this.lanes.has(laneKey(x, y))) this.stale = true;
+  /** The ground or the rail on (x, y) changed: `update` looks again at the portals it reaches. */
+  touch(x: number, y: number) {
+    for (const s of this.standing.values()) {
+      const { x0, y0, x1, y1 } = s.reads;
+      if (x >= x0 && x <= x1 && y >= y0 && y <= y1) this.touched.add(s);
+    }
   }
   /** Called every frame, after the relief has settled: a comparison unless something changed. */
   update() {
     if (this.stale) this.refresh();
+    else if (this.touched.size) {
+      for (const s of this.touched) this.fit(s.portal);
+      this.touched.clear();
+      this.settle();
+    }
   }
 
   /**
-   * Bring the portals up to the store and the ground: a portal whose ground or rail changed is cut
+   * Bring all the portals up to the store and the ground: one whose ground or rail changed is cut
    * again, and one that went is taken down. A portal nothing touched costs a look at its ground.
    */
   refresh() {
     this.stale = false;
-    const { host } = this,
-      gone = new Set(this.standing.keys());
-    for (const p of host.under().portals()) {
-      const key = `${p.x},${p.y},${p.face}`;
-      gone.delete(key);
-      const front = p.face === 'E' || p.face === 'S',
-        fit = front ? fitFace(host, p) : null,
-        hill = fit ? null : hillLine(host, p),
-        fingerprint = JSON.stringify([fit ?? hill, front ? this.throatPrint(p) : 0]),
-        old = this.standing.get(key);
-      if (old?.fit === fingerprint) continue;
-      if (old) this.takeDown(old);
-      this.standing.set(key, this.put(p, fingerprint, fit, hill));
-    }
+    this.touched.clear();
+    const gone = new Set(this.standing.keys());
+    for (const p of this.host.under().portals()) gone.delete(this.fit(p));
     for (const key of gone) {
       this.takeDown(this.standing.get(key)!);
       this.standing.delete(key);
     }
+    this.settle();
+  }
+  /** Cut `p` again if what it is made from changed. Returns its key. */
+  private fit(p: Portal) {
+    const { host } = this,
+      key = `${p.x},${p.y},${p.face}`,
+      front = p.face === 'E' || p.face === 'S',
+      fit = front ? fitFace(host, p) : null,
+      hill = fit ? null : hillLine(host, p),
+      fingerprint = JSON.stringify([fit ?? hill, front ? this.throatPrint(p) : 0]),
+      old = this.standing.get(key);
+    if (old?.fit === fingerprint) return key;
+    if (old) this.takeDown(old);
+    this.standing.set(key, this.put(p, fingerprint, fit, hill));
+    return key;
+  }
+  /** What the portals hold of the world, after one of them looked again. */
+  private settle() {
     this.layLanes();
     this.cutTheRails();
     this.showAll();
@@ -295,6 +334,7 @@ export class TunnelPortals {
       shown: Standing = {
         portal: p,
         fit,
+        reads: face ? tilesRead(p, face.run + 1, 0) : tilesRead(p, HILL_OUT, HILL_WALK),
         ...plane,
         back: null,
         lip: null,
@@ -327,6 +367,12 @@ export class TunnelPortals {
     shown.textures.push(back.texture, dark.texture);
     shown.back = this.picture(back, at, depth);
     shown.rail = this.throat(p, shown.inner, depth + 1);
+    const xs = opening.map((q) => at.x + q.x),
+      ys = opening.map((q) => at.y + q.y),
+      x = Math.min(...xs),
+      y = Math.min(...ys);
+    // the throat shows only through the opening, so that is its whole area for the chunk cull
+    shown.rail.cullArea = new Rectangle(x, y, Math.max(...xs) - x, Math.max(...ys) - y);
     shown.lip = this.picture(dark, at, depth + 4);
     return shown;
   }
@@ -340,6 +386,7 @@ export class TunnelPortals {
     s.position.set(at.x + p.x, at.y + p.y);
     s.scale.set(p.scale);
     s.zIndex = depth;
+    s.cullable = true;
     this.host.layer.addChild(s);
     return s;
   }
@@ -348,6 +395,7 @@ export class TunnelPortals {
     const { dx, dy } = planeOf(p),
       copies = new Container();
     copies.zIndex = depth;
+    copies.cullable = true;
     // from the far end: a piece overlaps the one behind it
     for (let i = THROAT_TINTS.length - 1; i >= 0; i--) {
       const t = this.host.rail(p.x - dx * i, p.y - dy * i);
@@ -400,14 +448,16 @@ export class TunnelPortals {
   }
   /** The hill's line cuts the rails of a cutting on a face that looks away. */
   private cutTheRails() {
-    const { host } = this;
+    const { host } = this,
+      under = host.under();
     for (const { rail } of this.cutRails) if (!rail.destroyed) rail.mask = null;
     this.cutRails = [];
     for (const s of this.standing.values()) {
       if (s.back) continue;
-      for (let i = 1; i <= HILL_OUT; i++) {
+      for (let i = 1; i <= HILL_RAILS; i++) {
         const x = s.portal.x + s.dx * i,
           y = s.portal.y + s.dy * i;
+        if (!under.isCut(x, y)) break;
         for (const rail of [host.rail(x, y), host.railMesh(x, y)])
           if (rail) this.cutRails.push({ rail, mask: s.outer });
       }
@@ -435,9 +485,11 @@ export class TunnelPortals {
   /**
    * Called for every sprite of a car, once it is posed at (x, y): what of it shows, and where it
    * sorts near a portal. Only a car on a portal's own rail and within reach of it is masked: a
-   * train passing a portal on another line takes no part in it.
+   * train passing a portal on another line takes no part in it. A picture `half` tiles long each
+   * way from (x, y), along the heading `angle`, is taken by its ends: it is under the dark while one
+   * end is behind the plane, and only with both behind it has nothing left outside.
    */
-  dress(s: Container, x: number, y: number) {
+  dress(s: Container, x: number, y: number, half = 0, angle = 0) {
     if (this.host.glass()) {
       if (s.mask) s.mask = null;
       return;
@@ -448,9 +500,13 @@ export class TunnelPortals {
       if (this.inside(x, y)) s.visible = false;
       return;
     }
-    // tiles out of the plane; less than 0 is inside
+    // tiles out of the plane, less than 0 is inside; how far the ends reach from there; tiles off
+    // the portal's axis. The masks cut a car where it crosses the plane on that axis, so one all
+    // behind the plane and off the axis has no part left for the side outside the opening
     const along = (x - near.x) * near.dx + (y - near.y) * near.dy,
-      deep = along < -DEEP;
+      ends = half * Math.abs(Math.cos(angle) * near.dx + Math.sin(angle) * near.dy),
+      across = Math.abs((x - near.x) * near.dy + (y - near.y) * near.dx),
+      deep = along < -DEEP || (along + ends < 0 && across > CAR_SIDE);
     if (!near.inner) {
       // a face that looks away: nothing of a car this far in stands above the hill
       if (deep) {
@@ -465,6 +521,8 @@ export class TunnelPortals {
     // nearer of two cars on top
     const over = near.depth + 2;
     s.zIndex =
-      along < UNDER_DARK ? over + (along + REACH) * THROAT_DEPTH : Math.max(s.zIndex, over);
+      along < Math.max(UNDER_DARK, ends)
+        ? over + (along + REACH) * THROAT_DEPTH
+        : Math.max(s.zIndex, over);
   }
 }

@@ -93,7 +93,7 @@ function draw(heading: number, rise: number) {
 
 describe('TrainRenderer at a portal', () => {
   /** A train on a straight, drawn over a layer whose portals dress with `dress`. */
-  function atPortal(dress: (s: Container, x: number, y: number) => void) {
+  function atPortal(dress: (s: Container, x: number, y: number, half?: number) => void) {
     const spec = vehicleSpec({ size: 'medium' }),
       rail = new Polyline([
         { x: -4, y: 0 },
@@ -122,6 +122,14 @@ describe('TrainRenderer at a portal', () => {
       bogies = (layer.children[1] as Container).children;
     expect(dressed).toContain(body);
     for (const b of bogies) expect(dressed).toContain(b);
+  });
+  it('tells a portal how long a body is, and nothing for a bogie', () => {
+    const halves = new Map<Container, number | undefined>(),
+      { layer } = atPortal((s, _x, _y, half) => halves.set(s, half)),
+      body = layer.children[0],
+      bogies = (layer.children[1] as Container).children;
+    expect(halves.get(body)).toBeCloseTo(vehicleSpec({ size: 'medium' }).L / 2);
+    for (const b of bogies) expect(halves.get(b)).toBe(0);
   });
   it('a hidden body hides its bogies, and a body sorted near a portal keeps them under it', () => {
     const { layer } = atPortal((s) => {

@@ -305,6 +305,20 @@ describe('TrainRenderer with a rendered model', () => {
     for (const l of lights) expect(l.mask).toBe(mask);
   });
 
+  it('a coupling takes its depth from a portal last, as a body and a truck do', () => {
+    const { atlas } = modelAtlas(),
+      layer = new Container();
+    layerPortals.set(layer, {
+      dress: (s: Container) => {
+        s.zIndex = 7777;
+      },
+    } as unknown as TunnelPortals);
+    new TrainRenderer(atlas, layer).update([trainOf([DIESEL, { ...DIESEL, id: 'two' }], 1)], 1);
+    const links = layer.children.filter((c) => c instanceof Graphics);
+    expect(links).toHaveLength(1);
+    expect(links[0].zIndex).toBe(7777);
+  });
+
   it('gives back everything it made when the train goes', () => {
     const train = trainOf([STEAM], 1),
       { atlas } = modelAtlas(() => true),

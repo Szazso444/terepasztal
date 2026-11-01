@@ -325,8 +325,10 @@ export class WorldRenderer {
   private glassOn = false;
   /** The tiles' levels while none moves: the sheet reads each of them several times. */
   private glassLevels: Uint8Array | null = null;
-  /** Counts the moves of a level, which is all the glass follows of the ground. */
-  private levelMoves = 0;
+  /** Counts what the glass follows of the ground: a level moved, a tile flattened, a cut carved. */
+  private sheetMoves = 0;
+  /** The landscape's state when the portals last read the ground: failed, it stands differently. */
+  private portalsFailed = false;
   /** Rail profile over each straight track tile (world/railProfile.ts). */
   private railBeds = new Map<number, RailBed>();
   /** Track tiles whose rail bends or climbs: the piece is a mesh that follows the profile. */
@@ -778,6 +780,7 @@ export class WorldRenderer {
   /** Re-texture a ground tile (after flattening a hill, etc). */
   refreshGround(x: number, y: number) {
     this.landscape.invalidate(x, y);
+    this.portals.touch(x, y);
     // the water painted there may have moved under a bridge: it is drawn again (animate)
     if (!this.bridgeWaterChanged && this.nearTexturedBridge(x, y)) this.bridgeWaterChanged = true;
     const i = idx(this.map, x, y);
@@ -868,6 +871,7 @@ export class WorldRenderer {
     if (this.flattened.has(i) === flat) return;
     if (flat) this.flattened.add(i);
     else this.flattened.delete(i);
+    this.sheetMoves++;
     this.refreshGround(x, y);
     this.showProps(i);
     this.wheat.near(x, y);
@@ -1044,7 +1048,6 @@ export class WorldRenderer {
     this.followDug();
     this.glass?.update(this.view);
     if (this.landscape.flush()) {
-      this.portals.mark();
       this.refreshSummits();
       this.harvest.refresh();
       for (const [i, s] of this.trackSprites)
@@ -1085,6 +1088,10 @@ export class WorldRenderer {
             !this.landscape.active ||
             !this.landscape.isPainted(i % this.map.w, Math.floor(i / this.map.w));
       }
+    }
+    if (this.portalsFailed !== this.landscape.failed) {
+      this.portalsFailed = this.landscape.failed;
+      this.portals.mark();
     }
     this.portals.update();
     // Bridges follow the water painted round them: a tile whose water changed is drawn again.
@@ -1971,7 +1978,7 @@ export class WorldRenderer {
       this.refreshScatter(x, y, 0);
       this.wheat.near(x, y);
       this.trackUnderRoad(x, y);
-      this.portals.railChanged(x, y);
+      this.portals.touch(x, y);
       return;
     }
     const f = this.atlas.get(frame);
@@ -1988,7 +1995,7 @@ export class WorldRenderer {
     this.refreshScatter(x, y, 0);
     this.wheat.near(x, y);
     this.trackUnderRoad(x, y);
-    this.portals.railChanged(x, y);
+    this.portals.touch(x, y);
   }
   /**
    * The track on tile (x, y) changed: where a road lies on it, its level crossing's deck follows,
@@ -2055,6 +2062,9 @@ export class WorldRenderer {
       if (bed) this.railBeds.set(k, bed);
       else this.railBeds.delete(k);
       this.landscape.invalidate(x, y);
+      this.portals.touch(x, y);
+      // the relief carves a cut under its rail; an ordinary bed leaves the sheet as it is
+      if (this.underground.isCut(x, y)) this.sheetMoves++;
       const s = this.trackSprites.get(k);
       if (s) this.placeTrackSprite(s, x, y);
     }
@@ -2578,7 +2588,7 @@ export class WorldRenderer {
     if (!held) return;
     if (tiles.every((t) => held[idx(this.map, t.x, t.y)] === levelAt(this.map, t.x, t.y))) return;
     this.glassLevels = null;
-    this.levelMoves++;
+    this.sheetMoves++;
   }
   private makeGlass() {
     const { map, atlas } = this;
@@ -2591,7 +2601,8 @@ export class WorldRenderer {
       cut: (x, y) => this.underground.isCut(x, y),
       shown: (x, y) => this.isBuilt(x, y),
       lift: (x, y) => -this.elevationOf(x, y),
-      ground: () => this.levelMoves + this.builtRegions.size * 2 ** 32,
+      ground: () =>
+        this.sheetMoves * 2 + (this.landscape.failed ? 1 : 0) + this.builtRegions.size * 2 ** 32,
       // a raised tile stands up to RELIEF_MAX px over its place on the ground
       rows: (view) => viewTileRows(view, RELIEF_MAX, map.w, map.h),
     });
