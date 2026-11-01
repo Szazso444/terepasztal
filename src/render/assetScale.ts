@@ -158,5 +158,19 @@ export function scaleReference(
   return { family: structureFamily(base), scale: structureScale(base, illustratedHeight) };
 }
 export function isTree(kind: string) {
-  return ['tree', 'pine', 'oak', 'spruce', 'birch', 'palm', 'deadtree'].includes(kind);
+  return [
+    'tree',
+    'pine',
+    'oak',
+    'spruce',
+    'birch',
+    'palm',
+    'deadtree',
+    'beech',
+    'poplar',
+    'apple',
+    'maple',
+    'larch',
+    'acacia',
+  ].includes(kind);
 }
