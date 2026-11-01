@@ -335,6 +335,42 @@ export class Builder {
     sfx('build.place');
     return true;
   }
+  /**
+   * Whether the bridge at (x, y) can come down one height. It costs nothing and gives nothing back.
+   * It is refused where it stands at its lowest, automatic, and where a train is on it or on its
+   * ramps.
+   */
+  checkLower(x: number, y: number): PlacementCheck {
+    const why = STR.build.raise,
+      no = (reason: string): PlacementCheck => ({ ok: false, cost: {}, reason }),
+      b = this.platformAt(x, y);
+    if (!b) return no(why.none);
+    const span = connectedPlatforms(this, b);
+    if (spanLevel(this, span) <= spanLevel(this, span, false)) return no(why.lowest);
+    const reach = rampReach(
+      this.map,
+      (tx, ty) => (inBounds(this.map, tx, ty) ? this.track.get(tx, ty) : undefined),
+      span.map((p) => ({ x: p.x, y: p.y, deck: spanLevel(this, span) })),
+    );
+    if ([...span, ...reach.climbs].some((t) => this.busy?.(t.x, t.y))) return no(why.train);
+    return { ok: true, cost: {} };
+  }
+  /** Bring the whole bridge at (x, y) down one height; at its lowest it is automatic again. */
+  lowerSpan(x: number, y: number): boolean {
+    if (!this.checkLower(x, y).ok) {
+      sfx('build.invalid');
+      return false;
+    }
+    const span = connectedPlatforms(this, this.platformAt(x, y)!),
+      deck = spanLevel(this, span) - 1,
+      lowest = spanLevel(this, span, false);
+    for (const p of span) {
+      this.log?.deck(p);
+      this.setDeck(p, deck > lowest ? deck : undefined);
+    }
+    sfx('build.remove');
+    return true;
+  }
   /** Stand a platform's deck at `deck`, or back on automatic. */
   setDeck(b: Building, deck: number | undefined) {
     if (deck === undefined) delete b.deck;
@@ -1467,6 +1503,7 @@ export class Builder {
     // a platform stands on water or on land, never on rock or a mountain (`buildingRules`)
     if (bad && !deck) return bad;
     if (deck && this.track.has(x, y)) return STR.build.bridgeCarriesRail;
+    if (deck?.deck !== undefined) return STR.build.raise.roadOnRaised;
     const dec = this.decorAt(x, y);
     if (
       this.stationAt(x, y) ||

@@ -123,6 +123,7 @@ const EN = {
     track: 'track',
     road: 'road',
     raised: (name: string) => `Raised ${name}`,
+    lowered: (name: string) => `Lowered ${name}`,
     upgradedTo: (name: string, level: number) => `Upgraded ${name} to level ${level}`,
     downgradedTo: (name: string, level: number) => `Downgraded ${name} to level ${level}`,
     renamed: (was: string, now: string) => `Renamed ${was} to ${now}`,
@@ -462,6 +463,8 @@ const EN = {
     raise: {
       none: 'No bridge here',
       highest: 'This bridge stands at the greatest height',
+      lowest: 'This bridge stands at its lowest',
+      roadOnRaised: 'A road stays at the height of its banks: lower this bridge first',
       road: 'A road stays at the height of its banks: this bridge cannot rise',
       station: 'A station stands on this bridge: it cannot rise',
       ramp: 'A curve, switch or crossing in the way must stay level: no ramp can reach this height',
@@ -545,6 +548,7 @@ const EN = {
     bridgeDragHint: 'drag to lay a bridge with its rail',
     raiseHint: (cost: string) => `Click: raise this bridge one height · ${cost}`,
     raiseFree: 'Click: raise this bridge one height',
+    lowerHint: 'Right-click: lower it one height',
     /** a dragged run's straights, its crossings and curves told apart */
     runPieces: (n: number, kind: string) => `${n} x ${kind}`,
     runCurves: (n: number) => `+${n} curve${n === 1 ? '' : 's'}`,
@@ -629,7 +633,7 @@ const EN = {
       track: 'On grass, forest, sand or hill. Not on rock; water needs a bridge.',
       bridge: 'Only on a water tile, joining track on both banks.',
       bridgePlatform:
-        'A Bridge over water, a Viaduct on land or once raised. Drag to lay it with its rail; click a bridge to raise it.',
+        'A Bridge over water, a Viaduct on land or once raised. Drag to lay it with its rail; click a bridge to raise it, right-click to lower it.',
       station:
         'On grass, forest, sand or a level hill tile with track touching one side; that track becomes the platform.',
       /**
