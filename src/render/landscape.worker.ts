@@ -34,7 +34,7 @@ import { FRINGE_EARTH, PAVING_FAR, PAVING_FRINGE, PAVING_SOLID, TownPaving } fro
 import { BuildingYards } from './buildingYard';
 import { pavingFade, RoadPaint } from './roadPaint';
 import { hash2 } from '../engine/rng';
-import { Terrain } from '../world/tiles';
+import { Biome, Terrain } from '../world/tiles';
 
 let map: LandscapeMap,
   relief: TerrainRelief,
@@ -160,8 +160,15 @@ self.onmessage = async (event: MessageEvent) => {
           pave = paving.near(tileIndex) ? paving.distance(tx, ty) : -PAVING_FAR,
           solid = pave >= PAVING_SOLID;
         // Pilot: the climate's own ground between the stones (desert sand, taiga moss...).
-        const stoneGround = relief.style.biomeTops ? stoneGroundAt(map, tileIndex) : 0;
+        const stoneGround = !relief.style.biomeTops
+          ? 0
+          : map.biome[tileIndex] === Biome.Mountain
+            ? Material.Alpine
+            : stoneGroundAt(map, tileIndex);
         color[0] = color[1] = color[2] = 0;
+        // ice and the moraine that keeps snow off, as much of each as this point holds
+        let ice = 0,
+          rubble = 0;
         // Water keeps its colours under the season's tint, and so does the paving (below). The
         // water's share is the waterline bridges cut their supports to (paintedWater): none on a
         // town's tile, which is paved over its water too.
@@ -219,15 +226,19 @@ self.onmessage = async (event: MessageEvent) => {
             stoneGround,
           );
           if (map.terrain[tile] === Terrain.Ice) {
+            for (let c = 0; c < 3; c++) part[c] *= RUBBLE_TONE[c];
+            ice += channel * weight;
+            rubble += (1 - channel) * weight;
             if (channel > 0) {
               surfaceColor(source, Material.Ice, wx, wy, wet);
-              for (let c = 0; c < 3; c++) part[c] += (wet[c] - part[c]) * channel;
+              for (let c = 0; c < 3; c++) part[c] += (wet[c] * ICE_TONE[c] - part[c]) * channel;
             }
           } else if (material !== Material.Water && channels.iced[tile]) {
-            const rubble = moraineAt(map, tile, tx, ty);
-            if (rubble > 0) {
+            const bank = moraineAt(map, tile, tx, ty);
+            rubble += bank * weight;
+            if (bank > 0) {
               surfaceColor(source, Material.Moraine, wx, wy, wet);
-              for (let c = 0; c < 3; c++) part[c] += (wet[c] - part[c]) * rubble;
+              for (let c = 0; c < 3; c++) part[c] += (wet[c] * RUBBLE_TONE[c] - part[c]) * bank;
             }
           } else if (blend[m] === Material.Water && isRiver(map, tile) && !paved) {
             if (river.bank > 0 && channel < 1) {
@@ -304,7 +315,7 @@ self.onmessage = async (event: MessageEvent) => {
             snowLineAt(map, snowLevels, tileIndex),
             steep ?? 0,
             solid || terrain === Terrain.Ice ? null : color,
-            waterWeight,
+            Math.max(waterWeight, ice, rubble),
             source,
           );
         }
@@ -327,11 +338,13 @@ self.onmessage = async (event: MessageEvent) => {
               color[c] = (color[c] + (FRINGE_EARTH[c] - color[c]) * earth) * shade;
           }
         } else
-          for (let c = 0; c < 3; c++)
-            color[c] *=
-              shade * (waterWeight + ((1 - waterWeight) * ((tint >> (16 - c * 8)) & 255)) / 255);
+          // Water, ice and snow keep their colours under the season's tint.
+          for (let c = 0; c < 3; c++) {
+            const keep = Math.max(waterWeight, ice, snowed);
+            color[c] *= shade * (keep + ((1 - keep) * ((tint >> (16 - c * 8)) & 255)) / 255);
+          }
         // Snow and ice stay under the cursor's white, however high they lie.
-        if (terrain === Terrain.Ice || snowed > 0)
+        if (ice > 0 || snowed > 0)
           for (let c = 0; c < 3; c++) color[c] = Math.min(color[c], SNOW_CAP[c]);
         // A fall's cascade and an ice front go over the lit ground: they are water and ice, the
         // light is their own.
@@ -591,6 +604,14 @@ const snowColor = [0, 0, 0];
 let snowed = 0;
 const SNOW_CAP = [220, 225, 228];
 /**
+ * Ice and snow lie high, where the height light lifts them by a quarter: these keep their texture
+ * under the cap, ice a cool green-blue and snow a cool blue, as the art demo has them apart.
+ */
+const ICE_TONE = [0.76, 0.82, 0.78];
+const SNOW_TONE = [0.74, 0.79, 0.84];
+/** The moraine's rubble: grey, under the same light. */
+const RUBBLE_TONE = [0.72, 0.76, 0.74];
+/**
  * Looks from the relief style (the shipped style has the height light and snow): higher levels
  * paint lighter (ground level unchanged), snow patches from the tile's snow line and full snow a
  * level above, and a cast shadow darkens ground that a higher tile hides from the upper-left light.
@@ -627,7 +648,7 @@ function previewLooks(
       snowed = snow;
       if (snow > 0) {
         surfaceColor(source, Material.Snow, wx, wy, snowColor);
-        for (let c = 0; c < 3; c++) color[c] += (snowColor[c] - color[c]) * snow;
+        for (let c = 0; c < 3; c++) color[c] += (snowColor[c] * SNOW_TONE[c] - color[c]) * snow;
       }
     }
   }

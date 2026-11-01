@@ -58,6 +58,8 @@ export interface IceFront {
   sheet: number;
   zHi: number;
   zLo: number;
+  /** whether it is the glacier's end, with its cave and its melt; else a step in the ice */
+  end: boolean;
 }
 
 /** What the painter needs of a map's water, worked out once a map. */
@@ -169,7 +171,8 @@ export function channelsOf(map: LandscapeMap, step: number, relief?: ArrayLike<n
         const ny = y + DY[d];
         if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
         const n = ny * w + nx;
-        if (headwaterOf(map.feature?.[n] ?? 0) !== Headwater.Melt) continue;
+        const end = headwaterOf(map.feature?.[n] ?? 0) === Headwater.Melt;
+        if (!end && !(terrain[n] === Terrain.Ice && levels[n] < levels[i])) continue;
         const front: IceFront = {
           mx: x + DX[d] / 2,
           my: y + DY[d] / 2,
@@ -179,6 +182,7 @@ export function channelsOf(map: LandscapeMap, step: number, relief?: ArrayLike<n
           sheet: d === 2 ? Material.CliffLit : Material.CliffShade,
           zHi: levels[i] * step,
           zLo: levels[n] * step,
+          end,
         };
         add(fronts, i, front);
         add(fronts, n, front);
@@ -331,7 +335,7 @@ export function bankMaterial(map: LandscapeMap, i: number, x: number, y: number)
 }
 
 /**
- * How much of (x, y) of Ice tile `i` is ice rather than the moraine banks either side of it: the
+ * How much of (x, y) of Ice tile `i` is ice, the rest the foot of the moraine banks either side: the
  * ice channel, flat ice between banks of rubble.
  */
 export function iceAt(c: Channels, map: LandscapeMap, i: number, x: number, y: number) {
@@ -339,11 +343,12 @@ export function iceAt(c: Channels, map: LandscapeMap, i: number, x: number, y: n
   const ty = (i - tx) / map.w;
   const wx = x + map.originX;
   const wy = y + map.originY;
-  const line = 0.4 + (landscapeNoise(wx * 3.7 + 11, wy * 3.7 + 2, map.seed) - 0.5) * 0.1;
+  // full width: the banks of rubble lie on the tiles beside it, the edge between wandering
+  const line = 0.42 + (landscapeNoise(wx * 3.7 + 11, wy * 3.7 + 2, map.seed) - 0.5) * 0.12;
   return 1 - smooth((channelDistance(c.legs[i], x - tx, y - ty) - line + 0.02) / 0.04);
 }
 
-/** How much moraine lies at (x, y) of land tile `i` beside ice: rubble spilling off the bank. */
+/** How much moraine lies at (x, y) of land tile `i` beside ice: the bank, thinning out away from it. */
 export function moraineAt(map: LandscapeMap, i: number, x: number, y: number) {
   const { w, h, terrain } = map;
   const tx = i % w;
@@ -356,7 +361,7 @@ export function moraineAt(map: LandscapeMap, i: number, x: number, y: number) {
     d = Math.min(d, 0.5 - (DX[s] * (x - tx) + DY[s] * (y - ty)));
   }
   const n = landscapeNoise((x + map.originX) * 4.3, (y + map.originY) * 4.3, map.seed + 9);
-  return 1 - smooth((d - 0.1 - 0.2 * n) / 0.08);
+  return 1 - smooth((d - 0.6 - 0.4 * n) / 0.2);
 }
 
 /** A colour with how much it covers: what a fall or a front lays over the painted ground. */
@@ -574,11 +579,11 @@ export function frontAt(f: IceFront, x: number, y: number, z: number, read: Shee
       read(f.sheet, al + 0.5, depth / 16, texel);
       const lum = texel[0] * 0.3 + texel[1] * 0.59 + texel[2] * 0.11;
       const lc = (168 + (lum - 172) * 1.3) * (1.04 - 0.2 * (1 - hF / face));
-      let r = texel[0] + (lc * 0.8 - texel[0]) * 0.82;
-      let g = texel[1] + (lc * 0.96 - texel[1]) * 0.82;
-      let b = texel[2] + (lc * 1.1 - texel[2]) * 0.82;
+      let r = texel[0] + (lc * 0.72 - texel[0]) * 0.88;
+      let g = texel[1] + (lc * 1.0 - texel[1]) * 0.88;
+      let b = texel[2] + (lc * 1.12 - texel[2]) * 0.88;
       const block = Math.floor(al * 15 + 0.6 * n2(al * 3 + 1, 5.1));
-      const jag = 0.4 + 3.4 * n2(block * 7.3, 2.1);
+      const jag = 0.3 + 1.8 * n2(block * 7.3, 2.1);
       if (depth < jag) {
         const lit = 0.92 + 0.1 * n2(block * 3.1, 9.2);
         r = 214 * lit;
@@ -590,7 +595,7 @@ export function frontAt(f: IceFront, x: number, y: number, z: number, read: Shee
       g += (112 - g) * dirt * 0.6;
       b += (100 - b) * dirt * 0.6;
       const cx = (al - CAVE_C) / CAVE_HW;
-      if (Math.abs(cx) < 1) {
+      if (f.end && Math.abs(cx) < 1) {
         const H =
           face * (0.52 + 0.06 * n2(al * 7 + 2, 4.4)) * Math.sqrt(1 - cx * cx) * (1 + 0.28 * cx);
         if (hF < H) {
@@ -612,7 +617,7 @@ export function frontAt(f: IceFront, x: number, y: number, z: number, read: Shee
       over(o, r, g, b, iw);
     }
   }
-  if (e > 0.1 && e < 0.8) {
+  if (f.end && e > 0.1 && e < 0.8) {
     const past = e - 0.25;
     const nA = n2(x * 7 + 3, y * 7 + 11);
     const nB = n2(x * 17 + 5, y * 17 + 2);

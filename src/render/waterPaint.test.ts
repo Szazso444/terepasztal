@@ -139,7 +139,8 @@ describe('a glacier in its tile', () => {
     const m = ice();
     const c = channelsOf(m, 10);
     expect(iceAt(c, m, tile(7, 5), 7, 5)).toBe(1);
-    expect(iceAt(c, m, tile(7, 5), 7.49, 5)).toBe(0);
+    expect(iceAt(c, m, tile(7, 5), 7.3, 5)).toBe(1);
+    expect(iceAt(c, m, tile(7, 5), 7.56, 5)).toBe(0);
     expect(materialAt(m, 7, 5)).toBe(Material.Moraine);
   });
 
@@ -156,7 +157,7 @@ describe('a glacier in its tile', () => {
     const c = channelsOf(m, 10);
     expect(c.iced[tile(6, 5)]).toBe(1);
     expect(moraineAt(m, tile(6, 5), 6.45, 5)).toBe(1);
-    expect(moraineAt(m, tile(6, 5), 5.6, 5)).toBe(0);
+    expect(moraineAt(m, tile(4, 5), 3.6, 5)).toBe(0);
   });
 });
 
