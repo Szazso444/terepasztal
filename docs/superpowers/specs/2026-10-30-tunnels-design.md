@@ -46,7 +46,7 @@ player tool changes it. `levelTarget` in `src/world/elevation.ts` is the single 
 
 **New plane.** The map gains a stored plane of ground levels, `groundLevel`, with 255 for "as
 generated". `levelTarget` returns the stored value where one is set; `tileLevels` and `levelAt`
-keep their clamp, so neighbours still differ by at most one level. The plane travels in the save
+keep their clamp, so neighbours differ by at most `maxStep`: 1 on a map with no generated plane, 4 on one with it. The plane travels in the save
 and needs a `SAVE_VERSION` step that fills in nothing (absent means as generated). It holds the
 player's changes only; generated levels are section 3a (proved with a floor plane: relief and paint
 workers need no change).
@@ -62,7 +62,7 @@ tile, one level a step.
 | Over a tunnel | Ground over a dug tile stays at rail level + 3 or higher; refused tiles show red.                                                                                                                                                                                                                                        |
 | Beside water  | Lower refuses a tile touching water, on a side or a corner, so a raised lake cannot run out.                                                                                                                                                                                                                             |
 | Beside pieces | A tile whose level would change refuses when a side holds a piece that needs level ground: a works, station, depot, house, curve, switch or crossing. Straights, roads and platforms need no such refusal, nor does rail on a platform or on a dug or cut tile. An undo or redo that would move such a tile refuses too. |
-| Slopes        | Neighbours differ by at most one level, so a raise lifts the tiles around it and a lower takes them down. The ghost shows every tile that moves and the price before the click.                                                                                                                                          |
+| Slopes        | Neighbours differ by at most `maxStep` levels (1, or 4 on a map with a generated plane), so a raise lifts the tiles around it and a lower takes them down. The ghost shows every tile that moves and the price before the click.                                                                                         |
 | Price         | Money, per tile per level, the same both ways: `$100` placeholder, a tuning slider.                                                                                                                                                                                                                                      |
 
 A refusal covers the whole action: nothing moves if any tile it would move refuses.
@@ -162,7 +162,7 @@ outline. Dug tiles show as rooms with a floor and see-through walls along their 
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Low ground    | A tile under rail + 3 between dug tiles is raised by Raise's rules, at Raise's price, shown in the ghost. So a tunnel crosses a low saddle, and the ridge it makes is Rock. A tile that leads down to open ground is a cut. A tile beside a piece that needs level ground does not rise, as with Raise. |
 | Water         | A tile touching water, on a side or a corner, refuses. No digging under water.                                                                                                                                                                                                                          |
-| Map edge      | A tile on the map's last row refuses: the ring a map grows by lies beside it, and may bring water there.                                                                                                                                                                                                |
+| Map edge      | A tile on any of the map's four edges refuses: the ring a map grows by lies beside it, and may bring water there.                                                                                                                                                                                       |
 | Above         | A dug tile takes no track, road or building on the surface.                                                                                                                                                                                                                                             |
 | Stone         | Each dug tile adds stone to the stock: `2` placeholder.                                                                                                                                                                                                                                                 |
 | Price         | Money per tile: `$500` placeholder, a tuning slider.                                                                                                                                                                                                                                                    |
@@ -254,6 +254,9 @@ Masks apply only to cars within about four tiles of a portal, so batching is bro
 - **A save with no plane or store** loads as today.
 - **Map expansion.** New chunks have no stored levels. A chunk grown beside a raised tile clamps as
   any neighbour does, and `levelTarget` keeps the stored value.
+- **Old maps.** An old map's first grown ring gives it a generated plane, which switches it to soft
+  banks above level 3 (section 3a). An old save grows with its rail held: the tiles under rail and
+  buildings keep the level they had, and the settle pass moves their neighbours.
 - **Refused digs** leave nothing dug and take no money, as a refused line of track does.
 - **A train inside when track is removed** behaves as on the surface.
 - **Load repair.** `repairBuiltTiles` keeps rock and mountain under pieces today; it must also keep
@@ -274,7 +277,7 @@ Deterministic tests, on invariants:
   rail on 19: the link to 20 passes and the rail reads level. A platform on the cliff top alone
   refuses.
 - An edge of a dug tile links only through a portal on that face. A cut takes straights and signals
-  only. The Drill refuses the map's last row.
+  only. The Drill refuses all four edges of the map.
 - Ground over a dug tile never drops under rail + 3, whatever order the tools run in.
 - A piece lays inside only on a whole dug footprint; no dug tile touches water.
 - Save round trip with both new stores, and the migration step.
