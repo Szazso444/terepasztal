@@ -1351,6 +1351,70 @@ describe('a maintenance train and a train stopped at the break', () => {
     expect([...w.fleet.traffic.claims.keys()].sort()).toEqual([...new Set(tiles)].sort());
   });
 
+  /** Posts facing east at x 22 and x 44, the block past the second holding the stopped train. */
+  const posts = (w: SimWorld) => {
+    const signal = (x: number) => ({ id: 'signal', x, y: 30, rot: Dir.E });
+    w.fleet.signals.rebuild([signal(22), signal(44)] as unknown as Parameters<
+      typeof w.fleet.signals.rebuild
+    >[0]);
+  };
+
+  it('held at a post behind the train it mends the piece from there', SLOW, () => {
+    const { w, west, east } = sidedLine(false);
+    posts(w);
+    const stopped = stoppedBy(w, 50, west, east);
+    const t = bothGoOn(w, 50, stopped);
+    expect(t.yieldCount).toBe(0);
+  });
+
+  it('held at a post with a switch between it and the train it mends the piece too', SLOW, () => {
+    const { w, west, east } = sidedLine();
+    posts(w);
+    const stopped = stoppedBy(w, 42, west, east);
+    const t = bothGoOn(w, 42, stopped);
+    expect(t.yieldCount).toBe(0);
+  });
+
+  it('held at a post with a train at its stop first on its way it does not start', SLOW, () => {
+    const { w, west, near } = sidedLine(false);
+    posts(w);
+    wearDown(w, 80, 0);
+    const other = heldAt(w, near, west);
+    const t = maintTrain(w, []);
+    until(w, () => t.blocked && t.speed < 0.005, 200);
+    expect(other.t.noWayOn).toBe(false);
+    run(w, 2, () => expect(t.state).toBe('moving'));
+  });
+
+  it('held by token working behind the train it mends the piece from there', SLOW, () => {
+    const { w, west, east } = sidedLine(false);
+    posts(w);
+    w.fleet.signals.level = 'token';
+    const stopped = stoppedBy(w, 50, west, east);
+    const t = bothGoOn(w, 50, stopped);
+    expect(t.yieldCount).toBe(0);
+  });
+
+  it.each(['detour', 'service stop'])('on a %s behind the train it starts nothing', SLOW, (how) => {
+    const { w, west, east } = sidedLine(false);
+    const stopped = stoppedBy(w, 50, west, east);
+    const t = maintTrain(w, []);
+    expect(t.maint?.ax).toBe(50);
+    if (how === 'detour') t.detour = east;
+    else
+      (t as unknown as { serviceStop: unknown }).serviceStop = {
+        x: 60,
+        y: 30,
+        fuel: true,
+        water: true,
+      };
+    until(w, () => t.blocked && t.speed < 0.005, 200);
+    run(w, 2, () => expect(t.state).toBe('moving'));
+    expect(t.maint?.ax).toBe(50);
+    expect(healthAt(w, 50)).toBe(0);
+    expect(stopped.state).toBe('noRoute');
+  });
+
   it('on a job not urgent it waits behind the train, and starts nothing from there', SLOW, () => {
     const { w, west, east } = sidedLine(false);
     const stopped = stoppedBy(w, 50, west, east);

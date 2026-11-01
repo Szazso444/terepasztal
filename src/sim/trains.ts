@@ -933,6 +933,10 @@ export class Train {
   private get boundForWork() {
     return this.maintaining && this.detour === null;
   }
+  /** Bound for its job or its waiting place, with no stop for fuel or water first? */
+  get goingToWork() {
+    return this.boundForWork && !this.serviceStop;
+  }
   /** contracts waiting for this train, in order */
   jobs: TrainJob[] = [];
   /** the contract being worked right now */
@@ -2351,8 +2355,7 @@ export class Train {
           if (this.state === 'overweight' && this.weight > this.power) break;
           if (this.state !== 'overweight' && this.fuelProblem(ctx, 0.05)) break;
           // it gave its job up when it stopped: it looks again
-          if (this.boundForWork && !this.maint && !this.parkAt && !this.serviceStop)
-            this.nextWork(ctx);
+          if (this.goingToWork && !this.maint && !this.parkAt) this.nextWork(ctx);
           else if (this.path) this.setState('moving');
           else if (this.dispatch(ctx.track, ctx.builder, ctx.map)) this.onPathReady(ctx);
           else this.setState('noRoute');
@@ -2449,10 +2452,9 @@ export class Train {
   /** On its way to wait, is it time to look for work again? */
   private get lookingOnTheWay() {
     return (
-      this.boundForWork &&
+      this.goingToWork &&
       this.parkAt !== null &&
       !this.holding &&
-      !this.serviceStop &&
       this.stateTime >= rules.trackLookSeconds
     );
   }

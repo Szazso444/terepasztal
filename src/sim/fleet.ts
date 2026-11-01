@@ -1365,14 +1365,27 @@ export class Fleet {
   /**
    * A worker on an urgent job, held behind a train with no way on, works from where it stands (spec,
    * section 6): the way to its job's tile runs through that train, or ends under it, and the train
-   * can only leave once the piece is mended. The train is not backed off.
+   * can only leave once the piece is mended. The train is not backed off. A post or a token holds it
+   * short of the train, with the claim it could not get (`claimBlocker`) naming the train, or with
+   * none when a switch lies between and its claims reach no further: then it is the first train on
+   * its way. A worker gone for fuel or water is not on its way to the job.
    */
   private workBehind(ctx: TickCtx) {
     for (const t of this.trains) {
-      if (t.state !== 'moving' || !t.blocked || t.speed > 0 || t.holding) continue;
-      if (!urgentWork(t, this.track) || t.blockedBy === null) continue;
-      if (this.byId(t.blockedBy)?.noWayOn) t.workBehind(ctx);
+      if (t.state !== 'moving' || !t.blocked || t.speed > HELD_SPEED || t.holding) continue;
+      if (!t.goingToWork || !urgentWork(t, this.track)) continue;
+      const by = t.blockedBy ?? t.claimBlocker;
+      const ahead = by === null ? this.firstOnWay(t) : this.byId(by);
+      if (ahead?.noWayOn) t.workBehind(ctx);
     }
+  }
+  /** The first train on the path ahead of `t`. */
+  private firstOnWay(t: Train): Train | undefined {
+    for (const p of t.pathAhead()) {
+      const [o] = this.occupants(p.x, p.y, t.id);
+      if (o) return o;
+    }
+    return undefined;
   }
   /**
    * Tile keys of the sidings: runs of plain track from a switch to a dead end with no platform on
@@ -1432,6 +1445,8 @@ function backOffOrder(t: Train, track: TrackGraph) {
   if (!t.maint) return 1;
   return urgentWork(t, track) ? 2 : 0;
 }
+/** tiles a second under which a held train counts as stood: its speed only dies away to none */
+const HELD_SPEED = 0.01;
 /** tiles a jammed train's head moves before its note no longer says it is jammed */
 const JAM_MOVED = 0.5;
 /** seconds an idle train in another train's way waits before looking again for a way aside */
