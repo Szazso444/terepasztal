@@ -349,6 +349,7 @@ export const HU: Strings = {
     digBesideWater: 'Vizet érintő föld nem ásható ki',
     overTunnel: 'E csempe alatt alagút fut',
     inCutting: 'A bevágásba csak sín kerülhet',
+    cutStraight: 'A bevágásba csak egyenes sín kerülhet',
     notDug: 'Odabent az egész elemnek kiásott föld kell',
     drillLine: 'A fúró keskeny nyomtávot, mellék-, fő- és törzsvonalat fektet',
     groundStays: 'Itt nem mozdul semmi',

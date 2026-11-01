@@ -936,11 +936,76 @@ describe('track inside', () => {
     expect(on(true).ok).toBe(true);
   });
 
-  it('a curve in a cut asks nothing of the bank it cuts through', () => {
-    const w = hill(),
-      tiles = footprintOf(16, 18, 'curve', 1, 'branch');
-    for (const t of tiles) w.under.cut(t.x, t.y);
-    expect(w.builder.checkTrack(16, 18, CURVE, 1).ok).toBe(true);
+  it.each([[false], [true]])(
+    'a cut takes straights, and no curve, switch or crossing, the Drill on: %s',
+    (drill) => {
+      let wide = 0;
+      for (const { item, rot } of PIECES) {
+        if (drill && !drillLine(item)) continue;
+        const where = what(item, rot),
+          refused = { ok: false, reason: STR.build.cutStraight };
+        const tiles = footprintOf(20, ROW, item.kind, rot, item.cls);
+        const whole = ground(() => 0);
+        for (const t of tiles) whole.under.cut(t.x, t.y);
+        whole.builder.insideMode = drill;
+        const c = whole.builder.checkTrack(20, ROW, item, rot);
+        if (item.kind === 'straight') expect(c.ok, `${where}: ${c.reason}`).toBe(true);
+        else expect(c, where).toMatchObject(refused);
+        if (drill || !isUnitKind(item.kind, item.cls)) continue;
+        // one tile of a wide piece on a cut, rail on it or none, keeps the whole piece off
+        wide++;
+        tiles.forEach((t, member) => {
+          const w = ground(() => 0);
+          w.under.cut(t.x, t.y);
+          expect(w.builder.checkTrack(20, ROW, item, rot), `${where}, ${member}`).toMatchObject(
+            refused,
+          );
+        });
+      }
+      if (!drill) expect(wide).toBeGreaterThan(20);
+    },
+  );
+
+  it('a straight on a cut takes no crossing over it, and may change its line', () => {
+    const w = hill();
+    expect(w.builder.placeLine(run(12, 14, ROW))).toBe(true);
+    w.under.cut(15, ROW);
+    expect(w.builder.placeTrack(15, ROW, STRAIGHT, 1)).toBe(true);
+    const crossing: TrackItem = { kind: 'crossing', cls: 'branch', cls2: 'branch' };
+    expect(w.builder.checkTrack(15, ROW, crossing, 0).reason).toBe(STR.build.cutStraight);
+    expect(w.builder.checkTrack(15, ROW, { kind: 'straight', cls: 'main' }, 1).ok).toBe(true);
+  });
+
+  it('a wide piece stands at one rail level on every tile, or not at all', () => {
+    const at = (level: (x: number) => number) => {
+      const w = ground((x) => level(x));
+      // the slope rule's own answer aside: the levels of the tiles are what is asked here
+      w.builder.groundCheck = () => true;
+      return w;
+    };
+    const tiles = footprintOf(14, 19, 'curve', 0, 'branch');
+    expect(new Set(tiles.map((t) => t.x)).size).toBeGreaterThan(1);
+    const terrace = at((x) => (x >= tiles[0].x + 1 ? 1 : 0));
+    expect(new Set(tiles.map((t) => levelAt(terrace.map, t.x, t.y))).size).toBe(2);
+    expect(terrace.builder.checkTrack(14, 19, CURVE, 0)).toMatchObject({
+      ok: false,
+      reason: STR.build.notSmooth,
+    });
+    expect(at(() => 0).builder.checkTrack(14, 19, CURVE, 0).ok).toBe(true);
+    expect(at(() => 1).builder.checkTrack(14, 19, CURVE, 0).ok).toBe(true);
+    // on platforms under every tile it rides the deck, as it did
+    const platform = BUILDING_DEFS.find((d) => d.bridge)!;
+    for (const t of tiles)
+      terrace.builder.buildings.set(t.y * SIZE + t.x, {
+        id: platform.id,
+        x: t.x,
+        y: t.y,
+        acc: 0,
+        rot: 0,
+        active: false,
+        rate: 0,
+      });
+    expect(terrace.builder.checkTrack(14, 19, CURVE, 0).ok).toBe(true);
   });
 
   it('with the Drill off a dug tile refuses track, as a tile with a surface', () => {
@@ -1027,13 +1092,6 @@ describe('track inside', () => {
       ok: false,
       reason: STR.build.notDug,
     });
-  });
-
-  it('a wide piece on cuts alone lays with the Drill on', () => {
-    const w = hill();
-    for (const t of footprintOf(16, 18, 'curve', 1, 'branch')) w.under.cut(t.x, t.y);
-    w.builder.insideMode = true;
-    expect(w.builder.checkTrack(16, 18, CURVE, 1).ok).toBe(true);
   });
 
   it.each([

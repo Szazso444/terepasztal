@@ -679,6 +679,9 @@ export class Builder {
     }
     const inside = this.insideRefusal(tiles);
     if (inside) return { ok: false, cost: {}, reason: inside };
+    // the relief carves a cut along one axis, so nothing but a straight runs through one
+    if (kind !== 'straight' && tiles.some((t) => this.underground.isCut(t.x, t.y)))
+      return { ok: false, cost: {}, reason: STR.build.cutStraight };
     // class compatibility with the neighbours the new piece would open onto
     const probe = new TrackGraph(this.map.w, this.map.h);
     probe.place(x, y, kind, rot, item.cls, item.cls2);
@@ -702,19 +705,22 @@ export class Builder {
       return { ok: false, cost: {}, reason: STR.build.mountainLine };
     // Straights and crossings may climb. Curves and switches need smooth ground on every tile, or a bridge platform under every tile: then
     // they sit at the deck, the level of the rails they meet off the bridge. A dug or cut tile asks
-    // nothing of the ground: its rail stands on a bed of its own.
+    // nothing of the ground: its rail stands on a bed of its own. Off a deck every tile of a wide
+    // piece stands at one rail level, as one piece cannot bend.
     const members = tiles.map((t) => ({ ...t, links: probe.get(t.x, t.y)?.links ?? [] })),
       // Members of a wide piece are parts of a curve or switch, whatever their links look like.
       climbs = !wide && members.some((m) => climbAxes(m.links).length > 0),
-      bedded = (t: { x: number; y: number }) => !!this.drilled(t.x, t.y);
+      bedded = (t: { x: number; y: number }) => !!this.drilled(t.x, t.y),
+      deck = tiles.every((t) => this.bridgeAt(t.x, t.y));
     if (
       this.groundCheck &&
       !climbs &&
-      !tiles.every((t) => bedded(t) || this.groundCheck!(t.x, t.y, 'level'))
+      (!tiles.every((t) => bedded(t) || this.groundCheck!(t.x, t.y, 'level')) ||
+        (!deck && new Set(tiles.map((t) => this.railAt(t.x, t.y))).size > 1))
     ) {
-      if (!tiles.every((t) => this.bridgeAt(t.x, t.y)))
-        return { ok: false, cost: {}, reason: STR.build.notSmooth };
-      if (supportedDeck(this.map, members, (bx, by) => !!this.bridgeAt(bx, by)) === null)
+      if (!deck) return { ok: false, cost: {}, reason: STR.build.notSmooth };
+      const under = this.underground;
+      if (supportedDeck(this.map, members, (bx, by) => !!this.bridgeAt(bx, by), under) === null)
         return { ok: false, cost: {}, reason: STR.build.deckLevels };
     }
     for (const t of tiles) {
@@ -758,6 +764,10 @@ export class Builder {
     const outside = tiles.every((t) => under.isCut(t.x, t.y) || under.fronted(t.x, t.y));
     return !dug && outside ? null : STR.build.notDug;
   }
+  /** The level rail stands at on (x, y): the bed on a dug or cut tile, else the ground. */
+  private railAt(x: number, y: number): number {
+    return this.underground.bedAt(x, y) ?? levelAt(this.map, x, y);
+  }
   /**
    * Rail takes a level a tile, and generated ground steps up to four: is the edge between `t` and
    * (nx, ny) too steep for a link? Each side counts at its rail: a dug or cut tile at its bed, so
@@ -768,8 +778,7 @@ export class Builder {
   private cliffAt(t: { x: number; y: number }, nx: number, ny: number): boolean {
     const under = this.underground,
       n = { x: nx, y: ny },
-      rail = (x: number, y: number) => under.bedAt(x, y) ?? levelAt(this.map, x, y),
-      step = Math.abs(rail(t.x, t.y) - rail(nx, ny)),
+      step = Math.abs(this.railAt(t.x, t.y) - this.railAt(nx, ny)),
       dug = under.isDug(t.x, t.y);
     if (dug === under.isDug(nx, ny)) return step > 1;
     const [inner, outer] = dug ? [t, n] : [n, t];
