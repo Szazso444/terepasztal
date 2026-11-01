@@ -31,6 +31,8 @@ export interface VehicleRowOptions {
   card?: CardTip | null;
   /** the labels stand on the name's line: a list of many rows, each as low as it can be */
   inline?: boolean;
+  /** in-cab signalling, marked beside the level: copies with it work where the others do not */
+  fitted?: boolean;
 }
 
 /** A Roster card as a tooltip: `key` says which card it is, as the row is drawn again under it. */
@@ -62,12 +64,15 @@ export function withCard(atlas: AtlasRegistry, mark: Node, card?: CardTip | null
 }
 
 /** A vehicle's name in its rarity's colour, with its level as a tag. */
-export function vehicleName(def: LocoDef | WagonDef, level: number): HTMLElement {
+export function vehicleName(def: LocoDef | WagonDef, level: number, fitted = false): HTMLElement {
   return el(
     'span',
     {},
     el('span', { class: `dp-vn rarity-${def.rarity}`, text: def.name }),
     el('em', { class: 'dp-lv', text: STR.roster.lv(level) }),
+    fitted
+      ? el('em', { class: 'dp-lv dp-cab', title: STR.roster.hasInCab, text: STR.depot.inCabTag })
+      : null,
   );
 }
 
@@ -79,7 +84,7 @@ export function vehicleRow(atlas: AtlasRegistry, o: VehicleRowOptions): HTMLElem
   const lines: Content[] = [...o.sub];
   if (o.reason) lines.push(el('span', { class: 'k-bad', title: o.reason, text: o.reason }));
   if (o.warn) lines.push(el('span', { class: 'k-bad', text: o.warn }));
-  const name = withCard(atlas, vehicleName(o.def, o.level), o.card);
+  const name = withCard(atlas, vehicleName(o.def, o.level, o.fitted), o.card);
   return listRow({
     title: o.inline ? el('span', { class: 'dp-vt' }, name, vehicleLabels(o.def)) : name,
     sprite: withCard(atlas, vehicleArt(atlas, o.def.id), o.card),

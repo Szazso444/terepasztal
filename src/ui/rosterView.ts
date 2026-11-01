@@ -111,11 +111,13 @@ export interface RosterCard {
   inService: boolean;
   /** how many copies there are, or that it can rise no further */
   stock: string;
+  /** its in-cab signalling, fitted or built in; none without */
+  fitted: string | null;
 }
 
 /** The card of a copy: `train` is the name of the train it is in, `copies` how many there are. */
 export function rosterCard(
-  it: Pick<Item, 'defId' | 'kind' | 'level'>,
+  it: Pick<Item, 'defId' | 'kind' | 'level' | 'inCab'>,
   train: string | null,
   copies: number,
 ): RosterCard {
@@ -149,6 +151,7 @@ export function rosterCard(
     where: train !== null ? STR.roster.assignedTo(train) : STR.roster.inDepot,
     inService: train !== null,
     stock: it.level >= LEVEL_CAP ? STR.roster.maxLevel : STR.roster.copies(copies),
+    fitted: it.kind === 'loco' && (it.inCab || (d as LocoDef).inCab) ? STR.roster.hasInCab : null,
   };
 }
 
@@ -161,6 +164,7 @@ export function rosterCardTip(c: RosterCard): TipDoc {
     ...c.lines.map((l) => text(...richText(l))),
     c.inService ? good(c.where) : dim(c.where),
     dim(c.stock),
+    ...(c.fitted ? [dim(c.fitted)] : []),
   ];
 }
 

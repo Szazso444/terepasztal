@@ -1082,7 +1082,14 @@ const EN = {
     again: 'Build another',
     againHint:
       'A new train like this one: the same models from the free stock, its route and depot',
-    notFree: (n: number) => `${n} of its vehicles ${n === 1 ? 'is' : 'are'} not free`,
+    againTitle: 'Replace the train being built?',
+    againText: (n: string) =>
+      `Build another like ${n}? What the draft holds now goes back to the stock.`,
+    againYes: 'Replace',
+    likeMissing: (list: string) => `Not free: ${list}`,
+    likeDiffers: (list: string) => `Another level or fitting: ${list}`,
+    inCabTag: 'In-cab',
+    customShort: 'With fewer than two stops it runs the automatic route.',
     toRoster: 'Roster',
     toRosterHint: 'Open this vehicle in the Roster, over the Depot; Back returns here',
     scopeHere: (n: number) => `This depot (${n})`,
@@ -1144,7 +1151,6 @@ const EN = {
     namePlaceholder: 'Train name',
     needTwoStops: 'Route needs at least two stops',
     routeApplied: (n: string) => `${n}: route updated`,
-    dispatched: (n: string) => `${n} dispatched`,
     inService: (n: string) => `${n} is in service: recall it to change its consist.`,
     wagonsCount: (n: number) => `${n} wagon${n === 1 ? '' : 's'}`,
     routeTab: 'Route',

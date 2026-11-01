@@ -18,6 +18,20 @@ import { NewGameScreen } from './newGameScreen';
 import { SavedGamesScreen, type SavedGamesActions } from './savedGamesScreen';
 import type { ReplaceSituation } from './saveSlots';
 import { SignalGuideScreen } from './signalGuide';
+import { Dir } from '../engine/iso';
+import { Inventory } from '../gacha/inventory';
+import { Builder } from '../sim/build';
+import { Economy } from '../sim/economy';
+import { Fleet } from '../sim/fleet';
+import { resetStationIds } from '../sim/stations';
+import { resetTrainIds, type Train } from '../sim/trains';
+import { storeWith } from '../testing/storeFixtures';
+import { emptyMap } from '../world/mapgen';
+import { RegionState } from '../world/regions';
+import { Terrain } from '../world/tiles';
+import { TrackGraph, makePiece } from '../world/track';
+import { DepotScreen } from './depot';
+import type { Confirm } from './menu';
 
 // the buttons play a sound when clicked; the context that plays it is a browser's
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -63,6 +77,8 @@ class FakeEl {
   };
   parent: FakeEl | null = null;
   children: (FakeEl | string)[] = [];
+  dataset: Record<string, string> = {};
+  hidden = false;
   private listeners = new Map<string, Listener[]>();
   classList = {
     toggle: (c: string, on = !this.className.split(' ').includes(c)) => {
@@ -72,6 +88,7 @@ class FakeEl {
     },
     add: (c: string) => this.classList.toggle(c, true),
     remove: (c: string) => this.classList.toggle(c, false),
+    contains: (c: string) => this.className.split(' ').includes(c),
   };
 
   constructor(readonly tagName: string) {}
@@ -97,6 +114,29 @@ class FakeEl {
   remove() {
     if (this.parent) this.parent.children = this.parent.children.filter((c) => c !== this);
     this.parent = null;
+  }
+  insertBefore(c: FakeEl, ref: FakeEl | null) {
+    c.remove();
+    const at = ref ? this.children.indexOf(ref) : -1;
+    this.children.splice(at < 0 ? this.children.length : at, 0, this.adopt(c));
+  }
+  private get elements(): FakeEl[] {
+    return this.children.filter((c): c is FakeEl => c instanceof FakeEl);
+  }
+  get firstElementChild(): FakeEl | null {
+    return this.elements[0] ?? null;
+  }
+  get lastElementChild(): FakeEl | null {
+    return this.elements.at(-1) ?? null;
+  }
+  /** The first element of the selector's last tag: `b`, or `.k-bar > i` for its `i`. */
+  querySelector(selector: string): FakeEl | null {
+    const tag = selector.split(' ').at(-1)?.toUpperCase();
+    return this.all.find((e) => e.tagName === tag) ?? null;
+  }
+  /** What was brought into sight, for a test to read. */
+  scrollIntoView() {
+    page.scrolledTo = this;
   }
   addEventListener(type: string, f: Listener) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), f]);
@@ -161,6 +201,7 @@ class FakeEl {
 const page = {
   body: new FakeEl('BODY'),
   activeElement: null as FakeEl | null,
+  scrolledTo: null as FakeEl | null,
   createElement: (tag: string) => new FakeEl(tag.toUpperCase()),
   createTextNode: (t: string) => t,
   createDocumentFragment: () => new FakeEl('FRAGMENT'),
@@ -1430,5 +1471,223 @@ describe('an old settings file', () => {
       { confirm: () => Promise.resolve(true) },
     );
     expect(screen.frameTabs().tabs.map((t) => t.label)).toEqual([gameplay, controls, saves]);
+  });
+});
+
+describe('the Depot', () => {
+  const ROCKET = 'rocket';
+  const TUB = 'mine_tub';
+
+  /** A narrow depot with a line to two stations, two engines and three wagons free. */
+  function world() {
+    resetTrainIds();
+    resetStationIds();
+    const map = emptyMap(4242, 64, 64, Terrain.Grass);
+    const track = new TrackGraph(64, 64);
+    const economy = new Economy();
+    const regions = new RegionState(map);
+    for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
+    const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
+    builder.free = true;
+    const inventory = new Inventory();
+    const fleet = new Fleet(track, builder, map, inventory, economy);
+    const depot = builder.placeStation(20, 20, 'narrow_depot', 0)!;
+    const ew = [0, 1].find((r) => makePiece('straight', r, 'narrow').links[0].includes(Dir.E))!;
+    for (let x = 22; x < 34; x++) track.place(x, 20, 'straight', ew, 'narrow');
+    builder.placeStation(24, 21, 'quarry', 0);
+    builder.placeStation(26, 21, 'farm', 0);
+    for (const id of [ROCKET, ROCKET, TUB, TUB, TUB]) inventory.add(id, 0);
+    return { builder, fleet, inventory, depot, track };
+  }
+
+  function open() {
+    const w = world();
+    const confirm = vi.fn(async () => true);
+    const atlas = { has: () => false } as unknown as AtlasRegistry;
+    const prompt = { confirm } as unknown as Confirm;
+    const screen = new DepotScreen(w.inventory, w.fleet, w.builder, atlas, prompt);
+    inPage(screen.root);
+    screen.onOpen();
+    return { ...w, screen, confirm, root: fake(screen.root) };
+  }
+  type Open = ReturnType<typeof open>;
+
+  const stockRow = (root: FakeEl, name: string) => {
+    const row = root.all.find((e) => e.classList.contains('dp-li') && e.text().includes(name));
+    if (!row) throw new Error(`no row ${name}`);
+    return row;
+  };
+  const plus = (root: FakeEl, name: string) => stockRow(root, name).button('+');
+  const nameInput = (root: FakeEl) => root.find('dp-dock')?.all.find((e) => e.tagName === 'INPUT');
+  const dock = (root: FakeEl) => root.find('dp-dock')?.text() ?? '';
+  const action = (o: Open, label: string) => {
+    const a = o.screen.frameFooter().actions?.find((x) => x.label === label);
+    if (!a) throw new Error(`no action ${label}`);
+    return a;
+  };
+  const cars = (root: FakeEl) => root.all.filter((e) => e.classList.contains('dp-car'));
+  /** A train out with an engine and a wagon, picked, as a Dispatch leaves it. */
+  function dispatched(o: Open) {
+    plus(o.root, "Stephenson's Rocket").fire('click');
+    plus(o.root, 'Mine Tub').fire('click');
+    action(o, STR.depot.dispatch).onClick();
+    return o.fleet.trains[0];
+  }
+
+  it('sends nothing on Enter in the name field: it commits the name and gives the keys back', () => {
+    const o = open();
+    plus(o.root, "Stephenson's Rocket").fire('click');
+    const field = nameInput(o.root)!;
+    field.value = 'Half built';
+    field.focus();
+    field.fire('keydown', 'Enter', 'Enter');
+    expect(o.fleet.trains).toHaveLength(0);
+    expect(page.activeElement).not.toBe(field);
+    expect(field.value).toBe('Half built');
+  });
+
+  it('picks the train that went out, with Build another a press away, and shows its row', () => {
+    const o = open();
+    const t = dispatched(o);
+    expect(o.fleet.trains).toHaveLength(1);
+    expect(action(o, STR.depot.again)).toBeDefined();
+    expect(fake(page.scrolledTo).text()).toContain(t.name);
+    expect(fake(page.scrolledTo).classList.contains('on')).toBe(true);
+  });
+
+  it('builds another straight off an empty draft, asking nothing', async () => {
+    const o = open();
+    dispatched(o);
+    action(o, STR.depot.again).onClick();
+    await tick();
+    expect(o.confirm).not.toHaveBeenCalled();
+    expect(cars(o.root)).toHaveLength(2);
+    expect(o.fleet.trains).toHaveLength(1);
+  });
+
+  /** A train out, and a new draft begun, with the train picked again. */
+  async function draftBeside(o: Open, t: Train) {
+    o.root.find('dp-new')?.fire('click');
+    plus(o.root, 'Mine Tub').fire('click');
+    plus(o.root, 'Mine Tub').fire('click');
+    expect(cars(o.root)).toHaveLength(2);
+    o.root.all.find((e) => e.classList.contains('dp-train'))?.fire('click');
+    expect(o.screen.frameFooter().actions?.some((a) => a.label === STR.depot.again)).toBe(true);
+    expect(t).toBeDefined();
+  }
+
+  it('asks before Build another replaces a draft, and keeps it on no', async () => {
+    const o = open();
+    const t = dispatched(o);
+    await draftBeside(o, t);
+    o.confirm.mockResolvedValueOnce(false);
+    action(o, STR.depot.again).onClick();
+    await tick();
+    expect(o.confirm).toHaveBeenCalledOnce();
+    // the question was declined: the train stays picked and the draft is as it was
+    expect(action(o, STR.depot.again)).toBeDefined();
+    o.root.find('dp-new')?.fire('click');
+    expect(cars(o.root)).toHaveLength(2);
+    expect(stockRow(o.root, 'Mine Tub').all.find((e) => e.tagName === 'INPUT')?.value).toBe('2');
+  });
+
+  it('replaces the draft on yes, with the train it was asked of', async () => {
+    const o = open();
+    const t = dispatched(o);
+    await draftBeside(o, t);
+    action(o, STR.depot.again).onClick();
+    await tick();
+    expect(o.confirm).toHaveBeenCalledOnce();
+    // like the train: the engine it has, and its one wagon, not the two of the draft
+    expect(stockRow(o.root, 'Mine Tub').all.find((e) => e.tagName === 'INPUT')?.value).toBe('1');
+    expect(
+      stockRow(o.root, "Stephenson's Rocket").all.find((e) => e.tagName === 'INPUT')?.value,
+    ).toBe('1');
+  });
+
+  it('does nothing for a train recalled while the question stood', async () => {
+    const o = open();
+    const t = dispatched(o);
+    await draftBeside(o, t);
+    let answer: (yes: boolean) => void = () => {};
+    o.confirm.mockReturnValueOnce(new Promise<boolean>((r) => (answer = r)));
+    action(o, STR.depot.again).onClick();
+    o.fleet.recall(t);
+    answer(true);
+    await tick();
+    o.root.find('dp-new')?.fire('click');
+    expect(stockRow(o.root, 'Mine Tub').all.find((e) => e.tagName === 'INPUT')?.value).toBe('2');
+  });
+
+  it('keeps the focus on the stepper pressed, as its row is drawn again', () => {
+    const o = open();
+    const press = plus(o.root, 'Mine Tub');
+    press.focus();
+    press.fire('click');
+    const again = plus(o.root, 'Mine Tub');
+    expect(again).not.toBe(press);
+    expect(page.activeElement).toBe(again);
+    const down = stockRow(o.root, 'Mine Tub').button('−');
+    down.focus();
+    down.fire('click');
+    expect(page.activeElement).toBe(stockRow(o.root, 'Mine Tub').button('−'));
+  });
+
+  it('leaves the focus alone on a click on the row itself', () => {
+    const o = open();
+    const before = page.activeElement;
+    stockRow(o.root, 'Mine Tub').fire('click');
+    expect(cars(o.root)).toHaveLength(1);
+    expect(page.activeElement).toBe(before);
+  });
+
+  it('says in its dock line what a train built like another could not get', async () => {
+    const o = open();
+    dispatched(o);
+    // the only other engine goes: nothing of that model is free
+    o.inventory.free('loco')[0].assigned = 99;
+    action(o, STR.depot.again).onClick();
+    await tick();
+    expect(dock(o.root)).toContain(STR.depot.likeMissing("Stephenson's Rocket"));
+    // it stands until the draft changes
+    o.screen.refresh();
+    expect(dock(o.root)).toContain(STR.depot.likeMissing("Stephenson's Rocket"));
+    plus(o.root, 'Mine Tub').fire('click');
+    expect(dock(o.root)).not.toContain(STR.depot.likeMissing("Stephenson's Rocket"));
+  });
+
+  it('says a full list in its dock line', () => {
+    const o = open();
+    for (let i = 0; i < 16; i++) o.inventory.add(TUB, 0);
+    o.screen.refresh();
+    const input = stockRow(o.root, 'Mine Tub').all.find((e) => e.tagName === 'INPUT')!;
+    input.value = '19';
+    input.fire('change');
+    expect(dock(o.root)).toContain(STR.fleet.tooManyWagons(16));
+  });
+
+  it('moves no camera and leaves the list as it was on a press of a depot', () => {
+    const o = open();
+    const seen = vi.fn();
+    o.screen.onFocusDepot = seen;
+    const standard = o.builder.placeStation(40, 40, 'depot', 0)!;
+    o.screen.refresh();
+    o.root.button(STR.depot.scopeAll(0)).fire('click');
+    const chips = o.root.all.filter((e) => e.classList.contains('dp-dep'));
+    chips.find((e) => e.text().includes(standard.name))?.fire('click');
+    expect(seen).not.toHaveBeenCalled();
+    expect(o.root.all.find((e) => e.text() === STR.depot.scopeAll(0))?.className).toContain('on');
+  });
+
+  it('calls a custom route too short to run what it will do', () => {
+    const o = open();
+    const routeTab = () =>
+      o.root
+        .find('k-tabs')
+        ?.all.find((e) => e.tagName === 'BUTTON' && e.text().startsWith(STR.depot.routeTab));
+    routeTab()?.fire('click');
+    o.root.button(STR.depot.routeMode.custom).fire('click');
+    expect(routeTab()?.text()).toContain(STR.depot.routeMode.auto);
+    expect(o.root.find('dp-short')?.textContent).toBe(STR.depot.customShort);
   });
 });

@@ -3,6 +3,7 @@ import { STR } from '../strings';
 import { defaultStop, type StopPlan } from '../sim/trains';
 import { clampToRange, stepNumber } from './kit';
 import {
+  CHECK_GATE_MS,
   CHECK_MS,
   CHECK_REFUSED_MS,
   DWELL_BIG_STEP,
@@ -13,17 +14,20 @@ import {
   checkLifetime,
   clickedCount,
   copiesLike,
+  draftHolds,
   editorSignature,
   foldStock,
   gateShown,
   haulShare,
   haulTone,
+  likeNotice,
   locoStats,
   moveStopUp,
   movedPick,
   pruneToFree,
   refusalAt,
   removeStopAt,
+  routeRuns,
   routeText,
   serviceResource,
   setPicked,
@@ -226,32 +230,109 @@ describe('what cannot roll out of this depot', () => {
 describe('building a train like another', () => {
   const tub = (uid: number, level = 1) => ({ uid, defId: 'mine_tub', level });
   const wanted = (level: number) => ({ defId: 'mine_tub', level });
+  const engine = (uid: number, level: number, inCab = false) => ({
+    uid,
+    defId: 'f7',
+    level,
+    inCab,
+  });
 
   it('finds a free copy of each vehicle, in the order of the train', () => {
     const free = [{ uid: 1, defId: 'rocket', level: 1 }, tub(2)];
     expect(copiesLike([wanted(1), { defId: 'rocket', level: 1 }], free)).toEqual({
       uids: [2, 1],
-      missing: 0,
+      missing: [],
+      differ: [],
     });
   });
 
-  it('uses each copy once, and counts the vehicles it found none for', () => {
-    expect(copiesLike([wanted(1), wanted(1), wanted(1)], [tub(1), tub(2)])).toEqual({
-      uids: [1, 2],
-      missing: 1,
+  it('uses each copy once, and names the vehicles it found none for', () => {
+    const r = copiesLike([wanted(1), wanted(1), wanted(1)], [tub(1), tub(2)]);
+    expect(r.uids).toEqual([1, 2]);
+    expect(r.missing).toEqual(['mine_tub']);
+  });
+
+  it('takes the copy nearest in level, and says when it is not the same', () => {
+    expect(copiesLike([wanted(3)], [tub(1, 1), tub(2, 4), tub(3, 3)])).toMatchObject({
+      uids: [3],
+      differ: [],
+    });
+    expect(copiesLike([wanted(3)], [tub(1, 1), tub(2, 4)])).toMatchObject({
+      uids: [2],
+      differ: ['mine_tub'],
     });
   });
 
-  it('takes the copy nearest in level', () => {
-    expect(copiesLike([wanted(3)], [tub(1, 1), tub(2, 4), tub(3, 3)]).uids).toEqual([3]);
-    expect(copiesLike([wanted(3)], [tub(1, 1), tub(2, 4)]).uids).toEqual([2]);
+  it('keeps the in-cab fitting where a fitted copy is free, ahead of the level', () => {
+    const fitted = { defId: 'f7', level: 3, inCab: true };
+    const r = copiesLike([fitted], [engine(1, 3), engine(2, 1, true)]);
+    expect(r.uids).toEqual([2]);
+    // the fitting is kept, the level is not: it says so
+    expect(r.differ).toEqual(['f7']);
+  });
+
+  it('says so when no fitted copy is free', () => {
+    const r = copiesLike([{ defId: 'f7', level: 1, inCab: true }], [engine(1, 1)]);
+    expect(r).toMatchObject({ uids: [1], differ: ['f7'], missing: [] });
+  });
+
+  it('does not spend a fitted copy on a train that has none', () => {
+    const r = copiesLike([{ defId: 'f7', level: 1 }], [engine(1, 1, true), engine(2, 1)]);
+    expect(r).toMatchObject({ uids: [2], differ: [] });
   });
 
   it('never takes another model', () => {
-    expect(copiesLike([wanted(1)], [{ uid: 1, defId: 'rocket', level: 1 }])).toEqual({
-      uids: [],
-      missing: 1,
-    });
+    const r = copiesLike([wanted(1)], [{ uid: 1, defId: 'rocket', level: 1 }]);
+    expect(r).toMatchObject({ uids: [], missing: ['mine_tub'] });
+  });
+
+  const names: Record<string, string> = { mine_tub: 'Mine Tub', f7: 'EMD F7' };
+  const nameOf = (id: string) => names[id];
+
+  it('says which vehicles are not free, and how many of each', () => {
+    const said = likeNotice({ missing: ['mine_tub', 'f7', 'mine_tub'], differ: [] }, nameOf);
+    expect(said).toBe(STR.depot.likeMissing('Mine Tub ×2, EMD F7'));
+  });
+
+  it('says which vehicles differ, beside those not free', () => {
+    const said = likeNotice({ missing: ['mine_tub'], differ: ['f7'] }, nameOf);
+    expect(said).toBe(`${STR.depot.likeMissing('Mine Tub')} · ${STR.depot.likeDiffers('EMD F7')}`);
+  });
+
+  it('says nothing of a train that came out alike', () => {
+    expect(likeNotice({ missing: [], differ: [] }, nameOf)).toBeNull();
+  });
+});
+
+describe('whether a press would lose the draft', () => {
+  const empty = { picks: 0, stops: 0, name: '', routeMode: 'auto' };
+
+  it('holds nothing as it stands after a dispatch', () => {
+    expect(draftHolds(empty)).toBe(false);
+    expect(draftHolds({ ...empty, name: '   ' })).toBe(false);
+  });
+
+  it('holds anything the player has set', () => {
+    expect(draftHolds({ ...empty, picks: 1 })).toBe(true);
+    expect(draftHolds({ ...empty, stops: 2 })).toBe(true);
+    expect(draftHolds({ ...empty, name: 'Coal' })).toBe(true);
+    expect(draftHolds({ ...empty, routeMode: 'freight' })).toBe(true);
+  });
+});
+
+describe('the route as it will run', () => {
+  it('is the automatic one for a custom list of under two stops', () => {
+    expect(routeRuns('custom', 0)).toBe('auto');
+    expect(routeRuns('custom', 1)).toBe('auto');
+  });
+
+  it('is the custom list from two stops on', () => {
+    expect(routeRuns('custom', 2)).toBe('custom');
+  });
+
+  it('is what was chosen for any other mode, whatever the list holds', () => {
+    expect(routeRuns('auto', 0)).toBe('auto');
+    expect(routeRuns('freight', 0)).toBe('freight');
   });
 });
 
@@ -468,9 +549,19 @@ describe('the picks of a draft that are still free', () => {
 });
 
 describe('how long the answer to "would it roll out?" stands', () => {
-  it('asks again soon after a go or a cheap refusal, and rarely after a refusal at the gate', () => {
-    expect(checkLifetime(false)).toBe(CHECK_MS);
-    expect(checkLifetime(true)).toBe(CHECK_REFUSED_MS);
+  const gate = { x: 1, y: 2 };
+
+  it('asks again soon after a go', () => {
+    expect(checkLifetime({ gate, routeFailed: false })).toBe(CHECK_MS);
+  });
+
+  it('asks again at every refresh after a refusal that searched nothing', () => {
+    expect(checkLifetime({ gate: null, routeFailed: false })).toBe(CHECK_GATE_MS);
+    expect(CHECK_GATE_MS).toBeLessThan(500);
+  });
+
+  it('asks again rarely after a route that was searched for and not found', () => {
+    expect(checkLifetime({ gate: null, routeFailed: true })).toBe(CHECK_REFUSED_MS);
     expect(CHECK_REFUSED_MS).toBeGreaterThan(CHECK_MS);
   });
 });

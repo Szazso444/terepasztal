@@ -923,7 +923,14 @@ export const HU: Strings = {
     again: 'Még egy ilyet',
     againHint:
       'Új vonat ennek mintájára: ugyanazok a típusok a szabad készletből, ugyanaz az útvonal és fűtőház',
-    notFree: (n: number) => `${n} járműve nem szabad`,
+    againTitle: 'Felülírod az épülő vonatot?',
+    againText: (n: string) =>
+      `Új vonat ${n} mintájára? Ami most az összeállításban van, visszakerül a készletbe.`,
+    againYes: 'Felülírás',
+    likeMissing: (list: string) => `Nem szabad: ${list}`,
+    likeDiffers: (list: string) => `Más szint vagy felszerelés: ${list}`,
+    inCabTag: 'Vezetőállás-jelzés',
+    customShort: 'Két megállónál kevesebbel az automatikus útvonalon jár.',
     toRoster: 'Járműpark',
     toRosterHint: 'Megnyitja ezt a járművet a Járműparkban, a fűtőház fölött; a Vissza ide hoz',
     scopeHere: (n: number) => `Ez a fűtőház (${n})`,
@@ -985,7 +992,6 @@ export const HU: Strings = {
     namePlaceholder: 'Vonat neve',
     needTwoStops: 'Az útvonalhoz legalább két megálló kell',
     routeApplied: (n: string) => `${n}: útvonal frissítve`,
-    dispatched: (n: string) => `${n} elindult`,
     inService: (n: string) => `${n} forgalomban van: a szerelvény módosításához hívd vissza.`,
     wagonsCount: (n: number) => `${n} kocsi`,
     routeTab: 'Útvonal',

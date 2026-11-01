@@ -219,29 +219,85 @@ export function foldStock<G extends { picked: number }>(
   };
 }
 
+/** A vehicle of a train, as another like it is looked for. */
+export interface LikeVehicle {
+  defId: string;
+  level: number;
+  inCab?: boolean;
+}
+
+/** The copies found for a train: `missing` had none free, `differ` got one not quite like it. */
+export interface LikeCopies {
+  uids: number[];
+  missing: string[];
+  differ: string[];
+}
+
 /**
- * A free copy for each vehicle of a train, to build another like it: the same model, at the level
- * nearest to it. `missing` counts the vehicles no copy was free for.
+ * A free copy for each vehicle of a train, to build another like it: the same model, fitted as
+ * that vehicle is where such a copy is free, at the level nearest to it.
  */
 export function copiesLike(
-  vehicles: readonly { defId: string; level: number }[],
+  vehicles: readonly LikeVehicle[],
   free: readonly StockCopy[],
-): { uids: number[]; missing: number } {
+): LikeCopies {
   const left = [...free];
-  const uids: number[] = [];
-  let missing = 0;
+  const out: LikeCopies = { uids: [], missing: [], differ: [] };
+  const fit = (c: { inCab?: boolean }, v: LikeVehicle) => !!c.inCab === !!v.inCab;
   for (const v of vehicles) {
-    const nearest = left
+    const best = left
       .filter((c) => c.defId === v.defId)
-      .sort((a, b) => Math.abs(a.level - v.level) - Math.abs(b.level - v.level))[0];
-    if (!nearest) {
-      missing++;
+      .sort(
+        (a, b) =>
+          Number(fit(b, v)) - Number(fit(a, v)) ||
+          Math.abs(a.level - v.level) - Math.abs(b.level - v.level),
+      )[0];
+    if (!best) {
+      out.missing.push(v.defId);
       continue;
     }
-    uids.push(nearest.uid);
-    left.splice(left.indexOf(nearest), 1);
+    out.uids.push(best.uid);
+    left.splice(left.indexOf(best), 1);
+    if (best.level !== v.level || !fit(best, v)) out.differ.push(v.defId);
   }
-  return { uids, missing };
+  return out;
+}
+
+/** Names with how many of each: `Mine Tub ×2, Rocket`. */
+function countedNames(ids: readonly string[], nameOf: (id: string) => string): string {
+  return [...new Set(ids)]
+    .map((id) => {
+      const n = ids.filter((x) => x === id).length;
+      return n > 1 ? `${nameOf(id)} ×${n}` : nameOf(id);
+    })
+    .join(', ');
+}
+
+/** What a train built like another did not get; null when it is alike in all. */
+export function likeNotice(
+  like: Pick<LikeCopies, 'missing' | 'differ'>,
+  nameOf: (id: string) => string,
+): string | null {
+  const parts = [
+    like.missing.length ? STR.depot.likeMissing(countedNames(like.missing, nameOf)) : '',
+    like.differ.length ? STR.depot.likeDiffers(countedNames(like.differ, nameOf)) : '',
+  ].filter(Boolean);
+  return parts.join(' · ') || null;
+}
+
+/** Does the draft hold anything a press would lose? */
+export function draftHolds(d: {
+  picks: number;
+  stops: number;
+  name: string;
+  routeMode: string;
+}): boolean {
+  return d.picks > 0 || d.stops > 0 || d.name.trim() !== '' || d.routeMode !== 'auto';
+}
+
+/** The route as it will run: `create` takes a custom list of under two stops for the automatic. */
+export function routeRuns(routeMode: string, stops: number): string {
+  return routeMode === 'custom' && stops < 2 ? 'auto' : routeMode;
 }
 
 /** What a click on a row asks for: one more, or with every copy picked one fewer. */
@@ -396,14 +452,20 @@ export function refusalAt(
 /** How long the answer to "would it roll out?" stands, ms, before the gate is looked at again. */
 export const CHECK_MS = 2000;
 /**
- * A refusal at the gate had to try every gate and every stop, a search of the track each: it is
- * asked again rarely, and at once when anything the answer depends on is changed.
+ * A failed route had to try every gate and every stop, a search of the track each: it is asked
+ * again rarely, and at once when anything the answer depends on is changed.
  */
 export const CHECK_REFUSED_MS = 10000;
+/**
+ * A refusal that searched nothing costs nothing to ask again, and a gate with a train on it clears
+ * as the train moves off: it is asked at every refresh, which comes twice a second.
+ */
+export const CHECK_GATE_MS = 400;
 
-/** How long an answer stands: `refusedAtGate` is a refusal that came after the track was tried. */
-export function checkLifetime(refusedAtGate: boolean): number {
-  return refusedAtGate ? CHECK_REFUSED_MS : CHECK_MS;
+/** How long an answer stands, by what it came to. */
+export function checkLifetime(a: { gate: unknown; routeFailed: boolean }): number {
+  if (a.routeFailed) return CHECK_REFUSED_MS;
+  return a.gate ? CHECK_MS : CHECK_GATE_MS;
 }
 
 /** What a locomotive row says about the engine, at its level's multiplier. */

@@ -1379,6 +1379,7 @@ export class Game implements UiHost {
       const t = TrainClass.fromJSON(tj, this.track);
       this.fleet.trains.push(t);
     }
+    this.fleet.settleHomes();
     this.contractJobs.reconcile();
     for (const [x, y, id, rot] of j.decor ?? []) {
       const d: Decor = { id, x, y, rot: wrapRotation(rot) };
@@ -1756,6 +1757,7 @@ export class Game implements UiHost {
       st.productionMul = productionMul(st.def.id, s) * this.biomeProduction(st);
   }
   private onStationChanged(s: Station, removed: boolean) {
+    if (s.def.depot) this.fleet.settleHomes();
     const id = `station:${s.id}`;
     if (removed) {
       this.onStationOrphaned(s, false);

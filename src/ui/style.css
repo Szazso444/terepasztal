@@ -5409,6 +5409,23 @@ body.title-up #topbar .now-playing:not(.held) {
 .dp-stock .k-num > span {
   padding: 0 3px;
 }
+/* what the last action came to, in the dock line beside the gate */
+.dp-rl > .k-note.dp-notice {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--amber);
+}
+.dp-short:empty {
+  display: none;
+}
+.dp-lv.dp-cab {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
 /* the card as a tooltip: its picture and labels */
 .tt-vehicle {
   display: grid;

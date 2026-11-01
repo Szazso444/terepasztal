@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LEVEL_CAP, locoDef, wagonDef } from '../gacha/items';
+import { LEVEL_CAP, LOCOS, locoDef, wagonDef } from '../gacha/items';
 import { STR } from '../strings';
 import {
   SIZE_FILTERS,
@@ -185,6 +185,19 @@ describe('a card of the Roster', () => {
       c.where,
       c.stock,
     ]);
+  });
+
+  it('as a tooltip says in-cab signalling is fitted, as the card does', () => {
+    const fitted = rosterCard({ ...copy, inCab: true }, null, 1);
+    expect(said(rosterCardTip(fitted))).toContain(STR.roster.hasInCab);
+    expect(said(rosterCardTip(rosterCard(copy, null, 1)))).not.toContain(STR.roster.hasInCab);
+  });
+
+  it('counts a model built with in-cab signalling as fitted', () => {
+    const built = LOCOS.find((l) => l.inCab);
+    if (!built) return;
+    const c = rosterCard({ defId: built.id, kind: 'loco', level: 1 }, null, 1);
+    expect(c.fitted).toBe(STR.roster.hasInCab);
   });
 
   it('as a tooltip carries the picture of the model', () => {

@@ -552,6 +552,7 @@ export class TrainScreen implements Screen {
           mode,
         ],
         card: copyTip(this.fleet, l.uid),
+        fitted: l.inCab,
         on: at.kind === 'l' && at.index === i,
         onClick: () => this.pickVehicle('l', i),
         right: i > 0 ? [standby(i)] : undefined,

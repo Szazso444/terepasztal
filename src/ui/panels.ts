@@ -350,7 +350,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
   /** progress towards every age: the era widget's, and what the build bar's locks wait for */
   const ages = () => ageStatus(d.economy.tier, host.ageSnapshot());
   const hud = new Hud(d.clock, ages, d.atlas, d.tooltip, audio);
-  const depot = new DepotScreen(d.inventory, d.fleet, d.builder, toast, d.atlas, d.namePrompt);
+  const depot = new DepotScreen(d.inventory, d.fleet, d.builder, d.atlas, d.namePrompt);
   depot.onFocusTrain = (t) => host.focusTrain(t);
   depot.onRedraw = () => d.screens.redraw();
   depot.stuckFor = (id) => host.stuckFor(id);
