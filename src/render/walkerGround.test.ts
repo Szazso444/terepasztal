@@ -49,7 +49,8 @@ const UNEVEN = [Terrain.Grass, Terrain.Hill, Terrain.Mountain];
 /**
  * The per-tile ground the game falls back to when its landscape painter fails, read through
  * WorldRenderer.elevationOf itself: grass at 0, a hill a level up unless it was flattened, a
- * mountain two, each over its whole tile, so the ground jumps at every edge between unlike tiles.
+ * mountain at its level, each over its whole tile, so the ground jumps at every edge between unlike
+ * tiles.
  */
 function fallbackGround(
   terrain: (x: number, y: number) => Terrain,
@@ -332,7 +333,9 @@ describe('walkerGround', () => {
   it('climbs steadily from one tile centre to the next where the ground changes along one axis only', () => {
     forAll(
       (rng) => {
-        const line = Array.from({ length: W }, () => rng.pick(UNEVEN)),
+        // no mountain: its level depends on the distance to the map's edge (levelAt), so it is not
+        // one height all the way along a row
+        const line = Array.from({ length: W }, () => rng.pick(UNEVEN.slice(0, 2))),
           alongY = rng.chance(0.5);
         return {
           line,
