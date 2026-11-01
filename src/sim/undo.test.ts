@@ -1073,7 +1073,6 @@ describe('a contract on a station that leaves', () => {
       originId: a.id,
       destId: b.id,
       payout: 500,
-      tickets: 0,
       duration: 5000,
       expires: g.clock.time + 5000,
       acceptedAt: g.clock.time,

@@ -81,6 +81,7 @@ import {
   type FieldPicture,
 } from './wheatField';
 import { FIELD_BUDGET_MS, WheatFields, type WheatHost } from './wheatFields';
+import { BuildingLife } from './buildingLife';
 import { doorSides, roadCode, roadSides } from './roadShape';
 import { paintedRoads } from './roadPaint';
 import { RoadWalk, roadWalks } from './roadWalk';
@@ -254,6 +255,8 @@ export class WorldRenderer {
    * game puts the night overlay under it, so the night does not darken it.
    */
   readonly harvest: HarvestHighlight;
+  /** chimney smoke, the crane's load and the windmills' sails */
+  readonly buildingLife: BuildingLife;
   /** out-of-map void ring */
   readonly border = new Container();
   /** The edge strip behind the map, under the ground, and before it, over all that stands. */
@@ -382,6 +385,7 @@ export class WorldRenderer {
   ) {
     this.landscape = new Landscape(map, this.flattened, this.railBeds);
     this.harvest = new HarvestHighlight(map, (x, y) => this.surfacePoint(x, y));
+    this.buildingLife = new BuildingLife(this.atlas, this.objects, this.surfaces);
     this.wheat = new WheatFields(map.w, map.h);
     this.wheatHost = {
       site: (x, y) => this.fieldSite(x, y),
@@ -2118,6 +2122,7 @@ export class WorldRenderer {
     else {
       // a copy of its atlas frame, texel for texel, sampled without mipmaps (surfaceAssets.ts)
       s.texture = this.surfaces.picture(frame, f);
+      this.buildingLife.place(id, s, frame, building.scale);
       const art = this.fitToGround(id, s, frame, f, building.scale, x, y);
       this.setFooting(id, s, frame, building.scale, x, y, dx, dy, art.base ?? null);
       let light = this.windowLights.get(id);
@@ -2366,6 +2371,7 @@ export class WorldRenderer {
   }
   /** A structure's window lights, ground fit, yard and plinth, which only a building has. */
   private dropBuildingDressing(id: string) {
+    this.buildingLife.remove(id);
     this.dropFooting(id);
     const fit = this.groundFits.get(id);
     if (fit) {

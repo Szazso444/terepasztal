@@ -113,8 +113,8 @@ export class RosterScreen implements Screen {
   private head(): HTMLElement {
     const kinds: SegOption[] = [
       { id: 'all', label: STR.roster.all },
-      { id: 'loco', label: STR.gacha.loco },
-      { id: 'wagon', label: STR.gacha.wagon },
+      { id: 'loco', label: STR.rollingStock.loco },
+      { id: 'wagon', label: STR.rollingStock.wagon },
     ];
     const rarities: SegOption[] = [
       { id: 'all', label: STR.roster.all },

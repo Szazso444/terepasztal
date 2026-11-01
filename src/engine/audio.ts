@@ -60,6 +60,8 @@ class AudioBus {
     if (ctx) this.ambience.update(ctx, this.master * this.ambient, rain, night);
   }
   debugLog = false;
+  /** `silently` is running: no sound effect plays. */
+  silent = false;
   readonly synth = new Synth();
   private files = new Map<string, FileState>();
   private unlocked = false;
@@ -291,6 +293,7 @@ class AudioBus {
   play(name: SoundEvent) {
     this.listen();
     if (this.debugLog) console.debug(`[sfx] ${name}`);
+    if (this.silent) return;
     const vol = this.master * this.sfx;
     if (vol <= 0) return;
     const now = performance.now();
@@ -314,4 +317,13 @@ class AudioBus {
 export const audio = new AudioBus();
 export function sfx(name: SoundEvent) {
   audio.play(name);
+}
+/** Run `fn` with no sound effects: what the game lays by itself at the start makes no noise. */
+export function silently<T>(fn: () => T): T {
+  audio.silent = true;
+  try {
+    return fn();
+  } finally {
+    audio.silent = false;
+  }
 }

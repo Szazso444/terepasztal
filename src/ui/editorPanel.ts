@@ -90,10 +90,6 @@ export class EditorPanel {
         num(l.start.money, (v) => (l.start.money = v)),
       ),
       field(
-        STR.hud.tickets,
-        num(l.start.tickets, (v) => (l.start.tickets = v), 0, 9999),
-      ),
-      field(
         STR.editor.startTier,
         num(l.start.tier, (v) => (l.start.tier = v), 0, LAST_AGE),
       ),

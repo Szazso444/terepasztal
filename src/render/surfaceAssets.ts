@@ -1,5 +1,6 @@
 import { ImageSource, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { FrameInfo } from '../engine/atlas';
+import type { Crane } from '../art/buildingLife';
 import { PAL } from '../art/palette';
 import { structureFamily } from './assetScale';
 import {
@@ -55,7 +56,7 @@ const WINDOW_REGIONS: Record<string, number[][]> = {
     [0.25, 0.395, 0.045, 0.075],
     [0.59, 0.31, 0.055, 0.095],
   ],
-  windmill: [[0.4, 0.57, 0.055, 0.11]],
+  windmill: [[0.266, 0.515, 0.05, 0.085]],
 };
 
 /** Frame `f`'s size in world px over `canvas`, filtered linearly with no mipmaps. */
@@ -201,6 +202,7 @@ const unit = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 export class SurfaceAssets {
   private pictures = new Map<string, Texture>();
   private windows = new Map<string, Texture>();
+  private cranes = new Map<string, { picture: Texture; load: AnchoredTexture }>();
   private groundFits = new Map<string, GroundFitArt>();
   private summits = new Map<string, Texture>();
   /**
@@ -214,6 +216,44 @@ export class SurfaceAssets {
     if (!result) {
       result = texture(copy(f).canvas, f);
       this.pictures.set(key, result);
+    }
+    return result;
+  }
+  /**
+   * The crane's load cut out of building `key`'s picture: the picture without it, and the load as
+   * a texture of its own, anchored at the pivot it hangs from. Nothing stands behind the load, so
+   * the two laid over each other are the picture.
+   */
+  crane(key: string, f: FrameInfo, crane: Crane) {
+    let result = this.cranes.get(key);
+    if (!result) {
+      const { canvas, ctx } = copy(f),
+        res = canvas.width / f.w,
+        // a rectangle in world px from the anchor as texels of the picture
+        x = (v: number) => Math.round((v + f.anchorX * f.w) * res),
+        y = (v: number) => Math.round((v + f.anchorY * f.h) * res),
+        boxes = crane.load.map(([x0, y0, x1, y1]) => [x(x0), y(y0), x(x1), y(y1)] as const),
+        left = Math.min(...boxes.map((b) => b[0])),
+        top = Math.min(...boxes.map((b) => b[1])),
+        width = Math.max(...boxes.map((b) => b[2])) - left,
+        height = Math.max(...boxes.map((b) => b[3])) - top,
+        cut = document.createElement('canvas');
+      cut.width = width;
+      cut.height = height;
+      const hung = cut.getContext('2d')!;
+      for (const [x0, y0, x1, y1] of boxes) {
+        hung.drawImage(canvas, x0, y0, x1 - x0, y1 - y0, x0 - left, y0 - top, x1 - x0, y1 - y0);
+        ctx.clearRect(x0, y0, x1 - x0, y1 - y0);
+      }
+      result = {
+        picture: texture(canvas, f),
+        load: {
+          texture: canvasTexture(cut, width / res, height / res, false),
+          anchorX: (x(crane.pivot[0]) - left) / width,
+          anchorY: (y(crane.pivot[1]) - top) / height,
+        },
+      };
+      this.cranes.set(key, result);
     }
     return result;
   }

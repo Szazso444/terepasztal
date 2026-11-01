@@ -5,7 +5,8 @@ import { tileToWorld } from '../engine/iso';
 import { Rng } from '../engine/rng';
 import type { Station } from '../sim/stations';
 import type { Train } from '../sim/trains';
-import { DayNight, Fog, GroundLights, surfaceVersions } from './fx';
+import { tileToWorld } from '../engine/iso';
+import { DayNight, Fog, Glows, GroundLights, Smoke, surfaceVersions } from './fx';
 
 const ATLAS = {
   get: () => ({ texture: Texture.EMPTY, anchorX: 0.5, anchorY: 0.5 }),
@@ -200,6 +201,90 @@ describe('GroundLights', () => {
     expect(layer.children.length).toBe(0);
     lights.update(stations, [], 1);
     expect(layer.children.length).toBe(13);
+  });
+
+  it('lights the tile a fixed way ahead of an engine, past the nose of a rendered model', () => {
+    const lit = (def: object) => {
+      const layer = new Container();
+      new GroundLights(ATLAS, layer, (x, y) => ({ x, y }), inBounds).update(
+        [],
+        [
+          {
+            poses: [{ x: 10, y: 10, heading: 0 }],
+            reversed: false,
+            locos: [{ def }],
+            vehicleSpecs: [{ L: 4 }],
+          } as unknown as Train,
+        ],
+        1,
+      );
+      return layer.children.map((s) => [s.x, s.y]);
+    };
+    expect(lit({})).toEqual([[11, 10]]);
+    expect(lit({ spriteGear: true })).toEqual([[13, 10]]);
+  });
+});
+
+/** An engine standing at (5, 5) heading along x; `def` says what its model says. */
+function engine(def: object) {
+  return {
+    id: 1,
+    poses: [{ x: 5, y: 5, heading: 0 }],
+    reversed: false,
+    hasSteam: true,
+    state: 'moving',
+    speed: 1000,
+    locos: [{ def }],
+    vehiclePoses: [{ segments: [{ part: 'body', x: 5, y: 5, angle: 0, mirror: false }] }],
+  } as unknown as Train;
+}
+const RAIL_LIFT = (x: number, y: number) => -(x + y);
+
+describe('Glows', () => {
+  it("sets a rendered model's lamps where it says, on the rail under them", () => {
+    const layer = new Container();
+    new Glows(ATLAS, layer, (x, y) => ({ x, y }), RAIL_LIFT).update(
+      [],
+      [engine({ lamps: [{ part: 'body', along: 0.5, across: 0.1, up: 6 }] })],
+      1,
+    );
+    const w = tileToWorld(5.5, 4.9);
+    expect(layer.children).toHaveLength(1);
+    expect(layer.children[0].x).toBe(Math.round(w.x));
+    expect(layer.children[0].y).toBe(Math.round(w.y - 6 - 10.4));
+    expect(layer.children[0].scale.x).toBe(0.6);
+  });
+
+  it("keeps any other engine's lamp ahead of its middle, level without a rail height", () => {
+    const layer = new Container();
+    new Glows(ATLAS, layer, (x, y) => ({ x, y })).update([], [engine({})], 1);
+    const w = tileToWorld(5.36, 5);
+    expect(layer.children[0].x).toBe(Math.round(w.x));
+    expect(layer.children[0].y).toBe(Math.round(w.y) - 8);
+    expect(layer.children[0].scale.x).toBe(1);
+  });
+});
+
+describe('Smoke', () => {
+  const puff = (smoke: Smoke, t: Train) => smoke.update([t], 0.001, true);
+
+  it('leaves a rendered model at its chimney', () => {
+    const layer = new Container();
+    puff(
+      new Smoke(ATLAS, layer, RAIL_LIFT),
+      engine({ smoke: [{ part: 'body', along: 0.5, up: 20 }] }),
+    );
+    const w = tileToWorld(5.5, 5);
+    expect(layer.children[0].x).toBeCloseTo(w.x, 0);
+    expect(layer.children[0].y).toBeCloseTo(w.y - 20 - 10.5, 0);
+  });
+
+  it('leaves any other engine ahead of its middle', () => {
+    const layer = new Container();
+    puff(new Smoke(ATLAS, layer), engine({}));
+    const w = tileToWorld(5.24, 5);
+    expect(layer.children[0].x).toBeCloseTo(w.x, 0);
+    expect(layer.children[0].y).toBeCloseTo(w.y - 30, 0);
   });
 });
 

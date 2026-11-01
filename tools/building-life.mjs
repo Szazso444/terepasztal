@@ -14,6 +14,8 @@
  *           this measured (issue #492). `work` is a works chimney, which always smokes.
  *   cranes  where the rope leaves the pulley (`pivot`) and the rectangles that hold the rope, the
  *           hook, the slings and the crate: the part of the picture that hangs free of the rest.
+ *   mills   where a windmill's sails turn: the hub and the plane, read from the painted body's
+ *           and the guide's records, not from the frame's pixels (`windmillHub`).
  *
  * Everything is in world px from the frame's anchor ((texel - anchor) / `resolution`), before the
  * renderer's scale reference, like buildingGround.json. A rectangle is [x0, y0, x1, y1], its left
@@ -33,6 +35,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { isMain } from './is-main.mjs';
 import { SOLID, atlasFrames, gameModules } from './building-ground.mjs';
 import { writeWhole } from './building-kit.mjs';
+import { MODELS, WINDMILL } from './illustrated-sprites.mjs';
 
 /** Where the data is written. */
 export const LIFE_FILE = 'src/art/buildingLife.json';
@@ -57,6 +60,13 @@ export const MEASURE = {
 };
 
 const names = (...list) => list.map((n) => `structures/${n}`);
+/** A works' frames by level: the plain one, then `_lv2` up, or `_1` up for a station's `count`. */
+const levels = (id, count = 0) =>
+  count
+    ? Array.from({ length: count }, (_, i) => `${id}_${i + 1}`)
+    : [id, `${id}_lv2`, `${id}_lv3`, `${id}_lv4`];
+/** The frames that show one picture of `assets/source/models`. */
+const modelFrames = (id) => JSON.parse(readFileSync(`${MODELS}/models.json`, 'utf8'))[id].frames;
 
 /**
  * The chimneys, by picture. `keys` are frames that share the seeds (the same picture, or the same
@@ -129,15 +139,102 @@ export const POT_GROUPS = [
   { keys: names('pump_3_r2'), work: true, at: [[17, 1]] },
   { keys: names('pump_4_r1', 'pump_4_r3', 'pump_5_r1', 'pump_5_r3'), work: true, at: [[30.5, 2]] },
   { keys: names('pump_4_r2', 'pump_5_r2'), work: true, at: [[24.5, 2]] },
+  // the works Codex painted (2026-10-29): every level one picture, one works chimney. A `stack` is
+  // too broad for a spike: its seed is a texel inside it, near the top. The wire mill's stack has
+  // a dome on it and the substation none, so neither smokes.
+  { keys: names(...levels('quarry', 5)), work: true, at: [[156, 8]] },
+  { keys: names(...levels('grinder')), work: true, at: [[174.5, 16]] },
+  { keys: names(...levels('refinery')), work: true, at: [[410.5, 110]] },
+  { keys: names(...levels('kiln')), work: true, stack: true, at: [[88, 15]] },
+  { keys: names(...levels('power_plant')), work: true, stack: true, at: [[521, 27]] },
+  { keys: names(...levels('ironworks')), work: true, stack: true, at: [[75, 15]] },
+  { keys: names(...levels('diesel_refinery')), work: true, stack: true, at: [[182, 90]] },
+  // the depot: the three stacks that rise out of its outline, in each of its four views; lit by
+  // lot like a house's
+  {
+    keys: modelFrames('depot-r0'),
+    work: false,
+    at: [
+      [206, 0],
+      [77, 86],
+      [401, 98],
+    ],
+  },
+  {
+    keys: modelFrames('depot-r1'),
+    work: false,
+    at: [
+      [268, 1],
+      [399, 43],
+      [79, 79],
+    ],
+  },
+  {
+    keys: modelFrames('depot-r2'),
+    work: false,
+    at: [
+      [215, 1],
+      [86, 65],
+      [406, 122],
+    ],
+  },
+  {
+    keys: modelFrames('depot-r3'),
+    work: false,
+    at: [
+      [271, 2],
+      [401, 67],
+      [76, 99],
+    ],
+  },
 ];
 
 /**
- * The quarry cranes, by picture: a texel inside the rope, and the pivot where the demo measured
- * one (`exact`; otherwise it is found from the rope). None for now: the quarry's picture is its 3D
- * model's since 2026-10-27, whose crate hangs over the stone block, not over a cart, and `loadOf`
- * cannot lift it out of the picture whole.
+ * The quarry cranes, by picture: a texel inside the rope, the row where the rope leaves the pulley
+ * (`top`), and `stop`, where something of the building touches the load: a broken line of texels,
+ * drawn by eye, and what lies below it is the building's. Codex's painted quarry (2026-10-30) hangs
+ * its crate in clear air, every level the same picture, but for the beam and its iron shoe that it
+ * all but rests on.
  */
-export const CRANE_GROUPS = [];
+export const CRANE_GROUPS = [
+  {
+    keys: names('quarry_1', 'quarry_2', 'quarry_3', 'quarry_4', 'quarry_5'),
+    rope: [23, 42],
+    top: 34,
+    stop: [
+      [18, 114],
+      [24, 110],
+      [28, 107.8],
+      [40, 101],
+      [43, 100.5],
+      [44.2, 98],
+      [51, 95],
+    ],
+  },
+];
+
+/** The windmill's body frames: every level shows the one painted body. */
+export const MILL_FRAMES = names('windmill', 'windmill_lv2', 'windmill_lv3', 'windmill_lv4');
+
+/**
+ * Where the sails sit on the windmill's body, which stands on the tile with the tower's foot
+ * (`addWindmillFrames`, tools/illustrated-sprites.mjs): the hub in world px from the frame's
+ * anchor, from the painted body's own record, and the plane the cross turns in from the guide's,
+ * the matrix that lays its face-on picture into that plane. Only the view the game shows: its
+ * buildings do not turn (#564).
+ */
+export function windmillHub() {
+  const read = (file) => JSON.parse(readFileSync(file, 'utf8'));
+  const body = read(`${WINDMILL}/hub.json`);
+  const { scale } = body.numbers;
+  return {
+    hub: [
+      round((body.hub[0] - body.footCentre[0]) / scale),
+      round((body.hub[1] - body.footCentre[1]) / scale),
+    ],
+    plane: read('assets/source/buildings-v2/guides/windmill-r0-hub.json').cross.affine,
+  };
+}
 
 /* ---------------------------------------------------------------- reading a frame */
 
@@ -193,6 +290,16 @@ export function potAt(frame, seed) {
   if (!near.length)
     throw new Error(`${frame.key}: no pot top within ${MEASURE.reach} px of ${seed}`);
   return [near.reduce((s, p) => s + p[0], 0) / near.length, Math.min(...near.map((p) => p[1]))];
+}
+
+/** A stack too broad for `spikes` from a texel inside it: the middle of its run at its top. */
+export function stackAt(frame, seed) {
+  const [x] = seed;
+  let [, y] = seed;
+  if (alpha(frame, x, y) < SOLID) throw new Error(`${frame.key}: ${seed} is not on a stack`);
+  while (alpha(frame, x, y - 1) >= SOLID) y--;
+  const [a, b] = runAt(frame, x, y + 1, SOLID);
+  return [(a + b + 1) / 2, y];
 }
 
 /**
@@ -304,6 +411,41 @@ export function loadOf(frame, rope, pivot = null) {
   return { pivot: at, rects };
 }
 
+/**
+ * What hangs from the rope that holds the texel `rope`, cut from the picture along a line drawn
+ * by eye (`CRANE_GROUPS`): every visible texel joined to the rope from `top` down, row by row,
+ * and the pivot on the rope's top row. For a load `loadOf` cannot tell from what it nearly touches.
+ */
+export function cutLoad(frame, { rope, top, stop }) {
+  const below = (x, y) => {
+    const at = stop.findIndex(([sx]) => x + 0.5 < sx);
+    if (at <= 0) return false;
+    const [[x0, y0], [x1, y1]] = [stop[at - 1], stop[at]];
+    return y + 0.5 > y0 + ((y1 - y0) * (x + 0.5 - x0)) / (x1 - x0);
+  };
+  const joined = new Set();
+  const rows = new Map();
+  const todo = [rope];
+  while (todo.length) {
+    const [x, y] = todo.pop();
+    const id = y * frame.w + x;
+    if (y < top || joined.has(id) || alpha(frame, x, y) < 1 || below(x, y)) continue;
+    joined.add(id);
+    const row = rows.get(y);
+    rows.set(y, row ? [Math.min(row[0], x), Math.max(row[1], x)] : [x, x]);
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) todo.push([x + dx, y + dy]);
+  }
+  const rects = [];
+  for (const y of [...rows.keys()].sort((a, b) => a - b)) {
+    const [a, b] = rows.get(y);
+    const last = rects.at(-1);
+    if (last && last[0] === a && last[2] === b + 1) last[3] = y + 1;
+    else rects.push([a, y, b + 1, y + 1]);
+  }
+  const [a, b] = rows.get(top);
+  return { pivot: [(a + b + 1) / 2, top], rects };
+}
+
 /* ---------------------------------------------------------------- the data */
 
 /**
@@ -333,7 +475,8 @@ export function buildLife(frames) {
     for (const key of g.keys) {
       const f = frame(key);
       pots[key] = g.at.map((seed) => {
-        const [dx, dy] = world(f, ...(g.exact ? seed : potAt(f, seed)));
+        const at = g.exact ? seed : g.stack ? stackAt(f, seed) : potAt(f, seed);
+        const [dx, dy] = world(f, ...at);
         return { dx, dy, work: g.work };
       });
     }
@@ -341,19 +484,24 @@ export function buildLife(frames) {
   for (const g of CRANE_GROUPS)
     for (const key of g.keys) {
       const f = frame(key);
-      const found = loadOf(f, g.rope, g.pivot);
+      const found = cutLoad(f, g);
       cranes[key] = {
         pivot: world(f, ...found.pivot),
         load: found.rects.map(([x0, y0, x1, y1]) => [...world(f, x0, y0), ...world(f, x1, y1)]),
       };
     }
+  const mills = {};
+  for (const key of MILL_FRAMES) {
+    frame(key);
+    mills[key] = windmillHub();
+  }
   const sorted = (o) =>
     Object.fromEntries(
       Object.keys(o)
         .sort()
         .map((k) => [k, o[k]]),
     );
-  return { pots: sorted(pots), cranes: sorted(cranes) };
+  return { pots: sorted(pots), cranes: sorted(cranes), mills: sorted(mills) };
 }
 
 /** The file's text: prettier's own formatting of the data, so that `format:check` leaves it be. */

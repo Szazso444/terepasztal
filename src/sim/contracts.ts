@@ -25,7 +25,6 @@ export interface Contract {
   originId: number;
   destId: number;
   payout: number;
-  tickets: number;
   /** duration in in-game seconds once accepted */
   duration: number;
   /** absolute game time when the offer disappears / the active contract fails */
@@ -62,7 +61,6 @@ export function rarityDef(id: ContractRarity): ContractRarityDef {
       name: 'Common',
       weight: 1,
       rewardMul: 1,
-      ticketMul: 1,
       amountMul: 1,
       deadlineMul: 1,
     }
@@ -86,7 +84,6 @@ export class ContractBoard {
   contracts: Contract[] = [];
   private nextId = 1;
   private nextRefresh = 0;
-  completedToday = 0;
   stats = { completed: 0, failed: 0 };
   onEvent: ((e: ContractEvent) => void) | null = null;
 
@@ -212,7 +209,6 @@ export class ContractBoard {
       originId: pair.from.id,
       destId: pair.to.id,
       payout,
-      tickets: Math.round(tpl.tickets * rar.ticketMul),
       duration: durationDays * rules.deadlineMul * daySeconds(),
       expires: now + contractData.offerLifetimeDays * daySeconds(),
       acceptedAt: 0,
@@ -330,9 +326,7 @@ export class ContractBoard {
     c.status = 'done';
     c.delivered = c.amount;
     this.stats.completed++;
-    this.completedToday++;
     this.economy.earn(c.payout);
-    this.economy.tickets += c.tickets;
     this.onEvent?.({ kind: 'completed', contract: c });
   }
 
@@ -342,7 +336,6 @@ export class ContractBoard {
       nextId: this.nextId,
       nextRefresh: this.nextRefresh,
       stats: this.stats,
-      completedToday: this.completedToday,
       /** offer generator state; a save without it stays on the stream seeded from the map */
       rng: this.rng.state,
     };
@@ -356,7 +349,6 @@ export class ContractBoard {
     this.nextId = j.nextId;
     this.nextRefresh = j.nextRefresh;
     this.stats = j.stats;
-    this.completedToday = j.completedToday;
     if (typeof j.rng === 'number') this.rng.state = j.rng;
   }
 }
