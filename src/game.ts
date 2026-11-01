@@ -49,6 +49,7 @@ import { GameClock, SIM_STEP } from './sim/time';
 import { Tooltip, type TipBuild } from './ui/tooltip';
 import { tipKey, type TipTarget } from './ui/tooltipStack';
 import { tipBuild } from './ui/tooltipRender';
+import { nextStopId } from './ui/trainView';
 import type { TipDoc } from './ui/tooltipDoc';
 import {
   chunkTip,
@@ -2724,7 +2725,8 @@ export class Game implements UiHost {
     };
   }
   private trainSnap(t: Train): TrainSnapshot {
-    const next = this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)]);
+    const stop = nextStopId(t);
+    const next = stop === null ? undefined : this.builder.stationById(stop);
     return {
       name: t.name,
       state: t.state,

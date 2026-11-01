@@ -908,6 +908,12 @@ const EN = {
     renameTip: 'Double-click to rename',
     contractTip: 'Open it in Contracts (C)',
     empty: 'empty',
+    work: {
+      repairing: 'Repairing track',
+      toJob: 'Heading for worn track',
+      toWait: 'Heading for its waiting place',
+      waiting: 'Waiting for work',
+    },
     storage: 'Storage',
     load: 'Load',
     nextStop: 'Next stop',

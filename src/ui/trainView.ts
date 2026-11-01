@@ -65,6 +65,9 @@ export interface TrainFacts {
   hungry: boolean;
   job: { name: string; destId: number } | null;
   jobs: readonly { name: string; destId: number }[];
+  maintaining: boolean;
+  maint: object | null;
+  parkAt: object | null;
 }
 
 /** A tank this few tiles from empty reads as low. */
@@ -96,10 +99,27 @@ export function trainChip(t: Pick<TrainFacts, 'state' | 'blocked'>, stuck: numbe
   return { ...CHIP[t.state], text: STR.outliner.status[t.state] };
 }
 
-/** The station the train is bound for: a service stop goes before the scheduled one. */
-export function nextStopId(t: Pick<TrainFacts, 'detour' | 'route' | 'routeIndex'>): number | null {
+/**
+ * The station the train is bound for: a service stop goes before the scheduled one. A maintenance
+ * train is bound for the track: the stops it keeps for later are not where it is going.
+ */
+export function nextStopId(
+  t: Pick<TrainFacts, 'detour' | 'route' | 'routeIndex' | 'maintaining'>,
+): number | null {
   if (t.detour !== null) return t.detour;
+  if (t.maintaining) return null;
   return t.route.length ? t.route[t.routeIndex % t.route.length] : null;
+}
+
+/** What a maintenance train is doing, in place of its load and route; null for any other train. */
+export function workLine(
+  t: Pick<TrainFacts, 'detour' | 'maintaining' | 'maint' | 'parkAt' | 'state'>,
+): string | null {
+  if (!t.maintaining || t.detour !== null) return null;
+  const say = STR.outliner.work;
+  if (t.state === 'repairing') return say.repairing;
+  if (t.maint) return say.toJob;
+  return t.parkAt && t.state === 'moving' ? say.toWait : say.waiting;
 }
 
 /** The stop before the one it is bound for; none on a route of one stop. */

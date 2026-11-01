@@ -426,7 +426,7 @@ export class Outliner {
         el(
           'div',
           { class: 'ol-l2' },
-          ...(cargo.length ? cargo : [el('span', { text: STR.outliner.empty })]),
+          ...(cargo.length ? cargo : [el('span', { text: r.work ?? STR.outliner.empty })]),
           route,
         ),
         r.detail ? this.trainDetail(r.detail) : null,

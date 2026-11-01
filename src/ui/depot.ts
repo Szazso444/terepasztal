@@ -16,6 +16,7 @@ import {
 } from '../sim/trains';
 import type { Station } from '../sim/stations';
 import { consistGauge, gaugeOf } from '../sim/compat';
+import { nextStopId } from './trainView';
 import { cargoDef } from '../sim/cargo';
 import type { AtlasRegistry } from '../engine/atlas';
 import {
@@ -375,7 +376,8 @@ export class DepotScreen implements Screen {
       if (e.textContent !== s) e.textContent = s;
     };
     const update = () => {
-      const next = this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)]);
+      const stop = nextStopId(t);
+      const next = stop === null ? undefined : this.builder.stationById(stop);
       const x = trainRowText({
         locoNames: t.locos.map((l) => l.def.name),
         wagonCount: t.wagons.length,

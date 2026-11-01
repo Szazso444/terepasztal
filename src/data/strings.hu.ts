@@ -759,6 +759,12 @@ export const HU: Strings = {
     renameTip: 'Dupla kattintás: átnevezés',
     contractTip: 'Megnyitás a Szerződésekben (C)',
     empty: 'üres',
+    work: {
+      repairing: 'Sínt javít',
+      toJob: 'Kopott sínhez tart',
+      toWait: 'Várakozóhelyére tart',
+      waiting: 'Munkára vár',
+    },
     storage: 'Raktár',
     load: 'Rakomány',
     nextStop: 'Következő',

@@ -33,6 +33,7 @@ import {
   type FootSpec,
 } from './kit';
 import { Bindings, bindMeter, keepPlace, keepScroll } from './liveView';
+import { nextStopId } from './trainView';
 import { vehicleRow, vehicleSprite } from './vehicleRow';
 import {
   haulShare,
@@ -301,8 +302,10 @@ export class TrainScreen implements Screen {
   // ---- Overview
 
   private overview(t: Train): HTMLElement {
-    const next = () =>
-      this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)])?.name;
+    const next = () => {
+      const stop = nextStopId(t);
+      return stop === null ? undefined : this.builder.stationById(stop)?.name;
+    };
     const status: HTMLElement[] = [
       this.kv(
         STR.train.state,
