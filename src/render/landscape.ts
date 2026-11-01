@@ -17,6 +17,7 @@ import {
   reliefCorners,
   reliefTileAtWorld,
   groundAllows,
+  isTrueTop,
   surfaceSlope,
   type TerrainRelief,
 } from './terrainRelief';
@@ -841,6 +842,8 @@ export class Landscape {
     if (this.relief.style.paintedPeaks) return false;
     if (Math.min(...reliefCorners(this.map, this.relief, x, y)) < this.relief.style.step)
       return false;
+    // On generated ground, tall and often steep, only a true top carries a peak picture.
+    if (this.map.generatedLevel && !isTrueTop(this.map, this.relief, x, y)) return false;
     const rank = hash2(x + this.map.originX, y + this.map.originY, this.map.seed + 601);
     for (let dy = -2; dy <= 2; dy++)
       for (let dx = -2; dx <= 2; dx++) {

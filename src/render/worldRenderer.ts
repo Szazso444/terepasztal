@@ -42,7 +42,7 @@ import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import { clearedByPaving, scatterFor } from './scatter';
 import { levelAt } from '../world/elevation';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
-import { DEFAULT_RELIEF } from './terrainRelief';
+import { DEFAULT_RELIEF, heightFactor } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
 import { doorstepChanges, pavingDoorsteps, type PavingDoor } from './townPaving';
 import { PAL, type RGB } from '../art/palette';
@@ -1237,7 +1237,7 @@ export class WorldRenderer {
             style.summitMatch ?? 0,
             style.summitMatch === undefined
               ? 1
-              : 1 + (style.heightLight ?? 0) * levelAt(this.map, x, y),
+              : heightFactor(levelAt(this.map, x, y), style.heightLight ?? 0),
           );
         if (s) s.texture = texture;
         else {

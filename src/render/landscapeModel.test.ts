@@ -603,3 +603,24 @@ describe('on generated worlds', () => {
       ).toBe(true);
   }, 20_000);
 });
+
+describe('forest on raised ground', () => {
+  it('a raised Forest tile paints as Grass and a level 0 one as Forest', () => {
+    const m = map(),
+      raised = 5 * 24 + 5,
+      flat = 5 * 24 + 8;
+    m.terrain[raised] = m.terrain[flat] = Terrain.Forest;
+    // a map the painter has no levels for paints every tile as its terrain says
+    expect(materialAt(m, 5, 5)).toBe(Material.Forest);
+    m.levels = new Uint8Array(576);
+    m.levels[raised] = 1;
+    expect(materialAt(m, 5, 5)).toBe(Material.Grass);
+    expect(materialAt(m, 8, 5)).toBe(Material.Forest);
+    // only the forest floor changes: the terrain stays Forest, and a swamp or taiga floor stays
+    expect(m.terrain[raised]).toBe(Terrain.Forest);
+    for (const material of [Material.Swamp, Material.Taiga]) {
+      m.biome[raised] = BIOME_MATERIAL.indexOf(material);
+      expect(materialAt(m, 5, 5)).toBe(material);
+    }
+  });
+});

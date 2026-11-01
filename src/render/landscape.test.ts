@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } fr
 import { RendererType, Texture, type Renderer, type TextureSource } from 'pixi.js';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
+import { NO_LEVEL, tileLevels } from '../world/elevation';
 import type { Rng } from '../engine/rng';
 import { forAll, shrinkArray } from '../testing/property';
 import { BIOME_DEFS } from '../sim/biomes';
@@ -307,6 +308,57 @@ function raiseHill(landscape: Landscape, map: { w: number; terrain: Uint8Array }
 }
 const everyTile = (map: { w: number; h: number }) =>
   Array.from({ length: map.w * map.h }, (_, k) => ({ x: k % map.w, y: Math.floor(k / map.w) }));
+
+describe('summit pictures', () => {
+  /** A landscape over mountains on a 24 tile square; `top` is the level at the centre, if any. */
+  function mountains(top?: number) {
+    const map = emptyMap(155, 24, 24);
+    map.terrain.fill(Terrain.Mountain);
+    if (top !== undefined) {
+      // a cone with a flat top seven tiles across, and a low bump in a corner
+      map.generatedLevel = new Uint8Array(24 * 24).fill(NO_LEVEL);
+      for (let y = 0; y < 24; y++)
+        for (let x = 0; x < 24; x++)
+          map.generatedLevel[y * 24 + x] = Math.max(
+            0,
+            top - 2 * Math.max(0, Math.max(Math.abs(x - 12), Math.abs(y - 12)) - 3),
+            4 - Math.max(Math.abs(x - 3), Math.abs(y - 3)),
+          );
+    }
+    const painters: PainterPool = {
+      size: 2,
+      spawn: () => new StubWorker() as unknown as Worker,
+      sheet: () => 'test://terrain-surfaces.png',
+    };
+    return { map, landscape: new Landscape(map, new Set(), new Map(), painters) };
+  }
+  const summits = (s: ReturnType<typeof mountains>) =>
+    everyTile(s.map).filter(({ x, y }) => s.landscape.summit(x, y));
+
+  it('stand only on true tops of level 7 or more where the map has generated levels', () => {
+    const tall = mountains(14),
+      levels = tileLevels(tall.map),
+      found = summits(tall);
+    expect(found.length).toBeGreaterThan(0);
+    for (const { x, y } of found) {
+      const here = levels[y * 24 + x];
+      expect(here, `level at ${x},${y}`).toBeGreaterThanOrEqual(7);
+      for (let dy = -3; dy <= 3; dy++)
+        for (let dx = -3; dx <= 3; dx++) {
+          const xx = x + dx,
+            yy = y + dy;
+          if (xx >= 0 && yy >= 0 && xx < 24 && yy < 24)
+            expect(levels[yy * 24 + xx]).toBeLessThanOrEqual(here);
+        }
+    }
+  });
+  it('keep their old rule on a map with no generated levels, level 4 at most', () => {
+    const old = mountains(),
+      found = summits(old);
+    expect(found.length).toBeGreaterThan(0);
+    expect(Math.max(...tileLevels(old.map))).toBeLessThanOrEqual(4);
+  });
+});
 
 describe('landscape ground rules', () => {
   it('answers the same level and straight questions whether the painter works or has failed', () => {

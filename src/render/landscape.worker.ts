@@ -5,7 +5,13 @@ import {
   stoneGroundAt,
   type LandscapeMap,
 } from './landscapeModel';
-import { reliefHeight, surfaceAlongRay, RELIEF_MAX, type TerrainRelief } from './terrainRelief';
+import {
+  heightFactor,
+  reliefHeight,
+  surfaceAlongRay,
+  RELIEF_MAX,
+  type TerrainRelief,
+} from './terrainRelief';
 import {
   grassDetail,
   paintedWater,
@@ -56,8 +62,9 @@ self.onmessage = async (event: MessageEvent) => {
       return;
     }
     if (data.map) {
-      map = data.map;
       relief = data.relief;
+      // The painter reads each tile's level to paint a forest on raised ground as grass.
+      map = { ...data.map, levels: relief.tiles };
       version = data.version;
       tint = data.tint;
       paving = new TownPaving(
@@ -487,7 +494,7 @@ function previewLooks(
   const style = relief.style,
     level = Math.max(0, z / style.step);
   let factor = 1;
-  if (style.heightLight) factor *= 1 + style.heightLight * level;
+  if (style.heightLight) factor *= heightFactor(level, style.heightLight);
   if (style.snow && color) {
     const above = level - snowLine,
       // Half cover (patches) on the snow line's level, full cover from the level above.

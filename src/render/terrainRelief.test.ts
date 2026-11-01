@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
+import { NO_LEVEL } from '../world/elevation';
 import {
   buildRelief,
   reliefHeight,
@@ -10,6 +11,8 @@ import {
   surfaceAlongRay,
   hillFamily,
   groundAllows,
+  heightFactor,
+  isTrueTop,
   RELIEF_MAX,
   DEFAULT_RELIEF,
   TILE_SIDE_PX,
@@ -454,4 +457,136 @@ describe('the top of the relief in a box, on any map', () => {
       },
     );
   }, 20_000);
+});
+
+describe('tall ground', () => {
+  /** A map whose generated level plane sets the levels in `levels` (tile index to level). */
+  function tall(size: number, levels: ReadonlyMap<number, number>) {
+    const m = emptyMap(311, size, size);
+    m.generatedLevel = new Uint8Array(size * size).fill(NO_LEVEL);
+    for (const [k, level] of levels) m.generatedLevel[k] = level;
+    return m;
+  }
+  const HARD: ReliefStyle = { ...DEFAULT_RELIEF, softFrom: undefined };
+
+  it('softFrom: a cell with a tile at level 3 or more ramps across the whole tile', () => {
+    const m = tall(16, new Map([[8 * 16 + 8, 3]])),
+      soft = buildRelief(m, new Set()),
+      hard = buildRelief(m, new Set(), HARD),
+      step = DEFAULT_RELIEF.step;
+    expect(DEFAULT_RELIEF.softFrom).toBe(3);
+    expect(soft.softFrom).toBe(3);
+    expect(hard.softFrom).toBeUndefined();
+    let last = 3 * step;
+    for (let t = 0.05; t < 0.99; t += 0.05) {
+      const z = reliefHeight(m, soft, 8 + t, 8);
+      expect(z, `soft at ${t}`).toBeLessThan(last);
+      last = z;
+    }
+    // the same rise on the hard bank is still flat a quarter of the way over
+    expect(reliefHeight(m, hard, 8.25, 8)).toBeCloseTo(3 * step, 6);
+    expect(reliefHeight(m, soft, 8.25, 8)).toBeLessThan(3 * step - 1);
+    // a cell whose tiles all stand below the level keeps its bank
+    const low = tall(16, new Map([[8 * 16 + 8, 2]])),
+      lowSoft = buildRelief(low, new Set()),
+      lowHard = buildRelief(low, new Set(), HARD);
+    for (let t = 0; t <= 1; t += 0.05)
+      expect(reliefHeight(low, lowSoft, 8 + t, 8)).toBe(reliefHeight(low, lowHard, 8 + t, 8));
+  });
+  it('keeps the terraces of a map with no generated level plane', () => {
+    const m = fixture(),
+      r = buildRelief(m, new Set());
+    expect(Math.max(...r.tiles!)).toBeGreaterThanOrEqual(3);
+    expect(r.softFrom).toBeUndefined();
+    const hard = buildRelief(m, new Set(), HARD);
+    for (let y = 6; y < 26; y += 0.37)
+      for (let x = 6; x < 26; x += 0.41)
+        expect(reliefHeight(m, r, x, y)).toBe(reliefHeight(m, hard, x, y));
+  });
+  it('cells of soft and hard banks meet exactly on their shared edge', () => {
+    const size = 14,
+      levels = new Map<number, number>();
+    for (let y = 2; y < size - 2; y++)
+      for (let x = 2; x < size - 2; x++)
+        levels.set(y * size + x, (x * 7 + y * 11 + ((x * y) % 5)) % 8);
+    const m = tall(size, levels),
+      r = buildRelief(m, new Set()),
+      tiles = r.tiles!,
+      isSoft = (fx: number, fy: number) =>
+        Math.max(
+          tiles[fy * size + fx],
+          tiles[fy * size + fx + 1],
+          tiles[(fy + 1) * size + fx],
+          tiles[(fy + 1) * size + fx + 1],
+        ) >= 3;
+    let mixed = 0;
+    const eps = 1e-9;
+    for (let fy = 1; fy < size - 2; fy++)
+      for (let fx = 1; fx < size - 2; fx++) {
+        if (isSoft(fx, fy) !== isSoft(fx + 1, fy)) mixed++;
+        if (isSoft(fx, fy) !== isSoft(fx, fy + 1)) mixed++;
+        for (let i = 0; i <= 200; i++) {
+          const t = i / 200;
+          expect(reliefHeight(m, r, fx + 1 - eps, fy + t)).toBeCloseTo(
+            reliefHeight(m, r, fx + 1 + eps, fy + t),
+            4,
+          );
+          expect(reliefHeight(m, r, fx + t, fy + 1 - eps)).toBeCloseTo(
+            reliefHeight(m, r, fx + t, fy + 1 + eps),
+            4,
+          );
+        }
+      }
+    // the map has both kinds of cell side by side
+    expect(mixed).toBeGreaterThan(10);
+  });
+  it('heightFactor is 1.24 at level 4 and 1.348 at level 16', () => {
+    expect(heightFactor(0, 0.06)).toBe(1);
+    expect(heightFactor(2, 0.06)).toBeCloseTo(1.12, 10);
+    expect(heightFactor(4, 0.06)).toBeCloseTo(1.24, 10);
+    expect(heightFactor(16, 0.06)).toBeCloseTo(1.348, 10);
+    expect(heightFactor(10, 0.06)).toBeGreaterThan(heightFactor(4, 0.06));
+  });
+  it('holds sixteen levels within RELIEF_MAX', () => {
+    expect(RELIEF_MAX).toBe(200);
+    const size = 16,
+      levels = new Map<number, number>();
+    for (let k = 0; k < size * size; k++) levels.set(k, 16);
+    const r = buildRelief(tall(size, levels), new Set());
+    expect(Math.max(...r.tiles!)).toBe(16);
+    expect(r.top).toBeLessThanOrEqual(RELIEF_MAX);
+  });
+  it('shows a peak picture only on a tile at level 7 or more with no higher tile within 3', () => {
+    const size = 24,
+      levels = new Map<number, number>();
+    // a tall cone and a low hill beside it
+    for (let y = 0; y < size; y++)
+      for (let x = 0; x < size; x++) {
+        const cone = 12 - 2 * Math.max(Math.abs(x - 7), Math.abs(y - 7)),
+          hill = 5 - Math.max(Math.abs(x - 18), Math.abs(y - 18));
+        levels.set(y * size + x, Math.max(0, cone, hill));
+      }
+    const m = tall(size, levels),
+      r = buildRelief(m, new Set()),
+      tiles = r.tiles!;
+    expect(isTrueTop(m, r, 7, 7)).toBe(true);
+    // a flank tile of the cone has a higher tile within 3
+    expect(isTrueTop(m, r, 8, 7)).toBe(false);
+    // the low hill's top stands under level 7
+    expect(tiles[18 * size + 18]).toBeLessThan(7);
+    expect(isTrueTop(m, r, 18, 18)).toBe(false);
+    for (let y = 0; y < size; y++)
+      for (let x = 0; x < size; x++) {
+        if (!isTrueTop(m, r, x, y)) continue;
+        const here = tiles[y * size + x];
+        expect(here).toBeGreaterThanOrEqual(7);
+        for (let dy = -3; dy <= 3; dy++)
+          for (let dx = -3; dx <= 3; dx++) {
+            const xx = x + dx,
+              yy = y + dy;
+            if (xx >= 0 && yy >= 0 && xx < size && yy < size)
+              expect(tiles[yy * size + xx]).toBeLessThanOrEqual(here);
+          }
+      }
+  });
 });
