@@ -44,6 +44,7 @@ import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './wor
 import { climbAxes, railProfile } from './world/railProfile';
 import { RegionState } from './world/regions';
 import { WorldRenderer, type TexturedBridge } from './render/worldRenderer';
+import { wholePixel } from './render/pixelGrid';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
 import { GameClock, SIM_STEP } from './sim/time';
 import { Tooltip, type TipBuild } from './ui/tooltip';
@@ -2930,8 +2931,8 @@ export class Game implements UiHost {
     const shrink = 1 - 0.45 * e;
     w.scale.set(this.camera.zoom * shrink);
     w.position.set(
-      Math.round(this.camera.viewW / 2 - this.camera.x * this.camera.zoom * shrink),
-      Math.round(this.camera.viewH / 2 - this.camera.y * this.camera.zoom * shrink),
+      wholePixel(this.camera.viewW / 2 - this.camera.x * this.camera.zoom * shrink),
+      wholePixel(this.camera.viewH / 2 - this.camera.y * this.camera.zoom * shrink),
     );
     w.alpha = 1 - e;
     w.visible = this.viewBlend < 1;

@@ -86,6 +86,7 @@ import { paintedRoads } from './roadPaint';
 import { RoadWalk, roadWalks } from './roadWalk';
 import { crossingAxis, levelCrossingFrame } from './levelCrossing';
 import { AtmosphereTint, setOwnTint } from './atmosphere';
+import { wholePixel } from './pixelGrid';
 import { cullByChunk } from './chunkCull';
 import { surfaceVersions } from './fx';
 
@@ -114,6 +115,11 @@ const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
 >;
 
 const CHUNK = 8;
+/**
+ * The depth layer (`setStructure`) from which a structure is a marker floating over the ground,
+ * a notice or a warning: nothing is built under it, so no nature gives way to it.
+ */
+const MARKER_LAYER = 45;
 /** How far (world px) past the view's edge a water ripple is still drawn. */
 const RIPPLE_MARGIN = 20;
 
@@ -292,7 +298,10 @@ export class WorldRenderer {
   readonly landscape: Landscape;
   private summitSprites = new Map<number, Sprite>();
   private terrainVisibilityVersion = -1;
-  private structureAnchors = new Map<string, { x: number; y: number; dx: number; dy: number }>();
+  private structureAnchors = new Map<
+    string,
+    { x: number; y: number; dx: number; dy: number; marker: boolean }
+  >();
   private surfaces = new SurfaceAssets();
   private windowLights = new Map<string, Sprite>();
   /** Each building's fit to the ground (groundFit.ts), keyed like its structure. */
@@ -955,8 +964,8 @@ export class WorldRenderer {
     const z = cam.zoom;
     this.root.scale.set(z);
     this.root.position.set(
-      Math.round(cam.viewW / 2 - cam.x * z),
-      Math.round(cam.viewH / 2 - cam.y * z),
+      wholePixel(cam.viewW / 2 - cam.x * z),
+      wholePixel(cam.viewH / 2 - cam.y * z),
     );
     // Same resolution cap as the renderer in game.ts.
     this.landscape.focus(this.view, z * Math.min(window.devicePixelRatio || 1, 2));
@@ -1269,6 +1278,7 @@ export class WorldRenderer {
       s.tint = this.city.has(i) ? 0xffffff : ground;
     }
     for (const list of this.propSprites.values()) for (const s of list) setOwnTint(s, props);
+    for (const list of this.scatterSprites.values()) for (const { s } of list) setOwnTint(s, props);
     for (const fit of this.groundFits.values()) setOwnTint(fit.weeds, props);
   }
   /** Apply the current season tint to a freshly built region. */
@@ -2031,7 +2041,8 @@ export class WorldRenderer {
   /** Place or update a tall structure sprite keyed by id in the depth-sorted object layer. */
   setStructure(id: string, x: number, y: number, frame: string, layer = 20, dy = 0, dx = 0) {
     const f = this.atlas.get(frame);
-    this.structureAnchors.set(id, { x, y, dx, dy });
+    const marker = layer >= MARKER_LAYER;
+    this.structureAnchors.set(id, { x, y, dx, dy, marker });
     let s = this.structures.get(id);
     if (!s) {
       s = new Sprite();
@@ -2064,11 +2075,15 @@ export class WorldRenderer {
       light.scale.copyFrom(s.scale);
       light.zIndex = s.zIndex + 0.01;
     }
-    // Stations reach up to two tiles from their anchor; nature there clears away.
-    this.refreshScatter(x, y, 2);
-    // and a field beside one ends short of it, or runs up to it
-    this.fieldRuns = null;
-    this.wheat.near(x - 2, y - 2, x + 2, y + 2);
+    // Stations reach up to two tiles from their anchor; nature there clears away. Nothing gives way
+    // to a marker, which stands on nothing, and the game sets its markers again every half second:
+    // building the scatter round them each time drew it again at that rate.
+    if (!marker) {
+      this.refreshScatter(x, y, 2);
+      // and a field beside one ends short of it, or runs up to it
+      this.fieldRuns = null;
+      this.wheat.near(x - 2, y - 2, x + 2, y + 2);
+    }
     return s;
   }
   /**
@@ -2315,7 +2330,7 @@ export class WorldRenderer {
       s.destroy();
       this.structures.delete(id);
     }
-    if (anchor) {
+    if (anchor && !anchor.marker) {
       this.refreshScatter(anchor.x, anchor.y, 2);
       this.fieldRuns = null;
       this.wheat.near(anchor.x - 2, anchor.y - 2, anchor.x + 2, anchor.y + 2);

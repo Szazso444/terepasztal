@@ -24,20 +24,25 @@ const SWEEP = 128;
  * The night and season colour over the objects of one depth-sorted layer (`WorldRenderer.objects`):
  * each object shows its own tint multiplied by the colour, except an emissive one (window lights),
  * which shines at its own. The work follows what changed rather than the whole layer each frame:
- * a new colour retints every object, an object added since the last call is tinted as it comes,
- * and an object given a new tint of its own through `tint` (or `setOwnTint`) shows it at once.
- * A tint set straight on an object (`object.tint = ...`) is found by a slow sweep and taken as its
- * own from then on, as the full pass used to.
+ * a new colour retints every object, an object added to the layer is tinted the moment it joins
+ * (a frame draws whatever stands in the layer then, and a renderer may add to it after this
+ * frame's `apply`), and an object given a new tint of its own through `tint` (or `setOwnTint`)
+ * shows it at once. A tint set straight on an object (`object.tint = ...`) after it joined is
+ * found by the next `apply` if the object is new, or else by a slow sweep, and taken as its own
+ * from then on, as the full pass used to.
  */
 export class AtmosphereTint {
   private color = 0xffffff;
   private tints = new WeakMap<Container, Tinted>();
-  /** Objects added to the layer since the last `apply`. */
+  /** Objects added to the layer since the last `apply`, which looks at their tint again. */
   private added = new Set<Container>();
   private cursor = 0;
 
   constructor(readonly layer: Container) {
-    layer.on('childAdded', (child: Container) => this.added.add(child));
+    layer.on('childAdded', (child: Container) => {
+      this.added.add(child);
+      this.retint(child);
+    });
     atmospheres.set(layer, this);
   }
 
