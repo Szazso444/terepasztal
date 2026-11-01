@@ -1,6 +1,7 @@
 import type { SaveGame } from './save';
 import type { MapGenParams } from '../world/mapgen';
 import { worldWithinBound } from './ground';
+import { shiftGroundLevel, shiftUnderground } from './underground';
 
 /** Chunk edge length in tiles (must match `emptyMap`). */
 export const CHUNK_TILES = 32;
@@ -72,6 +73,8 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
   ]);
   save.wires = (save.wires ?? []).map(([x, y, k]) => [x + d, y + d, k]);
   save.roads = (save.roads ?? []).map(([x, y]) => [x + d, y + d]);
+  if (save.underground) save.underground = shiftUnderground(save.underground, d);
+  if (save.groundLevel) save.groundLevel = shiftGroundLevel(save.groundLevel, d);
   for (const h of save.houses?.list ?? []) {
     h.x += d;
     h.y += d;

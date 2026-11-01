@@ -1,4 +1,5 @@
-import { MAX_LEVEL, NO_LEVEL } from '../world/elevation';
+import { MAX_LEVEL, NO_LEVEL, tileLevels, type Elevated } from '../world/elevation';
+import { Terrain } from '../world/tiles';
 
 /**
  * The store of what the Drill has made: the tiles dug inside a mountain, the cuttings that lead
@@ -42,6 +43,8 @@ export class Underground {
   private readonly dug = new Map<number, number>();
   private readonly cuts = new Set<number>();
   private list: Portal[] = [];
+  /** the portals by tile and face, so adding one does not search the list */
+  private readonly portalKeys = new Set<number>();
   /** counts every change, for a reader that keeps something made from the store */
   version = 0;
 
@@ -74,8 +77,8 @@ export class Underground {
     return !this.dug.size && !this.cuts.size && !this.list.length;
   }
 
-  /** Dig (x, y) at `floor`. A tile is dug or cut, never both: digging takes the cut away. */
-  dig(x: number, y: number, floor = 0): boolean {
+  /** Dig (x, y) at `floor`, 0 to MAX_LEVEL. A tile is dug or cut, never both: digging takes the cut away. */
+  dig(x: number, y: number, floor: number): boolean {
     const f = levelOf(floor, MAX_LEVEL);
     if (!this.inside(x, y) || f === undefined) return false;
     this.cuts.delete(y * this.w + x);
@@ -99,12 +102,17 @@ export class Underground {
     this.version++;
     return true;
   }
+  private portalKey(x: number, y: number, face: Face): number {
+    return (y * this.w + x) * FACES.length + FACES.indexOf(face);
+  }
   /** Add a portal; false for one off the map, with a bad face or floor, or already there. */
   addPortal(p: Portal): boolean {
     const floor = levelOf(p.floor, MAX_LEVEL);
     if (!this.inside(p.x, p.y) || !FACES.includes(p.face) || floor === undefined) return false;
-    if (this.list.some((q) => q.x === p.x && q.y === p.y && q.face === p.face)) return false;
-    this.list = [...this.list, { x: p.x, y: p.y, face: p.face, floor }];
+    const key = this.portalKey(p.x, p.y, p.face);
+    if (this.portalKeys.has(key)) return false;
+    this.portalKeys.add(key);
+    this.list.push({ x: p.x, y: p.y, face: p.face, floor });
     this.version++;
     return true;
   }
@@ -113,6 +121,8 @@ export class Underground {
     const kept = this.list.filter((p) => p.x !== x || p.y !== y);
     if (kept.length === this.list.length) return false;
     this.list = kept;
+    this.portalKeys.clear();
+    for (const q of kept) this.portalKeys.add(this.portalKey(q.x, q.y, q.face));
     this.version++;
     return true;
   }
@@ -135,7 +145,8 @@ export class Underground {
   /**
    * The store a save holds, on a map of w by h tiles. Anything that is not the shape `toJSON`
    * writes loads as an empty store, and so does each entry that is off the map or is not whole
-   * numbers; a tile listed as both dug and cut stays dug.
+   * numbers (a dug tile with no floor among them), and so does a portal that is not on a dug
+   * tile at that tile's floor; a tile listed as both dug and cut stays dug.
    */
   static fromJSON(j: unknown, w: number, h: number): Underground {
     const u = new Underground(w, h);
@@ -154,11 +165,37 @@ export class Underground {
       }
     if (Array.isArray(j.portals))
       for (const p of j.portals as unknown[]) {
-        if (isRecord(p)) u.addPortal(p as unknown as Portal);
+        if (isRecord(p) && u.floorAt(p.x as number, p.y as number) === p.floor)
+          u.addPortal(p as unknown as Portal);
       }
     u.version = 0;
     return u;
   }
+}
+
+/**
+ * The plane of a loaded map (`map.groundLevel`) as the map settles it, for the load to call once
+ * the map and the plane are both in place. A plane has to hold settled levels (`levelAt` trusts
+ * them and looks at four sides only), and a save may hold any level from 0 to MAX_LEVEL: a level
+ * on a water tile is cleared, and every other is lowered to what `tileLevels` gives the tile. A
+ * settled plane comes back as it was. Undefined when the map has no plane or none of it is left.
+ */
+export function settleGroundLevel(map: Elevated): Uint8Array | undefined {
+  const plane = map.groundLevel;
+  if (!plane) return undefined;
+  const cleared = Uint8Array.from(plane, (v, i) =>
+    map.terrain[i] === Terrain.Water ? NO_LEVEL : v,
+  );
+  // the levels the map settles to with the water tiles cleared; clamping the plane to them moves no
+  // other tile, as they stand under every target already
+  const levels = tileLevels({ ...map, groundLevel: cleared });
+  let any = false;
+  for (let i = 0; i < cleared.length; i++)
+    if (cleared[i] !== NO_LEVEL) {
+      cleared[i] = Math.min(cleared[i], levels[i]);
+      any = true;
+    }
+  return any ? cleared : undefined;
 }
 
 /**
@@ -191,4 +228,34 @@ export function groundLevelFromJSON(j: unknown, w: number, h: number): Uint8Arra
     plane[(y as number) * w + (x as number)] = lv;
   }
   return plane;
+}
+
+/** The tiles of a saved ground level plane, `d` tiles further along both axes (map growth). */
+export function shiftGroundLevel(j: GroundLevelJSON, d: number): GroundLevelJSON {
+  if (!Array.isArray(j)) return j;
+  return j.map((e) =>
+    Array.isArray(e) ? [e[0] + d, e[1] + d, ...e.slice(2)] : e,
+  ) as GroundLevelJSON;
+}
+
+/**
+ * A saved store with every tile `d` tiles further along both axes (map growth). Entries and parts
+ * that are not the shape `toJSON` writes are left as they are: the load skips them.
+ */
+export function shiftUnderground(j: UndergroundJSON, d: number): UndergroundJSON {
+  if (!isRecord(j)) return j;
+  const tiles = (list: unknown) =>
+    Array.isArray(list)
+      ? list.map((e: unknown) => (Array.isArray(e) ? [e[0] + d, e[1] + d, ...e.slice(2)] : e))
+      : list;
+  return {
+    ...j,
+    dug: tiles(j.dug),
+    cuts: tiles(j.cuts),
+    portals: Array.isArray(j.portals)
+      ? j.portals.map((p: unknown) =>
+          isRecord(p) ? { ...p, x: (p.x as number) + d, y: (p.y as number) + d } : p,
+        )
+      : j.portals,
+  } as UndergroundJSON;
 }

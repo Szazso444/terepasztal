@@ -166,7 +166,7 @@ describe('the migration registry', () => {
     for (const m of MIGRATIONS) expect(m.note.trim().length).toBeGreaterThan(0);
   });
 
-  it('has no step that leaves the file as it found it, bar the ones that fill in nothing', () => {
+  it('has no step that leaves the file as it found it, unless it is quiet', () => {
     // An empty step tells the player a default was filled in and leaves the load code to keep
     // the promise. Each step meets a file of its own version with nothing optional in it, the
     // offer values the step from v10 rewrites (1.5 days, three offers) and the ones the step from
@@ -176,9 +176,10 @@ describe('the migration registry', () => {
     // rotation for the steps that fill a works', and past the step that builds the world
     // description, a generated world with no ground stored for the step that starts its store, and
     // a wide straight and a transition for the step from v21 that lays the six lines.
-    // The step from v24 fills in nothing: a file without the underground or the ground levels is
-    // a map as generated with nothing dug, so there is nothing to put there.
-    for (const m of MIGRATIONS.filter((e) => e.from !== 24)) {
+    // A step that leaves the file as it found it must be quiet: the step from v24 fills in nothing,
+    // as a file without the underground or the ground levels is a map as generated with nothing
+    // dug, so there is nothing to put there.
+    for (const m of MIGRATIONS) {
       const file: SaveGame = {
         ...oldestSave(),
         ...(m.from > 2 ? { world: generatedWorldOf(96, 96) } : {}),
@@ -201,7 +202,8 @@ describe('the migration registry', () => {
       };
       const before = asStored(file);
       m.run(file);
-      expect.soft(asStored(file), `the step from v${m.from}`).not.toEqual(before);
+      if (JSON.stringify(asStored(file)) === JSON.stringify(before))
+        expect.soft(m.quiet, `the step from v${m.from} leaves the file as it was`).toBe(true);
     }
   });
 
