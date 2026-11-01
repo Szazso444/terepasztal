@@ -421,6 +421,9 @@ export class Rain {
   }
 }
 
+/** World px a second the strongest wind carries fog. */
+const FOG_WIND = 46;
+
 /** Drifting fog patches in world space around the camera plus a light screen haze. */
 export class Fog {
   readonly patches = new Container();
@@ -452,6 +455,7 @@ export class Fog {
     view: { x: number; y: number; w: number; h: number },
     screenW: number,
     screenH: number,
+    wind: { strength: number; dir: { x: number; y: number } },
   ) {
     const want = intensity > 0.02 ? 18 : 0;
     while (this.items.length < want) {
@@ -473,8 +477,11 @@ export class Fog {
     this.patches.visible = this.items.length > 0;
     this.patches.alpha = Math.min(1, intensity) * 0.6;
     for (const it of this.items) {
-      it.ox = (it.ox + (it.vx * dt) / Math.max(1, view.w)) % 1;
-      it.oy = (it.oy + (it.vy * dt) / Math.max(1, view.h)) % 1;
+      // it drifts on the air as it always has, and the wind carries it along
+      const vx = it.vx + wind.dir.x * wind.strength * FOG_WIND,
+        vy = it.vy + wind.dir.y * wind.strength * FOG_WIND;
+      it.ox = (it.ox + (vx * dt) / Math.max(1, view.w) + 1) % 1;
+      it.oy = (it.oy + (vy * dt) / Math.max(1, view.h) + 1) % 1;
       it.phase += dt * 0.4;
       it.s.position.set(view.x + it.ox * view.w, view.y + it.oy * view.h + Math.sin(it.phase) * 8);
     }
