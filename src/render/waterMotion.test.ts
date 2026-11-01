@@ -20,6 +20,42 @@ function river(): GameMap {
   return m;
 }
 
+describe('the waves on a shore', () => {
+  /** The sea to the west of column 12, land to the east of it. */
+  function coast(): GameMap {
+    const m = emptyMap(1, 24, 24);
+    for (let y = 0; y < 24; y++) for (let x = 0; x < 12; x++) m.terrain[y * 24 + x] = Terrain.Water;
+    return m;
+  }
+  const motionOn = (m: GameMap, tile: { x: number; y: number }) => {
+    const motion = new WaterMotion(
+      m,
+      () => 0,
+      () => true,
+    ) as unknown as {
+      shore: { n: number; x: Float32Array; energy: Float32Array };
+      update: WaterMotion['update'];
+    };
+    const rows = () => ({ y0: 0, y1: 23, x0: () => 0, x1: () => 23 });
+    motion.update(1, 3, { x: -600, y: 0, w: 1200, h: 800 }, rows, 1, { strength: 0.7, tile });
+    return motion.shore;
+  };
+
+  it('finds the waterline along the shore', () => {
+    const s = motionOn(coast(), { x: 1, y: 0 });
+    expect(s.n).toBeGreaterThan(0);
+    for (const x of s.x) {
+      expect(x).toBeGreaterThan(11);
+      expect(x).toBeLessThan(12);
+    }
+  });
+
+  it('reach a shore the wind blows toward, over open water, and no other', () => {
+    expect(Math.max(...motionOn(coast(), { x: 1, y: 0 }).energy)).toBeGreaterThan(0.5);
+    expect(Math.max(...motionOn(coast(), { x: -1, y: 0 }).energy)).toBe(0);
+  });
+});
+
 describe('a river in motion', () => {
   it('comes into a tile from its fullest inflow', () => {
     const m = river();

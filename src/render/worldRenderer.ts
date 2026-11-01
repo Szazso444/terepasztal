@@ -41,7 +41,7 @@ import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import { clearedByPaving, scatterFor } from './scatter';
 import { levelAt } from '../world/elevation';
-import { WaterMotion } from './waterMotion';
+import { WaterMotion, type WaterWind } from './waterMotion';
 import { isRiver } from './waterPaint';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
@@ -335,6 +335,8 @@ export class WorldRenderer {
   private rippleRefresh = 0;
   /** Whether all water moves (the setting); off, the still water of before #365. */
   movingWater = true;
+  /** The wind the water moves in (`Weather`); the game sets it each frame. */
+  wind: WaterWind | undefined;
   private waterMotion!: WaterMotion;
   private view: { x: number; y: number; w: number; h: number } | null = null;
   /** The wheat fields' pictures (#444), one per field tile's sprite. */
@@ -1078,6 +1080,7 @@ export class WorldRenderer {
       this.movingWater ? this.view : null,
       () => viewTileRows(this.view!, RIPPLE_MARGIN, this.map.w, this.map.h),
       this.builtRegions.size,
+      this.wind,
     );
     this.waterPhase += dt;
     if (this.waterPhase > 0.28) {
