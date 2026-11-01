@@ -5,6 +5,7 @@ import { RegionState } from '../world/regions';
 import {
   TrackGraph,
   CLASS_N,
+  LINES,
   TRACK_CLASSES,
   isUnitKind,
   makePiece,
@@ -22,10 +23,18 @@ import { Train, aheadRun, defaultStop, resetTrainIds, type RouteMode } from './t
 import { Fleet, MAX_LOCOS, MAX_WAGONS } from './fleet';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
-import { gaugeOf } from './compat';
-import { Polyline, consistLength, vehicleFronts, vehicleSpec, type BodyFields } from './body';
+import { gaugeOf, trainClassOf, verdictOf } from './compat';
+import {
+  Polyline,
+  consistLength,
+  poseVehicle,
+  vehicleFronts,
+  vehicleSpec,
+  type BodyFields,
+  type SegmentSpec,
+} from './body';
 import { walkBack, type PathSegment } from '../world/pathfinding';
-import { content, type Gauge } from '../data/content';
+import { content, type Gauge, type LocoDef, type WagonDef } from '../data/content';
 import { Inventory } from '../gacha/inventory';
 import { buildTrafficScenario, SCENARIO_GDT, SCENARIO_TICK_RATE } from '../testing/trafficScenario';
 import { locoDef, wagonDef } from '../gacha/items';
@@ -774,6 +783,8 @@ describe('a schedule train whose contract closes while it stands stranded', () =
 
 /** Side of the grid the lines below are laid on, from its middle: room for the longest consist. */
 const LINE_SIZE = 72;
+/** The zigzag's grid: room on its diagonal for twice the longest consist of model lengths. */
+const ZIGZAG_SIZE = 160;
 
 /** One piece of a line, and which of the ways it can carry the line on from where it stands. */
 interface LineStep {
@@ -1047,12 +1058,20 @@ function trackUnder(g: TrackGraph, at: LineTile, run: number): number[][] {
   return rows.reverse();
 }
 
+/** How far a part's pivot stands behind the part's front, in track order: its gear's, or by W. */
+const pivotBehind = (s: SegmentSpec, k: number) => {
+  if (!s.at) return (s.L - s.W) / 2 + (s.W / (s.nb - 1)) * k;
+  return s.mirror ? s.L - s.at[s.at.length - 1 - k] : s.at[k];
+};
+
 /**
  * Whether the train stands on the track behind its head (`trackUnder`, the oracle): its trail,
  * read from the head back, is that track point for point and at least as long as the train, and
  * every bogie stands on that track at its own distance from the head (its vehicle's front, its
  * segment's place in the body, its place in the segment), so no body is pulled short or pushed
- * off the end of the rails.
+ * off the end of the rails. A body pinned on its trucks stands them on the rail a little further
+ * apart than on the body through a curve (a chord is shorter than its arc): its bogies are where
+ * it poses on that track.
  */
 function expectOnTrack(t: Train, g: TrackGraph, at: LineTile, what: string) {
   const under = trackUnder(g, at, t.length + 4);
@@ -1076,16 +1095,22 @@ function expectOnTrack(t: Train, g: TrackGraph, at: LineTile, what: string) {
   const track = new Polyline(under.map(([x, y]) => ({ x, y })));
   const fronts = vehicleFronts(t.carLengths);
   const astray: string[] = [];
-  t.vehicleSpecs.forEach((spec, car) =>
+  // the same track running towards the head, as a train's trail does
+  const towards = new Polyline(under.map(([x, y]) => ({ x, y })).reverse());
+  t.vehicleSpecs.forEach((spec, car) => {
+    const posed = poseVehicle(towards, towards.length - fronts[car], spec);
     spec.segments.forEach((s, j) =>
       t.vehiclePoses[car].segments[j].bogies.forEach((b, k) => {
-        const p = track.at(fronts[car] + s.front + (s.L - s.W) / 2 + (s.W / (s.nb - 1)) * k);
+        const p = s.pinned
+          ? posed.segments[j].bogies[k]
+          : track.at(fronts[car] + s.front + pivotBehind(s, k));
         const d = Math.hypot(b.x - p.x, b.y - p.y);
-        if (d >= 1e-9) astray.push(`car ${car}, segment ${j}, bogie ${k}: ${d.toFixed(4)} off`);
+        if (d >= 1e-9)
+          astray.push(`car ${car}, segment ${j}, bogie ${k}: ${d.toExponential(2)} off`);
       }),
-    ),
-  );
-  expect(astray, `${what}: bogies away from their place on the track`).toEqual([]);
+    );
+  });
+  expect(astray.join('; '), `${what}: bogies away from their place on the track`).toBe('');
 }
 
 /** The case's train placed on its line by `spawnAt`, and again by a save without its trail. */
@@ -1099,15 +1124,20 @@ function standsOnTrack(c: LineCase) {
 }
 
 /** The longest consist of a gauge: the most units and wagons a train may have, of its longest stock. */
-function longestOf(gauge: Gauge) {
-  const longest = (ids: string[], def: (id: string) => BodyFields) => {
+function longestOf(cls: TrackClass) {
+  const longest = (ids: string[], def: (id: string) => BodyFields & (LocoDef | WagonDef)) => {
+    // a model's own length: the longest that takes the curves of this line. A body whose wheels
+    // stand further apart than the curve is across (a 5-tile flat wagon on a Branch Line ring) has
+    // nowhere to stand, and no train class puts it there
+    const fit = ids.filter((id) => verdictOf(def(id), cls).ok);
     const len = (id: string) => vehicleSpec(def(id)).L;
-    const most = Math.max(...ids.map(len));
-    return ids.find((id) => len(id) === most)!;
+    const most = Math.max(...fit.map(len));
+    return fit.find((id) => len(id) === most)!;
   };
+  const stock = STOCK[cls === 'narrow' ? 'narrow' : 'regular'];
   return {
-    locos: Array<string>(MAX_LOCOS).fill(longest(STOCK[gauge].locos, locoDef)),
-    wagons: Array<string>(MAX_WAGONS).fill(longest(STOCK[gauge].wagons, wagonDef)),
+    locos: Array<string>(MAX_LOCOS).fill(longest(stock.locos, locoDef)),
+    wagons: Array<string>(MAX_WAGONS).fill(longest(stock.wagons, wagonDef)),
   };
 }
 
@@ -1122,9 +1152,10 @@ function past(way: Way): LineTile {
  * south-west corner for as long as the grid has room, and the tiles it crosses.
  */
 function zigzag(cls: TrackClass) {
-  const g = new TrackGraph(LINE_SIZE, LINE_SIZE);
+  const size = ZIGZAG_SIZE;
+  const g = new TrackGraph(size, size);
   const tiles: LineTile[] = [];
-  let at: LineTile = { x: 0, y: LINE_SIZE - 1, in: Dir.W };
+  let at: LineTile = { x: 0, y: size - 1, in: Dir.W };
   for (let out = Dir.N; ; out = out === Dir.N ? Dir.E : Dir.N) {
     const way = waysOn(g, { kind: 'curve', way: 0 }, cls, at).find((w) => w.out === out);
     if (!way) break;
@@ -1311,9 +1342,16 @@ describe('a train placed on the track (spawnAt)', () => {
           expect(v.y).toBeCloseTo(mid.y, 9);
           expect(Math.cos(v.heading)).toBeCloseTo(ux, 9);
           expect(Math.sin(v.heading)).toBeCloseTo(uy, 9);
+          // an engine model and its tender on their drawbar, which sets the gap between them
+          // however the model has it: they stand as they pose on this straight
+          const rail = new Polyline([at(train.length + 10), at(0)]);
+          const posed = poseVehicle(rail, rail.length - fronts[i], spec);
+          const drawbar = spec.segments.some((s) => s.pinned && s.part === 'tender');
           spec.segments.forEach((s, j) =>
             v.segments[j].bogies.forEach((b, k) => {
-              const p = at(fronts[i] + s.front + (s.L - s.W) / 2 + (s.W / (s.nb - 1)) * k);
+              const p = drawbar
+                ? posed.segments[j].bogies[k]
+                : at(fronts[i] + s.front + pivotBehind(s, k));
               expect(b.x).toBeCloseTo(p.x, 9);
               expect(b.y).toBeCloseTo(p.y, 9);
             }),
@@ -1363,7 +1401,7 @@ describe('a train placed on the track (spawnAt)', () => {
       ] as const)
         for (const at of tiles.filter((_, i) => i % every === 0)) {
           const what = `${cls} ${line}, head on ${at.x},${at.y}`;
-          const t = lineTrain(longestOf(cls === 'narrow' ? 'narrow' : 'regular'));
+          const t = lineTrain(longestOf(cls));
           expect(t.spawnAt(g, at.x, at.y, at.in), what).toBe(true);
           expectReach(t, `${what}, rolled out`);
           expectReach(Train.fromJSON({ ...t.toJSON(), trail: [] }, g), `${what}, loaded`);
@@ -1383,7 +1421,7 @@ describe('a train placed on the track (spawnAt)', () => {
   it('stands on the track with the longest consist of its gauge on a line of nothing but curves', () => {
     for (const cls of TRACK_CLASSES) {
       const { g, tiles } = zigzag(cls);
-      const c = longestOf(cls === 'narrow' ? 'narrow' : 'regular');
+      const c = longestOf(cls);
       // a curve lays less than a tile of trail a tile, but far more than half
       expect(tiles.length, `${cls}: tiles the line crosses`).toBeGreaterThan(
         2 * lineTrain(c).length,
@@ -1402,9 +1440,10 @@ describe('a train placed on the track (spawnAt)', () => {
   // slow because the longest consist of each gauge is spawned with its head on every tile of a
   // ring, rolled out and loaded: 0.65 s alone
   it('stands on a ring shorter than itself, going round it as often as it takes', () => {
-    for (const cls of TRACK_CLASSES) {
+    // no line of curves on a Hyperloop: a body stood on its one-tile curves has nowhere to reach
+    for (const cls of TRACK_CLASSES.filter((c) => LINES[c].curves)) {
       const { g, tiles } = ring(cls);
-      const c = longestOf(cls === 'narrow' ? 'narrow' : 'regular');
+      const c = longestOf(cls);
       expect(tiles.length, `${cls}: tiles round the ring`).toBeLessThan(lineTrain(c).length);
       for (const at of tiles) {
         const what = `${cls} ring, head on ${at.x},${at.y}`;
@@ -1471,7 +1510,7 @@ describe('a train placed on the track (spawnAt)', () => {
               expect(Math.cos(v.heading), `${what}, ${how}: car ${i} heading`).toBeCloseTo(u, 9);
               spec.segments.forEach((s, j) =>
                 v.segments[j].bogies.forEach((b, k) => {
-                  const p = at(fronts[i] + s.front + (s.L - s.W) / 2 + (s.W / (s.nb - 1)) * k);
+                  const p = at(fronts[i] + s.front + pivotBehind(s, k));
                   expect(
                     Math.hypot(b.x - p.x, b.y - p.y),
                     `${what}, ${how}: car ${i}, segment ${j}, bogie ${k}`,
@@ -1531,6 +1570,54 @@ describe('the path ahead', () => {
     // the trains ran their paths for most of the run
     expect(checked).toBeGreaterThan(1000);
   }, 20_000);
+});
+
+describe('the tiles under a train, kept between passes', () => {
+  // Slow: steps the three-train traffic scenario 2400 times (about 1 s alone), so 20 s.
+  it('are the tiles its cars stand on, at every tick of the traffic scenario', () => {
+    const s = buildTrafficScenario(3);
+    const w = s.track.w;
+    let moved = 0;
+    const was = new Map<number, readonly number[]>();
+    for (let tick = 0; tick < 2400; tick++) {
+      s.step(SCENARIO_GDT, tick / SCENARIO_TICK_RATE);
+      for (const t of s.fleet.trains) {
+        const keys = t.occupancyKeys(w);
+        const fresh: number[] = [];
+        for (const p of t.occupancyPoints()) {
+          const k = Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5);
+          if (!fresh.includes(k)) fresh.push(k);
+        }
+        expect(keys, `tick ${tick}, train ${t.id}`).toEqual(fresh);
+        expect(t.occupancyKeys(w)).toBe(keys);
+        if (was.get(t.id) !== keys) moved++;
+        was.set(t.id, keys);
+      }
+    }
+    expect(moved).toBeGreaterThan(1000);
+  }, 20_000);
+  it('are worked out for the width asked', () => {
+    const s = buildTrafficScenario(3);
+    for (let tick = 0; tick < 200; tick++) s.step(SCENARIO_GDT, tick / SCENARIO_TICK_RATE);
+    const t = s.fleet.trains[0];
+    const [a] = t.occupancyKeys(s.track.w);
+    const [b] = t.occupancyKeys(s.track.w * 2);
+    expect(b).not.toBe(a);
+  });
+});
+
+describe('what a consist may use', () => {
+  it('is worked out again when its vehicles change', () => {
+    const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+    const alone = { access: t.access, cls: t.trainClass };
+    expect(t.access).toBe(alone.access);
+    const pullman = wagonDef('pullman');
+    t.wagons.push({ uid: 2, def: pullman, level: 1, cargo: null, amount: 0, origin: null });
+    expect(t.trainClass).toBe(trainClassOf([locoDef('f7'), pullman]));
+    expect(t.trainClass).not.toBe(alone.cls);
+    t.wagons.length = 0;
+    expect(t.trainClass).toBe(alone.cls);
+  });
 });
 
 describe('car poses kept between ticks', () => {

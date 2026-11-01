@@ -68,7 +68,6 @@ function levelForEdit(i: Extract<Intent, { action: 'edit' }>): LevelData | null 
   const level = levelFromMap(map, STR.menu.levelDefaultName(new Date().toLocaleDateString()));
   level.start = {
     money: rules.startMoney,
-    tickets: rules.startTickets,
     tier: 0,
   };
   saveLevel(level);

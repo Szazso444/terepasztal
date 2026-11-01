@@ -12,6 +12,7 @@ import {
   recentContracts,
   statusTone,
   tabOfStatus,
+  tabOnReturn,
   timeIsLow,
 } from './contractsView';
 
@@ -76,19 +77,27 @@ describe('a finished contract', () => {
 });
 
 describe('the tabs', () => {
-  const labels = { offers: 'Offers', active: 'Active', history: 'Recent' };
+  const labels = { offers: 'Offers', active: 'Active', history: 'Recent', settings: 'Settings' };
 
-  it('come in the order Offers, Active, Recent, each with its count', () => {
+  it('come in the order Offers, Active, Recent, Settings, the cards counted', () => {
     expect(contractTabs({ offers: 5, active: 4, history: 12 }, labels)).toEqual([
       { id: 'offers', label: 'Offers', count: 5 },
       { id: 'active', label: 'Active', count: 4 },
       { id: 'history', label: 'Recent', count: 12 },
+      { id: 'settings', label: 'Settings' },
     ]);
   });
 
   it('leave the screen where it was for a tab that does not exist', () => {
     expect(pickTab('active', 'offers')).toBe('active');
+    expect(pickTab('settings', 'offers')).toBe('settings');
     expect(pickTab('nope', 'history')).toBe('history');
+  });
+
+  it('come back where they were left, but Settings gives way to the offers', () => {
+    expect(tabOnReturn('settings')).toBe('offers');
+    expect(tabOnReturn('active')).toBe('active');
+    expect(tabOnReturn('history')).toBe('history');
   });
 });
 

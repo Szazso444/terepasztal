@@ -1,30 +1,41 @@
 /** The tab is hidden. Outside a browser (tests) there is no document and nothing is hidden. */
 const tabHidden = () => typeof document !== 'undefined' && document.hidden;
 
-/** Quiet continuous weather beds, sparse birds by day and crickets after dusk. */
+/**
+ * A quiet wind bed, sparse birds by day and crickets after dusk. Rain only silences the calls: a
+ * filtered noise bed for it read as a loud hiss of steam, so it waits for a real recording. The
+ * wind (and rain, when it has one) is the Weather volume; the calls are the Environment volume.
+ */
 export class Ambience {
   private ctx: AudioContext | null = null;
-  private master: GainNode | null = null;
+  /** all of it, silent while the tab is hidden */
+  private out: GainNode | null = null;
+  /** the Weather volume */
+  private weather: GainNode | null = null;
+  /** the Environment volume */
+  private environment: GainNode | null = null;
   private wind: GainNode | null = null;
-  private rain: GainNode | null = null;
   private nextCall = 0;
-  private volume = 0;
   private init(ctx: AudioContext) {
     this.ctx = ctx;
     // muting a hidden tab only matters once the beds exist, so the listener is added here, once,
     // rather than at import
     if (typeof document !== 'undefined')
       document.addEventListener('visibilitychange', () => {
-        if (this.ctx && this.master)
-          this.master.gain.setTargetAtTime(
-            tabHidden() ? 0 : this.volume,
-            this.ctx.currentTime,
-            0.15,
-          );
+        if (this.ctx && this.out)
+          this.out.gain.setTargetAtTime(tabHidden() ? 0 : 1, this.ctx.currentTime, 0.15);
       });
-    this.master = ctx.createGain();
-    this.master.gain.value = 0;
-    this.master.connect(ctx.destination);
+    this.out = ctx.createGain();
+    this.out.gain.value = 1;
+    this.out.connect(ctx.destination);
+    const volume = () => {
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.connect(this.out!);
+      return gain;
+    };
+    this.weather = volume();
+    this.environment = volume();
     const buffer = ctx.createBuffer(1, ctx.sampleRate * 8, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
@@ -40,21 +51,20 @@ export class Ambience {
       gain.gain.value = 0;
       source.connect(filter);
       filter.connect(gain);
-      gain.connect(this.master!);
+      gain.connect(this.weather!);
       source.start();
       return gain;
     };
     this.wind = bed('lowpass', 430);
-    this.rain = bed('bandpass', 2400);
   }
-  update(ctx: AudioContext, volume: number, rain: number, night: number) {
+  update(ctx: AudioContext, weather: number, environment: number, rain: number, night: number) {
     if (!this.ctx) this.init(ctx);
-    this.volume = volume;
     const now = ctx.currentTime;
-    this.master!.gain.setTargetAtTime(tabHidden() ? 0 : volume, now, 0.2);
+    this.out!.gain.setTargetAtTime(tabHidden() ? 0 : 1, now, 0.2);
+    this.weather!.gain.setTargetAtTime(weather, now, 0.2);
+    this.environment!.gain.setTargetAtTime(environment, now, 0.2);
     this.wind!.gain.setTargetAtTime(0.035 + 0.012 * Math.sin(now * 0.14), now, 1.2);
-    this.rain!.gain.setTargetAtTime(rain * 0.24, now, 1.5);
-    if (tabHidden() || volume <= 0 || now < this.nextCall || rain > 0.35) return;
+    if (tabHidden() || environment <= 0 || now < this.nextCall || rain > 0.35) return;
     this.nextCall = now + (night > 0.5 ? 5 : 9) + Math.random() * 12;
     for (let i = 0; i < (night > 0.5 ? 3 : 2); i++) {
       const start = now + i * 0.16,
@@ -71,7 +81,7 @@ export class Ambience {
       pan.pan.value = Math.sin(now) * 0.65;
       osc.connect(gain);
       gain.connect(pan);
-      pan.connect(this.master!);
+      pan.connect(this.environment!);
       osc.start(start);
       osc.stop(start + length + 0.02);
       osc.onended = () => {

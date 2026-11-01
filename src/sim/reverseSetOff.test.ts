@@ -12,6 +12,7 @@ import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { Train, defaultStop, type TickCtx } from './trains';
 import { Polyline } from './body';
 import { locoDef, wagonDef } from '../gacha/items';
+import { withModelsOff } from '../testing/modelFixtures';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSeasonOffset } from './weather';
 import { content } from '../data/content';
@@ -145,6 +146,9 @@ const LAYOUTS: Partial<Record<TrackClass, Layout[]>> = {
 };
 for (const cls of STANDARD_LINES)
   LAYOUTS[cls] = [straight(cls), ...GAPS.map((g) => wideStep(cls, g))];
+
+/** A Muki and mine tubs, as their rows have them: half a tile and a tile, on the tile grid. */
+const MINE_TRAIN = [locoDef('muki'), wagonDef('mine_tub')];
 
 /**
  * The wagons behind each locomotive: 0-4 wood hoppers on regular gauge; on narrow gauge 0-4 mine
@@ -314,40 +318,45 @@ describe('a train that ran to where it stands, reversing', () => {
       const rows: string[] = [];
       let runs = 0;
       let onAnEdge = 0;
-      for (const def of content.locomotives) {
-        const narrow = def.gauge === 'narrow';
+      const tryOn = (id: string, wagons: string[], layout: Layout) => {
+        const { w, stop } = build(layout);
+        const ran = run(w, stop.id, layout, id, wagons);
+        const what = `${id}+${wagons.length} on ${layout.name}`;
+        if (!ran) {
+          rows.push(`${what}: never set off`);
+          return;
+        }
+        const { t, path } = ran;
+        // the head stands where its path ends, on the stop's centre
+        const end = chords(w.track, path[path.length - 1], true).at(-1)!;
+        const head = t.headPos!;
+        if (
+          (t.state !== 'loading' && t.state !== 'waiting') ||
+          Math.hypot(head.x - end.x, head.y - end.y) > 1e-9
+        ) {
+          rows.push(`${what}: ${t.state} at (${head.x},${head.y}), not at its stop`);
+          return;
+        }
+        runs++;
+        const trail = new Polyline((t as unknown as Peek).trail);
+        if (onEdge(trail.at(trail.length - t.length))) onAnEdge++;
+        for (const wrong of wrongs(w.track, t, path))
+          rows.push(`${what}, ${t.length.toFixed(1)} tiles long: ${wrong}`);
+      };
+      for (const def of content.locomotives)
         for (const layout of LAYOUTS[CLASS_LINE[classOf(def)]]!)
-          for (const wagons of consists(narrow)) {
-            const { w, stop } = build(layout);
-            const ran = run(w, stop.id, layout, def.id, wagons);
-            const what = `${def.id}+${wagons.length} on ${layout.name}`;
-            if (!ran) {
-              rows.push(`${what}: never set off`);
-              continue;
-            }
-            const { t, path } = ran;
-            // the head stands where its path ends, on the stop's centre
-            const end = chords(w.track, path[path.length - 1], true).at(-1)!;
-            const head = t.headPos!;
-            if (
-              (t.state !== 'loading' && t.state !== 'waiting') ||
-              Math.hypot(head.x - end.x, head.y - end.y) > 1e-9
-            ) {
-              rows.push(`${what}: ${t.state} at (${head.x},${head.y}), not at its stop`);
-              continue;
-            }
-            runs++;
-            const trail = new Polyline((t as unknown as Peek).trail);
-            if (onEdge(trail.at(trail.length - t.length))) onAnEdge++;
-            for (const wrong of wrongs(w.track, t, path))
-              rows.push(`${what}, ${t.length.toFixed(1)} tiles long: ${wrong}`);
-          }
-      }
-      expect(rows).toEqual([]);
-      // every consist ran, and some stood with the rear end on an edge
+          for (const wagons of consists(def.gauge === 'narrow')) tryOn(def.id, wagons, layout);
+      // every consist ran
       expect(runs).toBe(
         content.locomotives.reduce((n, d) => n + 4 * consists(d.gauge === 'narrow').length, 0),
       );
+      // the lengths of the models bring no rear end onto an edge but by chance: a Muki and five tubs
+      // as their rows have them, four and a half tiles long, stand with it on one
+      withModelsOff(MINE_TRAIN, () => {
+        for (const layout of LAYOUTS.narrow!)
+          tryOn('muki', Array<string>(5).fill('mine_tub'), layout);
+      });
+      expect(rows).toEqual([]);
       expect(onAnEdge).toBeGreaterThan(0);
     },
   );
@@ -1069,67 +1078,69 @@ describe('a train that ran to where it stands, wherever its rear end lies', () =
     },
   );
 
-  it('a Muki with five mine tubs, its rear end on an edge, still sets off from the tile beyond it once it has turned round twice', () => {
-    // 4.5 tiles: east along row 30 to the stop on (30, 30), its rear end on the edge between
-    // (25, 30) and (26, 30)
-    const layout = straight('narrow');
-    const { w, stop } = build(layout);
-    const { t } = run(w, stop.id, layout, 'muki', Array<string>(5).fill('mine_tub'))!;
-    expect(t.length).toBeCloseTo(4.5, 9);
-    expect(t.headPos).toEqual({ x: 30, y: 30 });
-    const setsOff = () => show(inside(t).reversedTrail().trail.at(-1)!.seg);
-    expect(setsOff()).toBe(show({ x: 25, y: 30, in: Dir.E, out: Dir.W }));
-    for (let n = 1; n <= TURNS; n++) {
-      inside(t).reverseConsist();
-      // turned round, it would set off back from the tile its head stood on
-      const want =
-        n % 2 ? { x: 30, y: 30, in: Dir.W, out: Dir.E } : { x: 25, y: 30, in: Dir.E, out: Dir.W };
-      expect(setsOff(), `turned round ${times(n)}`).toBe(show(want));
-    }
-    expect(t.headPos).toEqual({ x: 30, y: 30 });
-  });
+  it('a Muki with five mine tubs, its rear end on an edge, still sets off from the tile beyond it once it has turned round twice', () =>
+    withModelsOff(MINE_TRAIN, () => {
+      // 4.5 tiles: east along row 30 to the stop on (30, 30), its rear end on the edge between
+      // (25, 30) and (26, 30)
+      const layout = straight('narrow');
+      const { w, stop } = build(layout);
+      const { t } = run(w, stop.id, layout, 'muki', Array<string>(5).fill('mine_tub'))!;
+      expect(t.length).toBeCloseTo(4.5, 9);
+      expect(t.headPos).toEqual({ x: 30, y: 30 });
+      const setsOff = () => show(inside(t).reversedTrail().trail.at(-1)!.seg);
+      expect(setsOff()).toBe(show({ x: 25, y: 30, in: Dir.E, out: Dir.W }));
+      for (let n = 1; n <= TURNS; n++) {
+        inside(t).reverseConsist();
+        // turned round, it would set off back from the tile its head stood on
+        const want =
+          n % 2 ? { x: 30, y: 30, in: Dir.W, out: Dir.E } : { x: 25, y: 30, in: Dir.E, out: Dir.W };
+        expect(setsOff(), `turned round ${times(n)}`).toBe(show(want));
+      }
+      expect(t.headPos).toEqual({ x: 30, y: 30 });
+    }));
 
-  it('on a figure of eight, sets off along the crossing the way its rear end ran over it', () => {
-    // a narrow figure of eight through a crossing at (0, 0): the train starts on the curve north
-    // of it heading south, runs the west loop and over the crossing again eastward, and stops on
-    // the curve north-east of it, its rear end on the crossing it ran southward. Its trail holds
-    // the crossing both ways, the way the head ran it 1.2 tiles back
-    const [N, E, S, W] = [Dir.N, Dir.E, Dir.S, Dir.W];
-    const steps: Step[] = [
-      { x: 0, y: -1, in: E, out: S },
-      { x: 0, y: 0, in: N, out: S },
-      { x: 0, y: 1, in: N, out: W },
-      { x: -1, y: 1, in: E, out: N },
-      { x: -1, y: 0, in: S, out: E },
-      { x: 0, y: 0, in: W, out: E },
-      { x: 1, y: 0, in: W, out: N },
-      { x: 1, y: -1, in: S, out: W },
-    ];
-    const puts: Put[] = steps
-      .filter((s) => s.x || s.y)
-      .map((s) => ({ x: s.x, y: s.y, kind: 'curve', rot: turnOf('curve', s.in, s.out) }));
-    puts.push({ x: 0, y: 0, kind: 'crossing', rot: 0 });
-    const laid = layDown('narrow', { puts, steps, warehouse: { x: 2, y: -1 } });
-    const { w, stop } = laid;
-    const at = laid.steps[0];
-    // 4.8 tiles: the rear end stands on the crossing the way it ran it first
-    const wagons = ['mine_tub', 'narrow_box', 'mine_tub', 'narrow_box'];
-    const t = board(w, stop.id, 'rocket', wagons, { x: at.x, y: at.y, entry: at.in })!;
-    expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
-    const path = [...inside(t).path!];
-    expect(path.map(show)).toEqual(laid.steps.map(show));
-    const heads = headWrongs(w, t, path);
-    const from = t.pathProgress;
-    t.onPathReady({ builder: w.builder });
-    let now = 0;
-    for (let i = 0; i < 4000 && t.state === 'moving'; i++) w.fleet.tick(0.05, (now += 0.05));
-    expect(t.state).not.toBe('moving');
-    expect(t.pathProgress).toBeCloseTo(stopArc(w.track, path), 9);
-    expect(show(inside(t).reversedTrail().trail.at(-1)!.seg)).toBe(show(turned(path[1])));
-    const spots = Array.from({ length: 19 }, (_, i) => (i + 1) / 20);
-    const ran = { w, t, path, from, head: t.pathProgress };
-    expect([...heads, ...standWrongs(ran, spots, false)]).toEqual([]);
-  });
+  it('on a figure of eight, sets off along the crossing the way its rear end ran over it', () =>
+    withModelsOff([locoDef('rocket'), ...MINE_TRAIN.slice(1), wagonDef('narrow_box')], () => {
+      // a narrow figure of eight through a crossing at (0, 0): the train starts on the curve north
+      // of it heading south, runs the west loop and over the crossing again eastward, and stops on
+      // the curve north-east of it, its rear end on the crossing it ran southward. Its trail holds
+      // the crossing both ways, the way the head ran it 1.2 tiles back
+      const [N, E, S, W] = [Dir.N, Dir.E, Dir.S, Dir.W];
+      const steps: Step[] = [
+        { x: 0, y: -1, in: E, out: S },
+        { x: 0, y: 0, in: N, out: S },
+        { x: 0, y: 1, in: N, out: W },
+        { x: -1, y: 1, in: E, out: N },
+        { x: -1, y: 0, in: S, out: E },
+        { x: 0, y: 0, in: W, out: E },
+        { x: 1, y: 0, in: W, out: N },
+        { x: 1, y: -1, in: S, out: W },
+      ];
+      const puts: Put[] = steps
+        .filter((s) => s.x || s.y)
+        .map((s) => ({ x: s.x, y: s.y, kind: 'curve', rot: turnOf('curve', s.in, s.out) }));
+      puts.push({ x: 0, y: 0, kind: 'crossing', rot: 0 });
+      const laid = layDown('narrow', { puts, steps, warehouse: { x: 2, y: -1 } });
+      const { w, stop } = laid;
+      const at = laid.steps[0];
+      // 4.8 tiles: the rear end stands on the crossing the way it ran it first
+      const wagons = ['mine_tub', 'narrow_box', 'mine_tub', 'narrow_box'];
+      const t = board(w, stop.id, 'rocket', wagons, { x: at.x, y: at.y, entry: at.in })!;
+      expect(t.dispatch(w.track, w.builder, w.map)).toBe(true);
+      const path = [...inside(t).path!];
+      expect(path.map(show)).toEqual(laid.steps.map(show));
+      const heads = headWrongs(w, t, path);
+      const from = t.pathProgress;
+      t.onPathReady({ builder: w.builder });
+      let now = 0;
+      for (let i = 0; i < 4000 && t.state === 'moving'; i++) w.fleet.tick(0.05, (now += 0.05));
+      expect(t.state).not.toBe('moving');
+      expect(t.pathProgress).toBeCloseTo(stopArc(w.track, path), 9);
+      expect(show(inside(t).reversedTrail().trail.at(-1)!.seg)).toBe(show(turned(path[1])));
+      const spots = Array.from({ length: 19 }, (_, i) => (i + 1) / 20);
+      const ran = { w, t, path, from, head: t.pathProgress };
+      expect([...heads, ...standWrongs(ran, spots, false)]).toEqual([]);
+    }));
 });
 
 describe('a train that ran to where it stands, turned round where it stands, saved and loaded', () => {
@@ -1151,11 +1162,12 @@ describe('a train that ran to where it stands, turned round where it stands, sav
     },
   );
 
-  it('a Muki with five mine tubs, its rear end on an edge, sets off from the same tile', () => {
-    const layout = straight('narrow');
-    const { w, stop } = build(layout);
-    const { t } = run(w, stop.id, layout, 'muki', Array<string>(5).fill('mine_tub'))!;
-    expect(t.length).toBeCloseTo(4.5, 9);
-    expect(loadWrongs(w, t)).toEqual([]);
-  });
+  it('a Muki with five mine tubs, its rear end on an edge, sets off from the same tile', () =>
+    withModelsOff(MINE_TRAIN, () => {
+      const layout = straight('narrow');
+      const { w, stop } = build(layout);
+      const { t } = run(w, stop.id, layout, 'muki', Array<string>(5).fill('mine_tub'))!;
+      expect(t.length).toBeCloseTo(4.5, 9);
+      expect(loadWrongs(w, t)).toEqual([]);
+    }));
 });

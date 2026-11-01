@@ -5,8 +5,10 @@ export const RARITIES: Rarity[] = ['N', 'R', 'SR', 'SSR'];
 
 export const LOCOS: LocoDef[] = content.locomotives;
 export const WAGONS: WagonDef[] = content.wagons;
-export const LEVEL_CAP: number = content.gacha.levelCap;
-export const STAT_PER_LEVEL: number = content.gacha.statPerLevel;
+/** the highest level a vehicle reaches */
+export const LEVEL_CAP = 5;
+/** what each level above the first adds to a vehicle's stats (`levelMul`) */
+export const STAT_PER_LEVEL = 0.08;
 
 export function locoDef(id: string): LocoDef {
   const d = LOCOS.find((l) => l.id === id);
@@ -26,7 +28,7 @@ export function itemDef(defId: string): LocoDef | WagonDef {
 }
 /**
  * A retired model is withdrawn from the game: its definition stays so copies already owned keep
- * loading and running, but no banner, starter kit or workshop may hand out another one.
+ * loading and running, but neither the starter kit nor the workshop may hand out another one.
  */
 export function isRetired(defId: string): boolean {
   return itemDef(defId).retired === true;
@@ -47,13 +49,7 @@ export interface Item {
   level: number;
   /** train id if in service */
   assigned: number | null;
-  /** duplicate points collected towards the next level */
-  dupes: number;
   obtainedAt: number;
   /** in-cab signalling equipment fitted to this locomotive */
   inCab?: boolean;
-}
-
-export function dupesNeeded(level: number) {
-  return level; // 1 dupe to reach 2, 2 more to reach 3, ...
 }

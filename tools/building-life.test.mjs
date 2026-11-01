@@ -2,13 +2,14 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { groundOf } from '../src/art/buildingGround';
 import LIFE from '../src/art/buildingLife.json';
-import { craneFrames, craneOf, potFrames, potsOf } from '../src/art/buildingLife';
+import { craneFrames, craneOf, millOf, potFrames, potsOf } from '../src/art/buildingLife';
 import { generateStructuresAtlas } from '../src/art/structures';
 import { atlasFrames, solidGap } from './building-ground.mjs';
 import {
   CRANE_GROUPS,
   LIFE_FILE,
   MEASURE,
+  MILL_FRAMES,
   POT_GROUPS,
   buildLife,
   loadOf,
@@ -26,7 +27,13 @@ import {
 
 /** Making the atlas takes seconds, more on a busy machine. */
 const SLOW = 120_000;
-const PICTURE = /^structures\/(town|townhouse|station|warehouse|lumber|farm|pump|quarry)/;
+const WORKS = 'quarry|grinder|refinery|kiln|power_plant|ironworks|diesel_refinery';
+const PICTURE = new RegExp(
+  `^structures/(town|townhouse|station|warehouse|lumber|farm|pump|depot|${WORKS})`,
+);
+/** Where the quarry's crate all but rests on the beam, in texels: the one place it touches. */
+const SHOE = [18, 94, 52, 114];
+const onShoe = (x, y) => x >= SHOE[0] && x < SHOE[2] && y >= SHOE[1] && y < SHOE[3];
 
 let frames;
 beforeAll(() => {
@@ -83,13 +90,11 @@ describe('the building life file', () => {
       expect(potsOf(`structures/${key}`), key).toBeDefined();
     for (const key of ['townhouse_s0', 'townhouse_s1', 'townhouse_s2'])
       expect(potsOf(`structures/${key}`), key).toBeDefined();
-    // the quarry has no crane while its 3D model's crate is none `loadOf` can lift (`CRANE_GROUPS`)
-    for (const n of levels)
-      expect(craneOf(`structures/quarry_${n}`), `quarry_${n}`).toBeUndefined();
+    for (const n of levels) expect(craneOf(`structures/quarry_${n}`), `quarry_${n}`).toBeDefined();
   });
 
   it('keeps the shape the reader promises', () => {
-    expect(Object.keys(LIFE).sort()).toEqual(['cranes', 'pots']);
+    expect(Object.keys(LIFE).sort()).toEqual(['cranes', 'mills', 'pots']);
     for (const [key, list] of Object.entries(LIFE.pots)) {
       expect(list.length, key).toBeGreaterThan(0);
       for (const pot of list) {
@@ -109,9 +114,26 @@ describe('the building life file', () => {
     }
   });
 
-  it('marks the works chimneys of the sawmill and the pumping station, and no other', () => {
+  it('marks the chimneys of the works, and no other', () => {
+    const works = new RegExp(`/(lumber|pump|${WORKS})(_|$)`);
     for (const [key, list] of Object.entries(LIFE.pots))
-      for (const pot of list) expect(pot.work, key).toBe(/\/(lumber|pump)_/.test(key));
+      for (const pot of list) expect(pot.work, key).toBe(works.test(key));
+  });
+
+  it('turns the sails on every level of the windmill, at the painted hub', () => {
+    expect(Object.keys(LIFE.mills).sort()).toEqual(MILL_FRAMES);
+    const { numbers, hub, footCentre } = JSON.parse(
+      readFileSync('assets/source/windmill-2026-10-17/hub.json', 'utf8'),
+    );
+    for (const key of MILL_FRAMES) {
+      const mill = millOf(key);
+      expect(mill.hub[0], key).toBeCloseTo((hub[0] - footCentre[0]) / numbers.scale, 1);
+      expect(mill.hub[1], key).toBeCloseTo((hub[1] - footCentre[1]) / numbers.scale, 1);
+      // the plane of tile x and the vertical: its u axis runs down the tile's 2:1 edge
+      expect(mill.plane[1][0] / mill.plane[0][0]).toBeCloseTo(0.5, 3);
+      expect(mill.plane[0][1]).toBe(0);
+    }
+    expect(millOf('structures/farm_1')).toBeUndefined();
   });
 });
 
@@ -132,7 +154,9 @@ describe('every pot', () => {
   });
 
   it('is the top of its stack: no pot top of the stack is higher', () => {
+    const broad = new Set(POT_GROUPS.filter((g) => g.stack).flatMap((g) => g.keys));
     for (const [key, list] of Object.entries(LIFE.pots)) {
+      if (broad.has(key)) continue;
       const f = frames.get(key);
       for (const pot of list) {
         const [x, y] = texel(f, pot.dx, pot.dy);
@@ -195,11 +219,8 @@ describe('every pot', () => {
   });
 });
 
-// the demo's crane (issue #492) hung over the cart of the quarry's painted picture; the quarry
-// shows its 3D model since 2026-10-27, whose crate is no crane `loadOf` can lift out
-// (`CRANE_GROUPS` is empty). These come back with a crane for that picture.
-describe.skip('every crane', () => {
-  it('has a load inside its frame that is one piece of the picture and touches the rest only at the pivot and the cart', () => {
+describe('every crane', () => {
+  it('has a load inside its frame that is one piece of the picture and touches the rest only at the pivot and the shoe', () => {
     for (const [key, crane] of Object.entries(LIFE.cranes)) {
       const f = frames.get(key);
       const rects = crane.load.map((r) => texels(f, r));
@@ -211,7 +232,6 @@ describe.skip('every crane', () => {
       const inside = (x, y) =>
         rects.some(([x0, y0, x1, y1]) => x >= x0 && x < x1 && y >= y0 && y < y1);
       const top = Math.min(...rects.map((r) => r[1]));
-      const bottom = Math.max(...rects.map((r) => r[3])) - 1;
 
       // the texels the cut takes
       const taken = [];
@@ -221,7 +241,7 @@ describe.skip('every crane', () => {
       expect(taken.length, key).toBeGreaterThan(100);
 
       // no texel of the rest of the picture is next to one of them, but from above at the pivot's
-      // row and from below at the crate's foot
+      // row and where the crate's corner rests on the shoe
       const where = new Set(taken.map(([x, y]) => `${x},${y}`));
       const stray = [];
       for (const [x, y] of taken)
@@ -229,8 +249,7 @@ describe.skip('every crane', () => {
           for (let dx = -1; dx <= 1; dx++) {
             if (inside(x + dx, y + dy) || !visible(f, x + dx, y + dy)) continue;
             const above = dy < 0 && y === top;
-            const below = dy > 0 && y === bottom;
-            if (!above && !below) stray.push([x, y, x + dx, y + dy]);
+            if (!above && !onShoe(x + dx, y + dy)) stray.push([x, y, x + dx, y + dy]);
           }
       expect(stray.slice(0, 5), `${key} touches the rest of the body`).toEqual([]);
 
@@ -258,59 +277,20 @@ describe.skip('every crane', () => {
     }
   });
 
-  it('takes nothing of the building with it: what stays is the rest of the picture', () => {
-    // the pulley above the pivot and the cart below the crate stay where they are
-    for (const [key, crane] of Object.entries(LIFE.cranes)) {
-      const f = frames.get(key);
-      const rects = crane.load.map((r) => texels(f, r));
-      const top = Math.min(...rects.map((r) => r[1]));
-      const bottom = Math.max(...rects.map((r) => r[3]));
-      let above = 0;
-      let below = 0;
-      for (let x = 0; x < f.w; x++) {
-        if (visible(f, x, top - 1)) above++;
-        if (visible(f, x, bottom)) below++;
-      }
-      expect(above, `${key} wheel`).toBeGreaterThan(0);
-      expect(below, `${key} cart`).toBeGreaterThan(0);
-    }
-  });
-
-  it('is the region the demo lifted out, to within a few texels, on the frame it measured', () => {
-    // issue #492: quarry_2 (271 x 346), pulley at (44.5, 41), the region
-    // (y 42-87, x 40-49) and (y 88-169, x 15-78), inclusive, in picture pixels
-    const f = frames.get('structures/quarry_2');
-    expect([f.w, f.h]).toEqual([271, 346]);
-    const demo = [
-      [40, 42, 50, 88],
-      [15, 88, 79, 170],
-    ];
-    const crane = craneOf('structures/quarry_2');
-    expect(crane.pivot[0]).toBeCloseTo((44.5 - f.ax) / f.resolution, 1);
-    expect(crane.pivot[1]).toBeCloseTo((41 - f.ay) / f.resolution, 1);
-    const mine = crane.load.map((r) => texels(f, r));
-    const within = (x, y, [x0, y0, x1, y1], slack) =>
-      x >= x0 - slack && x < x1 + slack && y >= y0 - slack && y < y1 + slack;
-    // every texel of the cut is the demo's, or within 4 texels of it: the demo's region cuts
-    // the cart's rim at its right edge, which this one leaves out
-    for (const [x0, y0, x1, y1] of mine)
-      for (let y = y0; y < y1; y++)
-        for (let x = x0; x < x1; x++)
-          if (!demo.some((r) => within(x, y, r, 4))) expect([x, y]).toEqual('inside the demo');
-    // and it holds the demo's rope, hook and crate: every visible texel of the demo's region that
-    // is not the cart's (from row 161 down) is in the cut
-    const taken = (x, y) => mine.some((r) => within(x, y, r, 0));
-    const missed = [];
-    for (const r of demo)
-      for (let y = r[1]; y < r[3]; y++)
-        for (let x = r[0]; x < r[2]; x++) if (visible(f, x, y) && !taken(x, y)) missed.push([x, y]);
-    expect(missed.filter(([, y]) => y < 161)).toEqual([]);
-  });
-
   it('finds the rope of a crane or says it is not one', () => {
     const f = frames.get('structures/quarry_2');
-    expect(() => loadOf(f, [200, 60])).toThrow(/not on the rope/);
-    expect(loadOf(f, [45, 60]).rects.length).toBeGreaterThan(2);
+    expect(() => loadOf(f, [60, 90])).toThrow(/not on the rope/);
+    expect(loadOf(f, [23, 42]).rects.length).toBeGreaterThan(2);
+  });
+
+  it('leaves the pulley above the pivot where it is', () => {
+    for (const [key, crane] of Object.entries(LIFE.cranes)) {
+      const f = frames.get(key);
+      const top = Math.min(...crane.load.map((r) => texels(f, r)[1]));
+      let above = 0;
+      for (let x = 0; x < f.w; x++) if (visible(f, x, top - 1)) above++;
+      expect(above, `${key} wheel`).toBeGreaterThan(0);
+    }
   });
 });
 

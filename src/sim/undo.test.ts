@@ -788,42 +788,61 @@ describe('refusal', () => {
     expectRefused(g, 'undo', STR.history.builtOver);
   });
 
-  it('a station to remove with a train routed to it says which', () => {
+  it('a station on a route leaves by an undo as it does by a demolish, the schedule untouched', () => {
     const g = game();
     line(g, 10, ROW, 30);
     const s = g.commands.act(() => g.builder.placeStation(15, ROW - 1, 'farm'))!;
     const t = train(g, 28);
     const schedule = [defaultStop(s.id), defaultStop(g.depot.id)];
     t.schedule = schedule;
-    expectRefused(g, 'undo', STR.history.routedTo(t.name, s.name));
-    // the schedule is not touched
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.stationById(s.id)).toBeUndefined();
     expect(t.schedule).toBe(schedule);
     expect(t.schedule.map((p) => p.stationId)).toEqual([s.id, g.depot.id]);
+    // and it stands again for the train that is routed to it
+    expect(g.history.redo()).toEqual({ ok: true });
+    expect(g.builder.stationById(t.schedule[0].stationId)).toBe(s);
+    expect(t.schedule).toBe(schedule);
   });
 
-  it('a contract job or a train at the platform holds a station too', () => {
+  it('a demolished station on a route is undone and redone as often as asked', () => {
+    const g = game();
+    line(g, 10, ROW, 30);
+    const s = g.builder.placeStation(15, ROW - 1, 'farm')!;
+    const t = train(g, 28);
+    const schedule = [defaultStop(s.id), defaultStop(g.depot.id)];
+    t.schedule = schedule;
+    t.jobs = [{ contractId: 1, originId: s.id, destId: g.depot.id } as (typeof t.jobs)[number]];
+    const jobs = t.jobs;
+    // the first demolish asked nothing of the route, so its redo asks nothing either
+    roundTrip(g, () => g.builder.removeStation(s));
+    expect(g.history.undoLabel).toBe(STR.history.demolished(s.name));
+    expect(t.schedule).toBe(schedule);
+    expect(t.schedule.map((p) => p.stationId)).toEqual([s.id, g.depot.id]);
+    expect(t.jobs).toBe(jobs);
+    expect(g.builder.stationById(s.id)).toBeUndefined();
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.stationById(t.schedule[0].stationId)).toBe(s);
+  });
+
+  it('a train at the platform holds a station, and the refusal names it', () => {
     const g = game();
     line(g, 10, ROW, 30);
     const s = g.commands.act(() => g.builder.placeStation(15, ROW - 1, 'farm'))!;
     const t = train(g, 28);
-    t.jobs = [{ contractId: 1, originId: s.id, destId: g.depot.id } as (typeof t.jobs)[number]];
-    expectRefused(g, 'undo', STR.history.routedTo(t.name, s.name));
-    t.jobs = [];
+    // a stop or a job there is no train in the way, a train at the platform is
+    t.schedule = [defaultStop(s.id), defaultStop(g.depot.id)];
     s.occupants.add(t.id);
-    expectRefused(g, 'undo', STR.history.routedTo(t.name, s.name));
+    expectRefused(g, 'undo', STR.history.trainAt(t.name, s.name));
     s.occupants.clear();
     expect(g.history.undo()).toEqual({ ok: true });
-  });
-
-  it('a redone demolish asks the same', () => {
-    const g = game();
-    line(g, 10, ROW, 30);
-    const s = g.builder.placeStation(15, ROW - 1, 'farm')!;
+    expect(g.history.redo()).toEqual({ ok: true });
     g.commands.act(() => g.builder.removeStation(s));
-    g.history.undo();
-    const t = train(g, 28);
-    t.schedule = [defaultStop(s.id), defaultStop(g.depot.id)];
-    expectRefused(g, 'redo', STR.history.routedTo(t.name, s.name));
+    expect(g.history.undo()).toEqual({ ok: true });
+    s.occupants.add(t.id);
+    expectRefused(g, 'redo', STR.history.trainAt(t.name, s.name));
+    s.occupants.clear();
+    expect(g.history.redo()).toEqual({ ok: true });
   });
 
   it('short goods refuse an undo, naming what is short', () => {
@@ -1073,7 +1092,6 @@ describe('a contract on a station that leaves', () => {
       originId: a.id,
       destId: b.id,
       payout: 500,
-      tickets: 0,
       duration: 5000,
       expires: g.clock.time + 5000,
       acceptedAt: g.clock.time,

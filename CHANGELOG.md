@@ -61,6 +61,16 @@ Asset redesign to the art direction in `docs/art-direction/README.md`, plus the 
   file is missing the synthesized ambient loop takes over, so a build without it still has music.
 - Music and effects volume sliders in the title screen and the pause menu, alongside the existing
   settings screen sliders. They drive the live bus and travel with the settings.
+- All eight tracks play in every age with no set of its own. Pastoral Pulse opens the game once a
+  tab; a reload, a restart or a new game goes on with the shuffled rounds, not starting with what
+  played last.
+- A now-playing widget in the top bar, left of the weather: back, pause, forward and a rolling
+  title. Its pause holds the music alone.
+- An Audio screen of its own under Settings, in place of the Settings tab and the sliders in the
+  menus: Master over Music and Effects, Effects over Weather, Environment, UI, Building, Trains and
+  Events, each with a slider and a switch that keeps its level. Ambience now passes through
+  Effects; the defaults and the migration of an old settings file keep every sound as loud as it
+  was.
 
 Atlas frame counts (2,839), atlas dimensions and anchors are unchanged, generation cost is
 unchanged on the same machine, curve compatibility verdicts are byte-identical and map generation
@@ -101,6 +111,23 @@ is untouched. Evidence and commands: `scratchpad/README.md`.
   and each warehouse keeps its own goods. Saves now carry a `stores` part in place of `stockpile`.
 - The `stockpileCap` tuning is gone; the depot, warehouse and Townhouse caps are tuned on their own,
   and a change to a cap or a reach on the Tuning screen holds at once.
+
+### The gacha's leftovers go
+
+- Crafting replaced the gacha in v0.8.0; now the rest of it is gone: the Gacha screen, banners and
+  rates, pulls, the `gacha` content table and its Content editor tab.
+- Tickets are gone everywhere: the starting tickets and their tuning row, contract rewards, the
+  daily bonus, the age milestone, the debug panel's button, the level editor's field and the ticket
+  part of the refund for a save that held content the game no longer has. Nothing replaces them,
+  and contracts pay the same money. The Cheat row stays.
+- The title screen says "Rails, contracts and industry".
+- Saves are format v24. A v23 save loads without a note and lists as before: its gacha and tickets
+  are dropped and nothing refunds them. An older save is told only of its other steps.
+- A stored `gacha` table is passed over without a warning, a stored contracts edit keeps applying
+  without its ticket fields until the shipped table next changes, a bundle exported with them comes
+  in without them, and a level file with `start.tickets` loads and is written without it.
+- A vehicle no longer keeps duplicate points (`dupes`): nothing read them since copies stopped
+  merging, and the step from v23 drops them.
 
 ## v0.8.0
 

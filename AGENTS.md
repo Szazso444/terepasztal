@@ -161,6 +161,8 @@ One step along +tx is half a tile right and a quarter tile down.
 Rolling stock is drawn at `FACINGS = 48` headings, 7.5° apart, but only `DRAWN_FACINGS` (25 of
 them) have sprites: the renderer mirrors a drawn facing to cover its partner, and
 `residualRotation` turns the sprite the rest of the way, at `ROTATION_SHARE` of the remainder.
+A vehicle with a rendered model (`gear.json`, `locoFit.json`) instead has its own sprite sets at
+`spriteFacings` headings (192 today), on WebP pages loaded per vehicle.
 Bodies are rigid and never change length (`src/sim/body.ts`). These constants are a contract
 between Gameplay, Rendering and Art: changing one changes atlas frame counts.
 
@@ -184,6 +186,15 @@ Test the invariant, not the current output. The registry test in `save.test.ts` 
 fails when someone adds a version and forgets the step, which is the actual failure mode. The
 standard for deterministic tests is `docs/process/verification.md`; the ownership test in
 `tools/agents/ownership.test.mjs` follows the same idea for the organisation itself.
+
+A script that opens the game in headless Chrome (a render, a screenshot, a measurement) runs it on
+the real GPU, never on SwiftShader. SwiftShader draws WebGL on the CPU: two such scripts held all
+16 threads of the author's machine at 100%, and the same WebGL test ran 28 times faster on the
+GPU. Playwright takes `args: ['--use-angle=d3d11', '--ignore-gpu-blocklist', '--enable-gpu']` and
+`ignoreDefaultArgs: ['--enable-unsafe-swiftshader', '--disable-gpu']`; do not pass
+`--use-gl=swiftshader` or `--enable-unsafe-swiftshader`. Read `UNMASKED_RENDERER_WEBGL` once to
+see the GPU's name, and close the browser when the shot is taken. A GPU render and a SwiftShader
+render can differ by a few pixels, so never compare one with the other.
 
 ## Conventions
 

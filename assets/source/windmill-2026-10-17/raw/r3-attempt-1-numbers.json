@@ -1,0 +1,87 @@
+{
+  "returned": [1254, 1254],
+  "box": [346, 305, 908, 1084],
+  "footWidth": 563,
+  "footCentre": [627, 943.25],
+  "scale": 13.096068853221679,
+  "widthOverShort": 0.44896331738437,
+  "camera": {
+    "off": false,
+    "by": 0.8,
+    "elevation": 0.8,
+    "turn": 0,
+    "ratio": 0.512,
+    "looking": 30.8
+  },
+  "apexOverW": 1.1283303730017762,
+  "stubSlope": 0.46551724137931033,
+  "stubDirectionPass": true,
+  "stubSpan": 63.97655820689325,
+  "hubTarget": [16, -34],
+  "hubFromAnchorWorld": [16.11170515097691, -33.64630106571936],
+  "hubOffset": [0.1117051509769098, 0.3536989342806365],
+  "hubDistance": 0.3709190974674022,
+  "doorPosition": 0.27175843694493784,
+  "doorHeight": 0.28596802841918295,
+  "pixels": {
+    "timber": 384,
+    "white": 4316,
+    "amber": 0
+  },
+  "check": {
+    "ok": true,
+    "problems": [],
+    "notes": ["placed by its outline: no straight wall base was found"],
+    "fit": {
+      "method": "outline",
+      "sure": [false, false],
+      "measured": [0.5, -0.5],
+      "slopes": [0.5, -0.5],
+      "base": {
+        "w": [346, 1000.5],
+        "s": [629, 1142],
+        "e": [906, 1003.5]
+      },
+      "scale": 0.8046,
+      "vertical": 1,
+      "shear": 0,
+      "cx": 626,
+      "cy": 1002,
+      "box": {
+        "left": 286.7,
+        "top": 271.2,
+        "right": 738.9,
+        "bottom": 898
+      },
+      "camera": null,
+      "area": 326260
+    }
+  },
+  "tests": {
+    "camera": true,
+    "tower": true,
+    "stub": true,
+    "hub": true,
+    "doorPosition": false,
+    "doorHeight": false,
+    "timber": false,
+    "amber": true,
+    "white": false,
+    "check": true,
+    "eye": true,
+    "position": false
+  },
+  "eye": {
+    "view": 3,
+    "apexTip": 308,
+    "stub": [
+      [751, 486],
+      [809, 513]
+    ],
+    "hub": [838, 555],
+    "hubBox": [795, 495, 883, 613],
+    "door": [750, 903, 810, 1064],
+    "pass": true,
+    "notes": "Round tower, slate cap/plain tip, right-face door/window/stub, no sails, ground, plinth or other objects; left lighter than right."
+  }
+}

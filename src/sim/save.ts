@@ -19,6 +19,7 @@ import { CHUNK_TILES } from './expand';
 import { generatorOf, groundOf, lacksGround, worldWithinBound } from './ground';
 import { wrapRotation } from './rotation';
 import { alertSettingsFrom, defaultAlertSettings, type AlertSettings } from './alerts';
+import { DEFAULT_VOLUMES, type Volumes } from '../engine/audioGroups';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
@@ -35,7 +36,7 @@ export type WorldSpec =
     }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 23;
+export const SAVE_VERSION = 24;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -61,12 +62,13 @@ export { SETTINGS_KEY };
 export interface SaveParts {
   seed: number;
   clock: { time: number; speedIndex: number };
-  /** v9: `tier` is the age index; `earned` the lifetime income (reputation dropped) */
+  /**
+   * v9: `tier` is the age index; `earned` the lifetime income (reputation dropped); v24: the
+   * tickets, and `granted`, the ages that had paid some, dropped
+   */
   economy: {
     money: number;
-    tickets: number;
     tier: number;
-    granted: number[];
     earned?: number;
     /** pre-v9 field, ignored */
     reputation?: number;
@@ -89,7 +91,6 @@ export interface SaveParts {
   trains: unknown[];
   contracts: unknown;
   inventory: unknown;
-  gacha: unknown;
   camera: { x: number; y: number; zoomIndex: number };
   lastDay: number;
   /** v2: signals, services and houses [x, y, id, rot] (rot below the decor's `rotations`) */
@@ -147,7 +148,6 @@ type SaveCore =
   | 'trains'
   | 'contracts'
   | 'inventory'
-  | 'gacha'
   | 'camera'
   | 'lastDay';
 
@@ -160,7 +160,10 @@ export interface SaveGame extends Pick<SaveParts, SaveCore>, Partial<Omit<SavePa
    * alone: never read, never written, and an old file's copy goes on its next save.
    */
   settings?: Settings;
-  /** set on load when the file was written by another format version (not persisted) */
+  /**
+   * set on load when the file was written by another format version and the player is told so: a
+   * file only quiet steps upgraded (`Migration.quiet`) has none (not persisted)
+   */
   loadedFrom?: number;
   /** what the migration steps filled in (not persisted) */
   migrationNotes?: string[];
@@ -168,15 +171,15 @@ export interface SaveGame extends Pick<SaveParts, SaveCore>, Partial<Omit<SavePa
   [extra: string]: unknown;
 }
 
-export interface Settings {
-  master: number;
-  sfx: number;
-  music: number;
+export interface Settings extends Volumes {
+  /** retired: a settings file that has it is migrated into `sfx` and `soundGroups` */
   ambient?: number;
   edgeScroll: boolean;
   autosave: boolean;
   dayNight: boolean;
   smoke: boolean;
+  /** chimney smoke, the quarry crane's load and the windmill's sails move; off, a still picture */
+  buildingLife: boolean;
   showFps: boolean;
   weather: boolean;
   /** the language of the text, read as the page loads (`LANGUAGE`) */
@@ -222,15 +225,45 @@ function retireAutoContracts(s: Partial<Settings>) {
     s.contractPolicy = uniformContractPolicy(s.autoContracts === false ? 'prompt' : 'accept');
   delete s.autoContracts;
 }
+/** What `ambient` held when a settings file had none: the default it had. */
+const OLD_AMBIENT = 0.35;
+/**
+ * Turn the retired `ambient` volume into the volume groups, at the same loudness. Effects played
+ * at `sfx`, and ambience at `ambient` beside it; now everything is under Effects, each group its
+ * share of it. `sfx` stays Effects while it is the louder, as it is by default. An `ambient` above
+ * it takes that place, as no group goes over 100%: otherwise the wind would drop.
+ */
+function groupVolumes(s: Partial<Settings>) {
+  const ambient = s.ambient ?? OLD_AMBIENT;
+  const old = s.sfx !== undefined || s.ambient !== undefined;
+  delete s.ambient;
+  if (!old || isRecord(s.soundGroups)) return;
+  const sfx = s.sfx ?? DEFAULT_VOLUMES.sfx;
+  const effects = Math.max(sfx, ambient);
+  const { weather } = DEFAULT_VOLUMES.soundGroups;
+  // nothing to take a share of: the groups stand at their defaults for when Effects comes back up
+  const share = (level: number, silent: number) => (effects > 0 ? level / effects : silent);
+  s.sfx = effects;
+  s.soundGroups = {
+    weather: share(ambient, weather),
+    environment: share(ambient, weather),
+    ui: share(sfx, 1),
+    building: share(sfx, 1),
+    trains: share(sfx, 1),
+    events: share(sfx, 1),
+  };
+}
 /**
  * Bring stored settings to the current shape. Runs on the stored object before defaults are
- * merged in, so a missing policy is still visible. The retired `autoContracts` flag becomes a
- * per-rarity policy; then, once, settings written while every offer was accepted by default move
- * to the new default: a policy that accepts every rarity (a missing entry read as accept then),
- * or none at all, becomes `DEFAULT_CONTRACT_POLICY` for every rarity. Any other policy is the
- * player's own choice and stays, its missing entries filled with the accept they meant.
+ * merged in, so a missing policy is still visible. The retired `ambient` volume becomes the volume
+ * groups, and the retired `autoContracts` flag a per-rarity policy; then, once, settings written
+ * while every offer was accepted by default move to the new default: a policy that accepts every
+ * rarity (a missing entry read as accept then), or none at all, becomes `DEFAULT_CONTRACT_POLICY`
+ * for every rarity. Any other policy is the player's own choice and stays, its missing entries
+ * filled with the accept they meant.
  */
 export function migrateSettings<T extends Partial<Settings>>(s: T): T {
+  groupVolumes(s);
   retireAutoContracts(s);
   const v = s.contractPolicyVersion;
   if (typeof v === 'number' && v >= CONTRACT_POLICY_VERSION) return s;
@@ -247,14 +280,12 @@ export function migrateSettings<T extends Partial<Settings>>(s: T): T {
   return s;
 }
 export const DEFAULT_SETTINGS: Settings = {
-  master: 0.8,
-  sfx: 0.8,
-  music: 0.5,
-  ambient: 0.35,
+  ...DEFAULT_VOLUMES,
   edgeScroll: true,
   autosave: true,
   dayNight: true,
   smoke: true,
+  buildingLife: true,
   showFps: false,
   weather: true,
   language: 'en',
@@ -267,8 +298,13 @@ export const DEFAULT_SETTINGS: Settings = {
 /** One step of the migration chain: brings a save from `from` to `from + 1`. */
 export interface Migration {
   from: number;
-  /** what the step fills in with defaults, shown to the player */
+  /** what the step fills in with defaults, shown to the player unless the step is `quiet` */
   note: string;
+  /**
+   * The player could not tell the step ran: nothing in the game changed for them. It adds no note,
+   * and a file only such steps stand between loads and lists as one of this build's.
+   */
+  quiet?: boolean;
   run(j: SaveGame): void;
 }
 /** The station kinds that were depots when the stores replaced the global stockpile (v21). */
@@ -664,7 +700,37 @@ export const MIGRATIONS: Migration[] = [
       for (const t of j.trains) if (isRecord(t)) t.colour = t.colour ?? 0;
     },
   },
+  {
+    from: 23,
+    note: 'the gacha and its tickets left the game, crafting having replaced them: what the file held of them is dropped and refunded by nothing',
+    quiet: true,
+    run: (j) => {
+      delete j.gacha;
+      const economy: Record<string, unknown> = j.economy;
+      delete economy.tickets;
+      delete economy.granted;
+      if (isRecord(j.contracts)) {
+        delete j.contracts.completedToday;
+        if (Array.isArray(j.contracts.contracts))
+          for (const c of j.contracts.contracts as unknown[]) if (isRecord(c)) delete c.tickets;
+      }
+      if (isRecord(j.inventory) && Array.isArray(j.inventory.items))
+        for (const it of j.inventory.items as unknown[]) if (isRecord(it)) delete it.dupes;
+      if (isRecord(j.rules)) delete (j.rules as Record<string, unknown>).startTickets;
+      const world: unknown = j.world;
+      if (isRecord(world) && isRecord(world.level) && isRecord(world.level.start))
+        delete world.level.start.tickets;
+    },
+  },
 ];
+/**
+ * The oldest format that loads without a word: only quiet steps (`Migration.quiet`) stand between
+ * it and this build, so nothing is told about the file and no list marks it as another format.
+ */
+export const SAVE_QUIET_VERSION = MIGRATIONS.reduce(
+  (oldest, m) => (m.quiet ? oldest : Math.max(oldest, m.from + 1)),
+  SAVE_MIN_VERSION,
+);
 /** Every field of `SaveParts`, once: leaving one out, or naming one it lacks, fails to compile. */
 const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
   seed: true,
@@ -675,7 +741,6 @@ const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
   trains: true,
   contracts: true,
   inventory: true,
-  gacha: true,
   camera: true,
   lastDay: true,
   decor: true,
@@ -787,7 +852,7 @@ export function firstNonFinite(value: unknown): string | null {
 /** The numbers inside the blocks every version since v1 has, checked before migrating. */
 const CORE_NUMBERS: Record<string, readonly string[]> = {
   clock: ['time', 'speedIndex'],
-  economy: ['money', 'tickets', 'tier'],
+  economy: ['money', 'tier'],
   camera: ['x', 'y', 'zoomIndex'],
 };
 /** The lists every version since v1 has. */
@@ -961,11 +1026,14 @@ export function migrate(j: SaveGame): SaveGame {
       continue;
     }
     step.run(j);
-    const note = LANGUAGE === 'hu' ? (HU_MIGRATIONS[step.from] ?? step.note) : step.note;
-    notes.push(`v${step.from}→v${step.from + 1}: ${note}`);
+    if (!step.quiet) {
+      const note = LANGUAGE === 'hu' ? (HU_MIGRATIONS[step.from] ?? step.note) : step.note;
+      notes.push(`v${step.from}→v${step.from + 1}: ${note}`);
+    }
     j.version = step.from + 1;
   }
-  if (from !== SAVE_VERSION) {
+  // a file from a newer build says so; an older one only when a step has something to tell
+  if (from > SAVE_VERSION || notes.length) {
     j.loadedFrom = from;
     j.migrationNotes = notes;
   }
@@ -993,12 +1061,20 @@ export function clearSave() {
     /* ignore */
   }
 }
+/** The browser asks for less motion; false where nothing can say. */
+function prefersReducedMotion() {
+  return globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+}
 /** The defaults overlaid by `stored`, sharing no object with `DEFAULT_SETTINGS`. */
 function settingsFrom(stored: Partial<Settings>): Settings {
   const s = { ...DEFAULT_SETTINGS, ...stored };
   if (s.contractPolicy) s.contractPolicy = { ...s.contractPolicy };
+  s.soundGroups = { ...DEFAULT_VOLUMES.soundGroups, ...stored.soundGroups };
+  s.soundOff = { ...stored.soundOff };
   s.alerts = alertSettingsFrom(stored.alerts);
   s.language = languageOf(stored.language);
+  // Building life starts off for a player who asked for less motion; a stored choice stands
+  if (typeof stored.buildingLife !== 'boolean') s.buildingLife = !prefersReducedMotion();
   return s;
 }
 export function readSettings(): Settings {

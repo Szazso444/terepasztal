@@ -8,6 +8,7 @@ export type TitleId =
   | 'saved'
   | 'levels'
   | 'settings'
+  | 'audio'
   | 'controls'
   | 'tuning'
   | 'content'
@@ -69,6 +70,7 @@ export function titleEntries(s: TitleState): TitleEntry[] {
       tip: STR.menu.levelsHint,
     },
     { id: 'settings', label: STR.topbar.settings, icon: 'gear' },
+    { id: 'audio', label: STR.settings.audio, icon: 'speaker' },
     { id: 'controls', label: STR.menu.controls, icon: 'keys', tip: STR.menu.controlsHint },
     { id: 'tuning', label: STR.menu.tuning, icon: 'slider' },
     {

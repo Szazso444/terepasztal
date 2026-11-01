@@ -9,13 +9,22 @@ import {
   formRow,
   note,
   page,
+  segmented,
   toggleSwitch,
+  well,
   type FootSpec,
 } from './kit';
 import type { FrameTabs, Screen } from './modal';
 import type { Confirm } from './menu';
 import { contractTitle, type ContractBoard, type Contract } from '../sim/contracts';
 import type { Builder } from '../sim/build';
+import {
+  CONTRACT_RARITIES,
+  contractPolicyFor,
+  uniformContractPolicy,
+  type ContractPolicy,
+  type Settings,
+} from '../sim/save';
 import type { GameClock } from '../sim/time';
 import type { AtlasRegistry } from '../engine/atlas';
 import { cargoDef } from '../sim/cargo';
@@ -31,15 +40,17 @@ import {
   recentContracts,
   statusTone,
   tabOfStatus,
+  tabOnReturn,
   timeIsLow,
   type AutoState,
   type ContractTab,
 } from './contractsView';
 
 /**
- * Contracts: the offers to accept, the ones being worked and the last ones finished, one tab each.
- * A card is built when its contract changes state; the clock, the delivery and the deadline bars
- * move in place, so a button under the pointer is never swapped away between press and release.
+ * Contracts: the offers to accept, the ones being worked and the last ones finished, one tab each,
+ * and what becomes of a new offer of each rarity on the Settings tab. A card is built when its
+ * contract changes state; the clock, the delivery and the deadline bars move in place, so a button
+ * under the pointer is never swapped away between press and release.
  */
 export class ContractsScreen implements Screen {
   /**
@@ -47,11 +58,13 @@ export class ContractsScreen implements Screen {
    * set by the game
    */
   autoAccept: { state: () => AutoState; set: (v: boolean) => void } | null = null;
-  /** set by the game: open Settings on its Contracts tab, over this screen */
-  openPolicies: (() => void) | null = null;
+  /** set by the game: the settings the Settings tab changes, and how a change is applied */
+  policy: { settings: Settings; onChange: () => void } | null = null;
   readonly id = 'contracts';
   readonly title = STR.contracts.title;
   readonly icon = 'scroll';
+  /** the Settings tab's controls, as they were in Settings: Tab goes round them */
+  readonly formKeys = true;
   readonly root = page();
   /** set by the game: name of the train working a contract (null: none in service) */
   trainName: ((id: number) => string | null) | null = null;
@@ -83,6 +96,7 @@ export class ContractsScreen implements Screen {
   }
   onClose() {
     this.focused = null;
+    this.tab = tabOnReturn(this.tab);
   }
   /** Pick a contract out: its tab opens and its card is lit and in view. Open the screen after. */
   focusContract(id: number) {
@@ -114,6 +128,7 @@ export class ContractsScreen implements Screen {
           offers: STR.contracts.offers,
           active: STR.contracts.active,
           history: STR.contracts.history,
+          settings: STR.contracts.settingsTab,
         },
       ),
       current: this.tab,
@@ -129,8 +144,8 @@ export class ContractsScreen implements Screen {
     return { note: STR.contracts.stats(s.completed, s.failed) };
   }
 
-  /** Switch to a tab from inside (the empty Active tab points at the offers). */
-  private show(tab: ContractTab) {
+  /** Stand on a tab: the empty Active tab points at the offers, Contract settings at Settings. */
+  show(tab: ContractTab) {
     this.tab = tab;
     this.scroll.top();
     this.build(true);
@@ -143,6 +158,7 @@ export class ContractsScreen implements Screen {
 
   // ---------------------------------------------------------------- what the tab is made of
   private contractsOf(tab: ContractTab): Contract[] {
+    if (tab === 'settings') return [];
     if (tab === 'offers') return this.board.offers;
     if (tab === 'active') return activeByDeadline(this.board.active);
     return recentContracts(this.board.contracts);
@@ -153,6 +169,8 @@ export class ContractsScreen implements Screen {
    * with which train, and whether Accept is allowed.
    */
   private stateKey(list: readonly Contract[]): string {
+    // the Settings tab changes by its own controls alone
+    if (this.tab === 'settings') return this.tab;
     return JSON.stringify([
       this.tab,
       this.board.activeFull(),
@@ -189,10 +207,11 @@ export class ContractsScreen implements Screen {
   }
 
   private draw(list: readonly Contract[]): HTMLElement[] {
+    if (this.tab === 'settings') return this.settingsTab();
     const out: HTMLElement[] = [];
     if (this.tab === 'offers') out.push(...this.offersHead(list.length > 0));
     if (!list.length) {
-      out.push(this.empty());
+      out.push(this.empty(this.tab));
       return out;
     }
     out.push(
@@ -204,13 +223,37 @@ export class ContractsScreen implements Screen {
     return out;
   }
 
-  private empty(): HTMLElement {
-    const kind = emptyKind(this.tab, this.board.canGenerate());
+  private empty(tab: Exclude<ContractTab, 'settings'>): HTMLElement {
+    const kind = emptyKind(tab, this.board.canGenerate());
     const see =
-      this.tab === 'active'
+      tab === 'active'
         ? actionButton(STR.contracts.seeOffers, () => this.show('offers'), { cls: 'small' })
         : null;
     return emptyState({ text: STR.contracts[kind], action: see, icon: 'scroll' });
+  }
+
+  /** One row per rarity: what happens to a new offer of that rarity. */
+  private settingsTab(): HTMLElement[] {
+    const policy = this.policy;
+    if (!policy) return [];
+    const { settings, onChange } = policy;
+    const POLICIES: ContractPolicy[] = ['accept', 'prompt', 'deny'];
+    const rows = CONTRACT_RARITIES.map((r) =>
+      formRow(
+        el('span', { class: `crarity-${r}` }, contractRarityLabel(r), STR.contracts.rarity[r] ?? r),
+        segmented({
+          options: POLICIES.map((p) => ({ id: p, label: STR.settings.policy[p] })),
+          value: contractPolicyFor(settings, r),
+          onChange: (id) => {
+            if (!settings.contractPolicy)
+              settings.contractPolicy = uniformContractPolicy(contractPolicyFor(settings, r));
+            settings.contractPolicy[r] = id as ContractPolicy;
+            onChange();
+          },
+        }),
+      ),
+    );
+    return [well(STR.settings.contractPolicy, ...rows, note(STR.settings.contractPolicyHint))];
   }
 
   /** The auto-accept row on top of the offers, and the reason Accept is off when it is. */
@@ -225,7 +268,7 @@ export class ContractsScreen implements Screen {
         (v) => void this.setAuto(auto, v),
       );
       sw.title = STR.contracts.autoHint;
-      const link = actionButton(STR.contracts.perRarity, () => this.openPolicies?.(), {
+      const link = actionButton(STR.contracts.perRarity, () => this.show('settings'), {
         cls: 'small',
         icon: 'gear',
         title: STR.contracts.perRarityHint,
