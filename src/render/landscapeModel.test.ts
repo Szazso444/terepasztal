@@ -549,7 +549,7 @@ describe('on generated worlds', () => {
   // ids holds it (its biome its climate, no climate plane) paints every tile as before. Three
   // worlds, which between them hold every tile the check below asks for: each new world plans the
   // rivers of the chunks around its start (#341), most of a tenth of a second.
-  const WORLD_SEEDS = [20260912, 33, 37];
+  const WORLD_SEEDS = [20260912, 55, 37];
   const SIZE = { w: 48, h: 48 };
 
   // three generated worlds, every tile painted five ways: about 1.2 s alone
