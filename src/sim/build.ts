@@ -691,9 +691,12 @@ export class Builder {
     }
     // Rock and mountain take track only as the continuation of a line, so a mountain line is
     // always drawn up from its foot or from track already on the mountain. The ground under it
-    // is asked next, as anywhere.
+    // is asked next, as anywhere. Nothing climbs inside, so a dug tile asks none of this: a
+    // junction can be laid in a mountain before the line reaches it.
     if (
-      tiles.some((t) => stone(terrainAt(this.map, t.x, t.y))) &&
+      tiles.some(
+        (t) => stone(terrainAt(this.map, t.x, t.y)) && !this.underground.isDug(t.x, t.y),
+      ) &&
       !continuesLine(this.track, probe, tiles)
     )
       return { ok: false, cost: {}, reason: STR.build.mountainLine };

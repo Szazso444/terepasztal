@@ -39,6 +39,7 @@ import { STR } from '../strings';
 import { applyTileRepairs, repairBuiltTiles, type BuiltObjects } from '../engine/loadRepair';
 import { onRails } from './mountainTrack';
 import { storeWith } from '../testing/storeFixtures';
+import { drillLine } from './underground';
 
 /** An economy in the Electric Age: Main and Trunk Line are open. */
 const electricAge = () => Object.assign(new Economy(), { tier: 2 });
@@ -883,6 +884,42 @@ describe('track inside', () => {
         reason: STR.build.overTunnel,
       });
     expect(under.isDug(23, 23)).toBe(true);
+  });
+
+  it('a first piece on a dug tile lays in a stone mountain as in a raised grass hill', () => {
+    let laid = 0;
+    for (const { item, rot } of PIECES) {
+      if (!drillLine(item)) continue;
+      const where = what(item, rot),
+        tiles = footprintOf(PLATEAU.x, PLATEAU.y, item.kind, rot, item.cls);
+      for (const w of [field(), block()]) {
+        for (const t of tiles) expect(w.builder.underground.dig(t.x, t.y, 0)).toBe(true);
+        w.builder.insideMode = true;
+        const c = w.builder.checkTrack(PLATEAU.x, PLATEAU.y, item, rot);
+        expect(c.ok, `${where}: ${c.reason}`).toBe(true);
+        expect(w.builder.placeTrack(PLATEAU.x, PLATEAU.y, item, rot), where).toBe(true);
+        laid++;
+      }
+    }
+    expect(laid).toBeGreaterThan(40);
+  });
+
+  it('on the surface of a mountain the first piece still has to continue a line', () => {
+    for (const at of [FOOT, BANK, PLATEAU]) {
+      const w = field();
+      // a tunnel next door changes nothing up here, with the Drill on or off
+      w.builder.underground.dig(at.x, at.y + 1, 0);
+      expect(w.builder.checkTrack(at.x, at.y, STRAIGHT, 1), `${at.x}`).toMatchObject({
+        ok: false,
+        reason: STR.build.mountainLine,
+      });
+    }
+    // and a wide piece with a tile out on the stone does not get in by its dug tiles
+    const w = field(),
+      tiles = footprintOf(PLATEAU.x, PLATEAU.y, 'curve', 1, 'branch');
+    for (const t of tiles.slice(1)) w.builder.underground.dig(t.x, t.y, 0);
+    w.builder.insideMode = true;
+    expect(w.builder.checkTrack(PLATEAU.x, PLATEAU.y, CURVE, 1).reason).toBe(STR.build.notDug);
   });
 
   it('a curve inside asks nothing of the ground over it', () => {
