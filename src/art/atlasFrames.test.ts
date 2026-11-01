@@ -5,8 +5,9 @@
  *
  * `track` is compared by key set only: `AtlasBuilder.add` trims each frame to its ink, and the
  * stub canvas has none, so every track frame comes out 1x1 at one constant anchor (OX * R,
- * OY * R). That leaves track frame sizes and anchors unpinned; they stay on
- * `node scratchpad/atlas-frames.mjs <label>` (needs a browser). Also unpinned are frames only a
+ * OY * R). `tunnel` is painted on canvases too and comes out the same way; its canvas sizes and
+ * anchors are pinned in `tunnelArt.test.ts`. That leaves track frame sizes and anchors unpinned;
+ * they stay on `node scratchpad/atlas-frames.mjs <label>` (needs a browser). Also unpinned are frames only a
  * shipped `public/assets/<group>.png` pair carries: this checks what the generators emit.
  *
  * `rolling` and `wagons` follow content, and a frame size is the trimmed ink box, so a new body,
@@ -33,7 +34,7 @@ const RECORD = [
 ];
 const UPDATE = process.env.UPDATE_ATLAS_FRAMES === '1';
 /** Groups whose frames are pinned by key only (see the header). */
-const KEYS_ONLY = new Set(['track']);
+const KEYS_ONLY = new Set(['track', 'tunnel']);
 /** Groups whose keys all end in `_f<facing>`, one family per sprite. */
 const FACED = ['rolling', 'wagons'];
 const SHOWN = 30;
@@ -59,7 +60,9 @@ const context = new Proxy(
     get: (_, name) =>
       name === 'getImageData'
         ? (_x: number, _y: number, w: number, h: number) => new FakeImageData(w, h)
-        : () => undefined,
+        : name === 'createLinearGradient'
+          ? () => ({ addColorStop: () => undefined })
+          : () => undefined,
     set: () => true,
   },
 );

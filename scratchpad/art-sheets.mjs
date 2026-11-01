@@ -22,6 +22,7 @@ const GROUPS = {
     ),
   bridges: (all) =>
     all.filter((k) => /structures\/(span_[a-z]+_1_3_[0-2]_[0-3]_(deck|rail)|bridge_)/.test(k)),
+  tunnel: (all) => all.filter((k) => k.startsWith('tunnel/')),
   icons: (all) => all.filter((k) => /^(icons|people|fx)\//.test(k)),
 };
 
