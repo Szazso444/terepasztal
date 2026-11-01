@@ -144,7 +144,7 @@ const EN = {
     /** why an undo or a redo cannot be done */
     builtOver: 'Something else has been built there since.',
     trainOn: (train: string) => `${train} stands on the track.`,
-    routedTo: (train: string, station: string) => `${train} is routed to ${station}.`,
+    trainAt: (train: string, station: string) => `${train} is at the platform of ${station}.`,
     contractNoTrain: (contract: string) => `No train can take up ${contract} again.`,
     short: (store: string, what: string) => `${store} is short of ${what}.`,
   },
@@ -1953,7 +1953,7 @@ const EN = {
     size: 'Size',
     description: 'Description shown in the level list',
     start: 'Player start',
-    startTier: 'Start age (0 steam, 1 diesel, 2 electric, 3 nuclear, 4 magnetic, 5 hyper)',
+    startTier: 'Start age',
     brush: 'Terrain brush',
     brushHint:
       'Pick a terrain in the toolbar, drag to paint. Painting clears anything built on the tile.',

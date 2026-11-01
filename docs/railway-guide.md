@@ -30,8 +30,8 @@ is done, and a building removed during its upgrade is gone with the work. The De
 instant and free.
 
 Houses hold 20, 60, 140, 300, 520 and 800 residents at levels 1–6. Select a completed House
-and use **Enlarge** to pay for the next level. Its appearance progresses from house to
-apartments, high-rise and skyscraper; levels 5 and 6 keep the skyscraper. Residents fill
+and use its **Upgrade** button to pay for the next level. Its appearance progresses from house
+to apartments, high-rise and skyscraper; levels 5 and 6 keep the skyscraper. Residents fill
 available homes while food is available; the game does not construct free housing or grant free
 upgrades. A sliding 6×6 area with at least 200 town residents gains city paving and roads.
 These are cosmetic and do not replace rails.
@@ -69,10 +69,10 @@ tanks. Normal service has the ordinary resource cost.
 
 ## Semaphores as block boundaries
 
-Choose **Utility → Semaphore** and place a post on track. Rotate with **R** before placement,
-or select it afterwards and use **Rotate direction**. The panel names the governed travel
-direction and highlights the protected stretch. **Signals** in the top bar's Fleet menu opens the
-same practical guidance inside the game.
+Choose **Tools → Track → Semaphore** in the build bar and place a post on track. Rotate with
+**R** before placement, or select it afterwards and use **Rotate direction**. The panel names
+the governed travel direction and highlights the protected stretch. **Signals** in the top bar's
+Fleet menu opens the same practical guidance inside the game, with the signalling level.
 
 ```text
 travel →  A ═════ block A–B ═════ B ═════ block B–C ═════ C
@@ -93,8 +93,8 @@ Posts operate in **Automatic** mode as soon as they are placed. Track without po
 ordinary traffic reservations.
 
 For two-way single track, provide passing loops long enough for the entire consist. Put posts
-on both approaches, facing into the shared line. **Token working** in Settings gives one
-train ownership of a shared plain section until its rear clears. Semaphores alone cannot
+on both approaches, facing into the shared line. The **Token** level, chosen in Fleet › Signals,
+gives one train ownership of a shared plain section until its rear clears. Semaphores alone cannot
 provide the missing space needed for two oncoming trains to pass. At a switch the selected
 post's preview follows the straight continuation; a train checks the branch on its actual path.
 

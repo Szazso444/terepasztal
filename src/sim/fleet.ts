@@ -745,14 +745,9 @@ export class Fleet {
     const keys = new Set(tiles.map((t) => t.y * this.map.w + t.x));
     return this.trains.find((t) => t.occupancyKeys(this.map.w).some((k) => keys.has(k)));
   }
-  /** The train that needs a station: one at its platforms, or with a stop or a job there. */
-  trainBoundFor(s: Station): Train | undefined {
-    return this.trains.find(
-      (t) =>
-        s.occupants.has(t.id) ||
-        [...t.schedule, ...t.program].some((p) => p.stationId === s.id) ||
-        (t.job ? [t.job, ...t.jobs] : t.jobs).some((j) => j.originId === s.id || j.destId === s.id),
-    );
+  /** The train standing at a station's platform now. A stop or a job there still to come is not. */
+  trainAt(s: Station): Train | undefined {
+    return this.trains.find((t) => s.occupants.has(t.id));
   }
   /** Is `tile` under any train other than `self`? Rebuilt each tick from car poses. */
   occupied(x: number, y: number, self: number) {

@@ -59,7 +59,7 @@ the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
   stations, station levels and contract templates; the top bar shows the current age and hovering
   it lists the goals with progress bars.
 - **Works**: Charcoal Kiln (wood → coal), Stone Grinder (stone → iron), Oil Refinery
-  (coal + water → oil), Power Plant (coal or oil + wood + water → power). The Market (`M`) buys
+  (coal + water → oil), Power Plant (coal or oil + wood + water → power). The Market (`K`) buys
   and sells any resource for money; fuel prices (oil, diesel, crude) wander up to ±40 % on a slow
   daily walk.
 - **Production chain** (picked when a new game starts, stored in the save): **Simple** is the
@@ -115,15 +115,17 @@ the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
 
 ## Controls
 
-| Action   | Keys                                                                                                            |
-| -------- | --------------------------------------------------------------------------------------------------------------- |
-| Pan      | WASD / arrows / middle-drag / edge scroll                                                                       |
-| Zoom     | mouse wheel (0.5x-2x); zoom out past 0.5x opens the overview                                                    |
-| Overview | Tab (Esc, scroll in or click a station/train to return)                                                         |
-| Build    | toolbar buttons, `R` rotate (track and signals), drag to lay straights, right-click / Delete remove, Esc cancel |
-| Undo     | Ctrl+Z undo, Ctrl+Y or Ctrl+Shift+Z redo, or the buttons beside the title                                       |
-| Time     | Space pause, `1` `2` `3` speed                                                                                  |
-| Screens  | `F` depot, `C` contracts, `G` craft, `V` roster, `M` market, `` ` `` debug                                      |
+| Action   | Keys                                                                                                                                |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Pan      | WASD / arrows / middle-drag / edge scroll                                                                                           |
+| Zoom     | mouse wheel (0.5x-4x); zoom out past 0.5x opens the overview                                                                        |
+| Overview | `M` toggles it (Esc, scroll in or click the map to return); `R` records stops for the picked train, `Enter` finishes                |
+| Build    | `1`-`5` open a category, `1`-`9` pick an item, `Tab` / `Shift+Tab` next / previous item, `Q` `E` type, `Shift+Q` `Shift+E` category |
+| Place    | drag to lay straights, `R` turn, `U` / `Shift+U` upgrade / downgrade track                                                          |
+| Remove   | `X` demolish, right-click / Delete remove, Esc close the tool                                                                       |
+| Undo     | Ctrl+Z undo, Ctrl+Y or Ctrl+Shift+Z redo, or the buttons in the top bar                                                             |
+| Time     | Space pause, `+` `-` faster / slower, or the speed buttons in the top bar                                                           |
+| Screens  | `F` depot, `C` contracts, `G` craft, `V` roster, `K` market, `` ` `` debug; Esc closes the top one                                  |
 
 ## Layout
 
