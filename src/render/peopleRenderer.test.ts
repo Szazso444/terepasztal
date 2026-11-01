@@ -5,13 +5,13 @@ import { generatePeopleAtlas } from '../art/people';
 import { AtlasRegistry, type AtlasImage, type FrameInfo } from '../engine/atlas';
 import { depthKey, tileToWorld } from '../engine/iso';
 import { Rng } from '../engine/rng';
-import type { PeopleSim, Person } from '../sim/people';
+import { PROFESSIONS, type PeopleSim, type Person } from '../sim/people';
 import { forAll, SEEDS } from '../testing/property';
 import { PROP_KINDS } from '../world/chunks';
 import { emptyMap } from '../world/mapgen';
 import { Terrain, type GameMap, type PropInstance, type PropKind } from '../world/tiles';
 import { PERSON_PX } from './assetScale';
-import { PeopleRenderer } from './peopleRenderer';
+import { PeopleRenderer, STEP_TILES } from './peopleRenderer';
 import { GROUND_COVER } from './walkerGround';
 import { WorldRenderer } from './worldRenderer';
 
@@ -37,8 +37,29 @@ function frame(w: number, h: number, anchorY: number): FrameInfo {
 
 /** A walker frame's size and anchor (people/walker_*: 6 x 12, feet at 11). */
 const WALKER_FRAME = frame(6, 12, 11 / 12);
-/** An atlas with every key, each a walker frame. */
-const ATLAS = { has: () => true, get: () => WALKER_FRAME } as unknown as AtlasRegistry;
+/** The old walker's keys, which an atlas without a profession's frames falls back to. */
+const isOldWalker = (key: string) => key.startsWith('people/walker_');
+/** An atlas with the old walker's keys, each a walker frame. */
+const ATLAS = { has: isOldWalker, get: () => WALKER_FRAME } as unknown as AtlasRegistry;
+
+/** An atlas of the keys `has` allows, each its own 9 px frame, with the key each texture is for. */
+function keyedAtlas(has: (key: string) => boolean) {
+  const frames = new Map<string, FrameInfo>(),
+    keys = new Map<Texture, string>(),
+    get = (key: string) => {
+      let f = frames.get(key);
+      if (!f) {
+        f = frame(5, 9, 8 / 9);
+        frames.set(key, f);
+        keys.set(f.texture, key);
+      }
+      return f;
+    };
+  return {
+    atlas: { has, get } as unknown as AtlasRegistry,
+    keyOf: (s: Sprite) => keys.get(s.texture),
+  };
+}
 
 /** One walker out of doors at (x, y). */
 function walker(x: number, y: number, state: Person['state'] = 'walk'): Person {
@@ -181,7 +202,7 @@ describe('the size of a walker', () => {
   function drawn(f: FrameInfo, state: Person['state'] = 'walk') {
     const layer = new Container(),
       map = emptyMap(1, W, H),
-      atlas = { has: () => true, get: () => f } as unknown as AtlasRegistry;
+      atlas = { has: isOldWalker, get: () => f } as unknown as AtlasRegistry;
     new PeopleRenderer(atlas, layer, () => 0).update(people(map, [walker(5.3, 6.7, state)]), 0);
     return layer.children[0] as Sprite;
   }
@@ -225,9 +246,9 @@ describe('the size of a walker', () => {
       }),
       ({ heights, states }) => {
         const frames = heights.map((h) => frame(6, h, (h - 1) / h)),
-          // step 0 is the first frame, step 1 the second (peopleRenderer.ts: 5 steps a second)
+          // the old walker has two frames, and a step of STEP_TILES goes to the other one
           atlas = {
-            has: () => true,
+            has: isOldWalker,
             get: (key: string) => frames[key.endsWith('_f1') ? 1 : 0],
           } as unknown as AtlasRegistry,
           layer = new Container(),
@@ -235,6 +256,7 @@ describe('the size of a walker', () => {
           person = walker(5.3, 6.7);
         for (const state of states) {
           person.state = state;
+          if (state !== 'idle') person.x += STEP_TILES;
           drawer.update(people(emptyMap(1, W, H), [person]), 0.2);
           const s = layer.children[0] as Sprite;
           expect(layer.children).toHaveLength(1);
@@ -255,6 +277,147 @@ describe('the size of a walker', () => {
       expect(s.height, key).toBeCloseTo(9, 9);
       expect(s.scale.y, key).toBeCloseTo(9 / h, 9);
     }
+  });
+});
+
+describe('the steps of a walker', () => {
+  const STEP = 'people/passenger_front_walk_f';
+  const every = (key: string) => key.startsWith('people/') && !isOldWalker(key);
+
+  /** A drawer of one walker over an atlas of every profession's frames, and its one sprite. */
+  function walking(person: Person, has: (key: string) => boolean = every) {
+    const { atlas, keyOf } = keyedAtlas(has),
+      layer = new Container(),
+      drawer = new PeopleRenderer(atlas, layer, () => 0),
+      sim = people(emptyMap(1, W, H), [person]);
+    return {
+      /** Draws a frame and says what the walker shows. */
+      draw() {
+        drawer.update(sim);
+        const s = layer.children[0] as Sprite;
+        return { key: keyOf(s), mirrored: s.scale.x < 0, sprite: s };
+      },
+    };
+  }
+
+  /** The frame a walker shows at each of `n` steps of `by` tiles along x. */
+  function framesAlong(by: number, n: number) {
+    const person = walker(1, 5),
+      seen = walking(person),
+      frames: number[] = [];
+    for (let i = 0; i < n; i++) {
+      person.x = 1 + by * i;
+      frames.push(Number(seen.draw().key!.slice(-1)));
+    }
+    return frames;
+  }
+
+  it('walks through its four poses, one every STEP_TILES', () => {
+    const quarter = STEP_TILES / 4;
+    const frames = framesAlong(quarter, 40);
+    // the sum drifts by a rounding error at each pose's edge: read the middle of each pose
+    expect(frames.filter((_, i) => i % 4 === 2)).toEqual([0, 1, 2, 3, 0, 1, 2, 3, 0, 1]);
+  });
+
+  it('keeps its frame while it stands, whatever the time', () => {
+    forAll(
+      (rng) => ({
+        walked: rng.range(0, 1),
+        state: rng.pick<Person['state']>(['idle', 'waiting', 'walk', 'gather']),
+      }),
+      ({ walked, state }) => {
+        const person = walker(1, 5),
+          seen = walking(person);
+        seen.draw();
+        person.x += walked;
+        const stopped = seen.draw().key;
+        person.state = state;
+        for (let i = 0; i < 20; i++) expect(seen.draw().key).toBe(stopped);
+      },
+    );
+  });
+
+  it('takes as many frames over a tile at 1x as at 3x', () => {
+    // 0.2 tiles a second drawn 60 times a second: game speed 3 is three times the ground a frame
+    const perFrame = 0.2 / 60,
+      at1x = framesAlong(perFrame, 300),
+      at3x = framesAlong(perFrame * 3, 100),
+      changes = (frames: number[]) => frames.filter((f, i) => i > 0 && f !== frames[i - 1]).length;
+    expect(changes(at1x)).toBe(Math.floor((299 * perFrame) / STEP_TILES));
+    expect(changes(at3x)).toBe(changes(at1x));
+    // and the same frame stands on the same spot of ground at both speeds
+    at3x.forEach((f, i) => expect(f).toBe(at1x[i * 3]));
+  });
+
+  it('counts a walker put somewhere else as no step', () => {
+    const person = walker(1, 5),
+      seen = walking(person);
+    seen.draw();
+    person.x += STEP_TILES + 0.001;
+    const before = seen.draw().key;
+    person.x += 3.01;
+    expect(seen.draw().key).toBe(before);
+  });
+
+  // the tile axes on the screen: +x down right, +y down left, -x up left, -y up right
+  it.each([
+    [1, 0, 'front', false],
+    [0, 1, 'front', true],
+    [-1, 0, 'back', true],
+    [0, -1, 'back', false],
+  ])('walking along (%i, %i) shows the %s, mirrored: %s', (dx, dy, view, mirrored) => {
+    const person = walker(5, 5),
+      seen = walking(person);
+    seen.draw();
+    for (let i = 1; i <= 4; i++) {
+      person.x = 5 + dx * 0.1 * i;
+      person.y = 5 + dy * 0.1 * i;
+      seen.draw();
+    }
+    const now = seen.draw();
+    expect(now.key).toContain(`passenger_${view}_walk_f`);
+    expect(now.mirrored).toBe(mirrored);
+    // mirrored about the feet, at its size
+    expect(now.sprite.height).toBeCloseTo(9, 9);
+    expect(now.sprite.scale.y).toBe(1);
+  });
+
+  it('keeps the way it faced when it stops', () => {
+    const person = walker(5, 5),
+      seen = walking(person);
+    seen.draw();
+    person.x -= 0.3;
+    const walked = seen.draw();
+    for (let i = 0; i < 5; i++) {
+      const stood = seen.draw();
+      expect([stood.key, stood.mirrored]).toEqual([walked.key, true]);
+    }
+  });
+
+  it.each(PROFESSIONS)('draws a %s from its own frames', (profession) => {
+    const seen = walking({ ...walker(5, 5), profession });
+    expect(seen.draw().key).toBe(`people/${profession}_front_walk_f0`);
+  });
+
+  it('draws the carry frames while it carries', () => {
+    const seen = walking({ ...walker(5, 5), profession: 'lumberjack', carrying: true });
+    expect(seen.draw().key).toBe('people/lumberjack_front_carry_f0');
+  });
+
+  it('walks on its walk frames while it carries where it has no carry frames', () => {
+    const seen = walking(
+      { ...walker(5, 5), carrying: true },
+      (key) => every(key) && !key.includes('_carry_'),
+    );
+    expect(seen.draw().key).toBe(`${STEP}0`);
+  });
+
+  it('shows the old walker, by its outfit, where the atlas has no frames of its profession', () => {
+    const person = { ...walker(5, 5), outfit: 2 },
+      seen = walking(person, isOldWalker);
+    expect(seen.draw().key).toBe('people/walker_2_f0');
+    person.x += STEP_TILES;
+    expect(seen.draw().key).toBe('people/walker_2_f1');
   });
 });
 
@@ -296,9 +459,9 @@ describe('a walker drawn from the atlas registry', () => {
   }
 
   /** The sprites a PeopleRenderer over `atlas` draws for `persons`, in their order. */
-  function drawnFrom(atlas: AtlasRegistry, persons: Person[], dt = 0) {
+  function drawnFrom(atlas: AtlasRegistry, persons: Person[]) {
     const layer = new Container();
-    new PeopleRenderer(atlas, layer, () => 0).update(people(emptyMap(1, W, H), persons), dt);
+    new PeopleRenderer(atlas, layer, () => 0).update(people(emptyMap(1, W, H), persons));
     return layer.children as Sprite[];
   }
 
@@ -329,9 +492,15 @@ describe('a walker drawn from the atlas registry', () => {
   it("draws today's generated figures 9 px tall, each outfit in each step, by its own frame", async () => {
     const atlas = await loaded(generatePeopleAtlas);
     for (const step of [0, 1]) {
-      const crowd = [0, 1, 2, 3].map((outfit) => ({ ...walker(5.3, 6.7), id: outfit + 1, outfit }));
-      // the step is floor(t * 5) % 2: a quarter second in is the second
-      const sprites = drawnFrom(atlas, crowd, step * 0.25);
+      const crowd = [0, 1, 2, 3].map((outfit) => ({ ...walker(5.3, 6.7), id: outfit + 1, outfit })),
+        layer = new Container(),
+        drawer = new PeopleRenderer(atlas, layer, () => 0),
+        sim = people(emptyMap(1, W, H), crowd);
+      drawer.update(sim);
+      // a pose further on is the old walker's other frame
+      for (const person of crowd) person.x += step * STEP_TILES;
+      drawer.update(sim);
+      const sprites = layer.children as Sprite[];
       expect(sprites).toHaveLength(4);
       sprites.forEach((s, outfit) => {
         const key = `people/walker_${outfit}_f${step}`,
