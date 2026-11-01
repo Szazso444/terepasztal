@@ -171,6 +171,7 @@ function renderer() {
     paved: (tile: number) => cityOf(world).has(tile),
     doorsteps: [],
     propTint: 0xffffff,
+    behindDecks: new Set(),
     structures: new Map(),
     structureAnchors: new Map(),
     windowLights: new Map(),
