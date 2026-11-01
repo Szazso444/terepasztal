@@ -22,7 +22,7 @@ export class WearAlertScreen implements Screen {
   );
   /** the Repair button: pick the Repair tool (wired by the game) */
   onRepair: (() => void) | null = null;
-  /** the Depot button: open the depot, on the maintenance wagon once there is one */
+  /** the Depot button: open the depot, on the maintenance wagon */
   onDepot: ((x: number, y: number) => void) | null = null;
   /** the window left the screen, by a button, Close, Esc or another screen */
   onDismiss: (() => void) | null = null;

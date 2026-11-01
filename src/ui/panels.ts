@@ -630,8 +630,12 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     live: () => host.mode === 'play' && !menuOpen() && !document.getElementById('loading-screen'),
   });
   const wearAlert = new WearAlertScreen(d.screens);
-  // the Depot button opens the depot (the maintenance wagon's tab comes with the wagons)
-  wearAlert.onDepot = () => d.screens.open(depot);
+  // the Depot button opens the nearest depot of the piece's gauge on the maintenance wagon
+  wearAlert.onDepot = (x, y) => {
+    const near = d.builder.depotForTrack(x, y);
+    if (near) depot.showMaintenance(near);
+    d.screens.open(depot);
+  };
   // the Repair button takes up the Repair tool, and keeps it when it is in hand already
   wearAlert.onRepair = () => toolbar.select({ kind: 'repair' });
   const advisor = new Advisor(d.settings.advisor === false);

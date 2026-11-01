@@ -1426,3 +1426,34 @@ describe('a maintenance train and a train stopped at the break', () => {
     expect(t.headTile).toEqual({ x: 69, y: 30 });
   });
 });
+
+describe('the Depot button of the wear window', () => {
+  const narrowLine = (w: SimWorld) => {
+    for (let x = 30; x <= 68; x++) w.track.place(x, 50, 'straight', 1, 'narrow');
+  };
+  /** Regular depots at x 4 and x 80, a narrow one at x 70 beside a narrow line along row 50. */
+  function depots() {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    depotWith(w, startStock(), { x: 4, y: 30 });
+    line(w, 6, 30, 78);
+    const east = station(w, 'depot', 80, 30);
+    const narrow = station(w, 'narrow_depot', 70, 50);
+    narrowLine(w);
+    return { w, east, narrow };
+  }
+
+  it('takes the nearest depot of the gauge of the piece', () => {
+    const { w, east, narrow } = depots();
+    expect(w.builder.depotForTrack(70, 30)).toBe(east);
+    expect(w.builder.depotForTrack(10, 30)?.x).toBe(4);
+    expect(w.builder.depotForTrack(32, 50), 'nearer regular depots do not count').toBe(narrow);
+  });
+
+  it('with no such depot, or no piece, it has none to name', () => {
+    const w = simWorld({ terrain: 'grass', size: 96 });
+    depotWith(w, startStock(), { x: 4, y: 30 });
+    narrowLine(w);
+    expect(w.builder.depotForTrack(40, 50)).toBeUndefined();
+    expect(w.builder.depotForTrack(40, 60)).toBeUndefined();
+  });
+});

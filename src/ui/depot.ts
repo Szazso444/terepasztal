@@ -15,7 +15,7 @@ import {
   type StopPlan,
 } from '../sim/trains';
 import type { Station } from '../sim/stations';
-import { consistGauge } from '../sim/compat';
+import { consistGauge, gaugeOf } from '../sim/compat';
 import { cargoDef } from '../sim/cargo';
 import type { AtlasRegistry } from '../engine/atlas';
 import {
@@ -122,6 +122,10 @@ export class DepotScreen implements Screen {
   /** depot the new train rolls out of (null: the first one) */
   private depotId: number | null = null;
   private checkCache: { key: string; at: number; value: Check } | null = null;
+  /** the row of the first free maintenance wagon of the depot's gauge, on the consist tab */
+  private maintenanceRow: HTMLElement | null = null;
+  /** the next draw brings that row into view (`showMaintenance`) */
+  private seekMaintenance = false;
   onFocusTrain: ((t: Train) => void) | null = null;
   /** the player picked a depot: the game peeks at it and marks the gate */
   onFocusDepot: ((d: Station, gate: { x: number; y: number } | null) => void) | null = null;
@@ -223,6 +227,26 @@ export class DepotScreen implements Screen {
   }
 
   // ---------------------------------------------------------------- the actions
+
+  /**
+   * Stand ready for a maintenance train out of this depot: a new train on the consist tab, with the
+   * maintenance wagon in view. Picks of the other gauge go, as they would rule the depot out. Call
+   * before the screen opens.
+   */
+  showMaintenance(depot: Station) {
+    const gauge = depot.def.gauge ?? 'regular';
+    const own = (kind: typeof locoDef | typeof wagonDef) => (u: number) => {
+      const it = this.inventory.byUid(u);
+      return !!it && gaugeOf(kind(it.defId)) === gauge;
+    };
+    this.locoUids = this.locoUids.filter(own(locoDef));
+    this.wagonUids = this.wagonUids.filter(own(wagonDef));
+    this.editing = null;
+    this.tab = 'consist';
+    this.depotId = depot.id;
+    this.checkCache = null;
+    this.seekMaintenance = true;
+  }
 
   /** New train: the train picked is let go, and the draft stands as it was left. */
   private showDraft() {
@@ -424,6 +448,8 @@ export class DepotScreen implements Screen {
     // another train or another tab starts at the top; a pick in the same list keeps its place
     if (key !== this.shown) d.body.scrollTop = 0;
     this.shown = key;
+    if (this.seekMaintenance) this.maintenanceRow?.scrollIntoView({ block: 'center' });
+    this.seekMaintenance = false;
   }
 
   /** The picks that left the free stock go from the draft: the counts and the rows show it. */
@@ -656,6 +682,14 @@ export class DepotScreen implements Screen {
         onClick: () => this.toggleWagon(it.uid),
       });
     });
+    const gauge = depot?.def.gauge ?? 'regular';
+    this.maintenanceRow =
+      wagonRows[
+        wagons.findIndex((it) => {
+          const def = wagonDef(it.defId);
+          return def.maintenance === true && gaugeOf(def) === gauge;
+        })
+      ] ?? null;
     return [
       well(
         {
