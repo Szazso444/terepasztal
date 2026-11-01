@@ -9,7 +9,7 @@ import {
 } from 'pixi.js';
 import type { AtlasRegistry } from '../engine/atlas';
 import { DIR_DX, DIR_DY, tileToWorld } from '../engine/iso';
-import { OPEN_CROWN, OPEN_SPRING, OPEN_W, TILE_FRAMES } from '../art/tunnelArt';
+import { OPEN_CROWN, OPEN_SPRING, OPEN_W, TILE_FRAMES, WALL_H } from '../art/tunnelArt';
 import type { Face, Portal, Underground } from '../sim/underground';
 import { TUNNEL_COVER } from '../sim/underground';
 import { MAX_LEVEL } from '../world/elevation';
@@ -238,8 +238,6 @@ function openSide(view: DugView, t: DugTile, face: Face) {
 const FACE_DIR: Record<Face, number> = { N: 0, E: 1, S: 2, W: 3 };
 /** How much of the room behind a wall shows through it. */
 const WALL_ALPHA = 0.75;
-/** Height of a room's walls, world px: what the wall frames are painted to. */
-const WALL_TOP = 22;
 
 /**
  * The pictures of the rooms on `tiles`: first every floor and the shade its back walls cast, then,
@@ -333,7 +331,7 @@ export interface GlassHost extends SheetRead {
   under(): DugView;
   /** World px of one level. */
   levelPx(): number;
-  /** Changes when the surface or the tiles shown do. */
+  /** Changes when a level or the tiles shown do; a repaint that moves no level leaves it. */
   ground(): number;
   /** The rows of tiles whose surface can show in a view. */
   rows(view: ViewRect): TileRows;
@@ -356,8 +354,9 @@ export class TunnelGlass {
   readonly root = new Container();
   /** What stands in front of a rail: over the track and under the objects. */
   readonly over = new Container();
-  /** How many times the layer was built, for a test or a measure. */
+  /** How many times the layer was built and the preview drawn, for a test or a measure. */
   rebuilds = 0;
+  previews = 0;
   private readonly strip = stripTexture();
   private sheet: Mesh | null = null;
   private readonly rooms = new Container();
@@ -368,6 +367,8 @@ export class TunnelGlass {
   private held: ViewRect | null = null;
   private version = -1;
   private surface = -1;
+  /** The tiles the preview shows, as x and y. */
+  private previewed: readonly number[] = [];
 
   constructor(private readonly host: GlassHost) {
     this.root.visible = this.over.visible = false;
@@ -384,17 +385,24 @@ export class TunnelGlass {
     if (!on) this.clear();
   }
   private clear() {
-    this.sheet?.geometry.destroy();
+    const geometry = this.sheet?.geometry;
     this.sheet?.destroy();
+    geometry?.destroy(true);
     this.sheet = null;
     for (const c of this.rooms.removeChildren()) c.destroy();
     this.walls.clear();
     this.outlines.clear();
     this.preview.clear();
+    this.previewed = [];
     this.held = null;
   }
-  /** What the Drill is about to take, at its floor. */
+  /** What the Drill is about to take, at its floor. The same tiles again draw nothing. */
   setPreview(tiles: readonly { x: number; y: number }[]) {
+    const held = tiles.flatMap((t) => [t.x, t.y]);
+    if (held.length === this.previewed.length && held.every((v, i) => v === this.previewed[i]))
+      return;
+    this.previewed = held;
+    this.previews++;
     const g = this.preview.clear();
     for (const { x, y } of tiles) {
       const c = SIDES.map((s) => tileToWorld(x + s.a[0], y + s.a[1]));
@@ -433,8 +441,9 @@ export class TunnelGlass {
         indices: made.indices,
       });
     if (this.sheet) {
-      this.sheet.geometry.destroy();
+      const old = this.sheet.geometry;
       this.sheet.geometry = geometry;
+      old.destroy(true);
     } else {
       this.sheet = new Mesh({ geometry, texture: this.strip });
       this.root.addChildAt(this.sheet, 0);
@@ -474,16 +483,16 @@ export class TunnelGlass {
       },
       near = sides.filter((s) => s.near),
       top = (s: WallSide) => {
-        const a = at(s.ax, s.ay, s.floor, WALL_TOP),
-          b = at(s.bx, s.by, s.floor, WALL_TOP);
+        const a = at(s.ax, s.ay, s.floor, WALL_H),
+          b = at(s.bx, s.by, s.floor, WALL_H);
         g.moveTo(a.x, a.y).lineTo(b.x, b.y);
       };
     for (const s of near)
       g.poly([
         at(s.ax, s.ay, s.floor, 0),
         at(s.bx, s.by, s.floor, 0),
-        at(s.bx, s.by, s.floor, WALL_TOP),
-        at(s.ax, s.ay, s.floor, WALL_TOP),
+        at(s.bx, s.by, s.floor, WALL_H),
+        at(s.ax, s.ay, s.floor, WALL_H),
       ]);
     if (near.length) g.fill({ color: GLASS_COLOUR, alpha: PANE_ALPHA });
     if (!sides.length) return;
@@ -493,7 +502,7 @@ export class TunnelGlass {
       for (const s of sides) if (!s.near) top(s);
       for (const p of posts) {
         const a = at(p.x, p.y, p.floor, 0),
-          b = at(p.x, p.y, p.floor, WALL_TOP);
+          b = at(p.x, p.y, p.floor, WALL_H);
         g.moveTo(a.x, a.y).lineTo(b.x, b.y);
       }
       g.stroke({ color: EDGE_COLOUR, alpha: BACK_EDGE_ALPHA, width: 1, pixelLine });

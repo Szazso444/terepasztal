@@ -314,8 +314,10 @@ export class WorldRenderer {
   private readonly glassOver = new Container();
   private glass: TunnelGlass | null = null;
   private glassOn = false;
-  /** The tiles' levels while the surface stands: the sheet reads each of them several times. */
-  private glassLevels: { surface: number; levels: Uint8Array } | null = null;
+  /** The tiles' levels while none moves: the sheet reads each of them several times. */
+  private glassLevels: Uint8Array | null = null;
+  /** Counts the moves of a level, which is all the glass follows of the ground. */
+  private levelMoves = 0;
   /** Rail profile over each straight track tile (world/railProfile.ts). */
   private railBeds = new Map<number, RailBed>();
   /** Track tiles whose rail bends or climbs: the piece is a mesh that follows the profile. */
@@ -826,6 +828,7 @@ export class WorldRenderer {
    * that has something standing on it.
    */
   retileMany(tiles: readonly { x: number; y: number }[]) {
+    this.noteLevels(tiles);
     const built = tiles.filter((t) => this.isBuilt(t.x, t.y));
     for (const t of built) this.refreshGround(t.x, t.y);
     for (const { x, y } of built) {
@@ -2481,10 +2484,18 @@ export class WorldRenderer {
     return { x: p.x, y: p.y - floor * this.levelPx };
   }
   private levelsForGlass() {
-    const surface = this.landscape.surfaceVersion;
-    if (this.glassLevels?.surface !== surface)
-      this.glassLevels = { surface, levels: tileLevels(this.map) };
-    return this.glassLevels.levels;
+    return (this.glassLevels ??= tileLevels(this.map));
+  }
+  /**
+   * The tiles of a re-tile: the levels the glass holds go if one of them moved. Paving and rail
+   * edits repaint the ground too, and move no level, so they cost the glass nothing.
+   */
+  private noteLevels(tiles: readonly { x: number; y: number }[]) {
+    const held = this.glassLevels;
+    if (!held) return;
+    if (tiles.every((t) => held[idx(this.map, t.x, t.y)] === levelAt(this.map, t.x, t.y))) return;
+    this.glassLevels = null;
+    this.levelMoves++;
   }
   private makeGlass() {
     const { map, atlas } = this;
@@ -2497,7 +2508,7 @@ export class WorldRenderer {
       cut: (x, y) => this.underground.isCut(x, y),
       shown: (x, y) => this.isBuilt(x, y),
       lift: (x, y) => -this.elevationOf(x, y),
-      ground: () => this.landscape.surfaceVersion + this.builtRegions.size * 2 ** 32,
+      ground: () => this.levelMoves + this.builtRegions.size * 2 ** 32,
       // a raised tile stands up to RELIEF_MAX px over its place on the ground
       rows: (view) => viewTileRows(view, RELIEF_MAX, map.w, map.h),
     });

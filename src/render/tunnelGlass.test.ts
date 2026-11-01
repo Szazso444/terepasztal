@@ -1,8 +1,17 @@
-import { describe, expect, it } from 'vitest';
-import { Rectangle, Texture, TextureSource, type Sprite } from 'pixi.js';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  Rectangle,
+  Sprite,
+  Texture,
+  TextureSource,
+  type Container,
+  type Graphics,
+  type Mesh,
+} from 'pixi.js';
 import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
 import { tileToWorld } from '../engine/iso';
 import { emptyMap } from '../world/mapgen';
+import type { RailBed } from '../world/railProfile';
 import { RegionState } from '../world/regions';
 import { Terrain, type GameMap } from '../world/tiles';
 import { Underground } from '../sim/underground';
@@ -178,8 +187,18 @@ function mountainMap() {
 const VIEW = { x: -300, y: -100, w: 600, h: 400 };
 type Inside = {
   view: typeof VIEW;
-  glass: { rebuilds: number; root: unknown; over: unknown } | null;
+  glass: {
+    rebuilds: number;
+    previews: number;
+    root: Container;
+    over: unknown;
+    sheet: Mesh | null;
+    rooms: Container;
+    walls: Graphics;
+  } | null;
   propSprites: Map<number, Sprite[]>;
+  scatterSprites: Map<number, { s: Sprite; ox: number; oy: number }[]>;
+  summitSprites: Map<number, Sprite>;
 };
 const inside = (w: WorldRenderer) => w as unknown as Inside;
 
@@ -256,6 +275,97 @@ describe('WorldRenderer.setGlass', () => {
     inside(w).view = { ...VIEW, x: VIEW.x + 5000 };
     w.animate(0.016);
     expect(inside(w).glass!.rebuilds).toBe(first);
+  });
+  it('an unchanged preview draws nothing, and a new one does', () => {
+    const map = mountainMap(),
+      w = world(map);
+    w.setGlass(true, [{ x: 4, y: 4 }]);
+    const first = inside(w).glass!.previews;
+    w.setGlass(true, [{ x: 4, y: 4 }]);
+    expect(inside(w).glass!.previews).toBe(first);
+    w.setGlass(true, [{ x: 4, y: 5 }]);
+    expect(inside(w).glass!.previews).toBe(first + 1);
+    w.setGlass(true, []);
+    expect(inside(w).glass!.previews).toBe(first + 2);
+  });
+  it('off and on again, the same preview is drawn again', () => {
+    const map = mountainMap(),
+      w = world(map);
+    w.setGlass(true, [{ x: 4, y: 4 }]);
+    w.setGlass(false);
+    const first = inside(w).glass!.previews;
+    w.setGlass(true, [{ x: 4, y: 4 }]);
+    expect(inside(w).glass!.previews).toBe(first + 1);
+  });
+  it('peaks and scatter on raised tiles hide with it and come back without it', () => {
+    const map = mountainMap(),
+      w = world(map),
+      peak = new Sprite(),
+      high = new Sprite(),
+      low = new Sprite();
+    inside(w).summitSprites.set(4 * 24 + 4, peak);
+    inside(w).scatterSprites.set(5 * 24 + 5, [{ s: high, ox: 0, oy: 0 }]);
+    inside(w).scatterSprites.set(15 * 24 + 15, [{ s: low, ox: 0, oy: 0 }]);
+    w.setGlass(true);
+    expect(peak.renderable).toBe(false);
+    expect(high.renderable).toBe(false);
+    expect(low.renderable).toBe(true);
+    w.setGlass(false);
+    expect(peak.renderable).toBe(true);
+    expect(high.renderable).toBe(true);
+  });
+  it('off, the sheet, rooms and walls are gone and the geometry is destroyed', () => {
+    const map = mountainMap(),
+      w = world(map),
+      u = new Underground(map.w, map.h);
+    u.dig(4, 4, 0);
+    w.underground = u;
+    inside(w).view = VIEW;
+    w.setGlass(true);
+    w.animate(0.016);
+    const glass = inside(w).glass!,
+      sheet = glass.sheet!,
+      destroyed = vi.fn();
+    sheet.geometry.on('destroy', destroyed);
+    expect(glass.rooms.children.length).toBeGreaterThan(0);
+    expect(glass.walls.context.instructions.length).toBeGreaterThan(0);
+    w.setGlass(false);
+    expect(sheet.destroyed).toBe(true);
+    expect(destroyed).toHaveBeenCalledOnce();
+    expect(glass.sheet).toBeNull();
+    expect(glass.root.children).not.toContain(sheet);
+    expect(glass.rooms.children).toHaveLength(0);
+    expect(glass.walls.context.instructions).toHaveLength(0);
+  });
+  it('a rebuild gives the old geometry back', () => {
+    const map = mountainMap(),
+      w = world(map);
+    inside(w).view = VIEW;
+    w.setGlass(true);
+    w.animate(0.016);
+    const destroyed = vi.fn();
+    inside(w).glass!.sheet!.geometry.on('destroy', destroyed);
+    inside(w).view = { ...VIEW, x: VIEW.x + 5000 };
+    w.animate(0.016);
+    expect(destroyed).toHaveBeenCalledOnce();
+  });
+  it('follows a level that moves, and neither paving nor a rail edit', () => {
+    const map = mountainMap(),
+      w = world(map);
+    inside(w).view = VIEW;
+    w.setGlass(true);
+    w.animate(0.016);
+    const rebuilds = () => inside(w).glass!.rebuilds,
+      first = rebuilds();
+    w.setCity(new Set([15 * 24 + 15]));
+    w.setRailBeds(new Map([[3 * 24 + 3, { axis: 'x', spans: [], flat: true } as RailBed]]));
+    w.retile(3, 3);
+    w.animate(0.016);
+    expect(rebuilds()).toBe(first);
+    map.terrain[12 * 24 + 12] = Terrain.Mountain;
+    w.retile(12, 12);
+    w.animate(0.016);
+    expect(rebuilds()).toBe(first + 1);
   });
   it('sits under the track and the objects, so trains and rails draw over it', () => {
     const w = world(mountainMap());
