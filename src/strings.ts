@@ -439,7 +439,7 @@ const EN = {
     overTunnel: 'A tunnel runs under this tile',
     /** anything but rail tried on a cut tile */
     inCutting: 'A cutting takes rail only',
-    /** track or a signal tried off a dug tile with the Drill on */
+    /** with the Drill on: track or a signal on open ground, or a piece across a tunnel's mouth */
     notDug: 'Inside, the whole piece needs dug ground',
     /** Maglev or Hyperloop track tried with the Drill on */
     drillLine: 'The Drill lays Narrow Gauge, Branch, Main and Trunk Line',
