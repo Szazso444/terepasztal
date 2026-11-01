@@ -13,7 +13,7 @@ import {
 } from './tiles';
 import { DRY, FLOW_CAP, KEEP_OUT, LAKE_CLEARANCE, LOW, WaterKind, drain } from './rivers';
 import { GlacierKind, traceGlaciers } from './glaciers';
-import { markWaterfalls } from './waterfalls';
+import { markHeadwaters, markWaterfalls } from './waterfalls';
 
 /** Smooth value noise built from the coordinate hash. */
 function valueNoise(x: number, y: number, seed: number): number {
@@ -757,7 +757,7 @@ export function generateMapPlanes(
   for (let y = start.y0; y < start.y1; y++)
     for (let x = start.x0; x < start.x1; x++)
       if (terrain[y * w + x] !== Terrain.Water) lake[y * w + x] = 0;
-  layGlaciers(field, plan, late, river);
+  const melt = layGlaciers(field, plan, late, river);
   const shore = cropPlane(terrain, w, mw, mh);
   // After the start chunk's patches, which it never reaches: the Ocean climate lies at least 5
   // tiles outside the start chunk (genRaw keeps the sea out of the start zone, and smoothing moves
@@ -775,6 +775,12 @@ export function generateMapPlanes(
     { w, h, terrain, waterSurface: water.surface, flowDir: water.dir },
     feature,
     inMap,
+  );
+  markHeadwaters(
+    { w, h, terrain, waterSurface: water.surface, flowDir: water.dir },
+    feature,
+    inMap,
+    melt,
   );
   // crop the map out of the field
   map.terrain = cropPlane(terrain, w, mw, mh);
@@ -1475,9 +1481,11 @@ function riverWater(
 /**
  * The plan's glaciers on the tiles of `s`, over the risen mountains: each melt tile turns to river
  * (`river`) and each ice tile, a Mountain until now, to Ice. Their planes came with the plan's.
+ * Returns the highest melt tile of each glacier, as 1s on the map's plane: its headwater.
  */
-function layGlaciers(map: GameMap, plan: RiverPlan, s: Span, river: Uint8Array) {
-  const { w, terrain, originX, originY } = map;
+function layGlaciers(map: GameMap, plan: RiverPlan, s: Span, river: Uint8Array): Uint8Array {
+  const { w, h, terrain, originX, originY } = map;
+  const melt = new Uint8Array(w * h);
   for (let y = Math.max(s.y0, plan.y0 - originY); y < s.y1; y++) {
     const py = y + originY - plan.y0;
     if (py >= plan.size) break;
@@ -1492,9 +1500,11 @@ function layGlaciers(map: GameMap, plan: RiverPlan, s: Span, river: Uint8Array) 
       } else {
         terrain[i] = Terrain.Water;
         river[i] = 1;
+        if (g === GlacierKind.Head) melt[i] = 1;
       }
     }
   }
+  return melt;
 }
 
 /** The Dir of the side a tile `delta` away (along a row of `w`) lies on. */

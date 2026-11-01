@@ -123,8 +123,8 @@ export interface GameMap {
   flowDir?: Uint8Array;
   /**
    * per-tile water features, a byte each, laid out in src/world/waterfalls.ts: a waterfall's drop
-   * and the edge it falls over, on the river tile the water falls from, with bits kept for the
-   * headwater kind (#356). Read a waterfall through waterfallAt. A map without the plane, a level
+   * and the edge it falls over, on the river tile the water falls from, and a headwater's kind
+   * (#356). Read them through waterfallAt and headwaterAt. A map without the plane, a level
    * or the editor's, and a chunk stored before it, has no waterfalls.
    */
   feature?: Uint8Array;
