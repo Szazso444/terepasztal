@@ -1500,6 +1500,8 @@ const EN = {
     autosave: 'Autosave (every minute)',
     dayNight: 'Day / night cycle',
     smoke: 'Locomotive smoke',
+    buildingLife: 'Building life',
+    buildingLifeHint: "Chimney smoke, the quarry crane and the windmill's sails",
     weather: 'Weather and seasons',
     showFps: 'Show FPS',
     controls: 'Controls',
