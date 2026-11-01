@@ -373,6 +373,7 @@ const EN = {
     onContract: (name: string) => `on contract: ${name}`,
     regularRun: 'back on the regular run',
     noTrackToStop: 'no track to the chosen stop',
+    noWork: 'no track to look after',
     noPlatform: (name: string) => `${name} has no platform`,
     parked: 'parked: no way to the chosen stop',
     detouring: 'detouring around an oncoming train',
@@ -789,6 +790,7 @@ const EN = {
       'Track is wearing out. Repair it by hand, or send a maintenance wagon from the depot.',
     trackBroken: (x: number, y: number) => `Track at ${x},${y} is broken and closed to trains`,
     trackBrokenMany: (n: number) => `${n} track pieces are broken and closed to trains`,
+    repairUnpaid: (n: string) => `${n}: no store can pay for the repair`,
   },
   /** track wear: the states and the window of the first piece to fail */
   wear: {
@@ -919,6 +921,7 @@ const EN = {
       loading: 'Loading',
       waiting: 'Waiting',
       yielding: 'Giving way',
+      repairing: 'Repairing',
       idle: 'Idle',
       held: 'Held',
       noRoute: 'No route',
@@ -1202,6 +1205,7 @@ const EN = {
       loading: 'At platform',
       waiting: 'Waiting for platform',
       yielding: 'Pulled aside for traffic',
+      repairing: 'Repairing track',
       idle: 'Idle: nothing worth hauling yet',
       held: 'Held behind a train',
       noRoute: 'No route',

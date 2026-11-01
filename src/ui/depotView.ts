@@ -22,6 +22,7 @@ export function stateTone(state: string, blocked = false): Tone {
     case 'moving':
       return blocked ? 'warn' : 'good';
     case 'loading':
+    case 'repairing':
       return 'info';
     case 'waiting':
     case 'yielding':

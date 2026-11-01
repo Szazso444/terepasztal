@@ -117,6 +117,14 @@ export class Notices {
           text: STR.notice.noRoute(t.name),
           target,
         });
+      else if (t.state === 'repairing' && t.repairUnpaid)
+        out.push({
+          key: `t${t.id}:repairfunds`,
+          kind: 'warn',
+          type: 'starved',
+          text: STR.notice.repairUnpaid(t.name),
+          target,
+        });
       else if (t.eco)
         out.push({
           key: `t${t.id}:eco`,

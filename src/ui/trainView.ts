@@ -75,6 +75,7 @@ const CHIP: Record<TrainState, Pick<Chip, 'sev' | 'icon'>> = {
   loading: { sev: 'good', icon: 'cargo' },
   waiting: { sev: 'attention', icon: 'clock' },
   yielding: { sev: 'attention', icon: 'clock' },
+  repairing: { sev: 'good', icon: 'repair' },
   idle: { sev: 'info', icon: 'clock' },
   noRoute: { sev: 'problem', icon: 'rail' },
   overweight: { sev: 'problem', icon: 'alert' },

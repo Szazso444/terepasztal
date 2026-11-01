@@ -46,6 +46,7 @@ import { sfx } from '../engine/audio';
 import { ENGLISH, STR } from '../strings';
 import { biomeDef, biomeAt } from './biomes';
 import { daySeconds } from './rules';
+import { MaintenanceBoard } from './maintenance';
 import { Traffic } from './traffic';
 import { Junctions } from './junctions';
 import { Signals, HEADWAY } from './signals';
@@ -73,6 +74,8 @@ export class Fleet {
   readonly junctions: Junctions;
   /** block signals and token working */
   readonly signals: Signals;
+  /** the pieces maintenance trains look after */
+  readonly maintenance: MaintenanceBoard;
   supplyAt: (x: number, y: number) => SupplyKind | null = () => null;
   gridFactor: (x: number, y: number) => number = () => 1;
   gridDraw: (x: number, y: number, u: number) => void = () => {};
@@ -91,6 +94,7 @@ export class Fleet {
     this.signals = new Signals(track);
     this.junctions = new Junctions(track);
     this.traffic.junctionReport = () => this.junctions.report();
+    this.maintenance = new MaintenanceBoard(() => this.trains, builder);
   }
 
   /**
@@ -547,9 +551,9 @@ export class Fleet {
     const made = this.assemble(locoUids, wagonUids, schedule, name, depotId);
     if (typeof made === 'string') return made;
     const { train: t, depot, locoItems, wagonItems: wagons } = made;
-    t.mode = mode;
     const placed = this.rollOut(t, depot);
     if (typeof placed === 'string') return placed;
+    t.mode = mode;
     if (t.mode !== 'schedule') {
       // a roaming train starts with the stop it would pick, not the automatic loop
       const next = this.chooseNext(t);
@@ -568,7 +572,8 @@ export class Fleet {
     if (dock) t.fillUp(dock, this.builder.stores.grid, { fuel: true, water: true });
     sfx('train.dispatch');
     this.rebuildOccupancy();
-    if (t.dispatch(this.track, this.builder, this.map)) t.onPathReady(this.ctx(0, 1));
+    if (t.mode === 'maintenance') t.takeUpWork(this.ctx(this.clockTime, 1));
+    else if (t.dispatch(this.track, this.builder, this.map)) t.onPathReady(this.ctx(0, 1));
     else t.state = 'noRoute';
     this.onChanged?.();
     return t;
@@ -589,18 +594,22 @@ export class Fleet {
    * two stops: the new mode takes over when the train goes back to its own program. The program
    * `schedule` checks is the one the train goes back to (`Train.program`), also after a job
    * closed and before the train has taken its program up again. `maintenance` is refused for a
-   * train without a maintenance wagon (`leaveMaintenance` is the way out when it loses it).
+   * train without a maintenance wagon (`leaveMaintenance` is the way out when it loses it); a train
+   * given it looks for work at once, unless it has a wait of its own to end, and one that leaves it
+   * drops its job, whose repair so far stays.
    */
   setMode(t: Train, mode: RouteMode): { ok: true } | { ok: false; message: string } {
     if (mode === 'maintenance' && !t.hasMaintenanceWagon)
       return { ok: false, message: STR.fleet.needMaintenanceWagon };
-    if (mode === 'schedule') {
-      if (t.program.length < 2) return { ok: false, message: STR.fleet.needTwoStops };
-      t.mode = mode;
-      return { ok: true };
-    }
+    if (mode === 'schedule' && t.program.length < 2)
+      return { ok: false, message: STR.fleet.needTwoStops };
+    const was = t.mode;
+    if (was === 'maintenance' && mode !== was) t.leaveWork();
     t.mode = mode;
-    if (!t.job) this.replan(t);
+    if (mode === 'schedule') return { ok: true };
+    if (mode === 'maintenance') {
+      if (was !== mode && !t.job) t.takeUpWork(this.ctx(this.clockTime, 1));
+    } else if (!t.job) this.replan(t);
     return { ok: true };
   }
   /**
@@ -773,6 +782,7 @@ export class Fleet {
         return id === self ? 0 : id;
       },
       chooseNext: (t) => this.chooseNext(t),
+      maintenance: this.maintenance,
       biomeAt: (x, y) => {
         const d = biomeDef(biomeAt(this.map, x, y));
         return { speedMul: d.speedMul, waterUseMul: d.waterUseMul };
@@ -797,6 +807,7 @@ export class Fleet {
     for (const t of this.trains)
       if (
         t.dynamic &&
+        t.mode !== 'maintenance' &&
         t.id !== except &&
         t.route.length &&
         !t.makingWay &&

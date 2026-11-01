@@ -308,6 +308,7 @@ export const HU: Strings = {
     onContract: (name: string) => `szerződést teljesít: ${name}`,
     regularRun: 'vissza a szokásos útvonalra',
     noTrackToStop: 'nem vezet sín a választott megállóhoz',
+    noWork: 'nincs karbantartandó sín',
     noPlatform: (name: string) => `${name}: nincs peronvágány`,
     parked: 'leállt: nincs út a választott megállóhoz',
     detouring: 'kerülőt tesz egy szemből jövő vonat miatt',
@@ -642,6 +643,7 @@ export const HU: Strings = {
     trackBroken: (x: number, y: number) =>
       `Tönkrement a sín (${x},${y}), a vonatok nem járhatnak rajta`,
     trackBrokenMany: (n: number) => `${n} sínelem tönkrement, a vonatok nem járhatnak rajtuk`,
+    repairUnpaid: (n: string) => `${n}: egyik raktár sem tudja fizetni a javítást`,
   },
   wear: {
     state: { healthy: 'ép', degraded: 'kopott', unusable: 'tönkrement' },
@@ -769,6 +771,7 @@ export const HU: Strings = {
       loading: 'Rakodik',
       waiting: 'Vár',
       yielding: 'Utat enged',
+      repairing: 'Javít',
       idle: 'Tétlen',
       held: 'Feltartva',
       noRoute: 'Nincs útvonal',
@@ -1051,6 +1054,7 @@ export const HU: Strings = {
       loading: 'A peronnál',
       waiting: 'Peronra vár',
       yielding: 'Félreállt a forgalom miatt',
+      repairing: 'Sínt javít',
       idle: 'Tétlen: még nincs mit szállítania',
       held: 'Egy vonat mögött vár',
       noRoute: 'Nincs útvonal',
