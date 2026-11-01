@@ -194,7 +194,11 @@ const EN = {
       rock: 'Rock',
       sand: 'Sand',
       mountain: 'Mountain',
+      ice: 'Glacier',
     } as Record<string, string>,
+    /** the titles of the water tiles that have one of their own */
+    waterfall: 'Waterfall',
+    headwater: 'Headwater',
     /** the title of a snow tile: its terrain's name, then this */
     snow: (terrain: string) => `${terrain}, snow`,
     /** one dim line under the rows, by `TERRAIN_NAMES`; water has `water` below */
@@ -205,7 +209,22 @@ const EN = {
       rock: 'Bare rock. Quarries count it; no building stands on it.',
       sand: 'Loose sand. Track and buildings can go here.',
       mountain: 'The raised heart of a rock field. No building stands on it.',
+      ice: 'Glacier ice. Nothing is built on it; its melt starts a river below.',
     } as Record<string, string>,
+    /** the dim line of a headwater */
+    aboutHeadwater: 'Where a river starts. Bridges cross it; pumps draw from it.',
+    /** the row of a waterfall's drop, its value, and the term's tooltip */
+    dropRow: 'Drop',
+    drop: (n: number) => (n === 1 ? `${n} level` : `${n} levels`),
+    dropAbout: (n: number, most: number) =>
+      `A river falls ${n} ${n === 1 ? 'level' : 'levels'} here, from 1 to ${most}. ` +
+      'Track crosses it on a bridge at the upper level; nothing is built on it.',
+    /** the row of a headwater, and its value by kind */
+    sourceRow: 'Source',
+    source: { melt: 'melt below a glacier', spring: 'a spring on high ground' },
+    /** the row of a river tile, and its value */
+    flowRow: 'Flow',
+    flow: (n: number) => `gathers ${n} tiles of rain`,
     /** the row of the elevation, and its value (the number is shown bold) */
     elevationRow: 'Elevation',
     level: (level: number) => `level ${level}`,
@@ -470,6 +489,7 @@ const EN = {
       water: 'Nothing can be built on water.',
       rock: 'Nothing can be built on rock.',
       mountain: 'Nothing can be built on a mountain.',
+      ice: 'Nothing can be built on ice.',
     },
     /**
      * A station with `standOn` tried on other ground, by `StationDef.id`: one line per station,

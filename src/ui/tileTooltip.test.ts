@@ -9,7 +9,9 @@ import { STR } from '../strings';
 import { tileLevels } from '../world/elevation';
 import { emptyMap, generateMap } from '../world/mapgen';
 import { TRACK_ITEMS } from '../world/track';
-import { TERRAIN_NAMES, Terrain, type GameMap } from '../world/tiles';
+import { Biome, TERRAIN_NAMES, Terrain, type GameMap } from '../world/tiles';
+import { Dir } from '../engine/iso';
+import { Headwater, fallFeature, withHeadwater } from '../world/waterfalls';
 import { tileTip, type TileSnapshot } from './tileTooltip';
 import { blockText, plain, type Block, type Parts, type TermPart } from './tooltipDoc';
 
@@ -24,6 +26,7 @@ const NAMES: Record<string, string> = {
   rock: 'Rock',
   sand: 'Sand',
   mountain: 'Mountain',
+  ice: 'Glacier',
 };
 
 const bare = (map: GameMap, x: number, y: number): TileSnapshot => ({
@@ -59,7 +62,9 @@ function checkEveryTile(map: GameMap, seen: Set<string>): void {
       const terrain = map.terrain[i];
       const name = NAMES[TERRAIN_NAMES[terrain]];
       const snowLevel = BIOME_DEFS[climate[i]].snowLevel;
-      const snow = terrain !== Terrain.Water && levels[i] >= snowLevel;
+      const snow = terrain !== Terrain.Water && terrain !== Terrain.Ice && levels[i] >= snowLevel;
+      // a river's own tiles are checked apart below, where their planes are made by hand
+      if (map.flow?.[i]) continue;
       const doc = tileTip(bare(map, x, y));
       const snowRow = doc.find((b) => labelOf(b) === 'Snow line');
       // one line a tile: block kinds; title; Biome row; Elevation row; Snow line row; the dim line
@@ -94,6 +99,97 @@ function checkEveryTile(map: GameMap, seen: Set<string>): void {
       if (terrain === Terrain.Mountain && levels[i] === 4) seen.add('summit');
     }
 }
+
+describe('the tooltip of water and glacier tiles', () => {
+  const tile = (set: (m: GameMap, i: number) => void) => {
+    const map = emptyMap(1, 8, 8);
+    map.climate = new Uint8Array(64);
+    map.waterSurface = new Uint8Array(64);
+    map.flow = new Uint16Array(64);
+    map.flowDir = new Uint8Array(64);
+    map.feature = new Uint8Array(64);
+    const i = 3 * 8 + 3;
+    set(map, i);
+    return tileTip(bare(map, 3, 3));
+  };
+  const river = (m: GameMap, i: number) => {
+    m.terrain[i] = Terrain.Water;
+    m.biome[i] = Biome.River;
+    m.flowDir![i] = 2;
+    m.flow![i] = 57;
+  };
+  const rows = (doc: readonly Block[]) =>
+    doc.filter((b) => b.kind === 'row').map((b) => `${labelOf(b)}: ${valueOf(b)}`);
+  const about = (doc: readonly Block[]) => blockText(doc[doc.length - 1]);
+
+  it('names a waterfall before a headwater, with its drop as a term', () => {
+    const doc = tile((m, i) => {
+      river(m, i);
+      m.feature![i] = withHeadwater(fallFeature(2, Dir.E), Headwater.Spring);
+    });
+    expect(blockText(doc[0])).toBe('Waterfall');
+    expect(rows(doc)).toEqual([
+      'Biome: River',
+      'Elevation: level 0',
+      'Drop: 2 levels',
+      'Source: a spring on high ground',
+      'Flow: gathers 57 tiles of rain',
+    ]);
+    expect(about(doc)).toBe('Bridges only; pumps draw from it.');
+    const drop = doc.find((b) => labelOf(b) === 'Drop')!;
+    const tip = termOf(drop)!.tip();
+    expect(blockText(tip[0])).toBe('Waterfall');
+    expect(blockText(tip[1])).toBe(
+      'A river falls 2 levels here, from 1 to 4. Track crosses it on a bridge at the upper ' +
+        'level; nothing is built on it.',
+    );
+  });
+
+  it('says level for a drop of one', () => {
+    const doc = tile((m, i) => {
+      river(m, i);
+      m.feature![i] = fallFeature(1, Dir.E);
+    });
+    expect(rows(doc)).toContain('Drop: 1 level');
+    const tip = termOf(doc.find((b) => labelOf(b) === 'Drop')!)!.tip();
+    expect(blockText(tip[1])).toContain('falls 1 level here');
+  });
+
+  it('names a headwater, melt or spring', () => {
+    const doc = tile((m, i) => {
+      river(m, i);
+      m.feature![i] = withHeadwater(0, Headwater.Melt);
+    });
+    expect(blockText(doc[0])).toBe('Headwater');
+    expect(rows(doc)).toContain('Source: melt below a glacier');
+    expect(about(doc)).toBe('Where a river starts. Bridges cross it; pumps draw from it.');
+  });
+
+  it('reads Glacier / Mountain with no snow in its title', () => {
+    const doc = tile((m, i) => {
+      for (let k = 0; k < 64; k++) m.terrain[k] = Terrain.Mountain;
+      m.terrain[i] = Terrain.Ice;
+      m.biome[i] = Biome.Mountain;
+    });
+    expect(blockText(doc[0])).toBe('Glacier');
+    expect(valueOf(doc[1])).toBe('Mountain');
+    expect(about(doc)).toBe('Glacier ice. Nothing is built on it; its melt starts a river below.');
+  });
+
+  it("reads Water for a lake and for an old chunk's river, Sand on a beach", () => {
+    const lake = tile((m, i) => {
+      m.terrain[i] = Terrain.Water;
+      m.biome[i] = Biome.Lake;
+    });
+    expect([blockText(lake[0]), valueOf(lake[1])]).toEqual(['Water', 'Lake']);
+    expect(rows(lake)).toHaveLength(2);
+    const beach = tile((m, i) => {
+      m.terrain[i] = Terrain.Sand;
+      m.biome[i] = Biome.Beach;
+    });
+    expect([blockText(beach[0]), valueOf(beach[1])]).toEqual(['Sand', 'Beach']);
+  });
+});
 
 describe('the tile tooltip on whole maps', () => {
   interface Patch {
@@ -161,7 +257,8 @@ describe('the tile tooltip on whole maps', () => {
     );
     // the property ran on every kind of tile it is about
     for (const kind of [
-      ...Object.keys(NAMES),
+      // the cases paint the terrains a player can; ice comes only from generation
+      ...Object.keys(NAMES).filter((k) => k !== 'ice'),
       'snow',
       'mountain without snow',
       'snow by climate, not biome',
@@ -225,6 +322,7 @@ describe('what each terrain description says is true of the rules', () => {
     rock: { buildings: false, counted: ['quarry'] },
     sand: { buildings: true, track: 'all' },
     mountain: { buildings: false },
+    ice: {},
   };
   const LAND = Object.keys(CLAIMS);
   const terrainOf = (name: string) => TERRAIN_NAMES.indexOf(name as (typeof TERRAIN_NAMES)[number]);
