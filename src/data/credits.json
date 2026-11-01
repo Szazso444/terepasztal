@@ -34,22 +34,6 @@
   "credits": [
     {
       "kind": "3D model",
-      "vehicles": ["daylight"],
-      "title": "southern pacific SP 4449 Engine",
-      "author": "zairiq zairiq 8",
-      "url": "https://sketchfab.com/3d-models/028a65074e684928bd93f297981ef181",
-      "licence": "cc-by-4.0"
-    },
-    {
-      "kind": "3D model",
-      "vehicles": ["daylight"],
-      "title": "southern pacific SP 4449 Tender",
-      "author": "zairiq zairiq 8",
-      "url": "https://sketchfab.com/3d-models/a64e36c61aef4ac9a61bcef3f1027090",
-      "licence": "cc-by-4.0"
-    },
-    {
-      "kind": "3D model",
       "vehicles": ["deltic"],
       "title": "Class 55 BR Green - D9009 Alycidon",
       "author": "timblewee",
@@ -330,38 +314,6 @@
     },
     {
       "kind": "3D model",
-      "vehicles": ["bm50"],
-      "title": "GLS 30",
-      "author": "zdanwoj",
-      "url": "https://3dwarehouse.sketchup.com/model/95ada3cc-2ccc-4d6e-a104-508b071cb2c5",
-      "licence": "3dw-gml"
-    },
-    {
-      "kind": "3D model",
-      "vehicles": ["c50"],
-      "title": "Lokomotywa wąskotorowa Wls50 (Ld1) v.1",
-      "author": "Hortenix",
-      "url": "https://3dwarehouse.sketchup.com/model/a1ceaa55af7bdaa74054f11f5d9166d1",
-      "licence": "3dw-gml"
-    },
-    {
-      "kind": "3D model",
-      "vehicles": ["muki"],
-      "title": "BN 30 PŽ č.10",
-      "author": "Koblih",
-      "url": "https://3dwarehouse.sketchup.com/model/edd7deef-d751-42af-b7af-b7eabb0b7896",
-      "licence": "3dw-gml"
-    },
-    {
-      "kind": "3D model",
-      "vehicles": ["mav490"],
-      "title": "Tw 29",
-      "author": "zdanwoj",
-      "url": "https://3dwarehouse.sketchup.com/model/58c1e80e-db19-4e8e-9838-d0a9f6b6e17e",
-      "licence": "3dw-gml"
-    },
-    {
-      "kind": "3D model",
       "vehicles": ["rezet"],
       "title": "Px 48",
       "author": "zdanwoj",
@@ -370,23 +322,7 @@
     },
     {
       "kind": "3D model",
-      "vehicles": ["mk45"],
-      "title": "Diesel locomotive ČSD class T334.0 (1961)",
-      "author": "Dominik P.",
-      "url": "https://3dwarehouse.sketchup.com/model/a30a81ef-1460-4bbe-929a-c08fa2c47604",
-      "licence": "3dw-gml"
-    },
-    {
-      "kind": "3D model",
-      "vehicles": ["mk48"],
-      "title": "Тепловоз ТУ2",
-      "author": "Станислав В.",
-      "url": "https://3dwarehouse.sketchup.com/model/uac9b35b0-5c47-4ad4-b9cc-03625634412f",
-      "licence": "3dw-gml"
-    },
-    {
-      "kind": "3D model",
-      "vehicles": ["crocodile"],
+      "vehicles": ["e94"],
       "title": "DRG Class E 94",
       "author": "TGEX Euro Railroad",
       "url": "https://3dwarehouse.sketchup.com/model/a7a0cbcf-7735-4d6f-986d-faf5ae4e71f4",
@@ -402,18 +338,10 @@
     },
     {
       "kind": "3D model",
-      "vehicles": ["ice1", "ice_cab", "ice_coach"],
+      "vehicles": ["ice_cab", "ice_coach"],
       "title": "ICE 2",
       "author": "kineo",
       "url": "https://3dwarehouse.sketchup.com/model/2fb42e08b0decf2765ae6400a93eedaf",
-      "licence": "3dw-gml"
-    },
-    {
-      "kind": "3D model",
-      "vehicles": ["j94"],
-      "title": "Interact Railway No.27 Hunslet Austerity",
-      "author": "Reece A.",
-      "url": "https://3dwarehouse.sketchup.com/model/962d40b7-1c53-41a3-87f5-fb71b6ea1b00",
       "licence": "3dw-gml"
     },
     {
@@ -434,18 +362,10 @@
     },
     {
       "kind": "3D model",
-      "vehicles": ["sw1"],
-      "title": "EMD MP15T - CSX Transportation",
-      "author": "Train Repair Guy",
-      "url": "https://3dwarehouse.sketchup.com/model/8a814ada-9a6d-481c-95bd-caa22a0a9d3e",
-      "licence": "3dw-gml"
-    },
-    {
-      "kind": "3D model",
-      "vehicles": ["v63"],
-      "title": "Yugoslav Railways electric locomotive class 441",
-      "author": "ViktorMKD",
-      "url": "https://3dwarehouse.sketchup.com/model/f28d9882-6414-4ad4-b0af-1e479b8af6e9",
+      "vehicles": ["br45"],
+      "title": "Mylyn \"BR 45 010\" 5th Stage of 5",
+      "author": "MylynPoddley",
+      "url": "https://3dwarehouse.sketchup.com/model/2df5ec41-7460-48d8-8454-ba1b1012ccb8",
       "licence": "3dw-gml"
     },
     {
@@ -893,6 +813,46 @@
       "author": "Lucide contributors",
       "url": "https://lucide.dev",
       "licence": "isc"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["j94"],
+      "title": "Hunslet Austerity 0-6-0ST in MOD Livery",
+      "author": "Railmonsterinc",
+      "url": "https://sketchfab.com/3d-models/676c337185154089b06ab5617776d183",
+      "licence": "cc-by-4.0"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["sw1"],
+      "title": "EMD SW1500",
+      "author": "OUTPISTON",
+      "url": "https://sketchfab.com/3d-models/4777c1cf85ca4f3a9cd4898119a83d48",
+      "licence": "cc-by-4.0"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["mav490"],
+      "title": "0-8-0T Brigadelok Steam Locomotive Kichevo",
+      "author": "Toli.Aliu",
+      "url": "https://sketchfab.com/3d-models/b5f8c68c28f34140aaaf2c602edb9597",
+      "licence": "cc-by-4.0"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["ice1"],
+      "title": "Eneroth Railroad System Test for Beta 0.1.3",
+      "author": "Eneroth3",
+      "url": "https://3dwarehouse.sketchup.com/model/4ea3a771833c1a5d664c9d233a6e4d7f",
+      "licence": "3dw-gml"
+    },
+    {
+      "kind": "3D model",
+      "vehicles": ["daylight"],
+      "title": "daylight",
+      "author": "Helo Thunder",
+      "url": "https://3dwarehouse.sketchup.com/model/907999622951dfdfb37e95cad1ea93e9",
+      "licence": "3dw-gml"
     }
   ]
 }

@@ -1076,7 +1076,14 @@ function wagonVariants(): { body: string; size: string; paint: string; def: Wago
     const size = `${d.size ?? 'small'}${d.gauge === 'narrow' ? '_n' : ''}`;
     for (const paint of [d.paint, 'iron']) {
       const key = `${d.body}|${size}|${paint}|${d.service ?? ''}`;
-      if (!seen.has(key)) seen.set(key, { body: d.body, size, paint, def: { ...d, paint } });
+      // the shared frames are drawn at the size's length, not at one wagon's own
+      if (!seen.has(key))
+        seen.set(key, {
+          body: d.body,
+          size,
+          paint,
+          def: { ...d, paint, gear: undefined, lengthTiles: undefined },
+        });
     }
   }
   // the renderer's last-resort frame
