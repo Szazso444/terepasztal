@@ -531,6 +531,21 @@ export function heightFactor(level: number, heightLight: number): number {
   return 1 + heightLight * (level <= 4 ? level : 4 + (level - 4) * 0.15);
 }
 
+/** Up to this shade snow takes the light as it comes; above it the light is rolled off. */
+const SNOW_KNEE = 0.95;
+/** The most light snow ever takes, which leaves its red and green just under white. */
+const SNOW_MOST = 1.08;
+/**
+ * The light on snow under slope shade `shade`. Snow is near white, so ground light would clip it
+ * flat on every slope that faces the sun. It takes no height light, shaded slopes keep their shade
+ * and lit ones roll off below SNOW_MOST, so the form of a mountain stays under the snow.
+ */
+export function snowLight(shade: number): number {
+  if (shade <= SNOW_KNEE) return shade;
+  const room = SNOW_MOST - SNOW_KNEE;
+  return SNOW_KNEE + room * (1 - Math.exp((SNOW_KNEE - shade) / room));
+}
+
 /** A true top, which carries a peak picture, stands at this level or higher... */
 export const TOP_LEVEL = 7;
 /** ...and has no higher tile within this many tiles along either axis. */

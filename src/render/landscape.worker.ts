@@ -7,6 +7,7 @@ import {
 } from './landscapeModel';
 import {
   heightFactor,
+  snowLight,
   reliefHeight,
   surfaceAlongRay,
   RELIEF_MAX,
@@ -240,6 +241,7 @@ self.onmessage = async (event: MessageEvent) => {
             wy,
             snowLineAt(map, snowLevels, tileIndex),
             steep ?? 0,
+            shade,
             solid ? null : color,
           );
         }
@@ -474,12 +476,17 @@ const BANK_TONES = {
   lush: [0.9, 1.02, 0.86],
 };
 const SNOW = [234, 239, 246];
+/** What snow in full shade keeps of its red, green and blue: shade on snow reads cool. */
+const SNOW_SHADE = [0.84, 0.93, 1];
+/** How much of the season's tint snow takes: it stays snow, not the colour of autumn grass. */
+const SNOW_SEASON = 0.25;
 /**
  * Looks from the relief style (the shipped style has the height light and snow): higher levels
  * paint lighter (ground level unchanged), snow patches from the tile's snow line and full snow a
  * level above, and a cast shadow darkens ground that a higher tile hides from the upper-left light.
  * Snow goes on `color`, the ground's colour, which is null where the ground is not painted (under
- * solid paving). Returns the shading factor.
+ * solid paving), lit by snowLight: it is set so that `shade`, the slope's light so far, and the
+ * factor returned, which the caller multiplies in, leave it at that. Returns the shading factor.
  */
 function previewLooks(
   x: number,
@@ -489,6 +496,7 @@ function previewLooks(
   wy: number,
   snowLine: number,
   steep: number,
+  shade: number,
   color: number[] | null,
 ) {
   const style = relief.style,
@@ -505,8 +513,15 @@ function previewLooks(
         // Patchy snow keeps off steep rock; full snow covers everything.
         amount = unit((cover - n) / 0.06) * (cover < 0.99 ? 1 - 0.6 * steep : 1);
       if (amount > 0) {
-        const texture = 0.88 + 0.12 * ((color[0] + color[1] + color[2]) / 3 / 140);
-        for (let c = 0; c < 3; c++) color[c] += (SNOW[c] * texture - color[c]) * amount;
+        const texture = Math.min(1, 0.88 + (0.12 * (color[0] + color[1] + color[2])) / 3 / 140),
+          lit = (texture * snowLight(shade)) / (shade * factor),
+          cool = unit((1 - shade) / 0.35);
+        for (let c = 0; c < 3; c++) {
+          const season = ((tint >> (16 - c * 8)) & 255) / 255,
+            kept = (1 + (season - 1) * SNOW_SEASON) / season,
+            hue = 1 + (SNOW_SHADE[c] - 1) * cool;
+          color[c] += (SNOW[c] * lit * kept * hue - color[c]) * amount;
+        }
       }
     }
   }

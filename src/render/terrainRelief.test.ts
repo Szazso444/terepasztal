@@ -12,6 +12,7 @@ import {
   hillFamily,
   groundAllows,
   heightFactor,
+  snowLight,
   isTrueTop,
   RELIEF_MAX,
   DEFAULT_RELIEF,
@@ -540,6 +541,17 @@ describe('tall ground', () => {
     // the map has both kinds of cell side by side
     expect(mixed).toBeGreaterThan(10);
   });
+  it('snowLight keeps shade as it comes and rolls off the light above it', () => {
+    expect(snowLight(0.7)).toBe(0.7);
+    expect(snowLight(0.95)).toBe(0.95);
+    let last = 0;
+    for (let shade = 0.5; shade < 1.7; shade += 0.05) {
+      expect(snowLight(shade)).toBeGreaterThan(last);
+      expect(snowLight(shade)).toBeLessThan(1.08);
+      last = snowLight(shade);
+    }
+  });
+
   it('heightFactor is 1.24 at level 4 and 1.348 at level 16', () => {
     expect(heightFactor(0, 0.06)).toBe(1);
     expect(heightFactor(2, 0.06)).toBeCloseTo(1.12, 10);

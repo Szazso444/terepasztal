@@ -277,6 +277,46 @@ describe('the painter with a town', () => {
   }, 60_000);
 });
 
+describe('the painter on snow', () => {
+  /** Red, green and blue of the bright pixels of a snowy hill, the rest being its rock and grass. */
+  async function snow(tint: number) {
+    const w = { ...onHill(world()), city: [], doorsteps: [], tint };
+    const r = await paint(
+      w,
+      0,
+      0,
+      1,
+      BIOME_DEFS.map(() => 1),
+    );
+    const out: number[][] = [];
+    for (let k = 0; k < r.pixels.length; k += 4)
+      if (r.pixels[k + 3] === 255 && r.pixels[k + 2] > 170)
+        out.push([r.pixels[k], r.pixels[k + 1], r.pixels[k + 2]]);
+    return out;
+  }
+
+  it('leaves its red and green under white, however the slope is lit', async () => {
+    // snow is bluer than it is red, and bright rock the other way round
+    const bright = (await snow(0xffffff)).filter(([red, , blue]) => blue >= red);
+    expect(bright.length).toBeGreaterThan(500);
+    for (const [red, green] of bright) {
+      expect(red).toBeLessThan(254);
+      expect(green).toBeLessThan(255);
+    }
+  });
+
+  it('shades its slopes', async () => {
+    const reds = (await snow(0xffffff)).map(([red]) => red);
+    expect(Math.max(...reds) - Math.min(...reds)).toBeGreaterThan(30);
+  });
+
+  it('stays snow under an autumn tint, near white and not the colour of the grass', async () => {
+    const bright = await snow(0xffe2bc);
+    const mean = (c: number) => bright.reduce((n, p) => n + p[c], 0) / bright.length;
+    expect(mean(2) / mean(0)).toBeGreaterThan(0.9);
+  });
+});
+
 describe('the painter with a town on the flat, on a hill and above the snow line', () => {
   /** A town's four chunks as painted, with the relief and the paving the painter builds. */
   interface Painted {
