@@ -16,6 +16,7 @@ import {
   bogieFrame,
   bogieStyleOf,
 } from '../art/frames';
+import { FrameKeys, type KeysByFacing } from './frameKeys';
 import { pitchOnRail, tiltOnRail, LEVEL_GROUND, type Ground } from './slope';
 import { PhaseCounter, WheelRolls, phaseIndex, phaseKey } from './runningGear';
 import { advanceSpin, spinPhase } from './wheelSpin';
@@ -110,6 +111,7 @@ export class TrainRenderer {
   selectedId: number | null = null;
   /** vehicles standing inside an engine shed are not drawn */
   hideAt: ((x: number, y: number) => boolean) | null = null;
+  private readonly frameKeys: FrameKeys;
   private hoverSince = 0;
   private clock = 0;
   /** wheel-phase frames per still frame, and each train's wheel roll (`runningGear.ts`) */
@@ -128,6 +130,7 @@ export class TrainRenderer {
     /** The surface under a tile position; trains climb hills on it. Level when absent. */
     private readonly ground: (x: number, y: number) => Ground = () => LEVEL_GROUND,
   ) {
+    this.frameKeys = new FrameKeys(atlas);
     this.phases = new PhaseCounter(atlas);
     layer.on('destroyed', () => this.surfaces.destroy());
   }
@@ -220,7 +223,7 @@ export class TrainRenderer {
    */
   private pose(
     s: Sprite,
-    frameFor: (f: number) => string,
+    keys: KeysByFacing,
     x: number,
     y: number,
     angle: number,
@@ -230,7 +233,7 @@ export class TrainRenderer {
   ) {
     const f = facingOf(angle);
     const drawn = DRAWN_FACINGS.has(f);
-    const key = frameFor(drawn ? f : mirrorFacing(f));
+    const key = keys[drawn ? f : mirrorFacing(f)];
     const fr = this.atlas.get(
       roll === undefined ? key : phaseKey(key, phaseIndex(roll, this.phases.count(key))),
     );
@@ -348,16 +351,14 @@ export class TrainRenderer {
   ): Ground {
     const n = seg.bogies.length;
     if (n < 2) return this.ground(x, y);
-    const at = (k: number) => {
-      const b = seg.bogies[k],
-        p = prev?.bogies[k];
-      return [
-        p ? lerp(p.drawX, b.drawX, alpha) : b.drawX,
-        p ? lerp(p.drawY, b.drawY, alpha) : b.drawY,
-      ];
-    };
-    const [ax, ay] = at(0),
-      [bx, by] = at(n - 1),
+    const first = seg.bogies[0],
+      last = seg.bogies[n - 1],
+      pf = prev?.bogies[0],
+      pl = prev?.bogies[n - 1],
+      ax = pf ? lerp(pf.drawX, first.drawX, alpha) : first.drawX,
+      ay = pf ? lerp(pf.drawY, first.drawY, alpha) : first.drawY,
+      bx = pl ? lerp(pl.drawX, last.drawX, alpha) : last.drawX,
+      by = pl ? lerp(pl.drawY, last.drawY, alpha) : last.drawY,
       ga = this.ground(ax, ay),
       gb = this.ground(bx, by),
       dx = bx - ax,
@@ -440,22 +441,23 @@ export class TrainRenderer {
     const segments = cur.segments;
     const previous = prev?.segments;
     c.undercarriage.zIndex = Infinity;
-    segments.forEach((seg, si) => {
+    for (let si = 0; si < segments.length; si++) {
+      const seg = segments[si];
       const ps = previous?.[si];
       const x = ps ? ps.x + (seg.x - ps.x) * alpha : seg.x;
       const y = ps ? ps.y + (seg.y - ps.y) * alpha : seg.y;
       const angle = ps ? lerpAngle(ps.angle, seg.angle, alpha) : seg.angle;
       const shown = angle + flip + (seg.mirror ? Math.PI : 0);
       const s = c.parts[si];
-      const frameFor = isLoco
-        ? (f: number) => locoFrame(this.atlas, t.locos[i].def, f, seg.part)
-        : (f: number) => wagonFrame(this.atlas, t.wagons[i - t.locos.length].def, f);
-      const styles = vehicleDef(t, i).bogieStyle;
+      const keys = isLoco
+        ? this.frameKeys.loco(t.locos[i].def, seg.part)
+        : this.frameKeys.wagon(t.wagons[i - t.locos.length].def);
+      const styles = (isLoco ? t.locos[i].def : t.wagons[i - t.locos.length].def).bogieStyle;
       // a segment drawn back to front turns its gear the other way, and so do its bogies
       const partRoll = roll === undefined ? undefined : seg.mirror ? -roll : roll;
       const key = this.pose(
         s,
-        frameFor,
+        keys,
         x,
         y,
         shown,
@@ -490,7 +492,8 @@ export class TrainRenderer {
       setOwnTint(s, tint);
       c.undercarriage.zIndex = Math.min(c.undercarriage.zIndex, s.zIndex - 1);
       if (c.spec.drawBogies)
-        seg.bogies.forEach((b, k) => {
+        for (let k = 0; k < seg.bogies.length; k++) {
+          const b = seg.bogies[k];
           const pb = ps?.bogies[k];
           // Each wheel group follows its own rail point and tangent; the raised body
           // occludes it naturally, leaving the wheels and sideways slide visible.
@@ -498,10 +501,10 @@ export class TrainRenderer {
           const by = pb ? pb.drawY + (b.drawY - pb.drawY) * alpha : b.drawY;
           const ba = pb ? lerpAngle(pb.angle, b.angle, alpha) : b.angle;
           const bs = c.bogies[bi++];
-          if (!bs) return;
+          if (!bs) continue;
           if (b.hidden) {
             bs.visible = false;
-            return;
+            continue;
           }
           // bogies are posed in track order; a reversed vehicle or a mirrored segment meets
           // them back to front, and its styled trucks (cylinders ahead) must face its own front
@@ -510,36 +513,29 @@ export class TrainRenderer {
           const style = bogieStyleOf(styles, seg.part, back ? nb - 1 - k : k);
           if (style === 'none') {
             bs.visible = false;
-            return;
+            continue;
           }
           const heading = ba + (back ? Math.PI : 0);
-          const narrow = vehicleDef(t, i).gauge === 'narrow';
-          this.pose(
-            bs,
-            (f) => bogieFrame(this.atlas, style, b.kind, f, narrow),
-            bx,
-            by,
-            heading,
-            14,
-            partRoll,
-          );
+          const narrow =
+            (isLoco ? t.locos[i].def : t.wagons[i - t.locos.length].def).gauge === 'narrow';
+          this.pose(bs, this.frameKeys.bogie(style, b.kind, narrow), bx, by, heading, 14, partRoll);
           bs.visible &&= s.visible;
           // always just under its own body: the depth key is by position, and a bogie
           // ahead of the body centre (towards the camera) would otherwise paint over it
           bs.zIndex = s.zIndex - 1;
           bs.tint = tint;
-        });
+        }
       if (c.load && si === 0) {
         const w = t.wagons[i - t.locos.length];
         if (w.cargo && w.amount > 0.5) {
           const kind = loadKind(w.def, w.cargo);
           const thin = w.def.gauge === 'narrow';
-          this.pose(c.load, (f) => loadFrame(kind, f, thin), x, y, shown, 16);
+          this.pose(c.load, this.frameKeys.load(kind, thin), x, y, shown, 16);
           const col = (PAL as unknown as Record<string, RGB>)[cargoDef(w.cargo).color] ?? PAL.white;
           setOwnTint(c.load, hex(col));
         } else c.load.visible = false;
       }
-    });
+    }
   }
 
   /**

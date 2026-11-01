@@ -1,0 +1,87 @@
+{
+  "returned": [1254, 1254],
+  "box": [399, 450, 860, 1094],
+  "footWidth": 462,
+  "footCentre": [629.5, 978.5],
+  "scale": 10.746685275645499,
+  "widthOverShort": 0.3684210526315789,
+  "camera": {
+    "off": false,
+    "by": 0.4,
+    "elevation": 0.4,
+    "turn": 0,
+    "ratio": 0.505,
+    "looking": 30.4
+  },
+  "apexOverW": 1.143939393939394,
+  "stubSlope": 0.42592592592592593,
+  "stubDirectionPass": true,
+  "stubSpan": 58.69412236331675,
+  "hubTarget": [16, -34],
+  "hubFromAnchorWorld": [16.05146103896104, -35.68418831168832],
+  "hubOffset": [0.05146103896104037, -1.6841883116883167],
+  "hubDistance": 1.6849743344509711,
+  "doorPosition": 0.29545454545454547,
+  "doorHeight": 0.3051948051948052,
+  "pixels": {
+    "timber": 129,
+    "white": 3129,
+    "amber": 0
+  },
+  "check": {
+    "ok": true,
+    "problems": [],
+    "notes": ["placed by its outline: no straight wall base was found"],
+    "fit": {
+      "method": "outline",
+      "sure": [false, true],
+      "measured": [0.5, -0.399],
+      "slopes": [0.5, -0.399],
+      "base": {
+        "w": [399, 1025],
+        "s": [608.2, 1129.6],
+        "e": [823, 1044]
+      },
+      "scale": 1.0626,
+      "vertical": 1.1129,
+      "shear": -0.0565,
+      "cx": 611,
+      "cy": 1116.8,
+      "box": {
+        "left": 286.7,
+        "top": 139.7,
+        "right": 776.6,
+        "bottom": 902
+      },
+      "camera": null,
+      "area": 217334
+    }
+  },
+  "tests": {
+    "camera": true,
+    "tower": true,
+    "stub": true,
+    "hub": true,
+    "doorPosition": false,
+    "doorHeight": false,
+    "timber": false,
+    "amber": true,
+    "white": false,
+    "check": true,
+    "eye": true,
+    "position": true
+  },
+  "eye": {
+    "view": 3,
+    "apexTip": 450,
+    "stub": [
+      [723, 582],
+      [777, 605]
+    ],
+    "hub": [802, 638],
+    "hubBox": [766, 590, 839, 686],
+    "door": [736, 932, 796, 1073],
+    "pass": true,
+    "notes": "Round tower, slate cap/plain tip, right-face door/window/stub, no sails, ground, plinth or other objects; left lighter than right."
+  }
+}

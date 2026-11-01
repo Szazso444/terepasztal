@@ -22,7 +22,7 @@ import { Train, aheadRun, defaultStop, resetTrainIds, type RouteMode } from './t
 import { Fleet, MAX_LOCOS, MAX_WAGONS } from './fleet';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
-import { gaugeOf } from './compat';
+import { gaugeOf, trainClassOf } from './compat';
 import { Polyline, consistLength, vehicleFronts, vehicleSpec, type BodyFields } from './body';
 import { walkBack, type PathSegment } from '../world/pathfinding';
 import { content, type Gauge } from '../data/content';
@@ -1531,6 +1531,54 @@ describe('the path ahead', () => {
     // the trains ran their paths for most of the run
     expect(checked).toBeGreaterThan(1000);
   }, 20_000);
+});
+
+describe('the tiles under a train, kept between passes', () => {
+  // Slow: steps the three-train traffic scenario 2400 times (about 1 s alone), so 20 s.
+  it('are the tiles its cars stand on, at every tick of the traffic scenario', () => {
+    const s = buildTrafficScenario(3);
+    const w = s.track.w;
+    let moved = 0;
+    const was = new Map<number, readonly number[]>();
+    for (let tick = 0; tick < 2400; tick++) {
+      s.step(SCENARIO_GDT, tick / SCENARIO_TICK_RATE);
+      for (const t of s.fleet.trains) {
+        const keys = t.occupancyKeys(w);
+        const fresh: number[] = [];
+        for (const p of t.occupancyPoints()) {
+          const k = Math.floor(p.y + 0.5) * w + Math.floor(p.x + 0.5);
+          if (!fresh.includes(k)) fresh.push(k);
+        }
+        expect(keys, `tick ${tick}, train ${t.id}`).toEqual(fresh);
+        expect(t.occupancyKeys(w)).toBe(keys);
+        if (was.get(t.id) !== keys) moved++;
+        was.set(t.id, keys);
+      }
+    }
+    expect(moved).toBeGreaterThan(1000);
+  }, 20_000);
+  it('are worked out for the width asked', () => {
+    const s = buildTrafficScenario(3);
+    for (let tick = 0; tick < 200; tick++) s.step(SCENARIO_GDT, tick / SCENARIO_TICK_RATE);
+    const t = s.fleet.trains[0];
+    const [a] = t.occupancyKeys(s.track.w);
+    const [b] = t.occupancyKeys(s.track.w * 2);
+    expect(b).not.toBe(a);
+  });
+});
+
+describe('what a consist may use', () => {
+  it('is worked out again when its vehicles change', () => {
+    const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+    const alone = { access: t.access, cls: t.trainClass };
+    expect(t.access).toBe(alone.access);
+    const pullman = wagonDef('pullman');
+    t.wagons.push({ uid: 2, def: pullman, level: 1, cargo: null, amount: 0, origin: null });
+    expect(t.trainClass).toBe(trainClassOf([locoDef('f7'), pullman]));
+    expect(t.trainClass).not.toBe(alone.cls);
+    t.wagons.length = 0;
+    expect(t.trainClass).toBe(alone.cls);
+  });
 });
 
 describe('car poses kept between ticks', () => {

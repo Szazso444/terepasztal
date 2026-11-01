@@ -309,6 +309,8 @@ describe('a building being upgraded', () => {
     w.builder.upgradeStation(farm);
     expect(farm.crew).toBe(0);
     expect(w.builder.crewTotal()).toBe(crew - LEVELS.crew[0]);
+    // the total is what the sites add up to
+    expect(w.builder.crewTotal()).toBe(w.builder.crewSites().reduce((n, c) => n + c.crew, 0));
     farm.tick(weekSeconds());
     expect(farm.totalStored()).toBe(0);
     // the step makes nothing there either, and counts no crew to feed
@@ -576,13 +578,12 @@ describe('what may be upgraded', () => {
       savedAt: 0,
       seed: 1,
       clock: { time: 0, speedIndex: 1 },
-      economy: { money: 0, tickets: 0, tier: 1, granted: [] },
+      economy: { money: 0, tier: 1 },
       track: [],
       stations: w.builder.stations.map((s) => s.toJSON()),
       trains: [],
       contracts: {},
       inventory: {},
-      gacha: {},
       camera: { x: 0, y: 0, zoomIndex: 0 },
       lastDay: 1,
       buildings: [...w.builder.buildings.values()].map(buildingToJSON),
@@ -703,13 +704,12 @@ function reload(w: World): World {
     savedAt: 0,
     seed: 1,
     clock: { time: w.clock.time, speedIndex: 1 },
-    economy: { money: 0, tickets: 0, tier: 5, granted: [] },
+    economy: { money: 0, tier: 5 },
     track: [],
     stations: w.builder.stations.map((s) => s.toJSON()),
     trains: [],
     contracts: {},
     inventory: {},
-    gacha: {},
     camera: { x: 0, y: 0, zoomIndex: 0 },
     lastDay: 1,
     buildings: [...w.builder.buildings.values()].map(buildingToJSON),
