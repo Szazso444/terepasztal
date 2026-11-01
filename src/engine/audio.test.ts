@@ -141,6 +141,29 @@ describe('audio outside a browser', () => {
     // the master bed rises to the volume: nothing counts as hidden without a document
     expect(gains[0].gain.setTargetAtTime).toHaveBeenLastCalledWith(0.5, 1, 0.2);
   });
+
+  it('adds no hiss for the rain: the wind is the only noise bed', () => {
+    const { ctx } = fakeContext();
+    const sources = vi.spyOn(ctx, 'createBufferSource');
+    new Ambience().update(ctx, 0.5, 1, 0);
+    expect(sources).toHaveBeenCalledOnce();
+  });
+
+  it('plays nothing inside `silently`, and plays again after it', async () => {
+    vi.resetModules();
+    const fresh = await import('./audio');
+    const { Synth: FreshSynth } = await import('./synth');
+    const play = vi.spyOn(FreshSynth.prototype, 'play').mockImplementation(() => {});
+    expect(fresh.silently(() => (fresh.sfx('build.place'), 7))).toBe(7);
+    expect(() =>
+      fresh.silently(() => {
+        throw new Error('laying failed');
+      }),
+    ).toThrow();
+    expect(play).not.toHaveBeenCalled();
+    fresh.sfx('build.place');
+    expect(play).toHaveBeenCalledOnce();
+  });
 });
 
 describe('audio in a browser', () => {

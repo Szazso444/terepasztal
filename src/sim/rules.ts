@@ -13,7 +13,6 @@
  */
 export interface Rules {
   startMoney: number;
-  startTickets: number;
   buildCostMul: number;
   /** multiplies the game time an upgrade takes; 0 makes every upgrade instant */
   upgradeTimeMul: number;
@@ -128,7 +127,6 @@ export interface RuleMeta {
 
 export const DEFAULT_RULES: Rules = {
   startMoney: 40000,
-  startTickets: 3,
   buildCostMul: 1,
   upgradeTimeMul: 1,
   refundRate: 0.5,
@@ -202,15 +200,6 @@ export const RULE_META: RuleMeta[] = [
     min: 0,
     max: 500000,
     step: 1000,
-    newGame: true,
-  },
-  {
-    key: 'startTickets',
-    label: 'Starting tickets',
-    group: 'Start',
-    min: 0,
-    max: 200,
-    step: 1,
     newGame: true,
   },
   {

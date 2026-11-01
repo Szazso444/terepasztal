@@ -9,8 +9,9 @@ import LIFE from './buildingLife.json';
  * (`scaleReference`, src/render/assetScale.ts), so a frame drawn at scale k puts a point at k
  * times these numbers, like `buildingGround.json`.
  *
- * The file is `{ pots: { <frame>: Pot[] }, cranes: { <frame>: Crane } }`. A frame that shows no
- * pot and no crane is not in it; so are the placeholder turns (`_r1` to `_r3`) that draw none.
+ * The file is `{ pots: { <frame>: Pot[] }, cranes: { <frame>: Crane }, mills: { <frame>: Mill } }`.
+ * A frame that shows none of them is not in it; so are the placeholder turns (`_r1` to `_r3`) that
+ * draw none.
  */
 
 /** [x, y]: world px right and down from the frame's anchor. */
@@ -39,9 +40,18 @@ export interface Crane {
   load: Rect[];
 }
 
+/** Where a windmill's sails turn. */
+export interface Mill {
+  /** the sails' hub */
+  hub: Point;
+  /** the sails' plane: the matrix [[a, b], [c, d]] that lays the face-on cross into it */
+  plane: readonly [readonly [number, number], readonly [number, number]];
+}
+
 const FILE = LIFE as unknown as {
   pots: Record<string, Pot[]>;
   cranes: Record<string, Crane>;
+  mills: Record<string, Mill>;
 };
 
 /** The pots of an atlas frame key (`structures/farm_2`), or undefined for a frame with none. */
@@ -52,6 +62,11 @@ export function potsOf(frame: string): readonly Pot[] | undefined {
 /** The crane of an atlas frame key (`structures/quarry_2`), or undefined for a frame without. */
 export function craneOf(frame: string): Crane | undefined {
   return Object.hasOwn(FILE.cranes, frame) ? FILE.cranes[frame] : undefined;
+}
+
+/** The sails of an atlas frame key (`structures/windmill_lv2`), or undefined for a frame without. */
+export function millOf(frame: string): Mill | undefined {
+  return Object.hasOwn(FILE.mills, frame) ? FILE.mills[frame] : undefined;
 }
 
 /** Every frame that has pots. */

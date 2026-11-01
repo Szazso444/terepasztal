@@ -1,0 +1,11 @@
+{
+  "stub": [
+    [548, 634],
+    [486, 654]
+  ],
+  "hub": [470, 686],
+  "hubBox": [435, 640, 503, 733],
+  "door": [468, 955, 515, 1074],
+  "pass": true,
+  "notes": "Round smooth tower, plain apex, no sails/ground/plinth/objects. Door and shaft lower-left. Upper-left lighting."
+}

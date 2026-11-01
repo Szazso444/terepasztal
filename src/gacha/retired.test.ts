@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { DEFAULT_CONTENT, validateContent, type Banner } from '../data/content';
+import { describe, it, expect } from 'vitest';
+import { DEFAULT_CONTENT, validateContent } from '../data/content';
 import { Rng } from '../engine/rng';
 import { Economy } from '../sim/economy';
 import { forAll, shrinkArray } from '../testing/property';
@@ -16,7 +16,6 @@ import {
 } from './items';
 import type { Item } from './items';
 import { Inventory } from './inventory';
-import { BANNERS, Gacha, bannerPool, validateBanners } from './gacha';
 import {
   CRAFT_TIERS,
   Crafting,
@@ -28,9 +27,9 @@ import {
 
 /**
  * A retired model stays in the tables so copies a player owns keep working, and nothing may hand
- * out a new one. These tests walk every way an item enters an inventory (banner pulls, the
- * starter kit, the workshop) and feed each one stale data that still names a retired model, the
- * way an edited content table or an old save would: the flag has to hold on its own.
+ * out a new one. These tests walk every way an item enters an inventory (the starter kit, the
+ * workshop) and feed each one stale data that still names a retired model, the way an edited
+ * content table or an old save would: the flag has to hold on its own.
  */
 const RETIRED = [...LOCOS, ...WAGONS].filter((d) => d.retired).map((d) => d.id);
 const KINDS: CraftKind[] = ['loco', 'wagon'];
@@ -42,7 +41,6 @@ function item(uid: number, defId: string): Item {
     kind: LOCOS.some((l) => l.id === defId) ? 'loco' : 'wagon',
     level: 1,
     assigned: null,
-    dupes: 0,
     obtainedAt: 0,
   };
 }
@@ -60,8 +58,8 @@ function workshop(seed: number) {
 }
 /**
  * Runs `fn` with `ids` retired too, the way a later retirement would flag them, then puts every
- * flag back. The shipped retired models are both N, and the featured rotation only ever picks SR
- * and SSR models, so the rarer cases need models retired for the test.
+ * flag back. The shipped retired models are both N, so the rarer cases need models retired for the
+ * test.
  */
 function retiring<T>(ids: string[], fn: () => T): T {
   const defs = ids.map((id) => itemDef(id));
@@ -94,105 +92,95 @@ describe('retired models', () => {
   });
 });
 
-describe('banners and retired models', () => {
+describe('recipe pools and retired models', () => {
+  /** Every recipe pool: each kind in each age. */
+  const POOLS = KINDS.flatMap((kind) =>
+    CRAFT_TIERS.map((tier) => ({ kind, tier, name: `${kind} age ${tier}` })),
+  );
+
   it('lists no retired model in a shipped pool and still offers every rarity', () => {
-    for (const b of BANNERS) {
-      expect(b.pool.filter(isRetired), b.id).toEqual([]);
-      expect(bannerPool(b).filter(isRetired), b.id).toEqual([]);
-    }
-    expect(validateBanners()).toEqual([]);
+    const offered = POOLS.flatMap((p) => craftPool(p.kind, p.tier));
+    expect(offered.filter(isRetired)).toEqual([]);
+    for (const r of RARITIES)
+      expect(
+        offered.some((id) => itemDef(id).rarity === r),
+        r,
+      ).toBe(true);
   });
 
-  // slow because every banner, as shipped and stale, pulls 11 cards in 12 rotations for 8 seeds,
-  // with and without a later retirement: 0.7 s alone
-  it('never pulls, features or lists a retired model, even when the pool still names one', () => {
-    for (const shipped of BANNERS) {
-      // what a stored content override from before the retirement looks like
-      const stale: Banner = { ...shipped, pool: [...RETIRED, ...shipped.pool] };
-      expect(bannerPool(stale)).toEqual(shipped.pool);
-      // and a later retirement of one model of each rarity, the featured SR and SSR included
-      for (const later of [[], onePerRarity(shipped.pool)])
+  // slow because every pool, as shipped and with a later retirement, runs 12 draws for 8 seeds and
+  // builds what they give
+  it('never draws, lists or builds a retired model, even when a list still names one', () => {
+    for (const { kind, tier, name } of POOLS) {
+      const shipped = craftPool(kind, tier);
+      // what a list from before the retirement looks like
+      const stale = [...RETIRED, ...shipped];
+      expect(obtainable(stale), name).toEqual(shipped);
+      // and a later retirement of one model of each rarity
+      for (const later of [[], onePerRarity(shipped)])
         retiring(later, () => {
-          for (const banner of [shipped, stale]) {
-            expect(bannerPool(banner).filter(isRetired)).toEqual([]);
-            const seen = new Set<string>();
-            for (let seed = 1; seed <= 8; seed++) {
-              const inventory = new Inventory();
-              const gacha = new Gacha(new Rng(seed * 7919), inventory);
-              for (let rotation = 0; rotation < 12; rotation++) {
-                expect(Gacha.featured(banner, rotation).filter(isRetired)).toEqual([]);
-                const results = [
-                  ...gacha.pull(banner, 10, 0, rotation),
-                  ...gacha.pull(banner, 1, 0, rotation),
-                ];
-                expect(results).toHaveLength(11);
-                for (const r of results) {
-                  expect(isRetired(r.defId), r.defId).toBe(false);
-                  seen.add(r.defId);
-                }
+          const pool = craftPool(kind, tier);
+          expect(obtainable(stale).filter(isRetired), name).toEqual([]);
+          expect(pool.filter(isRetired), name).toEqual([]);
+          const seen = new Set<string>();
+          for (let seed = 1; seed <= 8; seed++) {
+            const w = workshop(seed * 7919);
+            for (let n = 0; n < 12; n++) {
+              const draw = w.crafting.draw(kind, tier);
+              if (!draw) break;
+              expect(draw.cards.length, name).toBeGreaterThan(0);
+              for (const id of draw.cards) {
+                expect(isRetired(id), id).toBe(false);
+                seen.add(id);
               }
-              expect(inventory.items).toHaveLength(12 * 11);
-              expect(inventory.ownedDefs().filter(isRetired)).toEqual([]);
+              expect(w.crafting.choose(draw.cards[0], w.stock)?.defId, name).toBe(draw.cards[0]);
+              w.crafting.craft(draw.cards[0], w.stock, 0);
             }
-            // the run was wide enough to reach every rarity a retired model sits in, wherever
-            // the banner still has a model of that rarity to give
-            for (const id of [...RETIRED, ...later]) {
-              const rarity = itemDef(id).rarity;
-              if (bannerPool(banner).some((p) => itemDef(p).rarity === rarity))
-                expect(
-                  [...seen].some((s) => itemDef(s).rarity === rarity),
-                  id,
-                ).toBe(true);
-            }
+            expect(w.inventory.ownedDefs().filter(isRetired), name).toEqual([]);
+          }
+          // the run was wide enough to reach every rarity a retired model sits in, wherever the
+          // pool still has a model of that rarity to give
+          for (const id of [...RETIRED, ...later]) {
+            const rarity = itemDef(id).rarity;
+            if (pool.some((c) => itemDef(c).rarity === rarity))
+              expect(
+                [...seen].some((c) => itemDef(c).rarity === rarity),
+                `${name}: ${id}`,
+              ).toBe(true);
           }
         });
     }
   }, 30_000);
 
-  it('falls back to a model it may hand out when the rolled rarity has only retired ones', () => {
-    // N rolls find no N model to give; the downgrade search runs dry and the fallback picks
-    const ssr = LOCOS.find((l) => l.rarity === 'SSR' && !l.retired)!.id;
-    const banner: Banner = { id: 'thin', name: 'Thin', tier: 0, pool: [...RETIRED, ssr] };
-    const inventory = new Inventory();
-    const gacha = new Gacha(new Rng(5), inventory);
-    for (let rotation = 0; rotation < 6; rotation++)
-      for (const r of gacha.pull(banner, 10, 0, rotation)) expect(r.defId).toBe(ssr);
-    expect(inventory.ownedDefs()).toEqual([ssr]);
-  });
-
-  it('hands out nothing from a pool that is retired through and through', () => {
-    const inventory = new Inventory();
-    const gacha = new Gacha(new Rng(1), inventory);
-    const banner: Banner = { id: 'gone', name: 'Gone', tier: 0, pool: [...RETIRED] };
-    expect(bannerPool(banner)).toEqual([]);
-    expect(Gacha.featured(banner, 0)).toEqual([]);
-    expect(gacha.pull(banner, 10, 0)).toEqual([]);
-    expect(gacha.pull(banner, 1, 0)).toEqual([]);
-    expect(inventory.items).toEqual([]);
-  });
-
-  it('warns of a banner left without a rarity once its models of that rarity are retired', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      for (const b of BANNERS) {
-        const n = b.pool.filter((id) => itemDef(id).rarity === 'N');
-        expect(retiring(n, validateBanners), b.id).toContain(`banner ${b.id} has no N items`);
-      }
-      expect(validateBanners()).toEqual([]);
-    } finally {
-      warn.mockRestore();
+  it('falls back to the model it may hand out when the rest of a pool is retired', () => {
+    for (const { kind, tier, name } of POOLS) {
+      const [kept, ...rest] = craftPool(kind, tier);
+      if (!kept) continue;
+      retiring(rest, () => {
+        for (const seed of [5, 6, 7]) {
+          const w = workshop(seed);
+          for (let n = 0; n < 6; n++) {
+            expect(w.crafting.draw(kind, tier)?.cards, name).toEqual([kept]);
+            expect(w.crafting.choose(kept, w.stock)?.defId, name).toBe(kept);
+          }
+          expect([...w.crafting.recipes], name).toEqual([kept]);
+        }
+      });
     }
   });
 
-  it('rejects edited content whose banner has nothing left to pull, and keeps one that has', () => {
-    const bundle = structuredClone(DEFAULT_CONTENT);
-    const [first] = bundle.gacha.banners;
-    first.pool = [...RETIRED, ...first.pool];
-    expect(validateContent(bundle)).toEqual([]);
-    first.pool = [...RETIRED];
-    expect(validateContent(bundle)).toEqual([
-      `banner ${first.id}: every item in the pool is retired`,
-    ]);
+  it('hands out nothing from a pool that is retired through and through', () => {
+    for (const { kind, tier, name } of POOLS)
+      retiring(craftPool(kind, tier), () => {
+        const w = workshop(1);
+        const money = w.economy.money;
+        expect(craftPool(kind, tier), name).toEqual([]);
+        expect(w.crafting.canDraw(kind, tier), name).toBe(false);
+        expect(w.crafting.draw(kind, tier), name).toBeNull();
+        expect(w.economy.money, `${name}: nothing charged`).toBe(money);
+        expect(w.crafting.pending, name).toBeNull();
+        expect(w.inventory.items, name).toEqual([]);
+      });
   });
 });
 
@@ -340,33 +328,18 @@ function everyStarter<T>(fn: () => T): T {
 
 /**
  * Every way a model is handed out, checked against the `retired` flag read straight off the
- * tables (not through `isRetired`): banner listings, featured picks and pulls, the starter kit,
- * the recipe pools, draws, choices and builds, the recipes and drawn cards a save brings back,
- * the recipes derived from an inventory, and the content checks.
+ * tables (not through `isRetired`): any list read through `obtainable`, the starter kit, the recipe
+ * pools, draws, choices and builds, the recipes and drawn cards a save brings back, the recipes
+ * derived from an inventory, and the content checks.
  */
 function nothingRetiredHandedOut() {
   const off = new Set([...LOCOS, ...WAGONS].filter((d) => d.retired === true).map((d) => d.id));
   const on = (ids: readonly string[]) => ids.filter((id) => !off.has(id));
   const retiredOf = (ids: readonly string[]) => ids.filter((id) => off.has(id));
 
-  // banners: as shipped (plus the shipped retired models, as a stale override has them), and a
-  // stale banner that names every model
-  for (const shipped of BANNERS)
-    for (const banner of [
-      { ...shipped, pool: [...RETIRED, ...shipped.pool] },
-      { ...shipped, id: `${shipped.id}+all`, pool: [...ALL] },
-    ]) {
-      expect(bannerPool(banner), banner.id).toEqual(on(banner.pool));
-      const inventory = new Inventory();
-      const gacha = new Gacha(new Rng(17), inventory);
-      for (let rotation = 0; rotation < 3; rotation++) {
-        expect(retiredOf(Gacha.featured(banner, rotation)), `${banner.id} featured`).toEqual([]);
-        const got = gacha.pull(banner, 10, 0, rotation).map((r) => r.defId);
-        expect(got, `${banner.id} pull`).toHaveLength(on(banner.pool).length ? 10 : 0);
-        expect(retiredOf(got), `${banner.id} pull`).toEqual([]);
-      }
-      expect(retiredOf(inventory.ownedDefs()), banner.id).toEqual([]);
-    }
+  // a list as a stale table has it: the shipped retired models and every model, in either order
+  for (const list of [[...RETIRED], [...ALL], [...RETIRED, ...ALL], [...ALL].reverse()])
+    expect(obtainable(list)).toEqual(on(list));
 
   // the starter kit, with every model marked as a starter
   const kit = everyStarter(() => {
@@ -419,30 +392,16 @@ function nothingRetiredHandedOut() {
   expect([...owner.crafting.recipes], 'derived recipes').toEqual(on(ALL));
   expect(owner.inventory.ownedDefs()).toEqual(ALL);
 
-  // content checks: the retired starters do not count, and a banner of retired models only (of
-  // either kind, or both) is rejected
+  // content checks: the retired starters do not count
   const bundle = structuredClone(DEFAULT_CONTENT);
   for (const row of [...bundle.locomotives, ...bundle.wagons])
     if (off.has(row.id)) row.retired = true;
     else delete row.retired;
-  const tested = [
-    { id: 'off_locos', pool: retiredOf(LOCOS.map((d) => d.id)) },
-    { id: 'off_wagons', pool: retiredOf(WAGONS.map((d) => d.id)) },
-    { id: 'off_all', pool: [...off] },
-    { id: 'off_and_one', pool: [...off, ...on(ALL).slice(0, 1)] },
-  ];
-  for (const { id, pool } of tested)
-    if (pool.length) bundle.gacha.banners.push({ id, name: id, tier: 0, pool });
   const problems = validateContent(bundle);
   const startersLeft = (rows: { id: string; starter?: boolean }[]) =>
     rows.some((r) => r.starter && !off.has(r.id));
   expect(problems.includes('no starter locomotive')).toBe(!startersLeft(bundle.locomotives));
   expect(problems.includes('no starter wagon')).toBe(!startersLeft(bundle.wagons));
-  expect(problems.filter((p) => p.endsWith(': every item in the pool is retired'))).toEqual(
-    bundle.gacha.banners
-      .filter((b) => b.pool.every((id) => off.has(id)))
-      .map((b) => `banner ${b.id}: every item in the pool is retired`),
-  );
 }
 
 describe('any set of retired models', () => {
@@ -455,7 +414,7 @@ describe('any set of retired models', () => {
   };
 
   // slow because every one of the 100 seeded sets is put through every path that hands a model
-  // out, workshop, banners and content check alike: a few seconds alone
+  // out, workshop and content check alike: a few seconds alone
   it('hands none of them out by any path, and every other model as before', () => {
     forAll(genRetirement, (extra) => retiring(extra, nothingRetiredHandedOut), {
       shrink: (extra) => shrinkArray(extra),

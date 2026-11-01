@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
+  SAVE_QUIET_VERSION,
   SAVE_VERSION,
   SAVE_MIN_VERSION,
   SAVE_KEY,
@@ -78,7 +79,8 @@ function oldestSave(): SaveGame {
     savedAt: 1700000000000,
     seed: 12345,
     clock: { time: 0, speedIndex: 1 },
-    economy: { money: 1000, tickets: 0, tier: 0, granted: [] },
+    // the fields of a file that old: the step from v23 drops them and the gacha below
+    economy: { money: 1000, tickets: 0, tier: 0, granted: [] } as SaveGame['economy'],
     track: [],
     stations: [],
     trains: [],
@@ -98,7 +100,7 @@ function fullParts(): SaveParts {
   return {
     seed: 777,
     clock: { time: 1234.5, speedIndex: 2 },
-    economy: { money: 12345, tickets: 3, tier: 2, granted: [0, 1, 2], earned: 9000 },
+    economy: { money: 12345, tier: 2, earned: 9000 },
     track: [
       [4, 8, 'straight', 1, 'branch', 'branch'],
       [12, 8, 'crossing', 0, 'narrow', 'branch'],
@@ -107,7 +109,6 @@ function fullParts(): SaveParts {
     trains: [{ id: 1 }],
     contracts: { contracts: [], rng: 42 },
     inventory: { items: [], nextUid: 1 },
-    gacha: { pity: 0 },
     camera: { x: 10, y: 20, zoomIndex: 3 },
     lastDay: 42,
     decor: [[5, 6, 'signal', 1]],
@@ -206,7 +207,7 @@ describe('the migration registry', () => {
       [9, 'crafting', block],
       [19, 'roads', list],
       [20, 'stores', list],
-      [23, 'wear', block],
+      [24, 'wear', block],
     ];
     for (let version = SAVE_MIN_VERSION; version < SAVE_VERSION; version++) {
       const j = migrate({ ...oldestSave(), version });
@@ -256,7 +257,6 @@ const DECLARED: Record<keyof Declared<SaveGame>, true> = {
   trains: true,
   contracts: true,
   inventory: true,
-  gacha: true,
   camera: true,
   lastDay: true,
   decor: true,
@@ -341,7 +341,7 @@ describe('migrate', () => {
     const j = migrate(oldestSave());
     expect(j.version).toBe(SAVE_VERSION);
     expect(j.loadedFrom).toBe(SAVE_MIN_VERSION);
-    expect(j.migrationNotes).toHaveLength(SAVE_VERSION - SAVE_MIN_VERSION);
+    expect(j.migrationNotes).toHaveLength(MIGRATIONS.filter((m) => !m.quiet).length);
     expect(j.migrationNotes?.[0]).toContain('v1→v2');
     // Nothing may be left undone by the steps that promise a default.
     expect(j.decor).toEqual([]);
@@ -667,7 +667,7 @@ describe('v8 to v9', () => {
     return {
       ...oldestSave(),
       version: 8,
-      economy: { money: 5, tickets: 0, tier: 7, granted: [], reputation: 300 },
+      economy: { money: 5, tier: 7, reputation: 300 },
       contracts: { contracts: [{ id: 'c1', reputation: 12 }] },
       decor: [
         [3, 4, 'townhouse', 0],
@@ -689,9 +689,7 @@ describe('v8 to v9', () => {
     expect(j.economy.tier).toBe(2);
     expect(j.economy.earned).toBe(0);
     expect(j.economy.reputation).toBeUndefined();
-    expect(
-      migrate(v8({ economy: { money: 0, tickets: 0, tier: 1, granted: [] } })).economy.tier,
-    ).toBe(1);
+    expect(migrate(v8({ economy: { money: 0, tier: 1 } })).economy.tier).toBe(1);
   });
 
   it('turns every townhouse in the decor into a level 1 house', () => {
@@ -929,7 +927,6 @@ const CORE_PATHS: { path: string[]; kind: 'number' | 'array' }[] = [
     ['clock', 'time'],
     ['clock', 'speedIndex'],
     ['economy', 'money'],
-    ['economy', 'tickets'],
     ['economy', 'tier'],
     ['camera', 'x'],
     ['camera', 'y'],
@@ -2741,7 +2738,7 @@ describe('storage', () => {
     const v8 = {
       ...oldestSave(),
       version: 8,
-      economy: { money: 50, tickets: 0, tier: 7, granted: [] },
+      economy: { money: 50, tier: 7 },
     };
     store.items.set(SLOTS_KEY, JSON.stringify({ old: JSON.stringify(v8) }));
     expect(listSlots()[0]).toMatchObject({ name: 'old', version: 8, age: 2, money: 50 });
@@ -2887,6 +2884,27 @@ describe('settings', () => {
       writeSettings({ ...read, contractPolicy: accept });
       expect(readSettings().contractPolicy).toEqual(accept);
       expect(readSettings().contractPolicy).toEqual(accept);
+    });
+
+    it('keeps Building life with the settings, off by default for reduced motion', () => {
+      expect(DEFAULT_SETTINGS.buildingLife).toBe(true);
+      expect(readSettings().buildingLife).toBe(true);
+      writeSettings({ ...readSettings(), buildingLife: false });
+      expect(readSettings().buildingLife).toBe(false);
+      // what is stored is the player's; anything else is the default
+      store.items.set(SETTINGS_KEY, JSON.stringify({ buildingLife: 'maybe' }));
+      expect(readSettings().buildingLife).toBe(true);
+      const matchMedia = vi.fn(() => ({ matches: true }));
+      vi.stubGlobal('matchMedia', matchMedia);
+      try {
+        expect(readSettings().buildingLife).toBe(false);
+        expect(matchMedia).toHaveBeenCalledWith('(prefers-reduced-motion: reduce)');
+        store.items.set(SETTINGS_KEY, JSON.stringify({ buildingLife: true }));
+        expect(readSettings().buildingLife).toBe(true);
+      } finally {
+        vi.unstubAllGlobals();
+        vi.stubGlobal('localStorage', store);
+      }
     });
 
     it('hands out settings that share no policy with the defaults', () => {
@@ -3253,7 +3271,7 @@ function verdictOf(raw: string): SaveRefusal | 'save' {
     isObject(block) && keys.every((k) => typeof block[k] === 'number');
   const whole =
     numbers(j.clock, ['time', 'speedIndex']) &&
-    numbers(j.economy, ['money', 'tickets', 'tier']) &&
+    numbers(j.economy, ['money', 'tier']) &&
     numbers(j.camera, ['x', 'y', 'zoomIndex']) &&
     Array.isArray(j.track) &&
     Array.isArray(j.stations) &&
@@ -3373,9 +3391,10 @@ describe('a file with one field every version has taken out or retyped', () => {
         // before v9 the tier was a reputation tier, and becomes the age it reached (at most 2)
         expect(save.economy).toMatchObject({
           money: economy.money,
-          tickets: economy.tickets,
           tier: from < 9 ? Math.min(2, economy.tier) : economy.tier,
         });
+        // what the file held of tickets is gone, whatever the version it came from (v23 was the last)
+        if (from < 24) expect(save.economy).not.toHaveProperty('tickets');
         for (const key of ['track', 'stations', 'trains'] as const)
           expect(save[key], key).toHaveLength((file[key] as unknown[]).length);
 
@@ -3421,13 +3440,16 @@ describe('readSaveText, for any text', () => {
         const file = fileIn(raw);
         const from = fromVersion(file.version);
         expect(save.version).toBe(Math.max(from, SAVE_VERSION));
-        expect(save.loadedFrom).toBe(from === SAVE_VERSION ? undefined : from);
+        // only a file some step has something to tell about says where it came from
+        const told = from < SAVE_QUIET_VERSION || from > SAVE_VERSION;
+        expect(save.loadedFrom).toBe(told ? from : undefined);
         // the world a save describes is of the save's own seed, and the seed is a number
         if (save.world) expect(save.world.seed).toBe(save.seed);
-        if (from < SAVE_VERSION) {
-          expect(save.migrationNotes).toHaveLength(SAVE_VERSION - from);
+        if (told && from < SAVE_VERSION) {
+          const steps = MIGRATIONS.filter((m) => m.from >= from && !m.quiet);
+          expect(save.migrationNotes).toHaveLength(steps.length);
           save.migrationNotes!.forEach((note, i) =>
-            expect(note.startsWith(`v${from + i}→v${from + i + 1}: `), note).toBe(true),
+            expect(note.startsWith(`v${steps[i].from}→v${steps[i].from + 1}: `), note).toBe(true),
           );
         }
         for (const key of Object.keys(save))
@@ -4605,19 +4627,19 @@ describe('v22 to v23', () => {
   });
 });
 
-describe('v23 to v24', () => {
-  /** A save of v23: track without health, and no wear block. */
-  const v23 = (): SaveGame => ({
+describe('v24 to v25', () => {
+  /** A save of v24: track without health, and no wear block. */
+  const v24 = (): SaveGame => ({
     ...oldestSave(),
-    version: 23,
+    version: 24,
     track: [
       [4, 8, 'straight', 1, 'branch'],
       [12, 8, 'crossing', 0, 'narrow', 'branch'],
     ],
   });
 
-  it('loads a v23 save with full track and clear flags', () => {
-    const j = migrate(v23());
+  it('loads a v24 save with full track and clear flags', () => {
+    const j = migrate(v24());
     expect(j.version).toBe(SAVE_VERSION);
     expect(j.wear).toEqual({ degraded: false, unusable: false });
     // no piece has a health to keep: all come back full
@@ -4627,11 +4649,11 @@ describe('v23 to v24', () => {
   });
 
   it('records its note', () => {
-    expect(MIGRATIONS.find((m) => m.from === 23)!.note).toMatch(/full health/);
+    expect(MIGRATIONS.find((m) => m.from === 24)!.note).toMatch(/full health/);
   });
 
-  it('keeps a wear block a v24 file already has', () => {
-    const j = migrate({ ...v23(), version: 24, wear: { degraded: true, unusable: true } });
+  it('keeps a wear block a v25 file already has', () => {
+    const j = migrate({ ...v24(), version: 25, wear: { degraded: true, unusable: true } });
     expect(j.wear).toEqual({ degraded: true, unusable: true });
   });
 

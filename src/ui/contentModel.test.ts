@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { STR } from '../strings';
-import { CONTENT_KEYS, content, type ContentBundle } from '../data/content';
+import { CONTENT_KEYS, changedTables, content, type ContentBundle } from '../data/content';
 import { TRANSFER, applyState, contentTabs, entryName, importBundle } from './contentModel';
 import { problemSummary } from './contentReport';
 
@@ -40,6 +40,53 @@ describe('bringing a bundle in as text', () => {
     const text = JSON.stringify({ cargo: draft.cargo, decor: draft.decor, nothing: 1 });
     const read = importBundle(draft, text);
     expect(read).toEqual({ ok: true, tables: ['cargo', 'decor'], skipped: [] });
+  });
+
+  it('passes over the gacha table of a bundle exported before the gacha left', () => {
+    const draft = clone(content);
+    const wagons = [{ ...draft.wagons[0], name: 'Imported' }];
+    const text = JSON.stringify({ wagons, gacha: { banners: [] } });
+    expect(importBundle(draft, text)).toEqual({ ok: true, tables: ['wagons'], skipped: [] });
+    expect('gacha' in draft).toBe(false);
+  });
+
+  describe('a bundle exported while contracts paid tickets', () => {
+    type Row = Record<string, unknown>;
+    /** The contracts table as such an export holds it. */
+    const exported = () => {
+      const t = clone(content.contracts);
+      for (const row of t.templates as unknown as Row[]) row.tickets = 2;
+      for (const row of t.rarities as unknown as Row[]) row.ticketMul = 3;
+      return t;
+    };
+
+    it('changes nothing when it was not edited: the contracts stay the shipped table', () => {
+      const draft = clone(content);
+      const text = JSON.stringify({ contracts: exported() });
+      expect(importBundle(draft, text)).toEqual({ ok: true, tables: ['contracts'], skipped: [] });
+      expect(changedTables(draft)).toEqual({});
+      expect(JSON.stringify(draft.contracts)).not.toMatch(/ticket/i);
+    });
+
+    it('keeps an edit, and leaves the ticket fields behind', () => {
+      const draft = clone(content);
+      const edited = exported();
+      edited.cancelFine = 0.5;
+      importBundle(draft, JSON.stringify({ contracts: edited }));
+      expect(Object.keys(changedTables(draft))).toEqual(['contracts']);
+      expect(draft.contracts.cancelFine).toBe(0.5);
+      expect(JSON.stringify(draft.contracts)).not.toMatch(/ticket/i);
+    });
+
+    it('still leaves out a contracts table of the wrong shape', () => {
+      const draft = clone(content);
+      expect(importBundle(draft, JSON.stringify({ contracts: [1] }))).toEqual({
+        ok: true,
+        tables: [],
+        skipped: ['contracts'],
+      });
+      expect(draft.contracts).toEqual(content.contracts);
+    });
   });
 
   it('refuses text that is no JSON object, and changes nothing', () => {

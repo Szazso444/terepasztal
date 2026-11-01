@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pitchShear } from './slope';
+import { pitchShear, pitchTilt } from './slope';
 
 /** Screen offset of a point `t` tiles along the heading and `h` pixels above the rail. */
 function onScreen(cos: number, sin: number, t: number, h = 0) {
@@ -48,5 +48,53 @@ describe('pitchShear', () => {
       s = pitchShear(-6, d, d);
     expect(s.p).toBeCloseTo(0, 9);
     expect(s.q).toBeCloseTo(1 - (6 * Math.SQRT2) / 32, 9);
+  });
+});
+
+describe('pitchTilt', () => {
+  const UP = (32 * Math.SQRT2 * Math.sqrt(3)) / 2;
+  /** Screen picture of a world vector: tiles along x and y, tile sides up. */
+  const picture = (x: number, y: number, z: number) => ({
+    x: 32 * (x - y),
+    y: 16 * (x + y) - UP * z,
+  });
+  const apply = (
+    m: { a: number; b: number; c: number; d: number },
+    p: { x: number; y: number },
+  ) => ({
+    x: m.a * p.x + m.c * p.y,
+    y: m.b * p.x + m.d * p.y,
+  });
+
+  it('leaves a body on level rail alone', () => {
+    const m = pitchTilt(0, 1, 0);
+    expect([m.a, m.b, m.c, m.d].map((v) => v + 0)).toEqual([1, 0, 0, 1]);
+  });
+
+  it('turns forward and up together along a tile axis, like a real pitch', () => {
+    for (const [cos, sin] of AXES)
+      for (const along of [-9.8, -4, 4, 9.8]) {
+        const m = pitchTilt(along, cos, sin),
+          t = -along / UP;
+        const fwd = apply(m, picture(cos, sin, 0)),
+          up = apply(m, picture(0, 0, 1));
+        // forward gains the grade in height, up leans back by the same grade
+        expect(fwd.x).toBeCloseTo(picture(cos, sin, t).x, 9);
+        expect(fwd.y).toBeCloseTo(picture(cos, sin, t).y, 9);
+        expect(up.x).toBeCloseTo(picture(-t * cos, -t * sin, 1).x, 9);
+        expect(up.y).toBeCloseTo(picture(-t * cos, -t * sin, 1).y, 9);
+      }
+  });
+
+  it('keeps the centre line on the rail at every heading', () => {
+    for (let deg = 0; deg < 360; deg += 7.5) {
+      const cos = Math.cos((deg * Math.PI) / 180),
+        sin = Math.sin((deg * Math.PI) / 180);
+      for (const k of [-1.2, 0.4, 2]) {
+        const p = onScreen(cos, sin, k),
+          q = apply(pitchTilt(-6, cos, sin), p);
+        expect(q.y - p.y).toBeCloseTo(-6 * k, 9);
+      }
+    }
   });
 });

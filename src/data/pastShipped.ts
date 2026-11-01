@@ -19,6 +19,9 @@
  * The list is closed and never extended. A build that contains 0beae08 stores overrides per table
  * with a stamp, so a table shipped after it cannot be in an old whole-bundle value; a later change
  * to a shipped table changes its stamp and leaves this list alone.
+ *
+ * A table that leaves the bundle leaves this list with it, as `gacha` did: the load reads only
+ * the tables of `CONTENT_KEYS`, so a stored copy of a table gone is passed over, edited or not.
  */
 import type { ContentKey } from './content';
 
@@ -89,7 +92,6 @@ export const PAST_SHIPPED: Readonly<Record<ContentKey, readonly string[]>> = Obj
     'f0adc3d0',
     'ff6251e3',
   ),
-  gacha: list('06641837', '2039c8bb', '943105da', 'b3e7aaa0', 'fc9d4ee3'),
   track: list('0d0c78a4', '28c50e02', '51bab72e', '68ebecc5', '856d16ce', 'aa527faa', 'ee87cabb'),
   crafting: list('8f4c7a87'),
   houses: list('31ef4dd4', '4444dc55'),

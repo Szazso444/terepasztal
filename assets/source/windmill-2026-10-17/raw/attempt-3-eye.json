@@ -1,0 +1,11 @@
+{
+  "stub": [
+    [537, 633],
+    [493, 654]
+  ],
+  "hub": [474, 684],
+  "hubBox": [439, 637, 508, 731],
+  "door": [467, 940, 504, 1055],
+  "pass": true,
+  "notes": "Round smooth tower, plain apex, no sails/ground/plinth/objects. Door and shaft lower-left. Upper-left lighting. Stub top edge reread from 4x zoom: original coordinates (537,633) near cap to (493,654) near plate; earlier point fell on the curved band instead of edge."
+}

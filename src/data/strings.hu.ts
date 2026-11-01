@@ -68,7 +68,6 @@ export const HU: Strings = {
   hud: {
     money: 'Pénz',
     weather: (season: string, weather: string) => `${season} · ${weather}`,
-    tickets: 'Jegyek',
     agePercent: (pct: number) => `${pct}%`,
     day: (d: number) => `${d}. nap`,
     speed: ['❚❚', '1x', '2x', '3x', '½x'],
@@ -281,7 +280,6 @@ export const HU: Strings = {
     seed: 'Mag',
     entities: 'Entitások',
     giveMoney: '+10 000 pénz',
-    giveTickets: '+10 jegy',
     nextAge: 'Következő korszak',
     giveResources: '+200 nyersanyag',
     spawnContract: 'Szerződés létrehozása',
@@ -1110,7 +1108,6 @@ export const HU: Strings = {
     offersBadge: (n: number) => `${n} új`,
     sideEmpty: 'Nincs aktív szerződés.',
     sideEmptyOffers: 'Ajánlatok várnak a táblán.',
-    dailyTicket: 'Napi bónusz: +1 jegy a tegnapi szállításokért',
     cancelFine: (fine: string) => `Felmondás (bírság: ${fine})`,
     cancelled: 'Felmondva',
     cancelledMsg: (n: string, fine: string) => `${n} felmondva: ${fine} bírság`,
@@ -1127,30 +1124,9 @@ export const HU: Strings = {
       legendary: 'Legendás',
     },
   },
-  gacha: {
-    title: 'Járműgyár',
-    banners: 'Zászlók',
-    pull: 'Húzás',
-    rates: 'Esélyek',
-    rules: (pity: number) =>
-      `SSR ${pity} húzáson belül garantált. A 10x legalább egy R-t garantál.`,
-    pity: (n: number, max: number) => `Garancia ${n} / ${max}`,
-    pull1: (c: number) => `Húzás x1 (${c} jegy)`,
-    pull10: (c: number) => `Húzás x10 (${c} jegy)`,
-    poolSize: (n: number) => `${n} tétel a készletben`,
-    idleHint: 'Jegyet szerződésekért és napi szállításokért kapsz. Valódi pénzt soha nem kér.',
-    noTickets: 'Nincs elég jegy',
+  rollingStock: {
     loco: 'Mozdony',
     wagon: 'Kocsi',
-    newItem: 'ÚJ',
-    dupe: (n: number, need: number) => `Másodpéldány: ${n} / ${need} a következő szintig`,
-    levelUp: (l: number) => `Szintlépés! Most Sz. ${l}`,
-    guaranteed: 'garantált',
-    collect: 'Átvétel',
-    ssrToast: (n: number) => `${n} SSR húzva!`,
-    featured: (days: number, pct: number) =>
-      `Kiemelt (ritkaságán belül ${pct}%-os esély) · ${days} nap múlva vált`,
-    featuredBadge: 'kiemelt',
   },
   craft: {
     title: 'Gyártás',
@@ -1325,7 +1301,6 @@ export const HU: Strings = {
     serviceLine: (service: string, cap: number) =>
       `Tankolókocsi: +${cap} ${service === 'battery' ? 'áram' : service === 'fuel' ? 'olaj' : 'szén'}, kocsinként 10%-kal kisebb fogyasztás (csak ${service === 'coal' ? 'gőz' : service === 'fuel' ? 'dízel' : 'villamos'}mozdonyoknak)`,
     maxLevel: 'Legmagasabb szint',
-    dupeProgress: (n: number, need: number) => `Másodpéldányok: ${n} / ${need} a következő szintig`,
     assignedTo: (n: string) => `Forgalomban: ${n}`,
     inDepot: 'Fűtőházban',
   },
@@ -1367,6 +1342,8 @@ export const HU: Strings = {
     autosave: 'Automatikus mentés (percenként)',
     dayNight: 'Nappalok és éjszakák',
     smoke: 'Mozdonyfüst',
+    buildingLife: 'Élet az épületeken',
+    buildingLifeHint: 'Kéményfüst, a kőbánya darúja és a szélmalom vitorlái',
     weather: 'Időjárás és évszakok',
     showFps: 'FPS kijelzése',
     controls: 'Irányítás',
@@ -1523,11 +1500,6 @@ export const HU: Strings = {
     },
     pruned: (list: string, refund: string) =>
       `Ez a mentés olyat tartalmazott, ami már nincs a játékban. Eltávolítva: ${list}.${refund ? ` Visszatérítve: ${refund}.` : ''}`,
-    refund: (money: string, tickets: number) => {
-      const t = `${tickets} jegy`;
-      if (tickets <= 0) return money;
-      return money ? `${money} és ${t}` : t;
-    },
     groundUnreadable: (n: number) =>
       `A térkép ${n} chunkjának tárolt talaja nem olvasható. Azt a földet ebben a játékban újragenerálta a játék, így eltérhet attól, amire építettél; a tárolt talaj megmarad.`,
     groundUnsaved:
@@ -1590,7 +1562,7 @@ export const HU: Strings = {
     chain: 'Termelési lánc',
   },
   menu: {
-    tagline: 'Sínek, szerződések és a húzás szerencséje',
+    tagline: 'Sínek, szerződések és ipar',
     continue: 'Folytatás',
     newGame: 'Új játék',
     tuning: 'Játékhangolás',
@@ -1789,7 +1761,6 @@ export const HU: Strings = {
       contracts: 'Szerződések',
       decor: 'Dekor',
       buildings: 'Épületek',
-      gacha: 'Gacha',
       track: 'Sín',
       crafting: 'Gyártás',
       houses: 'Házak',
@@ -2072,7 +2043,6 @@ export const HU: Strings = {
     depot: 'Fűtőház',
     signals: 'Jelzők',
     contracts: 'Szerződések',
-    gacha: 'Gacha',
     crafting: 'Gyártás',
     roster: 'Járműpark',
     market: 'Piac',
