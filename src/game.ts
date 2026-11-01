@@ -42,6 +42,7 @@ import { Terrain as TerrainEnum } from './world/tiles';
 import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
 import { climbAxes, railProfile } from './world/railProfile';
+import { groundAllowsOn } from './world/slope';
 import { RegionState } from './world/regions';
 import { WorldRenderer, type TexturedBridge } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
@@ -977,7 +978,7 @@ export class Game implements UiHost {
     this.stores.onMessage = (m, k) => this.toasts.push(m, k);
     this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
-    this.builder.groundCheck = (x, y, need) => this.world.groundAllows(x, y, need);
+    this.builder.groundCheck = (x, y, need) => groundAllowsOn(this.map, x, y, need);
     this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
     this.builder.onDecorChanged = (d, removed) => this.onDecorChanged(d, removed);
     this.builder.onStationOrphaned = (s, orphaned) => this.onStationOrphaned(s, orphaned);
