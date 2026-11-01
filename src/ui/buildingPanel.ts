@@ -1,3 +1,4 @@
+import { bridgeTitle, deckRise } from './bridgeName';
 import { bridgeCapacity, BRIDGE_SLOW_SHARE } from '../sim/bridges';
 import { el, btn } from './dom';
 import { STR } from '../strings';
@@ -109,7 +110,8 @@ export class BuildingPanel {
       return;
     }
     const def = buildingDef(b.id);
-    this.title.textContent = STR.building.title(def.name, buildingLevel(b));
+    const span = def.bridge && bridgeTitle(this.builder.map, b, def.bridge.material);
+    this.title.textContent = STR.building.title(span || def.name, buildingLevel(b));
     const body = this.body;
     body.innerHTML = '';
     const row = (k: string, v: string, cls = '') =>
@@ -126,6 +128,7 @@ export class BuildingPanel {
     const capacity = bridgeCapacity(b);
     if (capacity !== null)
       body.append(
+        row(STR.building.deckHeight, String(deckRise(this.builder.map, b))),
         row(
           STR.building.bridgeCapacity,
           STR.building.bridgeLimit(capacity, Math.round(capacity * BRIDGE_SLOW_SHARE)),
