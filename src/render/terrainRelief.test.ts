@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { emptyMap } from '../world/mapgen';
+import { tileLevels } from '../world/elevation';
+import { emptyMap, generateMap } from '../world/mapgen';
+import { groundAllowsAt, groundAllowsOn } from '../world/slope';
 import { Terrain } from '../world/tiles';
 import {
   buildRelief,
@@ -389,6 +391,29 @@ describe('raised water in the relief', () => {
         buildRelief(none, new Set(), style).corners,
       );
   });
+describe('the slope rule', () => {
+  it('agrees with the simulation on every tile of seeded maps', () => {
+    let refused = 0;
+    for (const seed of [15, 2026, 7412]) {
+      const map = generateMap(seed, { w: 96, h: 96 });
+      const relief = buildRelief(map, new Set());
+      const levels = tileLevels(map);
+      for (const need of ['straight', 'level'] as const)
+        for (let y = 0; y < map.h; y++)
+          for (let x = 0; x < map.w; x++) {
+            const sim = groundAllowsAt(map, levels, x, y, need);
+            expect(groundAllows(map, relief, x, y, need), `${seed}, ${x},${y}`).toBe(sim);
+            if (!sim) refused++;
+          }
+      // a sample against the rule the builder asks, which reads no whole-map levels
+      for (let k = 0; k < 400; k += 7) {
+        const x = k % map.w;
+        const y = (k * 13) % map.h;
+        expect(groundAllowsOn(map, x, y, 'level')).toBe(groundAllowsAt(map, levels, x, y, 'level'));
+      }
+    }
+    expect(refused).toBeGreaterThan(0);
+  }, 30_000);
 });
 
 describe('the top of the relief in a box, on any map', () => {
