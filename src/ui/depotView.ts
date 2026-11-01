@@ -301,6 +301,13 @@ export function trainsShown<T extends { home: number | null }>(
   return trains.filter((t) => t.home === depotId);
 }
 
+/** How many trains belong to the depot `id`, from the depot each belongs to (`Fleet.homeDepot`). */
+export function trainsHomeAt(homes: Iterable<number | null>, id: number): number {
+  let n = 0;
+  for (const home of homes) if (home === id) n++;
+  return n;
+}
+
 /** A depot's head in the list of all trains, and its trains. */
 export interface TrainGroup<T> {
   depotId: number | null;

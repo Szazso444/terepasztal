@@ -2,7 +2,11 @@
  * The top bar's menu bar worked out: its entries and their items in play and in the level editor,
  * and which menu is open. No DOM here, so it runs under Node; `menuBar.ts` draws it.
  */
+import type { Fleet } from '../sim/fleet';
+import type { Station } from '../sim/stations';
+import type { StoreRegistry } from '../sim/stores';
 import { STR } from '../strings';
+import { trainsHomeAt } from './depotView';
 import type { IconName } from './kit';
 import { glyph, title, type TipDoc } from './tooltipDoc';
 
@@ -66,7 +70,7 @@ export interface MenuEntry {
   /** what its tooltip says in place of its label */
   readonly tip?: string;
   readonly playOnly?: boolean;
-  /** it has no place on the bar yet */
+  /** its menu, top to bottom; none on an entry that runs */
   readonly items: readonly MenuItem[];
 }
 
@@ -219,10 +223,35 @@ export interface DepotFacts {
   readonly id: number;
   readonly name: string;
   readonly gauge: 'regular' | 'narrow';
-  /** the trains at its platforms */
+  /** the trains that belong to it, wherever they are (`Fleet.homeDepot`) */
   readonly trains: number;
-  /** its store is the one the resource bar shows */
+  /** the resource bar shows its store, and no other depot's */
   readonly shown: boolean;
+}
+
+/**
+ * The depots as the game tells the Fleet menu about them. A tick means this depot's store and no
+ * other's, so depots that share a rail network's store (Simple mode) have none: the bar shows them
+ * alike, under the network's one name, whichever of them was picked.
+ */
+export function fleetDepots(
+  fleet: Pick<Fleet, 'trains' | 'homeDepot'>,
+  depots: readonly Station[],
+  stores: Pick<StoreRegistry, 'dockOf' | 'networkPool' | 'selected'>,
+): DepotFacts[] {
+  const homes = fleet.trains.map((t) => fleet.homeDepot(t)?.id ?? null);
+  const pools = depots.map((s) => {
+    const store = stores.dockOf(s);
+    return store && stores.networkPool(store).key;
+  });
+  const shown = stores.selected?.key;
+  return depots.map((s, i) => ({
+    id: s.id,
+    name: s.name,
+    gauge: s.def.gauge ?? 'regular',
+    trains: trainsHomeAt(homes, s.id),
+    shown: pools[i] === shown && pools.indexOf(pools[i]) === pools.lastIndexOf(pools[i]),
+  }));
 }
 
 /** One row of the Fleet menu under Depot. */
@@ -239,7 +268,7 @@ export function depotRows(mode: MenuMode, depots: readonly DepotFacts[]): DepotR
   return depots.map((d) => ({
     id: d.id,
     label: d.name,
-    detail: STR.topbar.depotDetail(d.gauge, d.trains),
+    detail: STR.topbar.depotDetail(STR.depot.gaugeName[d.gauge], d.trains),
     on: d.shown,
   }));
 }

@@ -37,6 +37,7 @@ import {
   stripCars,
   trainRowText,
   trainsByDepot,
+  trainsHomeAt,
   trainsShown,
   wagonStats,
   type GateAnswer,
@@ -367,6 +368,13 @@ describe('the trains of a depot', () => {
       ['Main', ['A', 'C']],
       [STR.depot.noHome, ['D']],
     ]);
+  });
+
+  it('counts the trains of a depot from where each belongs', () => {
+    const homes = [1, 2, 1, null];
+    expect(trainsHomeAt(homes, 1)).toBe(2);
+    expect(trainsHomeAt(new Map([[{}, 2]]).values(), 2)).toBe(1);
+    expect(trainsHomeAt(homes, 9)).toBe(0);
   });
 
   it('gives no head to a depot with no train', () => {

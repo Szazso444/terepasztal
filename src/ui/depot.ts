@@ -67,6 +67,7 @@ import {
   stripCars,
   trainRowText,
   trainsByDepot,
+  trainsHomeAt,
   trainsShown,
   wagonStats,
   type Car,
@@ -126,7 +127,7 @@ export class DepotScreen implements Screen {
   private readonly split = listDetail(300);
   private readonly bar = new DepotBar({
     chosen: () => this.depotId,
-    trains: (id) => [...this.homes.values()].filter((h) => h === id).length,
+    trains: (id) => trainsHomeAt(this.homes.values(), id),
     gate: (id) => gateShown(this.gates.get(id)),
     pick: (id) => this.chooseDepot(id),
   });
@@ -190,6 +191,8 @@ export class DepotScreen implements Screen {
   onFocusTrain: ((t: Train) => void) | null = null;
   /** the player picked a depot: the game peeks at it and marks the gate */
   onFocusDepot: ((d: Station, gate: { x: number; y: number } | null) => void) | null = null;
+  /** the player chose this depot here, as a pick in Fleet does */
+  onChooseDepot: ((id: number) => void) | null = null;
   onDetails: ((t: Train) => void) | null = null;
   /** the Roster over this screen, on a copy */
   onRoster: ((uid: number) => void) | null = null;
@@ -432,8 +435,9 @@ export class DepotScreen implements Screen {
     this.render();
   }
 
-  /** The player chose a depot: everything below follows it. */
+  /** The player chose a depot: everything below follows it, and the bar shows its store. */
   private chooseDepot(id: number) {
+    this.onChooseDepot?.(id);
     if (id !== this.depotId) {
       this.depotId = id;
       this.checkCache = null;

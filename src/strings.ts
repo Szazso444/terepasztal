@@ -360,7 +360,7 @@ const EN = {
     guideJunction:
       'Before a junction, put the entry signal on its approach and exit signals beyond each branch, leaving room for a complete train. A train reads a signal along its own route; the arms and the highlight follow the straight road through a switch. Junction reservations still require the exit clear for the whole train plus one tile, so a clear signal alone cannot force a train into a blocked crossing.',
     guideSingleLine:
-      'On a two-way single line, put signals on both approaches to a passing loop, facing into the shared line. Keep the loop long enough for the entire train. The Token level above allows one train per shared plain section, but under it trains ignore the signals, so use one or the other. Signals regulate entry; they cannot create a missing siding.',
+      'On a two-way single line, put signals on both approaches to a passing loop, facing into the shared line. Keep the loop long enough for the entire train. The Token level above allows one train per shared plain section, but while Token is chosen trains ignore the signals, so use one or the other. Signals regulate entry; they cannot create a missing siding.',
   },
   hints: {
     camera: 'WASD / arrows / middle-drag: pan   wheel: zoom   M: overview   `: debug',
@@ -2161,7 +2161,7 @@ const EN = {
     hint: 'Prices are per unit. A store holds up to its cap of each good.',
     deals: 'Standing deals',
     spot: 'Spot prices',
-    noStore: 'No store is selected. Pick one in Fleet or on the map.',
+    noStore: 'There is no store yet. Build a depot, a warehouse or a townhouse.',
     dealsHint: (d: number) =>
       `Buy or sell a set amount every ${d} day${d === 1 ? '' : 's'}, settled automatically at a slightly better rate than the spot market. Buying stops at the store's cap or when funds run out; selling takes what is on hand.`,
     dealBuy: 'Buy / cycle',
@@ -2298,8 +2298,8 @@ const EN = {
     save: 'Save',
     depot: 'Depot',
     /** the Fleet menu's line of a depot, right of its name */
-    depotDetail: (gauge: 'regular' | 'narrow', trains: number) =>
-      `${gauge === 'narrow' ? 'Narrow' : 'Standard'} · ${trains} ${trains === 1 ? 'train' : 'trains'}`,
+    depotDetail: (gauge: string, trains: number) =>
+      `${gauge} · ${trains} ${trains === 1 ? 'train' : 'trains'}`,
     depotHint: 'Open the Depot on this one and show its store on the resource bar',
     signals: 'Signals',
     contracts: 'Contracts',
@@ -2706,7 +2706,9 @@ const EN = {
     market: {
       marketHead: 'The Market',
       where:
-        'The {market} buys into and sells from the store shown on the resource bar. Select a townhouse, a depot or a warehouse on the map to show its store.',
+        'The {market} buys into and sells from the store shown on the resource bar. Pick a depot in {fleet} or on the {depot} screen, or select a townhouse, a depot or a warehouse on the map, and the bar shows its store.',
+      whereSimple:
+        'In this production chain the stores on one rail network count as one: the bar shows the same goods whichever of them you pick.',
       prices: "You pay {buy} of a good's base price and get {sell} of it.",
       colGood: 'Good',
       colBuy: 'Buy',

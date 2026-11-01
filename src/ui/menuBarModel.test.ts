@@ -1,5 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import type { Fleet } from '../sim/fleet';
+import type { Station } from '../sim/stations';
+import type { ResourceStore, StoreRegistry } from '../sim/stores';
 import { STR } from '../strings';
 import { KEYMAP, type KeyAction } from './keymap';
 import {
@@ -10,6 +13,7 @@ import {
   depotRows,
   entriesFor,
   entryTip,
+  fleetDepots,
   foldedEntries,
   type DepotFacts,
   type MenuAction,
@@ -367,14 +371,14 @@ describe('the depots in the Fleet menu', () => {
       depot({ id: 7, name: 'Narrow Depot', gauge: 'narrow', trains: 1 }),
     ]);
     expect(rows).toEqual([
-      { id: 1, label: 'Eastgate', detail: STR.topbar.depotDetail('regular', 3), on: true },
-      { id: 7, label: 'Narrow Depot', detail: STR.topbar.depotDetail('narrow', 1), on: false },
+      { id: 1, label: 'Eastgate', detail: 'Standard gauge · 3 trains', on: true },
+      { id: 7, label: 'Narrow Depot', detail: 'Narrow gauge · 1 train', on: false },
     ]);
   });
 
   it('counts one train and none as English has them', () => {
-    expect(STR.topbar.depotDetail('narrow', 1)).toBe('Narrow · 1 train');
-    expect(STR.topbar.depotDetail('regular', 0)).toBe('Standard · 0 trains');
+    expect(STR.topbar.depotDetail('Narrow gauge', 1)).toBe('Narrow gauge · 1 train');
+    expect(STR.topbar.depotDetail('Standard gauge', 0)).toBe('Standard gauge · 0 trains');
   });
 
   it('has one row with one depot, and none with none', () => {
@@ -384,6 +388,65 @@ describe('the depots in the Fleet menu', () => {
 
   it('lists none in the editor, where the Depot is closed', () => {
     expect(depotRows('editor', [depot()])).toEqual([]);
+  });
+
+  describe('as the game tells them', () => {
+    type Depot = { id: number; pool: string | null; gauge?: 'narrow' };
+    const station = (d: Depot) =>
+      ({
+        id: d.id,
+        name: `Depot ${d.id}`,
+        def: { gauge: d.gauge },
+        pool: d.pool,
+      }) as unknown as Station;
+    /** `homes` holds each train's depot, `shown` the key of the store on the resource bar. */
+    function told(depots: Depot[], homes: (number | null)[], shown: string | null) {
+      const pool = (key: string) => ({ key }) as ResourceStore;
+      const fleet = {
+        trains: homes,
+        homeDepot: (t: number | null) => (t === null ? null : { id: t }),
+      } as unknown as Pick<Fleet, 'trains' | 'homeDepot'>;
+      const stores = {
+        dockOf: (s: { pool: string | null }) => s.pool && pool(s.pool),
+        networkPool: (r: ResourceStore) => r,
+        selected: shown === null ? null : pool(shown),
+      } as unknown as Pick<StoreRegistry, 'dockOf' | 'networkPool' | 'selected'>;
+      return fleetDepots(fleet, depots.map(station), stores);
+    }
+    const net = (...pools: (string | null)[]) => pools.map((pool, i) => ({ id: i + 1, pool }));
+
+    it('counts the trains that belong to a depot, wherever they are, as its chip does', () => {
+      const facts = told(
+        [
+          { id: 1, pool: 'a' },
+          { id: 2, pool: 'b', gauge: 'narrow' },
+        ],
+        [1, 1, 2, null],
+        'a',
+      );
+      expect(facts.map((f) => f.trains)).toEqual([2, 1]);
+      expect(facts.map((f) => f.gauge)).toEqual(['regular', 'narrow']);
+    });
+
+    it('ticks the depot whose store the bar shows, when each has its own', () => {
+      const facts = told(net('a', 'b'), [], 'b');
+      expect(facts.map((f) => f.shown)).toEqual([false, true]);
+    });
+
+    it('ticks none of the depots that share a network’s store: the bar shows them all alike', () => {
+      const facts = told(net('shared', 'shared', 'other'), [], 'shared');
+      expect(facts.map((f) => f.shown)).toEqual([false, false, false]);
+    });
+
+    it('ticks a lone depot on another network beside a shared one', () => {
+      const facts = told(net('shared', 'shared', 'other'), [], 'other');
+      expect(facts.map((f) => f.shown)).toEqual([false, false, true]);
+    });
+
+    it('ticks nothing with no store on the bar, or a depot with no store', () => {
+      expect(told(net(null), [], null)[0].shown).toBe(false);
+      expect(told(net(null), [], 'a')[0].shown).toBe(false);
+    });
   });
 
   it('runs a pick like a row: the menu closes, and the double-click grace starts', () => {

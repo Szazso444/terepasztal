@@ -72,6 +72,7 @@ import { RosterScreen } from './rosterScreen';
 import { InspectScreen } from './inspectScreen';
 import { ContractsScreen } from './contractsScreen';
 import { autoState } from './contractsView';
+import { fleetDepots } from './menuBarModel';
 import { Minimap } from './minimap';
 import { DebugPanel } from './debug';
 import { Toolbar, type Tool } from './toolbar';
@@ -552,22 +553,16 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     notifications: () => notificationsScreen.openFrom(null),
     guide: openGuide,
   };
-  hud.menuBar.depots = () =>
-    d.builder.depots().map((s) => {
-      const store = stores.dockOf(s);
-      return {
-        id: s.id,
-        name: s.name,
-        gauge: s.def.gauge ?? 'regular',
-        trains: s.occupants.size,
-        shown: !!store && stores.networkPool(store).key === stores.selected?.key,
-      };
-    });
-  // a depot picked in Fleet: the Depot opens on it, and the bar shows its store
-  hud.menuBar.onDepot = (id) => {
+  hud.menuBar.depots = () => fleetDepots(d.fleet, d.builder.depots(), stores);
+  // a depot picked in Fleet or on the Depot: the bar shows its store
+  const showDepotStore = (id: number) => {
     const st = d.builder.stationById(id);
     const store = st && stores.dockOf(st);
     if (store) stores.selected = store;
+  };
+  depot.onChooseDepot = showDepotStore;
+  hud.menuBar.onDepot = (id) => {
+    showDepotStore(id);
     depot.openOn(id);
     d.screens.open(depot);
   };

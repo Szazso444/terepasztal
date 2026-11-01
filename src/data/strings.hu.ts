@@ -296,7 +296,7 @@ export const HU: Strings = {
     guideJunction:
       'Csomópont elé tedd a bejárati jelzőt a ráfutó ágra, a kijárati jelzőket pedig mindegyik ág mögé, egy teljes vonatnak elég hellyel. A vonat a jelzőt a saját útvonalán olvassa; a karok és a kiemelés a váltón az egyenes irányt követik. A csomópontfoglaláshoz akkor is szabad kijárat kell az egész vonatnak, plusz egy csempe, így a szabad jelzés sem kényszerít vonatot foglalt keresztezésbe.',
     guideSingleLine:
-      'Kétirányú egyvágányú vonalon a kitérő mindkét végére tegyél jelzőt, a közös vonal felé nézve. A kitérő legyen elég hosszú az egész vonatnak. A fenti Token szint közös szakaszonként egy vonatot enged, de alatta a vonatok nem figyelik a jelzőket, ezért vagy az egyiket, vagy a másikat használd. A jelzők a behaladást szabályozzák; hiányzó kitérőt nem pótolnak.',
+      'Kétirányú egyvágányú vonalon a kitérő mindkét végére tegyél jelzőt, a közös vonal felé nézve. A kitérő legyen elég hosszú az egész vonatnak. A fenti Token szint közös szakaszonként egy vonatot enged, de ezen a szinten a vonatok nem figyelik a jelzőket, ezért vagy az egyiket, vagy a másikat használd. A jelzők a behaladást szabályozzák; hiányzó kitérőt nem pótolnak.',
   },
   hints: {
     camera:
@@ -1945,7 +1945,7 @@ export const HU: Strings = {
     hint: 'Az árak egységárak. Egy készlet minden áruból a felső határáig tart.',
     deals: 'Állandó ügyletek',
     spot: 'Azonnali árak',
-    noStore: 'Nincs kiválasztott készlet. Válassz egyet a Flotta menüben vagy a térképen.',
+    noStore: 'Még nincs készlet. Építs fűtőházat, raktárt vagy városházát.',
     dealsHint: (d: number) =>
       `${d} naponként adott mennyiséget vesz vagy ad el, automatikus elszámolással, az azonnali piacnál kicsit jobb áron. A vétel a készlet felső határánál vagy a pénz elfogytával megáll; az eladás azt adja el, ami megvan.`,
     dealBuy: 'Vétel / ciklus',
@@ -2072,9 +2072,8 @@ export const HU: Strings = {
     guide: 'Útmutató',
     save: 'Mentés',
     depot: 'Fűtőház',
-    depotDetail: (gauge: 'regular' | 'narrow', trains: number) =>
-      `${gauge === 'narrow' ? 'Keskeny' : 'Normál'} · ${trains} vonat`,
-    depotHint: 'Megnyitja a Fűtőházat ezen, és a felső sávon ennek a készletét mutatja',
+    depotDetail: (gauge: string, trains: number) => `${gauge} · ${trains} vonat`,
+    depotHint: 'Megnyitja ezt a fűtőházat, és a felső sávon a készletét mutatja',
     signals: 'Jelzők',
     contracts: 'Szerződések',
     contractSettings: 'Szerződés-beállítások',
@@ -2458,7 +2457,9 @@ export const HU: Strings = {
     market: {
       marketHead: 'A Piac',
       where:
-        'A {market} a felső sávon látható készletbe vesz, és abból ad el. Ha a térképen kijelölsz egy városházát, fűtőházat vagy raktárt, a sáv az ő készletét mutatja.',
+        'A {market} a felső sávon látható készletbe vesz, és abból ad el. Ha a {fleet} menüben vagy a {depot} képernyőn választasz fűtőházat, vagy a térképen kijelölsz egy városházát, fűtőházat vagy raktárt, a sáv annak a készletét mutatja.',
+      whereSimple:
+        'Ebben a termelési láncban az egy sínhálózaton lévő készletek egynek számítanak: a sáv ugyanazt mutatja, akármelyiket választod.',
       prices: 'Az áru alapárának {buy}-át fizeted, és {sell}-át kapod.',
       colGood: 'Áru',
       colBuy: 'Vétel',

@@ -14,6 +14,8 @@ class FakeElement {
   readonly style: Record<string, string> = {};
   readonly kids: FakeElement[] = [];
   readonly on = new Set<string>();
+  /** how many times it let go of the keys */
+  blurred = 0;
   readonly classList = {
     toggle: (c: string, on: boolean) => (on ? this.on.add(c) : this.on.delete(c)),
   };
@@ -37,6 +39,9 @@ class FakeElement {
   }
   addEventListener(type: string, fn: (e: unknown) => void) {
     this.handlers.set(type, [...(this.handlers.get(type) ?? []), fn]);
+  }
+  blur() {
+    this.blurred++;
   }
   getBoundingClientRect() {
     return { left: 0 };
@@ -169,6 +174,22 @@ describe('the menu bar and the document', () => {
     expect(bar.isOpen).toBe(false);
   });
 
+  it('lets go of an entry that ran, after it ran: Enter must not save again', () => {
+    const save = entry('Save');
+    let blurredAtRun = -1;
+    bar.actions = new Proxy({} as Record<MenuAction, () => void>, {
+      get: () => () => (blurredAtRun = save.blurred),
+    });
+    save.fire('click');
+    expect(blurredAtRun, 'not before it ran').toBe(0);
+    expect(save.blurred).toBe(1);
+  });
+
+  it('keeps the keys on an entry with a menu, whose rows are next', () => {
+    openView();
+    expect(entry('View').blurred).toBe(0);
+  });
+
   it('folds the entries asked for, in the order, and gives the labels back', () => {
     const folded = () => element(bar.root).kids.filter((c) => c.kids[0].on.has('folded'));
     bar.setFolded(2);
@@ -199,6 +220,53 @@ describe('the menu bar and the document', () => {
     box.kids[1].fire('click');
     expect(picked).toEqual([9]);
     expect(bar.isOpen).toBe(false);
+  });
+
+  describe('with Fleet left open', () => {
+    const depot = (trains: number, shown = false) => ({
+      id: 4,
+      name: 'Eastgate',
+      gauge: 'regular' as const,
+      trains,
+      shown,
+    });
+    const box = () => element(bar.pane).kids.find((k) => k.className === 'mb-depots')!;
+    /** A row's line right of its name. */
+    const detail = () => box().kids[0].kids.at(-1)!.textContent;
+
+    it('tells what changed since it opened', () => {
+      let now = [depot(0)];
+      bar.depots = () => now;
+      entry('Fleet').fire('click');
+      expect(detail()).toContain('0');
+      now = [depot(2)];
+      bar.update();
+      expect(detail()).toContain('2');
+      now = [depot(2, true)];
+      bar.update();
+      expect(box().kids[0].on.has('on')).toBe(true);
+    });
+
+    it('leaves the rows alone while nothing changed, so one is not lost under a press', () => {
+      bar.depots = () => [depot(2)];
+      entry('Fleet').fire('click');
+      const was = box().kids[0];
+      bar.update();
+      bar.update();
+      expect(box().kids[0]).toBe(was);
+    });
+
+    it('reads nothing with Fleet shut', () => {
+      let reads = 0;
+      bar.depots = () => {
+        reads++;
+        return [];
+      };
+      bar.update();
+      openView();
+      bar.update();
+      expect(reads).toBe(0);
+    });
   });
 
   it('names an entry in its tooltip, and says nothing over its own open menu', () => {

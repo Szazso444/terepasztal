@@ -194,6 +194,15 @@ describe('what the pages say is what the game does', () => {
     const market = pageWords(page('market'));
     expect(market).not.toContain('picked on the top bar');
     expect(market).toContain('shown on the resource bar');
+    expect(market).toContain(
+      `pick a depot in ${STR.topbar.fleet} or on the ${STR.depot.title} screen`.toLowerCase(),
+    );
+  });
+
+  it('says a rail network is one store only in the chain where it is', () => {
+    const says = (mode: SupplyMode) => words('market', mode).includes('count as one');
+    expect(says('simple')).toBe(true);
+    expect(says('full')).toBe(false);
   });
 
   it('gives each age its own heading, picture and what it brings', () => {

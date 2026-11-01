@@ -262,6 +262,7 @@ export class Hud {
   }
 
   update(m: HudModel) {
+    this.menuBar.update();
     this.nowPlaying.update();
     this.updateEra(m.tier);
     this.day.textContent = STR.hud.day(this.clock.day);

@@ -776,7 +776,12 @@ function marketPage(): GuidePage {
     blocks: [
       head(S.marketHead),
       list(
-        fill(S.where, { market: STR.market.title }),
+        fill(S.where, {
+          market: STR.market.title,
+          fleet: STR.topbar.fleet,
+          depot: STR.depot.title,
+        }),
+        ...(supplyMode() === 'simple' ? [said(S.whereSimple)] : []),
         fill(S.prices, {
           buy: num(percent(BUY_MUL * rules.spotPriceMul)),
           sell: num(percent(SELL_MUL * rules.spotPriceMul)),

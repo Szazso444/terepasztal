@@ -24,8 +24,8 @@ const onMap = (e: Event) => !(e.target as Element | null)?.closest?.('#ui-root')
  * The menu bar of the top bar. `root` is its cell in the bar; `pane`, the open menu, stands in
  * `#ui-root` on its own: the cell clips when the bar runs short of room, and the input takes
  * anything under `#ui-root` for UI. The rows are made once and only shown and hidden, so one under
- * the pointer never goes while it is being clicked; the depots' are made as the Fleet menu opens.
- * The rules are `MenuBarState`'s.
+ * the pointer never goes while it is being clicked; the depots' are made again only when what they
+ * say changes. The rules are `MenuBarState`'s.
  */
 export class MenuBar {
   readonly root = el('div', { class: 'stat menus' });
@@ -45,6 +45,8 @@ export class MenuBar {
   private badges = new Map<MenuAction, HTMLElement[]>();
   /** the depots' rows, under the Depot row */
   private depotBox = el('div', { class: 'mb-depots' });
+  /** what the depots' rows say now */
+  private depotsDrawn = '';
 
   /** `tip` builds a tooltip from a document made as it opens. */
   constructor(tip: (doc: () => TipDoc) => TipBuild) {
@@ -104,22 +106,35 @@ export class MenuBar {
 
   /** The depots' rows as they stand now, each with its gauge and its trains. */
   private drawDepots() {
-    const rows = depotRows(this.state.mode, this.depots?.() ?? []).map((d) => {
-      const b = btn(d.label, () => this.pickedDepot(d.id), 'mb-item mb-depot-row');
-      b.setAttribute('role', 'menuitem');
-      b.prepend(lineIcon('shed'));
-      b.title = STR.topbar.depotHint;
-      b.classList.toggle('on', d.on);
-      b.append(el('small', { text: d.detail }));
-      return b;
-    });
-    this.depotBox.replaceChildren(...rows);
+    const rows = depotRows(this.state.mode, this.depots?.() ?? []);
+    const said = JSON.stringify(rows);
+    if (said === this.depotsDrawn) return;
+    this.depotsDrawn = said;
+    this.depotBox.replaceChildren(
+      ...rows.map((d) => {
+        const b = btn(d.label, () => this.pickedDepot(d.id), 'mb-item mb-depot-row');
+        b.setAttribute('role', 'menuitem');
+        b.prepend(lineIcon('shed'));
+        b.title = STR.topbar.depotHint;
+        b.classList.toggle('on', d.on);
+        b.append(el('small', { text: d.detail }));
+        return b;
+      }),
+    );
+  }
+
+  /** Every frame: a Fleet menu left open follows the depots and their trains. */
+  update() {
+    if (this.state.open === 'fleet') this.drawDepots();
   }
 
   private clicked(id: MenuId) {
     const run = this.state.click(id);
     this.draw();
-    if (run) this.actions?.[run]();
+    if (!run) return;
+    this.actions?.[run]();
+    // the keys go back to the game: Enter would run it again
+    this.entries.get(id)?.blur();
   }
 
   private picked(action: MenuAction) {
