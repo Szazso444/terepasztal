@@ -36,7 +36,6 @@ import { DEFAULT_SUPPLY, SUPPLY_MODES, dieselFuelId, setSupplyMode, supplyMode }
 import { STR } from '../strings';
 import { Inventory } from '../gacha/inventory';
 import { CRAFT_TIERS, Crafting, craftPool, craftResources } from '../gacha/crafting';
-import { bannerPool } from '../gacha/gacha';
 import { itemDef, locoDef, wagonDef } from '../gacha/items';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { Store, StoreRegistry } from './stores';
@@ -1276,16 +1275,10 @@ describe('the engines the kit no longer hands out', () => {
   /** Withdrawn from the game (decision retire-adler-john-bull): owned copies keep running. */
   const RETIRED_KIT = ['adler', 'john_bull'];
   /**
-   * Kept as Diesel-age recipe finds only, in no banner (decision startkit-diesels, "Keep them,
-   * Diesel-age crafting only"). Putting one in a banner is a change to that decision.
+   * Kept as Diesel-age recipe finds only (decision startkit-diesels, "Keep them, Diesel-age
+   * crafting only"): the Diesel age is the one recipe pool that holds them.
    */
   const DIESEL_FINDS = ['bm50', 'muki', 'mk48'];
-  /** Every banner pool as shipped, and as a pull reads it. */
-  const pools = () =>
-    content.gacha.banners.flatMap((b) => [
-      { banner: b.id, pool: b.pool },
-      { banner: `${b.id} (as pulled)`, pool: bannerPool(b) },
-    ]);
 
   it('stay in the game, and a new game hands out none of them', () => {
     const defined = content.locomotives.map((l) => l.id);
@@ -1297,21 +1290,20 @@ describe('the engines the kit no longer hands out', () => {
     }
   });
 
-  it('retire Adler and John Bull: flagged, in no banner pool and in no recipe pool', () => {
+  it('retire Adler and John Bull: flagged, and in no recipe pool', () => {
     for (const id of RETIRED_KIT) {
       expect(locoDef(id).retired, id).toBe(true);
-      for (const { banner, pool } of pools()) expect(pool, `${banner}: ${id}`).not.toContain(id);
       for (const t of CRAFT_TIERS)
         expect(craftPool('loco', t), `age ${t}: ${id}`).not.toContain(id);
     }
   });
 
-  it('keep BM-50, Muki and the Mk48 as Diesel-age recipe finds in no banner (startkit-diesels)', () => {
+  it('keep BM-50, Muki and the Mk48 as Diesel-age recipe finds only (startkit-diesels)', () => {
     for (const id of DIESEL_FINDS) {
       expect(locoDef(id).type, id).toBe('diesel');
       expect(locoDef(id).retired, id).toBeUndefined();
       expect(craftPool('loco', 1), id).toContain(id);
-      for (const { banner, pool } of pools()) expect(pool, `${banner}: ${id}`).not.toContain(id);
+      for (const t of [0, 2]) expect(craftPool('loco', t), `age ${t}: ${id}`).not.toContain(id);
     }
     // the guards drop a model for its flag alone: every diesel without it can be drawn
     for (const l of content.locomotives)
@@ -1395,12 +1387,10 @@ describe('the engines the kit no longer hands out', () => {
 });
 
 describe('the wagons the kit no longer hands out', () => {
-  it('stay in the game: in a steam banner and in the recipe pool of their age', () => {
-    const steam = content.gacha.banners.filter((b) => b.tier === 0).flatMap((b) => b.pool);
+  it('stay in the game: in the recipe pool of their age', () => {
     const { inventory } = newGame();
     for (const id of FORMER_WAGONS) {
       expect(wagonDef(id).id, id).toBe(id);
-      expect(steam, id).toContain(id);
       expect(craftPool('wagon', 0), id).toContain(id);
       expect(inventory.count(id), id).toBe(0);
     }

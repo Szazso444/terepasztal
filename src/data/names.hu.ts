@@ -311,11 +311,6 @@ export const HU_NAMES = {
         '20 lakos otthona. Minden korszak egy újabb szintet nyit 60, 140, 300, 520 és 800 lakosnak; fejlesztés alatt senki sem költözik be. A népesség a szabad férőhelyeknél megáll; az élelem a szélmalmokból jön.',
     },
   },
-  banners: {
-    steam_age: { name: 'A gőz kora' },
-    diesel_era: { name: 'A dízel kora' },
-    electric_line: { name: 'Villamos vonal' },
-  },
   contractTemplates: {
     local: { name: 'Helyi fuvar' },
     bulk: { name: 'Tömeges rendelés' },
@@ -375,7 +370,6 @@ export const HU_NAMES = {
 /** The Game tuning screen's rows, by rule key; a rule with no hint has none here either. */
 export const HU_RULES: Record<string, { label: string; hint?: string }> = {
   startMoney: { label: 'Kezdő pénz' },
-  startTickets: { label: 'Kezdő jegyek' },
   buildCostMul: { label: 'Építési költség x', hint: '0 = ingyenes építés' },
   upgradeTimeMul: {
     label: 'Fejlesztési idő x',

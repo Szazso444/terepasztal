@@ -1,0 +1,84 @@
+{
+  "returned": [1254, 1254],
+  "box": [389, 368, 891, 1157],
+  "footWidth": 503,
+  "footCentre": [640, 1031.25],
+  "scale": 11.700395440800186,
+  "widthOverShort": 0.4011164274322169,
+  "camera": {
+    "off": false,
+    "by": 1.2,
+    "elevation": -1.2,
+    "turn": 0,
+    "ratio": 0.482,
+    "looking": 28.8
+  },
+  "apexOverW": 1.3185884691848906,
+  "stubSlope": 0.4307692307692308,
+  "hubFromAnchorWorld": [-16.32423459244533, -41.5414662027833],
+  "hubOffset": [-0.32423459244532893, -7.5414662027832975],
+  "hubDistance": 7.548432986962322,
+  "doorPosition": -0.24950298210735586,
+  "doorHeight": 0.38767395626242546,
+  "pixels": {
+    "timber": 1998,
+    "white": 6666,
+    "amber": 0
+  },
+  "check": {
+    "ok": true,
+    "problems": [],
+    "notes": [
+      "placed by its outline: no straight wall base was found",
+      "taller than its canvas by 45 px once on its footprint"
+    ],
+    "fit": {
+      "method": "outline",
+      "sure": [true, false],
+      "measured": [0.329, -0.5],
+      "slopes": [0.33, -0.5],
+      "base": {
+        "w": [439, 1096.6],
+        "s": [707.3, 1184.9],
+        "e": [891, 1093]
+      },
+      "scale": 0.9968,
+      "vertical": 1.2048,
+      "shear": 0.1024,
+      "cx": 665,
+      "cy": 1387.1,
+      "box": {
+        "left": 236.9,
+        "top": -45,
+        "right": 737.3,
+        "bottom": 909.6
+      },
+      "camera": null,
+      "area": 295678
+    }
+  },
+  "tests": {
+    "camera": true,
+    "tower": false,
+    "stub": true,
+    "hub": false,
+    "doorPosition": false,
+    "doorHeight": false,
+    "timber": false,
+    "amber": true,
+    "white": false,
+    "check": true,
+    "eye": true
+  },
+  "eye": {
+    "stub": [
+      [539, 530],
+      [474, 558]
+    ],
+    "hub": [449, 592],
+    "hubBox": [414, 544, 490, 642],
+    "door": [480, 934, 549, 1129],
+    "pass": true,
+    "notes": "Round smooth tower, plain tip, no sails/ground/objects. Limestone and slate, upper-left lighting. Door and shaft on lower-left face."
+  }
+}

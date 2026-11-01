@@ -3,7 +3,6 @@ import { rules } from './rules';
 import { CARGO } from './cargo';
 import { inSupplyMode } from './supply';
 import { locoDef, type Item } from '../gacha/items';
-import { PULL_COST, type Banner, type Gacha, type PullResult } from '../gacha/gacha';
 import type { Inventory } from '../gacha/inventory';
 import { BuildLog, type BuildWorld } from './buildLog';
 import { History } from './history';
@@ -23,9 +22,6 @@ import { isTrainColour } from './trainColours';
 
 /** What a command did: applied, or refused with the reason to show the player. */
 export type CommandResult = { ok: true } | { ok: false; message: string };
-/** A pull also hands back what came out. */
-export type PullCommandResult =
-  { ok: true; results: PullResult[] } | { ok: false; message: string };
 
 /** The simulation modules the commands change. */
 export interface CommandDeps {
@@ -33,7 +29,6 @@ export interface CommandDeps {
   builder: Builder;
   economy: Economy;
   trade: TradeDesk;
-  gacha: Gacha;
   inventory: Inventory;
   towns: TownRegistry;
   houses: HouseRegistry;
@@ -51,16 +46,15 @@ const done = (): CommandResult => ({ ok: true });
 const refuse = (message: string) => ({ ok: false as const, message });
 
 /**
- * Every change a panel makes to trains, stations, signals, trade, pulls and fittings goes through
- * here: each command checks what it is asked, applies it and reports the outcome, and a refused
- * command changes nothing.
+ * Every change a panel makes to trains, stations, signals, trade and fittings goes through here:
+ * each command checks what it is asked, applies it and reports the outcome, and a refused command
+ * changes nothing.
  */
 export class Commands {
   private readonly fleet: Fleet;
   private readonly builder: Builder;
   private readonly economy: Economy;
   private readonly trade: TradeDesk;
-  private readonly gacha: Gacha;
   private readonly inventory: Inventory;
   /** what an undo reads and changes */
   private readonly buildWorld: BuildWorld;
@@ -72,7 +66,6 @@ export class Commands {
     this.builder = deps.builder;
     this.economy = deps.economy;
     this.trade = deps.trade;
-    this.gacha = deps.gacha;
     this.inventory = deps.inventory;
     this.buildWorld = deps;
   }
@@ -254,15 +247,6 @@ export class Commands {
     store.take(cargoId, qty);
     this.economy.earn(qty * sell);
     return done();
-  }
-
-  // ------------------------------------------------------------ works
-  /** Pull `count` times on a banner for `PULL_COST` tickets each (arguments as `Gacha.pull`). */
-  pull(banner: Banner, count: 1 | 10, now: number, rotation = 0): PullCommandResult {
-    const cost = PULL_COST * count;
-    if (this.economy.tickets < cost) return refuse(STR.gacha.noTickets);
-    this.economy.tickets -= cost;
-    return { ok: true, results: this.gacha.pull(banner, count, now, rotation) };
   }
 }
 

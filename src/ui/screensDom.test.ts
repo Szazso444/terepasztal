@@ -419,6 +419,25 @@ describe('the Settings screen', () => {
     money: 0,
   };
 
+  it('has a Building life switch on Gameplay that says what it switches and applies at once', () => {
+    const state = { buildingLife: true } as Settings;
+    const onChange = vi.fn();
+    const screen = new SettingsScreen(
+      state,
+      onChange,
+      { slots: () => [] } as unknown as SettingsActions,
+      () => ({ seed: 1, savedAt: null, version: 'v22', warning: null, saveOff: false }),
+      { confirm: () => Promise.resolve(true) },
+    );
+    screen.onOpen();
+    screen.frameTabs().pick('gameplay');
+    const row = fake(screen.root).all.find((e) => e.title === STR.settings.buildingLifeHint)!;
+    expect(row.text()).toContain(STR.settings.buildingLife);
+    row.all.find((e) => e.tagName === 'BUTTON')!.fire('click');
+    expect(state.buildingLife).toBe(false);
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
   function settings(saveOff: boolean, slots: SlotMeta[] = [], saveOffWhy?: string) {
     const saveAs = vi.fn();
     const actions = { saveAs, slots: () => slots } as unknown as SettingsActions;
@@ -728,7 +747,7 @@ describe('the Levels screen', () => {
       track: [],
       stations: [],
       decor: [],
-      start: { money: 1, tickets: 0, tier: 0 },
+      start: { money: 1, tier: 0 },
     }) as unknown as LevelData;
 
   function levels(existing: LevelData[], answer = true, keeps = true) {

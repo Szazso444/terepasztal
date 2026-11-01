@@ -1,5 +1,10 @@
 import { STR } from '../strings';
-import { CONTENT_KEYS, type ContentBundle, type ContentKey } from '../data/content';
+import {
+  CONTENT_KEYS,
+  withoutTicketFields,
+  type ContentBundle,
+  type ContentKey,
+} from '../data/content';
 import type { TabDef } from './kit';
 
 /** What the Content editor decides apart from its forms: pure, so it is tested under Node. */
@@ -40,7 +45,8 @@ function sameShape(value: unknown, like: unknown): boolean {
  * Put the tables a bundle text holds into `draft`, each in place of its own; a key the bundle
  * does not have keeps the draft's table, and so does one that is not in the table's shape (a list
  * where an object stands, a number for a list), which the editor could not draw. Text that is not a
- * JSON object changes nothing.
+ * JSON object changes nothing. A bundle exported while contracts paid tickets comes in without
+ * their fields, so an unedited contracts table is the shipped table again.
  */
 export function importBundle(draft: ContentBundle, text: string): ImportResult {
   let parsed: unknown;
@@ -57,7 +63,8 @@ export function importBundle(draft: ContentBundle, text: string): ImportResult {
     if (j[k] !== undefined) {
       if (!sameShape(j[k], draft[k])) skipped.push(k);
       else {
-        (draft as unknown as Record<string, unknown>)[k] = j[k];
+        const table = k === 'contracts' ? withoutTicketFields(j[k]) : j[k];
+        (draft as unknown as Record<string, unknown>)[k] = table;
         tables.push(k);
       }
     }

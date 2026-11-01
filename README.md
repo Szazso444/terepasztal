@@ -35,8 +35,8 @@ the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
   generated, import JSON). Esc or the Menu button opens the pause menu in play.
 - **Game tuning**: live sliders for economy, contracts, trains, time, weather and map generation;
   stored with the save.
-- **Content editor**: edit or add locomotives, wagons, cargo, stations, contracts, decor, gacha
-  banners and track data inside the client; applies on reload, export/import as JSON.
+- **Content editor**: edit or add locomotives, wagons, cargo, stations, contracts, decor and track
+  data inside the client; applies on reload, export/import as JSON.
 - **Level editor**: paint terrain, build anything for free, set the player's start, save and
   play-test levels; export/import as JSON.
 
@@ -56,8 +56,8 @@ the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
 - **Ages**: every game starts in the **Steam Age**. The **Diesel Age** begins once you own three
   depots and the population reaches 1000; the **Electric Age** once $250,000 has been earned in
   total (goals in `src/data/ages.json`, checked every in-game hour). Each age unlocks its works,
-  stations, station levels, contract templates and gacha banners; the top bar shows the current
-  age and hovering it lists the goals with progress bars.
+  stations, station levels and contract templates; the top bar shows the current age and hovering
+  it lists the goals with progress bars.
 - **Works**: Charcoal Kiln (wood → coal), Stone Grinder (stone → iron), Oil Refinery
   (coal + water → oil), Power Plant (coal or oil + wood + water → power). The Market (`M`) buys
   and sells any resource for money; fuel prices (oil, diesel, crude) wander up to ±40 % on a slow
@@ -130,7 +130,7 @@ the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
 - `src/engine` loop, camera, input, iso math, atlas pipeline, audio hooks, RNG
 - `src/world` map generation, tiles, regions, track graph, pathfinding
 - `src/sim` clock, economy, stockpile, stations, buildings, power grid, trains, fleet, traffic control, towns, contracts, build rules, save format (versioned, migration registry, unknown fields preserved)
-- `src/gacha` items, inventory, gacha
+- `src/gacha` items, inventory, crafting
 - `src/render` world, overview, trains, fx
 - `src/ui` DOM overlay screens and panels
 - `src/art` procedural placeholder generators (one file per atlas group)
