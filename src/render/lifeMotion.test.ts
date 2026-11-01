@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   PLUME_PUFFS,
+  TREE_SWAY,
   cranePhase,
   ease,
   gustAt,
@@ -12,6 +13,7 @@ import {
   pinnedAlpha,
   plumeLife,
   plumePuff,
+  treeLean,
 } from './lifeMotion';
 
 const EAST = { x: 1, y: 0 };
@@ -153,6 +155,44 @@ describe('the crane load', () => {
     };
     expect(lean(1)).toBeGreaterThan(0);
     expect(lean(-1)).toBeLessThan(0);
+  });
+});
+
+describe('a tree', () => {
+  const TREE = { amp: 0.9, om: 3, ph: 1.2 };
+
+  it('stands in a calm', () => {
+    for (let t = 0; t < 20; t += 0.7) expect(treeLean(TREE, 0, 0, t)).toBe(0);
+  });
+
+  it('leans further the harder it blows, and more in a gust', () => {
+    const mean = (s: number, gust: number) => {
+      let sum = 0;
+      for (let t = 0; t < 200; t += 0.05) sum += treeLean(TREE, s, gust, t);
+      return sum / 4000;
+    };
+    expect(mean(0.7, 0.5)).toBeGreaterThan(mean(0.35, 0.5));
+    expect(mean(0.7, 1)).toBeGreaterThan(mean(0.7, 0));
+    expect(mean(0.35, 0.5)).toBeGreaterThan(0);
+  });
+
+  it('never leans past about a sixth of its height, the loosest kind in the worst gust', () => {
+    const loosest = { amp: 1.15 * 1.15, om: 3, ph: 0 };
+    for (let t = 0; t < 60; t += 0.03)
+      expect(Math.abs(treeLean(loosest, 1, 1, t))).toBeLessThan(0.17);
+  });
+
+  it('swings about its lean, back and forth', () => {
+    const seen: number[] = [];
+    for (let t = 0; t < 20; t += 0.1) seen.push(treeLean(TREE, 0.35, 0.5, t));
+    expect(Math.max(...seen)).toBeGreaterThan(Math.min(...seen) + 0.01);
+  });
+
+  it('keeps the demo table: conifers stiffer and quicker than broadleaves, dead trees least', () => {
+    expect(TREE_SWAY.spruce[0]).toBeLessThan(TREE_SWAY.oak[0]);
+    expect(TREE_SWAY.spruce[1]).toBeGreaterThan(TREE_SWAY.oak[1]);
+    expect(TREE_SWAY.deadtree[0]).toBe(0.25);
+    expect(TREE_SWAY.rock).toBeUndefined();
   });
 });
 

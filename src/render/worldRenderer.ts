@@ -81,6 +81,7 @@ import {
 } from './wheatField';
 import { FIELD_BUDGET_MS, WheatFields, type WheatHost } from './wheatFields';
 import { BuildingLife } from './buildingLife';
+import { TreeSway } from './treeSway';
 import { doorSides, roadCode, roadSides } from './roadShape';
 import { paintedRoads } from './roadPaint';
 import { RoadWalk, roadWalks } from './roadWalk';
@@ -254,6 +255,8 @@ export class WorldRenderer {
   readonly harvest: HarvestHighlight;
   /** chimney smoke, the crane's load and the windmills' sails */
   readonly buildingLife: BuildingLife;
+  /** the trees in the wind */
+  readonly treeSway = new TreeSway();
   /** out-of-map void ring */
   readonly border = new Container();
   private trackSprites = new Map<number, Sprite>();
@@ -870,6 +873,7 @@ export class WorldRenderer {
     s.cullable = true;
     s.tint = this.propTint;
     this.objects.addChild(s);
+    this.treeSway.add(s, p.kind);
     return s;
   }
   /** Rebuild the visual-only nature on one tile from its current surroundings. */
