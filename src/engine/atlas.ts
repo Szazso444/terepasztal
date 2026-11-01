@@ -94,6 +94,8 @@ function atlasFileUrl(base: string, group: string, ext: 'json' | 'png' | 'webp')
  */
 export class AtlasRegistry {
   private frames = new Map<string, FrameInfo>();
+  /** Counts the changes to the frames: what was worked out from `has` holds until this moves. */
+  framesVersion = 0;
   private sources: ImageSource[] = [];
   /** vehicle pages by stem (`rolling/loco_m62`) */
   private vehicles = new Map<string, VehiclePages>();
@@ -292,6 +294,7 @@ export class AtlasRegistry {
         w: f.w / resolution,
         h: f.h / resolution,
       });
+      this.framesVersion++;
     }
   }
 
@@ -367,6 +370,7 @@ export class AtlasRegistry {
     const v = this.vehicles.get(stem);
     if (!v || v.state !== 'ready') return;
     for (const k of v.keys) this.frames.delete(k);
+    this.framesVersion++;
     for (const t of v.textures) t.destroy(false);
     for (const s of v.sources) s.destroy();
     for (const im of v.images)
