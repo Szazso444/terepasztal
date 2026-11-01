@@ -389,6 +389,11 @@ export class BuildStep implements HistoryStep {
       h.residents += forward ? p.n : -p.n;
     }
     if (!forward) this.putPropsBack();
+    // a tile a later frame of a drag first touched noted its sides with the earlier frames' ground
+    // moved; the way forward starts from the ground as the undo left it
+    if (!forward && this.ops.some((op) => op.op === 'ground'))
+      for (const k of this.before.keys())
+        this.before.set(k, tileState(builder, k % builder.map.w, Math.floor(k / builder.map.w)));
     for (const { held } of this.lapsed(forward)) {
       contracts.revive(held.contract, held.status);
       if (held.status === 'active') contractJobs.assign(held.contract);

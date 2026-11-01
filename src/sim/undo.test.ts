@@ -1498,6 +1498,55 @@ describe('a raise or a lower in the history', () => {
     expect(levels(g).every((v) => v === 0)).toBe(true);
   });
 
+  it('a drag goes back and forward whole, again and again', () => {
+    const g = game();
+    g.economy.money = 5000;
+    rules.groundCost = 100;
+    for (let x = 40; x < 43; x++)
+      g.commands.act(() => g.builder.reshapeGround([{ x, y: 40 }], 1), 7);
+    const after = levels(g);
+    expect(g.economy.money).toBe(4700);
+    expect([40, 41, 42].map((x) => levelAt(g.map, x, 40))).toEqual([1, 1, 1]);
+    for (let i = 0; i < 2; i++) {
+      expect(g.history.undo()).toEqual({ ok: true });
+      expect(g.economy.money).toBe(5000);
+      expect(levels(g).every((v) => v === 0)).toBe(true);
+      expect(g.history.redo()).toEqual({ ok: true });
+      expect(g.economy.money).toBe(4700);
+      expect(levels(g)).toEqual(after);
+    }
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.economy.money).toBe(5000);
+    expect(levels(g).every((v) => v === 0)).toBe(true);
+  });
+
+  it('a lower dragged along a ridge goes back and forward too', () => {
+    const g = game();
+    rules.groundCost = 100;
+    const ridge = Array.from({ length: 4 }, (_, i) => ({ x: 40 + i, y: 40 }));
+    expect(g.builder.reshapeGround(ridge, 1)).toBe(true);
+    const start = levels(g),
+      money = g.economy.money;
+    for (const t of ridge) g.commands.act(() => g.builder.reshapeGround([t], -1), 8);
+    expect(g.economy.money).toBe(money - 400);
+    expect(levels(g).every((v) => v === 0)).toBe(true);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(levels(g)).toEqual(start);
+    expect(g.economy.money).toBe(money);
+    expect(g.history.redo()).toEqual({ ok: true });
+    expect(levels(g).every((v) => v === 0)).toBe(true);
+    expect(g.economy.money).toBe(money - 400);
+  });
+
+  it('a redo still refuses when something moved or was built since the undo', () => {
+    const g = game();
+    for (let x = 40; x < 43; x++)
+      g.commands.act(() => g.builder.reshapeGround([{ x, y: 40 }], 1), 7);
+    expect(g.history.undo()).toEqual({ ok: true });
+    expect(g.builder.reshapeGround([{ x: 41, y: 41 }], 1)).toBe(true);
+    expectRefused(g, 'redo', STR.history.builtOver);
+  });
+
   it('gives back the terrain a lower turned, and the harvest with it', () => {
     const g = game();
     g.economy.money = 1e6;
