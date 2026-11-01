@@ -270,11 +270,11 @@ describe('what each age brings', () => {
 
   it('counts a long list, and the count opens every name of it', () => {
     const steam = card(tip(), 'steam');
-    const count = termsOf(steam).find((t) => t.term === STR.ages.news.enginesCount(17));
+    const count = termsOf(steam).find((t) => t.term === STR.ages.news.enginesCount(18));
     expect(count).toBeDefined();
     const names = count?.tip().map(blockText) ?? [];
     expect(names).toContain("Stephenson's Rocket");
-    expect(names).toHaveLength(18);
+    expect(names).toHaveLength(19);
   });
 
   it('says of an age with nothing but a level just that', () => {
