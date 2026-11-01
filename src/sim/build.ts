@@ -219,8 +219,8 @@ export class Builder {
   onDecorChanged: ((d: Decor, removed: boolean) => void) | null = null;
   onBuildingChanged: ((b: Building, removed: boolean) => void) | null = null;
   onSupplyChanged: ((x: number, y: number) => void) | null = null;
-  /** fired when a raise or a lower, or the undo or redo of one, wrote these tiles */
-  onGroundChanged: ((tiles: readonly { x: number; y: number }[]) => void) | null = null;
+  /** fired when a raise or a lower, or the undo or redo of one, wrote these changes */
+  onGroundChanged: ((changes: readonly GroundChange[]) => void) | null = null;
   /** fired when an undo gave a tile back the props track or a structure took off it */
   onPropsBack: ((x: number, y: number) => void) | null = null;
   /** fired when a road is laid on or taken off a tile (`placeRoad`, `removeRoad`) */

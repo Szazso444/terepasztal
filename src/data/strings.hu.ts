@@ -345,7 +345,10 @@ export const HU: Strings = {
     groundUp: (tiles: number, cost: string) => `Emelés: ${tiles} csempe, ${cost}`,
     groundDown: (tiles: number, cost: string) => `Süllyesztés: ${tiles} csempe, ${cost}`,
     groundStays: 'Itt nem mozdul semmi',
-    groundRefused: (tiles: number, reason: string) => `${tiles} csempe nem mozdulhat: ${reason}`,
+    groundRefused: (tiles: number, reason: string) =>
+      tiles === 1
+        ? `1 csempe nem mozdulhat: ${reason}`
+        : `${tiles} csempe nem mozdulhat, az első oka: ${reason}`,
     notLevel: 'Sík terep kell: csak egyenes sín mehet emelkedőre',
     notSmooth:
       'Az ívekhez és váltókhoz egyenletes terep kell: emelkedőre csak egyenes és keresztezés mehet, hacsak nem tartja hídpálya az elem minden csempéjét',
@@ -520,7 +523,7 @@ export const HU: Strings = {
       reclass:
         'Kattints egy elemre, vagy húzd végig a vonalon. Ami nem illeszkedik, az marad, és pirossal látszik.',
       ground:
-        'Szárazföldi csempére, amelyen nincs semmi. A vizet nem lehet mozdítani, és az alagút fölötti föld a tető fölött marad.',
+        'Szárazföldi csempére, amelyen nincs semmi és nincs lelőhely, a tengerszint és a 16. szint között. A vizet nem lehet mozdítani, az alagút fölötti föld pedig a tető fölött marad.',
       road: 'Fűre, erdőbe, homokra vagy dombra, épületre soha: az épülettel az utcai ajtajánál találkozik. Keskeny nyomtáv, Mellékvonal vagy Fővonal sima egyenes sínjét derékszögben keresztezi, útátjáróként; Törzsvonalat soha.',
     },
     trackDesc: {
