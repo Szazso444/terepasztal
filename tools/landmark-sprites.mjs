@@ -126,7 +126,8 @@ const MEASURED = {
 };
 
 const round = (v, digits = 2) => Math.round(v * 10 ** digits) / 10 ** digits + 0;
-const readJson = (p) => JSON.parse(readFileSync(p, 'utf8').replace(/^﻿/, ''));
+const readJson = (p) =>
+  JSON.parse(readFileSync(p, 'utf8').replace(String.fromCharCode(0xfeff), ''));
 
 /** The renderer's door, `DOOR_PX` in src/render/assetScale.ts, read from there rather than copied. */
 export function readDoorPx(file = 'src/render/assetScale.ts') {

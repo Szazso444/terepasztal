@@ -8,7 +8,7 @@ import { PixelBuf, pickShade } from './pixels';
  * Every landmark's footprint from the spec, section 1: `[W, D]` in tiles, W along +x, D along +y.
  * tools/landmark-sprites.mjs reads the same file.
  */
-export const LANDMARK_FOOTPRINTS = footprints as Record<string, [number, number]>;
+export const LANDMARK_FOOTPRINTS = footprints as unknown as Record<string, [number, number]>;
 
 /** The picture's body at a glance: height in world px to the eaves, ridge rise, wall and roof. */
 const LOOK: Record<string, { h: number; ridge: number; wall: RGB[]; roof: RGB[] }> = {

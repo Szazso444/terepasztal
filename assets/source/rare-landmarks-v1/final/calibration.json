@@ -181,7 +181,7 @@
           1
         ],
         "differs": false,
-        "longSide": "W"
+        "longSide": "neither"
       },
       "anchor": {
         "point": "footprint centre",
@@ -492,7 +492,7 @@
           1
         ],
         "differs": false,
-        "longSide": "D"
+        "longSide": "neither"
       },
       "anchor": {
         "point": "footprint centre",
