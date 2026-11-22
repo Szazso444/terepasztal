@@ -460,6 +460,10 @@ export const HU_RULES: Record<string, { label: string; hint?: string }> = {
   hillLevel: { label: 'Dombszint' },
   rockLevel: { label: 'Sziklaszint' },
   forestDensity: { label: 'Erdőküszöb', hint: 'alacsonyabb = több erdő' },
+  landmarkChance: {
+    label: 'Ritka nevezetességek esélye x',
+    hint: '0 = nincs ritka nevezetesség az újonnan generált földön',
+  },
 };
 /** The tuning groups, by the English name `RULE_META` keeps them under. */
 export const HU_RULE_GROUPS: Record<string, string> = {

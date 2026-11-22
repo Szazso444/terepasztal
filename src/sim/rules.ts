@@ -52,6 +52,8 @@ export interface Rules {
   hillLevel: number;
   rockLevel: number;
   forestDensity: number;
+  /** multiplies every landmark's roll band and the site-led chance; 0 places none */
+  landmarkChance: number;
   wheatPerCrew: number;
   /** units of each good a town's store holds before any warehouse */
   townStoreCap: number;
@@ -125,6 +127,7 @@ export const DEFAULT_RULES: Rules = {
   hillLevel: 0.64,
   rockLevel: 0.76,
   forestDensity: 0.56,
+  landmarkChance: 1,
   wheatPerCrew: 1,
   townStoreCap: 300,
   buildReach: 24,
@@ -476,6 +479,16 @@ export const RULE_META: RuleMeta[] = [
     step: 0.01,
     newGame: true,
     hint: 'lower = more forest',
+  },
+  {
+    key: 'landmarkChance',
+    label: 'Landmark chance x',
+    group: 'Map',
+    min: 0,
+    max: 3,
+    step: 0.1,
+    newGame: true,
+    hint: '0 = no rare landmarks in newly generated land',
   },
 ];
 if (LANGUAGE === 'hu')

@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PAST_SHIPPED } from './pastShipped';
 import { forAll } from '../testing/property';
-import type { ContentBundle, ContentKey, HouseConfig, StationLevels, TrackConfig } from './content';
+import type {
+  ContentBundle,
+  ContentKey,
+  HouseConfig,
+  LandmarkDef,
+  StationLevels,
+  TrackConfig,
+} from './content';
 
 type ContentModule = typeof import('./content');
 type Table = Record<string, unknown>;
@@ -845,10 +852,11 @@ describe('the list of past shipped tables', () => {
     expect(shipped.content.wagons.some((w) => w.accepts?.length)).toBe(true);
   });
 
-  it('holds at least one version of every table, each a unique eight-digit hex hash', () => {
+  it('holds at least one version of every table but the newest, each a unique eight-digit hex hash', () => {
     expect(Object.keys(PAST_SHIPPED).sort()).toEqual([...shipped.CONTENT_KEYS].sort());
     for (const k of shipped.CONTENT_KEYS) {
-      expect(PAST_SHIPPED[k].length, k).toBeGreaterThan(0);
+      // landmarks came after the old format closed, so no build of it ever shipped one
+      if (k !== 'landmarks') expect(PAST_SHIPPED[k].length, k).toBeGreaterThan(0);
       for (const h of PAST_SHIPPED[k]) expect(h, k).toMatch(/^[0-9a-f]{8}$/);
       expect(new Set(PAST_SHIPPED[k]).size, k).toBe(PAST_SHIPPED[k].length);
     }
@@ -900,5 +908,181 @@ describe('writing overrides', () => {
     const locos = editedLocomotives();
     const mod = await load(stamped({ locomotives: locos }, '00000000'));
     expect(mod.readContentOverrides()).toEqual({ locomotives: locos });
+  });
+});
+
+describe('landmarks', () => {
+  /** The shipped bundle with `edit` done to its landmarks, and the problems validation finds. */
+  function problemsAfter(edit: (list: LandmarkDef[]) => void) {
+    const b = clone(shipped.DEFAULT_CONTENT);
+    edit(b.landmarks);
+    return shipped.validateContent(b);
+  }
+  /** An edit of the landmark at `at`, through a view that lets a test write what the types forbid. */
+  const set = (at: number, edit: (lm: Table) => void) => (list: LandmarkDef[]) =>
+    edit(list[at] as unknown as Table);
+
+  it('ships the twelve, valid', () => {
+    expect(shipped.DEFAULT_CONTENT.landmarks).toHaveLength(12);
+    expect(shipped.validateContent(shipped.DEFAULT_CONTENT)).toEqual([]);
+    expect(shipped.content.landmarks).toEqual(shipped.DEFAULT_CONTENT.landmarks);
+  });
+
+  it('has the roll bands of spec section 1: eleven rolled, the house site-led', () => {
+    const rolled = shipped.content.landmarks.filter((l) => l.roll !== undefined);
+    expect(rolled).toHaveLength(11);
+    expect(rolled.reduce((sum, l) => sum + l.roll!, 0)).toBeCloseTo(0.3963, 4);
+    const house = shipped.landmarkDef('house_between_seasons')!;
+    expect(house.siteChance).toBe(0.23);
+    expect(house.roll).toBeUndefined();
+  });
+
+  it('reports an unknown cargo', () => {
+    const edits: ((list: LandmarkDef[]) => void)[] = [
+      set(0, (lm) => ((lm.restore as { needs: Table }).needs.moonstone = 5)),
+      set(0, (lm) => (((lm.salvage as Table).effect as Table).cargo = { moonstone: 5 })),
+      set(4, (lm) => (((lm.restore as Table).effect as Table).cargo = 'moonstone')),
+      set(
+        9,
+        (lm) => ((((lm.restore as Table).effect as Table).consumes as Table).cargo = 'moonstone'),
+      ),
+    ];
+    for (const [i, edit] of edits.entries()) {
+      const problems = problemsAfter(edit);
+      expect(problems, `edit ${i}`).toHaveLength(1);
+      expect(problems[0], `edit ${i}`).toMatch(/unknown cargo "moonstone"/);
+    }
+  });
+
+  it('reports a footprint side outside 1 to 5', () => {
+    for (const side of [0, 6, -1, 2.5, '2', null])
+      for (const key of ['w', 'd']) {
+        const problems = problemsAfter(set(0, (lm) => (lm[key] = side)));
+        expect(problems, `${key} = ${JSON.stringify(side)}`).toEqual([
+          expect.stringMatching(/^landmark merchants_last_stop: footprint sides/),
+        ]);
+      }
+    for (const side of [1, 5]) expect(problemsAfter(set(0, (lm) => (lm.w = side)))).toEqual([]);
+  });
+
+  it('reports a chance outside 0 to 1', () => {
+    for (const v of [-0.1, 1.1, NaN, '0.5'])
+      for (const key of ['roll', 'target'])
+        expect(problemsAfter(set(0, (lm) => (lm[key] = v))), `${key} = ${String(v)}`).not.toEqual(
+          [],
+        );
+    for (const v of [-0.1, 1.1])
+      expect(problemsAfter(set(11, (lm) => (lm.siteChance = v)))).toEqual([
+        expect.stringMatching(/siteChance must be between 0 and 1/),
+      ]);
+  });
+
+  it('reports a landmark with both a roll and a site chance, or neither', () => {
+    expect(problemsAfter(set(0, (lm) => (lm.siteChance = 0.2)))).not.toEqual([]);
+    expect(problemsAfter(set(0, (lm) => delete lm.roll))).not.toEqual([]);
+  });
+
+  it('reports roll bands that add up to more than 1', () => {
+    expect(problemsAfter(set(0, (lm) => (lm.roll = 0.7)))).toEqual([
+      expect.stringMatching(/^landmarks: roll bands add up to .*more than 1/),
+    ]);
+    expect(problemsAfter(set(0, (lm) => (lm.roll = 0.6037)))).toEqual([]);
+  });
+
+  it('reports an unknown site-rule kind', () => {
+    expect(problemsAfter(set(0, (lm) => (lm.rule = { kind: 'onTheMoon' })))).toEqual([
+      expect.stringMatching(/^landmark merchants_last_stop: unknown site rule kind "onTheMoon"/),
+    ]);
+    expect(problemsAfter(set(0, (lm) => (lm.rule = null)))).not.toEqual([]);
+  });
+
+  it('checks the numbers and names each site-rule kind takes', () => {
+    const rules: unknown[] = [
+      { kind: 'climateAll', climate: 'moon' },
+      { kind: 'near', what: 'moon', r: 3 },
+      { kind: 'near', what: 'lake', r: -1 },
+      { kind: 'forestCount', n: 0, r: 2 },
+      { kind: 'levelAtLeast', n: 0 },
+      { kind: 'cliff', levels: 2 },
+      { kind: 'fourClimates', climates: [], r: 3 },
+      { kind: 'fourClimates', climates: ['plains', 'moon'], r: 3 },
+    ];
+    for (const rule of rules)
+      expect(problemsAfter(set(0, (lm) => (lm.rule = rule))), JSON.stringify(rule)).not.toEqual([]);
+  });
+
+  it('reports an unknown effect kind, in either path and in a pick', () => {
+    const edits: ((list: LandmarkDef[]) => void)[] = [
+      set(0, (lm) => ((lm.salvage as Table).effect = { kind: 'teleport' })),
+      set(0, (lm) => ((lm.restore as Table).effect = { kind: 'teleport' })),
+      set(7, (lm) => ((lm.restore as { pick: Table[] }).pick[1] = { kind: 'teleport' })),
+    ];
+    for (const [i, edit] of edits.entries())
+      expect(problemsAfter(edit), `edit ${i}`).toEqual([
+        expect.stringMatching(/unknown effect kind "teleport"/),
+      ]);
+  });
+
+  it('reports a restore path without exactly one of effect and pick, and an unknown condition', () => {
+    expect(problemsAfter(set(0, (lm) => delete (lm.restore as Table).effect))).not.toEqual([]);
+    expect(
+      problemsAfter(
+        set(7, (lm) => ((lm.restore as Table).effect = { kind: 'boost', strength: 1 })),
+      ),
+    ).not.toEqual([]);
+    expect(problemsAfter(set(0, (lm) => ((lm.restore as Table).condition = 'eclipse')))).toEqual([
+      expect.stringMatching(/unknown condition "eclipse"/),
+    ]);
+  });
+
+  it('reports a landmark table of the wrong shape without throwing', () => {
+    for (const v of [null, 42, 'x', {}, [null], [{}], [{ id: 'a', restore: 5, salvage: 5 }]]) {
+      const b = { ...shipped.DEFAULT_CONTENT, landmarks: v } as unknown as ContentBundle;
+      expect(() => shipped.validateContent(b), JSON.stringify(v)).not.toThrow();
+      expect(shipped.validateContent(b), JSON.stringify(v)).not.toEqual([]);
+    }
+  });
+
+  it('finds a landmark by id, and returns undefined for an unknown one without throwing', () => {
+    expect(shipped.landmarkDef('inverted_manor')).toBe(
+      shipped.content.landmarks.find((l) => l.id === 'inverted_manor'),
+    );
+    for (const id of ['x', '', 'constructor', '__proto__', 'toString', 'Inverted_Manor'])
+      expect(shipped.landmarkDef(id), id).toBeUndefined();
+    expect(() => shipped.landmarkDef(null as unknown as string)).not.toThrow();
+  });
+
+  it('applies a stored landmarks table, and sets an invalid one aside', async () => {
+    const list = clone(shipped.DEFAULT_CONTENT.landmarks);
+    list[0].restore.needs.wood = 61;
+    let mod = await load(stamped({ landmarks: list }));
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['landmarks'], setAside: [] });
+    expect(mod.landmarkDef('merchants_last_stop')!.restore.needs.wood).toBe(61);
+    list[0].w = 9;
+    mod = await load(stamped({ landmarks: list }));
+    expect(mod.content.landmarks).toEqual(shipped.content.landmarks);
+    expect(mod.contentOverrideReport().setAside.map((s) => [s.key, s.reason])).toEqual([
+      ['landmarks', 'invalid'],
+    ]);
+  });
+
+  it('sets a landmarks table made for another shipped table aside as stale', async () => {
+    const mod = await load(stamped({ landmarks: shipped.DEFAULT_CONTENT.landmarks }, '00000000'));
+    expect(mod.content.landmarks).toEqual(shipped.content.landmarks);
+    expect(mod.contentOverrideReport().setAside.map((s) => [s.key, s.reason])).toEqual([
+      ['landmarks', 'stale'],
+    ]);
+  });
+
+  it('is named by no file in src/data but its own table', () => {
+    const files = import.meta.glob('./*', { query: '?raw', import: 'default', eager: true });
+    const ids = shipped.DEFAULT_CONTENT.landmarks.map((l) => l.id);
+    const named = Object.entries(files).flatMap(([path, text]) =>
+      path === './landmarks.json' || path === './content.test.ts'
+        ? []
+        : ids.filter((id) => (text as string).includes(id)).map((id) => `${path}: ${id}`),
+    );
+    expect(Object.keys(files).length).toBeGreaterThan(10);
+    expect(named).toEqual([]);
   });
 });

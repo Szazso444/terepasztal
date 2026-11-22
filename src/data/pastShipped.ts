@@ -95,4 +95,5 @@ export const PAST_SHIPPED: Readonly<Record<ContentKey, readonly string[]>> = Obj
   track: list('0d0c78a4', '28c50e02', '51bab72e', '68ebecc5', '856d16ce', 'aa527faa', 'ee87cabb'),
   crafting: list('8f4c7a87'),
   houses: list('31ef4dd4', '4444dc55'),
+  landmarks: list(),
 });
