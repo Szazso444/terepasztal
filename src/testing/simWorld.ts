@@ -33,7 +33,6 @@ import { TradeDesk } from '../sim/trade';
 import { Notices } from '../sim/notices';
 import { DEFAULT_SETTINGS, contractPolicyFor } from '../sim/save';
 import { Inventory } from '../gacha/inventory';
-import { Gacha } from '../gacha/gacha';
 import { Crafting } from '../gacha/crafting';
 
 /** The seed a world gets when none is asked for: the one the older local fixtures use. */
@@ -70,7 +69,6 @@ export interface SimWorld {
   readonly fleet: Fleet;
   readonly people: PeopleSim;
   readonly contracts: ContractBoard;
-  readonly gacha: Gacha;
   readonly crafting: Crafting;
   readonly contractJobs: ContractDispatcher;
   readonly trade: TradeDesk;
@@ -94,7 +92,7 @@ export function mapParams(size: number): MapGenParams {
  * A fresh game's simulation, built as `new Game(spec, supply)` and `Game.init` build it: the
  * block from `new TrackGraph` through `contracts.onEvent`, plus `fleet.waitingAt` and
  * `fleet.contractDest`, with the same RNG seeds (weather `seed ^ 0x77ea`, contracts `^ 0x5eed`,
- * gacha `^ 0x9ac4a`, crafting `^ 0xc4af7`; walkers from the map seed) and the starter inventory.
+ * crafting `^ 0xc4af7`; walkers from the map seed) and the starter inventory.
  *
  * Defaults: seed SIM_WORLD_SEED (4242), size `rules.mapSize` read at the call (160 unless a test
  * changed the rules), terrain `generated` (generateMap with the parameters a new game gets from
@@ -204,7 +202,6 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
   const people = new PeopleSim(map, builder);
   fleet.onPassengers = (st, n, boarding) => (boarding ? people.board(st, n) : people.alight(st, n));
   const contracts = new ContractBoard(new Rng(seed ^ 0x5eed), builder, economy);
-  const gacha = new Gacha(new Rng(seed ^ 0x9ac4a), inventory);
   const crafting = new Crafting(new Rng(seed ^ 0xc4af7), inventory, economy);
   crafting.grantFromInventory();
   fleet.onDelivery = (e) => contracts.onDelivery(e);
@@ -239,7 +236,6 @@ export function simWorld(opts: SimWorldOptions = {}): SimWorld {
     fleet,
     people,
     contracts,
-    gacha,
     crafting,
     contractJobs,
     trade,

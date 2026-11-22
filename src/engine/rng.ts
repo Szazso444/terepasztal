@@ -1,4 +1,4 @@
-/** Seeded PRNG (mulberry32). Deterministic, cheap, good enough for map gen and gacha. */
+/** Seeded PRNG (mulberry32). Deterministic, cheap, good enough for map gen and crafting. */
 export class Rng {
   private s: number;
   constructor(seed: number) {

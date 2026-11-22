@@ -32,6 +32,9 @@ type Tile = { x: number; y: number };
 /** What the stack shows, level by level: the documents themselves. */
 class DocView implements TipView<TipDoc> {
   shown: TipDoc[] = [];
+  empty(content: TipDoc) {
+    return !content.length;
+  }
   open(level: number, content: TipDoc) {
     this.shown[level] = content;
   }
