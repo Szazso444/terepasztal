@@ -37,6 +37,30 @@ describe('landmark depth', () => {
     });
   }
 
+  // The known limit it shares with every multi-tile structure (stations and works are placed the
+  // same way: front tile, layer 20, so one key per picture). A train on a tile beside a front edge,
+  // away from the front corner, is in front of the footprint but sorts BEHIND the picture. This
+  // asserts what happens today; a better key would flip these and show up here.
+  it('sorts a train beside a front edge behind the picture, as stations do (known limit)', () => {
+    const x = 20,
+      y = 30,
+      train = 15,
+      key = landmarkDepth(x, y, 3, 3);
+    // along the edge that faces +y: (x, y+3) and (x+1, y+3); along the one facing +x: (x+3, y), (x+3, y+1)
+    for (const [tx, ty] of [
+      [x, y + 3],
+      [x + 1, y + 3],
+      [x + 3, y],
+      [x + 3, y + 1],
+    ])
+      expect(depthKey(tx, ty, train)).toBeLessThan(key);
+    // the tiles from the front corner outward sort in front
+    expect(depthKey(x + 2, y + 3, train)).toBeGreaterThan(key);
+    expect(depthKey(x + 3, y + 2, train)).toBeGreaterThan(key);
+    // a 2x2 station-sized footprint has the same tie on its edge tiles
+    expect(depthKey(20, 32, train)).toBeLessThan(landmarkDepth(20, 30, 2, 2));
+  });
+
   it('anchors the picture on the footprint centre', () => {
     forAll(
       (r) => ({ x: r.int(0, 100), y: r.int(0, 100), fp: footprints[r.int(0, 3)] }),
