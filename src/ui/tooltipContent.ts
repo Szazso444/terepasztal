@@ -124,6 +124,8 @@ export interface ResourceSnapshot {
   cap: number;
   /** what every store holds together; absent for what no store keeps */
   total?: number;
+  /** the name of the store the bar shows; absent for what no store keeps */
+  store?: string;
   /** units received and spent over the last week; absent where nothing counts them */
   produced?: number;
   consumed?: number;
@@ -238,6 +240,8 @@ export function resourceTip(s: ResourceSnapshot): TipDoc {
   return [
     title(icon(s.id), resourceName(s.id)),
     row(STOCK_LABEL[s.id] ?? STR.res.have, stock),
+    // power is the grid's, whichever store the bar shows
+    ...(s.store && s.id !== 'power' ? [dim(STR.res.shownStore(s.store))] : []),
     ...(s.total !== undefined ? [dim(STR.res.allStores(Math.floor(s.total)))] : []),
     ...(s.produced !== undefined ? [row(STR.res.producedDay, num(s.produced.toFixed(1)))] : []),
     ...(s.consumed !== undefined ? [row(STR.res.consumedDay, num(s.consumed.toFixed(1)))] : []),
@@ -330,7 +334,7 @@ function defOf(ref: BuildRef) {
 }
 
 /** "30 wood, 10 stone": each amount in bold, each resource with its icon. */
-function amounts(cost: Cost): Inline[] {
+export function amounts(cost: Cost): Inline[] {
   const out: Inline[] = [];
   for (const [cargo, v] of Object.entries(cost)) {
     if (v <= 0) continue;

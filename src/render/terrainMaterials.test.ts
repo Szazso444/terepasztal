@@ -306,3 +306,33 @@ describe('the painted waterline, on any shore', () => {
     );
   }, 30_000);
 });
+
+describe('open water', () => {
+  /** Ten cells of 64 texels, the water's left half dark and its right half light. */
+  function halves() {
+    const size = 64;
+    const sheet = new Uint8ClampedArray(size * size * 10 * 4);
+    for (let y = 0; y < size; y++)
+      for (let x = 0; x < size; x++) {
+        const k = ((5 * size + y) * size + x) * 4;
+        sheet.fill(x < size / 2 ? 50 : 150, k, k + 3);
+        sheet[k + 3] = 255;
+      }
+    return sheet;
+  }
+
+  it('keeps no broad light or shade of its picture, so its patches meet with no band', () => {
+    const sheet = halves();
+    const out = [0, 0, 0];
+    let near = 0;
+    let all = 0;
+    for (let y = 0; y < 30; y += 0.37)
+      for (let x = 0; x < 30; x += 0.41) {
+        surfaceColor(sheet, Material.Water, x, y, out);
+        all++;
+        if (Math.abs(out[0] - 100) < 25) near++;
+      }
+    // (a step this hard leaves a margin either side of it; the painted water has no such step)
+    expect(near / all).toBeGreaterThan(0.7);
+  });
+});

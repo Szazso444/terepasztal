@@ -14,25 +14,14 @@ import {
 import type { Screen } from './modal';
 import type { Confirm } from './menu';
 import type { Inventory } from '../gacha/inventory';
-import {
-  RARITIES,
-  STAT_PER_LEVEL,
-  itemDef,
-  levelMul,
-  LEVEL_CAP,
-  type Item,
-  type LocoDef,
-  type WagonDef,
-  locoDef,
-} from '../gacha/items';
-import { cargoDef } from '../sim/cargo';
-import { runsOn } from '../sim/compat';
+import { RARITIES, STAT_PER_LEVEL, itemDef, LEVEL_CAP, type Item, locoDef } from '../gacha/items';
 import { rarityStars, vehicleLabels } from './labels';
 import type { Fleet } from '../sim/fleet';
 import type { Commands } from '../sim/commands';
 import type { AtlasRegistry } from '../engine/atlas';
 import { decorateSegmented, fragment, ScrollKeep, switchLine, vehicleArt } from './economyParts';
 import { rarityClass } from './rarityClass';
+import { copyCard } from './vehicleRow';
 import {
   KIND_FILTERS,
   SIZE_FILTERS,
@@ -41,6 +30,7 @@ import {
   levelGainPercent,
   levelUpState,
   pickOf,
+  revealFilters,
   rosterItems,
   type KindFilter,
   type RosterEntry,
@@ -64,6 +54,8 @@ export class RosterScreen implements Screen {
   private scroll = new ScrollKeep(this.cards);
   /** what the cards were last built from: the same again builds nothing */
   private shown = '';
+  /** the copy another screen opened this one on: its card is marked, and shown as it opens */
+  private focus: number | null = null;
   /** set by the game: show a model in the Inspect 3D screen over this one */
   onInspect: ((defId: string) => void) | null = null;
 
@@ -79,8 +71,30 @@ export class RosterScreen implements Screen {
     this.root.append(this.head(), this.cards);
   }
 
+  /** Open on a copy: the caller puts the screen on the stack. */
+  showCopy(uid: number) {
+    const it = this.inventory.byUid(uid);
+    if (!it) return;
+    const f = revealFilters(this.filters(), this.entry(it));
+    this.kind = pickOf(KIND_FILTERS, f.kind, this.kind);
+    this.rarity = f.rarity;
+    this.size = f.size;
+    this.freeOnly = f.freeOnly;
+    // the filter strips hold what they show
+    this.root.firstElementChild?.replaceWith(this.head());
+    this.focus = uid;
+  }
+
   onOpen() {
     this.render(true);
+    const on = this.cards.querySelector<HTMLElement>('.k-card.on');
+    if (!on) return;
+    const box = this.cards.getBoundingClientRect();
+    const r = on.getBoundingClientRect();
+    this.cards.scrollTop += r.top - box.top - (box.height - r.height) / 2;
+  }
+  onClose() {
+    this.focus = null;
   }
   refresh() {
     this.scroll.restore();
@@ -218,6 +232,7 @@ export class RosterScreen implements Screen {
     // what a card shows besides the model: its level, where it serves, whether it can be fitted
     const key = JSON.stringify([
       f,
+      this.focus,
       rules.inCabCost,
       items.map((i) => [
         i.uid,
@@ -246,27 +261,7 @@ export class RosterScreen implements Screen {
 
   private card(it: Item): HTMLElement {
     const d = itemDef(it.defId);
-    const m = levelMul(it.level);
-    const stats: string[] = [];
-    if (it.kind === 'loco') {
-      const ld = d as LocoDef;
-      stats.push(
-        `${STR.depot.speed} ${(ld.speed * m).toFixed(2)} · ${STR.depot.power} ${Math.round(ld.power * m)} t`,
-        `${STR.depot.weight} ${ld.weight} t · ${STR.roster.crew} ${ld.crew}`,
-        STR.roster.fuelLine(ld),
-      );
-      if (ld.controlClass) stats.push(STR.depot.controlClass(ld.controlClass));
-    } else {
-      const wd = d as WagonDef;
-      stats.push(
-        `${STR.roster.capacity} ${Math.round(wd.capacity * m)} · ${STR.depot.weight} ${wd.weight} t`,
-        (wd.accepts ?? []).map((c) => cargoDef(c).name).join(', '),
-      );
-      if (wd.service) stats.push(STR.roster.serviceLine(wd.service, wd.serviceCap ?? 0));
-    }
-    // its train class and the lines it may run on
-    stats.push(runsOn(d as LocoDef | WagonDef));
-    const train = it.assigned !== null ? this.fleet.byId(it.assigned) : null;
+    const c = copyCard(this.fleet, it);
     const art = vehicleArt(this.atlas, it.defId, 2);
     art.classList.add('ec-art');
     art.addEventListener('click', () => this.onInspect?.(it.defId));
@@ -277,34 +272,22 @@ export class RosterScreen implements Screen {
     });
     eye.setAttribute('aria-label', STR.craft.inspect);
     const foot: (Node | null)[] = [
-      el('span', {
-        class: 'ec-grow dim',
-        text:
-          it.level >= LEVEL_CAP
-            ? STR.roster.maxLevel
-            : STR.roster.copies(this.inventory.count(it.defId)),
-      }),
+      el('span', { class: 'ec-grow dim', text: c.stock }),
       eye,
       this.levelButton(it),
       this.inCabPart(it),
     ];
     return card({
       rarity: rarityClass(d.rarity),
-      title: d.name,
-      badge: STR.roster.lv(it.level),
+      title: c.name,
+      badge: c.level,
       sprite: art,
+      on: it.uid === this.focus,
       sub: vehicleLabels(d),
       body: fragment(
-        el('div', { class: 'ec-era', text: d.era }),
-        el(
-          'div',
-          { class: 'ec-lines' },
-          ...stats.filter(Boolean).map((t) => el('div', { text: t })),
-        ),
-        el('div', {
-          class: `ec-where ${train ? 'on' : ''}`.trim(),
-          text: train ? STR.roster.assignedTo(train.name) : STR.roster.inDepot,
-        }),
+        el('div', { class: 'ec-era', text: c.era }),
+        el('div', { class: 'ec-lines' }, ...c.lines.map((t) => el('div', { text: t }))),
+        el('div', { class: `ec-where ${c.inService ? 'on' : ''}`.trim(), text: c.where }),
       ),
       foot: fragment(...foot),
     });
