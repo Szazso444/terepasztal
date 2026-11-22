@@ -250,7 +250,7 @@ export const WORKS_TOP_PICTURE = 4;
  * a save or a level file brings (`buildingLevel`, `buildingFromJSON`), so a building above the
  * cap `worksUpgradeMax` sets keeps its level. Upgrades stop earlier, at `worksUpgradeMax`.
  */
-export function worksMaxLevel(b: Building) {
+export function worksMaxLevel(b: Pick<Building, 'id'>) {
   return buildingDef(b.id).bridge ? BRIDGE_MAX_LEVEL : MAX_LEVEL;
 }
 /**
@@ -259,7 +259,7 @@ export function worksMaxLevel(b: Building) {
  * age opens (`levelCap` of the works' own first age), since the art has no model for the ages
  * after it. A `lastTier` that is not a whole number counts as missing, so every age upgrades.
  */
-export function worksUpgradeMax(b: Building) {
+export function worksUpgradeMax(b: Pick<Building, 'id'>) {
   const def = buildingDef(b.id);
   if (def.bridge) return BRIDGE_MAX_LEVEL;
   const last = def.lastTier;
@@ -267,13 +267,13 @@ export function worksUpgradeMax(b: Building) {
     ? levelCap(def.tier ?? 0, last)
     : MAX_LEVEL;
 }
-export function buildingLevel(b: Building) {
+export function buildingLevel(b: Pick<Building, 'id' | 'level'>) {
   return Math.min(worksMaxLevel(b), Math.max(1, b.level ?? 1));
 }
-export function buildingRate(b: Building) {
+export function buildingRate(b: Pick<Building, 'id' | 'level'>) {
   return buildingDef(b.id).perWeek * (1 + (buildingLevel(b) - 1) * 0.5);
 }
-export function buildingRecipe(b: Building) {
+export function buildingRecipe(b: Pick<Building, 'id' | 'level'>) {
   const r = buildingDef(b.id).recipe;
   return b.id === 'windmill' ? { in: r.in, out: { food: 5 + 2 * (buildingLevel(b) - 1) } } : r;
 }

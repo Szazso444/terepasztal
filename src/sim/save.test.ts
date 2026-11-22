@@ -48,6 +48,7 @@ import {
   type BuildingJSON,
 } from './buildings';
 import { MAX_LEVEL } from './levels';
+import { groupGain, heardVolumes, musicGain } from '../engine/audioGroups';
 import { isTrainColour, shownTrainColour } from './trainColours';
 import type { Work } from './upgrade';
 import type { HousesJSON } from './houses';
@@ -2774,6 +2775,119 @@ describe('storage', () => {
     writeSlot(long, buildSave(fullParts()));
     expect(hasSlot(long)).toBe(true);
     for (const { name } of listSlots()) expect(hasSlot(name), name).toBe(true);
+  });
+});
+
+describe('the volumes of a settings file', () => {
+  /** What a settings file made a sound play at before the groups: its own arithmetic. */
+  const was = (s: { master: number; sfx: number; music: number; ambient: number }) => ({
+    event: s.master * s.sfx,
+    ambience: s.master * s.ambient,
+    music: s.master * s.music,
+  });
+  /** What the same file plays at now. */
+  const now = (s: Partial<Settings>) => {
+    const heard = heardVolumes(s as Settings);
+    return {
+      event: groupGain(heard, 'trains'),
+      ambience: groupGain(heard, 'weather'),
+      music: musicGain(heard),
+    };
+  };
+  const old = (over: Record<string, number> = {}) => ({
+    master: 0.8,
+    sfx: 0.8,
+    music: 0.5,
+    ambient: 0.35,
+    ...over,
+  });
+  const moved = (over: Record<string, number> = {}) =>
+    migrateSettings<Partial<Settings>>(old(over));
+
+  it.each([
+    ['the defaults', {}],
+    ['a quiet Effects under the ambience', { sfx: 0.2 }],
+    ['no Effects, the ambience on', { sfx: 0 }],
+    ['no ambience', { ambient: 0 }],
+    ['a loud ambience', { sfx: 0.5, ambient: 1 }],
+    ['everything down', { master: 0.1, sfx: 0.1, music: 0.1, ambient: 0.1 }],
+    ['master off', { master: 0 }],
+  ])('keeps the loudness of every sound: %s', (_, over) => {
+    const file = old(over);
+    const heard = now(migrateSettings({ soundOff: {}, ...file }));
+    const before = was(file);
+    expect(heard.event).toBeCloseTo(before.event, 12);
+    expect(heard.ambience).toBeCloseTo(before.ambience, 12);
+    expect(heard.music).toBeCloseTo(before.music, 12);
+  });
+
+  it('makes sfx Effects and sets Weather and Environment from ambient', () => {
+    const m = moved({ sfx: 0.6, ambient: 0.3 });
+    expect(m.sfx).toBe(0.6);
+    expect(m.soundGroups).toEqual({
+      weather: 0.5,
+      environment: 0.5,
+      ui: 1,
+      building: 1,
+      trains: 1,
+      events: 1,
+    });
+    expect(m.ambient).toBeUndefined();
+  });
+
+  it('keeps every level one a slider can show, whatever the file held', () => {
+    for (const sfx of [0, 0.1, 0.35, 0.8, 1])
+      for (const ambient of [0, 0.1, 0.35, 0.8, 1]) {
+        const m = moved({ sfx, ambient });
+        const label = JSON.stringify({ sfx, ambient });
+        for (const level of [m.sfx!, ...Object.values(m.soundGroups!)]) {
+          expect(level, label).toBeGreaterThanOrEqual(0);
+          expect(level, label).toBeLessThanOrEqual(1);
+        }
+      }
+  });
+
+  it('leaves the groups at their defaults when both old volumes were 0, for Effects to raise', () => {
+    const m = moved({ sfx: 0, ambient: 0 });
+    expect(m.sfx).toBe(0);
+    expect(m.soundGroups).toEqual(DEFAULT_SETTINGS.soundGroups);
+  });
+
+  it('runs once: a file with groups keeps what the player set', () => {
+    const once = moved();
+    const set = { ...once, soundGroups: { ...once.soundGroups!, weather: 0.9 }, sfx: 0.2 };
+    const twice = migrateSettings(JSON.parse(JSON.stringify(set)) as Partial<Settings>);
+    expect(twice.soundGroups).toEqual(set.soundGroups);
+    expect(twice.sfx).toBe(0.2);
+  });
+
+  it('reads an old settings file through the store, and writes it back without ambient', () => {
+    const items = new Map([[SETTINGS_KEY, JSON.stringify(old({ sfx: 0.5, ambient: 0.25 }))]]);
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => items.get(k) ?? null,
+      setItem: (k: string, v: string) => void items.set(k, v),
+    });
+    const read = readSettings();
+    expect(read.sfx).toBe(0.5);
+    expect(read.soundGroups.weather).toBe(0.5);
+    expect(read.soundOff).toEqual({});
+    writeSettings(read);
+    expect(JSON.parse(items.get(SETTINGS_KEY)!)).not.toHaveProperty('ambient');
+    vi.unstubAllGlobals();
+  });
+
+  it('fills in a group a stored file does not have, and shares nothing with the defaults', () => {
+    const stored = { ...DEFAULT_SETTINGS, soundGroups: { ui: 0.5 }, soundOff: { ui: true } };
+    const items = new Map([[SETTINGS_KEY, JSON.stringify(stored)]]);
+    vi.stubGlobal('localStorage', { getItem: (k: string) => items.get(k) ?? null });
+    const read = readSettings();
+    expect(read.soundGroups).toEqual({ ...DEFAULT_SETTINGS.soundGroups, ui: 0.5 });
+    expect(read.soundOff).toEqual({ ui: true });
+    read.soundGroups.trains = 0;
+    read.soundOff.trains = true;
+    expect(DEFAULT_SETTINGS.soundGroups.trains).toBe(1);
+    expect(DEFAULT_SETTINGS.soundOff).toEqual({});
+    vi.unstubAllGlobals();
   });
 });
 

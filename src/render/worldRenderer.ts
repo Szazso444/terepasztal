@@ -635,6 +635,9 @@ export class WorldRenderer {
         return `terrain/mountain_${v % 3}`;
       case Terrain.Sand:
         return b === Biome.Desert ? `terrain/desert_${v}` : `terrain/sand_${v}`;
+      default:
+        // a terrain with no frame of its own yet reads as the high ground it lies on
+        return `terrain/mountain_${v % 3}`;
     }
   }
 
