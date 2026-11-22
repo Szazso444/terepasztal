@@ -22,7 +22,6 @@ import { CARGO, cargoDef } from './cargo';
 import { setSupplyMode, inSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { rules, DEFAULT_RULES } from './rules';
 import { Inventory } from '../gacha/inventory';
-import { Gacha, BANNERS, PULL_COST, type PullResult } from '../gacha/gacha';
 import { locoDef, wagonDef, type Item } from '../gacha/items';
 import { Commands, STATION_NAME_MAX } from './commands';
 import { STR } from '../strings';
@@ -55,7 +54,6 @@ function world() {
   const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
   builder.free = true;
   const fleet = new Fleet(track, builder, map, inventory, economy);
-  const gacha = new Gacha(new Rng(7), inventory);
   for (let x = 2; x < 90; x++) track.place(x, ROW, 'straight', 1);
   const towns = new TownRegistry(builder);
   const houses = new HouseRegistry(builder, towns);
@@ -66,7 +64,6 @@ function world() {
     builder,
     economy,
     trade,
-    gacha,
     inventory,
     towns,
     houses,
@@ -82,7 +79,6 @@ function world() {
     trade,
     builder,
     fleet,
-    gacha,
     towns,
     commands,
     cap: 1000,
@@ -698,38 +694,6 @@ describe('spotSell', () => {
   });
 });
 
-describe('pull', () => {
-  it('takes the tickets and returns what came out', () => {
-    const w = world();
-    w.economy.tickets = PULL_COST * 10 + 2;
-    const items = w.inventory.items.length;
-    const r = w.commands.pull(BANNERS[0], 10, 5);
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.results).toHaveLength(10);
-    expect(w.economy.tickets).toBe(2);
-    expect(w.inventory.items.length).toBe(items + 10);
-    expect(w.gacha.totalPulls).toBe(10);
-  });
-
-  it('changes nothing with too few tickets', () => {
-    const w = world();
-    w.economy.tickets = PULL_COST * 10 - 1;
-    const before = {
-      tickets: w.economy.tickets,
-      items: w.inventory.items.length,
-      gacha: JSON.stringify(w.gacha.toJSON()),
-    };
-    expect(w.commands.pull(BANNERS[0], 10, 5)).toEqual({
-      ok: false,
-      message: STR.gacha.noTickets,
-    });
-    expect(w.economy.tickets).toBe(before.tickets);
-    expect(w.inventory.items.length).toBe(before.items);
-    expect(JSON.stringify(w.gacha.toJSON())).toBe(before.gacha);
-  });
-});
-
 // ------------------------------------------------------------ properties
 
 /** Every good the commands may be asked about: all cargo, power, and an id nothing defines. */
@@ -747,12 +711,10 @@ function quote(id: string, fuelMul: number, side: 'buy' | 'sell') {
 type EconomyOp =
   | { kind: 'buy'; id: string; n: number; cap: number }
   | { kind: 'sell'; id: string; n: number }
-  | { kind: 'pull'; banner: number; count: 1 | 10; rotation: number }
   | { kind: 'fit'; item: number };
 interface LedgerCase {
   full: boolean;
   money: number;
-  tickets: number;
   spotPriceMul: number;
   fuelMul: number;
   inCabCost: number;
@@ -777,20 +739,13 @@ function amount(rng: Rng) {
   }
 }
 function economyOp(rng: Rng): EconomyOp {
-  switch (rng.int(0, 3)) {
+  switch (rng.int(0, 2)) {
     case 0: {
       const cap = [1000, rng.int(0, 400), rng.range(0, 400), NaN, 0][rng.int(0, 4)];
       return { kind: 'buy', id: rng.pick(GOODS), n: amount(rng), cap };
     }
     case 1:
       return { kind: 'sell', id: rng.pick(GOODS), n: amount(rng) };
-    case 2:
-      return {
-        kind: 'pull',
-        banner: rng.int(0, BANNERS.length - 1),
-        count: rng.chance(0.5) ? 1 : 10,
-        rotation: rng.int(0, 3),
-      };
     default:
       return { kind: 'fit', item: rng.int(0, 4) };
   }
@@ -800,7 +755,6 @@ function ledgerCase(rng: Rng): LedgerCase {
   return {
     full: rng.chance(0.3),
     money: [0, rng.int(0, 300), rng.range(0, 5000), rng.range(0, 60000), -rng.range(0, 200)][m],
-    tickets: rng.int(0, 25),
     spotPriceMul: rng.chance(0.15) ? 0 : Math.round(rng.range(0.1, 5) * 10) / 10,
     fuelMul: rng.range(0.6, 1.4),
     // the In-cab signalling fit-out slider: 0 to 50 000 in steps of 500
@@ -827,23 +781,12 @@ function* shrinkLedger(c: LedgerCase): Iterable<LedgerCase> {
     if (money !== c.money) yield { ...c, money };
   if (c.full) yield { ...c, full: false };
   if (c.fuelMul !== 1) yield { ...c, fuelMul: 1 };
-  if (c.tickets !== 0) yield { ...c, tickets: 0 };
   if (c.inCabCost !== 0) yield { ...c, inCabCost: 0 };
 }
-/** Pull results as the player sees them. */
-const shown = (rs: PullResult[]) =>
-  rs.map((r) => ({
-    defId: r.defId,
-    rarity: r.rarity,
-    featured: r.featured,
-    forced: r.forced,
-    duplicate: r.duplicate,
-  }));
-
 /**
  * Run a case's commands against the books kept by hand: every command is refused, changing
- * nothing, or moves money, tickets, stock and fittings by exactly its quoted amount; nothing ends
- * below zero that did not start there. Returns the economy's own warnings posted on the way.
+ * nothing, or moves money, stock and fittings by exactly its quoted amount; nothing ends below
+ * zero that did not start there. Returns the economy's own warnings posted on the way.
  */
 function keepBooks(c: LedgerCase) {
   setSupplyMode(c.full ? 'full' : 'simple');
@@ -852,7 +795,6 @@ function keepBooks(c: LedgerCase) {
   const w = world();
   w.trade.fuelMul = c.fuelMul;
   w.economy.money = c.money;
-  w.economy.tickets = c.tickets;
   for (const [id, v] of c.stock) w.stock.amounts.set(id, v);
   // a plain locomotive, one built with in-cab signalling, a wagon, a locomotive the player
   // does not own and a second plain one
@@ -863,13 +805,9 @@ function keepBooks(c: LedgerCase) {
     new Inventory().add('f7', 0),
     w.inventory.add('f7', 0),
   ];
-  // the slow obvious model: the books kept by hand, and a twin gacha on the same seed
-  const twinInventory = new Inventory();
-  for (const id of ['f7', 'tgv', 'flatbed', 'f7']) twinInventory.add(id, 0);
-  const twin = new Gacha(new Rng(7), twinInventory);
+  // the slow obvious model: the books kept by hand
   const books = {
     money: c.money,
-    tickets: c.tickets,
     earned: 0,
     stock: new Map(w.stock.amounts),
     fitted: items.map((i) => !!i.inCab),
@@ -917,19 +855,6 @@ function keepBooks(c: LedgerCase) {
         books.stock.set(op.id, have - qty);
       }
       result = w.commands.spotSell(op.id, op.n, w.stock);
-    } else if (op.kind === 'pull') {
-      const banner = BANNERS[op.banner];
-      const cost = PULL_COST * op.count;
-      if (books.tickets < cost) want = { ok: false, message: STR.gacha.noTickets };
-      else {
-        want = { ok: true };
-        books.tickets -= cost;
-        books.owned += op.count;
-      }
-      const r = w.commands.pull(banner, op.count, i, op.rotation);
-      result = r;
-      if (want.ok && r.ok)
-        expect(shown(r.results), at).toEqual(shown(twin.pull(banner, op.count, i, op.rotation)));
     } else {
       const item = items[op.item];
       const def = item.kind === 'loco' ? locoDef(item.defId) : null;
@@ -950,16 +875,13 @@ function keepBooks(c: LedgerCase) {
     if (!want.ok) expect(result.message, at).toBe(want.message);
     expect(w.economy.money, `${at}: money`).toBe(books.money);
     expect(w.economy.earned, `${at}: earned`).toBe(books.earned);
-    expect(w.economy.tickets, `${at}: tickets`).toBe(books.tickets);
     expect(new Map(w.stock.amounts), `${at}: stock`).toEqual(books.stock);
     expect(
       items.map((it) => !!it.inCab),
       `${at}: fittings`,
     ).toEqual(books.fitted);
     expect(w.inventory.items.length, `${at}: items owned`).toBe(books.owned);
-    expect(w.gacha.toJSON(), `${at}: gacha`).toEqual(twin.toJSON());
     if (wasMoney >= 0) expect(w.economy.money, `${at}: money`).toBeGreaterThanOrEqual(0);
-    expect(w.economy.tickets, `${at}: tickets`).toBeGreaterThanOrEqual(0);
     for (const [id, v] of w.stock.amounts) expect(v, `${at}: ${id}`).toBeGreaterThanOrEqual(0);
   }
   return posted;
@@ -968,7 +890,7 @@ function keepBooks(c: LedgerCase) {
 describe('economy commands', () => {
   // slow because each seeded ledger runs the economy commands and checks the books: 0.36 s alone,
   // so a limit of 30 s
-  it('move money, tickets, stock and fittings only by the quoted amounts, never below zero', () => {
+  it('move money, stock and fittings only by the quoted amounts, never below zero', () => {
     forAll(ledgerCase, (c) => void keepBooks(c), { shrink: shrinkLedger });
   }, 30_000);
 

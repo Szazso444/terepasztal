@@ -1,7 +1,8 @@
 import { readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { LOCOS, WAGONS } from '../gacha/items';
-import { PORTRAIT_IDS, portraitUrl } from './rosterPortraits';
+import { frameForItem } from './spritePreview';
+import { PORTRAIT_IDS, portraitUrl, vehiclePicture } from './rosterPortraits';
 
 const shipped = readdirSync(new URL('../../public/assets/portraits/', import.meta.url))
   .filter((f) => f.endsWith('.png'))
@@ -20,5 +21,13 @@ describe('roster portraits', () => {
   it('gives a URL under the base for a listed vehicle and null otherwise', () => {
     expect(portraitUrl('m62', '/sub/')).toBe('/sub/assets/portraits/m62.png');
     expect(portraitUrl('no_such_vehicle')).toBeNull();
+  });
+
+  it('stands for a vehicle by its portrait', () => {
+    expect(vehiclePicture('m62', '/sub/')).toEqual({ portrait: '/sub/assets/portraits/m62.png' });
+  });
+
+  it('falls back to the atlas sprite for a vehicle with no portrait', () => {
+    expect(vehiclePicture('no_such_vehicle')).toEqual({ frame: frameForItem('no_such_vehicle') });
   });
 });

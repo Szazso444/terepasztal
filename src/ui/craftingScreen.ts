@@ -216,7 +216,7 @@ export class CraftingScreen implements Screen {
     const kindSeg = segmented({
       options: KINDS.map((k) => ({
         id: k,
-        label: k === 'loco' ? STR.gacha.loco : STR.gacha.wagon,
+        label: k === 'loco' ? STR.rollingStock.loco : STR.rollingStock.wagon,
       })),
       value: this.kind,
       cls: 'small',
@@ -326,7 +326,7 @@ export class CraftingScreen implements Screen {
 
   // ---------------------------------------------------------------- the draw
   private pickWell(ids: string[], kind: CraftKind, tier: number): HTMLElement {
-    const kindName = kind === 'loco' ? STR.gacha.loco : STR.gacha.wagon;
+    const kindName = kind === 'loco' ? STR.rollingStock.loco : STR.rollingStock.wagon;
     return well(
       {
         title: STR.craft.pickTitle,
@@ -379,7 +379,7 @@ export class CraftingScreen implements Screen {
           rarityStars(d.rarity, `rarity-${d.rarity}`),
           ` ${STR.craft.quality[d.rarity] ?? d.rarity}`,
         ),
-        ` · ${itemKind(id) === 'loco' ? STR.gacha.loco : STR.gacha.wagon}`,
+        ` · ${itemKind(id) === 'loco' ? STR.rollingStock.loco : STR.rollingStock.wagon}`,
       ),
       body: fragment(
         el(
@@ -504,7 +504,7 @@ export class CraftingScreen implements Screen {
         d.name,
         el('em', {
           class: 'ec-tag',
-          text: itemKind(id) === 'loco' ? STR.gacha.loco : STR.gacha.wagon,
+          text: itemKind(id) === 'loco' ? STR.rollingStock.loco : STR.rollingStock.wagon,
         }),
       ),
       sub: [

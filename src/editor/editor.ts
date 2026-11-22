@@ -145,7 +145,6 @@ export class Editor {
   static defaultStart(): LevelData['start'] {
     return {
       money: rules.startMoney,
-      tickets: rules.startTickets,
       tier: 0,
     };
   }

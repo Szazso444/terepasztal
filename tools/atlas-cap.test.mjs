@@ -665,7 +665,8 @@ function shippedAtlases() {
 describe('every packed atlas in public/assets', () => {
   const groups = shippedAtlases();
   it('is found: the groups the packers write', () => {
-    for (const g of ['props', 'terrain', 'structures', 'icons', 'bridges', 'rolling'])
+    // the rolling atlases are WebP pictures of rendered models, outside this check
+    for (const g of ['props', 'terrain', 'structures', 'icons', 'bridges'])
       expect(groups).toContain(g);
   });
   // slow because every texel of a group's whole atlas is checked: 0.37 s alone for structures, the
