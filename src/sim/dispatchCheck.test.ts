@@ -9,7 +9,7 @@ import { Economy } from './economy';
 import { Fleet, MAX_LOCOS, MAX_WAGONS } from './fleet';
 import { Inventory } from '../gacha/inventory';
 import { rules, DEFAULT_RULES } from './rules';
-import { resetTrainIds, type StopPlan } from './trains';
+import { Train, resetTrainIds, type StopPlan } from './trains';
 import { resetStationIds } from './stations';
 import { STR } from '../strings';
 import { storeWith } from '../testing/storeFixtures';
@@ -183,5 +183,163 @@ describe('Fleet.dispatchCheck', () => {
         'object',
       );
     });
+  });
+});
+
+describe('the depot a train belongs to', () => {
+  const rolledOut = () => {
+    const w = world(8);
+    const t = w.fleet.create([w.inventory.add('rocket', 0).uid], [], [], undefined, 'schedule');
+    if (typeof t === 'string') throw new Error(t);
+    return { ...w, t };
+  };
+
+  it('is the one it rolled out of, and a save keeps it', () => {
+    const { t, depot, fleet, track } = rolledOut();
+    expect(t.depotId).toBe(depot.id);
+    expect(fleet.homeDepot(t)).toBe(depot);
+    const back = Train.fromJSON(JSON.parse(JSON.stringify(t.toJSON())), track);
+    expect(back.depotId).toBe(depot.id);
+  });
+
+  it('reads as none from a file written before trains kept it', () => {
+    const { t, track } = rolledOut();
+    const old = JSON.parse(JSON.stringify(t.toJSON()));
+    delete old.depot;
+    expect(Train.fromJSON(old, track).depotId).toBeNull();
+  });
+
+  it('is nobody for a train that does not say, until the homes are settled', () => {
+    const { t, fleet } = rolledOut();
+    t.depotId = null;
+    expect(fleet.homeDepot(t)).toBeNull();
+  });
+
+  it('settles on the depot of its gauge on its rails', () => {
+    const { t, depot, builder, fleet } = rolledOut();
+    builder.placeStation(40, 40, 'narrow_depot', 0);
+    // the depot off its rails stands first in the list
+    builder.stations.reverse();
+    t.depotId = null;
+    expect(builder.depots()[0]).not.toBe(depot);
+    fleet.settleHomes();
+    expect(t.depotId).toBe(depot.id);
+  });
+
+  it('passes to another depot of its gauge when its own is gone', () => {
+    const { t, depot, builder, fleet } = rolledOut();
+    const other = builder.placeStation(40, 40, 'narrow_depot', 0)!;
+    t.depotId = 9999;
+    fleet.settleHomes();
+    expect(fleet.homeDepot(t)).toBe(depot);
+    // not on the map at all: the first of its gauge
+    builder.stations.reverse();
+    const off = new Train([{ uid: -1, def: t.locos[0].def, level: 1 }], 'off', 77);
+    fleet.trains.push(off);
+    fleet.settleHomes();
+    expect(fleet.homeDepot(off)).toBe(other);
+  });
+
+  it('leaves a train with a home alone, and walks no rails for it', () => {
+    const { t, depot, fleet } = rolledOut();
+    const walk = vi.spyOn(fleet, 'reachableFrom');
+    fleet.settleHomes();
+    expect(walk).not.toHaveBeenCalled();
+    expect(t.depotId).toBe(depot.id);
+  });
+
+  it('walks each depot once, however many trains need one', () => {
+    const { t, fleet } = rolledOut();
+    const second = new Train([{ uid: -1, def: t.locos[0].def, level: 1 }], 'second', 78);
+    fleet.trains.push(second);
+    t.depotId = second.depotId = null;
+    const walk = vi.spyOn(fleet, 'reachableFrom');
+    fleet.settleHomes();
+    expect(walk).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads no track at all when asked for a home', () => {
+    const { t, fleet } = rolledOut();
+    const walk = vi.spyOn(fleet, 'reachableFrom');
+    fleet.homeDepot(t);
+    t.depotId = null;
+    fleet.homeDepot(t);
+    expect(walk).not.toHaveBeenCalled();
+  });
+
+  it('is no depot of another gauge, even one that came to hold its old id', () => {
+    const { t, builder, fleet } = rolledOut();
+    const standard = builder.placeStation(40, 40, 'depot', 0)!;
+    t.depotId = standard.id;
+    expect(fleet.homeDepot(t)).toBeNull();
+    fleet.settleHomes();
+    expect(fleet.homeDepot(t)?.def.gauge).toBe('narrow');
+  });
+
+  it('is nobody when its gauge has no depot left, whatever other depots stand', () => {
+    const { t, depot, builder, fleet } = rolledOut();
+    builder.placeStation(40, 40, 'depot', 0);
+    builder.stations.splice(builder.stations.indexOf(depot), 1);
+    fleet.settleHomes();
+    expect(t.depotId).toBeNull();
+    expect(fleet.homeDepot(t)).toBeNull();
+    // the depot stands again: the train that had no home finds it
+    builder.stations.push(depot);
+    fleet.settleHomes();
+    expect(fleet.homeDepot(t)).toBe(depot);
+  });
+
+  it('is nobody with no depot left', () => {
+    const { t, builder, fleet } = rolledOut();
+    builder.stations.length = 0;
+    fleet.settleHomes();
+    expect(fleet.homeDepot(t)).toBeNull();
+  });
+
+  it('moves nothing: a train is where it was, and rolls on the same', () => {
+    const { t, fleet } = rolledOut();
+    const before = JSON.stringify(t.toJSON());
+    t.depotId = null;
+    fleet.settleHomes();
+    expect(JSON.stringify(t.toJSON())).toBe(before);
+  });
+});
+
+describe('what a refusal at the gates cost', () => {
+  it('searched nothing for a gate a train stands on', () => {
+    const w = world(8);
+    const first = w.fleet.create([w.inventory.add('rocket', 0).uid], [], [], undefined);
+    expect(typeof first).not.toBe('string');
+    const second = w.inventory.add('rocket', 0);
+    const check = w.fleet.dispatchCheck([second.uid], [], [], w.depot.id);
+    expect(check.reason).not.toBeNull();
+    expect(check.gate).toBeNull();
+    expect(check.routeFailed).toBe(false);
+    expect(w.fleet.previewSpawn([], [], w.depot.id).routeFailed).toBe(false);
+  });
+
+  it('searched the track when a gate was free and no route led from it', () => {
+    const w = world(8);
+    const loco = w.inventory.add('rocket', 0);
+    // a stop on no rails of the depot's: the free gate is tried, and leads nowhere
+    const away = w.builder.placeStation(40, 40, 'narrow_depot', 0)!;
+    w.track.place(42, 40, 'straight', 1, 'narrow');
+    const stops = [away.id, away.id];
+    const check = w.fleet.dispatchCheck([loco.uid], [], stops, w.depot.id);
+    expect(check.reason).not.toBeNull();
+    expect(check.routeFailed).toBe(true);
+  });
+
+  it('searched nothing for a consist that never reached the gates', () => {
+    const w = world(8);
+    expect(w.fleet.dispatchCheck([], [], [], w.depot.id).routeFailed).toBe(false);
+  });
+
+  it('is no failure for a train that goes', () => {
+    const w = world(8);
+    const loco = w.inventory.add('rocket', 0);
+    const check = w.fleet.dispatchCheck([loco.uid], [], [], w.depot.id);
+    expect(check.reason).toBeNull();
+    expect(check.routeFailed).toBe(false);
   });
 });

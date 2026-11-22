@@ -127,7 +127,7 @@ export interface KeyBinding {
 /** What a digit key stands for: 1 for Digit1. */
 const digitOf = (code: string) => Number(code.slice('Digit'.length));
 /** The digits that open a category: the row never has more than five on show. */
-const CATEGORY_KEYS = 5;
+export const CATEGORY_KEYS = 5;
 
 /**
  * + steps the speed up and − down. They are bound by the character they type (`Input` names them
