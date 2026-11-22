@@ -86,10 +86,13 @@ keeps its own plot in its picture. The ocean panel's railway is a bridge, not tr
 | Taiga          | Cooler blue-green conifers, subdued lichen ground. Optional cosmetic snow accents. | Distinguish pine and spruce by shape, not just colour.                                     |
 | Swamp          | Peat greens, shallow teal pockets, reeds and occasional deadwood.                  | Shallow wet ground must remain distinct from actual unbuildable water.                     |
 | Ocean          | Quiet teal water, limited horizontal glints, sandy and rocky shores.               | Do not texture it so strongly that bridge feet or moving trains disappear.                 |
+| Lake           | The sea's water: all still water looks the same.                                   | No lake picture and no shore ring (the author, 2026-10-12).                                |
+| River          | Own lighter current, a waterline that wanders into the ground beside it.           | Never a straight stone rim; a mouth fades into still water along no line.                  |
+| Beach          | Pale sea-shore sand with a wet band.                                               | Only on the sea shore; lakes and rivers have no beach.                                     |
 
 Cover all terrain frame families: `grass`, `forest`, `rock`, `hillcut`, `sand`, `plains`,
-`taiga`, `swamp`, `desert`, `water`, `hill`, `mountain`, `void`, `city`, and the interaction
-overlays. Keep the four ground variants, three water variants with four animation frames,
+`taiga`, `swamp`, `desert`, `water`, `river`, `beach`, `glacier`, `waterfall`, `hill`,
+`mountain`, `void`, `city`, and the interaction overlays. Keep the four ground variants, three water variants with four animation frames,
 and three hill/mountain/void variants present in the catalog.
 
 - **Rock / mountain:** rock is low exposed stone; mountains have unmistakable raised mass.
@@ -422,6 +425,12 @@ estimated equipment families, and the checks required when adding illustrated ar
 feathered interlocks, painted stones and contour-following foundation features. It replaced
 the v4 checkpoint, which had rolled v3's ground and hill relief back to the illustrated atlas
 ([terrain-v4.md](terrain-v4.md), kept as history).
+
+Water and mountain materials are painted swatches in a second sheet, `public/assets/wild-surfaces.png`,
+finished and packed by `tools/wild-surfaces.mjs` from `assets/source/water-2026-10-11/` and
+`assets/source/mountain-2026-10-11/`. The per-tile `terrain/river_*`, `beach_*`, `glacier_*` and
+`waterfall_*` frames and `fx/headwater_f*` are the fallback while painting loads. A waterfall is a steep
+cascade of white water down the rounded bank, in the river's line, with no cliff in the relief.
 
 ## Style consistency: both smooth (approved 2026-09-26)
 

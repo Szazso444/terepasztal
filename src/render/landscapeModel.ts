@@ -1,15 +1,17 @@
+import { MAX_LEVEL, levelTarget } from '../world/elevation';
 import { Terrain, climateAtIndex, type GameMap } from '../world/tiles';
 
 export type LandscapeMap = Pick<
   GameMap,
   'w' | 'h' | 'seed' | 'originX' | 'originY' | 'terrain' | 'biome' | 'climate' | 'generatedLevel'
-> & {
-  /**
-   * The level of each tile, where the painter has them (the relief's tiles): a Forest tile above
-   * level 0 is painted as grass. Without it every tile is painted as its terrain says.
-   */
-  levels?: Uint8Array;
-};
+> &
+  Pick<Partial<GameMap>, 'waterSurface'> & {
+    /**
+     * The level of each tile, where the painter has them (the relief's tiles): a Forest tile above
+     * level 0 is painted as grass. Without it every tile is painted as its terrain says.
+     */
+    levels?: Uint8Array;
+  };
 /** The cells of the packed surface sheet, by material index (names in tools/terrain-surfaces.mjs). */
 export const Material = {
   Grass: 0,
@@ -117,16 +119,16 @@ export function landscapeHeights(map: LandscapeMap, flat: ReadonlySet<number>): 
   for (let y = 0; y < map.h; y++)
     for (let x = 0; x < map.w; x++) {
       const k = y * map.w + x;
-      if (flat.has(k) || ![Terrain.Hill, Terrain.Mountain].includes(map.terrain[k])) continue;
+      if (flat.has(k) || !levelTarget(map, k)) continue;
       let mass = 0,
         weight = 0;
       for (let dy = -2; dy <= 2; dy++)
         for (let dx = -2; dx <= 2; dx++) {
           const xx = clamp(x + dx, map.w - 1),
             yy = clamp(y + dy, map.h - 1);
-          const t = map.terrain[yy * map.w + xx],
+          const level = levelTarget(map, yy * map.w + xx),
             w = (3 - Math.abs(dx)) * (3 - Math.abs(dy));
-          mass += (t === Terrain.Mountain ? 54 : t === Terrain.Hill ? 31 : 0) * w;
+          mass += (level >= MAX_LEVEL ? 54 : level * 15.5) * w;
           weight += w;
         }
       heights[k] = mass / weight;

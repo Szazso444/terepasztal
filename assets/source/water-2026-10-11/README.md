@@ -1,8 +1,8 @@
 # Water painting material
 
 The pictures the approved water demo uses for rivers, waterfalls and the beach, picked by the author on
-2026-10-30 (#343). This is unmodified painting material, not finished atlas frames. Nothing in the game
-reads this folder yet: #365 draws rivers, waterfalls and beaches, and the finishing step belongs to it.
+2026-10-30 (#343). This is unmodified painting material, not finished atlas frames. `tools/wild-surfaces.mjs` finishes the
+swatches and packs them into `public/assets/wild-surfaces.png`, which #365 draws from. `PROMPT.md` has the prompts.
 
 | Picture                                  | What it gives the demo                                  |
 | ---------------------------------------- | ------------------------------------------------------- |
@@ -15,7 +15,7 @@ reads this folder yet: #365 draws rivers, waterfalls and beaches, and the finish
 | `fall-sheet-lit.png`                     | Falling water on the sunny side.                        |
 | `fall-sheet-shade.png`                   | Falling water on the shaded side.                       |
 
-## What the finishing step has to do
+## What finishing does and does not do
 
 - The stone rims on the strips and on `river-end.png` stay out of the game. The shore line is drawn, not
   painted.
