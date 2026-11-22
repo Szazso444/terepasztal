@@ -556,6 +556,8 @@ export class Builder {
   ): string | null {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
+    // a landmark's tiles hold no track, not even a clear member of a curve
+    if (this.landmarks?.occupies(x, y)) return STR.build.landmark;
     const t = terrainAt(this.map, x, y);
     // no track on a glacier, of any kind: the one ground it never crosses
     if (t === Terrain.Ice) return STR.build.nothingOn.ice;
@@ -758,6 +760,13 @@ export class Builder {
     });
     const locked = plan.changes.map(itemAge).find((age) => this.lineLocked(age));
     if (locked !== undefined) return refused(STR.build.tierLocked(locked));
+    // a piece of another line may cover other tiles than the one it replaces
+    if (
+      plan.changes.some((c) =>
+        footprintOf(c.x, c.y, c.kind, c.rot, c.cls).some((t) => this.landmarks?.occupies(t.x, t.y)),
+      )
+    )
+      return refused(STR.build.landmark);
     const crossing = this.reclassCrossing(plan.changes);
     if (crossing) return refused(crossing);
     const cost: Cost = {};
@@ -937,6 +946,7 @@ export class Builder {
     const b = new Builder(this.map, this.regions, track, this.economy, this.stores, this.roads);
     b.free = this.free;
     b.groundCheck = this.groundCheck;
+    b.landmarks = this.landmarks;
     b.stations.push(...this.stations);
     for (const [k, d] of this.decor) b.decor.set(k, d);
     for (const [k, w] of this.buildings) b.buildings.set(k, w);
@@ -953,6 +963,8 @@ export class Builder {
     for (const { x: tx, y: ty } of stationFootprint(defId, x, y, rot)) {
       if (!inBounds(this.map, tx, ty)) return { ok: false, cost: {}, reason: STR.build.offMap };
       if (!this.unlocked(tx, ty)) return { ok: false, cost: {}, reason: STR.build.locked };
+      if (this.landmarks?.occupies(tx, ty))
+        return { ok: false, cost: {}, reason: STR.build.landmark };
       const bad = unbuildable(terrainAt(this.map, tx, ty));
       if (bad) return { ok: false, cost: {}, reason: bad };
       if (
@@ -1132,6 +1144,7 @@ export class Builder {
     const def = decorDef(defId);
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
+    if (this.landmarks?.occupies(x, y)) return STR.build.landmark;
     if (this.decorAt(x, y) || this.buildingAt(x, y)) return STR.build.occupied;
     if (onRails(defId)) {
       if (!this.track.railOn(x, y)) return STR.build.needTrackHere;
@@ -1234,6 +1247,8 @@ export class Builder {
     for (const t of tiles) {
       if (!inBounds(this.map, t.x, t.y)) return { ok: false, cost: {}, reason: STR.build.offMap };
       if (!this.unlocked(t.x, t.y)) return { ok: false, cost: {}, reason: STR.build.locked };
+      if (this.landmarks?.occupies(t.x, t.y))
+        return { ok: false, cost: {}, reason: STR.build.landmark };
     }
     if (!this.free && def.tier > this.economy.tier)
       return { ok: false, cost: {}, reason: STR.build.tierLocked(def.tier) };
@@ -1364,6 +1379,7 @@ export class Builder {
   private roadRules(x: number, y: number, roads = this.roads): string | null {
     if (!inBounds(this.map, x, y)) return STR.build.offMap;
     if (!this.unlocked(x, y)) return STR.build.locked;
+    if (this.landmarks?.occupies(x, y)) return STR.build.landmark;
     if (roads.has(x, y)) return STR.build.roadHere;
     const deck = this.bridgeAt(x, y);
     const bad = unbuildable(terrainAt(this.map, x, y));

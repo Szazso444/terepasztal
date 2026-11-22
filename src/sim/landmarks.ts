@@ -71,6 +71,8 @@ export type ProduceReason = 'store' | 'inputs' | 'full' | '';
 
 /** What the Builder reads to add restored landmarks to the stations in their reach. */
 export interface LandmarkEffects {
+  /** a landmark's footprint covers the tile: no building goes there, ever (spec section 3) */
+  occupies(x: number, y: number): boolean;
   /** loading rate a station gains from restored landmarks in reach (added to its boost) */
   boostAt(s: Station): number;
   /** visitors a day the station gains: those of the landmarks it is the nearest passenger station to */
@@ -146,6 +148,10 @@ export class LandmarkRegistry implements LandmarkEffects {
       if (x >= i.x && x < i.x + w && y >= i.y && y < i.y + d) return i;
     }
     return undefined;
+  }
+  /** A landmark covers the tile (`at`, as a yes or no; the Builder asks it per tile of a drag). */
+  occupies(x: number, y: number): boolean {
+    return this.at(x, y) !== undefined;
   }
   /** Why a restored landmark that produces made nothing in the last step ('' while it runs). */
   reasonOf(id: number): ProduceReason {

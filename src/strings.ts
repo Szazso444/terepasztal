@@ -518,6 +518,7 @@ const EN = {
     } as Record<string, string>,
     bridgeOnWater: 'Bridges only span water',
     occupied: 'Tile occupied',
+    landmark: 'A landmark stands here',
     funds: 'Not enough funds',
     tierLocked: (t: number) => `Requires the ${ageLabel(t)}`,
     supplyLocked: "Not part of this game's production chain",
