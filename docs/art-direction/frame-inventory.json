@@ -23358,5 +23358,69 @@
     "height": 32,
     "anchorX": 31,
     "anchorY": 16
+  },
+  {
+    "key": "terrain/moraine_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/moraine_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/moraine_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/moraine_3",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/snow_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/snow_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/snow_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/snow_3",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
   }
 ]

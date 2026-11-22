@@ -36,6 +36,16 @@ const ICE: RGB[] = [
   [176, 190, 199],
 ];
 const CREVASSE: RGB = [120, 142, 156];
+const SNOW_FIELD: RGB[] = [
+  [214, 219, 223],
+  [204, 211, 216],
+  [194, 203, 209],
+];
+const MORAINE: RGB[] = [
+  [128, 122, 110],
+  [112, 107, 97],
+  [142, 136, 122],
+];
 const PLAINS: RGB[] = [
   [128, 148, 74],
   [140, 160, 82],
@@ -544,6 +554,18 @@ export function generateTerrainAtlas(): AtlasImage {
     ab.add(
       `terrain/glacier_${v}`,
       glacierTile(1300 + v).toImageData(),
+      groundAnchor.ax,
+      groundAnchor.ay,
+    );
+    ab.add(
+      `terrain/snow_${v}`,
+      groundTile(SNOW_FIELD, 1500 + v, 0.002).toImageData(),
+      groundAnchor.ax,
+      groundAnchor.ay,
+    );
+    ab.add(
+      `terrain/moraine_${v}`,
+      groundTile(MORAINE, 1600 + v, 0.03).toImageData(),
       groundAnchor.ax,
       groundAnchor.ay,
     );
