@@ -61,7 +61,10 @@ export class InspectScreen implements Screen {
   }
 
   frameFooter(): FootSpec {
-    const kind = this.defId && itemKind(this.defId) === 'loco' ? STR.gacha.loco : STR.gacha.wagon;
+    const kind =
+      this.defId && itemKind(this.defId) === 'loco'
+        ? STR.rollingStock.loco
+        : STR.rollingStock.wagon;
     return { note: STR.vehicle.note(this.defId ? kind : '') };
   }
 
@@ -183,7 +186,7 @@ export class InspectScreen implements Screen {
             ),
             labelValue(
               STR.vehicle.kind,
-              itemKind(id) === 'loco' ? STR.gacha.loco : STR.gacha.wagon,
+              itemKind(id) === 'loco' ? STR.rollingStock.loco : STR.rollingStock.wagon,
             ),
             ...vehicleFacts(id).map((f) => labelValue(STR.vehicle.fact[f.key], f.value)),
           ),

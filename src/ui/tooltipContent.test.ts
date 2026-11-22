@@ -30,6 +30,7 @@ import {
   blockText,
   fill,
   good,
+  partsOf,
   plain,
   richText,
   row,
@@ -55,7 +56,6 @@ const biomeId = (id: string) => {
 const WEEKLY = weeklyOutput(1, 1, { productionMul: 1 });
 
 const lines = (doc: TipDoc) => doc.map(blockText);
-const partsOf = (b: Block): Parts => (b.kind === 'row' ? [...b.label, ...b.value] : b.parts);
 const rows = (doc: TipDoc) => doc.filter((b) => b.kind === 'row');
 const termIn = (parts: Parts): TermPart => {
   const t = parts.find((p): p is TermPart => typeof p !== 'string' && 'term' in p);
@@ -375,7 +375,10 @@ describe('the tile tooltip', () => {
     weeklyAtLevel1: WEEKLY,
   });
   /** the lines after the dim line about the terrain: what the game adds */
-  const extras = (doc: TipDoc) => lines(doc.slice(doc.findIndex((b) => b.kind === 'dim') + 1));
+  /** A line of what the tile gives; tileTooltip.test.ts is about them. */
+  const isGood = (b: Block) => partsOf(b).some((p) => typeof p !== 'string' && 'res' in p);
+  const extras = (doc: TipDoc) =>
+    lines(doc.slice(doc.findIndex((b) => b.kind === 'dim') + 1).filter((b) => !isGood(b)));
 
   /**
    * A 15 x 15 map of grass with a block of `terrain` seven tiles across around (cx, cy), whose
@@ -428,7 +431,7 @@ describe('the tile tooltip', () => {
       const name = TERRAIN_NAMES[t];
       const doc = tileTip(bare(field(t, 'desert'), 7, 7));
       expect(
-        doc.map((b) => b.kind),
+        doc.filter((b) => !isGood(b)).map((b) => b.kind),
         name,
       ).toEqual(['title', 'row', 'row', 'dim']);
       expect(blockText(doc[0]), name).toBe(STR.tile.terrain[name]);
@@ -595,6 +598,11 @@ describe('the tile tooltip', () => {
     expect(extras(tileTip({ ...bare(map, 5, 5), trackCostFactor: 0 }))).toContain(STR.tile.noTrack);
     expect(extras(tileTip(bare(map, 5, 5)))).toEqual([]);
     expect(lines(tileTip(bare(map, 5, 5))).join('\n')).not.toMatch(/Track costs/);
+  });
+
+  it('prints the cost of track as a price, not as a long float', () => {
+    const doc = tileTip({ ...bare(grid(), 5, 5), trackCostFactor: 1.1 * 1.1 });
+    expect(extras(doc)).toContain(STR.tile.trackCost(1.21));
   });
 
   it('explains water and names its terrain', () => {
@@ -947,6 +955,16 @@ describe('the resource tooltips', () => {
     expect(lines(wheat)).toContain(STR.res.allStores(345));
     const funds = lines(resourceTip({ id: 'money', have: 25000, cap: Infinity, tier: 0 }));
     expect(funds.join('\n')).not.toContain('All stores');
+  });
+  it('a resource tooltip names the store the bar shows, which the bar itself no longer does', () => {
+    const tip = (store?: string) =>
+      lines(resourceTip({ id: 'wheat', have: 30, cap: 100, store, tier: 0 }));
+    expect(tip('Narrow Depot')).toContain(STR.res.shownStore('Narrow Depot'));
+    expect(tip().join('\n')).not.toContain(STR.res.shownStore(''));
+  });
+  it('power is the grid’s: its tooltip names no store, whichever the bar shows', () => {
+    const text = lines(resourceTip({ id: 'power', have: 30, cap: 100, store: 'Depot', tier: 0 }));
+    expect(text).not.toContain(STR.res.shownStore('Depot'));
   });
   it('a building tooltip from a resource says what it costs and when it unlocks', () => {
     const ref = makersOf('oil')[0];

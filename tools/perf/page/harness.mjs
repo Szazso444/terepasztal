@@ -82,7 +82,7 @@
     w(g.contracts, 'tick', 'A.1.4 contracts.tick');
     w(g.trade, 'tick', 'A.1.5 trade.tick');
     w(g.weather, 'tick', 'A.1.6 weather.tick');
-    w(g.stock, 'tick', 'A.1.7 stock.tick');
+    w(g.stores, 'tickUpkeep', 'A.1.7 stores.tickUpkeep');
     w(g, 'drawFrame', 'B drawFrame (all)');
     w(g, 'handleInput', 'B.1 handleInput');
     w(g.world, 'animate', 'B.2 world.animate');
@@ -327,7 +327,7 @@
     const b = g.builder;
     const was = b.free;
     b.free = true;
-    const item = { kind: 'straight', cls: 'regular', cls2: 'regular' };
+    const item = { kind: 'straight', cls: 'branch', cls2: 'branch' };
     const made = { lines: 0, trains: 0, signals: 0, fails: [] };
     try {
       for (let y = o.y0; made.lines < o.lines && y < g.map.h - 4; y += o.dy) {

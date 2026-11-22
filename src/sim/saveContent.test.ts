@@ -19,7 +19,6 @@ import {
   pruneUnknownContent,
   LIVE_CONTENT,
   UNKNOWN_BUILD_REFUND,
-  UNKNOWN_ITEM_REFUND,
   type KnownContent,
   type PruneReport,
 } from './saveContent';
@@ -74,7 +73,7 @@ function item(
   assigned: number | null,
   kind: 'loco' | 'wagon' = 'wagon',
 ): ItemJSON {
-  return { uid, defId, kind, level: 1, assigned, dupes: 0, obtainedAt: 0 };
+  return { uid, defId, kind, level: 1, assigned, obtainedAt: 0 };
 }
 function contract(id: number, originId: number, destId: number) {
   return { id, originId, destId, cargo: 'stone', amount: 50, delivered: 0, status: 'active' };
@@ -91,7 +90,7 @@ function oldSave(track: TrackGraph): SaveGame {
     savedAt: 0,
     seed: 7,
     clock: { time: 0, speedIndex: 1 },
-    economy: { money: 1000, tickets: 3, tier: 0, granted: [], earned: 0 },
+    economy: { money: 1000, tier: 0, earned: 0 },
     track: [],
     stations: [
       station(1, 'farm', { wheat: 12 }),
@@ -136,7 +135,6 @@ function oldSave(track: TrackGraph): SaveGame {
       ],
       nextUid: 8,
     },
-    gacha: {},
     camera: { x: 0, y: 0, zoomIndex: 2 },
     lastDay: 0,
     decor: [
@@ -203,7 +201,7 @@ describe('pruneUnknownContent', () => {
     for (const it of inv.items) expect(LIVE_CONTENT.vehicle(it.defId, it.kind)).toBe(true);
   });
 
-  it('reports each dropped id with its count and refunds money and tickets at the stated rates', () => {
+  it('reports each dropped id with its count and refunds money at the stated rate', () => {
     const j = oldSave(line());
     const report = pruneUnknownContent(j);
     expect(report.dropped).toEqual([
@@ -212,13 +210,11 @@ describe('pruneUnknownContent', () => {
       { kind: 'decor', id: 'gone_decor', count: 1 },
       { kind: 'vehicle', id: 'puffer', count: 1 },
       { kind: 'vehicle', id: 'gone_wagon', count: 1 },
-      // the puffer in train 1 is inventory copy 1, refunded once; copy 5 is the spare
+      // the puffer in train 1 is inventory copy 1, reported once; copy 5 is the spare
       { kind: 'item', id: 'puffer', count: 1 },
     ]);
     expect(report.money).toBe(3 * UNKNOWN_BUILD_REFUND);
-    expect(report.tickets).toBe(3 * UNKNOWN_ITEM_REFUND);
     expect(j.economy.money).toBe(1000 + report.money);
-    expect(j.economy.tickets).toBe(3 + report.tickets);
   });
 
   it('salvages goods into the stores and unhooks contracts, stops and inventory', () => {
@@ -276,13 +272,13 @@ describe('pruneUnknownContent', () => {
     const track = line();
     const clean = currentSave(track);
     const before = JSON.parse(JSON.stringify(clean)) as SaveGame;
-    expect(pruneUnknownContent(clean)).toEqual({ dropped: [], money: 0, tickets: 0 });
+    expect(pruneUnknownContent(clean)).toEqual({ dropped: [], money: 0 });
     expect(clean).toEqual(before);
 
     const j = oldSave(track);
     pruneUnknownContent(j);
     const once = JSON.parse(JSON.stringify(j)) as SaveGame;
-    expect(pruneUnknownContent(j)).toEqual({ dropped: [], money: 0, tickets: 0 });
+    expect(pruneUnknownContent(j)).toEqual({ dropped: [], money: 0 });
     expect(j).toEqual(once);
   });
 
@@ -360,7 +356,7 @@ const NEVER = {
 const LOCO_IDS = new Set([...SHIPPED.loco, ...NEVER.loco]);
 /** What a store or a wagon may hold: every cargo, passengers included, and one the game dropped. */
 const GOODS = [...CARGO.map((c) => c.id), 'gone_cargo'];
-const EMPTY: PruneReport = { dropped: [], money: 0, tickets: 0 };
+const EMPTY: PruneReport = { dropped: [], money: 0 };
 
 interface WagonSpec {
   defId: string;
@@ -617,7 +613,7 @@ function buildSave(spec: SaveSpec): SaveGame {
     savedAt: 0,
     seed: 7,
     clock: { time: 0, speedIndex: 1 },
-    economy: { money: 1000, tickets: 3, tier: 0, granted: [], earned: 0 },
+    economy: { money: 1000, tier: 0, earned: 0 },
     track: [],
     stations: spec.stations.map((s, i) => station(i + 1, s.defId, Object.fromEntries(s.storage))),
     trains,
@@ -626,10 +622,8 @@ function buildSave(spec: SaveSpec): SaveGame {
       nextId: spec.contracts.length + 1,
       nextRefresh: 0,
       stats: { completed: 0, failed: 0 },
-      completedToday: 0,
     },
     inventory: { items, nextUid: uid },
-    gacha: {},
     camera: { x: 0, y: 0, zoomIndex: 2 },
     lastDay: 0,
     decor: spec.decor.map((id, i) => [i, 8, id, 0]),
@@ -754,7 +748,7 @@ describe('pruneUnknownContent over random saves', () => {
           decor: null,
           buildings: null,
           stores: null,
-          economy: { ...s.economy, money: null, tickets: null },
+          economy: { ...s.economy, money: null },
           contracts: { ...(s.contracts as object), contracts: null },
           inventory: { ...(s.inventory as object), items: null },
         });
@@ -764,7 +758,7 @@ describe('pruneUnknownContent over random saves', () => {
     );
   });
 
-  it('reports each dropped id with its count, refunded per kind at the stated rates', () => {
+  it('reports each dropped id with its count, money refunded for what stood on the map', () => {
     forAll(
       genSpec,
       (spec) => {
@@ -787,7 +781,7 @@ describe('pruneUnknownContent over random saves', () => {
               inService.add(v.uid);
             }
         }
-        // a vehicle in a train is also its inventory copy: one copy, one refund
+        // a vehicle in a train is also its inventory copy: one copy, one entry
         for (const it of itemsOf(before))
           if (!known.vehicle(it.defId) && !inService.has(it.uid)) add('item', it.defId);
 
@@ -797,9 +791,7 @@ describe('pruneUnknownContent over random saves', () => {
         const count = (...kinds: string[]) =>
           report.dropped.filter((d) => kinds.includes(d.kind)).reduce((n, d) => n + d.count, 0);
         expect(report.money).toBe(count('station', 'works', 'decor') * UNKNOWN_BUILD_REFUND);
-        expect(report.tickets).toBe(count('vehicle', 'item') * UNKNOWN_ITEM_REFUND);
         expect(j.economy.money).toBe(before.economy.money + report.money);
-        expect(j.economy.tickets).toBe(before.economy.tickets + report.tickets);
       },
       bySpec,
     );
