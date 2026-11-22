@@ -64,6 +64,8 @@ export interface AgeStatus {
 export const AGE_DEFS: AgeDef[] = agesJson as AgeDef[];
 export const AGE_COUNT = AGE_DEFS.length;
 export const LAST_AGE = AGE_COUNT - 1;
+/** Checks of the next age's goals per in-game day, in play mode only: once an in-game hour. */
+export const AGE_CHECKS_PER_DAY = 24;
 /** Ages that bring their own rolling stock, contracts and land: steam, diesel and electric. */
 export const RAIL_AGES = 3;
 
