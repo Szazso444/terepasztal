@@ -7,8 +7,8 @@ and then not always (sections 1 and 2, measured). Epic #529; artwork and handoff
 `art/528-rare-landmarks-handoff` @ `210cfe5d`, `docs/art-direction/rare-landmarks-handoff.md` and
 `assets/source/rare-landmarks-v1/final/manifest.json` there).
 
-Refreshed by Core on 2026-10-31 against `develop` @ `9c3628c4`, after town stores (#589), the new
-UI (#610–#623), the end of gacha and save v23. What changed is listed in section 12. Map generation
+Refreshed by Core on 2026-10-31 and again on 2026-11-22 against `develop` @ `11cf47b2`, after town stores (#589), the new
+UI (#610–#623), the end of gacha (#624) and save v24. What changed is listed in section 12. Map generation
 has not changed since the sites were measured, so sections 1 and 2 stand.
 
 ## Goal
@@ -221,8 +221,8 @@ production chains.
 
 ## 6. Save format
 
-`SAVE_VERSION` 23 → 24, one new top-level field (a `SaveParts` key, listed in `SAVE_PART_KEYS`).
-Track wear and resource modes also want 24: whichever lands later takes the next number.
+`SAVE_VERSION` 24 → 25, one new top-level field (a `SaveParts` key, listed in `SAVE_PART_KEYS`).
+Track wear, resource modes and the bridge stack also want 25: whichever lands later takes the next number.
 
 ```
 landmarks: {
@@ -243,7 +243,7 @@ landmarks: {
 }
 ```
 
-- The step `from: 23` fills `{ nextId: 1, items: [], skipRoll: true }` and nothing else: the
+- The step `from: 24` fills `{ nextId: 1, items: [], skipRoll: true }` and nothing else: the
   chunks generated in the first load after the migration are not rolled (a save older than v19
   generates all of its terrain in that load and must not gain landmarks under its track).
 - `expandSave` shifts every item's `x`, `y` like other saved coordinates.
@@ -311,9 +311,9 @@ landmarks: {
 3. No placed footprint breaks a legality rule or its site rule, crosses its chunk's 3-tile margin,
    or sits in the start chunk; no two rolled landmarks sit in 8-neighbouring chunks; a house and a
    rolled landmark never share a chunk.
-4. A chunk already in the store never gains a landmark: loading a v23 save and expanding it adds
+4. A chunk already in the store never gains a landmark: loading a v24 save and expanding it adds
    landmarks only in chunks that were not stored; the mapgen goldens are unchanged.
-5. Every save version migrates to 24; a v24 round trip keeps every item; `expandSave` shifts
+5. Every save version migrates to 25; a v25 round trip keeps every item; `expandSave` shifts
    items with the rest; a migrated pre-v19 save gets no landmarks in its first load.
 6. A one-time grant is paid exactly once across any sequence of save, load, expand and reload, and
    money and cargo change only through recorded transactions.
@@ -532,22 +532,23 @@ Codex); regeneration of any picture T6 flags.
 Dependency graph: T1, T2 and T6 start in parallel; T3 after T1; T4 after T3; T5 after T2 and T3;
 T7 after T5 and T6; T8 after T3 and T5; T9 after T7.
 
-## 12. What changed by 2026-10-31
+## 12. What changed by 2026-11-22
 
-Measured against `develop` @ `9c3628c4`. These override the task briefs of section 11 and the
+Measured against `develop` @ `11cf47b2`. These override the task briefs of section 11 and the
 filed issues.
 
 | What changed since the spec  | What it changes here                                                                                                                                                                                                                |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Save is at v23               | v24, step `from: 23`, `skipRoll` as the mark (section 6); every "v21" and "from: 20" in T3, T5 and the issues reads so                                                                                                              |
+| Save is at v24               | v25, step `from: 24`, `skipRoll` as the mark (section 6); every "v21" and "from: 20" in T3, T5 and the issues reads so                                                                                                              |
 | Town stores (#589)           | `Stockpile` is gone: `grant` and `produce` name their store (section 4); `toJSON` / `load` meet `StoreRegistry`, loaded after the stations                                                                                          |
 | Unloading since #589         | `contractable` in `src/sim/trains.ts` skips stations that do not accept the cargo and pool stations, and the loader asks whether a later stop takes it: both count a landmark's need, in T3, and the fleet context gains that query |
 | New UI (#610–#623)           | T8 builds on `src/ui/kit.ts`; the tile tooltip names a landmark; the content editor gets the table                                                                                                                                  |
 | Hungarian (#622)             | every string also in `src/data/strings.hu.ts`, which Gameplay owns and UI/UX does not, so the strings of T8 go first as a Gameplay pull request; T1 adds the Hungarian rule label in `src/data/names.hu.ts`                         |
 | Game undo (#612)             | landmark commands stay out of the history (section 7)                                                                                                                                                                               |
-| Gacha removed (#624 pending) | no landmark pays tickets, and none did; phase 2's `recipe` is crafting, which stays                                                                                                                                                 |
+| Gacha removed (#624)         | no landmark pays tickets, and none did; phase 2's `recipe` is crafting, which stays                                                                                                                                                 |
 | Buildings at real size       | the door rule stays for landmarks for now (section 8): a question for the author in the review page                                                                                                                                 |
 | Resource modes (in progress) | `global` and Easy mode reach `grant` and `produce` through `StoreRegistry`; that plan adapts the one lookup when it lands                                                                                                           |
+| Atlas pages (#633, #645)     | a group may span pages and `framesVersion` counts frame changes; the `landmarks` group is one page and registers as any other                                                                                                       |
 | Map generation               | unchanged, so the sites and rolls stand; the calibration test watches them, as `vizek-hegyek` and tunnels may change terrain                                                                                                        |
 
 Order of work, one branch stacked on the one before, each a pull request of its own role whose
