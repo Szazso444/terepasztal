@@ -2460,6 +2460,138 @@ const EN = {
     makesAnywhere: 'Makes {res}: {amount} a week at level {level}.',
   },
   /**
+   * Landmarks (`src/data/landmarks.json`, `src/sim/landmarks.ts`). A name and a story per content id;
+   * the panel, the toasts and the tile notice read the rest. No cargo name is typed here: a line
+   * that needs one takes it from the content, and money and cargo lists arrive already worded.
+   */
+  landmarks: {
+    unknown: 'Unknown',
+    /** the line a spotted landmark shows in place of its story */
+    spotted: 'Something old stands out there. Stop a train at a station nearby to survey it.',
+    names: {
+      merchants_last_stop: "Merchant's Last Stop",
+      overgrown_bathhouse: 'Overgrown Bathhouse',
+      bellkeepers_refuge: "Bellkeeper's Refuge",
+      flooded_archive: 'Flooded Archive',
+      rootbound_workshop: 'Rootbound Workshop',
+      cliffside_cable_station: 'Cliffside Cable Station',
+      stormglass_observatory: 'Stormglass Observatory',
+      ashen_conservatory: 'Ashen Conservatory',
+      inverted_manor: 'Inverted Manor',
+      sleeping_foundry: 'Sleeping Foundry',
+      moonwell_pavilion: 'Moonwell Pavilion',
+      house_between_seasons: 'House Between Seasons',
+    } as Record<string, string>,
+    /** what the player finds; Salvage and Restore are meant in railway terms: goods out, or goods in */
+    stories: {
+      merchants_last_stop:
+        'A wagon inn the caravans left in a hurry, its ledgers still on the counter. Salvage the stock in its cellar, or deliver timber, stone and food to open the trading stop again and load faster nearby.',
+      overgrown_bathhouse:
+        'Roots have choked the spring channels of an old bathhouse. Salvage its cut stone, or deliver the materials to clear the pipes and the pools will draw bathers to your nearest station.',
+      bellkeepers_refuge:
+        'A lone bell tower on a ridge, its rope frayed. Salvage the iron fittings, or deliver wood and iron to hang the bell again; trains stop and load quicker within its sound.',
+      flooded_archive:
+        'Water has risen into the record halls of a buried archive. Salvage what the dry shelves still hold, or deliver stone, iron and coal for the pumps and sell the saved records.',
+      rootbound_workshop:
+        'A workshop lifted off its footings by tree roots, tools still in the vices. Salvage the timber, or deliver wood and water to free the machines; it then saws wood for your stores every day.',
+      cliffside_cable_station:
+        'The top station of a cable line, its winch seized and its cars stranded. Salvage the iron, or deliver iron, wood and coal to restart the winch; cargo loads much faster nearby.',
+      stormglass_observatory:
+        'An observatory of lenses and glass, dead since the last great storm. Salvage the instruments, or deliver stone and iron and keep the work going until a storm charges it; it then speeds up loading nearby.',
+      ashen_conservatory:
+        'A glasshouse that survived a fire, with a few seedlings alive under the ash. Salvage the frames, or deliver water, coal and wood to bring the heating back, and choose which crop it grows.',
+      inverted_manor:
+        'A manor that sits upside down, doors in the roof and chandeliers underfoot. Salvage its fittings for a large payment, or deliver stone, iron and wood to shore it up; curious visitors will come.',
+      sleeping_foundry:
+        'A foundry gone quiet mid-shift, its furnaces cold. Salvage the metal stock, or deliver coal, iron and water to wake it; it then smelts iron from your coal every day.',
+      moonwell_pavilion:
+        'A pavilion around a still well that mirrors the night sky. Salvage the old treasure at once, or deliver stone and water and finish the work at night; travellers will come to see it.',
+      house_between_seasons:
+        'A house with four wings, one for each season, where the weather inside never matches the weather outside. Salvage its stores, or deliver wood, stone, water and food to settle it, and choose what it gives.',
+    } as Record<string, string>,
+    /** in `LANDMARK_STAGES` order */
+    stages: {
+      hidden: 'Hidden',
+      spotted: 'Spotted',
+      surveyed: 'Surveyed',
+      restoring: 'Restoring',
+      restored: 'Restored',
+      salvaged: 'Salvaged',
+    } as Record<string, string>,
+    paths: {
+      restore: 'Restore',
+      salvage: 'Salvage',
+      /** the cost line of Restore: the goods to deliver, already listed */
+      restoreCost: (needs: string) => `Deliver ${needs} by train`,
+      /** the cost line of Salvage */
+      salvageCost: 'Costs nothing, at once',
+      /** the outcome line of a path: the effect line */
+      gives: (what: string) => `Gives: ${what}`,
+    },
+    buttons: {
+      start: 'Start restoring',
+      salvage: 'Salvage',
+      cancel: 'Cancel restoring',
+      confirm: 'Confirm',
+      keep: 'Keep going',
+    },
+    /** the confirmation of a final choice */
+    confirm: {
+      salvage: (name: string) =>
+        `Salvage ${name}? It is final: the site is stripped, and a restore under way is lost.`,
+      restore: (name: string) =>
+        `Start restoring ${name}? The goods you deliver stay with the site.`,
+      cancel: (name: string) =>
+        `Cancel restoring ${name}? What was delivered is not refunded and cannot be taken back.`,
+    },
+    /** the pick of a Restore that has one (`pickKey`); the cargo name comes from the content */
+    pick: {
+      head: 'Choose what it gives',
+      produce: (cargo: string) => `Produce ${cargo}`,
+      boost: 'Faster loading nearby',
+    },
+    /** one cargo of the restore while it runs */
+    progress: (cargo: string, delivered: number, required: number) =>
+      `${cargo}: ${delivered} / ${required}`,
+    progressHead: 'Delivered',
+    conditions: {
+      night: 'It can only be finished at night, 20:00 to 05:00',
+      storm: 'It can only be finished in a storm',
+      holds: 'The condition holds now',
+      waits: 'The condition does not hold yet',
+    },
+    /** the lasting or one-time effect, as one line each */
+    effects: {
+      grant: (what: string) => `One-time reward: ${what}`,
+      produce: (cargo: string, perDay: number) => `Makes ${perDay} ${cargo} a day`,
+      produceFrom: (cargo: string, perDay: number, used: string, usedPerDay: number) =>
+        `Makes ${perDay} ${cargo} a day from ${usedPerDay} ${used}`,
+      attraction: (perDay: number) => `${perDay} more passengers a day at the nearest station`,
+      boost: (strength: number) => `Stations nearby load ${strength * 25}% faster`,
+    },
+    /** why a restored landmark made nothing in the last step (`ProduceReason`) */
+    produceReasons: {
+      store: 'No store within reach to work from',
+      inputs: 'Missing what it works from',
+      full: 'The store is full',
+    } as Record<string, string>,
+    /** command refusals by reason code (`LandmarkRefusal`) */
+    refusals: {
+      unknown: 'That landmark is gone',
+      stage: 'That cannot be done at this stage',
+      pick: 'Choose what it gives first',
+    } as Record<string, string>,
+    toasts: {
+      surveyed: (name: string) => `${name} surveyed: see what it can become`,
+      restored: (name: string) => `${name} restored`,
+      salvaged: (name: string) => `${name} salvaged`,
+    },
+    /** the tile notice when a landmark is surveyed */
+    notice: (name: string) => `${name} is surveyed`,
+    /** the tile tooltip: the name, or Unknown while it is only spotted; then the stage */
+    tooltip: (name: string, stage: string) => `${name} (${stage})`,
+  },
+  /**
    * The in-game Guide (src/ui/guideContent.ts). The words around what the data says: a `{name}` is
    * filled there (`fill` in src/ui/tooltipDoc.ts) with a number, a resource or a name from the data,
    * so no cost, count or name is typed here.

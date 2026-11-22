@@ -2204,6 +2204,119 @@ export const HU: Strings = {
       '{res}: hetente {amount}, {level}. szinten; több, ha {radius} csempén belül van {tiles} (a közelebbi többet ér), és ha a biom kedvez neki.',
     makesAnywhere: '{res}: hetente {amount}, {level}. szinten.',
   },
+  landmarks: {
+    unknown: 'Ismeretlen',
+    spotted: 'Valami régi tűnik fel ott. Állíts meg egy vonatot a közeli állomáson, hogy felmérd.',
+    names: {
+      merchants_last_stop: 'Kereskedő utolsó állomása',
+      overgrown_bathhouse: 'Benőtt fürdőház',
+      bellkeepers_refuge: 'Harangozó menedéke',
+      flooded_archive: 'Elárasztott levéltár',
+      rootbound_workshop: 'Gyökerek fogta műhely',
+      cliffside_cable_station: 'Sziklafali kötélpálya-állomás',
+      stormglass_observatory: 'Viharüveg-csillagvizsgáló',
+      ashen_conservatory: 'Hamvadt üvegház',
+      inverted_manor: 'Fejtetőre állt kúria',
+      sleeping_foundry: 'Alvó öntöde',
+      moonwell_pavilion: 'Holdkút-pavilon',
+      house_between_seasons: 'Évszakok közti ház',
+    },
+    stories: {
+      merchants_last_stop:
+        'Fogadó, amelyet a karavánok sietve hagytak el, a főkönyvek még a pulton. Bontsd le a pincéjének készletét, vagy szállíts fát, követ és élelmet, hogy újra kinyisson a kereskedőhely, és a környéken gyorsabb legyen a rakodás.',
+      overgrown_bathhouse:
+        'Gyökerek fojtják el egy régi fürdőház forráscsatornáit. Bontsd le a faragott kövét, vagy szállítsd a nyersanyagot a csövek kitisztításához, és a medencék fürdőzőket vonzanak a legközelebbi állomásra.',
+      bellkeepers_refuge:
+        'Magányos harangtorony egy gerincen, a kötele rojtos. Bontsd le a vasalatát, vagy szállíts fát és vasat, hogy újra megszólaljon a harang: a vonatok gyorsabban rakodnak a hangja hatósugarában.',
+      flooded_archive:
+        'Víz öntötte el egy elásott levéltár iratterem-sorát. Bontsd le, amit a száraz polcok még őriznek, vagy szállíts követ, vasat és szenet a szivattyúkhoz, és add el a megmentett iratokat.',
+      rootbound_workshop:
+        'Fagyökerek emelték le az alapjáról a műhelyt, a szerszámok még a satukban. Bontsd le a fáját, vagy szállíts fát és vizet a gépek kiszabadításához: ezután naponta fát fűrészel a raktáraidnak.',
+      cliffside_cable_station:
+        'Egy kötélpálya felső állomása, a csörlője berozsdált, a kocsik ott ragadtak. Bontsd le a vasat, vagy szállíts vasat, fát és szenet a csörlő újraindításához: a rakomány sokkal gyorsabban kerül fel a környéken.',
+      stormglass_observatory:
+        'Lencsékből és üvegből épült csillagvizsgáló, a legutóbbi nagy vihar óta halott. Bontsd le a műszereket, vagy szállíts követ és vasat, és tartsd a munkát, amíg egy vihar fel nem tölti: ezután gyorsítja a rakodást a környéken.',
+      ashen_conservatory:
+        'Tűzvészt túlélt üvegház, hamu alatt néhány élő palántával. Bontsd le a vázát, vagy szállíts vizet, szenet és fát a fűtés visszaállításához, és válaszd ki, mit termeszszen.',
+      inverted_manor:
+        'Fejtetőre állt kúria, az ajtók a tetőn, a csillárok a talpad alatt. Bontsd le a berendezését nagy összegért, vagy szállíts követ, vasat és fát a megtámasztásához: kíváncsi látogatók érkeznek.',
+      sleeping_foundry:
+        'Műszak közepén elcsendesedett öntöde, a kemencéi hidegek. Bontsd le a fémkészletét, vagy szállíts szenet, vasat és vizet a felébresztéséhez: ezután naponta vasat olvaszt a szenedből.',
+      moonwell_pavilion:
+        'Pavilon egy mozdulatlan kút körül, amely az éjszakai eget tükrözi. Bontsd le azonnal a régi kincset, vagy szállíts követ és vizet, és éjjel fejezd be a munkát: az utazók megnézni jönnek.',
+      house_between_seasons:
+        'Négyszárnyú ház, minden szárny egy évszak, és bent soha nem olyan az idő, mint kint. Bontsd le a készleteit, vagy szállíts fát, követ, vizet és élelmet a megnyugtatásához, és válaszd ki, mit adjon.',
+    },
+    stages: {
+      hidden: 'Rejtett',
+      spotted: 'Észrevett',
+      surveyed: 'Felmért',
+      restoring: 'Helyreállítás alatt',
+      restored: 'Helyreállított',
+      salvaged: 'Lebontott',
+    },
+    paths: {
+      restore: 'Helyreállítás',
+      salvage: 'Lebontás',
+      restoreCost: (needs: string) => `Szállíts vonattal: ${needs}`,
+      salvageCost: 'Nem kerül semmibe, azonnal megy',
+      gives: (what: string) => `Ezt adja: ${what}`,
+    },
+    buttons: {
+      start: 'Helyreállítás indítása',
+      salvage: 'Lebontás',
+      cancel: 'Helyreállítás megszakítása',
+      confirm: 'Megerősítés',
+      keep: 'Folytatás',
+    },
+    confirm: {
+      salvage: (name: string) =>
+        `Lebontod: ${name}? Végleges: a helyszín kifosztva marad, a folyamatban lévő helyreállítás elvész.`,
+      restore: (name: string) =>
+        `Elindítod a helyreállítást: ${name}? A leszállított áru a helyszínen marad.`,
+      cancel: (name: string) =>
+        `Megszakítod a helyreállítást: ${name}? A leszállított árut nem kapod vissza.`,
+    },
+    pick: {
+      head: 'Válaszd ki, mit adjon',
+      produce: (cargo: string) => `Termel: ${cargo}`,
+      boost: 'Gyorsabb rakodás a környéken',
+    },
+    progress: (cargo: string, delivered: number, required: number) =>
+      `${cargo}: ${delivered} / ${required}`,
+    progressHead: 'Leszállítva',
+    conditions: {
+      night: 'Csak éjjel fejezhető be, 20:00 és 05:00 között',
+      storm: 'Csak viharban fejezhető be',
+      holds: 'A feltétel most teljesül',
+      waits: 'A feltétel még nem teljesül',
+    },
+    effects: {
+      grant: (what: string) => `Egyszeri jutalom: ${what}`,
+      produce: (cargo: string, perDay: number) => `Naponta ${perDay} ${cargo} termel`,
+      produceFrom: (cargo: string, perDay: number, used: string, usedPerDay: number) =>
+        `Naponta ${perDay} ${cargo} termel, ennyiből: ${usedPerDay} ${used}`,
+      attraction: (perDay: number) => `Naponta ${perDay} utassal több a legközelebbi állomáson`,
+      boost: (strength: number) => `A közeli állomásokon ${strength * 25}%-kal gyorsabb a rakodás`,
+    },
+    produceReasons: {
+      store: 'Nincs elérhető készlet, amiből dolgozhatna',
+      inputs: 'Hiányzik, amiből dolgozik',
+      full: 'A készlet tele van',
+    },
+    refusals: {
+      unknown: 'Ez a nevezetesség már nincs meg',
+      stage: 'Ez ebben a szakaszban nem lehetséges',
+      pick: 'Előbb válaszd ki, mit adjon',
+    },
+    toasts: {
+      surveyed: (name: string) => `Felmérve: ${name}. Nézd meg, mivé lehet`,
+      restored: (name: string) => `Helyreállítva: ${name}`,
+      salvaged: (name: string) => `Lebontva: ${name}`,
+    },
+    notice: (name: string) => `Felmérve: ${name}`,
+    tooltip: (name: string, stage: string) => `${name} (${stage})`,
+  },
   guide: {
     title: 'Útmutató',
     search: 'Keresés…',
