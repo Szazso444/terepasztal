@@ -45,32 +45,34 @@
 
 ## File map
 
-| File                                               | Role      | Responsibility                                        |
-| -------------------------------------------------- | --------- | ----------------------------------------------------- |
-| `src/world/elevation.ts`                           | World     | planes, `MAX_LEVEL`, `maxStep`, `levelTarget`         |
-| `src/world/waterfalls.ts`, `src/world/chunks.ts`   | World     | `MAX_WATER_LEVEL`, chunk version 6                    |
-| `src/world/mountains.ts` (new)                     | World     | pure sculpt pass with the shape mix                   |
-| `src/world/reshape.ts` (new)                       | World     | which tiles a raise or lower moves                    |
-| `src/world/railProfile.ts`                         | World     | beds for dug and cut tiles                            |
-| `src/sim/underground.ts` (new)                     | Gameplay  | dug tiles, cuts, portals, the dig plan                |
-| `src/sim/build.ts`, `src/sim/rules.ts`             | Gameplay  | rules and prices                                      |
-| `src/sim/save.ts`                                  | Gameplay  | `SAVE_VERSION` 24                                     |
-| `src/render/terrainRelief.ts`, `landscape*.ts`     | Rendering | `RELIEF_MAX`, soft banks, light, forest on a slope    |
-| `src/render/tunnelGlass.ts` (new)                  | Rendering | the glass view                                        |
-| `src/render/tunnelPortals.ts` (new)                | Rendering | portal art cut to the ground, masks, the ghost copy   |
-| `src/art/tunnelArt.ts` (new)                       | Art       | placeholder portal, floor and wall frames             |
-| `src/ui/buildBar.ts`, `buildController.ts`         | UI/UX     | tools, ghosts, refusals                               |
-| `src/game.ts`, `src/engine/loadRepair.ts`          | Engine    | wiring only                                           |
+| File                                             | Role      | Responsibility                                      |
+| ------------------------------------------------ | --------- | --------------------------------------------------- |
+| `src/world/elevation.ts`                         | World     | planes, `MAX_LEVEL`, `maxStep`, `levelTarget`       |
+| `src/world/waterfalls.ts`, `src/world/chunks.ts` | World     | `MAX_WATER_LEVEL`, chunk version 6                  |
+| `src/world/mountains.ts` (new)                   | World     | pure sculpt pass with the shape mix                 |
+| `src/world/reshape.ts` (new)                     | World     | which tiles a raise or lower moves                  |
+| `src/world/railProfile.ts`                       | World     | beds for dug and cut tiles                          |
+| `src/sim/underground.ts` (new)                   | Gameplay  | dug tiles, cuts, portals, the dig plan              |
+| `src/sim/build.ts`, `src/sim/rules.ts`           | Gameplay  | rules and prices                                    |
+| `src/sim/save.ts`                                | Gameplay  | `SAVE_VERSION` 24                                   |
+| `src/render/terrainRelief.ts`, `landscape*.ts`   | Rendering | `RELIEF_MAX`, soft banks, light, forest on a slope  |
+| `src/render/tunnelGlass.ts` (new)                | Rendering | the glass view                                      |
+| `src/render/tunnelPortals.ts` (new)              | Rendering | portal art cut to the ground, masks, the ghost copy |
+| `src/art/tunnelArt.ts` (new)                     | Art       | placeholder portal, floor and wall frames           |
+| `src/ui/buildBar.ts`, `buildController.ts`       | UI/UX     | tools, ghosts, refusals                             |
+| `src/game.ts`, `src/engine/loadRepair.ts`        | Engine    | wiring only                                         |
 
 ---
 
 ### Task 1: Stored levels and the new top (World)
 
 **Files:**
+
 - Modify: `src/world/elevation.ts`, `src/world/tiles.ts`, `src/world/waterfalls.ts`, `src/world/chunks.ts`
 - Test: `src/world/elevation.test.ts`
 
 **Interfaces:**
+
 - Produces: `MAX_LEVEL = 16`; `NO_LEVEL = 255`; `MAX_WATER_LEVEL = 4` in `waterfalls.ts`, with `MAX_DROP = MAX_WATER_LEVEL`; `maxStep(map: Elevated): 1 | 4`; `GameMap.generatedLevel?: Uint8Array`; `GameMap.groundLevel?: Uint8Array`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -101,10 +103,12 @@ it('agrees with tileLevels on every tile of a map with both planes', () => {
 ### Task 2: Chunks hold generated levels (World)
 
 **Files:**
+
 - Modify: `src/world/chunks.ts`
 - Test: `src/world/chunks.test.ts`
 
 **Interfaces:**
+
 - Consumes: `generatedLevel`, `NO_LEVEL` (Task 1).
 - Produces: `CHUNK_VERSION = 6`. `ChunkPlanes.generatedLevel: Uint8Array`.
 
@@ -117,10 +121,12 @@ it('agrees with tileLevels on every tile of a map with both planes', () => {
 ### Task 3: Relief, light and painting for tall ground (Rendering)
 
 **Files:**
+
 - Modify: `src/render/terrainRelief.ts`, `src/render/landscape.worker.ts`, `src/render/landscapeModel.ts`, `src/render/worldRenderer.ts`
 - Test: `src/render/terrainRelief.test.ts`, `src/render/landscapeModel.test.ts`
 
 **Interfaces:**
+
 - Produces: `RELIEF_MAX = 200`; `ReliefStyle.softFrom?: number`, shipped `3`; `heightFactor(level, heightLight): number`.
 
 - [ ] **Step 1: Write the failing tests.** `softFrom: a cell with a tile at level 3 or more ramps across the whole tile`; `cells of soft and hard banks meet exactly on their shared edge` (sample both sides over 200 points); `heightFactor is 1.24 at level 4 and 1.348 at level 16`; `a raised Forest tile paints as Grass and a level 0 one as Forest`.
@@ -132,18 +138,22 @@ it('agrees with tileLevels on every tile of a map with both planes', () => {
 ### Task 4: Mountains in map generation (World; goldens need `gate:approved`)
 
 **Files:**
+
 - Create: `src/world/mountains.ts`, `src/world/mountains.test.ts`
 - Modify: `src/world/mapgen.ts`
 - Test goldens: `src/world/mapgenSupply.test.ts`, `src/testing/simWorld.test.ts`
 
 **Interfaces:**
+
 - Consumes: `generatedLevel`, `maxStep` (Task 1), chunk version 6 (Task 2).
 - Produces: `massifAt(wx: number, wy: number, seed: number): number`; `sculptMountains(field: SculptField, span: Span, keepClear: Span, seed: number): Uint8Array`; `MOUNTAIN_SHAPES = { hill: 0.7, ridge: 0.2, tower: 0.1 }`; `SCULPT_REACH = 32`.
 
 - [ ] **Step 1: Write the failing tests.**
 
 ```ts
-it('stays within the top and a step of 4', () => { /* 20 seeds */ });
+it('stays within the top and a step of 4', () => {
+  /* 20 seeds */
+});
 it('reaches at least level 12 on 18 of 20 seeds of 160 x 160', () => {});
 it('uses all three shapes over 40 seeds, hill the most', () => {});
 it('leaves water, the map border and the start chunk at their old levels', () => {});
@@ -164,16 +174,23 @@ it('keeps every river at water level 4 or under, flowing downhill', () => {});
 ### Task 5: Rules, snow, saved planes (Gameplay)
 
 **Files:**
+
 - Modify: `src/sim/rules.ts`, `src/data/biomes.json`, `src/sim/save.ts`
 - Create: `src/sim/underground.ts` (types and store only)
 - Test: `src/sim/save.test.ts`, `src/sim/underground.test.ts`
 
 **Interfaces:**
+
 - Produces: `Rules.groundCost = 100`, `drillCost = 500`, `portalCost = 2000`, `drillStone = 2`.
 
 ```ts
 export type Face = 'N' | 'E' | 'S' | 'W';
-export interface Portal { x: number; y: number; face: Face; floor: number }
+export interface Portal {
+  x: number;
+  y: number;
+  face: Face;
+  floor: number;
+}
 export class Underground {
   constructor(w: number, h: number);
   isDug(x: number, y: number): boolean;
@@ -194,17 +211,26 @@ export class Underground {
 ### Task 6: What a raise moves (World)
 
 **Files:**
+
 - Create: `src/world/reshape.ts`, `src/world/reshape.test.ts`
 
 **Interfaces:**
+
 - Consumes: `tileLevels`.
 - Produces:
 
 ```ts
-export interface Reshape { moved: { x: number; y: number; to: number }[]; refused: { x: number; y: number }[] }
+export interface Reshape {
+  moved: { x: number; y: number; to: number }[];
+  refused: { x: number; y: number }[];
+}
 export function reshape(
-  map: Elevated, levels: Uint8Array, tiles: readonly { x: number; y: number }[], delta: 1 | -1,
-  fixed: (x: number, y: number) => boolean, least: (x: number, y: number) => number,
+  map: Elevated,
+  levels: Uint8Array,
+  tiles: readonly { x: number; y: number }[],
+  delta: 1 | -1,
+  fixed: (x: number, y: number) => boolean,
+  least: (x: number, y: number) => number,
 ): Reshape;
 ```
 
@@ -217,10 +243,12 @@ export function reshape(
 ### Task 7: Raise, Lower and rail on steps (Gameplay)
 
 **Files:**
+
 - Modify: `src/sim/build.ts`
 - Test: `src/sim/ground.test.ts`, `src/sim/mountainTrack.test.ts`
 
 **Interfaces:**
+
 - Consumes: `reshape` (Task 6), `Underground` (Task 5).
 - Produces: `Builder.checkGround(tiles, delta: 1 | -1): GroundCheck` (`PlacementCheck` plus `moved`, `refused`); `Builder.reshapeGround(tiles, delta): boolean`.
 
@@ -233,12 +261,14 @@ export function reshape(
 ### Task 8: Raise and Lower in the build menu (UI/UX, then Engine)
 
 **Files:**
+
 - Modify: `src/ui/buildBar.ts`, `src/ui/buildController.ts`, `src/strings.ts`
 - Before it, on its own Gameplay branch: `src/data/strings.hu.ts`
 - Then, on its own Engine branch: `src/game.ts`
 - Test: `src/ui/buildBar.test.ts`, `src/ui/buildController.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Builder.checkGround`, `Builder.reshapeGround`.
 - Produces: `Tool` case `{ kind: 'ground'; delta: 1 | -1 }`; `toolKey` `ground:up`, `ground:down`; items in the Utility group, icons `up` and `down`.
 
@@ -251,10 +281,12 @@ export function reshape(
 ### Task 9: The dig plan (Gameplay)
 
 **Files:**
+
 - Modify: `src/sim/underground.ts`, `src/sim/build.ts`
 - Test: `src/sim/underground.test.ts`
 
 **Interfaces:**
+
 - Consumes: `reshape`, `Rules`, `tileLevels`.
 - Produces:
 
@@ -293,11 +325,13 @@ it('fill refuses a tile with track', () => {});
 ### Task 10: Track inside and rail beds (World, then Gameplay)
 
 **Files:**
+
 - Modify: `src/world/railProfile.ts`
 - Then: `src/sim/build.ts`
 - Test: `src/world/railProfile.test.ts`, `src/sim/mountainTrack.test.ts`, `src/sim/trafficSoak.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Underground`, through a view so World does not import `src/sim`.
 - Produces: `interface BedsUnder { floorAt(x, y): number | undefined; isCut(x, y): boolean }`, a new last parameter of `railProfile`. `Builder.insideMode: boolean`.
 
@@ -310,9 +344,11 @@ it('fill refuses a tile with track', () => {});
 ### Task 11: Placeholder art (Art)
 
 **Files:**
+
 - Create: `src/art/tunnelArt.ts`, `src/art/tunnelArt.test.ts`
 
 **Interfaces:**
+
 - Produces: frames `tunnel/portal_E`, `tunnel/portal_S`, `tunnel/floor_0` to `3`, `tunnel/wall_N_0` to `2`, `tunnel/wall_W_0` to `2`, `tunnel/shade_N`, `tunnel/shade_W`, `tunnel/rim_S`, `tunnel/rim_E`. `tunnel/brick_0` to `3` and `tunnel/coping`. `portal_*` holds the throat and ring only, on the plane of `trial:frontArt`.
 
 - [ ] **Step 1: Write the failing test.** `every frame exists with its anchor at the tile centre`.
@@ -324,10 +360,12 @@ it('fill refuses a tile with track', () => {});
 ### Task 12: Glass (Rendering)
 
 **Files:**
+
 - Create: `src/render/tunnelGlass.ts`, `src/render/tunnelGlass.test.ts`
 - Modify: `src/render/worldRenderer.ts`
 
 **Interfaces:**
+
 - Consumes: `Underground` as a read view, `tunnel/*` frames.
 - Produces: `WorldRenderer.setGlass(on: boolean, preview?: { x: number; y: number }[]): void`.
 
@@ -340,10 +378,12 @@ it('fill refuses a tile with track', () => {});
 ### Task 13: Portals and trains going in (Rendering)
 
 **Files:**
+
 - Create: `src/render/tunnelPortals.ts`, `src/render/tunnelPortals.test.ts`
 - Modify: `src/render/trainRenderer.ts`, `src/render/worldRenderer.ts`
 
 **Interfaces:**
+
 - Consumes: `Portal`, `tunnel/portal_*`, `WorldRenderer.groundAt`.
 - Produces: `TunnelPortals.refresh(): void`; `TunnelPortals.dress(s: Sprite, x: number, y: number): void`, called from `TrainRenderer.pose` after `hideAt`.
 
@@ -356,6 +396,7 @@ it('fill refuses a tile with track', () => {});
 ### Task 14: The Drill in the build menu (UI/UX, then Engine)
 
 **Files:**
+
 - Modify: `src/ui/buildBar.ts`, `src/ui/buildController.ts`, `src/strings.ts`
 - Before it, on its own Gameplay branch: `src/data/strings.hu.ts`
 - Then, on its own Engine branch: `src/game.ts`, `src/engine/loadRepair.ts`
@@ -363,6 +404,7 @@ it('fill refuses a tile with track', () => {});
 - Test: `src/ui/buildController.test.ts`, `src/engine/loadRepair.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Builder.checkDig`, `dig`, `fillDug`, `insideMode`, `setGlass`, `TunnelPortals`.
 - Produces: `Tool` case `{ kind: 'drill' }`, in the Track menu.
 
