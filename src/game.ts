@@ -64,7 +64,7 @@ import {
 } from './ui/tooltipContent';
 import { tileTip, type TileSnapshot } from './ui/tileTooltip';
 import { STR } from './strings';
-import { content, sourceContent } from './data/content';
+import { content, sourceContent, landmarkDef } from './data/content';
 import { TrackGraph, liftLegacyTrack } from './world/track';
 import { Builder } from './sim/build';
 import { Economy } from './sim/economy';
@@ -78,7 +78,7 @@ import { ScreenManager } from './ui/modal';
 import type { Train } from './sim/trains';
 import { defaultStop as defaultStopFor } from './sim/trains';
 import { ContractBoard, contractTitle } from './sim/contracts';
-import { LandmarkRegistry } from './sim/landmarks';
+import { LandmarkRegistry, type LandmarkEvent, type LandmarkResult } from './sim/landmarks';
 import { placeNewLandmarks } from './engine/landmarkWiring';
 import { Rng } from './engine/rng';
 import { DayNight, Glows, Smoke, GroundLights, Rain, Fog, nightness } from './render/fx';
@@ -231,6 +231,8 @@ export class Game implements UiHost {
   contracts!: ContractBoard;
   /** the rare landmarks of a generated world; empty in a level. #548 sets its `onEvent` */
   landmarks!: LandmarkRegistry;
+  /** #548 fills this for its toasts; the registry's own `onEvent` stays ours, it redraws the world first */
+  onLandmarkEvent: ((e: LandmarkEvent) => void) | null = null;
   /** hands accepted contracts to trains */
   contractJobs!: ContractDispatcher;
   crafting!: Crafting;
@@ -317,6 +319,13 @@ export class Game implements UiHost {
   private uiRoot: HTMLElement;
   private depthOverlay = false;
   private overviewSource: OverviewSource = {
+    landmarks: () =>
+      this.landmarks.items
+        .filter((i) => i.stage === 'spotted')
+        .map((i) => {
+          const d = landmarkDef(i.def);
+          return d ? { x: i.x + (d.w - 1) / 2, y: i.y + (d.d - 1) / 2 } : { x: i.x, y: i.y };
+        }),
     trackTiles: () => this.trackTilesForOverview(),
     stations: () =>
       this.builder.stations.map((s) => ({
@@ -1000,6 +1009,10 @@ export class Game implements UiHost {
     });
     this.builder.landmarks = this.landmarks;
     this.landmarks.onEffectsChanged = () => this.builder.refreshStationBoosts();
+    this.landmarks.onEvent = (e) => {
+      this.world.setLandmarks(this.landmarks.items);
+      this.onLandmarkEvent?.(e);
+    };
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
     this.economy.onAgeUp = (t) => this.onAgeUp(t);
     this.inventory.seedStarter(0);
@@ -1123,6 +1136,7 @@ export class Game implements UiHost {
     this.world.harvest.canStand = (x, y, id, rot) => this.builder.checkStation(x, y, id, rot).ok;
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
+    this.world.setLandmarks(this.landmarks.items);
     this.overview.root.visible = false;
     const cur = this.atlas.get('terrain/cursor');
     this.cursor = new Sprite(cur.texture);
@@ -1191,6 +1205,19 @@ export class Game implements UiHost {
       landmarks: this.landmarks,
     });
     this.build.act = (fn, stroke) => this.commands.act(fn, stroke);
+    // Start moves a stage without an event, and Cancel goes back to one the world already drew, so
+    // the world is redrawn after all three commands
+    for (const name of ['startLandmark', 'salvageLandmark', 'cancelLandmark'] as const) {
+      const run = this.commands[name].bind(this.commands) as (
+        id: number,
+        pick?: string,
+      ) => LandmarkResult;
+      this.commands[name] = (id: number, pick?: string) => {
+        const r = run(id, pick);
+        this.world.setLandmarks(this.landmarks.items);
+        return r;
+      };
+    }
     // every panel, screen and menu, wired to this game; it also sets the build controller's
     // selection and status callbacks
     this.ui = createPlayUi(this, {
@@ -2038,6 +2065,7 @@ export class Game implements UiHost {
       rules.landmarkChance,
     );
     this.refreshLandmarks();
+    this.world.setLandmarks(this.landmarks.items);
   }
   private refreshLandmarks() {
     this.landmarks.refreshVisibility((x, y) => this.regions.isTileRevealed(x, y));
