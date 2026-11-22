@@ -94,9 +94,9 @@ import {
 import { decorOffset, type Decor } from './sim/build';
 import { wrapRotation } from './sim/rotation';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
-import { validateBanners } from './gacha/gacha';
 import { Dir, DIRS, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
-import { audio, sfx } from './engine/audio';
+import { audio, sfx, silently } from './engine/audio';
+import { heardVolumes } from './engine/audioGroups';
 import {
   SAVE_VERSION,
   buildSave,
@@ -128,7 +128,6 @@ import { Train as TrainClass, resetTrainIds } from './sim/trains';
 import { pieceFrame } from './world/track';
 import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
-import { Gacha } from './gacha/gacha';
 import { Crafting } from './gacha/crafting';
 import { StoreRegistry, RESOURCE_IDS, type ResourceStore } from './sim/stores';
 import { cityTiles } from './sim/city';
@@ -211,7 +210,6 @@ export class Game implements UiHost {
   readonly sim = new SimStep(this, {
     refreshCity: () => this.refreshCity(),
     season: () => this.applySeason(),
-    dailyTicket: () => this.toasts.push(STR.contracts.dailyTicket, 'good'),
   });
   map!: GameMap;
   regions!: RegionState;
@@ -232,7 +230,6 @@ export class Game implements UiHost {
   contracts!: ContractBoard;
   /** hands accepted contracts to trains */
   contractJobs!: ContractDispatcher;
-  gacha!: Gacha;
   crafting!: Crafting;
   /** every town's, depot's and warehouse's goods; building pays from them */
   stores = new StoreRegistry();
@@ -466,9 +463,6 @@ export class Game implements UiHost {
   get settingsScreen() {
     return this.ui.settingsScreen;
   }
-  get gachaScreen() {
-    return this.ui.gachaScreen;
-  }
   get craftingScreen() {
     return this.ui.craftingScreen;
   }
@@ -536,7 +530,6 @@ export class Game implements UiHost {
     this.clock.time = daySeconds() * 0.5;
     this.applySeason(true);
     this.economy.money = start ? start.money : rules.startMoney;
-    this.economy.tickets = start ? start.tickets : rules.startTickets;
     if (!start) {
       // the starter engines are narrow gauge, so the first depot is too (unless tuning bars it)
       const d = this.ensureDepot(startDepotKind());
@@ -997,7 +990,6 @@ export class Game implements UiHost {
     this.houses.onUpgraded = (e) => this.onUpgraded(e);
     this.builder.onReclassed = (tiles, dir) => this.onReclassed(tiles, dir);
     this.weather = new Weather(new Rng(this.seed ^ 0x77ea));
-    validateBanners();
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
     this.economy.onAgeUp = (t) => this.onAgeUp(t);
     this.inventory.seedStarter(0);
@@ -1035,7 +1027,6 @@ export class Game implements UiHost {
       b ? this.people.board(st, n) : this.people.alight(st, n);
     this.people = new PeopleSim(this.map, this.builder);
     this.contracts = new ContractBoard(new Rng(this.seed ^ 0x5eed), this.builder, this.economy);
-    this.gacha = new Gacha(new Rng(this.seed ^ 0x9ac4a), this.inventory);
     this.crafting = new Crafting(new Rng(this.seed ^ 0xc4af7), this.inventory, this.economy);
     this.crafting.grantFromInventory();
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
@@ -1143,14 +1134,19 @@ export class Game implements UiHost {
       this.storm.flash,
       this.overview.root,
     );
-    this.glows = new Glows(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
+    this.glows = new Glows(
+      this.atlas,
+      this.world.overlay,
+      (x, y) => this.world.surfacePoint(x, y),
+      (x, y) => this.world.railAt(x, y).dz,
+    );
     this.groundLights = new GroundLights(
       this.atlas,
       this.world.lights,
       (x, y) => this.world.surfacePoint(x, y),
       (x, y) => inBounds(this.map, x, y),
     );
-    this.smoke = new Smoke(this.atlas, this.world.overlay);
+    this.smoke = new Smoke(this.atlas, this.world.overlay, (x, y) => this.world.railAt(x, y).dz);
     this.floaters = new Floaters(this.atlas, this.world.overlay, (x, y) =>
       this.world.surfacePoint(x, y),
     );
@@ -1182,7 +1178,6 @@ export class Game implements UiHost {
       builder: this.builder,
       economy: this.economy,
       trade: this.trade,
-      gacha: this.gacha,
       inventory: this.inventory,
       towns: this.towns,
       houses: this.houses,
@@ -1200,7 +1195,6 @@ export class Game implements UiHost {
       fleet: this.fleet,
       builder: this.builder,
       contracts: this.contracts,
-      gacha: this.gacha,
       crafting: this.crafting,
       trade: this.trade,
       towns: this.towns,
@@ -1246,10 +1240,7 @@ export class Game implements UiHost {
 
   // ---------------------------------------------------------------- settings / save
   applySettings() {
-    audio.master = this.settings.master;
-    audio.sfx = this.settings.sfx;
-    audio.music = this.settings.music;
-    audio.ambient = this.settings.ambient ?? 0.35;
+    Object.assign(audio, heardVolumes(this.settings));
     writeSettings(this.settings);
     audio.applyMusic();
     if (!this.settings.weather && this.weather) this.weather.visible = 0;
@@ -1276,7 +1267,6 @@ export class Game implements UiHost {
         contracts: this.contracts.toJSON(),
         trade: this.trade.toJSON(),
         inventory: this.inventory.toJSON(),
-        gacha: this.gacha.toJSON(),
         crafting: this.crafting.toJSON(),
         camera: { x: this.camera.x, y: this.camera.y, zoomIndex: this.camera.zoomIndex },
         lastDay: this.sim.lastDay,
@@ -1400,7 +1390,6 @@ export class Game implements UiHost {
       this.onStationChanged(st, false);
     }
     this.inventory.load(j.inventory as ReturnType<typeof this.inventory.toJSON>);
-    this.gacha.load(j.gacha as ReturnType<typeof this.gacha.toJSON>);
     this.crafting.load(j.crafting as ReturnType<typeof this.crafting.toJSON> | undefined);
     this.contracts.load(j.contracts as ReturnType<typeof this.contracts.toJSON>);
     this.trade.load(j.trade as ReturnType<typeof this.trade.toJSON> | undefined);
@@ -1409,6 +1398,7 @@ export class Game implements UiHost {
       const t = TrainClass.fromJSON(tj, this.track);
       this.fleet.trains.push(t);
     }
+    this.fleet.settleHomes();
     this.contractJobs.reconcile();
     for (const [x, y, id, rot] of j.decor ?? []) {
       const d: Decor = { id, x, y, rot: wrapRotation(rot) };
@@ -1786,6 +1776,7 @@ export class Game implements UiHost {
       st.productionMul = productionMul(st.def.id, s) * this.biomeProduction(st);
   }
   private onStationChanged(s: Station, removed: boolean) {
+    if (s.def.depot) this.fleet.settleHomes();
     const id = `station:${s.id}`;
     if (removed) {
       this.onStationOrphaned(s, false);
@@ -1866,9 +1857,7 @@ export class Game implements UiHost {
   /** A save named content the game no longer has: say what went and what was refunded. */
   private warnPruned(report: PruneReport) {
     const list = report.dropped.map((d) => `${d.id} ×${d.count}`).join(', ');
-    // `saves.refund` takes the money already formatted, and empty when none was refunded
-    const money = report.money ? fmtMoney(report.money) : '';
-    const text = STR.saves.pruned(list, STR.saves.refund(money, report.tickets));
+    const text = STR.saves.pruned(list, report.money ? fmtMoney(report.money) : '');
     this.notices.push({ key: 'save:pruned', kind: 'warn', type: 'note', text, target: null }, 180);
   }
   /** warning text for the settings screen while a converted save is in play */
@@ -1896,7 +1885,7 @@ export class Game implements UiHost {
    * on the console that no site near the start could take one.
    */
   ensureDepot(defId = 'depot'): Station | null {
-    const d = ensureStartDepot(this.builder, defId);
+    const d = silently(() => ensureStartDepot(this.builder, defId));
     if (!d) console.warn(`[depot] no site near the start takes a ${defId} and its gate track`);
     return d;
   }
@@ -2053,7 +2042,6 @@ export class Game implements UiHost {
   /** Debug aid requested for testing: money, and the selected store and the grid filled. */
   cheat() {
     this.economy.money += 10000;
-    this.economy.tickets += 10;
     const store = this.stores.selected;
     if (store) for (const id of RESOURCE_IDS) this.stores.withGrid(store).add(id, 1e9);
     this.toasts.push(STR.topbar.cheated, 'info');

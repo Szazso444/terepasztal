@@ -47,3 +47,22 @@ export function compactLevel(
   }
   return 2;
 }
+
+/**
+ * Past the last level, how many labels of the menu bar go (`FOLD_ORDER`): the first count, from
+ * none, at which the bar fits. `overflows(count)` lays the bar out with that many gone and says
+ * whether it is still short of room, or null while it is not laid out (keep the last answer). As
+ * in `compactLevel`, each count is measured on its own, from none up and no further than needed.
+ * `total` is the answer when even that is short: from there the menu bar is cut.
+ */
+export function foldCount(
+  total: number,
+  overflows: (count: number) => boolean | null,
+): number | null {
+  for (let count = 0; count < total; count++) {
+    const short = overflows(count);
+    if (short === null) return null;
+    if (!short) return count;
+  }
+  return total;
+}

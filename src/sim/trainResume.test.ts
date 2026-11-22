@@ -26,6 +26,7 @@ import { migrate, MIGRATIONS, SAVE_VERSION, type SaveGame } from './save';
 import { expandSave, CHUNK_TILES } from './expand';
 import { Inventory } from '../gacha/inventory';
 import { locoDef, wagonDef } from '../gacha/items';
+import { sceneLengths } from '../testing/modelFixtures';
 import { STR } from '../strings';
 import { SEEDS, forAll, shrinkArray, shrinkInt } from '../testing/property';
 import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
@@ -38,6 +39,9 @@ import {
   SCENARIO_TICK_RATE,
 } from '../testing/trafficScenario';
 import { storeWith } from '../testing/storeFixtures';
+
+// a scene laid out tile by tile: see sceneLengths
+sceneLengths();
 
 // Trains carry on after a load (issue #81). A train saved while moving or loading, taken through
 // toJSON, JSON and fromJSON into a fresh fleet on the same track, runs on as the uninterrupted
@@ -395,13 +399,12 @@ describe('a v13 save', () => {
       savedAt: 0,
       seed: 4242,
       clock: { time: timeOf(i), speedIndex: 1 },
-      economy: { money: 0, tickets: 0, tier: 0, granted: [] },
+      economy: { money: 0, tier: 0 },
       track: [],
       stations: [],
       trains: j.trains,
       contracts: { contracts: [] },
       inventory: { items: [] },
-      gacha: {},
       camera: { x: 0, y: 0, zoomIndex: 2 },
       lastDay: 0,
     };
