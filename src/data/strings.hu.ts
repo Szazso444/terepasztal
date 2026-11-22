@@ -2235,9 +2235,9 @@ export const HU: Strings = {
       cliffside_cable_station:
         'Egy kötélpálya felső állomása, a csörlője berozsdált, a kocsik ott ragadtak. Bontsd le a vasat, vagy szállíts vasat, fát és szenet a csörlő újraindításához: a rakomány sokkal gyorsabban kerül fel a környéken.',
       stormglass_observatory:
-        'Lencsékből és üvegből épült csillagvizsgáló, a legutóbbi nagy vihar óta halott. Bontsd le a műszereket, vagy szállíts követ és vasat, és tartsd a munkát, amíg egy vihar fel nem tölti: ezután gyorsítja a rakodást a környéken.',
+        'Lencsékből és üvegből épült csillagvizsgáló, a legutóbbi nagy vihar óta halott. Bontsd le a műszereket, vagy szállíts követ és vasat, és várd meg, hogy egy vihar feltöltse: ezután gyorsítja a rakodást a környéken.',
       ashen_conservatory:
-        'Tűzvészt túlélt üvegház, hamu alatt néhány élő palántával. Bontsd le a vázát, vagy szállíts vizet, szenet és fát a fűtés visszaállításához, és válaszd ki, mit termeszszen.',
+        'Tűzvészt túlélt üvegház, hamu alatt néhány élő palántával. Bontsd le a vázát, vagy szállíts vizet, szenet és fát a fűtés visszaállításához, és válaszd ki, mit termesszen.',
       inverted_manor:
         'Fejtetőre állt kúria, az ajtók a tetőn, a csillárok a talpad alatt. Bontsd le a berendezését nagy összegért, vagy szállíts követ, vasat és fát a megtámasztásához: kíváncsi látogatók érkeznek.',
       sleeping_foundry:
@@ -2259,7 +2259,7 @@ export const HU: Strings = {
       restore: 'Helyreállítás',
       salvage: 'Lebontás',
       restoreCost: (needs: string) => `Szállíts vonattal: ${needs}`,
-      salvageCost: 'Nem kerül semmibe, azonnal megy',
+      salvageCost: 'Azonnali, nem kerül semmibe',
       gives: (what: string) => `Ezt adja: ${what}`,
     },
     buttons: {
@@ -2293,9 +2293,9 @@ export const HU: Strings = {
     },
     effects: {
       grant: (what: string) => `Egyszeri jutalom: ${what}`,
-      produce: (cargo: string, perDay: number) => `Naponta ${perDay} ${cargo} termel`,
+      produce: (cargo: string, perDay: number) => `Termelés: naponta ${perDay} ${cargo}`,
       produceFrom: (cargo: string, perDay: number, used: string, usedPerDay: number) =>
-        `Naponta ${perDay} ${cargo} termel, ennyiből: ${usedPerDay} ${used}`,
+        `Termelés: naponta ${perDay} ${cargo}, ehhez naponta ${usedPerDay} ${used}`,
       attraction: (perDay: number) => `Naponta ${perDay} utassal több a legközelebbi állomáson`,
       boost: (strength: number) => `A közeli állomásokon ${strength * 25}%-kal gyorsabb a rakodás`,
     },
@@ -2310,7 +2310,7 @@ export const HU: Strings = {
       pick: 'Előbb válaszd ki, mit adjon',
     },
     toasts: {
-      surveyed: (name: string) => `Felmérve: ${name}. Nézd meg, mivé lehet`,
+      surveyed: (name: string) => `Felmérve: ${name}. Nézd meg, mi lehet belőle`,
       restored: (name: string) => `Helyreállítva: ${name}`,
       salvaged: (name: string) => `Lebontva: ${name}`,
     },
