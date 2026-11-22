@@ -733,6 +733,7 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 24,
+    quiet: true,
     note: 'the rare landmarks started empty, and the chunks the first load generates get none: a save that old has its land as it is',
     run: (j) => (j.landmarks = j.landmarks ?? { nextId: 1, items: [], skipRoll: true }),
   },

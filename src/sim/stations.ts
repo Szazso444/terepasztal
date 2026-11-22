@@ -386,7 +386,7 @@ export class Station {
   passengerPopulation = 0;
   /**
    * Visitors a day that restored landmarks in reach bring (`LandmarkRegistry.visitorsAt`, set by
-   * `Builder.refreshStationBoosts`): added to the output after the population cap.
+   * `Builder.refreshStationBoosts`): added to the output after the population cap and the season's and biome's multiplier (`tick`).
    */
   visitorsPerDay = 0;
   /** a coaling stage stands within reach (engines refuel from a store) */
@@ -530,9 +530,7 @@ export class Station {
   get productionPerWeek() {
     if (this.closed) return 0;
     const rate = weeklyOutput(this.level, this.terrainFactor);
-    if (this.def.id !== 'station') return rate;
-    const visitors = this.visitorsPerDay * (weekSeconds() / daySeconds());
-    return Math.min(rate, this.passengerPopulation * 0.4) + visitors;
+    return this.def.id === 'station' ? Math.min(rate, this.passengerPopulation * 0.4) : rate;
   }
   /** Picture of the level (`spriteByLevel`): levels above the highest picture repeat it. */
   get spriteLevel() {
@@ -658,7 +656,10 @@ export class Station {
     const produced = this.producedCargo();
     if (!produced.length) return;
     const perType =
-      ((this.productionPerWeek * this.productionMul) / weekSeconds() / produced.length) * gameDt;
+      (((this.productionPerWeek * this.productionMul) / weekSeconds() +
+        this.visitorsPerDay / daySeconds()) /
+        produced.length) *
+      gameDt;
     if (this.outlet) {
       for (const c of produced) this.outlet.add(c, perType);
       return;

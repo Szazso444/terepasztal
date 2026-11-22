@@ -226,8 +226,7 @@ export class LandmarkRegistry implements LandmarkEffects {
     delete i.pick;
     delete i.delivered;
     i.path = 'salvage';
-    this.enter(i, 'salvaged');
-    this.settle(i, def.salvage.effect);
+    this.enter(i, 'salvaged', def.salvage.effect);
     return { ok: true };
   }
   /** Give a restore up: back to surveyed, what was delivered is kept by no one. */
@@ -302,8 +301,7 @@ export class LandmarkRegistry implements LandmarkEffects {
   private tryComplete(item: LandmarkItem, def: LandmarkDef) {
     if (item.stage !== 'restoring' || !this.delivered(item, def) || !this.conditionHolds(def))
       return;
-    this.enter(item, 'restored');
-    this.settle(item, effectOf(item, def));
+    this.enter(item, 'restored', effectOf(item, def));
   }
 
   // ------------------------------------------------------------------ effects
@@ -409,10 +407,15 @@ export class LandmarkRegistry implements LandmarkEffects {
   }
 
   // ------------------------------------------------------------------ stages
-  private enter(item: LandmarkItem, stage: LandmarkStage) {
+  /**
+   * Move to the stage. A one-time grant of `effect` is paid, and `paid` set, before anything is
+   * announced, so a handler that saves on the event writes the item paid.
+   */
+  private enter(item: LandmarkItem, stage: LandmarkStage, effect?: LandmarkEffect) {
     const before = item.stage;
     item.stage = stage;
     item.stageDay = this.d.clock.day;
+    this.settle(item, effect);
     if (stage === 'spotted' || stage === 'surveyed' || stage === 'restored' || stage === 'salvaged')
       this.onEvent?.({ kind: stage, item });
     if (stage === 'restored' || before === 'restored') this.onEffectsChanged?.();

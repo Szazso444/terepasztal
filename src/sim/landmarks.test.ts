@@ -434,10 +434,30 @@ describe('the effects', () => {
     const depot = new Station('depot', 21, 21);
     const all = [farther, nearer, outside, depot];
     expect(all.map((s) => f.reg.visitorsAt(s, all))).toEqual([0, 10, 0, 0]);
-    // the visitors count after the population cap
-    nearer.visitorsPerDay = 10;
-    nearer.passengerPopulation = 0;
-    expect(nearer.productionPerWeek).toBeCloseTo(10 * 7, 6);
+  });
+
+  it('brings its visitors per game day whatever the season or biome multiplier says', () => {
+    for (const mul of [0.3, 1, 1.7]) {
+      const s = new Station('station', 22, 20);
+      s.visitorsPerDay = 10;
+      s.passengerPopulation = 0;
+      s.productionMul = mul;
+      s.tick(daySeconds());
+      expect(s.stored('passengers'), 'multiplier ' + mul).toBeCloseTo(10, 6);
+    }
+  });
+
+  it('writes a grant paid even when a handler saves on the event', () => {
+    for (const stage of ['salvaged', 'restored'] as const) {
+      const f = fixture();
+      const snaps: LandmarksJSON[] = [];
+      f.reg.onEvent = (e) => {
+        if (e.kind === stage) snaps.push(JSON.parse(JSON.stringify(f.reg.toJSON())));
+      };
+      stand(f, stage === 'salvaged' ? 'inverted_manor' : 'flooded_archive', stage);
+      expect(snaps, stage).toHaveLength(1);
+      expect(snaps[0].items[0].paid, stage).toBe(true);
+    }
   });
 
   it('adds nothing where no passenger station is in reach', () => {
