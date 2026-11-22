@@ -66,6 +66,13 @@ type RollOut =
 export class Fleet {
   trains: Train[] = [];
   onDelivery: ((e: DeliveryEvent) => number) | null = null;
+  /**
+   * Set by the game from the landmark registry: how much of the cargo the restoring landmarks in
+   * reach of the station still miss, and the credit of a delivery to them (units credited). Trains
+   * unload and load for that need whatever the station accepts, and credit it before contracts.
+   */
+  landmarkWants: ((station: Station, cargo: string) => number) | null = null;
+  landmarkCredit: ((e: DeliveryEvent) => number) | null = null;
   private occ = new Map<number, number[]>();
   /** set by the game each tick: is a tile inside a live power network? */
   powered: (x: number, y: number) => boolean = () => false;
@@ -773,6 +780,8 @@ export class Fleet {
       builder: this.builder,
       map: this.map,
       onDelivery: (e: DeliveryEvent) => this.onDelivery?.(e) ?? 0,
+      landmarkWants: (s, c) => this.landmarkWants?.(s, c) ?? 0,
+      landmarkCredit: (e) => this.landmarkCredit?.(e) ?? 0,
       spend: (v: number) => (this.economy.money -= v),
       earn: (v: number) => this.economy.earn(v),
       occupied: (x, y, self) => this.occupied(x, y, self),

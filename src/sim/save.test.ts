@@ -207,6 +207,7 @@ describe('the migration registry', () => {
       [9, 'crafting', block],
       [19, 'roads', list],
       [20, 'stores', list],
+      [24, 'landmarks', block],
     ];
     for (let version = SAVE_MIN_VERSION; version < SAVE_VERSION; version++) {
       const j = migrate({ ...oldestSave(), version });
@@ -275,6 +276,7 @@ const DECLARED: Record<keyof Declared<SaveGame>, true> = {
   supply: true,
   people: true,
   roads: true,
+  landmarks: true,
   loadedFrom: true,
   migrationNotes: true,
 };
@@ -3504,8 +3506,8 @@ describe('a file with one field every version has taken out or retyped', () => {
           money: economy.money,
           tier: from < 9 ? Math.min(2, economy.tier) : economy.tier,
         });
-        // what the file held of tickets is gone, whatever the version it came from
-        if (from < SAVE_VERSION) expect(save.economy).not.toHaveProperty('tickets');
+        // what a file older than v24 held of tickets is gone (the step from v23 drops them)
+        if (from < 24) expect(save.economy).not.toHaveProperty('tickets');
         for (const key of ['track', 'stations', 'trains'] as const)
           expect(save[key], key).toHaveLength((file[key] as unknown[]).length);
 
@@ -4735,5 +4737,46 @@ describe('v22 to v23', () => {
     const [train] = migrate(file as SaveGame).trains as { colour: number }[];
     expect(train.colour).toBe(0);
     expect(isTrainColour(train.colour)).toBe(true);
+  });
+});
+
+describe('v24 to v25', () => {
+  it('starts the landmarks empty, with the mark that the first load rolls none', () => {
+    const j = runStep(24, { ...oldestSave(), version: 24 });
+    expect(j.landmarks).toEqual({ nextId: 1, items: [], skipRoll: true });
+  });
+
+  it('keeps landmarks a file already holds', () => {
+    const landmarks = { nextId: 3, items: [] };
+    const file = { ...oldestSave(), version: 24, landmarks } as SaveGame;
+    expect(runStep(24, file).landmarks).toBe(landmarks);
+  });
+
+  it('reaches every version, the oldest included, with the mark', () => {
+    for (let version = SAVE_MIN_VERSION; version < SAVE_VERSION; version++) {
+      const j = migrate({ ...oldestSave(), version });
+      expect(j.landmarks, `from v${version}`).toEqual({ nextId: 1, items: [], skipRoll: true });
+      expect(j.version).toBe(SAVE_VERSION);
+    }
+  });
+
+  it('writes a file of the current version with what it holds, and reads it back as it was', () => {
+    const items = [
+      {
+        id: 4,
+        def: 'inverted_manor',
+        x: 9,
+        y: 11,
+        region: [0, 1] as [number, number],
+        stage: 'salvaged' as const,
+        path: 'salvage' as const,
+        paid: true as const,
+      },
+    ];
+    const parts = { ...fullParts(), landmarks: { nextId: 5, items } };
+    const text = JSON.stringify(buildSave(parts));
+    const back = parseSave(text)!;
+    expect(back.version).toBe(SAVE_VERSION);
+    expect(back.landmarks).toEqual({ nextId: 5, items });
   });
 });

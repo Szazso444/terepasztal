@@ -39,6 +39,7 @@ import { ageOfLevel, levelCap } from './levels';
 import { ageDef, LAST_AGE } from './ages';
 import type { Economy } from './economy';
 import { scaleCost, type ResourceStore, type StoreRegistry } from './stores';
+import type { LandmarkEffects } from './landmarks';
 import {
   buildingDef,
   buildingLevel,
@@ -217,6 +218,12 @@ export class Builder {
    * relaid and which way it moved them
    */
   onReclassed: ((tiles: { x: number; y: number }[], dir: ReclassDir) => void) | null = null;
+
+  /**
+   * What restored landmarks add to the stations in their reach (the game's `LandmarkRegistry`):
+   * loading speed and visitors, read by `refreshStationBoosts`. None until the game sets it.
+   */
+  landmarks: LandmarkEffects | null = null;
 
   constructor(
     readonly map: GameMap,
@@ -1201,7 +1208,9 @@ export class Builder {
         if (def.water) s.waterSupply = true;
         if (def.fuel) s.fuelSupply = true;
       }
-      s.loadBoost = 1 + boost;
+      // a restored landmark's boost comes on top of the decor's limit of two
+      s.loadBoost = 1 + boost + (this.landmarks?.boostAt(s) ?? 0);
+      s.visitorsPerDay = this.landmarks?.visitorsAt(s, this.stations) ?? 0;
     }
   }
 

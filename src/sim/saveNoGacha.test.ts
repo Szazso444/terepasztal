@@ -169,17 +169,22 @@ describe('the step from v23', () => {
     expect('save' in read && read.save.economy.money).toBe(12345);
   });
 
-  it('is quiet: the file loads with no note and no mark of another format', () => {
+  it('is quiet: it adds no note of its own, only the step from v24 tells the file of it', () => {
     expect(step().quiet).toBe(true);
     const j = parseSave(text(v23()))!;
-    expect(j.loadedFrom).toBeUndefined();
-    expect(j.migrationNotes).toBeUndefined();
+    expect(j.migrationNotes).toHaveLength(1);
+    expect(j.migrationNotes?.[0].startsWith('v24→')).toBe(true);
+    // a file written after the step has nothing left to be told
+    const now = parseSave(text(v23({ version: SAVE_QUIET_VERSION })))!;
+    expect(now.loadedFrom).toBeUndefined();
+    expect(now.migrationNotes).toBeUndefined();
   });
 
   it('leaves its note out of what an older file is told, and tells the rest', () => {
     const j = migrate(v23({ version: LAST_GACHA_FORMAT - 1, trains: [{ id: 1 }] }));
     expect(j.loadedFrom).toBe(LAST_GACHA_FORMAT - 1);
-    expect(j.migrationNotes).toHaveLength(1);
+    // the step from v22 and the step from v24; the one from v23 says nothing
+    expect(j.migrationNotes).toHaveLength(2);
     expect(j.migrationNotes?.[0].startsWith(`v${LAST_GACHA_FORMAT - 1}→`)).toBe(true);
     expect(j.migrationNotes?.join(' ')).not.toMatch(/gacha/i);
   });
@@ -247,8 +252,11 @@ describe('the line Continue shows for an old file', () => {
   it('is the line the same save shows in this format', () => {
     const now: SaveGame = { ...v23(), version: SAVE_VERSION };
     delete now.gacha;
-    expect(line(v23())).toEqual(line(now));
-    expect(line(v23()).format).toBeNull();
+    // the step from v23 is quiet: from there the line differs from the current one only by the
+    // note of the step from v24
+    expect(line(v23()).format).toBe(formatNote(LAST_GACHA_FORMAT));
+    expect(line(now).format).toBeNull();
+    expect(line(v23({ version: SAVE_QUIET_VERSION })).format).toBeNull();
   });
 
   it('still marks a file some step has to tell the player about', () => {
@@ -262,6 +270,6 @@ describe('the quiet versions', () => {
   it('start past the last step that has something to tell', () => {
     const told = MIGRATIONS.filter((m) => !m.quiet).map((m) => m.from);
     expect(SAVE_QUIET_VERSION).toBe(Math.max(...told) + 1);
-    expect(SAVE_QUIET_VERSION).toBeLessThanOrEqual(LAST_GACHA_FORMAT);
+    expect(SAVE_QUIET_VERSION).toBeGreaterThan(LAST_GACHA_FORMAT);
   });
 });
