@@ -215,6 +215,7 @@ function partsOf(w: SimWorld, step: SimStep, camera: SaveParts['camera']): SaveP
     houses: w.houses.toJSON(),
     people: w.people.toJSON(),
     roads: w.builder.roads.toJSON(),
+    landmarks: { nextId: 1, items: [] },
   };
 }
 

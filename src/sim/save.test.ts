@@ -134,6 +134,7 @@ function fullParts(): SaveParts {
       [4, 7],
       [4, 8],
     ],
+    landmarks: { nextId: 1, items: [] },
   };
 }
 

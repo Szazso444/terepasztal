@@ -166,6 +166,7 @@ function partsOf(world: SaveParts['world'], supply: SupplyMode = 'simple'): Save
     supply,
     people: { rng: 7 },
     roads: [],
+    landmarks: { nextId: 1, items: [] },
   };
 }
 /**

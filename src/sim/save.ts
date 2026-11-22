@@ -140,9 +140,8 @@ export interface SaveParts {
   roads: RoadJSON;
   /**
    * v25: the rare landmarks the world placed and where each stands (`LandmarkRegistry.toJSON`).
-   * Optional until the game writes it; a file without one is a v24 file the step has not reached.
    */
-  landmarks?: LandmarksJSON;
+  landmarks: LandmarksJSON;
 }
 /** The fields every format version since v1 has; the others arrived later and may be missing. */
 type SaveCore =

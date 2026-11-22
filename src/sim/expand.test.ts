@@ -58,6 +58,7 @@ function partsOf(world: SaveParts['world']): SaveParts {
     supply: 'simple',
     people: { rng: 7 },
     roads: [],
+    landmarks: { nextId: 1, items: [] },
   };
 }
 
