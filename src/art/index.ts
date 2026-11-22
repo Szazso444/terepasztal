@@ -8,6 +8,7 @@ import { generateRollingAtlas, generateWagonAtlas } from './rolling';
 import { generateFxAtlas } from './fx';
 import { generateIconsAtlas } from './icons';
 import { generatePeopleAtlas } from './people';
+import { generateLandmarksAtlas } from './landmarks';
 
 /**
  * Atlas groups. A real `/public/assets/<name>.png` + `.json` pair overrides the generator for that
@@ -30,6 +31,8 @@ export const ATLAS_GROUPS: { name: string; generate: AtlasGenerator }[] = [
   { name: 'people', generate: generatePeopleAtlas },
   // Illustrated bridge kit (tools/bridge-kit.mjs); without the file, bridges stay procedural.
   { name: 'bridges', generate: emptyAtlas },
+  // The painted landmarks (tools/landmark-sprites.mjs); plain stand-ins without the file.
+  { name: 'landmarks', generate: generateLandmarksAtlas },
 ];
 
 function emptyAtlas() {
