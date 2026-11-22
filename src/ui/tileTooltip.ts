@@ -21,6 +21,7 @@ import {
 } from '../world/tiles';
 import { Headwater, MAX_DROP, headwaterAt, waterfallAt } from '../world/waterfalls';
 import { biomeTerm, productionLabel } from './biomeTooltip';
+import { shownName } from './landmarkView';
 import { line } from './tooltipContent';
 import {
   dim,
@@ -55,6 +56,8 @@ export interface TileSnapshot {
   /** the kind of each prop on it */
   props: readonly string[];
   powered: boolean;
+  /** the rare landmark whose footprint covers it; the game gives `landmarks.at(x, y)` as it is */
+  landmark?: { def: string; stage: string } | null;
   /** what the ground does to the cost of track here (`Builder.terrainMul`): 0 none can be laid */
   trackCostFactor: number;
   /** the tuned level 1 weekly output the biome's station tooltips print (`StationSnapshot`) */
@@ -173,6 +176,16 @@ export function tileTip(s: TileSnapshot): TipDoc {
     out.push(text(s.decor.name));
     for (const l of s.decor.lines) out.push(line(l));
   }
+  // a hidden landmark is nothing to the player yet; a spotted one is named Unknown
+  if (s.landmark && s.landmark.stage !== 'hidden')
+    out.push(
+      text(
+        STR.landmarks.tooltip(
+          shownName(s.landmark),
+          STR.landmarks.stages[s.landmark.stage] ?? s.landmark.stage,
+        ),
+      ),
+    );
   if (s.props.length) out.push(text(...propsText(s.props)));
   if (s.powered) out.push(line(T.powered));
   if (s.trackCostFactor === 0) out.push(line(T.noTrack));

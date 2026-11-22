@@ -40,7 +40,7 @@ import {
   type Settings,
   type SlotMeta,
 } from '../sim/save';
-import { contentIsCustom } from '../data/content';
+import { contentIsCustom, landmarkDef } from '../data/content';
 import type { Crafting } from '../gacha/crafting';
 import type { Inventory } from '../gacha/inventory';
 import type { Screen, ScreenManager } from './modal';
@@ -79,6 +79,10 @@ import { Toolbar, type Tool } from './toolbar';
 import { toastBottom } from './buildBar';
 import { BuildingPanel } from './buildingPanel';
 import { DecorPanel } from './decorPanel';
+import { LandmarkPanel } from './landmarkPanel';
+import { landmarkName } from './landmarkView';
+import type { LandmarkEvent, LandmarkRegistry } from '../sim/landmarks';
+import type { WindLevel } from '../sim/wind';
 import { AlertBar } from './alertBar';
 import { AlertDesk } from './alertDesk';
 import { AlertPopup } from './alertPopup';
@@ -191,6 +195,12 @@ export interface UiHost {
   selectFieldTrain(t: Train | null): void;
   /** the train picked in the field view */
   readonly selectedTrain: Train | null;
+  /** the rare landmarks the panel reads (a game with none has an empty registry) */
+  readonly landmarks: LandmarkRegistry;
+  /** the weather the landmark panel reads the storm from */
+  readonly weather: { readonly wind: { readonly level: WindLevel } };
+  /** the registry tells the game what happened to a landmark; the panels toast it (#548) */
+  onLandmarkEvent: ((e: LandmarkEvent) => void) | null;
   /** pick a train from anywhere, the overview too, and go to it */
   pickTrain(t: Train): void;
   /** which train the camera follows */
@@ -288,6 +298,7 @@ export interface PlayUi {
   readonly toolbar: Toolbar;
   readonly buildingPanel: BuildingPanel;
   readonly decorPanel: DecorPanel;
+  readonly landmarkPanel: LandmarkPanel;
   readonly outliner: Outliner;
   readonly trainPanel: TrainPanel;
   readonly alerts: AlertDesk;
@@ -619,6 +630,45 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     if (d.build.selectedDecor) d.build.selectDecor(null);
   });
   decorPanel.houses = d.houses;
+  const landmarkPanel = new LandmarkPanel({
+    landmarks: host.landmarks,
+    commands: d.commands,
+    now: () => ({ hour: d.clock.hour, wind: host.weather.wind.level }),
+    confirm: async (title, text, o) => await d.namePrompt.confirm(title, text, o),
+    toast,
+    onClose: () => d.build.selectedLandmark && d.build.selectLandmark(null),
+  });
+  d.build.landmarks = host.landmarks;
+  // a landmark is told by a toast when it is surveyed, restored or salvaged; the survey also
+  // leaves a notice that points at the site
+  host.onLandmarkEvent = (e) => {
+    if (e.kind !== 'granted') {
+      const name = landmarkName(e.item.def);
+      const T = STR.landmarks.toasts;
+      if (e.kind === 'surveyed') {
+        toast(T.surveyed(name));
+        const def = landmarkDef(e.item.def);
+        d.notices.push(
+          {
+            key: `landmark:${e.item.id}:surveyed`,
+            kind: 'info',
+            type: 'note',
+            text: STR.landmarks.notice(name),
+            // the toast above says it
+            toast: null,
+            target: {
+              kind: 'tile',
+              x: e.item.x + Math.floor((def?.w ?? 1) / 2),
+              y: e.item.y + Math.floor((def?.d ?? 1) / 2),
+            },
+          },
+          180,
+        );
+      } else if (e.kind === 'restored') toast(T.restored(name), 'good');
+      else if (e.kind === 'salvaged') toast(T.salvaged(name), 'good');
+    }
+    if (landmarkPanel.item) landmarkPanel.render();
+  };
   const signalGuide = new SignalGuideScreen(d.settings, () => host.applySettings());
   decorPanel.onSignalGuide = () => d.screens.toggle(signalGuide);
   decorPanel.onSignalBlock = (dec) => host.highlightSignalBlock(dec);
@@ -680,6 +730,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       d.build.setTool({ kind: 'none' });
       lookAt(s.cx + 0.5, s.cy + 0.5);
       d.build.selectDecor(null);
+      d.build.selectLandmark(null);
       d.build.select(s);
     },
     onWorks: (b) => {
@@ -687,6 +738,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
       lookAt(b.x + 0.5, b.y + 0.5);
       d.build.select(null);
       d.build.selectDecor(null);
+      d.build.selectLandmark(null);
       d.build.selectBuilding(b);
     },
     onContract: (id) => {
@@ -772,6 +824,11 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     if (b) buildingPanel.open(b);
     else if (buildingPanel.building) buildingPanel.close();
   };
+  d.build.onSelectLandmark = (l) => {
+    if (l) host.selectFieldTrain(null);
+    if (l) landmarkPanel.open(l);
+    else if (landmarkPanel.item) landmarkPanel.close();
+  };
   d.build.onSelectDecor = (dec) => {
     if (dec) host.selectFieldTrain(null);
     if (dec) decorPanel.open(dec);
@@ -813,6 +870,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     stationPanel.render();
     buildingPanel.render();
     decorPanel.render();
+    landmarkPanel.render();
     outliner.update(0, true);
     trainPanel.update(0, true);
   };
@@ -1112,6 +1170,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     toolbar.root,
     buildingPanel.root,
     decorPanel.root,
+    landmarkPanel.root,
     d.toasts.root,
     d.tooltip.root,
     d.tooltip.stackRoot,
@@ -1228,6 +1287,7 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
     toolbar,
     buildingPanel,
     decorPanel,
+    landmarkPanel,
     outliner,
     trainPanel,
     alerts,

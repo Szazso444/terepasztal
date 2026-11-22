@@ -1246,7 +1246,8 @@ html[lang='hu'] .tb-cats .tt-term {
 
 /* ---- the works and decor panels ---- */
 #building-panel,
-#decor-panel {
+#decor-panel,
+#landmark-panel {
   position: absolute;
   left: 8px;
   top: 62px;

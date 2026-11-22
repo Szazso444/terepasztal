@@ -586,3 +586,21 @@ describe('what each terrain description says is true of the rules', () => {
     expect(checked).toBe(LAND.reduce((n, t) => n + (CLAIMS[t].counted?.length ?? 0), 0));
   });
 });
+
+describe('a landmark tile', () => {
+  const lines = (stage: string | null) => {
+    const snap = {
+      ...bare(emptyMap(7, 5, 5, Terrain.Grass), 2, 2),
+      landmark: stage ? { def: 'bellkeepers_refuge', stage } : null,
+    };
+    return tileTip(snap).map((b) => blockText(b));
+  };
+  it('names the landmark, Unknown while it is spotted, and says nothing while it is hidden', () => {
+    const L = STR.landmarks;
+    expect(lines('surveyed')).toContain(L.tooltip(L.names.bellkeepers_refuge, L.stages.surveyed));
+    expect(lines('restored')).toContain(L.tooltip(L.names.bellkeepers_refuge, L.stages.restored));
+    expect(lines('spotted')).toContain(L.tooltip(L.unknown, L.stages.spotted));
+    expect(lines('hidden')).toEqual(lines(null));
+    expect(lines(null).join(' ')).not.toContain(L.names.bellkeepers_refuge);
+  });
+});
