@@ -1593,6 +1593,7 @@ export class Game implements UiHost {
             height: b.deck,
             raised,
             narrow,
+            gauge: span && piece && !piece.cls2 ? piece.cls : undefined,
           });
           continue;
         }
