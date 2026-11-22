@@ -1,4 +1,3 @@
-import { locoFrame, wagonFrame } from '../art/frames';
 import type { AtlasRegistry } from '../engine/atlas';
 import type { Builder } from '../sim/build';
 import { cargoName } from '../sim/cargo';
@@ -9,6 +8,7 @@ import type { Train } from '../sim/trains';
 import { STR } from '../strings';
 import { buildIcon } from './buildIcons';
 import { btn, el } from './dom';
+import { vehicleArt } from './economyParts';
 import { sectionHeader } from './kit';
 import { vehicleLabels } from './labels';
 import { classBadge } from './lineBadge';
@@ -354,15 +354,15 @@ export class TrainPanel {
   private drawConsist(t: Train) {
     const P = STR.trainPanel;
     const a = this.h.atlas;
-    const car = (frame: string, title: string, cargo: string | null) => {
+    const car = (defId: string, title: string, cargo: string | null) => {
       const c = el('span', { class: 'tp-car', title });
-      c.append(spriteImg(a, frame, 1, 'sprite-preview'));
+      c.append(vehicleArt(a, defId, 1));
       if (cargo) c.append(this.icon(cargo));
       return c;
     };
     const strip = el('div', { class: 'tp-strip' });
-    for (const l of t.locos) strip.append(car(locoFrame(a, l.def, 3), l.def.name, null));
-    for (const w of t.wagons) strip.append(car(wagonFrame(a, w.def, 0), w.def.name, w.cargo));
+    for (const l of t.locos) strip.append(car(l.def.id, l.def.name, null));
+    for (const w of t.wagons) strip.append(car(w.def.id, w.def.name, w.cargo));
     if (!t.wagons.length) strip.append(el('span', { class: 'tp-none', text: P.noWagons }));
     const ph = t.physics;
     const out: HTMLElement[] = [strip, this.section(P.engine)];
