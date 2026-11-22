@@ -29,6 +29,7 @@ export interface BridgeSurfaces {
   woodGrain: Texture;
 }
 export interface BridgeTile extends BridgeSite {
+  /** Raised above the ground or water under it (BridgeSite.raised). */
   water: boolean;
   /** World px up of the water's surface where it stands above level 0; else `WATERLINE`. */
   waterline?: number;
@@ -58,6 +59,9 @@ const SCALE = {
 /** World px along a tile edge. */
 const EDGE = Math.hypot(32, 16);
 const LIGHT = { top: 0xffffff, left: 0xdedad2, right: 0xaaa49a } as const;
+/** The colour of a raised deck's shadow, and of the wet foot of a support in water. */
+const SHADOW = 0x10262b,
+  WET = 0x1d4652;
 /**
  * Faces are split (tile units) every GRADE, so they follow the deck's grade; every STEP where the
  * ground in front comes within NEAR_PX of their foot and may cut them (Painter.horizon); and where
@@ -399,6 +403,7 @@ export function bridgeTileMeshes(tile: BridgeTile, plan: BridgePlan, surfaces: B
   const t = onAbutments(tile, plan),
     under = new Container(),
     near = new Container(),
+    cover = new Container(),
     p = new Painter(t, surfaces),
     stone = t.material === 'stone',
     top: Surface = stone ? 'stoneTop' : 'woodTop',
@@ -432,6 +437,7 @@ export function bridgeTileMeshes(tile: BridgeTile, plan: BridgePlan, surfaces: B
     supports.push({ depth: t.x + t.y + w, draw: () => trestle(p, w, underside, feet) });
   supports.sort((a, b) => a.depth - b.depth);
   p.target = under;
+  if (t.raised && !t.approach) under.addChild(deckShadow(p, plan.deck));
   for (const s of supports) {
     s.draw();
     p.flush();
@@ -445,8 +451,32 @@ export function bridgeTileMeshes(tile: BridgeTile, plan: BridgePlan, surfaces: B
   for (const r of plan.parapets.filter((r) => !r.near)) parapet(p, r, deck);
   p.target = near;
   for (const r of plan.parapets.filter((r) => r.near)) parapet(p, r, deck);
-  under.cullable = near.cullable = true;
-  return { under, near };
+  // Over the rail's ballast shoulder: the deck surface again, a hair above it.
+  p.target = cover;
+  p.part = 'deck';
+  const over: Z = (x, y) => deck(x, y) + 0.2;
+  for (const r of plan.covers) prism(p, r, over, over, side, top, !stone);
+  p.flush();
+  under.cullable = near.cullable = cover.cullable = true;
+  return { under, near, cover };
+}
+
+/** A raised deck's shadow on the ground or water under it: how high it stands shows there. */
+function deckShadow(p: Painter, r: Rect) {
+  const t = p.t,
+    g = new Graphics(),
+    corners = [
+      [r.x0, r.y0],
+      [r.x1, r.y0],
+      [r.x1, r.y1],
+      [r.x0, r.y1],
+    ].flatMap(([dx, dy]) => {
+      // each corner on the ground or water under it
+      const s = screen(t.x + dx, t.y + dy, p.ground(t.x + dx, t.y + dy));
+      return [s.x, s.y];
+    });
+  g.poly(corners).fill({ color: SHADOW, alpha: 0.22 });
+  return g;
 }
 
 /**
@@ -689,8 +719,8 @@ function waterFade(feet: Foot[], surface: number) {
         b2 = screen(f.x + f.half, f.y, z - 2),
         c2 = screen(f.x + f.half, f.y - depth, z - 2);
       g.poly([a.x, a.y, b.x, b.y, c.x, c.y, c2.x, c2.y, b2.x, b2.y, a2.x, a2.y]).fill({
-        color: 0x2d6f80,
-        alpha: 0.15 + k * 0.15,
+        color: WET,
+        alpha: 0.1 + k * 0.12,
       });
     }
   }

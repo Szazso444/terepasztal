@@ -48,6 +48,16 @@ export interface BridgeSite {
   raised?: boolean;
   /** It carries narrow gauge only: its free edges pull in (`NARROW`). */
   narrow?: boolean;
+  /**
+   * Half the rail's bed across a rail span, in tiles: the deck is laid over the bed's ragged
+   * shoulder out to its edges (`BridgePlan.covers`), so no ballast lies loose on it.
+   */
+  bed?: number;
+  /**
+   * Not a platform: the ramp's rail where it stands over lower ground beside a raised deck. It is
+   * carried on solid masonry or timber the deck's width, with no parapets (`approachPlan`).
+   */
+  approach?: boolean;
 }
 
 /** Per edge, in iso Dir order (N -y, E +x, S +y, W -x): it meets a bridge tile it merges with. */
@@ -159,6 +169,8 @@ export interface BridgePlan {
   arches: number[];
   /** Masonry between a span's arched walls at each tile end: the bulk of its piers. */
   blocks: Rect[];
+  /** Deck surface laid again over the rail's ballast shoulder, out to the deck's edges. */
+  covers: Rect[];
   /**
    * The deck's end on its +x (`e`) and +y (`s`) edge rests on the bank's abutment, so its end face
    * is not drawn: over water, where the track leaves the bridge for a tile it does not merge with.
@@ -173,15 +185,15 @@ export const ACROSS = {
   deck: 0.5,
   /** Inner face of a parapet; its outer face is the deck edge. */
   parapet: 0.44,
-  /** A lone bridge's outer supports. */
-  support: { pier: 0.38, trestle: 0.38, arch: 0.44 },
+  /** A lone bridge's outer supports; arched walls stand flush with the deck edge. */
+  support: { pier: 0.38, trestle: 0.38, arch: 0.5 },
 } as const;
 export const PARAPET = ACROSS.parapet;
 /** The same under narrow gauge: a bridge is as wide as its track. */
 export const NARROW = {
   deck: 0.3,
   parapet: 0.24,
-  support: { pier: 0.2, trestle: 0.2, arch: 0.24 },
+  support: { pier: 0.2, trestle: 0.2, arch: 0.3 },
 } as const;
 /** Along offset and half thickness of the stone piers under a span over land. */
 export const PIER_AT = 0.38;
@@ -189,6 +201,8 @@ const PIER_HALF = 0.07;
 /** Half the opening of a tile's arch, and the masonry left at each tile end: a pier's half. */
 export const ARCH_OPEN = 0.36;
 const PIER_LENGTH = 0.5 - ARCH_OPEN;
+/** How far an abutment reaches in under a deck's free end, in tiles. */
+export const ABUTMENT_DEPTH = 0.14;
 /** Half side of a pad's corner pier. */
 const PAD_PIER = { stone: 0.09, wood: 0.045 } as const;
 
@@ -238,6 +252,7 @@ export function bridgePlan(site: BridgeSite, joins: Joins, water: boolean): Brid
     },
     abutment = (d: number) => water && !joins[d] && !!site.open?.[d],
     abutments = { e: abutment(E), s: abutment(S) };
+  if (site.approach) return approachPlan(site, across);
   if (site.axis === null) return padPlan(site, joins, deck, stone, abutments, across);
   const axis = site.axis,
     // The span's far and near sides: -y and +y along x, -x and +x along y.
@@ -249,8 +264,31 @@ export function bridgePlan(site: BridgeSite, joins: Joins, water: boolean): Brid
       trestles: [],
       arches: [],
       blocks: [],
+      covers: [],
       abutments,
     };
+  // Where the line or road runs on off a free end, the deck rests on an abutment the deck's width
+  // there, cut to the bank: it never floats over the ground it meets.
+  for (const [d, l] of [
+    [axis === 1 ? W : N, -0.5],
+    [axis === 1 ? E : S, 0.5 - ABUTMENT_DEPTH],
+  ] as const)
+    if (!joins[d] && site.open?.[d])
+      plan.blocks.push(
+        spanRect(
+          axis,
+          l,
+          l + ABUTMENT_DEPTH,
+          joins[far] ? -0.5 : -across.deck,
+          joins[near] ? 0.5 : across.deck,
+        ),
+      );
+  // the deck again over the ballast's shoulder, out to a parapet's inner face or the seam
+  if (site.bed !== undefined && site.carries !== 'road')
+    plan.covers = [
+      spanRect(axis, -0.5, 0.5, joins[far] ? -0.5 : -across.parapet, -site.bed),
+      spanRect(axis, -0.5, 0.5, site.bed, joins[near] ? 0.5 : across.parapet),
+    ];
   const side = across.deck,
     wall = across.parapet;
   if (!joins[far]) plan.parapets.push({ ...spanRect(axis, -0.5, 0.5, -side, -wall), near: false });
@@ -305,5 +343,28 @@ function padPlan(
         cy = sy > 0 && joins[S] ? 0.5 : sy * across.support.pier;
       piers.push({ x0: cx - h, x1: cx + h, y0: cy - h, y1: cy + h });
     }
-  return { deck, parapets, piers, trestles: [], arches: [], blocks: [], abutments };
+  return { deck, parapets, piers, trestles: [], arches: [], blocks: [], covers: [], abutments };
+}
+
+/**
+ * A ramp tile beside a raised deck: one solid block the deck's width under the rail, cut to the
+ * ground, and the deck surface over the ballast shoulder as on the deck it leads to.
+ */
+function approachPlan(site: BridgeSite, across: typeof ACROSS | typeof NARROW): BridgePlan {
+  const axis = site.axis ?? 1,
+    deck = spanRect(axis, -0.5, 0.5, -across.deck, across.deck),
+    bed = site.bed ?? across.parapet;
+  return {
+    deck,
+    parapets: [],
+    piers: [],
+    trestles: [],
+    arches: [],
+    blocks: [deck],
+    covers: [
+      spanRect(axis, -0.5, 0.5, -across.deck, -bed),
+      spanRect(axis, -0.5, 0.5, bed, across.deck),
+    ],
+    abutments: { e: false, s: false },
+  };
 }

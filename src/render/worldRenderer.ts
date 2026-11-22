@@ -41,8 +41,10 @@ import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import { clearedByPaving, scatterFor } from './scatter';
-import { levelAt } from '../world/elevation';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
+import { BED_SHOULDER } from '../art/trackIllustrated';
+import type { TrackClass } from '../world/track';
+import { levelAt, MAX_LEVEL } from '../world/elevation';
 import { DEFAULT_RELIEF } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
 import { doorstepChanges, pavingDoorsteps, type PavingDoor } from './townPaving';
@@ -66,6 +68,7 @@ import {
   roadDeckSamples,
   type BridgeCarries,
   type BridgeSite,
+  type Joins,
 } from './bridgeLayout';
 import { HarvestHighlight } from './harvestHighlight';
 import { groundOf as groundDataOf, type FrameGround } from '../art/buildingGround';
@@ -97,6 +100,8 @@ export type BridgeStyle = 'textured' | 'kit' | 'procedural';
 export type TexturedBridge = Omit<BridgeSite, 'deck'> & {
   /** The height stored for the deck, in levels; absent where it is automatic. */
   height?: number;
+  /** The line of the rail on a rail deck: how wide its ballast shoulder lies. */
+  gauge?: TrackClass;
   /** Rail, or a road where the platform has a road and no rail (bridgeSpan's road case). */
   carries: BridgeCarries;
   /** Over water: supports stand in it, and the deck never sinks below the waterline's. */
@@ -1480,7 +1485,10 @@ export class WorldRenderer {
       return false;
     }
   }
-  private texturedParts = new Map<number, { key: string; under: Container; near: Container }>();
+  private texturedParts = new Map<
+    number,
+    { key: string; under: Container; near: Container; cover: Container }
+  >();
   /** Tiles behind a raised deck, on which nothing that grows is drawn (`setRaisedDecks`). */
   private behindDecks = new Set<number>();
   /** The top of each raised deck in world px up, by tile: what the pointer and ghosts stand on. */
@@ -1533,36 +1541,50 @@ export class WorldRenderer {
         ? tiles.map((t) =>
             roadDecks.has(idx(this.map, t.x, t.y))
               ? { ...t, open: this.roadDeckEnds(t), deck: this.roadDeckProfile(t, roadDecks) }
-              : { ...t, deck: this.deckProfile(t.x, t.y, t.axis, t.water, t.height) },
+              : {
+                  ...t,
+                  deck: this.deckProfile(t.x, t.y, t.axis, t.water, t.height),
+                  bed: t.gauge ? BED_SHOULDER[t.gauge] : undefined,
+                },
           )
         : [],
       joins = bridgeJoins(sites, this.map.w),
       ground = (tx: number, ty: number) => this.bridgeGround(tx, ty),
-      keep = new Set<number>();
-    for (const site of sites) {
-      const k = idx(this.map, site.x, site.y),
-        j = joins.get(k)!,
-        // Everything the meshes depend on, to a tenth of a pixel: the ground is sampled under
-        // the tile and in front of it, where it can hide the tile's faces, and the water painted
-        // there is given by what it is painted from.
-        key = JSON.stringify([
-          site.material,
-          site.carries,
-          site.axis,
-          site.water,
-          site.raised,
-          site.narrow,
-          site.level,
-          site.open,
-          j,
-          site.deck.map((z) => Math.round(z * 10)),
-          GROUND_SAMPLES.map(([dx, dy]) => Math.round(ground(site.x + dx, site.y + dy) * 10)),
-          this.bridgeWaterKey(site.x, site.y),
-        ]);
+      keep = new Set<number>(),
+      // a ramp's tiles beside a raised deck, keyed past the map's own tiles
+      approaches = this.approachSites(sites),
+      plans = [
+        ...sites.map((s) => [idx(this.map, s.x, s.y), s, joins.get(idx(this.map, s.x, s.y))!]),
+        ...approaches.map((s) => [
+          idx(this.map, s.x, s.y) + this.map.w * this.map.h,
+          s,
+          [false, false, false, false],
+        ]),
+      ] as [number, BridgeSite & TexturedBridge, Joins][];
+    for (const [k, site, j] of plans) {
+      // Everything the meshes depend on, to a tenth of a pixel: the ground is sampled under
+      // the tile and in front of it, where it can hide the tile's faces, and the water painted
+      // there is given by what it is painted from.
+      const key = JSON.stringify([
+        site.material,
+        site.carries,
+        site.axis,
+        site.water,
+        site.raised,
+        site.narrow,
+        site.bed,
+        site.approach,
+        site.level,
+        site.open,
+        j,
+        site.deck.map((z) => Math.round(z * 10)),
+        GROUND_SAMPLES.map(([dx, dy]) => Math.round(ground(site.x + dx, site.y + dy) * 10)),
+        this.bridgeWaterKey(site.x, site.y),
+      ]);
       keep.add(k);
       const old = this.texturedParts.get(k);
       if (old?.key === key) continue;
-      if (old) for (const c of [old.under, old.near]) destroyBridgeParts(c);
+      if (old) for (const c of [old.under, old.near, old.cover]) destroyBridgeParts(c);
       const [from, to] = GROUND_BOX,
         parts = bridgeTileMeshes(
           {
@@ -1578,14 +1600,45 @@ export class WorldRenderer {
       parts.near.zIndex = depthKey(site.x, site.y, 35);
       this.piers.addChild(parts.under);
       this.objects.addChild(parts.near);
+      this.crossings.addChild(parts.cover);
       this.texturedParts.set(k, { key, ...parts });
     }
     for (const [k, old] of this.texturedParts)
       if (!keep.has(k)) {
-        for (const c of [old.under, old.near]) destroyBridgeParts(c);
+        for (const c of [old.under, old.near, old.cover]) destroyBridgeParts(c);
         this.texturedParts.delete(k);
       }
-    this.refreshDecks(keep);
+    this.refreshDecks(new Set([...keep].filter((k) => k < this.map.w * this.map.h)));
+  }
+  /**
+   * The ramp's tiles beside each raised rail span (`BridgeSite.approach`): along its axis, past
+   * its ends, every tile whose rail stands over the ground under it, until the rail meets the
+   * ground or leaves the line.
+   */
+  private approachSites(sites: readonly (BridgeSite & TexturedBridge)[]) {
+    const out: (BridgeSite & TexturedBridge)[] = [],
+      seen = new Set(sites.map((s) => idx(this.map, s.x, s.y)));
+    for (const s of sites) {
+      if (!s.raised || s.axis === null || s.carries === 'road') continue;
+      const dir = s.axis === 1 ? 'x' : 'y';
+      for (const way of [-1, 1])
+        for (let n = 1; n <= MAX_LEVEL + 1; n++) {
+          const x = s.x + (s.axis === 1 ? way * n : 0),
+            y = s.y + (s.axis === 1 ? 0 : way * n);
+          if (!inBounds(this.map, x, y)) break;
+          const k = idx(this.map, x, y),
+            tile = this.railBeds.get(k),
+            bed = tile?.axis === dir ? tile : tile?.cross?.axis === dir ? tile.cross : undefined;
+          if (seen.has(k) || !bed || bed.bridge) break;
+          const deck = this.deckProfile(x, y, s.axis, false),
+            // the end toward the deck: where the ramp stands highest over its ground
+            end = (s.axis === 1 ? x : y) - way * 0.5;
+          if (railLevel(bed, end) <= levelAt(this.map, x, y) + 0.05) break;
+          seen.add(k);
+          out.push({ ...s, x, y, deck, approach: true, raised: false, open: undefined });
+        }
+    }
+    return out;
   }
   /**
    * The edges of road deck `t` its road leaves through (N, E, S, W): its ends along its axis where
