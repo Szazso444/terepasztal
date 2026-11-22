@@ -98,7 +98,7 @@ Dealing with an event pays: the paid or project choice gives back more than the 
 
 ## 5. The twelve events
 
-"Income" is the average income per day over the last 4 days, at least `EVENT_MIN_INCOME`. A
+"Income" is the average income per day over the last 4 days, at least `EVENT_MIN_INCOME` (300). A
 project is a delivery by train with a deadline (section 7). Numbers are starting values for the
 playtest.
 
@@ -124,21 +124,21 @@ spring.
 
 ### Town life and good news
 
-| Id       | When and where                      | First choice (free)                            | Other choices                                                      |
-| -------- | ----------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------ |
-| noise    | a town of 100+ with track beside it | Ignore it: growth -10 %, season                | Noise wall, 1 day's income: growth +10 %, season                   |
-| fair     | a town of 100+, not winter          | Skip it                                        | Project, 60 food, 2 days: 1 day's income, passengers +50 %, 2 days |
-| auction  | any time, income above the minimum  | Pass                                           | Buy the lot: 1 day's income of the scarcest good, at half price    |
-| settlers | 2 or more towns                     | Town A: growth +30 %, season                   | Town B: the same                                                   |
+| Id       | When and where                      | First choice (free)                            | Other choices                                                            |
+| -------- | ----------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------ |
+| noise    | a town of 100+ with track beside it | Ignore it: growth -10 %, season                | Noise wall, 1 day's income: growth +10 %, season                         |
+| fair     | a town of 100+, not winter          | Skip it                                        | Project, 60 food, 2 days: 1 day's income, passengers +50 %, 2 days       |
+| auction  | any time, at the first depot        | Pass                                           | Buy the lot: 1 day's income of the scarcest good, at half its base price |
+| settlers | 2 or more towns                     | Town A: growth +30 %, season                   | Town B: the same                                                         |
 | harvest  | autumn; at least one farm           | no choice: all farms +20 % to the season's end |
 
 ### Finds, when a chunk is bought
 
-| Id       | Where                        | First choice (free)                             | Other choices                                                 |
-| -------- | ---------------------------- | ----------------------------------------------- | ------------------------------------------------------------- |
-| trackbed | any chunk                    | no choice: iron and stone worth 1 day's income  |
-| lode     | a chunk with rock or hills   | Keep it: its quarries and mines +15 %, for good | Sell the rights: 1 day's income                               |
-| ruin     | a chunk with a town in reach | Leave it                                        | Dig, 1.5 days' income: that town's passengers +20 %, for good |
+| Id       | Where                        | First choice (free)                                                          | Other choices                                                 |
+| -------- | ---------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| trackbed | any chunk                    | no choice: iron and stone worth 1 day's income, as far as the store has room |
+| lode     | a chunk with rock or hills   | Keep it: its quarries and mines +15 %, for good                              | Sell the rights: 1 day's income                               |
+| ruin     | a chunk with a town in reach | Leave it                                                                     | Dig, 1.5 days' income: that town's passengers +20 %, for good |
 
 ## 6. Notifications
 
@@ -164,7 +164,8 @@ Three rows join the Notifications screen, after `goal`:
 A project is a contract, so it needs no new delivery code, panel or train dispatch:
 
 - `ContractBoard` gets a project contract: active at once, with a deadline, tied to its event. It
-  takes the cargo, amount and destination from the event, and an origin from `pairs()`.
+  takes the cargo and amount from the event. Its destination is the station nearest the site that
+  accepts the cargo, and its origin comes from `pairs()`.
 - It shows in the Contracts screen with a mark of its own, and does not count toward `activeFull`.
 - A train is dispatched as for any contract. With no pair that can carry the cargo there, the choice
   is grey, with the reason.
@@ -193,19 +194,33 @@ skips those chunks.
   effects, the chain follow-ups, the memory and the log; it picks events, applies choices and
   answers `productionMul`, `passengerMul` and `growthMul`.
 - `src/sim/eventSites.ts`: the site finders (`river`, `hills`, `slope`, `farmChunk`, `town`, `towns`,
-  `chunkRock`, `chunkTown`, `anywhere`). Pure functions of the world; a world with no such place
-  gives null.
+  `depot`, `chunkRock`, `chunkTown`). Pure functions of the world; a world with no such place gives
+  null. Every site is a place in the world, so every Decide item has somewhere to go.
 - `src/sim/step.ts`: at a new day, in play mode with `ctx.events`, one call to the desk. The
   multipliers go in where the famine multiplier and the catchment already are.
 - `src/sim/notices.ts`: open cases become notices with a `target`, and `Game.focusNotice` does the
   rest.
-- `src/ui/eventScreen.ts`, `src/ui/situationsScreen.ts`: on the kit and the modal frame. Event is
-  frame M, Situations frame M.
+- `src/ui/eventScreen.ts`, `src/ui/situationsScreen.ts`: on the kit and the modal frame, both size M.
 - `Game.buyChunk`: one call for the discovery. Hub changes stay wiring.
 - Text is `STR.events` in `src/strings.ts` and in `src/data/strings.hu.ts`. Town names are filled in
   at show time, so the save holds ids, not sentences.
-- `payEvent` and `giveEvent` are the only two functions that move goods. Resource modes (#306)
-  changes where goods live, and only these two follow it.
+
+### Paying and giving
+
+`payEvent` and `giveEvent` are the only two functions that move goods. Resource modes (#306) changes
+where goods live, and only these two follow it. The rules below were agreed with the balance work on
+2026-10-31.
+
+- **Which store:** `stores.selected`, which is the global stock on Easy and Normal and the selected
+  store on Hard. An event tied to a place uses `stores.nearest(x, y)[0]` on Hard.
+- **Paying goods:** `store.spend(cost)`, all or nothing. False means the choice is grey. Event costs
+  never go through the market.
+- **Giving goods:** `store.add(id, n)` stops at the cap and the rest would be lost, so the desk
+  checks `cap - get` first and gives what fits; the text says how much came.
+- **Money:** `economy.spend(v)`, never `economy.charge(v)`, which can bankrupt.
+- **The auction:** its good is the scarcest in `stores.selected`, its price half of
+  `cargoDef(id).price`. The market price climbs in a shortage, which is exactly when the auction is
+  wanted.
 
 ## 10. Determinism, saves and tests
 
@@ -218,8 +233,9 @@ Weather, contracts and walkers keep their own streams untouched.
 multiplier is exactly 1 with no effect running, so the digests do not move. If they do, that is a
 bug in this work, not a number to update.
 
-**Saves.** One new top-level key, `events`, in `KNOWN_SAVE_KEYS`, with the next free `SAVE_VERSION`
-and a migration step that fills in the empty state. The log keeps the last 50 entries.
+**Saves.** One new top-level key, `events`, in `KNOWN_SAVE_KEYS`, with the `SAVE_VERSION` that is
+next free at merge (#624, track wear and resource modes want numbers too) and a migration step that
+fills in the empty state. The log keeps the last 50 entries.
 
 **Tests**, as invariants over the data, so a new event is covered by being added:
 
