@@ -1821,6 +1821,7 @@ export const HU: Strings = {
       track: 'Sín',
       crafting: 'Gyártás',
       houses: 'Házak',
+      landmarks: 'Nevezetességek',
     },
     customActive: 'Egyéni tartalom aktív',
     shipped: 'Alaptartalom',
