@@ -891,8 +891,10 @@ export class WorldRenderer {
       ty = Math.round(y);
     if (tx < 0 || ty < 0 || tx >= this.map.w || ty >= this.map.h) return 0;
     const i = idx(this.map, tx, ty);
-    if (this.map.terrain[i] === Terrain.Mountain) return -2 * ELEV_PX;
-    return this.map.terrain[i] === Terrain.Hill && !this.flattened.has(i) ? -ELEV_PX : 0;
+    // high ground stands at the levels the rail profile reads, so track sits at its own height
+    const t = this.map.terrain[i];
+    if (t === Terrain.Mountain || t === Terrain.Rock) return -levelAt(this.map, tx, ty) * ELEV_PX;
+    return t === Terrain.Hill && !this.flattened.has(i) ? -ELEV_PX : 0;
   }
 
   private buildProps() {
@@ -1359,61 +1361,67 @@ export class WorldRenderer {
   private propTint = 0xffffff;
   private refreshSummits() {
     for (let y = 0; y < this.map.h; y++)
-      for (let x = 0; x < this.map.w; x++) {
-        if (!this.isBuilt(x, y)) continue;
-        const k = idx(this.map, x, y),
-          show =
-            this.landscape.active && this.landscape.isPainted(x, y) && this.landscape.summit(x, y);
-        let s = this.summitSprites.get(k);
-        if (!show) {
-          s?.destroy();
-          this.summitSprites.delete(k);
-          continue;
-        }
-        const key = `terrain/mountain_${this.map.variant[k] % 3}`,
-          f = this.atlas.get(key),
-          style = this.landscape.style,
-          matched = style.summitMatch !== undefined,
-          // With a match set, its rock lit like the ground it stands on (the painter's height
-          // light) and the season's tint baked in, snow taking its share of it as the ground's
-          // snow does, so a cap is no brighter than the snow round it.
-          texture = this.surfaces.summit(
-            key,
-            f,
-            style.summitMatch ?? 0,
-            matched ? heightFactor(levelAt(this.map, x, y), style.heightLight ?? 0) : 1,
-            matched ? this.groundTint : 0xffffff,
-          );
-        if (s) s.texture = texture;
-        else {
-          s = new Sprite({ texture, cullable: true });
-          s.anchor.set(f.anchorX, f.anchorY);
-          s.scale.set(1.05 + hash2(x + this.map.originX, y + this.map.originY, 27) * 0.3);
-          s.zIndex = depthKey(x, y, 2);
-          s.renderable = !this.glassOn;
-          this.objects.addChild(s);
-          this.summitSprites.set(k, s);
-        }
-        const p = this.surfacePoint(x, y);
-        s.position.set(p.x, p.y);
-        setOwnTint(s, this.summitTint());
-      }
-    this.clearPeaks();
+      for (let x = 0; x < this.map.w; x++) this.refreshSummit(x, y);
+  }
+  /** The summit of tile (x, y): a peak gives way to track, and comes back when the track goes. */
+  private refreshSummit(x: number, y: number) {
+    if (!this.isBuilt(x, y)) return;
+    const k = idx(this.map, x, y),
+      show =
+        !this.trackFrames.has(k) &&
+        this.landscape.active &&
+        this.landscape.isPainted(x, y) &&
+        this.landscape.summit(x, y);
+    let s = this.summitSprites.get(k);
+    if (!show) {
+      s?.destroy();
+      this.summitSprites.delete(k);
+      return;
+    }
+    const key = `terrain/mountain_${this.map.variant[k] % 3}`,
+      f = this.atlas.get(key),
+      style = this.landscape.style,
+      matched = style.summitMatch !== undefined,
+      // With a match set, its rock lit like the ground it stands on (the painter's height
+      // light) and the season's tint baked in, snow taking its share of it as the ground's
+      // snow does, so a cap is no brighter than the snow round it.
+      texture = this.surfaces.summit(
+        key,
+        f,
+        style.summitMatch ?? 0,
+        matched ? heightFactor(levelAt(this.map, x, y), style.heightLight ?? 0) : 1,
+        matched ? this.groundTint : 0xffffff,
+      );
+    if (s) s.texture = texture;
+    else {
+      s = new Sprite({ texture, cullable: true });
+      s.anchor.set(f.anchorX, f.anchorY);
+      s.scale.set(1.05 + hash2(x + this.map.originX, y + this.map.originY, 27) * 0.3);
+      s.zIndex = depthKey(x, y, 2);
+      s.renderable = !this.glassOn;
+      this.objects.addChild(s);
+      this.summitSprites.set(k, s);
+    }
+    const p = this.surfacePoint(x, y);
+    s.position.set(p.x, p.y);
+    setOwnTint(s, this.summitTint());
+    s.visible = !this.peakCleared(x, y);
   }
   /** No peak picture stands in a cutting or right beside a portal. */
   private clearPeaks() {
-    const { w } = this.map,
-      under = this.underground,
-      portals = under.portals(),
-      open = (x: number, y: number) => {
-        for (let dy = -PEAK_CLEAR; dy <= PEAK_CLEAR; dy++)
-          for (let dx = -PEAK_CLEAR; dx <= PEAK_CLEAR; dx++)
-            if (under.isCut(x + dx, y + dy)) return true;
-        return portals.some(
-          (p) => Math.abs(p.x - x) <= PEAK_CLEAR && Math.abs(p.y - y) <= PEAK_CLEAR,
-        );
-      };
-    for (const [k, s] of this.summitSprites) s.visible = !open(k % w, Math.floor(k / w));
+    const { w } = this.map;
+    for (const [k, s] of this.summitSprites)
+      s.visible = !this.peakCleared(k % w, Math.floor(k / w));
+  }
+  /** Whether a cut or a portal lies within PEAK_CLEAR tiles of tile (x, y). */
+  private peakCleared(x: number, y: number) {
+    const under = this.underground;
+    for (let dy = -PEAK_CLEAR; dy <= PEAK_CLEAR; dy++)
+      for (let dx = -PEAK_CLEAR; dx <= PEAK_CLEAR; dx++)
+        if (under.isCut(x + dx, y + dy)) return true;
+    return under
+      .portals()
+      .some((p) => Math.abs(p.x - x) <= PEAK_CLEAR && Math.abs(p.y - y) <= PEAK_CLEAR);
   }
   /** What a summit sprite is tinted by: nothing when its picture has the season baked in. */
   private summitTint() {
@@ -1971,6 +1979,7 @@ export class WorldRenderer {
     let s = this.trackSprites.get(i);
     if (frame) this.trackFrames.set(i, frame);
     else this.trackFrames.delete(i);
+    this.refreshSummit(x, y);
     if (!frame) {
       if (s) {
         s.destroy();
