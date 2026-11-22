@@ -9,7 +9,7 @@ import {
   type VehicleSize,
 } from '../data/content';
 import type { Rng } from '../engine/rng';
-import { LOCOS, WAGONS, isRetired, itemDef, itemKind, type Item } from './items';
+import { LOCOS, WAGONS, isRetired, itemDef, itemKind, obtainable, type Item } from './items';
 import type { Inventory } from './inventory';
 import type { Economy } from '../sim/economy';
 import { scaleCost, type ResourceStore } from '../sim/stores';
@@ -48,7 +48,7 @@ export function craftResources(): string[] {
 /** Every model of a kind and age a recipe can still be drawn for (retired models are left out). */
 export function craftPool(kind: CraftKind, tier: number): string[] {
   const defs = kind === 'loco' ? LOCOS : WAGONS;
-  return defs.map((d) => d.id).filter((id) => !isRetired(id) && craftTier(id) === tier);
+  return obtainable(defs.map((d) => d.id)).filter((id) => craftTier(id) === tier);
 }
 
 export interface CraftStats {

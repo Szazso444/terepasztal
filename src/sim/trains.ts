@@ -592,6 +592,8 @@ export class Train {
   name: string;
   /** the player's colour code, an index into `TRAIN_COLOURS`: the outliner groups trains by it */
   colour = 0;
+  /** the depot it belongs to, where it rolled out of; `Fleet.settleHomes` keeps it */
+  depotId: number | null = null;
   locos: LocoSlot[];
   wagons: WagonSlot[] = [];
   schedule: StopPlan[] = [];
@@ -3451,6 +3453,7 @@ export class Train {
       id: this.id,
       name: this.name,
       colour: this.colour,
+      depot: this.depotId,
       locos: this.locos.map((l) => ({
         uid: l.uid,
         defId: l.def.id,
@@ -3557,6 +3560,8 @@ export class Train {
       j.id,
     );
     t.colour = savedTrainColour(j.colour);
+    // a file without it has trains of no depot, which `Fleet.settleHomes` finds one for
+    t.depotId = j.depot ?? null;
     t.wagons = j.wagons.map((w) => ({
       uid: w.uid,
       def: wagonDef(w.defId),

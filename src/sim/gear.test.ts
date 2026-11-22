@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { gearSegments, type Gear } from './gear';
 import { vehicleSpec, poseVehicle, Polyline } from './body';
+import { content } from '../data/content';
+import { CLASS_LINE, classOf, referencePath, vehicleAccess, verdictOf } from './compat';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -117,5 +119,76 @@ describe('trucks drawn as sprites of their own', () => {
     const pose = poseVehicle(straight, 20, spec);
     const shown = pose.segments.flatMap((s) => s.bogies.filter((b) => !b.hidden));
     expect(shown.map((b) => b.truck)).toEqual([1]);
+  });
+});
+
+describe('the DDA40X', () => {
+  const def = content.locomotives.find((d) => d.id === 'dda40x')!;
+  // hinged on 2026-10-24, rigid again on 2026-10-25: the user wants to see it whole on larger curves
+  it('is one rigid body on two four-axle trucks', () => {
+    const spec = vehicleSpec(def);
+    expect(spec.segments.map((s) => s.part)).toEqual(['body']);
+    const [body] = spec.segments;
+    expect(body.hinge).toBeUndefined();
+    expect(body.L).toBeCloseTo(def.lengthTiles!, 6);
+    expect(body.kinds).toEqual(['bogie4', 'bogie4']);
+    expect(body.hidden).toEqual([false, false]);
+  });
+  it('keeps both trucks in their sockets through the tightest curve', () => {
+    const spec = vehicleSpec(def);
+    const path = referencePath('branch');
+    let worst = 0;
+    for (let front = spec.L; front <= path.length; front += 0.05)
+      for (const b of poseVehicle(path, front, spec).segments[0].bogies)
+        worst = Math.max(worst, b.foreAft, b.lateral);
+    expect(worst).toBeLessThan(0.005);
+  });
+  it('may run on the line of its class', () => {
+    expect(vehicleAccess(def, CLASS_LINE[classOf(def)])).toBeNull();
+  });
+});
+
+describe('the Big Boy', () => {
+  const def = content.locomotives.find((d) => d.id === 'big_boy')!;
+  const spec = vehicleSpec(def);
+  const engine = spec.segments.find((s) => s.part === 'engine')!;
+  it('rides on two engine units, each set of drivers a bogie of its own', () => {
+    expect(spec.segments.map((s) => s.part)).toEqual(['engine', 'tender']);
+    // no drivers fixed in the boiler: leading bogie, front unit, rear unit, trailing truck
+    expect(engine.rigid).toBeUndefined();
+    expect(engine.kinds).toEqual(['bogie', 'bogie4', 'bogie4', 'bogie']);
+    expect(engine.hidden).toEqual([false, false, false, false]);
+  });
+  it('turns without a jolt on the tightest curve, its units under the boiler', () => {
+    const path = referencePath('branch');
+    let prev: number[] | null = null,
+      step = 0,
+      off = 0;
+    for (let front = spec.L + 0.2; front <= path.length - 0.3; front += 0.01) {
+      const v = poseVehicle(path, front, spec);
+      const a = v.segments.flatMap((s) => [s.angle, ...s.bogies.map((b) => b.angle)]);
+      if (prev) a.forEach((x, i) => (step = Math.max(step, Math.abs(x - prev![i]))));
+      prev = a;
+      const e = v.segments.find((s) => s.part === 'engine')!;
+      for (const b of e.bogies) off = Math.max(off, b.foreAft, b.lateral);
+    }
+    // a hundredth of a tile on a 1.5 tile radius turns the track 0.38 degrees
+    expect((step * 180) / Math.PI).toBeLessThan(0.6);
+    // a 4.2-tile boiler straddling the whole quarter curve: its wheel groups share the misfit (all
+    // four in the plain best fit stood up to 0.42 tiles beside their sockets)
+    expect(off).toBeLessThan(0.3);
+  });
+});
+
+describe('every engine', () => {
+  it('may run on the line of its class, and fits its curves', () => {
+    // a length or a bogie moved can bar an engine from every curve: each one is measured on its line
+    const barred = content.locomotives
+      .map((def) => {
+        const line = CLASS_LINE[classOf(def)];
+        return { id: def.id, why: vehicleAccess(def, line) ?? verdictOf(def, line).reason };
+      })
+      .filter((x) => x.why !== null);
+    expect(barred).toEqual([]);
   });
 });

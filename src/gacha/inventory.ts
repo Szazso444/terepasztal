@@ -26,7 +26,6 @@ export class Inventory {
       kind: itemKind(defId),
       level: 1,
       assigned: null,
-      dupes: 0,
       obtainedAt: now,
     };
     this.items.push(item);

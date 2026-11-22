@@ -33,6 +33,11 @@ import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { STR } from '../strings';
 import { vehicleAccess } from './compat';
+import { rowLengths } from '../testing/modelFixtures';
+import { locoDef, wagonDef } from '../gacha/items';
+
+// a mine train's rear end on a tile edge: see `Mine`
+rowLengths(locoDef('muki'), wagonDef('mine_tub'), wagonDef('narrow_box'));
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -1092,7 +1097,9 @@ interface Siding {
 /**
  * A mine train on narrow gauge: a Muki, `tubs` mine tubs (half a tile long) and `boxes` box wagons.
  * With five wagons, an odd number of them tubs, it is a whole number of tiles and a half long, so
- * with its head at a tile's centre its rear end lies on a tile edge.
+ * with its head at a tile's centre its rear end lies on a tile edge. Those are the lengths of their
+ * rows (`rowLengths`, below): the rear end on an edge is what these cases are for, and their models
+ * measure 0.741, 0.32 and 0.54 tiles.
  */
 interface Mine {
   tubs: number;
