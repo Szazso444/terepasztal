@@ -68,8 +68,8 @@ export interface PlaceOptions {
 export const REGION_CHUNKS = 3;
 /** A footprint lies at least this many tiles inside its chunk: out of reach of `seam()`. */
 export const CHUNK_MARGIN = 3;
-/** Seeded candidate corners tried in an anchor chunk. */
-export const MAX_CANDIDATES = 64;
+/** The step of findCorner's walk over the corners: prime, and above the 676 corners of a chunk. */
+const WALK_STEP = 7919;
 
 /** The world chunk the game starts in. */
 export function startChunk(map: GameMap): { cx: number; cy: number } {
@@ -300,15 +300,21 @@ function cornerRange(s: LandmarkSite) {
   return { lo, hiX: C - lo - s.w, hiY: C - lo - s.d };
 }
 
-/** Up to MAX_CANDIDATES seeded corners in the chunk; the first that fits wins. */
+/**
+ * Every corner in the chunk's margin, walked from a seeded start by a fixed step coprime to the
+ * count (the step is a prime above any corner count), so the first that fits wins and a chunk with
+ * a site always gets its landmark.
+ */
 function findCorner(g: Ground, seed: number, cx: number, cy: number, s: LandmarkSite) {
   const { lo, hiX, hiY } = cornerRange(s);
   if (hiX < lo || hiY < lo) return null;
   const nx = hiX - lo + 1;
-  const ny = hiY - lo + 1;
-  for (let k = 0; k < MAX_CANDIDATES; k++) {
-    const x = lo + Math.floor(draw(seed, cx, cy, `${s.id}/x`, k) * nx);
-    const y = lo + Math.floor(draw(seed, cx, cy, `${s.id}/y`, k) * ny);
+  const n = nx * (hiY - lo + 1);
+  const start = Math.min(n - 1, Math.floor(draw(seed, cx, cy, `${s.id}/corner`) * n));
+  for (let k = 0; k < n; k++) {
+    const i = (start + k * WALK_STEP) % n;
+    const x = lo + (i % nx);
+    const y = lo + Math.floor(i / nx);
     if (fits(g, s, x, y)) return { x, y };
   }
   return null;

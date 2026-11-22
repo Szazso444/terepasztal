@@ -375,14 +375,18 @@ describe('legality', () => {
 describe('calibration', () => {
   // The Sites column of spec section 1, measured again: the share of chunks (start chunk left out)
   // with a legal footprint meeting the rule, 3 tiles in from the chunk's edges, on 11 x 11-chunk
-  // maps of a fixed seed list, as the measure script does. Roll x sites must come to the target
-  // within a fifth; the house's draw is nine chunks x its site share x siteChance. A change to map
-  // generation, which is what moves the sites, fails here and the data gets new rolls. The rolled
-  // landmarks are measured on the first 36 seeds (4 320 chunks), the house, whose sites are 0.1 percent
-  // of chunks, on 150 (18 000 chunks) as the spec did, looking only in chunks that hold both a desert
-  // and a taiga tile.
+  // maps of a fixed seed list, as the measure script does. A rolled landmark is placed in its
+  // anchor chunk whenever the chunk has a site, so its placed rate per region is the rate at which
+  // its roll stands after the spacing rule (counted over 200 000 regions) times that share, and it
+  // must come to the target within a fifth (spec 9 item 2); roll x sites, before spacing, is
+  // checked too. On the maps themselves, every standing anchor with a site gets exactly its
+  // landmark. A change to map generation, which is what moves the sites, fails here and the data
+  // gets new rolls. The rolled landmarks are measured on 24 seeds (2 880 chunks). The house is only
+  // a canary: its sites are 0.1 percent of chunks, so its rate (nine chunks x site share x
+  // siteChance) is measured on 100 seeds (12 000 chunks) in the chunks that hold both a desert and
+  // a taiga tile, and a run of a fixed list cannot be a statistical test of it.
   // Slow: 100 maps of 11 x 11 chunks to generate and scan, 14 s alone; limit 240 s.
-  it('keeps roll x sites within a fifth of every target', { timeout: 240_000 }, () => {
+  it('places every landmark at its target rate per region', { timeout: 240_000 }, () => {
     const ROLLED_SEEDS = 24;
     const SEEDS = 100;
     const RING = 4;
@@ -391,13 +395,15 @@ describe('calibration', () => {
     let rolledChunks = 0;
     let houseChunks = 0;
     for (let s = 0; s < SEEDS; s++) {
-      const map = generateMap(1000 + s * 7919, {
+      const seed = 1000 + s * 7919;
+      const map = generateMap(seed, {
         w: n * C,
         h: n * C,
         originX: -RING * C,
         originY: -RING * C,
       });
       const start = startChunk(map);
+      const standing = new Set<string>();
       for (let cy = -RING; cy < n - RING; cy++)
         for (let cx = -RING; cx < n - RING; cx++) {
           if (cx === start.cx && cy === start.cy) continue;
@@ -407,16 +413,42 @@ describe('calibration', () => {
           if (sites.includes(HOUSE) && !hasBoth(map, cx, cy))
             sites = sites.filter((x) => x !== HOUSE);
           sitesInChunk(map, cx, cy, sites, 1).forEach((list, i) => {
-            if (list.length) hit.set(sites[i].id, (hit.get(sites[i].id) ?? 0) + 1);
+            if (!list.length) return;
+            hit.set(sites[i].id, (hit.get(sites[i].id) ?? 0) + 1);
+            const r = rolledLandmark(seed, Math.floor(cx / 3), Math.floor(cy / 3), ROLLED);
+            if (r?.id === sites[i].id && r.anchor.cx === cx && r.anchor.cy === cy)
+              standing.add(`${r.id}@${cx},${cy}`);
           });
         }
+      if (s >= ROLLED_SEEDS) continue;
+      // every standing anchor with a site gets its landmark, and nothing else is placed
+      const added: string[] = [];
+      for (let cy = -RING; cy < n - RING; cy++)
+        for (let cx = -RING; cx < n - RING; cx++) added.push(chunkKey(cx, cy));
+      const placed = placeLandmarks(seed, map, added, ROLLED).map((p) => `${p.id}@${p.cx},${p.cy}`);
+      expect(placed.sort(), `seed ${seed}`).toEqual([...standing].sort());
+    }
+    // the share of regions whose roll stands after spacing, per landmark
+    const survive = new Map<string, number>();
+    const regions = 200_000;
+    for (let i = 0; i < regions; i++) {
+      const r = rolledLandmark(
+        1 + (i % 500),
+        (i % 20) - 10,
+        (Math.floor(i / 500) % 20) - 10,
+        ROLLED,
+      );
+      if (r) survive.set(r.id, (survive.get(r.id) ?? 0) + 1);
     }
     for (const site of ROLLED) {
-      const rate = site.roll! * ((hit.get(site.id) ?? 0) / rolledChunks);
+      const share = (hit.get(site.id) ?? 0) / rolledChunks;
       const target = TARGET.get(site.id)!;
+      const before = site.roll! * share;
+      expect(Math.abs(before - target) / target, `${site.id} roll x sites`).toBeLessThan(0.2);
+      const placed = ((survive.get(site.id) ?? 0) / regions) * share;
       expect(
-        Math.abs(rate - target) / target,
-        `${site.id}: ${rate} against ${target}`,
+        Math.abs(placed - target) / target,
+        `${site.id}: placed ${placed} per region against ${target}`,
       ).toBeLessThan(0.2);
     }
     const house = 9 * ((hit.get(HOUSE.id) ?? 0) / houseChunks) * HOUSE.siteChance!;
