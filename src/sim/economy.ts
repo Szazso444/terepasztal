@@ -1,13 +1,12 @@
 /**
- * Money, tickets and the current age (steam / diesel / electric / nuclear / magnetic / hyper),
- * reached through goals.
+ * Money and the current age (steam / diesel / electric / nuclear / magnetic / hyper), reached
+ * through goals.
  */
 import { LAST_AGE, goalsMet, type AgeSnapshot } from './ages';
 import { STR } from '../strings';
 
 export class Economy {
   money = 25000;
-  tickets = 3;
   /** money taken in over the whole game (contracts, spot sales, fares); one of the age goals */
   earned = 0;
   /**
@@ -17,8 +16,6 @@ export class Economy {
   tier = 0;
   /** the high-speed rail quest is done: the fast track may be built */
   hsUnlocked = false;
-  /** Milestone tickets already granted per age. */
-  private ageTicketsGranted = new Set<number>();
   onAgeUp: ((tier: number) => void) | null = null;
   onMessage: ((msg: string, kind: 'info' | 'warn' | 'good') => void) | null = null;
 
@@ -55,28 +52,20 @@ export class Economy {
   }
   private enterAge(tier: number) {
     this.tier = tier;
-    if (!this.ageTicketsGranted.has(tier)) {
-      this.ageTicketsGranted.add(tier);
-      this.tickets += 5;
-    }
     this.onAgeUp?.(tier);
   }
   toJSON() {
     return {
       money: this.money,
-      tickets: this.tickets,
       earned: this.earned,
       tier: this.tier,
-      granted: [...this.ageTicketsGranted],
       hsUnlocked: this.hsUnlocked,
     };
   }
   load(j: Partial<ReturnType<Economy['toJSON']>>) {
     this.money = j.money ?? this.money;
-    this.tickets = j.tickets ?? this.tickets;
     this.earned = j.earned ?? 0;
     this.tier = Math.max(0, Math.min(LAST_AGE, j.tier ?? 0));
-    this.ageTicketsGranted = new Set(j.granted ?? []);
     this.hsUnlocked = j.hsUnlocked ?? false;
   }
 }

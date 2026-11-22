@@ -83,17 +83,22 @@ it("loads a vehicle's own pages only when it is wanted, and releases them unused
   expect(atlas.has('rolling/loco_m62_body_f1')).toBe(false);
   expect(atlas.want(null)).toBe(true);
   expect(atlas.want('rolling/wagon_procedural')).toBe(true);
+  const before = atlas.framesVersion;
   expect(atlas.want('rolling/loco_m62')).toBe(false);
   await atlas.idle();
   expect(atlas.want('rolling/loco_m62')).toBe(true);
   expect(atlas.has('rolling/loco_m62_body_f1')).toBe(true);
+  const loaded = atlas.framesVersion;
+  expect(loaded).toBeGreaterThan(before);
   expect(atlas.loadedVehicles()).toEqual(['rolling/loco_m62']);
   // a vehicle whose pages are missing stays not ready (nothing of it is drawn)
   expect(atlas.want('rolling/loco_tgv')).toBe(false);
   await atlas.idle();
   expect(atlas.want('rolling/loco_tgv')).toBe(false);
+  expect(atlas.framesVersion).toBe(loaded); // pages that failed add no frame
   atlas.sweep(performance.now() + 60000);
   expect(atlas.loadedVehicles()).toEqual([]);
+  expect(atlas.framesVersion).toBeGreaterThan(loaded);
   expect(atlas.has('rolling/loco_m62_body_f1')).toBe(false);
   expect(atlas.has('rolling/loco_m62_body_f0')).toBe(true);
   expect(atlas.want('rolling/loco_m62')).toBe(false);
