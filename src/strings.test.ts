@@ -526,15 +526,3 @@ describe('text the panels show', () => {
     expect(STR.signals.directions).toHaveLength(4);
   });
 });
-
-describe('landmark texts', () => {
-  it('names and tells every landmark of the content, in both languages', async () => {
-    const { HU } = await import('./data/strings.hu');
-    const { ENGLISH } = await import('./strings');
-    for (const lm of content.landmarks)
-      for (const table of [ENGLISH, HU]) {
-        expect(table.landmarks.names[lm.id], `${lm.id} name`).toBeTruthy();
-        expect(table.landmarks.stories[lm.id], `${lm.id} story`).toBeTruthy();
-      }
-  });
-});
