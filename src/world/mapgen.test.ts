@@ -172,7 +172,7 @@ describe('a grown map', () => {
       fnv(m.variant),
       propHash(m),
       fnv(m.generatedLevel!),
-    ]).toEqual([2055292387, 913513656, 1813736059, 1615046882, 2259723918]);
+    ]).toEqual([2476708133, 2645726063, 1813736059, 3011035059, 1970568255]);
     const g = grown(SEED, 160);
     expect([
       fnv(g.terrain),
@@ -180,7 +180,7 @@ describe('a grown map', () => {
       fnv(g.variant),
       propHash(g),
       fnv(g.generatedLevel!),
-    ]).toEqual([3951292950, 4272823928, 1107381422, 3363527260, 970212280]);
+    ]).toEqual([880990651, 2095190737, 1107381422, 3946167647, 492530707]);
   });
 });
 

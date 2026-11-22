@@ -7,6 +7,8 @@ export const enum Terrain {
   Sand = 5,
   /** the raised heart of a large stone field; nothing can be built on it */
   Mountain = 6,
+  /** a glacier: ice where a river would run above the snow line (glaciers.ts); nothing stands on it */
+  Ice = 7,
 }
 export const TERRAIN_NAMES = [
   'grass',
@@ -16,6 +18,7 @@ export const TERRAIN_NAMES = [
   'rock',
   'sand',
   'mountain',
+  'ice',
 ] as const;
 
 /**
@@ -143,8 +146,8 @@ export interface GameMap {
   flowDir?: Uint8Array;
   /**
    * per-tile water features, a byte each, laid out in src/world/waterfalls.ts: a waterfall's drop
-   * and the edge it falls over, on the river tile the water falls from, with bits kept for the
-   * headwater kind (#356). Read a waterfall through waterfallAt. A map without the plane, a level
+   * and the edge it falls over, on the river tile the water falls from, and a headwater's kind
+   * (#356). Read them through waterfallAt and headwaterAt. A map without the plane, a level
    * or the editor's, and a chunk stored before it, has no waterfalls.
    */
   feature?: Uint8Array;

@@ -18,7 +18,7 @@ import {
   type MountainShape,
 } from './mountains';
 import { Biome, Terrain, startRegion, type GameMap } from './tiles';
-import { MAX_WATER_LEVEL } from './waterfalls';
+import { MAX_WATER_LEVEL, MELT_BIT } from './waterfalls';
 
 /** Twenty worlds of 160 x 160, generated once for the tests that read them. */
 const SIZE = 160;
@@ -594,14 +594,16 @@ describe('the mountains of generated worlds', () => {
     expect(straight / tiles).toBeLessThan(0.145);
   }, 120_000);
 
-  it('keeps every river at water level 4 or under, flowing downhill', () => {
+  it('keeps every river at water level 4 or under (a glacier melts higher), flowing downhill', () => {
     for (const { map, river } of worlds()) {
-      const { w, h, waterSurface, flowDir, terrain } = map;
+      const { w, h, waterSurface, flowDir, terrain, feature } = map;
       for (let y = 0; y < h; y++)
         for (let x = 0; x < w; x++) {
           const i = y * w + x;
-          if (terrain[i] === Terrain.Water)
-            expect(waterSurface![i]).toBeLessThanOrEqual(MAX_WATER_LEVEL);
+          // a glacier's melt (glaciers.ts) comes down a mountain's side from the ice; no other water
+          // is higher
+          if (terrain[i] === Terrain.Water && waterSurface![i] > MAX_WATER_LEVEL)
+            expect(feature![i] & MELT_BIT, `${x},${y}`).toBe(MELT_BIT);
           if (!river[i]) continue;
           const side = flowDir![i] - 1;
           const nx = x + DIR_DX[side];

@@ -4,12 +4,17 @@ import { MAX_LEVEL, NO_LEVEL, levelTarget, maxStep, tileLevels } from './elevati
 import { FLOW_CAP } from './rivers';
 import {
   FALL_BITS,
+  HEAD_BITS,
+  Headwater,
   MAX_DROP,
   fallAt,
   fallDrop,
   fallEdge,
   fallFeature,
+  headwaterOf,
+  MELT_BIT,
   isFeature,
+  withHeadwater,
 } from './waterfalls';
 import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from './tiles';
 
@@ -52,7 +57,7 @@ import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from '
  *   its flow (GameMap.flow, at most FLOW_CAP) times four plus its side less one. Both live only on
  *   water, so a chunk without a river spends a byte or two on them;
  * - from version 4, the water features (GameMap.feature, laid out in waterfalls.ts: a waterfall's
- *   drop and edge, and bits kept for #356): a varint count of the tiles whose byte is not 0, and
+ *   drop and edge): a varint count of the tiles whose byte is not 0, and
  *   for each of those tiles a varint of the tiles skipped since the one before, then its byte. A
  *   chunk without a waterfall spends a byte on them, and a waterfall two or three more.
  *
@@ -103,11 +108,16 @@ import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from '
  *   byte. A fourth prop and later is all raw: five bits of kind, the variant as Elias gamma and
  *   the two offset bytes, 22 bits or more, so a corrupt count cannot make props of no text.
  *
- * Version 6 (the tunnels) holds everything version 5 does, in the same bytes, and after the props
+ * Version 6 (#356) is version 5 with the headwaters after the water features, before the props:
+ * whether there are any, and if so for each tile whether it has one (by whether it has a side) and
+ * whether it is a spring rather than a melt. Their bits (waterfalls.ts) are the feature plane's;
+ * versions 1 to 5 hold none, so their rivers have no headwaters.
+ *
+ * Version 7 (the tunnels) holds everything version 6 does, in the same bytes, and after the props
  * the generated levels (GameMap.generatedLevel): whether the plane has any tile that is not
  * NO_LEVEL, and if so the plane as the water levels are, five bits a value, its contexts by the
  * tile's terrain. A value is 0 to MAX_LEVEL, or 31 for NO_LEVEL; any other is refused. A map
- * with no plane is stored as one with no tile set, and a chunk of version 5 or earlier reads
+ * with no plane is stored as one with no tile set, and a chunk of version 6 or earlier reads
  * with every tile at NO_LEVEL.
  *
  * The guesses are only that: a variant, prop or offset that is not the guess costs more bits and
@@ -123,14 +133,14 @@ import { Terrain, Biome, type GameMap, type PropInstance, type PropKind } from '
  * and a chunk of an older version decodes with that plane empty: version 1 holds no climate, and
  * its climate is its biome; versions 1 and 2 hold no water levels, flow or sides, so their water
  * is at level 0 and their rivers have neither; versions 1 to 3 hold no water features, so they
- * have no waterfalls; versions 1 to 5 hold no generated levels, so every tile of theirs is at
- * NO_LEVEL.
+ * have no waterfalls; versions 1 to 5 hold no headwaters; versions 1 to 6 hold no generated
+ * levels, so every tile of theirs is at NO_LEVEL.
  */
 
 /** Chunk edge in world tiles: emptyMap's region size. */
 export const CHUNK_TILES = 32;
 /** The encoding encodeChunk writes; decodeChunk reads it and every one before it. */
-export const CHUNK_VERSION = 6;
+export const CHUNK_VERSION = 7;
 
 /**
  * The index a chunk stores each prop kind under. Only ever add to it: an index written into a save
@@ -432,7 +442,7 @@ function readOldPlanes(r: Reader, version: number, n: number): Tiles | null {
       const i = last + 1 + r.varint();
       if (i >= n) return null;
       const f = r.byte();
-      if (!f || !isFeature(f)) return null;
+      if (!f || !isFeature(f) || f & ~FALL_BITS) return null;
       feature[i] = f;
       last = i;
     }
@@ -452,7 +462,7 @@ function readOldPlanes(r: Reader, version: number, n: number): Tiles | null {
   };
 }
 
-// Versions 5 and 6 (see the encoding above). Every number and choice below is part of the encoding: a
+// Versions 5 to 7 (see the encoding above). Every number and choice below is part of the encoding: a
 // change to any of them is a new CHUNK_VERSION, with this one kept for the texts it wrote.
 
 /**
@@ -466,8 +476,10 @@ function tileHash(x: number, y: number, seed: number): number {
   return (h >>> 0) / 4294967296;
 }
 
-/** What version 5 guesses from: a seed, and the world tile of the rectangle's first tile. */
+/** What versions 5 and on guess from: a seed, and the world tile of the rectangle's first tile. */
 interface Guess {
+  /** the encoding, 5 or later */
+  version: number;
   seed: number;
   wx: number;
   wy: number;
@@ -723,7 +735,7 @@ function codePlane(
 const levelContexts = new Uint16Array(2 * PLANE_GROUPS * (LEVEL_CTX + 2));
 
 /**
- * The generated levels (version 6): whether any tile is set, and if so every tile as a value of
+ * The generated levels (version 7): whether any tile is set, and if so every tile as a value of
  * five bits (tileValue) in the contexts of its terrain. The plane in memory holds NO_LEVEL where
  * the text holds NO_STORED; a decoder is given a plane of NO_LEVEL.
  */
@@ -780,7 +792,7 @@ function codeFlow(c: Coder, flow: Uint16Array, flowDir: Uint8Array, w: number, h
 function codeFeatures(c: Coder, feature: Uint8Array, flowDir: Uint8Array) {
   const ctx = new Uint16Array(2 * 13);
   for (let i = 0; i < feature.length; i++) {
-    const f = feature[i];
+    const f = feature[i] & FALL_BITS;
     const side = flowDir[i];
     if (!c.bit(ctx, side ? 1 : 0, f ? 1 : 0)) continue;
     let drop = 1;
@@ -794,7 +806,25 @@ function codeFeatures(c: Coder, feature: Uint8Array, flowDir: Uint8Array) {
     }
     const v = (drop - 8) | (edge << 3);
     if (!v || !isFeature(v)) throw new Corrupt();
-    feature[i] = v;
+    feature[i] = (feature[i] & ~FALL_BITS) | v;
+  }
+}
+
+/** The glacier melt: per tile whether it is water a glacier's melt laid (version 7). */
+function codeMelt(c: Coder, feature: Uint8Array, flowDir: Uint8Array) {
+  const ctx = new Uint16Array(2 * 2);
+  for (let i = 0; i < feature.length; i++)
+    if (c.bit(ctx, flowDir[i] ? 1 : 0, feature[i] & MELT_BIT ? 1 : 0)) feature[i] |= MELT_BIT;
+}
+
+/** The headwaters: per tile whether it has one, then whether it is a spring (version 6). */
+function codeHeadwaters(c: Coder, feature: Uint8Array, flowDir: Uint8Array) {
+  const ctx = new Uint16Array(2 * 3);
+  for (let i = 0; i < feature.length; i++) {
+    const kind = headwaterOf(feature[i]);
+    if (!c.bit(ctx, flowDir[i] ? 1 : 0, kind ? 1 : 0)) continue;
+    const spring = c.bit(ctx, 2, kind === Headwater.Spring ? 1 : 0);
+    feature[i] = withHeadwater(feature[i], spring ? Headwater.Spring : Headwater.Melt);
   }
 }
 
@@ -945,7 +975,7 @@ function codeProps(
     }
 }
 
-/** The planes of version 5 or 6 after the head, encoded from `t` and `lists`, or decoded into `t`. */
+/** The planes of versions 5 to 7 after the head, encoded from `t` and `lists`, or decoded into `t`. */
 function codeTiles(
   c: Coder,
   t: Tiles,
@@ -953,7 +983,6 @@ function codeTiles(
   h: number,
   g: Guess,
   lists: (PropInstance[] | undefined)[] | null,
-  version: number,
 ) {
   const { terrain, biome, climate, variant, waterSurface, flow, flowDir, feature } = t;
   codePlane(c, terrain, w, h, null, null);
@@ -997,9 +1026,13 @@ function codeTiles(
     for (let i = 0; i < w * h; i++) if (flowDir[i] > 4) throw new Corrupt();
     codeFlow(c, flow, flowDir, w, h);
   }
-  if (c.bit(any, 2, features ? 1 : 0)) codeFeatures(c, feature, flowDir);
+  if (c.bit(any, 2, features & FALL_BITS ? 1 : 0)) codeFeatures(c, feature, flowDir);
+  if (g.version >= 6 && c.bit(new Uint16Array(2), 0, features & HEAD_BITS ? 1 : 0))
+    codeHeadwaters(c, feature, flowDir);
+  if (g.version >= 7 && c.bit(new Uint16Array(2), 0, features & MELT_BIT ? 1 : 0))
+    codeMelt(c, feature, flowDir);
   codeProps(c, t, w, h, g, lists);
-  if (version >= 6) codeLevels(c, t.generatedLevel, terrain, w, h);
+  if (g.version >= 7) codeLevels(c, t.generatedLevel, terrain, w, h);
 }
 
 function toBase64(bytes: Uint8Array): string {
@@ -1028,8 +1061,8 @@ function fromBase64(text: string): Uint8Array | null {
  * kind PROP_KINDS lacks, a feature byte isFeature refuses), so a generator that makes one has to
  * come with a new CHUNK_VERSION.
  */
-export function encodeChunk(map: GameMap, cx: number, cy: number): string {
-  return encodeWith(map, cx, cy, null);
+export function encodeChunk(map: GameMap, cx: number, cy: number, version = CHUNK_VERSION): string {
+  return encodeWith(map, cx, cy, null, version);
 }
 
 /** A map's props by the chunk they lie in (chunkIndex), each as its map tile and its list. */
@@ -1062,6 +1095,7 @@ function encodeWith(
   cx: number,
   cy: number,
   entries: [number, PropInstance[]][] | null,
+  version = CHUNK_VERSION,
 ): string {
   const c = coverage(map, cx, cy);
   if (!c) throw new Error(`the map does not cover chunk ${chunkKey(cx, cy)}`);
@@ -1095,7 +1129,7 @@ function encodeWith(
   copy(t.flowDir, map.flowDir);
   copy(t.feature, map.feature);
   copy(t.generatedLevel, map.generatedLevel);
-  const v = CHUNK_VERSION;
+  const v = version;
   const ids = (name: string, id: number) =>
     new Error(`chunk encoding ${v} holds ${name} ids 0 to 15, not ${id}`);
   const lists: (PropInstance[] | undefined)[] = new Array(n);
@@ -1134,7 +1168,7 @@ function encodeWith(
       );
   }
   const out = new Writer();
-  for (const b of [CHUNK_VERSION, c.x0, c.y0, c.w, c.h]) out.byte(b);
+  for (const b of [version, c.x0, c.y0, c.w, c.h]) out.byte(b);
   // the seed as it is, so that the guesses are generation's for any seed a world may have; as a
   // number, so that a seed of another kind a save may carry ('7412') is the one number in the head
   // and in every guess (seed + 5 is 7417, not '74125'), as decodeChunk reads it
@@ -1148,8 +1182,8 @@ function encodeWith(
   const gy = guessable(cy);
   for (const k of [gx, gy]) out.varint(zigzag(k));
   const coder = new RangeWriter(out);
-  const g = { seed, wx: gx * CHUNK_TILES + c.x0, wy: gy * CHUNK_TILES + c.y0 };
-  codeTiles(coder, t, c.w, c.h, g, lists, CHUNK_VERSION);
+  const g = { version, seed, wx: gx * CHUNK_TILES + c.x0, wy: gy * CHUNK_TILES + c.y0 };
+  codeTiles(coder, t, c.w, c.h, g, lists);
   coder.finish();
   return toBase64(out.buf.subarray(0, out.n));
 }
@@ -1192,8 +1226,8 @@ export function decodeChunk(text: string): ChunkPlanes | null {
         feature: new Uint8Array(n),
         generatedLevel: new Uint8Array(n).fill(NO_LEVEL),
       };
-      const g = { seed, wx: gx * CHUNK_TILES + x0, wy: gy * CHUNK_TILES + y0 };
-      codeTiles(new RangeReader(r), t, w, h, g, null, version);
+      const g = { version, seed, wx: gx * CHUNK_TILES + x0, wy: gy * CHUNK_TILES + y0 };
+      codeTiles(new RangeReader(r), t, w, h, g, null);
     }
     // bytes left over are not something encodeChunk writes
     if (!t || r.i !== bytes.length) return null;
@@ -1395,6 +1429,10 @@ function seam(map: GameMap, stored: Uint8Array) {
     surface[i] = v;
     if (levels && levels[i] !== NO_LEVEL) levels[i] = v;
   };
+  // water stands within a level of what lies beside it, but a glacier's melt up a mountain's side
+  // (MELT_BIT): within a step
+  const feature = map.feature!;
+  const stepOf = (i: number) => (feature[i] & MELT_BIT ? maxStep(map) : 1);
   const fresh: number[] = [];
   for (let i = 0; i < w * h; i++) if (!stored[i] && terrain[i] === Terrain.Water) fresh.push(i);
   // the levels the generator gave, for its waterfalls off the map
@@ -1414,9 +1452,10 @@ function seam(map: GameMap, stored: Uint8Array) {
     for (const i of fresh) {
       let v = surface[i];
       if (!v) continue;
+      const step = stepOf(i);
       for (let d = 1; d <= 4; d++) {
         const n = ahead(i, d);
-        if (n >= 0) v = Math.min(v, levelTarget(map, n) + 1);
+        if (n >= 0) v = Math.min(v, levelTarget(map, n) + step);
       }
       if (v < surface[i]) {
         lower(i, v);
@@ -1431,7 +1470,6 @@ function seam(map: GameMap, stored: Uint8Array) {
       }
     }
   }
-  const feature = map.feature!;
   fresh.forEach((i, k) => {
     const d = flowDir[i];
     let fall: number;
@@ -1439,7 +1477,8 @@ function seam(map: GameMap, stored: Uint8Array) {
       const drop = fallDrop(feature[i]) - (generated[k] - surface[i]);
       fall = drop > 0 ? fallFeature(drop, d - 1) : 0;
     } else fall = fallAt(map, i);
-    feature[i] = (feature[i] & ~FALL_BITS) | fall;
+    // a tile the seam stopped running has no fall, and starts no river
+    feature[i] = d ? (feature[i] & ~FALL_BITS) | fall : withHeadwater(fall, Headwater.None);
   });
   fitLevels(map, stored);
 }

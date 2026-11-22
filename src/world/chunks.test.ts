@@ -20,7 +20,7 @@ import {
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './mapgen';
 import { MAX_LEVEL, NO_LEVEL, levelAt, maxStep, tileLevels } from './elevation';
 import { bytesOf, oldChunkText, textOf, type OldVersion } from './oldChunkTexts';
-import { MAX_DROP, fallFeature } from './waterfalls';
+import { FALL_BITS, MAX_DROP, fallFeature } from './waterfalls';
 import { Dir } from '../engine/iso';
 import { generatorOf, groundOf, type GeneratedWorld } from '../sim/ground';
 import { Biome, Terrain, climateAtIndex, type GameMap, type PropInstance } from './tiles';
@@ -714,12 +714,10 @@ describe('a map built from stored chunks', () => {
 });
 
 describe('the levels of a map built from stored chunks', () => {
-  // a chunk text of version 5: a text of version 6 with no level set holds the same bytes but its
-  // first, which this checks, so no writer of version 5 is needed
+  // a chunk text of version 5: the planes of a text of the version after it, which holds no levels
+  // and no headwaters here, as version 5 spells them
   const asVersion5 = (text: string) => {
-    const bytes = bytesOf(text);
-    bytes[0] = 5;
-    const old = textOf(bytes);
+    const old = oldChunkText(decodeChunk(text)!, 5);
     expect(decodeChunk(old)?.version).toBe(5);
     return old;
   };
@@ -1021,8 +1019,8 @@ interface Garbled {
   salt: number;
   edit: number;
 }
-/** The versions a test can write a text in: the oracle's (1 to 4) and today's. */
-const WRITABLE = [1, 2, 3, 4, CHUNK_VERSION];
+/** The versions a test can write a text in: the oracle's (1 to 6) and today's. */
+const WRITABLE = [1, 2, 3, 4, 5, 6, CHUNK_VERSION];
 const genGarbled = (rng: Rng): Garbled => {
   const w = rng.int(1, 32);
   const h = rng.int(1, 32);
@@ -1520,8 +1518,13 @@ function heldBy(c: ChunkPlanes, version: number): ChunkPlanes {
     waterSurface: version >= 3 ? c.waterSurface : new Uint8Array(n),
     flow: version >= 3 ? c.flow : new Uint16Array(n),
     flowDir: version >= 3 ? c.flowDir : new Uint8Array(n),
-    feature: version >= 4 ? c.feature : new Uint8Array(n),
-    generatedLevel: version >= 6 ? c.generatedLevel : new Uint8Array(n).fill(NO_LEVEL),
+    feature:
+      version >= 6
+        ? c.feature
+        : version >= 4
+          ? c.feature.map((f) => f & FALL_BITS)
+          : new Uint8Array(n),
+    generatedLevel: version >= 7 ? c.generatedLevel : new Uint8Array(n).fill(NO_LEVEL),
   };
 }
 
@@ -1578,12 +1581,13 @@ describe('chunk texts of every version (#392)', () => {
     expect(oldChunkText(spelled, 3)).toBe(v3);
   });
 
-  // Version 5's and 6's texts pinned the same way: the planes above as chunk (-1, 2) of a world of
-  // seed 7412; and the 12 x 10 tiles from (0, 0) that generateMap made for seed 7412 in the full
-  // chain, as version 4, 5 and 6 store them. A change to version 5's or 6's model reads them
+  // Version 5's, 6's and 7's texts pinned the same way: the planes above as chunk (-1, 2) of a world
+  // of seed 7412; and the 12 x 10 tiles from (0, 0) that generateMap made for seed 7412 in the full
+  // chain, as version 4, 5, 6 and 7 store them. A change to the model of any of them reads them
   // otherwise, so it needs a version of its own.
   const V5_SPELLED = 'BQECAwLocwEEOAHBhXgCXXpQWJ6XfMJBx1qzwAAA';
-  const V6_SPELLED = 'BgECAwLocwEEOAHBhXgCXXpQWJ6XfMJBx1qzwAAA';
+  const V6_SPELLED = 'BgECAwLocwEEOAHBhXgCXXpQWJ6XfL9g361Z4AAA';
+  const V7_SPELLED = 'BwECAwLocwEEOAHBhXgCXXpQWJ6XfL3wa9as8AAAAA==';
   const V4_GENERATED =
     'BAAADAoxUQVRMFEGUTBQCTBQCTBQECIFMBEiBTARIgUwEgc0BhMwBmEJYApwCnAQCXARCHASB3ASB3ASB3QGE3AGDwgQ' +
     'ChEJEggTB0ASB0ASB0ATBhQGU5OQZSfuZNXjzplKSdgG7IQjgJjKIPShq+aAUXjnGkhDWFMoI8S3AAMQFgBq/M0sCirt' +
@@ -1594,14 +1598,18 @@ describe('chunk texts of every version (#392)', () => {
     'BQAADArocwAAOUQvcR4Qb3RdCjxBkI+u6PfnF9PI9ntMvf+nyPkEohffnQoZpCeKLRzE/NrlWJpVpPRtghPqIswmBOaB' +
     'cBxtcckNMBR2NUsM4r8vAg==';
   const V6_GENERATED =
-    'BgAADArocwAAOUQvcR4Qb3RdCjxBkI+u6PfnF9PI9ntMvf+nyPkEohffnQoZpCeKLRzE/NrlWJpVpPRtghPqIswmBOaB' +
-    'cBxtcckNMBR2NUsM4r8vAg==';
+    'BgAADArocwAAOUQvcR4Qb3RdCjxBkI+u6PfnF9PI9ntMvf+nyPkEohffnQoZpCeKLRyrk/EL6l2cq2IBaB0dDjfg2HETScGfP0AsoiNLAXXnGgJGBA==';
+  const V7_GENERATED =
+    'BwAADArocwAAOUQvcR4Qb3RdCjxBkI+u6PfnF9PI9ntMvf+nyPkEohffnQoZpCeKLRye3PlOFiYUZ5YDgifwvr8v0SnmdiiIkgpHFcWY1+3tw9rCYA==';
 
-  // Version 6's text with real levels: the 12 x 10 tiles from chunk (0, -1)'s corner that map
-  // generation made for seed 7412 in the full chain, on the side of a mountain.
-  const V6_TALL =
-    'BgAADArocwABC0OvSAYPFrFEkMrMDKYOtSbdR98zWUD7Z/6X+K1Cjqvx79SLfwaqe1UKDBv6aS6ex11C626m39W70gbm' +
-    'i3vVv5vIO5lw8jIgVxKkukPoPT3x0y8WRBl5/7nc/QkLxvmPuepwAA==';
+  // Version 7's text with real levels: the 12 x 10 tiles of V4_GENERATED from chunk (0, -1)'s corner
+  // with the levels of a mountain's side (as map generation made them for seed 7412 in the full
+  // chain, before water and hills moved).
+  const V7_TALL =
+    'BwAADArocwABOUQvcR4Qb3RdCjxBkI+u6PfnF9PI9ntMvf+noa0tMxBv0YxRV9UPGnDW6VtASPs4bw55kft6yLFg2IsAQX3D' +
+    'hY/R2W3aO+FWxleug164T9ke9XqWCySRBrHQERWuZYNtyqwsDP+0FzFQ6tvLU7nsdomWmTEUxjv8lObpcmDmFqtgz9vFxpvK' +
+    'XbyJqpAbRKKjaBoKLpoMo82hrJGOCke8fQlipng4UyYt2y4USHPD1rzjaulv+mVnRHgKWoGjyVJB0jBEA4AW4JvrfVJ3TZv5' +
+    '88CnuIZwwTaKEp+Yw3UHRw3CcaTc';
   const TALL_LEVELS = [
     0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 1, 0, 2, 2, 2, 2, 2, 3, 3, 1, 0, 0, 1, 1, 2, 3, 3,
     3, 3, 4, 4, 2, 2, 1, 2, 2, 2, 3, 3, 4, 4, 4, 5, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 6, 3, 3, 3, 3,
@@ -1609,14 +1617,14 @@ describe('chunk texts of every version (#392)', () => {
     11, 4, 4, 4, 4, 5, 6, 7, 8, 10, 11, 12, 14, 4, 4, 5, 5, 6, 7, 8, 9, 11, 12, 12, 12,
   ];
 
-  it('of version 6 with real levels decodes as it always has, and is written so again', () => {
-    const c = decodeChunk(V6_TALL)!;
-    expect([c.version, c.x0, c.y0, c.w, c.h]).toEqual([6, 0, 0, 12, 10]);
+  it('of version 7 with real levels decodes as it always has, and is written so again', () => {
+    const c = decodeChunk(V7_TALL)!;
+    expect([c.version, c.x0, c.y0, c.w, c.h]).toEqual([7, 0, 0, 12, 10]);
     expect([...c.generatedLevel]).toEqual(TALL_LEVELS);
     const m = emptyMap(7412, 12, 10, Terrain.Grass, 0, -CHUNK_TILES);
     placeChunk(m, 0, -1, c);
     expect([...m.generatedLevel!]).toEqual(TALL_LEVELS);
-    expect(encodeChunk(m, 0, -1)).toBe(V6_TALL);
+    expect(encodeChunk(m, 0, -1)).toBe(V7_TALL);
   });
 
   it('of version 5 decodes as it always has, with every generated level NO_LEVEL', () => {
@@ -1627,22 +1635,29 @@ describe('chunk texts of every version (#392)', () => {
     expect(g.generatedLevel).toEqual(new Uint8Array(120).fill(NO_LEVEL));
   });
 
-  it('of version 6 decodes as it always has, and is written so again', () => {
+  it('of versions 6 and 7 decode as they always have, and are written so again', () => {
     expect(decodeChunk(V6_SPELLED)).toEqual({ ...spelled, version: 6 });
+    expect(decodeChunk(V7_SPELLED)).toEqual({ ...spelled, version: 7 });
     const m = emptyMap(7412, 3, 2, Terrain.Grass, -CHUNK_TILES + 1, 2 * CHUNK_TILES + 2);
     placeChunk(m, -1, 2, decodeChunk(V5_SPELLED)!);
-    expect(encodeChunk(m, -1, 2)).toBe(V6_SPELLED);
+    expect(encodeChunk(m, -1, 2)).toBe(V7_SPELLED);
+    expect(encodeChunk(m, -1, 2, 6)).toBe(V6_SPELLED);
+    expect(encodeChunk(m, -1, 2, 5)).toBe(V5_SPELLED);
     // the generated tiles: rivers, oil and five kinds of tree among them, the same in both texts
     const v4 = decodeChunk(V4_GENERATED)!;
     expect(v4.flowDir.filter((d) => d).length).toBeGreaterThan(0);
     expect(new Set([...v4.props.values()].flat().map((p) => p.kind)).size).toBeGreaterThan(5);
     expect(plain(decodeChunk(V5_GENERATED)!)).toEqual(plain({ ...v4, version: 5 }));
     expect(plain(decodeChunk(V6_GENERATED)!)).toEqual(plain({ ...v4, version: 6 }));
+    expect(plain(decodeChunk(V7_GENERATED)!)).toEqual(plain({ ...v4, version: 7 }));
     const g = emptyMap(7412, 12, 10);
     placeChunk(g, 0, 0, v4);
-    expect(encodeChunk(g, 0, 0)).toBe(V6_GENERATED);
+    expect(encodeChunk(g, 0, 0)).toBe(V7_GENERATED);
+    expect(encodeChunk(g, 0, 0, 6)).toBe(V6_GENERATED);
+    expect(encodeChunk(g, 0, 0, 5)).toBe(V5_GENERATED);
     expect(V5_GENERATED.length).toBeLessThan(V4_GENERATED.length / 2);
     expect(V6_GENERATED.length).toBeLessThan(V4_GENERATED.length / 2);
+    expect(V7_GENERATED.length).toBeLessThan(V4_GENERATED.length / 2);
   });
 
   // six worlds of 49 chunks, each chunk read from a text of every version and written again:
@@ -1729,8 +1744,8 @@ describe('chunk texts of every version (#392)', () => {
   it("loads a store holding chunks of every version unchanged, and grows it in today's", () => {
     const params = { w: 224, h: 224, originX: -96, originY: -96 };
     const made = buildMap(7412, params, {});
-    // each chunk in a version of WRITABLE by where it lies (version 5 has no oracle here, and is
-    // read from its pinned texts above and in the test of buildMap below)
+    // each chunk in a version of WRITABLE by where it lies (versions 5 and 6 are written by encodeChunk,
+    // and are also read from their pinned texts above)
     const versionAt = (cx: number, cy: number) =>
       WRITABLE[(((cx + 2 * cy) % WRITABLE.length) + WRITABLE.length) % WRITABLE.length];
     const store: ChunkStore = {};
@@ -2043,7 +2058,7 @@ function fixtureMap(): GameMap {
  * made it (32fdc93, version 1 with wheat; 37a0048; a588d0d; 3d24617, develop's before #392). The
  * bytes of saves already made: never re-blessed.
  */
-const WRITTEN: Record<OldVersion, string> = {
+const WRITTEN: Record<Exclude<OldVersion, 5 | 6>, string> = {
   1:
     'AQUJBgQRATEQATIhADFQYEExUBEBcRABcWAxAHBggJJwYIDk5OT/kJMGAABA4AJBAADlgH8fBggB/xMBBAoUKvbsHwus' +
     'AlqmbAB/j4AAGCIhLBBOAAAQZ7M3',

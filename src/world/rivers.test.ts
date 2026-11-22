@@ -18,6 +18,7 @@ import {
   type ChunkStore,
 } from './chunks';
 import { oldChunkText } from './oldChunkTexts';
+import { MELT_BIT } from './waterfalls';
 import {
   DRY,
   FLOW_CAP,
@@ -146,7 +147,7 @@ function checkWater(small: MapPlanes, big: MapPlanes, seen: Seen) {
         throw new Error(`too steep a step at ${at(i)}`);
       if (terrain[i] === Terrain.Water && levels[i] !== surface[i])
         throw new Error(`water at level ${levels[i]}, its own ${surface[i]}, at ${at(i)}`);
-      if (terrain[i] !== Terrain.Water && surface[i])
+      if (terrain[i] !== Terrain.Water && terrain[i] !== Terrain.Ice && surface[i])
         throw new Error(`a water level on land at ${at(i)}`);
       // River and Lake as #340 assigns them, read off the pass's own flow planes rather than the
       // river plane biomeRules is given: River where the pass laid a river (a side to run to),
@@ -189,7 +190,10 @@ function checkWater(small: MapPlanes, big: MapPlanes, seen: Seen) {
       const block = [i, i + 1, i + w, i + w + 1];
       if (block.every((k) => river[k])) {
         seen.wide++;
-        if (block.some((k) => levels[k] >= 2)) throw new Error(`a wide river high up at ${at(i)}`);
+        // (a glacier's melt, and the river it runs into, may run side by side up the mountain)
+        const glacial = block.some((k) => m.feature![k] & MELT_BIT);
+        if (!glacial && block.some((k) => levels[k] >= 2))
+          throw new Error(`a wide river high up at ${at(i)}`);
       }
     }
   // every lake that lies wholly in the grown world: three tiles or more, and an outlet, a river
@@ -713,6 +717,8 @@ describe('the water planes in stored chunks', () => {
         const store: ChunkStore = { [chunkKey(cx, cy)]: encodeChunk(stubChunk(c, fresh), cx, cy) };
         const m = buildMap(c.seed, params, store).map;
         const levels = tileLevels(m);
+        // a glacier's melt stands up the mountain's side, not within a level of what lies beside it
+        const glacial = (i: number) => (m.feature![i] & MELT_BIT) !== 0;
         const stored = (i: number) =>
           Math.floor((i % 160) / CHUNK_TILES) === cx && Math.floor(i / 160 / CHUNK_TILES) === cy;
         const sides = (i: number) =>
@@ -738,7 +744,7 @@ describe('the water planes in stored chunks', () => {
           }
           if (water)
             for (const n of sides(i))
-              if (stored(n) && m.waterSurface![i] > levelTarget(m, n) + 1)
+              if (stored(n) && !glacial(i) && m.waterSurface![i] > levelTarget(m, n) + 1)
                 throw new Error(
                   `new water ${m.waterSurface![i]} beside stored ${levelTarget(m, n)} at ${at(i)}`,
                 );

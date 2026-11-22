@@ -31,7 +31,8 @@ export function maxStep(map: Elevated): 1 | 4 {
 /**
  * The level tile `i` (`y * w + x`) stands at before its neighbours lower it: the player's level
  * where GameMap.groundLevel sets one, else the generated one where GameMap.generatedLevel does,
- * else by terrain: a hill 2, a mountain LEGACY_MOUNTAIN_LEVEL, water the level of its surface
+ * else by terrain: a hill 2, a mountain LEGACY_MOUNTAIN_LEVEL, ice the level it was laid at (in
+ * waterSurface, LEGACY_MOUNTAIN_LEVEL where the map has none), water the level of its surface
  * (GameMap.waterSurface, 0 where the map has none), and any other ground 0. tileLevels and
  * levelAt build every level from it; the renderer reads the same rule through them.
  */
@@ -42,6 +43,7 @@ export function levelTarget(map: Elevated, i: number): number {
   if (generated !== undefined && generated !== NO_LEVEL) return generated;
   const t = map.terrain[i];
   if (t === Terrain.Water) return map.waterSurface?.[i] ?? 0;
+  if (t === Terrain.Ice) return map.waterSurface?.[i] || LEGACY_MOUNTAIN_LEVEL;
   return t === Terrain.Hill ? 2 : t === Terrain.Mountain ? LEGACY_MOUNTAIN_LEVEL : 0;
 }
 
