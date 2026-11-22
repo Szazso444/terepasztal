@@ -5,7 +5,9 @@ import { forAll, shrinkInt } from '../testing/property';
 import {
   BIOME_MATERIAL,
   Material,
+  FIRST_WILD,
   MATERIAL_COLORS,
+  WILD_CELLS,
   biomeMaterial,
   groundMaterial,
   heightAt,
@@ -175,7 +177,7 @@ describe('materialAt', () => {
   it('paints water in a lake and a river, sand on a beach and rock on a mountain', () => {
     expect(materialOf(Terrain.Water, LAKE)).toBe(5);
     expect(materialOf(Terrain.Water, RIVER)).toBe(5);
-    expect(materialOf(Terrain.Sand, BEACH)).toBe(6);
+    expect(materialOf(Terrain.Sand, BEACH)).toBe(Material.Beach);
     for (const terrain of [Terrain.Mountain, Terrain.Rock])
       expect(materialOf(terrain, MOUNTAIN)).toBe(7);
     // The terrain decides these, so no biome repaints them.
@@ -276,12 +278,16 @@ describe('the snow line and the ground between stones', () => {
 describe('the material table against the surface sheet', () => {
   it('names the cells the packed sheet holds, in the order it holds them', () => {
     // The sheet's own manifest, written by tools/terrain-surfaces.mjs next to the pixels.
-    const sheet = JSON.parse(readFileSync('public/assets/terrain-surfaces.json', 'utf8')) as {
-      materials: string[];
-    };
-    expect(Object.keys(Material)).toHaveLength(sheet.materials.length);
+    const read = (name: string) =>
+      (JSON.parse(readFileSync(`public/assets/${name}.json`, 'utf8')) as { materials: string[] })
+        .materials;
+    // the second sheet's cells follow the first's, its names hyphenated (tools/wild-surfaces.mjs)
+    const sheet = [...read('terrain-surfaces'), ...read('wild-surfaces')];
+    expect(Object.keys(Material)).toHaveLength(sheet.length);
+    expect(read('wild-surfaces')).toHaveLength(WILD_CELLS);
+    expect(FIRST_WILD).toBe(read('terrain-surfaces').length);
     for (const [name, cell] of Object.entries(Material))
-      expect(sheet.materials[cell], `Material.${name}`).toBe(name.toLowerCase());
+      expect(sheet[cell].replace('-', ''), `Material.${name}`).toBe(name.toLowerCase());
   });
   it('never gives a biome the city or mountain cell, which the painter sets from the map', () => {
     for (let id = 0; id < 256; id++) {
@@ -364,7 +370,9 @@ function materialFor(terrain: number, biome: number): number {
     case Terrain.Water:
       return 5;
     case Terrain.Sand:
-      return biome === 2 ? 2 : 6;
+      return biome === 2 ? 2 : biome === 8 ? 12 : 6;
+    case Terrain.Ice:
+      return 19;
     case Terrain.Rock:
     case Terrain.Mountain:
       return 7;

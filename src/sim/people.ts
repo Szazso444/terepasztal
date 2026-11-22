@@ -257,7 +257,7 @@ export function walkable(map: GameMap, x: number, y: number, decks?: RoadDecks |
   if (x < 0 || y < 0 || x >= map.w || y >= map.h) return false;
   const t = map.terrain[y * map.w + x];
   if (t === Terrain.Water) return !!decks && decks.axis(x, y) !== null;
-  return t !== Terrain.Rock && t !== Terrain.Mountain;
+  return t !== Terrain.Rock && t !== Terrain.Mountain && t !== Terrain.Ice;
 }
 
 /**

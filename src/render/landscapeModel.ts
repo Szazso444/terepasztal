@@ -1,12 +1,15 @@
 import { MAX_LEVEL, levelTarget } from '../world/elevation';
-import { Terrain, climateAtIndex, type GameMap } from '../world/tiles';
+import { Biome, Terrain, climateAtIndex, type GameMap } from '../world/tiles';
 
 export type LandscapeMap = Pick<
   GameMap,
   'w' | 'h' | 'seed' | 'originX' | 'originY' | 'terrain' | 'biome' | 'climate'
 > &
-  Pick<Partial<GameMap>, 'waterSurface'>;
-/** The cells of the packed surface sheet, by material index (names in tools/terrain-surfaces.mjs). */
+  Pick<Partial<GameMap>, 'waterSurface' | 'flowDir' | 'feature'>;
+/**
+ * The cells of the packed surface sheet, by material index (names in tools/terrain-surfaces.mjs),
+ * and after them those of the second, wild sheet (tools/wild-surfaces.mjs), from `FIRST_WILD` on.
+ */
 export const Material = {
   Grass: 0,
   Forest: 1,
@@ -18,7 +21,22 @@ export const Material = {
   Rock: 7,
   City: 8,
   Mountain: 9,
+  River: 10,
+  Bank: 11,
+  Beach: 12,
+  FallLit: 13,
+  FallShade: 14,
+  Snow: 15,
+  HighRock: 16,
+  Alpine: 17,
+  Ice: 18,
+  Moraine: 19,
+  CliffLit: 20,
+  CliffShade: 21,
 } as const;
+/** The first material of the wild sheet, and how many it holds. */
+export const FIRST_WILD = Material.River;
+export const WILD_CELLS = 12;
 /**
  * The material each biome stands for, by biome id. Ids are appended and never renumbered
  * (src/sim/biomes.ts), so a biome added later needs its entry here: an id with none paints as
@@ -73,6 +91,20 @@ export const MATERIAL_COLORS = [
   [65, 111, 116],
   [185, 161, 111],
   [127, 130, 118],
+  [150, 140, 122],
+  [127, 130, 118],
+  [70, 122, 128],
+  [120, 108, 88],
+  [192, 170, 124],
+  [190, 196, 192],
+  [170, 178, 178],
+  [214, 219, 223],
+  [132, 134, 124],
+  [116, 124, 96],
+  [196, 208, 214],
+  [120, 114, 104],
+  [170, 186, 196],
+  [150, 166, 178],
 ] as const;
 const clamp = (n: number, hi: number) => Math.max(0, Math.min(hi, n));
 const smooth = (n: number) => n * n * (3 - 2 * n);
@@ -97,7 +129,11 @@ export function materialAt(map: LandscapeMap, x: number, y: number) {
   const t = map.terrain[k],
     own = biomeMaterial(map.biome[k]);
   if (t === Terrain.Water) return Material.Water;
-  if (t === Terrain.Sand) return own === Material.Desert ? Material.Desert : Material.Sand;
+  if (t === Terrain.Sand) {
+    if (map.biome[k] === Biome.Beach) return Material.Beach;
+    return own === Material.Desert ? Material.Desert : Material.Sand;
+  }
+  if (t === Terrain.Ice) return Material.Moraine;
   if (t === Terrain.Rock || t === Terrain.Mountain) return Material.Rock;
   if (t === Terrain.Forest)
     return own === Material.Swamp || own === Material.Taiga ? own : Material.Forest;

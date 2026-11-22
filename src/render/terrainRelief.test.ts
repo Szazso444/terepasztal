@@ -73,7 +73,7 @@ describe('connected illustrated terrain', () => {
         expect(detail).toBeLessThanOrEqual(1);
         expect(Math.abs(detail - grassDetail(x + 0.001, y))).toBeLessThan(0.002);
         surfaceBlend(m, x, y, weights);
-        expect(weights.slice(4).reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10);
+        expect(weights.slice(4, 8).reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10);
         const forest = weights
           .slice(0, 4)
           .reduce((n, t, i) => n + (t === 1 ? weights[i + 4] : 0), 0);
@@ -355,31 +355,6 @@ describe('connected illustrated terrain', () => {
   });
 });
 
-describe('the slope rule', () => {
-  it('agrees with the simulation on every tile of seeded maps', () => {
-    let refused = 0;
-    for (const seed of [15, 2026, 7412]) {
-      const map = generateMap(seed, { w: 96, h: 96 });
-      const relief = buildRelief(map, new Set());
-      const levels = tileLevels(map);
-      for (const need of ['straight', 'level'] as const)
-        for (let y = 0; y < map.h; y++)
-          for (let x = 0; x < map.w; x++) {
-            const sim = groundAllowsAt(map, levels, x, y, need);
-            expect(groundAllows(map, relief, x, y, need), `${seed}, ${x},${y}`).toBe(sim);
-            if (!sim) refused++;
-          }
-      // a sample against the rule the builder asks, which reads no whole-map levels
-      for (let k = 0; k < 400; k += 7) {
-        const x = k % map.w;
-        const y = (k * 13) % map.h;
-        expect(groundAllowsOn(map, x, y, 'level')).toBe(groundAllowsAt(map, levels, x, y, 'level'));
-      }
-    }
-    expect(refused).toBeGreaterThan(0);
-  }, 30_000);
-});
-
 describe('raised water in the relief', () => {
   /** A 7 x 7 hill plateau with a 3 x 3 pool at its middle, raised to `level`. */
   function pool(level: number) {
@@ -416,6 +391,31 @@ describe('raised water in the relief', () => {
         buildRelief(none, new Set(), style).corners,
       );
   });
+});
+
+describe('the slope rule', () => {
+  it('agrees with the simulation on every tile of seeded maps', () => {
+    let refused = 0;
+    for (const seed of [15, 2026, 7412]) {
+      const map = generateMap(seed, { w: 96, h: 96 });
+      const relief = buildRelief(map, new Set());
+      const levels = tileLevels(map);
+      for (const need of ['straight', 'level'] as const)
+        for (let y = 0; y < map.h; y++)
+          for (let x = 0; x < map.w; x++) {
+            const sim = groundAllowsAt(map, levels, x, y, need);
+            expect(groundAllows(map, relief, x, y, need), `${seed}, ${x},${y}`).toBe(sim);
+            if (!sim) refused++;
+          }
+      // a sample against the rule the builder asks, which reads no whole-map levels
+      for (let k = 0; k < 400; k += 7) {
+        const x = k % map.w;
+        const y = (k * 13) % map.h;
+        expect(groundAllowsOn(map, x, y, 'level')).toBe(groundAllowsAt(map, levels, x, y, 'level'));
+      }
+    }
+    expect(refused).toBeGreaterThan(0);
+  }, 30_000);
 });
 
 describe('the top of the relief in a box, on any map', () => {
