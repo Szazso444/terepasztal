@@ -18,7 +18,7 @@ import { harvestBreakdown } from '../sim/stations';
 import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { simWorld, type SimWorld } from '../testing/simWorld';
 import { picture } from '../testing/townPaving';
-import { MAX_LEVEL, tileLevels } from '../world/elevation';
+import { LEGACY_MOUNTAIN_LEVEL, tileLevels } from '../world/elevation';
 import { emptyMap } from '../world/mapgen';
 import { EDGE_STRIP_TILES } from '../world/edgeStrip';
 import { stripMeshes } from './edgeStripMesh';
@@ -1033,7 +1033,8 @@ describe('the ground when the painter has failed', () => {
         const t = map.terrain[y * 32 + x];
         if (t !== Terrain.Mountain && t !== Terrain.Rock) continue;
         expect(world.elevationOf(x, y), `${x},${y}`).toBe(-levels[y * 32 + x] * ELEV_PX);
-        if (levels[y * 32 + x] === MAX_LEVEL) high++;
+        // a map with no generated plane tops out at the old mountain level
+        if (levels[y * 32 + x] === LEGACY_MOUNTAIN_LEVEL) high++;
       }
     expect(high).toBeGreaterThan(0);
   });
