@@ -256,6 +256,10 @@ class TooltipLayer implements TipView<TipContent> {
     );
   }
 
+  empty(content: TipContent) {
+    return !content.length;
+  }
+
   open(level: number, content: TipContent, anchor: Point) {
     const body = el('div', { class: 'tt-body' }, ...content);
     const track = circle('tt-ring-track');

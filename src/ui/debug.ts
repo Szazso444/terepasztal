@@ -13,7 +13,6 @@ import {
 
 export interface DebugActions {
   giveMoney(): void;
-  giveTickets(): void;
   nextAge(): void;
   giveResources(): void;
   spawnContract(): void;
@@ -61,7 +60,6 @@ export class DebugPanel {
           null,
           buttonRow(
             actionButton(STR.debug.giveMoney, actions.giveMoney, { cls: 'small' }),
-            actionButton(STR.debug.giveTickets, actions.giveTickets, { cls: 'small' }),
             actionButton(STR.debug.nextAge, actions.nextAge, { cls: 'small' }),
             actionButton(STR.debug.spawnContract, actions.spawnContract, { cls: 'small' }),
             actionButton(STR.debug.giveResources, actions.giveResources, { cls: 'small' }),

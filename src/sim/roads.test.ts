@@ -34,7 +34,7 @@ import {
   walkable,
   type Person,
 } from './people';
-import { SAVE_VERSION, migrate, readSaveText, type SaveGame } from './save';
+import { MIGRATIONS, SAVE_VERSION, migrate, readSaveText, type SaveGame } from './save';
 import { buildingFromJSON, buildingToJSON } from './buildings';
 import { repairBuiltRoads, repairBuiltTiles } from '../engine/loadRepair';
 import { bridgeSpan } from './bridges';
@@ -1269,7 +1269,9 @@ describe('roads and the save', () => {
     expect(v19.migrationNotes?.[0]).toBe(
       'v19→v20: no road had been built: the road list started empty',
     );
-    expect(v19.migrationNotes).toHaveLength(SAVE_VERSION - 19);
+    expect(v19.migrationNotes).toHaveLength(
+      MIGRATIONS.filter((m) => m.from >= 19 && !m.quiet).length,
+    );
     // the step only fills in: a list the file has is kept
     const kept = migrate({ ...oldSave(19), roads: [[1, 2]] });
     expect(kept.roads).toEqual([[1, 2]]);
@@ -1311,13 +1313,12 @@ function oldSave(version: number): SaveGame {
     savedAt: 1,
     seed: 5,
     clock: { time: 0, speedIndex: 1 },
-    economy: { money: 0, tickets: 0, tier: 0, granted: [] },
+    economy: { money: 0, tier: 0 },
     track: [],
     stations: [],
     trains: [],
     contracts: { contracts: [] },
     inventory: { items: [] },
-    gacha: {},
     camera: { x: 0, y: 0, zoomIndex: 2 },
     lastDay: 0,
   };

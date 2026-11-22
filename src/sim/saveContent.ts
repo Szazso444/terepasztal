@@ -1,8 +1,8 @@
 /**
  * Content a save names that the game no longer defines: removed in an update, or hidden by a
  * content override. Loading such a save used to throw at the first lookup ("unknown station
- * mill"); instead the things are dropped before the save is applied, the player is refunded and
- * a report says what went. It works on the parsed save alone: no DOM, no storage.
+ * mill"); instead the things are dropped before the save is applied, what stood on the map is
+ * refunded and a report says what went. It works on the parsed save alone: no DOM, no storage.
  */
 import type { SaveGame } from './save';
 import type { StopPlan, TrainJob } from './trains';
@@ -14,8 +14,6 @@ import { LOCOS, WAGONS } from '../gacha/items';
 
 /** Money refunded for each dropped station, works or service; about the cheapest station's cost. */
 export const UNKNOWN_BUILD_REFUND = 250;
-/** Tickets refunded for each dropped vehicle or inventory item (one pull or recipe each). */
-export const UNKNOWN_ITEM_REFUND = 1;
 
 /** Which ids the content defines. `vehicle` checks one table when given a kind, either without. */
 export interface KnownContent {
@@ -40,8 +38,6 @@ export interface PruneReport {
   dropped: { kind: DroppedKind; id: string; count: number }[];
   /** money added to the economy */
   money: number;
-  /** tickets added to the economy */
-  tickets: number;
 }
 
 /** The parts of a saved train this pass reads (`Train.toJSON`; older saves may lack the job fields). */
@@ -73,16 +69,16 @@ interface ItemSave {
  * depot's store (`depotStoreAmounts`), its contracts are cancelled and trains skip its stops; a
  * train left without a locomotive is taken off the line and its wagons go back to the inventory; a
  * dropped wagon's cargo goes to the start depot's store. A vehicle in a train and its inventory
- * entry are one copy and are refunded once. Running it again finds nothing.
+ * entry are one copy and are reported once. Only stations, works and services refund money.
+ * Running it again finds nothing.
  */
 export function pruneUnknownContent(j: SaveGame, known: KnownContent = LIVE_CONTENT): PruneReport {
-  const report: PruneReport = { dropped: [], money: 0, tickets: 0 };
+  const report: PruneReport = { dropped: [], money: 0 };
   const drop = (kind: DroppedKind, id: string) => {
     const e = report.dropped.find((d) => d.kind === kind && d.id === id);
     if (e) e.count++;
     else report.dropped.push({ kind, id, count: 1 });
-    if (kind === 'vehicle' || kind === 'item') report.tickets += UNKNOWN_ITEM_REFUND;
-    else report.money += UNKNOWN_BUILD_REFUND;
+    if (kind !== 'vehicle' && kind !== 'item') report.money += UNKNOWN_BUILD_REFUND;
   };
   const depotStore = depotStoreAmounts(j, known);
   const toStock = (cargo: string | null, amount: number) => {
@@ -155,7 +151,7 @@ export function pruneUnknownContent(j: SaveGame, known: KnownContent = LIVE_CONT
   }
   if (offLine.size) j.trains = trains.filter((t) => !offLine.has(t.id));
 
-  // inventory: unknown models go; a copy already refunded as a train vehicle is not counted again
+  // inventory: unknown models go; a copy already reported as a train vehicle is not counted again
   const inv = j.inventory as { items?: ItemSave[] } | undefined;
   if (inv && Array.isArray(inv.items)) {
     if (inv.items.some((it) => !known.vehicle(it.defId)))
@@ -170,7 +166,6 @@ export function pruneUnknownContent(j: SaveGame, known: KnownContent = LIVE_CONT
   }
 
   if (report.money) j.economy.money += report.money;
-  if (report.tickets) j.economy.tickets += report.tickets;
   return report;
 }
 

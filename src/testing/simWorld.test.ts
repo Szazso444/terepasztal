@@ -173,14 +173,12 @@ describe('simWorld as Game builds it', () => {
     expect({
       weather: w.weather.rng.state,
       contracts: w.contracts.rng.state,
-      gacha: w.gacha.rng.state,
       crafting: w.crafting.rng.state,
       people: w.people.toJSON(),
       trade: w.trade.seed,
     }).toEqual({
       weather: new Rng(seed ^ 0x77ea).state,
       contracts: new Rng(seed ^ 0x5eed).state,
-      gacha: new Rng(seed ^ 0x9ac4a).state,
       crafting: new Rng(seed ^ 0xc4af7).state,
       people: new PeopleSim(w.map, w.builder).toJSON(),
       trade: seed,

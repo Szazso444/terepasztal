@@ -358,13 +358,12 @@ describe('Game.loadSlot, Game.loadSave and Game.importSave', () => {
     savedAt: 1700000000000,
     seed: 12345,
     clock: { time: 0, speedIndex: 1 },
-    economy: { money: 1000, tickets: 0, tier: 0, granted: [] },
+    economy: { money: 1000, tier: 0 },
     track: [],
     stations: [],
     trains: [],
     contracts: { contracts: [] },
     inventory: { items: [] },
-    gacha: {},
     camera: { x: 0, y: 0, zoomIndex: 2 },
     lastDay: 0,
   });
@@ -1112,7 +1111,6 @@ function gameOn(w: SimWorld): Game {
     fleet: w.fleet,
     people: w.people,
     contracts: w.contracts,
-    gacha: w.gacha,
     crafting: w.crafting,
     contractJobs: w.contractJobs,
     trade: w.trade,
@@ -1563,7 +1561,7 @@ describe('stores through Game.snapshot and Game.applySave', () => {
   });
 
   /** A level's start block: the default goods, in the first age. */
-  const levelStart = { money: 25000, tickets: 3, tier: 0, stockMul: 1 };
+  const levelStart = { money: 25000, tier: 0, stockMul: 1 };
   /** The start stock a level's start block brings, by good. */
   const levelStock = () =>
     Object.fromEntries(

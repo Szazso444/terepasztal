@@ -15,7 +15,6 @@ import { SAVE_VERSION, SAVE_MIN_VERSION, migrate, parseSave, type SaveGame } fro
 import { pruneUnknownContent } from './saveContent';
 import { gaugeLine, gaugeOf } from './compat';
 import { Inventory } from '../gacha/inventory';
-import { Gacha } from '../gacha/gacha';
 import { Crafting } from '../gacha/crafting';
 import { LOCOS, WAGONS, locoDef, wagonDef, type Item } from '../gacha/items';
 import { looseStore, storeWith } from '../testing/storeFixtures';
@@ -40,12 +39,11 @@ function world() {
   const builder = new Builder(map, new RegionState(map), track, economy, storeWith({}).stores);
   builder.free = true;
   const fleet = new Fleet(track, builder, map, inventory, economy);
-  const gacha = new Gacha(new Rng(1), inventory);
   const crafting = new Crafting(new Rng(2), inventory, economy);
-  return { map, track, stock, economy, builder, fleet, inventory, gacha, crafting };
+  return { map, track, stock, economy, builder, fleet, inventory, crafting };
 }
 function item(uid: number, defId: string, kind: Item['kind'], assigned: number | null): Item {
-  return { uid, defId, kind, level: 1, assigned, dupes: 0, obtainedAt: 0 };
+  return { uid, defId, kind, level: 1, assigned, obtainedAt: 0 };
 }
 
 /** A pair of engines a save holds, the track they run on and the wagon behind each. */
@@ -107,13 +105,12 @@ function saveWith(version: number, pair: Pair): string {
     savedAt: 1700000000000,
     seed: 4242,
     clock: { time: 0, speedIndex: 1 },
-    economy: { money: 1000, tickets: 0, tier: 0, granted: [], earned: 0 },
+    economy: { money: 1000, tier: 0, earned: 0 },
     track,
     stations: w.builder.stations.map((s) => s.toJSON()),
     trains: trains.map((t) => t.toJSON()),
     contracts: { contracts: [] },
     inventory: { items, nextUid: 40 },
-    gacha: { pity: 3, totalPulls: 7, rng: 12345 },
     camera: { x: 0, y: 0, zoomIndex: 2 },
     lastDay: 1,
     decor: [],
@@ -141,7 +138,6 @@ function load(text: string) {
   resetStationIds(1);
   for (const sj of j.stations) w.builder.stations.push(Station.fromJSON(sj));
   w.inventory.load(j.inventory as ReturnType<Inventory['toJSON']>);
-  w.gacha.load(j.gacha as ReturnType<Gacha['toJSON']>);
   w.crafting.load(j.crafting as ReturnType<Crafting['toJSON']> | undefined);
   resetTrainIds(1);
   for (const tj of j.trains as ReturnType<Train['toJSON']>[])
@@ -238,13 +234,12 @@ function oldSave(version: number, items: Item[]): SaveGame {
     savedAt: 1700000000000,
     seed: 1,
     clock: { time: 0, speedIndex: 1 },
-    economy: { money: 0, tickets: 0, tier: 0, granted: [] },
+    economy: { money: 0, tier: 0 },
     track: [],
     stations: [],
     trains: [],
     contracts: { contracts: [] },
     inventory: { items, nextUid: items.length + 1 },
-    gacha: {},
     camera: { x: 0, y: 0, zoomIndex: 2 },
     lastDay: 0,
   };

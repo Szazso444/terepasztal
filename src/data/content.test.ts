@@ -206,7 +206,6 @@ describe('a bad stored override never stops the load', () => {
     ['track', {}],
     ['houses', 'x'],
     ['cargo', [null]],
-    ['gacha', { banners: [{ id: 'b', pool: null }], rates: null }],
   ] as [ContentKey, unknown][])(
     'current-stamped %s table of the wrong shape: shipped tables, set aside as invalid',
     async (key, data) => {
@@ -270,8 +269,6 @@ describe('validateContent', () => {
       (b) => (b.stations.levels.capacity = b.stations.levels.capacity.slice(0, -1)),
       (b) => ((b.buildings[0] as unknown as Table).recipe = null),
       (b) => ((b.buildings[0].recipe as unknown as Table).in = 'coal'),
-      (b) => ((b.gacha.banners[0] as unknown as Table).pool = null),
-      (b) => ((b.gacha as unknown as Table).rates = { N: '1' }),
       (b) => ((b.track as unknown as Table).pieces = null),
       (b) => ((b.track.pieces as unknown as Table)[Object.keys(b.track.pieces)[0]] = null),
       (b) => ((b.contracts as unknown as Table).templates = null),
@@ -431,16 +428,13 @@ describe('applying stored tables', () => {
   });
 
   it('applies tables that only validate together', async () => {
-    const locos = clone(shipped.DEFAULT_CONTENT.locomotives);
-    locos.push({ ...locos[0], id: 'test_loco', starter: false });
-    const gacha = clone(shipped.DEFAULT_CONTENT.gacha);
-    gacha.banners[0].pool.push('test_loco');
-    const mod = await load(stamped({ locomotives: locos, gacha }));
-    expect(mod.contentOverrideReport()).toEqual({
-      applied: ['locomotives', 'gacha'],
-      setAside: [],
-    });
-    expect(mod.content.gacha.banners[0].pool).toContain('test_loco');
+    const cargo = clone(shipped.DEFAULT_CONTENT.cargo);
+    cargo.push({ ...cargo[0], id: 'test_cargo' });
+    const stations = clone(shipped.DEFAULT_CONTENT.stations);
+    stations.defs[0].accepts.push('test_cargo');
+    const mod = await load(stamped({ cargo, stations }));
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['cargo', 'stations'], setAside: [] });
+    expect(mod.content.stations.defs[0].accepts).toContain('test_cargo');
   });
 
   it('sets aside a table that breaks a shipped one and keeps the tables valid without it', async () => {
@@ -657,6 +651,188 @@ describe('an override in the old whole-bundle format', () => {
       expect(rewriteWarned()).toBe(true);
       expect(storage.getItem(KEY)).toBe(JSON.stringify(old));
     });
+  });
+});
+
+describe('a stored gacha table, from before the gacha left the game', () => {
+  /** A table the old editor stored; nothing today checks it, so it may name anything. */
+  const gacha = { rates: { N: 2 }, banners: [{ id: 'gone', tier: 0, pool: ['no_such_model'] }] };
+  const STAMP = 'fc9d4ee3';
+
+  it('is no table of the bundle: not shipped, listed, checked or hashed', () => {
+    expect(shipped.CONTENT_KEYS).not.toContain('gacha');
+    expect('gacha' in shipped.DEFAULT_CONTENT).toBe(false);
+    expect('gacha' in PAST_SHIPPED).toBe(false);
+    expect(shipped.validateContent(clone(shipped.DEFAULT_CONTENT))).toEqual([]);
+  });
+
+  it.each([
+    ['a table', { stamp: STAMP, data: gacha }],
+    ['a table stamped by no build', { stamp: 'x', data: gacha }],
+    ['a table with no stamp', { data: gacha }],
+    ['malformed data', { stamp: STAMP, data: null }],
+    ['no entry at all', 'x'],
+  ])('alone in the store as %s: the shipped tables load, without a word', async (_, entry) => {
+    const mod = await load({ format: 2, tables: { gacha: entry } });
+    expect(mod.content).toEqual(shipped.content);
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(mod.contentIsCustom()).toBe(false);
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it('beside an edited table: the edit applies and nothing is set aside', async () => {
+    const stored = stamped({ locomotives: editedLocomotives() });
+    const mod = await load({
+      ...stored,
+      tables: { ...stored.tables, gacha: { stamp: STAMP, data: gacha } },
+    });
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['locomotives'], setAside: [] });
+    expect(mod.content.locomotives[0].speed).toBe(shipped.content.locomotives[0].speed + 1);
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it('holds Apply up for nothing, and the next Apply takes it out of storage', async () => {
+    const mod = await load({ format: 2, tables: { gacha: { stamp: STAMP, data: gacha } } });
+    const draft = clone(mod.sourceContent);
+    expect(mod.validateContent(draft)).toEqual([]);
+    expect(mod.changedTables(draft)).toEqual({});
+    draft.locomotives[0].speed += 1;
+    expect(mod.validateContent(draft)).toEqual([]);
+    expect(mod.writeContentOverrides(mod.changedTables(draft))).toBe(true);
+    const stored = JSON.parse(localStorage.getItem(KEY)!) as { tables: Table };
+    expect(Object.keys(stored.tables)).toEqual(['locomotives']);
+  });
+
+  it('in the old whole-bundle format: dropped with the conversion, without a warning', async () => {
+    const mod = await load({
+      ...oldBundle((b) => void (b.locomotives[0].speed += 1)),
+      gacha,
+    });
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['locomotives'], setAside: [] });
+    expect(console.warn).not.toHaveBeenCalled();
+    const stored = JSON.parse(localStorage.getItem(KEY)!) as { format: number; tables: Table };
+    expect(stored.format).toBe(2);
+    expect(Object.keys(stored.tables)).toEqual(['locomotives']);
+  });
+
+  it('alone in the old whole-bundle format: the shipped tables load, without a word', async () => {
+    const mod = await load({ gacha });
+    expect(mod.content).toEqual(shipped.content);
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+});
+
+describe('a stored contracts edit, from before the tickets left', () => {
+  /**
+   * The stamp of the last contracts table that shipped with its ticket fields. The next change to
+   * `contracts.json` ends all this: such an edit is stale, as the test of that says, and the
+   * branch in `content.ts` and the tests here that apply one can go with it.
+   */
+  const STAMP = '39fa427f';
+  /** That table: today's with the fields it held. */
+  function withTickets() {
+    const t = clone(shipped.DEFAULT_CONTENT.contracts);
+    const tickets = [1, 1, 2, 3, 2];
+    const ticketMul = [1, 2, 3, 5, 10];
+    t.templates.forEach((row, i) => ((row as unknown as Table).tickets = tickets[i]));
+    t.rarities.forEach((row, i) => ((row as unknown as Table).ticketMul = ticketMul[i]));
+    return t;
+  }
+  const noTicket = (v: unknown) => expect(JSON.stringify(v)).not.toMatch(/ticket/i);
+
+  it('ships a table that names no ticket, whose rarities are checked without one', () => {
+    noTicket(shipped.DEFAULT_CONTENT.contracts);
+    expect(shipped.validateContent(clone(shipped.DEFAULT_CONTENT))).toEqual([]);
+  });
+
+  it('has that table as its fixture: it hashes to the stamp, and is a past shipped version', () => {
+    expect(shipped.tableHash('contracts', withTickets())).toBe(STAMP);
+    expect(PAST_SHIPPED.contracts).toContain(STAMP);
+  });
+
+  it("applies over today's table without its ticket fields, and without a word", async () => {
+    const edited = withTickets();
+    edited.rarities[0].rewardMul = 7;
+    const mod = await load(stamped({ contracts: edited }, STAMP));
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['contracts'], setAside: [] });
+    expect(mod.content.contracts.rarities[0].rewardMul).toBe(7);
+    noTicket(mod.content.contracts);
+    noTicket(mod.sourceContent.contracts);
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it('is no edit at all when all it changed was a ticket field', async () => {
+    const edited = withTickets();
+    (edited.templates[0] as unknown as Table).tickets = 9;
+    const mod = await load(stamped({ contracts: edited }, STAMP));
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(mod.contentIsCustom()).toBe(false);
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it("is stored under today's stamp by the next Apply", async () => {
+    const edited = withTickets();
+    edited.cancelFine = 0.5;
+    const mod = await load(stamped({ contracts: edited }, STAMP));
+    const draft = clone(mod.sourceContent);
+    expect(mod.validateContent(draft)).toEqual([]);
+    expect(Object.keys(mod.changedTables(draft))).toEqual(['contracts']);
+    expect(mod.writeContentOverrides(mod.changedTables(draft))).toBe(true);
+    const stored = localStorage.getItem(KEY)!;
+    noTicket(stored);
+    expect(JSON.parse(stored)).toEqual(stamped({ contracts: draft.contracts }));
+  });
+
+  it('still answers to validation: a broken edit is set aside as invalid', async () => {
+    const edited = withTickets();
+    (edited.rarities[0] as unknown as Table).weight = 'heavy';
+    const mod = await load(stamped({ contracts: edited }, STAMP));
+    const { applied, setAside } = mod.contentOverrideReport();
+    expect(applied).toEqual([]);
+    expect(setAside.map((s) => [s.key, s.reason])).toEqual([['contracts', 'invalid']]);
+  });
+
+  it('is stale as before when it was made from an older table than that', async () => {
+    const mod = await load(stamped({ contracts: withTickets() }, '16aa0709'));
+    const { applied, setAside } = mod.contentOverrideReport();
+    expect(applied).toEqual([]);
+    expect(setAside.map((s) => [s.key, s.reason])).toEqual([['contracts', 'stale']]);
+  });
+
+  it('goes stale like any other edit once the shipped table changes again', async () => {
+    const changed = clone(shipped.DEFAULT_CONTENT.contracts);
+    changed.failFine += 1;
+    vi.doMock('./contracts.json', () => ({ default: changed }));
+    try {
+      const edited = withTickets();
+      edited.cancelFine = 0.5;
+      const mod = await load(stamped({ contracts: edited }, STAMP));
+      const { applied, setAside } = mod.contentOverrideReport();
+      expect(applied).toEqual([]);
+      expect(setAside.map((s) => [s.key, s.reason])).toEqual([['contracts', 'stale']]);
+      expect(mod.content.contracts.cancelFine).toBe(changed.cancelFine);
+      expect(warnedAbout('contracts')).toBe(true);
+    } finally {
+      vi.doUnmock('./contracts.json');
+    }
+  });
+
+  it('in the old whole-bundle format: an edit converts without the ticket fields', async () => {
+    const edited = withTickets();
+    edited.cancelFine = 0.5;
+    const mod = await load(oldBundle((b) => (b.contracts = edited)));
+    expect(mod.contentOverrideReport().applied).toEqual(['contracts']);
+    expect(mod.content.contracts.cancelFine).toBe(0.5);
+    noTicket(mod.content.contracts);
+    noTicket(localStorage.getItem(KEY));
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it('in the old whole-bundle format: the table as it shipped is an untouched copy', async () => {
+    const mod = await load(oldBundle((b) => (b.contracts = withTickets())));
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(mod.content).toEqual(shipped.content);
   });
 });
 

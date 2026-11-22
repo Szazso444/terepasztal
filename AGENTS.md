@@ -161,6 +161,8 @@ One step along +tx is half a tile right and a quarter tile down.
 Rolling stock is drawn at `FACINGS = 48` headings, 7.5° apart, but only `DRAWN_FACINGS` (25 of
 them) have sprites: the renderer mirrors a drawn facing to cover its partner, and
 `residualRotation` turns the sprite the rest of the way, at `ROTATION_SHARE` of the remainder.
+A vehicle with a rendered model (`gear.json`, `locoFit.json`) instead has its own sprite sets at
+`spriteFacings` headings (192 today), on WebP pages loaded per vehicle.
 Bodies are rigid and never change length (`src/sim/body.ts`). These constants are a contract
 between Gameplay, Rendering and Art: changing one changes atlas frame counts.
 

@@ -62,6 +62,8 @@ async function rig() {
     },
   });
   vi.stubGlobal('Audio', FakeAudio);
+  // a tab of its own: Node has a `sessionStorage` too, which would carry one test's track to the next
+  vi.stubGlobal('sessionStorage', { getItem: () => null, setItem: () => undefined });
   return {
     Game,
     audio,
