@@ -52,6 +52,11 @@ export interface OverviewMarker {
   y: number;
   kind: 'info' | 'warn' | 'bad';
 }
+/** A `spotted` landmark: the tile at the centre of its footprint, which gets a `?`. */
+export interface OverviewLandmark {
+  x: number;
+  y: number;
+}
 export interface OverviewContract {
   id: number;
   from: { x: number; y: number };
@@ -67,6 +72,8 @@ export interface OverviewSource {
   contracts(): OverviewContract[];
   markers(): OverviewMarker[];
   towns(): OverviewTown[];
+  /** the spotted landmarks; a source without landmarks leaves it out */
+  landmarks?(): OverviewLandmark[];
 }
 
 const FLAT_COLORS: Record<number, string> = {
@@ -96,6 +103,8 @@ export class OverviewRenderer {
   private powerG = new Graphics();
   private pathG = new Graphics();
   private markerG = new Graphics();
+  /** The `?` glyphs over spotted landmarks, one text kept per mark and shown or hidden. */
+  private landmarkMarks = new Container();
   private townG = new Graphics();
   private townLabels = new Map<number, Text>();
   /** atlas for locomotive icons (optional; arrows without it) */
@@ -123,6 +132,7 @@ export class OverviewRenderer {
       this.stationLayer,
       this.trainLayer,
       this.markerG,
+      this.landmarkMarks,
       this.regionLabels,
     );
     this.rebuildRegions();
@@ -388,6 +398,7 @@ export class OverviewRenderer {
       this.markerG.circle(mx, my, 6).fill({ color: 0x000000, alpha: 0.7 });
       this.markerG.circle(mx, my, 4).fill({ color: col });
     }
+    this.drawLandmarkMarks();
     // contracts
     this.contractG.clear();
     const contracts: ReturnType<OverviewSource['contracts']> = [];
@@ -455,6 +466,35 @@ export class OverviewRenderer {
         this.contractLabels.delete(id);
       }
     this.resolveLabelOverlaps();
+  }
+
+  /** A `?` over each spotted landmark in a revealed region, as the world shows it. */
+  private drawLandmarkMarks() {
+    const U = OV_UNIT;
+    const marks = (this.source.landmarks?.() ?? []).filter((l) =>
+      this.regions.isTileRevealed(Math.floor(l.x), Math.floor(l.y)),
+    );
+    marks.forEach((l, n) => {
+      let t = this.landmarkMarks.children[n] as Text | undefined;
+      if (!t) {
+        t = new Text({
+          text: '?',
+          style: {
+            fontFamily: TITLE_FONT,
+            fontSize: 16,
+            fontWeight: 'bold',
+            fill: 0xf2d27a,
+            stroke: { color: 0x000000, width: 4 },
+          },
+        });
+        t.anchor.set(0.5);
+        this.landmarkMarks.addChild(t);
+      }
+      t.visible = true;
+      t.position.set((l.x + 0.5) * U, (l.y + 0.5) * U);
+    });
+    for (let n = marks.length; n < this.landmarkMarks.children.length; n++)
+      this.landmarkMarks.children[n].visible = false;
   }
 
   /**

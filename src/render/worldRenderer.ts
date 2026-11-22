@@ -6,6 +6,7 @@ import {
   Graphics,
   Mesh,
   MeshGeometry,
+  Text,
   Texture,
 } from 'pixi.js';
 import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
@@ -38,6 +39,14 @@ import { SurfaceAssets, fieldFrames, fieldTexture, windowSprite } from './surfac
 import { footGround, footScatter, type Foot } from './groundFit';
 import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
+import {
+  footprintIndices,
+  landmarkPlacement,
+  LANDMARK_LAYER,
+  treatmentOf,
+  type DrawnLandmark,
+} from './landmarkDraw';
+import { landmarkDef } from '../data/content';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import { clearedByPaving, scatterFor } from './scatter';
 import { levelAt } from '../world/elevation';
@@ -157,6 +166,29 @@ const CUT_BY_TRACK: ReadonlySet<PropKind> = new Set<PropKind>(['wheat']);
 /** An illustrated picture: more texels than world pixels (an atlas `resolution` above 1). */
 function illustrated(f: FrameInfo) {
   return f.texture.frame.width / f.w > 1;
+}
+
+/** The structure id of a landmark's picture. */
+const LANDMARK_PREFIX = 'landmark:';
+const landmarkId = (id: number) => `${LANDMARK_PREFIX}${id}`;
+
+/** The `?` over a spotted landmark: a dark disc with the glyph, shining at its own colour at night. */
+function questionMark() {
+  const c = new Container({ cullable: true, label: 'emissive' });
+  c.addChild(
+    new Graphics()
+      .circle(0, 0, 9)
+      .fill({ color: 0x000000, alpha: 0.72 })
+      .circle(0, 0, 9)
+      .stroke({ color: 0xf2d27a, width: 1.5 }),
+  );
+  const glyph = new Text({
+    text: '?',
+    style: { fontFamily: 'Georgia, serif', fontSize: 14, fontWeight: 'bold', fill: 0xf2d27a },
+  });
+  glyph.anchor.set(0.5);
+  c.addChild(glyph);
+  return c;
 }
 
 /** What fits one building to the ground, beside its picture (`setStructure`). */
@@ -297,6 +329,13 @@ export class WorldRenderer {
   private structureAnchors = new Map<string, { x: number; y: number; dx: number; dy: number }>();
   private surfaces = new SurfaceAssets();
   private windowLights = new Map<string, Sprite>();
+  /** The landmarks as the game last handed them in (`setLandmarks`). */
+  private landmarkItems: readonly DrawnLandmark[] = [];
+  /** Per landmark id: its window light and its `?` marker, which the picture's structure keeps. */
+  private landmarkLights = new Map<number, Sprite>();
+  private landmarkMarks = new Map<number, Container>();
+  /** The tiles under a drawn landmark: no vegetation shows there and no scatter grows. */
+  private landmarkCover = new Set<number>();
   /** Each building's fit to the ground (groundFit.ts), keyed like its structure. */
   private groundFits = new Map<string, GroundFitSprites>();
   /** The buildings' cast shadows: on the ground, under the track and everything that stands. */
@@ -874,10 +913,12 @@ export class WorldRenderer {
   private showProps(i: number, railed = this.trackSprites.has(i)) {
     const flat = this.flattened.has(i),
       road = this.roads.has(i),
-      paved = this.paved(i);
+      paved = this.paved(i),
+      covered = this.landmarkCover.has(i);
     for (const s of this.propSprites.get(i) ?? [])
       s.visible =
         !flat &&
+        !covered &&
         !(railed && this.cutSprites.has(s)) &&
         !(road && !this.deposits.has(s)) &&
         !(paved && this.paveCleared.has(s));
@@ -909,6 +950,7 @@ export class WorldRenderer {
       occupied: (xx, yy) =>
         this.trackSprites.has(idx(this.map, xx, yy)) ||
         this.roads.has(idx(this.map, xx, yy)) ||
+        this.landmarkCover.has(idx(this.map, xx, yy)) ||
         this.occupied(xx, yy),
       city: (xx, yy) => this.city.has(idx(this.map, xx, yy)),
       // A stacked bank passes through: one neighbour a level up, another a level down.
@@ -973,6 +1015,8 @@ export class WorldRenderer {
       this.fog.addChild(g);
       this.fogShapes.set(i, g);
     }
+    // a region just revealed brings its landmarks' pictures
+    this.syncLandmarks();
   }
 
   /** Apply camera transform. */
@@ -1023,6 +1067,7 @@ export class WorldRenderer {
         if (fit) placeGroundFit(fit, s);
         this.windowLights.get(id)?.position.copyFrom(s.position);
       }
+      for (const l of this.landmarkItems) this.placeLandmarkDressing(l);
       for (let i = 0; i < this.groundSprites.length; i++) {
         const s = this.groundSprites[i];
         if (s)
@@ -2316,6 +2361,112 @@ export class WorldRenderer {
     fit.weeds.visible = !!art;
     if (art) fit.weeds.anchor.set(art.anchorX, art.anchorY);
   }
+  /**
+   * Draw the landmarks (spec section 7), as the registry holds them now: the game hands them in on
+   * load, when one is placed and whenever a stage changes. Each is one picture in the objects layer
+   * at its footprint's centre, sorted with its front tile; a hidden one, or one whose region is not
+   * revealed yet, has none. The treatment follows its stage: a `?` over a spotted one, a salvaged
+   * one darkened and desaturated, window lights at night on a restored one. The fog already lies
+   * over an unowned region's objects, so a spotted landmark there shows under it.
+   */
+  setLandmarks(items: readonly DrawnLandmark[]) {
+    this.landmarkItems = items;
+    this.syncLandmarks();
+  }
+  private syncLandmarks() {
+    const live = new Set<number>();
+    const cover = new Set<number>();
+    const drawn: { l: DrawnLandmark; def: NonNullable<ReturnType<typeof landmarkDef>> }[] = [];
+    for (const l of this.landmarkItems) {
+      const def = landmarkDef(l.def);
+      if (!def || !this.atlas.has(`landmarks/${l.def}`)) continue;
+      if (!treatmentOf(l.stage).picture || !this.isBuilt(l.x, l.y)) continue;
+      live.add(l.id);
+      drawn.push({ l, def });
+      for (const i of footprintIndices(l.x, l.y, def.w, def.d, this.map.w)) cover.add(i);
+    }
+    // the cover first: drawing a picture regrows the scatter around it, which must keep clear
+    const before = this.landmarkCover;
+    this.landmarkCover = cover;
+    for (const { l, def } of drawn) {
+      const frame = `landmarks/${l.def}`,
+        look = treatmentOf(l.stage),
+        f = this.atlas.get(frame),
+        at = landmarkPlacement(l.x, l.y, def.w, def.d),
+        s = this.setStructure(
+          landmarkId(l.id),
+          at.front.x,
+          at.front.y,
+          frame,
+          LANDMARK_LAYER,
+          at.dy,
+          at.dx,
+        );
+      if (look.worn) s.texture = this.surfaces.landmarkWorn(frame, f);
+      let light = this.landmarkLights.get(l.id);
+      if (look.lit) {
+        if (!light) {
+          light = windowSprite();
+          this.objects.addChild(light);
+          this.landmarkLights.set(l.id, light);
+        }
+        light.texture = this.surfaces.landmarkWindow(frame, f);
+        light.anchor.set(f.anchorX, f.anchorY);
+      } else if (light) {
+        light.destroy();
+        this.landmarkLights.delete(l.id);
+      }
+      let mark = this.landmarkMarks.get(l.id);
+      if (look.marker && !mark) {
+        mark = questionMark();
+        this.objects.addChild(mark);
+        this.landmarkMarks.set(l.id, mark);
+      } else if (!look.marker && mark) {
+        mark.destroy({ children: true });
+        this.landmarkMarks.delete(l.id);
+      }
+      this.placeLandmarkDressing(l);
+    }
+    for (const [id, light] of this.landmarkLights)
+      if (!live.has(id)) {
+        light.destroy();
+        this.landmarkLights.delete(id);
+      }
+    for (const [id, mark] of this.landmarkMarks)
+      if (!live.has(id)) {
+        mark.destroy({ children: true });
+        this.landmarkMarks.delete(id);
+      }
+    for (const key of [...this.structures.keys()])
+      if (key.startsWith(LANDMARK_PREFIX) && !live.has(Number(key.slice(LANDMARK_PREFIX.length))))
+        this.removeStructure(key);
+    // vegetation under a footprint is hidden, not removed: the chunk store keeps it
+    const changed = new Set([...before, ...cover]);
+    for (const i of changed) {
+      this.showProps(i);
+      if (cover.has(i)) {
+        for (const { s } of this.scatterSprites.get(i) ?? []) s.destroy();
+        this.scatterSprites.delete(i);
+      } else this.buildScatterAt(i % this.map.w, Math.floor(i / this.map.w));
+    }
+  }
+  /** Put a landmark's window light and marker where its picture stands. */
+  private placeLandmarkDressing(l: DrawnLandmark) {
+    const s = this.structures.get(landmarkId(l.id));
+    if (!s) return;
+    const light = this.landmarkLights.get(l.id);
+    if (light) {
+      light.position.copyFrom(s.position);
+      light.scale.copyFrom(s.scale);
+      light.zIndex = s.zIndex + 0.01;
+    }
+    const mark = this.landmarkMarks.get(l.id);
+    if (mark) {
+      const f = this.atlas.get(`landmarks/${l.def}`);
+      mark.position.set(s.x, s.y - f.anchorY * f.h * s.scale.y - 14);
+      mark.zIndex = s.zIndex + 26;
+    }
+  }
   setWindowNight(night: number) {
     for (const [id, light] of this.windowLights) {
       light.alpha = night * 0.88;
@@ -2324,6 +2475,10 @@ export class WorldRenderer {
       light.position.copyFrom(owner.position);
       light.scale.copyFrom(owner.scale);
       light.rotation = owner.rotation;
+    }
+    for (const [id, light] of this.landmarkLights) {
+      light.alpha = night * 0.88;
+      light.visible = !!this.structures.get(landmarkId(id))?.visible;
     }
   }
   /**
