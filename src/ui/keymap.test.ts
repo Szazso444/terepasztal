@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { Input } from '../engine/input';
+import { BuildBar, buildCatalog } from './buildBar';
 import {
   KEYMAP,
   handlePlayKeys,
@@ -353,6 +354,42 @@ describe('the build bar keys', () => {
     const { host, calls } = fakeHost('overview');
     handlePlayKeys(keys(['KeyX']), host);
     expect(calls).toEqual([]);
+  });
+
+  it('takes a digit for a piece while a category is open: Esc comes before the next one', () => {
+    // the Guide's first minutes walk this: Track, a stretch of track, Esc, Works
+    const bar = new BuildBar(
+      buildCatalog(() => true),
+      () => 0,
+      () => undefined,
+      () => undefined,
+    );
+    const live: KeyHost = {
+      ...fakeHost('play').host,
+      get categoryOpen() {
+        return bar.open !== null;
+      },
+      get building() {
+        return bar.active.kind !== 'none';
+      },
+      openCategory: (i) => bar.openAt(i),
+      closeCategory: () => bar.closeCategory(),
+      selectPiece: (i) => void bar.selectIndex(i),
+    };
+    handlePlayKeys(keys(['Digit1']), live);
+    expect(bar.open).toBe('track');
+    expect(bar.active.kind).toBe('track');
+
+    handlePlayKeys(keys(['Digit4']), live);
+    expect(bar.open, 'with Track open, 4 stays in Track').toBe('track');
+
+    // with a tool in hand Escape is the build controller's, and it puts the tool down
+    expect(handlePlayKeys(keys(['Escape']), live)).toBe(false);
+    bar.setActive({ kind: 'none' });
+    expect(bar.open).toBeNull();
+
+    handlePlayKeys(keys(['Digit4']), live);
+    expect(bar.open).toBe('works');
   });
 
   it('leaves the build controller its Escape with a tool in hand, and ends the frame without one', () => {

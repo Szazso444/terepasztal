@@ -1,0 +1,34 @@
+{
+  "picture": "windmill-a0-r0.png",
+  "size": [1498, 1050],
+  "box": [350, 20, 1119, 1003],
+  "anchor": [857.9, 856.4],
+  "hub": [691, 435],
+  "hubFromAnchor": [-166.9, -421.4],
+  "hubFromAnchorWorld": [-12.247122, -25.696972],
+  "door": [821, 982],
+  "masterHub": [703, 444],
+  "masterTips": [
+    [1118, 178],
+    [436, 22],
+    [444, 785],
+    [1026, 903]
+  ],
+  "readByEye": {
+    "master": "Plate centre (703,444); evergreen door aperture approximately x650–715, y821–982. Outer sail corners read visually then refined to farthest painted pixel with alpha >128, the master threshold; lower-arm search excludes tower stone. UR (1118,178), UL (436,22), LL (444,785), LR (1026,903).",
+    "body": "Selected attempt 2 as closest after three. Shaft-end centre (691,435); door opening y821–982. No sails, stocks, square plate or sail shadows; continuous slate and stone. Cap and finial aligned; window approximately y599–669. Hub placement fails 8 px limit, camera check fails by 10.8 degrees; retained as instructed. Additional palette measurement finds 6499 cursor-white pixels, failing the scenery highlight cap; no selection amber.",
+    "sails": "Three-rail, two-bay timber frame from one arm, repeated by exact quarter turns; one centred four-bolt iron plate. Stable pivot and slanted plane, broad lattice readable at game size. Closest new arm attempt 3 retained after three. Width, borders, colours, centroid and symmetry pass. Reach 57.07% fails 49% cap, causing some tip clipping during rotation inside the fixed source square. fitMiss 86.55 px records the irregular master cross, not a pass test."
+  },
+  "sailAffine": [
+    [0.6131585497386542, -0.12501451920683648],
+    [0.23288807765701486, 0.7101966315440139]
+  ],
+  "sailScale": 1.444604601511055,
+  "sailAngle": 32.65840360061068,
+  "fitMiss": 86.54623042050999,
+  "sails": {
+    "picture": "windmill-sails-front.png",
+    "size": [1254, 1254],
+    "pivot": [626.5, 626.5]
+  }
+}

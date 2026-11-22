@@ -267,7 +267,7 @@ export class Traffic {
 
   // ------------------------------------------------------------------ claims
   /** Tiles under a train's cars. */
-  private carTiles(t: Train): number[] {
+  private carTiles(t: Train): readonly number[] {
     return t.occupancyKeys(this.track.w);
   }
   /**

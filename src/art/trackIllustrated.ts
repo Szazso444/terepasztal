@@ -20,7 +20,13 @@ import {
   type TrackItem,
 } from '../world/track';
 import { PAL, css, mix, shade, type RGB } from './palette';
-import { NO_MATERIALS, drawSprite, drawStrip, type TrackMaterials } from './trackMaterials';
+import {
+  NO_MATERIALS,
+  drawSprite,
+  drawStrip,
+  type MaterialImage,
+  type TrackMaterials,
+} from './trackMaterials';
 
 const R = 4,
   W = 72,
@@ -270,6 +276,10 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
       return { x: -(b.y - a.y) / l, y: (b.x - a.x) / l };
     }),
   }));
+  // every road's shoulders before any road's bed: where two roads meet, no shoulder lies on a bed
+  if (!bridge)
+    for (const { points, normals, cls, run } of rows)
+      if (MATERIALS.lines[cls]?.bed) paintedShoulders(c, points, normals, cls, run, scale);
   for (const { points, normals, cls, run } of rows) {
     const mat = bridge ? undefined : MATERIALS.lines[cls];
     if (mat?.bed) {
@@ -393,10 +403,59 @@ function draw(paths: RailPath[], seed: number, bridge = false, scale = 1) {
 }
 
 /**
- * The painted bed of one rail line: the ballast strip, the shoulder along both its edges and, on
- * lines that have them, grass tufts. Along the line the strips repeat a whole number of times over
- * the run, so every piece starts and ends on a repeat and meets the next one seamlessly.
+ * Lays one painted strip along a road. Along the line it repeats a whole number of times over the
+ * run, so every piece starts and ends on a repeat and meets the next one seamlessly.
  */
+function paintedStrip(
+  c: CanvasRenderingContext2D,
+  points: Vec2[],
+  normals: Vec2[],
+  run: RailPath['run'],
+  scale: number,
+) {
+  const px = MATERIALS.pxPerTile;
+  const own = pathLength(points),
+    start = run?.start ?? 0,
+    length = run?.length ?? own;
+  const stretch = Math.max(1, Math.round(length / scale)) / length;
+  return (img: MaterialImage, from: number, to: number) => {
+    // drawStrip starts its repeats at the start of `points`: shift them to the run's start
+    const shift = (start * stretch * px) % img.width;
+    drawStrip(c, { ox: OX, oy: OY }, img, points, normals, from, to, px, stretch, 1.6, shift);
+  };
+}
+
+/**
+ * The shoulder along both edges of a painted bed, its solid paint butted in under the bed's, so the
+ * bed's own soft edge runs out over it instead of over the ground.
+ */
+function paintedShoulders(
+  c: CanvasRenderingContext2D,
+  points: Vec2[],
+  normals: Vec2[],
+  cls: TrackClass,
+  run: RailPath['run'],
+  scale: number,
+) {
+  const mat = MATERIALS.lines[cls]!;
+  if (!mat.edge) return;
+  const bed = mat.bed!;
+  const px = MATERIALS.pxPerTile;
+  const half = (bed.height / px / 2) * scale;
+  const row = scale / px;
+  const strip = paintedStrip(c, points, normals, run, scale);
+  const [bedTop, bedBottom] = mat.solid?.bed ?? [0, bed.height - 1];
+  const [, edgeInner] = mat.solid?.edge ?? [0, mat.edge.height - 1];
+  const tuck = EDGE_TUCK * scale;
+  const top = half - bedTop * row - tuck,
+    bottom = half - (bedBottom + 1) * row + tuck;
+  const reach = (edgeInner + 1) * row,
+    depth = mat.edge.height * row;
+  strip(mat.edge, top + reach, top + reach - depth);
+  strip(mat.edge, bottom - reach, bottom - reach + depth);
+}
+
+/** The painted bed of one rail line: the ballast strip and, on lines that have them, grass tufts. */
 function paintedBed(
   c: CanvasRenderingContext2D,
   points: Vec2[],
@@ -410,32 +469,10 @@ function paintedBed(
   const px = MATERIALS.pxPerTile;
   const pr = { ox: OX, oy: OY };
   const own = pathLength(points),
-    start = run?.start ?? 0,
-    length = run?.length ?? own;
-  const repeats = Math.max(1, Math.round(length / scale));
-  const stretch = repeats / length;
-  const strip = (img: NonNullable<typeof mat.bed>, from: number, to: number) => {
-    // drawStrip starts its repeats at the start of `points`: shift them to the run's start
-    const shift = (start * stretch * px) % img.width;
-    drawStrip(c, pr, img, points, normals, from, to, px, stretch, 1.6, shift);
-  };
+    start = run?.start ?? 0;
   const bed = mat.bed!;
   const half = (bed.height / px / 2) * scale;
-  const row = scale / px;
-  // the shoulders first, their solid paint butted in under the bed's, so the bed's own soft edge
-  // runs out over them instead of over the ground
-  if (mat.edge) {
-    const [bedTop, bedBottom] = mat.solid?.bed ?? [0, bed.height - 1];
-    const [, edgeInner] = mat.solid?.edge ?? [0, mat.edge.height - 1];
-    const tuck = EDGE_TUCK * scale;
-    const top = half - bedTop * row - tuck,
-      bottom = half - (bedBottom + 1) * row + tuck;
-    const reach = (edgeInner + 1) * row,
-      depth = mat.edge.height * row;
-    strip(mat.edge, top + reach, top + reach - depth);
-    strip(mat.edge, bottom - reach, bottom - reach + depth);
-  }
-  strip(bed, half, -half);
+  paintedStrip(c, points, normals, run, scale)(bed, half, -half);
   if (!mat.tufts) return;
   const cells = Math.max(1, Math.floor(mat.tufts.width / mat.tufts.height));
   const cell = mat.tufts.height;

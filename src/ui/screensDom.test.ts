@@ -1,10 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { STR } from '../strings';
-import type { Settings, SlotMeta } from '../sim/save';
+import { SETTINGS_KEY, readSettings, type Settings, type SlotMeta } from '../sim/save';
 import type { LevelData } from '../world/level';
+import { ContractsScreen } from './contractsScreen';
 import { ScreenFrame, ScreenManager, type Screen } from './modal';
 import { NamePrompt } from './namePrompt';
 import { SettingsScreen, type SettingsActions } from './settingsScreen';
+import { AudioScreen } from './audioScreen';
+import { pictureNode } from './guideScreen';
+import { signalHint } from './ruleText';
+import type { SignalLevel } from '../sim/signals';
+import type { AtlasRegistry } from '../engine/atlas';
+import { NowPlaying, type MusicDeck } from './nowPlaying';
+import { DEFAULT_VOLUMES, heardVolumes, type Volumes } from '../engine/audioGroups';
 import { numberField, slider, textField, type ConfirmOptions } from './kit';
 import { LevelsScreen, type LevelsActions } from './levelsScreen';
 import { MainMenu, PauseMenu, type MainMenuActions, type PauseMenuActions } from './menu';
@@ -12,6 +20,20 @@ import { NewGameScreen } from './newGameScreen';
 import { SavedGamesScreen, type SavedGamesActions } from './savedGamesScreen';
 import type { ReplaceSituation } from './saveSlots';
 import { SignalGuideScreen } from './signalGuide';
+import { Dir } from '../engine/iso';
+import { Inventory } from '../gacha/inventory';
+import { Builder } from '../sim/build';
+import { Economy } from '../sim/economy';
+import { Fleet } from '../sim/fleet';
+import { resetStationIds } from '../sim/stations';
+import { resetTrainIds, type Train } from '../sim/trains';
+import { storeWith } from '../testing/storeFixtures';
+import { emptyMap } from '../world/mapgen';
+import { RegionState } from '../world/regions';
+import { Terrain } from '../world/tiles';
+import { TrackGraph, makePiece } from '../world/track';
+import { DepotScreen } from './depot';
+import type { Confirm } from './menu';
 
 // the buttons play a sound when clicked; the context that plays it is a browser's
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
@@ -46,10 +68,19 @@ class FakeEl {
   disabled = false;
   maxLength = -1;
   innerHTML = '';
+  offsetWidth = 0;
+  clientWidth = 0;
   attrs = new Map<string, string>();
-  style = { display: '', visibility: '', setProperty() {} };
+  props = new Map<string, string>();
+  style = {
+    display: '',
+    visibility: '',
+    setProperty: (k: string, v: string) => void this.props.set(k, v),
+  };
   parent: FakeEl | null = null;
   children: (FakeEl | string)[] = [];
+  dataset: Record<string, string> = {};
+  hidden = false;
   private listeners = new Map<string, Listener[]>();
   classList = {
     toggle: (c: string, on = !this.className.split(' ').includes(c)) => {
@@ -59,6 +90,7 @@ class FakeEl {
     },
     add: (c: string) => this.classList.toggle(c, true),
     remove: (c: string) => this.classList.toggle(c, false),
+    contains: (c: string) => this.className.split(' ').includes(c),
   };
 
   constructor(readonly tagName: string) {}
@@ -84,6 +116,29 @@ class FakeEl {
   remove() {
     if (this.parent) this.parent.children = this.parent.children.filter((c) => c !== this);
     this.parent = null;
+  }
+  insertBefore(c: FakeEl, ref: FakeEl | null) {
+    c.remove();
+    const at = ref ? this.children.indexOf(ref) : -1;
+    this.children.splice(at < 0 ? this.children.length : at, 0, this.adopt(c));
+  }
+  private get elements(): FakeEl[] {
+    return this.children.filter((c): c is FakeEl => c instanceof FakeEl);
+  }
+  get firstElementChild(): FakeEl | null {
+    return this.elements[0] ?? null;
+  }
+  get lastElementChild(): FakeEl | null {
+    return this.elements.at(-1) ?? null;
+  }
+  /** The first element of the selector's last tag: `b`, or `.k-bar > i` for its `i`. */
+  querySelector(selector: string): FakeEl | null {
+    const tag = selector.split(' ').at(-1)?.toUpperCase();
+    return this.all.find((e) => e.tagName === tag) ?? null;
+  }
+  /** What was brought into sight, for a test to read. */
+  scrollIntoView() {
+    page.scrolledTo = this;
   }
   addEventListener(type: string, f: Listener) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), f]);
@@ -148,8 +203,10 @@ class FakeEl {
 const page = {
   body: new FakeEl('BODY'),
   activeElement: null as FakeEl | null,
+  scrolledTo: null as FakeEl | null,
   createElement: (tag: string) => new FakeEl(tag.toUpperCase()),
   createTextNode: (t: string) => t,
+  createDocumentFragment: () => new FakeEl('FRAGMENT'),
 };
 /** A timer of 0 has run: the dialog puts the focus on its answer in one. */
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -418,6 +475,25 @@ describe('the Settings screen', () => {
     age: 0,
     money: 0,
   };
+
+  it('has a Building life switch on Gameplay that says what it switches and applies at once', () => {
+    const state = { buildingLife: true } as Settings;
+    const onChange = vi.fn();
+    const screen = new SettingsScreen(
+      state,
+      onChange,
+      { slots: () => [] } as unknown as SettingsActions,
+      () => ({ seed: 1, savedAt: null, version: 'v22', warning: null, saveOff: false }),
+      { confirm: () => Promise.resolve(true) },
+    );
+    screen.onOpen();
+    screen.frameTabs().pick('gameplay');
+    const row = fake(screen.root).all.find((e) => e.title === STR.settings.buildingLifeHint)!;
+    expect(row.text()).toContain(STR.settings.buildingLife);
+    row.all.find((e) => e.tagName === 'BUTTON')!.fire('click');
+    expect(state.buildingLife).toBe(false);
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
 
   function settings(saveOff: boolean, slots: SlotMeta[] = [], saveOffWhy?: string) {
     const saveAs = vi.fn();
@@ -728,7 +804,7 @@ describe('the Levels screen', () => {
       track: [],
       stations: [],
       decor: [],
-      start: { money: 1, tickets: 0, tier: 0 },
+      start: { money: 1, tier: 0 },
     }) as unknown as LevelData;
 
   function levels(existing: LevelData[], answer = true, keeps = true) {
@@ -810,8 +886,6 @@ describe('the title screen', () => {
     const actions = {
       slots,
       levels,
-      volume: () => 0.5,
-      setVolume: () => undefined,
       tunings: () => [],
       asks: () => null,
       deleteLevel: () => undefined,
@@ -885,17 +959,319 @@ describe('the title screen', () => {
   it('gives the pause menu the focus on Resume as well', () => {
     const menu = new PauseMenu({
       slots: () => [],
-      volume: () => 0.5,
-      setVolume: () => undefined,
     } as unknown as PauseMenuActions);
     menu.show({ testing: false, editor: false });
     expect(fake(page.activeElement).text()).toContain(STR.menu.resume);
   });
 });
 
+describe('Audio as a row of its own', () => {
+  const menuActions = (audio: () => void) =>
+    ({
+      slots: () => [],
+      levels: () => [],
+      tunings: () => [],
+      asks: () => null,
+      audio,
+    }) as unknown as MainMenuActions & PauseMenuActions;
+  /** The labels of the buttons of the frame's stack, top to bottom. */
+  const stack = (root: unknown) =>
+    fake(root)
+      .find('k-stack')!
+      .all.filter((e) => e.tagName === 'BUTTON')
+      .map((b) => b.text());
+  const follows = (labels: string[]) => labels[labels.indexOf(STR.topbar.settings) + 1];
+
+  it('stands directly under Settings on the title, and opens the screen', () => {
+    const audio = vi.fn();
+    const menu = new MainMenu(
+      menuActions(audio),
+      { confirm: () => Promise.resolve(true) },
+      { open: () => undefined },
+    );
+    menu.show(null, { content: false });
+    expect(follows(stack(menu.root))).toBe(STR.settings.audio);
+    fake(menu.root).button(STR.settings.audio).fire('click');
+    expect(audio).toHaveBeenCalledTimes(1);
+  });
+
+  it('stands directly under Settings in the pause menu, and opens the screen', () => {
+    const audio = vi.fn();
+    const menu = new PauseMenu(menuActions(audio));
+    menu.show({ testing: false, editor: false });
+    expect(follows(stack(menu.root))).toBe(STR.settings.audio);
+    fake(menu.root).button(STR.settings.audio).fire('click');
+    expect(audio).toHaveBeenCalledTimes(1);
+  });
+
+  it('is gone from the tabs of Settings, which opens on Gameplay', () => {
+    const screen = new SettingsScreen(
+      { autosave: true } as Settings,
+      () => undefined,
+      { slots: () => [] } as unknown as SettingsActions,
+      () => ({ seed: 1, savedAt: null, version: 'v22', warning: null, saveOff: false }),
+      { confirm: () => Promise.resolve(true) },
+    );
+    const tabs = screen.frameTabs();
+    expect(tabs.tabs.map((t) => t.id)).not.toContain('audio');
+    expect(tabs.current).toBe('gameplay');
+  });
+});
+
+describe('the Audio screen', () => {
+  function open() {
+    const volumes: Volumes = {
+      ...DEFAULT_VOLUMES,
+      soundGroups: { ...DEFAULT_VOLUMES.soundGroups },
+      soundOff: {},
+    };
+    const onChange = vi.fn();
+    const screen = new AudioScreen(volumes, onChange);
+    screen.onOpen();
+    const root = fake(screen.root);
+    const rows = root.all.filter((e) => e.className.split(' ').includes('k-row'));
+    const row = (label: string) => rows.find((r) => r.find('k-lab')?.text().startsWith(label))!;
+    const sliderOf = (label: string) => row(label).all.find((e) => e.tagName === 'INPUT')!;
+    const switchOf = (label: string) => row(label).find('k-sw')!;
+    const drag = (label: string, value: number) => {
+      const input = sliderOf(label);
+      input.value = String(value);
+      input.fire('input');
+    };
+    return { volumes, onChange, screen, rows, row, sliderOf, switchOf, drag };
+  }
+  const G = STR.settings.soundGroups;
+
+  it('lists one group under another, each with a slider and a switch', () => {
+    const { rows } = open();
+    const says = rows.map((r) => r.find('k-lab')!.all[0].text());
+    expect(says).toEqual([
+      STR.settings.master,
+      STR.settings.music,
+      STR.settings.sfx,
+      G.weather.label,
+      G.environment.label,
+      G.ui.label,
+      G.building.label,
+      G.trains.label,
+      G.events.label,
+    ]);
+    const depths = rows.map((r) => /au-depth(\d)/.exec(r.className)?.[1]);
+    expect(depths).toEqual(['0', '1', '1', '2', '2', '2', '2', '2', '2']);
+    for (const r of rows) {
+      expect(r.all.filter((e) => e.tagName === 'INPUT')).toHaveLength(1);
+      expect(r.find('k-sw')).toBeDefined();
+    }
+  });
+
+  it('is an M frame, with a way out and the words that it applies at once', () => {
+    const { screen } = open();
+    expect(screen.frameSize).toBe('M');
+    expect(screen.frameFooter()).toEqual({ note: STR.settings.appliesAtOnce, done: true });
+  });
+
+  it('writes a level where it belongs, and tells the game', () => {
+    const { volumes, onChange, drag } = open();
+    drag(STR.settings.master, 50);
+    drag(STR.settings.sfx, 40);
+    drag(G.trains.label, 30);
+    expect(volumes.master).toBe(0.5);
+    expect(volumes.sfx).toBe(0.4);
+    expect(volumes.soundGroups.trains).toBe(0.3);
+    expect(onChange).toHaveBeenCalledTimes(3);
+  });
+
+  it('turns a group off without losing its level, and back on', () => {
+    const { volumes, onChange, switchOf, sliderOf } = open();
+    expect(sliderOf(G.ui.label).value).toBe('100');
+    switchOf(G.ui.label).fire('click');
+    expect(heardVolumes(volumes).groups.ui).toBe(0);
+    expect(volumes.soundGroups.ui).toBe(1);
+    expect(sliderOf(G.ui.label).value).toBe('100');
+    switchOf(G.ui.label).fire('click');
+    expect(heardVolumes(volumes).groups.ui).toBe(1);
+    expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  it('marks what a row switched off silences, and nothing else', () => {
+    const { row, switchOf } = open();
+    const silenced = (label: string) => row(label).className.includes('au-silenced');
+    switchOf(STR.settings.sfx).fire('click');
+    expect(silenced(STR.settings.sfx)).toBe(false);
+    expect(silenced(G.trains.label)).toBe(true);
+    expect(silenced(STR.settings.music)).toBe(false);
+    switchOf(STR.settings.sfx).fire('click');
+    expect(silenced(G.trains.label)).toBe(false);
+    switchOf(STR.settings.master).fire('click');
+    expect(silenced(STR.settings.music)).toBe(true);
+    expect(silenced(G.events.label)).toBe(true);
+  });
+
+  it('shows a level rounded, and keeps the exact one until it is moved', () => {
+    const { volumes, sliderOf } = open();
+    expect(sliderOf(G.weather.label).value).toBe('44');
+    expect(volumes.soundGroups.weather).toBe(DEFAULT_VOLUMES.soundGroups.weather);
+  });
+});
+
+describe('the now-playing widget', () => {
+  /** A deck as the bus is one: `view` is a new reading each time. */
+  function deck(over: Partial<MusicDeck['view']> = {}) {
+    const state: MusicDeck['view'] = {
+      title: 'Pastoral Pulse',
+      paused: false,
+      silent: false,
+      held: false,
+      canGoBack: false,
+      canGoForward: true,
+      ...over,
+    };
+    return {
+      state,
+      get view() {
+        return { ...state };
+      },
+      togglePause: vi.fn(),
+      back: vi.fn(),
+      forward: vi.fn(),
+    };
+  }
+  function widget(d: ReturnType<typeof deck>) {
+    const tips: (() => string)[] = [];
+    const w = new NowPlaying(d, (text) => {
+      tips.push(text);
+      return () => null as never;
+    });
+    w.update();
+    const root = fake(w.root);
+    const [back, toggle, forward] = root.all.filter((e) => e.tagName === 'BUTTON');
+    return { w, root, back, toggle, forward, tips };
+  }
+
+  it('shows the title, and works the three buttons', () => {
+    const d = deck({ canGoBack: true });
+    const { root, back, toggle, forward } = widget(d);
+    expect(root.find('np-text')!.textContent).toBe('Pastoral Pulse');
+    back.fire('click');
+    toggle.fire('click');
+    forward.fire('click');
+    expect([d.back, d.togglePause, d.forward].map((f) => f.mock.calls.length)).toEqual([1, 1, 1]);
+  });
+
+  it('says each button in its tooltip, the full title too, and why Back is off', () => {
+    const { tips, back } = widget(deck());
+    expect(back.disabled).toBe(true);
+    expect(tips.map((t) => t())).toEqual([
+      STR.nowPlaying.noBack,
+      STR.nowPlaying.pause,
+      STR.nowPlaying.forward,
+      'Pastoral Pulse',
+    ]);
+  });
+
+  it('follows the music: a new title, Back on, and play in place of pause', () => {
+    const d = deck();
+    const { w, root, back, tips } = widget(d);
+    Object.assign(d.state, { title: 'Sparse Pulse', canGoBack: true, paused: true });
+    w.update();
+    expect(root.find('np-text')!.textContent).toBe('Sparse Pulse');
+    expect(back.disabled).toBe(false);
+    expect(tips[0]()).toBe(STR.nowPlaying.back);
+    expect(tips[1]()).toBe(STR.nowPlaying.play);
+    expect(root.find('np-title')!.className).toContain('paused');
+  });
+
+  it('says what plays when no file is left, and offers nothing to skip to', () => {
+    const { root, forward, tips } = widget(deck({ title: null, canGoForward: false }));
+    expect(root.find('np-text')!.textContent).toBe(STR.nowPlaying.noTrack);
+    expect(forward.disabled).toBe(true);
+    expect(tips[3]()).toBe(STR.nowPlaying.noTrack);
+  });
+
+  it('rolls a title wider than its room, and lets one that fits stand', () => {
+    const d = deck();
+    const { w, root } = widget(d);
+    const box = root.find('np-title')!;
+    const text = root.find('np-text')!;
+    box.clientWidth = 100;
+    text.offsetWidth = 160;
+    d.state.title = 'Pastoral Pulse (Liquid DnB)';
+    w.update();
+    expect(box.className).toContain('roll');
+    expect(text.props.get('--np-shift')).toBe('-60px');
+    text.offsetWidth = 90;
+    d.state.title = 'Sparse Pulse';
+    w.update();
+    expect(box.className).not.toContain('roll');
+  });
+
+  it('writes nothing while nothing changes, as it runs every frame', () => {
+    const { w, root } = widget(deck());
+    const box = vi.spyOn(root.find('np-title')!.classList, 'toggle');
+    const self = vi.spyOn(root.classList, 'toggle');
+    for (let i = 0; i < 5; i++) w.update();
+    expect(box).not.toHaveBeenCalled();
+    expect(self).not.toHaveBeenCalled();
+  });
+
+  it("names each button for a screen reader in the tooltip's words, with no browser title beside the tooltip", () => {
+    const d = deck();
+    const { w, back, toggle, forward } = widget(d);
+    const named = (b: FakeEl) => [b.title, b.attrs.get('aria-label')];
+    expect(named(back)).toEqual(['', STR.nowPlaying.noBack]);
+    expect(named(toggle)).toEqual(['', STR.nowPlaying.pause]);
+    expect(named(forward)).toEqual(['', STR.nowPlaying.forward]);
+    Object.assign(d.state, { paused: true, canGoBack: true });
+    w.update();
+    expect(named(back)).toEqual(['', STR.nowPlaying.back]);
+    expect(named(toggle)).toEqual(['', STR.nowPlaying.play]);
+  });
+
+  it('gives the keys back after a press: Enter finishes a route, and must not toggle the music', () => {
+    const d = deck({ canGoBack: true });
+    const { back, toggle, forward } = widget(d);
+    for (const b of [back, toggle, forward]) {
+      b.focus();
+      expect(page.activeElement).toBe(b);
+      b.fire('click');
+      expect(page.activeElement).not.toBe(b);
+    }
+  });
+
+  it('says plainly that nothing can be heard, with its buttons off and saying why', () => {
+    const d = deck({ silent: true, canGoBack: true });
+    const { w, root, back, toggle, forward, tips } = widget(d);
+    expect(root.find('np-text')!.textContent).toBe(STR.nowPlaying.silent);
+    expect(root.find('np-title')!.className).toContain('paused');
+    for (const b of [back, toggle, forward]) {
+      expect(b.disabled).toBe(true);
+      expect(b.attrs.get('aria-label')).toBe(STR.nowPlaying.silentTip);
+    }
+    expect(tips.slice(0, 3).map((t) => t())).toEqual(Array(3).fill(STR.nowPlaying.silentTip));
+    // the tooltip still has the track, whose words the row gave up
+    expect(tips[3]()).toBe('Pastoral Pulse');
+    const off = toggle.find('k-ic')!.innerHTML;
+    d.state.silent = false;
+    w.update();
+    expect(root.find('np-text')!.textContent).toBe('Pastoral Pulse');
+    expect(root.find('np-title')!.className).not.toContain('paused');
+    expect(toggle.find('k-ic')!.innerHTML).not.toBe(off);
+    expect([back, toggle, forward].map((b) => b.disabled)).toEqual([false, false, false]);
+  });
+
+  it('marks the music held, for the title to leave it out', () => {
+    const d = deck({ held: true });
+    const { w, root } = widget(d);
+    expect(root.className).toContain('held');
+    d.state.held = false;
+    w.update();
+    expect(root.className).not.toContain('held');
+  });
+});
+
 describe('the screens that read something and use nothing', () => {
   it('keeps the tool in hand while the semaphore guide is up', () => {
-    expect(new SignalGuideScreen().keepsTool).toBe(true);
+    expect(new SignalGuideScreen({} as Settings, () => undefined).keepsTool).toBe(true);
   });
 
   it('reads what Start loses once, when New game opens, not at every refresh', () => {
@@ -909,5 +1285,416 @@ describe('the screens that read something and use nothing', () => {
     for (let i = 0; i < 6; i++) screen.frameFooter();
     expect(asks).toHaveBeenCalledTimes(1);
     expect(screen.frameFooter().actions![0].title).toBe(STR.newGameScreen.startAsks);
+  });
+});
+
+/** A Contracts screen over a board with nothing on it, its Settings tab on `settings`. */
+function contractsOver(settings: Settings, onChange = () => {}) {
+  const board = {
+    offers: [],
+    active: [],
+    contracts: [],
+    stats: { completed: 0, failed: 0 },
+    activeFull: () => false,
+    limit: () => 3,
+    canGenerate: () => true,
+    byId: () => undefined,
+  };
+  const screen = new ContractsScreen(
+    board as never,
+    {} as never,
+    { time: 0 } as never,
+    () => undefined,
+    { confirm: () => Promise.resolve(true) },
+  );
+  screen.policy = { settings, onChange };
+  screen.autoAccept = { state: () => 'prompt', set: () => undefined };
+  return screen;
+}
+
+describe('the Contracts screen and its Settings tab', () => {
+  it('has a tab called Settings, after the three of cards', () => {
+    expect(
+      contractsOver({} as Settings)
+        .frameTabs()
+        .tabs.map((t) => t.label),
+    ).toEqual([
+      STR.contracts.offers,
+      STR.contracts.active,
+      STR.contracts.history,
+      STR.contracts.settingsTab,
+    ]);
+  });
+
+  it('opens on it when asked, as the Economy menu asks, with a row for each rarity', () => {
+    const screen = contractsOver({} as Settings);
+    screen.show('settings');
+    screen.onOpen();
+    expect(screen.frameTabs().current).toBe('settings');
+    expect(fake(screen.root).text()).toContain(STR.settings.contractPolicy);
+    expect(fake(screen.root).all.filter((e) => e.className === 'k-row')).toHaveLength(5);
+  });
+
+  it('goes there from Per rarity on the Offers tab, in the same screen', () => {
+    const screen = contractsOver({} as Settings);
+    const redraw = vi.fn();
+    screen.redraw = redraw;
+    screen.onOpen();
+    expect(screen.frameTabs().current).toBe('offers');
+    fake(screen.root).button(STR.contracts.perRarity).fire('click');
+    expect(screen.frameTabs().current).toBe('settings');
+    expect(redraw).toHaveBeenCalled();
+  });
+
+  it('stores a choice for one rarity and tells the game', () => {
+    const settings = { contractPolicy: { common: 'prompt' } } as Settings;
+    const onChange = vi.fn();
+    const screen = contractsOver(settings, onChange);
+    screen.show('settings');
+    fake(screen.root).button(STR.settings.policy.deny).fire('click');
+    expect(settings.contractPolicy?.common).toBe('deny');
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('is back on the offers the next time it opens', () => {
+    const screen = contractsOver({} as Settings);
+    screen.show('settings');
+    screen.onClose();
+    expect(screen.frameTabs().current).toBe('offers');
+  });
+
+  it('builds the tab once: a refresh swaps no button away', () => {
+    const screen = contractsOver({} as Settings);
+    screen.show('settings');
+    const button = fake(screen.root).button(STR.settings.policy.deny);
+    screen.refresh();
+    expect(fake(screen.root).button(STR.settings.policy.deny)).toBe(button);
+  });
+});
+
+describe('the Signals screen', () => {
+  const level = (screen: SignalGuideScreen, name: string) =>
+    fake(screen.root).all.find(
+      (e) => e.tagName === 'BUTTON' && e.text().startsWith(STR.settings.signalLevel[name]),
+    );
+
+  it('heads the guide with the signalling level, each level with what it does', () => {
+    const screen = new SignalGuideScreen({} as Settings, () => undefined);
+    screen.onOpen();
+    const text = fake(screen.root).text();
+    expect(text.indexOf(STR.settings.signalling)).toBeLessThan(
+      text.indexOf(STR.signals.guidePlace),
+    );
+    for (const id of Object.keys(STR.settings.signalLevel)) {
+      expect(text).toContain(STR.settings.signalLevel[id]);
+      expect(text).toContain(signalHint(id as SignalLevel));
+    }
+    expect(text).toContain(STR.settings.signallingNote);
+    expect(level(screen, 'auto')?.attrs.get('aria-checked')).toBe('true');
+  });
+
+  it('stores the level picked and tells the game', () => {
+    const settings = {} as Settings;
+    const onChange = vi.fn();
+    const screen = new SignalGuideScreen(settings, onChange);
+    screen.onOpen();
+    level(screen, 'ctc')?.fire('click');
+    expect(settings.signalling).toBe('ctc');
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the pictures of the Guide', () => {
+  it('draws a vehicle from its portrait file, not from its id', () => {
+    const img = fake(
+      pictureNode({ of: 'vehicle', id: 'rocket', caption: '' }, {} as AtlasRegistry),
+    );
+    expect(img.attrs.get('src')).toContain('assets/portraits/rocket.png');
+  });
+
+  it('has none for a vehicle with no portrait', () => {
+    expect(
+      pictureNode({ of: 'vehicle', id: 'no_such_model', caption: '' }, {} as AtlasRegistry),
+    ).toBeNull();
+  });
+});
+
+describe('an old settings file', () => {
+  /** Written when Contracts and Signalling were tabs of Settings. */
+  const OLD = {
+    master: 0.4,
+    signalling: 'in_cab',
+    contractPolicyVersion: 2,
+    contractPolicy: {
+      common: 'accept',
+      uncommon: 'prompt',
+      rare: 'deny',
+      epic: 'prompt',
+      legendary: 'accept',
+    },
+  };
+  const stored = () => {
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => (k === SETTINGS_KEY ? JSON.stringify(OLD) : null),
+      setItem() {},
+      removeItem() {},
+    });
+    return readSettings();
+  };
+
+  it('keeps its signalling level, and the Signals screen shows it', () => {
+    const settings = stored();
+    expect(settings.signalling).toBe('in_cab');
+    const screen = new SignalGuideScreen(settings, () => undefined);
+    screen.onOpen();
+    const picked = fake(screen.root).all.filter((e) => e.attrs.get('aria-checked') === 'true');
+    expect(picked.map((e) => e.text())).toEqual([
+      STR.settings.signalLevel.in_cab + signalHint('in_cab'),
+    ]);
+  });
+
+  it('keeps its policy for each rarity, and the Contracts Settings tab shows it', () => {
+    const settings = stored();
+    expect(settings.contractPolicy).toEqual(OLD.contractPolicy);
+    const screen = contractsOver(settings);
+    screen.show('settings');
+    const picked = fake(screen.root).all.filter((e) => e.attrs.get('aria-checked') === 'true');
+    const { accept, prompt, deny } = STR.settings.policy;
+    expect(picked.map((e) => e.text())).toEqual([accept, prompt, deny, prompt, accept]);
+  });
+
+  it('finds Settings without the three tabs that left', () => {
+    const { gameplay, controls, saves } = STR.settings;
+    const screen = new SettingsScreen(
+      stored(),
+      () => undefined,
+      { slots: () => [] } as unknown as SettingsActions,
+      () => ({ seed: 1, savedAt: null, version: 'v24', warning: null, saveOff: false }),
+      { confirm: () => Promise.resolve(true) },
+    );
+    expect(screen.frameTabs().tabs.map((t) => t.label)).toEqual([gameplay, controls, saves]);
+  });
+});
+
+describe('the Depot', () => {
+  const ROCKET = 'rocket';
+  const TUB = 'mine_tub';
+
+  /** A narrow depot with a line to two stations, two engines and three wagons free. */
+  function world() {
+    resetTrainIds();
+    resetStationIds();
+    const map = emptyMap(4242, 64, 64, Terrain.Grass);
+    const track = new TrackGraph(64, 64);
+    const economy = new Economy();
+    const regions = new RegionState(map);
+    for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
+    const builder = new Builder(map, regions, track, economy, storeWith({}).stores);
+    builder.free = true;
+    const inventory = new Inventory();
+    const fleet = new Fleet(track, builder, map, inventory, economy);
+    const depot = builder.placeStation(20, 20, 'narrow_depot', 0)!;
+    const ew = [0, 1].find((r) => makePiece('straight', r, 'narrow').links[0].includes(Dir.E))!;
+    for (let x = 22; x < 34; x++) track.place(x, 20, 'straight', ew, 'narrow');
+    builder.placeStation(24, 21, 'quarry', 0);
+    builder.placeStation(26, 21, 'farm', 0);
+    for (const id of [ROCKET, ROCKET, TUB, TUB, TUB]) inventory.add(id, 0);
+    return { builder, fleet, inventory, depot, track };
+  }
+
+  function open() {
+    const w = world();
+    const confirm = vi.fn(async () => true);
+    const atlas = { has: () => false } as unknown as AtlasRegistry;
+    const prompt = { confirm } as unknown as Confirm;
+    const screen = new DepotScreen(w.inventory, w.fleet, w.builder, atlas, prompt);
+    inPage(screen.root);
+    screen.onOpen();
+    return { ...w, screen, confirm, root: fake(screen.root) };
+  }
+  type Open = ReturnType<typeof open>;
+
+  const stockRow = (root: FakeEl, name: string) => {
+    const row = root.all.find(
+      (e) =>
+        e.classList.contains('dp-li') &&
+        !e.classList.contains('dp-train') &&
+        e.text().includes(name),
+    );
+    if (!row) throw new Error(`no row ${name}`);
+    return row;
+  };
+  const plus = (root: FakeEl, name: string) => stockRow(root, name).button('+');
+  const nameInput = (root: FakeEl) => root.find('dp-dock')?.all.find((e) => e.tagName === 'INPUT');
+  const dock = (root: FakeEl) => root.find('dp-dock')?.text() ?? '';
+  const action = (o: Open, label: string) => {
+    const a = o.screen.frameFooter().actions?.find((x) => x.label === label);
+    if (!a) throw new Error(`no action ${label}`);
+    return a;
+  };
+  const cars = (root: FakeEl) => root.all.filter((e) => e.classList.contains('dp-car'));
+  /** A train out with an engine and a wagon, picked, as a Dispatch leaves it. */
+  function dispatched(o: Open) {
+    plus(o.root, "Stephenson's Rocket").fire('click');
+    plus(o.root, 'Mine Tub').fire('click');
+    action(o, STR.depot.dispatch).onClick();
+    return o.fleet.trains[0];
+  }
+
+  it('sends nothing on Enter in the name field: it commits the name and gives the keys back', () => {
+    const o = open();
+    plus(o.root, "Stephenson's Rocket").fire('click');
+    const field = nameInput(o.root)!;
+    field.value = 'Half built';
+    field.focus();
+    field.fire('keydown', 'Enter', 'Enter');
+    expect(o.fleet.trains).toHaveLength(0);
+    expect(page.activeElement).not.toBe(field);
+    expect(field.value).toBe('Half built');
+  });
+
+  it('picks the train that went out, with Build another a press away, and shows its row', () => {
+    const o = open();
+    const t = dispatched(o);
+    expect(o.fleet.trains).toHaveLength(1);
+    expect(action(o, STR.depot.again)).toBeDefined();
+    expect(fake(page.scrolledTo).text()).toContain(t.name);
+    expect(fake(page.scrolledTo).classList.contains('on')).toBe(true);
+  });
+
+  it('builds another straight off an empty draft, asking nothing', async () => {
+    const o = open();
+    dispatched(o);
+    action(o, STR.depot.again).onClick();
+    await tick();
+    expect(o.confirm).not.toHaveBeenCalled();
+    expect(cars(o.root)).toHaveLength(2);
+    expect(o.fleet.trains).toHaveLength(1);
+  });
+
+  /** A train out, and a new draft begun, with the train picked again. */
+  async function draftBeside(o: Open, t: Train) {
+    o.root.find('dp-new')?.fire('click');
+    plus(o.root, 'Mine Tub').fire('click');
+    plus(o.root, 'Mine Tub').fire('click');
+    expect(cars(o.root)).toHaveLength(2);
+    o.root.all.find((e) => e.classList.contains('dp-train'))?.fire('click');
+    expect(o.screen.frameFooter().actions?.some((a) => a.label === STR.depot.again)).toBe(true);
+    expect(t).toBeDefined();
+  }
+
+  it('asks before Build another replaces a draft, and keeps it on no', async () => {
+    const o = open();
+    const t = dispatched(o);
+    await draftBeside(o, t);
+    o.confirm.mockResolvedValueOnce(false);
+    action(o, STR.depot.again).onClick();
+    await tick();
+    expect(o.confirm).toHaveBeenCalledOnce();
+    // the question was declined: the train stays picked and the draft is as it was
+    expect(action(o, STR.depot.again)).toBeDefined();
+    o.root.find('dp-new')?.fire('click');
+    expect(cars(o.root)).toHaveLength(2);
+    expect(stockRow(o.root, 'Mine Tub').all.find((e) => e.tagName === 'INPUT')?.value).toBe('2');
+  });
+
+  it('replaces the draft on yes, with the train it was asked of', async () => {
+    const o = open();
+    const t = dispatched(o);
+    await draftBeside(o, t);
+    action(o, STR.depot.again).onClick();
+    await tick();
+    expect(o.confirm).toHaveBeenCalledOnce();
+    // like the train: the engine it has, and its one wagon, not the two of the draft
+    expect(stockRow(o.root, 'Mine Tub').all.find((e) => e.tagName === 'INPUT')?.value).toBe('1');
+    expect(
+      stockRow(o.root, "Stephenson's Rocket").all.find((e) => e.tagName === 'INPUT')?.value,
+    ).toBe('1');
+  });
+
+  it('does nothing for a train recalled while the question stood', async () => {
+    const o = open();
+    const t = dispatched(o);
+    await draftBeside(o, t);
+    let answer: (yes: boolean) => void = () => {};
+    o.confirm.mockReturnValueOnce(new Promise<boolean>((r) => (answer = r)));
+    action(o, STR.depot.again).onClick();
+    o.fleet.recall(t);
+    answer(true);
+    await tick();
+    o.root.find('dp-new')?.fire('click');
+    expect(stockRow(o.root, 'Mine Tub').all.find((e) => e.tagName === 'INPUT')?.value).toBe('2');
+  });
+
+  it('keeps the focus on the stepper pressed, as its row is drawn again', () => {
+    const o = open();
+    const press = plus(o.root, 'Mine Tub');
+    press.focus();
+    press.fire('click');
+    const again = plus(o.root, 'Mine Tub');
+    expect(again).not.toBe(press);
+    expect(page.activeElement).toBe(again);
+    const down = stockRow(o.root, 'Mine Tub').button('−');
+    down.focus();
+    down.fire('click');
+    expect(page.activeElement).toBe(stockRow(o.root, 'Mine Tub').button('−'));
+  });
+
+  it('leaves the focus alone on a click on the row itself', () => {
+    const o = open();
+    const before = page.activeElement;
+    stockRow(o.root, 'Mine Tub').fire('click');
+    expect(cars(o.root)).toHaveLength(1);
+    expect(page.activeElement).toBe(before);
+  });
+
+  it('says in its dock line what a train built like another could not get', async () => {
+    const o = open();
+    dispatched(o);
+    // the only other engine goes: nothing of that model is free
+    o.inventory.free('loco')[0].assigned = 99;
+    action(o, STR.depot.again).onClick();
+    await tick();
+    expect(dock(o.root)).toContain(STR.depot.likeMissing("Stephenson's Rocket"));
+    // it stands until the draft changes
+    o.screen.refresh();
+    expect(dock(o.root)).toContain(STR.depot.likeMissing("Stephenson's Rocket"));
+    plus(o.root, 'Mine Tub').fire('click');
+    expect(dock(o.root)).not.toContain(STR.depot.likeMissing("Stephenson's Rocket"));
+  });
+
+  it('says a full list in its dock line', () => {
+    const o = open();
+    for (let i = 0; i < 16; i++) o.inventory.add(TUB, 0);
+    o.screen.refresh();
+    const input = stockRow(o.root, 'Mine Tub').all.find((e) => e.tagName === 'INPUT')!;
+    input.value = '19';
+    input.fire('change');
+    expect(dock(o.root)).toContain(STR.fleet.tooManyWagons(16));
+  });
+
+  it('moves no camera and leaves the list as it was on a press of a depot', () => {
+    const o = open();
+    const seen = vi.fn();
+    o.screen.onFocusDepot = seen;
+    const standard = o.builder.placeStation(40, 40, 'depot', 0)!;
+    o.screen.refresh();
+    o.root.button(STR.depot.scopeAll(0)).fire('click');
+    const chips = o.root.all.filter((e) => e.classList.contains('dp-dep'));
+    chips.find((e) => e.text().includes(standard.name))?.fire('click');
+    expect(seen).not.toHaveBeenCalled();
+    expect(o.root.all.find((e) => e.text() === STR.depot.scopeAll(0))?.className).toContain('on');
+  });
+
+  it('calls a custom route too short to run what it will do', () => {
+    const o = open();
+    const routeTab = () =>
+      o.root
+        .find('k-tabs')
+        ?.all.find((e) => e.tagName === 'BUTTON' && e.text().startsWith(STR.depot.routeTab));
+    routeTab()?.fire('click');
+    o.root.button(STR.depot.routeMode.custom).fire('click');
+    expect(routeTab()?.text()).toContain(STR.depot.routeMode.auto);
+    expect(o.root.find('dp-short')?.textContent).toBe(STR.depot.customShort);
   });
 });

@@ -1445,6 +1445,23 @@
         "structures/wire_mill_lv3",
         "structures/wire_mill_lv4"
       ]
+    },
+    {
+      "id": "windmill",
+      "source": "assets\\source\\windmill-2026-10-17\\windmill-a0-r0.png",
+      "frames": [
+        "structures/windmill",
+        "structures/windmill_lv2",
+        "structures/windmill_lv3",
+        "structures/windmill_lv4"
+      ]
+    },
+    {
+      "id": "windmill_sails",
+      "source": "assets\\source\\windmill-2026-10-16\\windmill-sails-front.png",
+      "frames": [
+        "structures/windmill_sails"
+      ]
     }
   ],
   "groups": {
@@ -1477,15 +1494,15 @@
       }
     },
     "structures": {
-      "frames": 113,
-      "uniqueImages": 36,
-      "width": 4026,
-      "height": 1093,
+      "frames": 114,
+      "uniqueImages": 35,
+      "width": 4018,
+      "height": 1086,
       "capped": {
-        "texels": 8618177,
-        "haze": 160976,
-        "solid": 8449546,
-        "white": 59352,
+        "texels": 8753387,
+        "haze": 165096,
+        "solid": 8580636,
+        "white": 60752,
         "amber": 49186,
         "compressed": 0
       }

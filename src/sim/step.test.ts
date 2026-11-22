@@ -25,7 +25,6 @@ import {
   ageSnapshot,
   AGE_CHECKS_PER_DAY,
   CITY_CHECK_SECONDS,
-  DAILY_TICKETS,
   FAMINE_PRODUCTION_MUL,
   FAMINE_SPEED_MUL,
   PASSENGER_CATCHMENT,
@@ -218,39 +217,6 @@ describe('SimStep: passenger catchment', () => {
   });
 });
 
-describe('SimStep: daily ticket', () => {
-  it('grants one ticket for each day with completed contracts, none otherwise, and resets the count', () => {
-    rules.daySeconds = 30;
-    const w = grass();
-    // completions per day; day 4 has two and still earns one ticket
-    const completions: Record<number, number> = { 1: 1, 3: 1, 4: 2, 6: 1 };
-    let hookCalls = 0;
-    const hooks: StepHooks = { dailyTicket: () => hookCalls++ };
-    const step = new SimStep(w, hooks);
-    const ctx = context(w, true);
-    const tickets0 = w.economy.tickets;
-    w.contracts.completedToday = completions[1];
-    let day = w.clock.day;
-    while (w.clock.day < 7) {
-      const before = { tickets: w.economy.tickets, hooks: hookCalls };
-      run(w, step, ctx, 1);
-      if (w.clock.day === day) continue;
-      // the day turned on this step: settle the one that ended
-      const earned = completions[day] ? 1 : 0;
-      expect(w.economy.tickets - before.tickets, `tickets for day ${day}`).toBe(earned);
-      expect(hookCalls - before.hooks, `hook calls for day ${day}`).toBe(earned);
-      expect(w.contracts.completedToday, `count after day ${day}`).toBe(0);
-      expect(step.lastDay).toBe(w.clock.day);
-      day = w.clock.day;
-      w.contracts.completedToday = completions[day] ?? 0;
-    }
-    expect(w.economy.tickets - tickets0, 'tickets over six days').toBe(4);
-    expect(hookCalls, 'hook calls over six days').toBe(4);
-    expect(w.economy.tier, 'no age-up added tickets').toBe(0);
-    expect(w.clock.time, 'six days run').toBeGreaterThan(6 * daySeconds());
-  });
-});
-
 describe('startStock', () => {
   it.each([
     [3, 1],
@@ -388,7 +354,6 @@ function build(w: SimWorld) {
   const train = w.fleet.create([loco.uid], [hopper.uid], [quarry.id, warehouse.id]);
   if (typeof train === 'string') throw new Error(`seed ${w.seed}: fleet.create: ${train}`);
   w.clock.time = daySeconds() - 20;
-  w.contracts.completedToday = 1;
   return { train, passengers };
 }
 
@@ -414,10 +379,9 @@ describe('SimStep from one seed', () => {
       const once = () => {
         const w = simWorld({ seed });
         const built = build(w);
-        const ticketsBefore = w.economy.tickets;
         const step = new SimStep(w);
         run(w, step, context(w, true), 1200);
-        return { w, built, ticketsBefore, state: state(w, step) };
+        return { w, built, state: state(w, step) };
       };
       const a = once();
       const b = once();
@@ -427,7 +391,6 @@ describe('SimStep from one seed', () => {
       expect(a.built.train.distance, `seed ${seed}: tiles run`).toBeGreaterThan(0);
       expect(a.built.passengers.passengerPopulation, `seed ${seed}: passengers`).toBe(32);
       expect(a.w.clock.day, `seed ${seed}: day`).toBe(2);
-      expect(a.w.economy.tickets, `seed ${seed}: daily ticket`).toBe(a.ticketsBefore + 1);
     },
     90_000,
   );
@@ -453,8 +416,6 @@ interface Scene {
   startDays: number;
   /** leave lastDay at a new SimStep's 1 rather than the clock's day */
   staleLastDay: boolean;
-  /** contracts already completed on the starting day */
-  completedToday: number;
   mode: 'play' | 'editor';
   /** the weather setting */
   weather: boolean;
@@ -506,7 +467,6 @@ function genScene(rng: Rng, steps: [number, number]): Scene {
     seasonOffset: rng.int(0, 3),
     startDays: Math.round(rng.range(0, 3) * 1000) / 1000,
     staleLastDay: rng.chance(0.15),
-    completedToday: rng.chance(0.3) ? rng.int(1, 2) : 0,
     mode: rng.chance(0.75) ? 'play' : 'editor',
     weather: rng.chance(0.7),
     sky: {
@@ -547,7 +507,6 @@ function* shrinkScene(s: Scene): Iterable<Scene> {
   ] as const)
     if (s[k]) yield { ...s, [k]: false };
   if (s.tradeIn !== null) yield { ...s, tradeIn: null };
-  if (s.completedToday) yield { ...s, completedToday: 0 };
   if (s.weather) yield { ...s, weather: false };
   if (s.mode === 'play') yield { ...s, mode: 'editor' };
 }
@@ -562,7 +521,7 @@ interface Staged {
   w: SimWorld;
   ctx: StepContext;
   hooks: Required<StepHooks>;
-  /** what the hooks saw: `city <time>`, `season <name> <time>`, `ticket <time>` */
+  /** what the hooks saw: `city <time>`, `season <name> <time>` */
   log: string[];
   /** the lastDay a step starts the run with */
   lastDay: number;
@@ -576,7 +535,7 @@ interface Staged {
  * buildings on row 41, a new game's stock in the depot's store (trains refuel from it, the works
  * run from it), the scene's food and famine at every store, the clock,
  * weather and season.
- * The season hook is the simulating half of Game.applySeason; the city and ticket hooks log.
+ * The season hook is the simulating half of Game.applySeason; the city hook logs.
  * Deliveries run inside fleet.tick, where a train's unloading would complete a contract.
  */
 function stage(s: Scene): Staged {
@@ -630,7 +589,6 @@ function stage(s: Scene): Staged {
   });
   if (s.tradeIn !== null)
     w.trade.load({ deals: { stone: 5, wood: -3 }, nextAt: w.clock.time + s.tradeIn });
-  w.contracts.completedToday = s.completedToday;
   // set on every call, as daySeconds is: the scene alone decides it, whatever ran before it
   rules.contractOfferCount = s.takeOffers ? TAKEN_AT_ONCE : DEFAULT_RULES.contractOfferCount;
   if (s.takeOffers) {
@@ -656,7 +614,6 @@ function stage(s: Scene): Staged {
   const hooks: Required<StepHooks> = {
     refreshCity: () => log.push(`city ${w.clock.time}`),
     season: () => applySeason(),
-    dailyTicket: () => log.push(`ticket ${w.clock.time}`),
   };
   const ctx: StepContext = {
     mode: s.mode,
@@ -733,7 +690,6 @@ describe('the named constants', () => {
     expect(PASSENGER_CATCHMENT, 'PASSENGER_CATCHMENT').toBe(7);
     expect(CITY_CHECK_SECONDS, 'CITY_CHECK_SECONDS').toBe(10);
     expect(AGE_CHECKS_PER_DAY, 'AGE_CHECKS_PER_DAY').toBe(24);
-    expect(DAILY_TICKETS, 'DAILY_TICKETS').toBe(1);
   });
 });
 
@@ -763,8 +719,7 @@ describe('SimStep: one step', () => {
         famine: 0,
         city: 0,
         age: 0,
-        ticket: 0,
-        turnQuiet: 0,
+        turn: 0,
         editor: 0,
         weatherOff: 0,
       };
@@ -782,7 +737,6 @@ describe('SimStep: one step', () => {
               calls.push('season');
               hooks.season();
             },
-            dailyTicket: () => calls.push('dailyTicket'),
           });
           step.lastDay = lastDay;
           for (at.step = 0; at.step < scene.steps - 1; at.step++)
@@ -802,7 +756,6 @@ describe('SimStep: one step', () => {
             clock,
           } = w;
           const play = ctx.mode === 'play';
-          let completedAtEnd = -1;
           // the works under way advance once a step, by the step's game time, before anything else
           builder.tickWorks = watched(
             calls,
@@ -887,7 +840,6 @@ describe('SimStep: one step', () => {
             expect(now, 'trade.tick: time').toBe(clock.time);
             expect(st === stores && econ === economy, 'trade.tick: stores and economy').toBe(true);
             tradeTick(now, st, econ);
-            completedAtEnd = contracts.completedToday;
           };
           economy.advanceAge = watched(
             calls,
@@ -910,7 +862,6 @@ describe('SimStep: one step', () => {
             vi.mocked(tickBuildings).mockImplementation(realTickBuildings);
           }
 
-          const ticket = turns && completedAtEnd > 0;
           expect(calls, 'calls').toEqual([
             'builder.tickWorks',
             'houses.tickWorks',
@@ -926,7 +877,6 @@ describe('SimStep: one step', () => {
             'contracts.tick',
             'trade.tick',
             ...(ageDue ? ['advanceAge'] : []),
-            ...(ticket ? ['dailyTicket'] : []),
           ]);
           expect(step.lastDay, 'lastDay').toBe(clock.day);
           expect(step.nextCityCheck, 'nextCityCheck').toBe(
@@ -935,12 +885,10 @@ describe('SimStep: one step', () => {
           expect(step.nextAgeCheck, 'nextAgeCheck').toBe(
             ageDue ? clock.time + daySeconds() / AGE_CHECKS_PER_DAY : before.nextAgeCheck,
           );
-          expect(contracts.completedToday, 'completedToday').toBe(turns ? 0 : completedAtEnd);
           if (stores.all().some((st) => st.famine)) seen.famine++;
           if (cityDue) seen.city++;
           if (ageDue) seen.age++;
-          if (ticket) seen.ticket++;
-          if (turns && !ticket) seen.turnQuiet++;
+          if (turns) seen.turn++;
           if (!play) seen.editor++;
           if (!ctx.weather) seen.weatherOff++;
         },
@@ -1149,184 +1097,142 @@ describe('SimStep: cadence', () => {
 
 // ---------------------------------------------------------------- the economy's ledger
 
-describe('SimStep: tickets, money and stock', () => {
+describe('SimStep: money and stock', () => {
   /**
    * Scenes without a train, where fares, refuelling and access charges cannot move money or
    * stock: every change is then a contract completed or failed, a trade settled, an age reached,
-   * the crews' food, a building's batch, or the step's own daily ticket.
+   * the crews' food or a building's batch.
    */
   // slow because 100 seeded scenes of 200 to 1500 steps each run with every stock movement logged:
   // 2.5 s alone
-  it(
-    'change only through the named rules; daily tickets equal the days with completions',
-    { timeout: 90_000 },
-    () => {
-      const seen = {
-        dailyTickets: 0,
-        quietTurns: 0,
-        completions: 0,
-        failures: 0,
-        settlements: 0,
-        ageUps: 0,
-        upkeep: 0,
-        batches: 0,
-        harvest: 0,
-      };
-      forAll(
-        (rng) => ({ ...genScene(rng, [200, 1500]), train: false }),
-        (s) => {
-          const { w, ctx, hooks, lastDay, at } = stage(s);
-          // what the domains report
-          let completed: { tickets: number; payout: number }[] = [];
-          let fines: number[] = [];
-          let settled: { units: number; money: number; resource: string }[] = [];
-          let ages: number[] = [];
-          let daily = 0;
-          const granted = new Set(w.economy.toJSON().granted);
-          const onEvent = w.contracts.onEvent;
-          w.contracts.onEvent = (e) => {
-            if (e.kind === 'completed')
-              completed.push({ tickets: e.contract.tickets, payout: e.contract.payout });
-            if (e.kind === 'failed') fines.push(w.contracts.failFine(e.contract));
-            if (e.kind === 'cancelled') throw new Error('a step cancelled a contract');
-            onEvent?.(e);
+  it('change only through the named rules', { timeout: 90_000 }, () => {
+    const seen = {
+      completions: 0,
+      failures: 0,
+      settlements: 0,
+      ageUps: 0,
+      upkeep: 0,
+      batches: 0,
+      harvest: 0,
+    };
+    forAll(
+      (rng) => ({ ...genScene(rng, [200, 1500]), train: false }),
+      (s) => {
+        const { w, ctx, hooks, lastDay, at } = stage(s);
+        // what the domains report
+        let completed: number[] = [];
+        let fines: number[] = [];
+        let settled: { units: number; money: number; resource: string }[] = [];
+        let ages: number[] = [];
+        const onEvent = w.contracts.onEvent;
+        w.contracts.onEvent = (e) => {
+          if (e.kind === 'completed') completed.push(e.contract.payout);
+          if (e.kind === 'failed') fines.push(w.contracts.failFine(e.contract));
+          if (e.kind === 'cancelled') throw new Error('a step cancelled a contract');
+          onEvent?.(e);
+        };
+        w.trade.onSettled = (out) => settled.push(...out);
+        w.economy.onAgeUp = (tier) => ages.push(tier);
+        // every movement of each store (its key), and the domain call it happened in
+        let phase = 'the step';
+        const flows: { phase: string; where: string; id: string; n: number }[] = [];
+        const within =
+          <A extends unknown[], R>(name: string, f: (...a: A) => R) =>
+          (...a: A): R => {
+            const was = phase;
+            phase = name;
+            try {
+              return f(...a);
+            } finally {
+              phase = was;
+            }
           };
-          w.trade.onSettled = (out) => settled.push(...out);
-          w.economy.onAgeUp = (tier) => ages.push(tier);
-          // every movement of each store (its key), and the domain call it happened in
-          let phase = 'the step';
-          const flows: { phase: string; where: string; id: string; n: number }[] = [];
-          const within =
-            <A extends unknown[], R>(name: string, f: (...a: A) => R) =>
-            (...a: A): R => {
-              const was = phase;
-              phase = name;
-              try {
-                return f(...a);
-              } finally {
-                phase = was;
-              }
-            };
-          for (const st of w.stores.all()) {
-            const storeAdd = st.add.bind(st);
-            const storeTake = st.take.bind(st);
-            st.add = (id, amount) => {
-              const n = storeAdd(id, amount);
-              flows.push({ phase, where: st.key, id, n });
-              return n;
-            };
-            st.take = (id, amount) => {
-              const n = storeTake(id, amount);
-              flows.push({ phase, where: st.key, id, n: -n });
-              return n;
-            };
-          }
-          w.stores.tickUpkeep = within('upkeep', w.stores.tickUpkeep.bind(w.stores));
-          for (const st of w.builder.stations) st.tick = within('stations', st.tick.bind(st));
-          w.trade.tick = within('trade', w.trade.tick.bind(w.trade));
-          vi.mocked(tickBuildings).mockImplementation(within('buildings', realTickBuildings));
+        for (const st of w.stores.all()) {
+          const storeAdd = st.add.bind(st);
+          const storeTake = st.take.bind(st);
+          st.add = (id, amount) => {
+            const n = storeAdd(id, amount);
+            flows.push({ phase, where: st.key, id, n });
+            return n;
+          };
+          st.take = (id, amount) => {
+            const n = storeTake(id, amount);
+            flows.push({ phase, where: st.key, id, n: -n });
+            return n;
+          };
+        }
+        w.stores.tickUpkeep = within('upkeep', w.stores.tickUpkeep.bind(w.stores));
+        for (const st of w.builder.stations) st.tick = within('stations', st.tick.bind(st));
+        w.trade.tick = within('trade', w.trade.tick.bind(w.trade));
+        vi.mocked(tickBuildings).mockImplementation(within('buildings', realTickBuildings));
 
-          const step = new SimStep(w, {
-            ...hooks,
-            dailyTicket: () => {
-              daily++;
-              hooks.dailyTicket();
-            },
-          });
-          step.lastDay = lastDay;
-          // the oracle's own count: completions since the day last turned, and that day
-          let pending = s.completedToday;
-          let day = lastDay;
-          for (at.step = 0; at.step < s.steps; at.step++) {
-            const before = {
-              tickets: w.economy.tickets,
-              money: w.economy.money,
-              earned: w.economy.earned,
-              stores: new Map(w.stores.all().map((st) => [st.key, new Map(st.amounts)])),
-            };
-            completed = [];
-            fines = [];
-            settled = [];
-            ages = [];
-            daily = 0;
-            flows.length = 0;
-            w.clock.run((gdt) => step.run(gdt, ctx));
-            const where = `step ${at.step} at ${w.clock.time}`;
+        const step = new SimStep(w, hooks);
+        step.lastDay = lastDay;
+        for (at.step = 0; at.step < s.steps; at.step++) {
+          const before = {
+            money: w.economy.money,
+            earned: w.economy.earned,
+            stores: new Map(w.stores.all().map((st) => [st.key, new Map(st.amounts)])),
+          };
+          completed = [];
+          fines = [];
+          settled = [];
+          ages = [];
+          flows.length = 0;
+          w.clock.run((gdt) => step.run(gdt, ctx));
+          const where = `step ${at.step} at ${w.clock.time}`;
 
-            pending += completed.length;
-            const turned = w.clock.day !== day;
-            const dailyWant = turned && pending > 0 ? 1 : 0;
-            if (turned) {
-              if (pending > 0) seen.dailyTickets++;
-              else seen.quietTurns++;
-              pending = 0;
-              day = w.clock.day;
+          const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+          expect(step.lastDay, `${where}: lastDay`).toBe(w.clock.day);
+
+          const payouts = sum(completed);
+          const trade = sum(settled.map((t) => t.money));
+          const sales = sum(settled.map((t) => Math.max(0, t.money)));
+          const money = w.economy.money - before.money;
+          expect(money, `${where}: money`).toBeCloseTo(payouts - sum(fines) + trade, 6);
+          const earned = w.economy.earned - before.earned;
+          expect(earned, `${where}: earned`).toBeCloseTo(payouts + sales, 6);
+
+          const holders: [string, Map<string, number>, Map<string, number>][] = [
+            ...w.stores
+              .all()
+              .map((st): [string, Map<string, number>, Map<string, number>] => [
+                st.key,
+                before.stores.get(st.key) ?? new Map(),
+                st.amounts,
+              ]),
+          ];
+          for (const [at, was, now] of holders)
+            for (const id of new Set([...was.keys(), ...now.keys()])) {
+              const moved = sum(flows.filter((f) => f.where === at && f.id === id).map((f) => f.n));
+              const change = (now.get(id) ?? 0) - (was.get(id) ?? 0);
+              expect(change, `${where}: ${at} ${id} against its recorded moves`).toBeCloseTo(
+                moved,
+                9,
+              );
             }
-            let ageTickets = 0;
-            for (const t of ages)
-              if (!granted.has(t)) {
-                granted.add(t);
-                ageTickets += 5;
-              }
-            const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
-            expect(w.economy.tickets - before.tickets, `${where}: tickets`).toBe(
-              sum(completed.map((c) => c.tickets)) + ageTickets + dailyWant,
-            );
-            expect(daily, `${where}: ticket hook`).toBe(dailyWant);
-            expect(w.contracts.completedToday, `${where}: completedToday`).toBe(pending);
-            expect(step.lastDay, `${where}: lastDay`).toBe(w.clock.day);
-
-            const payouts = sum(completed.map((c) => c.payout));
-            const trade = sum(settled.map((t) => t.money));
-            const sales = sum(settled.map((t) => Math.max(0, t.money)));
-            const money = w.economy.money - before.money;
-            expect(money, `${where}: money`).toBeCloseTo(payouts - sum(fines) + trade, 6);
-            const earned = w.economy.earned - before.earned;
-            expect(earned, `${where}: earned`).toBeCloseTo(payouts + sales, 6);
-
-            const holders: [string, Map<string, number>, Map<string, number>][] = [
-              ...w.stores
-                .all()
-                .map((st): [string, Map<string, number>, Map<string, number>] => [
-                  st.key,
-                  before.stores.get(st.key) ?? new Map(),
-                  st.amounts,
-                ]),
-            ];
-            for (const [at, was, now] of holders)
-              for (const id of new Set([...was.keys(), ...now.keys()])) {
-                const moved = sum(
-                  flows.filter((f) => f.where === at && f.id === id).map((f) => f.n),
-                );
-                const change = (now.get(id) ?? 0) - (was.get(id) ?? 0);
-                expect(change, `${where}: ${at} ${id} against its recorded moves`).toBeCloseTo(
-                  moved,
-                  9,
-                );
-              }
-            for (const f of flows) {
-              const named = f.phase === 'buildings' || f.phase === 'trade';
-              const food = f.phase === 'upkeep' && f.id === 'food' && f.n <= 0;
-              // a harvester in a town's reach makes into the town's store
-              const made = f.phase === 'stations' && f.where.startsWith('town:') && f.n >= 0;
-              if (!named && !food && !made)
-                throw new Error(`${where}: ${f.id} ${f.n} moved in ${f.phase} at ${f.where}`);
-              if (f.phase === 'upkeep' && f.n < 0) seen.upkeep++;
-              if (f.phase === 'buildings' && f.n !== 0) seen.batches++;
-              if (made && f.n > 0) seen.harvest++;
-            }
-            seen.completions += completed.length;
-            seen.failures += fines.length;
-            seen.settlements += settled.length;
-            seen.ageUps += ages.length;
+          for (const f of flows) {
+            const named = f.phase === 'buildings' || f.phase === 'trade';
+            const food = f.phase === 'upkeep' && f.id === 'food' && f.n <= 0;
+            // a harvester in a town's reach makes into the town's store
+            const made = f.phase === 'stations' && f.where.startsWith('town:') && f.n >= 0;
+            if (!named && !food && !made)
+              throw new Error(`${where}: ${f.id} ${f.n} moved in ${f.phase} at ${f.where}`);
+            if (f.phase === 'upkeep' && f.n < 0) seen.upkeep++;
+            if (f.phase === 'buildings' && f.n !== 0) seen.batches++;
+            if (made && f.n > 0) seen.harvest++;
           }
-          vi.mocked(tickBuildings).mockImplementation(realTickBuildings);
-        },
-        { shrink: shrinkScene, seeds: Array.from({ length: 30 }, (_, i) => i + 1) },
-      );
-      for (const [k, n] of Object.entries(seen)) expect(n, `runs with ${k}`).toBeGreaterThan(0);
-    },
-  );
+          seen.completions += completed.length;
+          seen.failures += fines.length;
+          seen.settlements += settled.length;
+          seen.ageUps += ages.length;
+        }
+        vi.mocked(tickBuildings).mockImplementation(realTickBuildings);
+      },
+      { shrink: shrinkScene, seeds: Array.from({ length: 30 }, (_, i) => i + 1) },
+    );
+    for (const [k, n] of Object.entries(seen)) expect(n, `runs with ${k}`).toBeGreaterThan(0);
+  });
 });
 
 // ---------------------------------------------------------------- the age snapshot
@@ -1608,7 +1514,6 @@ function seedRun(c: SeedCase, varied: boolean) {
       for (const st of w.builder.stations)
         st.productionMul = productionMul(st.def.id, now) * biomeFactor(w, st);
     },
-    dailyTicket: () => log.push(`ticket ${w.clock.time}`),
   };
   const ctx: StepContext = {
     mode: c.mode,

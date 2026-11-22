@@ -8,6 +8,7 @@ import {
   harvestBreakdown,
   resetStationIds,
   stationDef,
+  stationSpan,
   terrainFactorAt,
   weeklyOutput,
   type HarvestBreakdown,
@@ -817,5 +818,22 @@ describe('the definition of a station kind', () => {
       expect(stationDef(def.id), def.id).toBe(STATION_DEFS.find((d) => d.id === def.id));
     for (const id of ['', 'mill', 'Farm', 'farm ', 'toString', 'constructor', '__proto__'])
       expect(() => stationDef(id), JSON.stringify(id)).toThrow(`unknown station ${id}`);
+  });
+});
+
+describe('the span kept by a station', () => {
+  it('follows a turn, and the tiles it covers are its footprint', () => {
+    for (const def of STATION_DEFS) {
+      const s = new Station(def.id, 10, 20);
+      for (const rot of [0, 1, 2, 3, 0, 3]) {
+        s.rot = rot;
+        expect(s.w, `${def.id} ${rot}`).toBe(stationSpan(def, rot).w);
+        expect(s.h, `${def.id} ${rot}`).toBe(stationSpan(def, rot).h);
+        const on = new Set(s.footprint().map((p) => `${p.x},${p.y}`));
+        for (let y = 17; y < 28; y++)
+          for (let x = 7; x < 18; x++)
+            expect(s.covers(x, y), `${def.id} ${rot} at ${x},${y}`).toBe(on.has(`${x},${y}`));
+      }
+    }
   });
 });

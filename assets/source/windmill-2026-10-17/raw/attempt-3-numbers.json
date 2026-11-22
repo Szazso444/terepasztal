@@ -1,0 +1,84 @@
+{
+  "returned": [1254, 1254],
+  "box": [420, 514, 834, 1079],
+  "footWidth": 415,
+  "footCentre": [627, 975.25],
+  "scale": 9.653407769248663,
+  "widthOverShort": 0.3309409888357257,
+  "camera": {
+    "off": false,
+    "by": 1.5,
+    "elevation": -1.5,
+    "turn": 0,
+    "ratio": 0.478,
+    "looking": 28.5
+  },
+  "apexOverW": 1.1114457831325302,
+  "stubSlope": 0.4772727272727273,
+  "hubFromAnchorWorld": [-15.84932530120482, -34.17069277108433],
+  "hubOffset": [0.15067469879518036, -0.17069277108433312],
+  "hubDistance": 0.22768154724849107,
+  "doorPosition": -0.3409638554216867,
+  "doorHeight": 0.27710843373493976,
+  "pixels": {
+    "timber": 99,
+    "white": 2962,
+    "amber": 0
+  },
+  "check": {
+    "ok": true,
+    "problems": [],
+    "notes": [
+      "placed by its outline: no straight wall base was found",
+      "taller than its canvas by 29 px once on its footprint"
+    ],
+    "fit": {
+      "method": "outline",
+      "sure": [true, false],
+      "measured": [0.163, -0.5],
+      "slopes": [0.33, -0.5],
+      "base": {
+        "w": [499, 1061.4],
+        "s": [687.5, 1092.2],
+        "e": [833, 1019.5]
+      },
+      "scale": 1.349,
+      "vertical": 1.2048,
+      "shear": 0.1024,
+      "cx": 666,
+      "cy": 1321.8,
+      "box": {
+        "left": 180.2,
+        "top": -29,
+        "right": 738.6,
+        "bottom": 893
+      },
+      "camera": null,
+      "area": 173779
+    }
+  },
+  "tests": {
+    "camera": true,
+    "tower": true,
+    "stub": true,
+    "hub": true,
+    "doorPosition": true,
+    "doorHeight": true,
+    "timber": false,
+    "amber": true,
+    "white": false,
+    "check": true,
+    "eye": true
+  },
+  "eye": {
+    "stub": [
+      [537, 633],
+      [493, 654]
+    ],
+    "hub": [474, 684],
+    "hubBox": [439, 637, 508, 731],
+    "door": [467, 940, 504, 1055],
+    "pass": true,
+    "notes": "Round smooth tower, plain apex, no sails/ground/plinth/objects. Door and shaft lower-left. Upper-left lighting. Stub top edge reread from 4x zoom: original coordinates (537,633) near cap to (493,654) near plate; earlier point fell on the curved band instead of edge."
+  }
+}

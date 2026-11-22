@@ -108,8 +108,8 @@ describe('the two tables', () => {
 describe('rules an older build wrote', () => {
   // `reputationMul` and `tradeCycleDays` were settings no screen showed and nothing read;
   // `collectMin` was the pile a warehouse held before a freight train came for it, and freight
-  // takes nothing out of a store any more.
-  const old = { reputationMul: 3, tradeCycleDays: 2, collectMin: 30 };
+  // takes nothing out of a store any more; `startTickets` left with the tickets.
+  const old = { reputationMul: 3, tradeCycleDays: 2, collectMin: 30, startTickets: 9 };
   const gone = (r: object) => {
     for (const k of Object.keys(old)) expect(Object.hasOwn(r, k), k).toBe(false);
   };

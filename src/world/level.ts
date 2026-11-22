@@ -39,7 +39,8 @@ export interface LevelData {
   buildings?: LevelBuilding[];
   start: {
     money: number;
-    tickets: number;
+    /** a level file from before the tickets left may hold this: read past, never written */
+    tickets?: number;
     /** age the level starts in (0 steam, 1 diesel, 2 electric) */
     tier: number;
     /** multiplier on the default starting goods (1 = normal) */
@@ -87,11 +88,18 @@ export function mapFromLevel(level: LevelData, supply: SupplyMode = DEFAULT_SUPP
   return map;
 }
 
+/** A level without the tickets an older file's start block holds. */
+function withoutTickets(level: LevelData): LevelData {
+  const start = { ...level.start };
+  delete start.tickets;
+  return { ...level, start };
+}
+
 export function listLevels(): LevelData[] {
   try {
     const raw = localStorage.getItem(LEVELS_KEY);
     const list = raw ? (JSON.parse(raw) as LevelData[]) : [];
-    return Array.isArray(list) ? list.filter(isLevel) : [];
+    return Array.isArray(list) ? list.filter(isLevel).map(withoutTickets) : [];
   } catch {
     return [];
   }
@@ -101,7 +109,7 @@ export function getLevel(id: string): LevelData | null {
 }
 export function saveLevel(level: LevelData): boolean {
   const list = listLevels().filter((l) => l.id !== level.id);
-  list.push(level);
+  list.push(withoutTickets(level));
   list.sort((a, b) => b.updatedAt - a.updatedAt);
   try {
     localStorage.setItem(LEVELS_KEY, JSON.stringify(list));
@@ -151,6 +159,6 @@ export function levelFromMap(map: GameMap, name: string, id = newLevelId()): Lev
     stations: [],
     decor: [],
     buildings: [],
-    start: { money: 25000, tickets: 3, tier: 0, stockMul: 1 },
+    start: { money: 25000, tier: 0, stockMul: 1 },
   };
 }

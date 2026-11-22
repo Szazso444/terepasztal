@@ -1,0 +1,88 @@
+{
+  "returned": [1254, 1254],
+  "box": [338, 251, 919, 1084],
+  "footWidth": 582,
+  "footCentre": [628.5, 938.5],
+  "scale": 13.538032100488484,
+  "widthOverShort": 0.46411483253588515,
+  "camera": {
+    "off": false,
+    "by": 0.6,
+    "elevation": -0.6,
+    "turn": 0,
+    "ratio": 0.491,
+    "looking": 29.4
+  },
+  "apexOverW": 1.1073883161512028,
+  "stubSlope": 0.6153846153846154,
+  "stubDirectionPass": true,
+  "stubSpan": 76.32168761236875,
+  "hubTarget": [16, -50],
+  "hubFromAnchorWorld": [16.435180412371135, -50.12930412371134],
+  "hubOffset": [0.43518041237113536, -0.1293041237113428],
+  "hubDistance": 0.45398408311335064,
+  "doorPosition": null,
+  "doorHeight": null,
+  "pixels": {
+    "timber": 113,
+    "white": 5665,
+    "amber": 0
+  },
+  "check": {
+    "ok": true,
+    "problems": [],
+    "notes": ["placed by its outline: no straight wall base was found"],
+    "fit": {
+      "method": "outline",
+      "sure": [false, false],
+      "measured": [0.5, -0.5],
+      "slopes": [0.5, -0.5],
+      "base": {
+        "w": [338, 999],
+        "s": [626.5, 1143.3],
+        "e": [919, 997]
+      },
+      "scale": 0.7755,
+      "vertical": 1,
+      "shear": 0,
+      "cx": 628.5,
+      "cy": 998,
+      "box": {
+        "left": 286.7,
+        "top": 252.7,
+        "right": 737.3,
+        "bottom": 898.7
+      },
+      "camera": null,
+      "area": 351050
+    }
+  },
+  "tests": {
+    "camera": true,
+    "tower": true,
+    "stub": false,
+    "hub": true,
+    "doorPosition": true,
+    "doorHeight": true,
+    "timber": false,
+    "amber": true,
+    "white": false,
+    "check": true,
+    "eye": true,
+    "position": false
+  },
+  "eye": {
+    "view": 2,
+    "apexTip": 294,
+    "stub": [
+      [728, 349],
+      [793, 309]
+    ],
+    "hub": [851, 314],
+    "hubBox": [801, 251, 901, 375],
+    "door": null,
+    "noDoorWindow": true,
+    "pass": true,
+    "notes": "Plain round smooth stone tower, slate cone/plain tip, no door/window on visible faces, rear stub root hidden by cap and complete plate above-right; left lighter than right; no sails/plinth/ground/objects."
+  }
+}

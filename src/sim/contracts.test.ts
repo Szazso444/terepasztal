@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 import { emptyMap } from '../world/mapgen';
 import { Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
@@ -357,7 +358,7 @@ function act(d: Desk, op: Op): string {
         : null;
     }
   }
-  return `${JSON.stringify(out)}|${economy.money},${economy.tickets},${economy.earned}`;
+  return `${JSON.stringify(out)}|${economy.money},${economy.earned}`;
 }
 const run = (d: Desk, ops: readonly Op[]) => ops.map((op) => act(d, op));
 
@@ -412,7 +413,6 @@ describe('ContractBoard randomness, over seeded boards', () => {
         Object.assign(b, { now: a.now });
         Object.assign(b.economy, {
           money: a.economy.money,
-          tickets: a.economy.tickets,
           earned: a.economy.earned,
         });
         // a twin of a that reloads its own save in place
@@ -490,5 +490,95 @@ describe('ContractBoard randomness, over seeded boards', () => {
       },
       { shrink: ({ c, ...rest }) => [...shrinkBoard(c)].map((s) => ({ c: s, ...rest })) },
     );
+  });
+});
+
+describe('what a contract holds', () => {
+  it('names no ticket, in an offer or in the save of the board', () => {
+    const { builder, economy } = world();
+    const board = new ContractBoard(new Rng(SEED), builder, economy);
+    const [offer] = draw(board, 1, true);
+    expect(offer).not.toBeNull();
+    expect(JSON.stringify(board.toJSON())).not.toMatch(/ticket|completedToday/i);
+  });
+
+  it('loads a board a build with tickets saved, and writes it back without them', () => {
+    const { builder, economy } = world();
+    const board = new ContractBoard(new Rng(SEED), builder, economy);
+    draw(board, 2, true);
+    const old = JSON.parse(JSON.stringify(board.toJSON())) as ReturnType<ContractBoard['toJSON']>;
+    const text = JSON.stringify(board.toJSON());
+    const back = new ContractBoard(new Rng(SEED ^ 1), builder, economy);
+    back.load({ ...old, completedToday: 3 } as typeof old);
+    expect(JSON.stringify(back.toJSON())).toBe(text);
+  });
+
+  it('pays money alone: a delivery that finishes one adds its payout and nothing else', () => {
+    const { builder, economy } = world();
+    const board = new ContractBoard(new Rng(SEED), builder, economy);
+    const c = board.generate(NOW, true)!;
+    board.accept(c, NOW);
+    const before = JSON.stringify(economy.toJSON());
+    const station = builder.stationById(c.destId)!;
+    const money = economy.money;
+    board.onDelivery({
+      cargo: c.cargo,
+      amount: c.amount,
+      origin: c.originId,
+      station,
+    } as DeliveryEvent);
+    expect(c.status).toBe('done');
+    expect(economy.money).toBe(money + c.payout);
+    const { money: _m, earned: _e, ...rest } = JSON.parse(before) as Record<string, unknown>;
+    void [_m, _e];
+    expect(economy.toJSON()).toMatchObject(rest);
+  });
+});
+
+describe('the offers of a build, held against golden values', () => {
+  /** All an offer asks and pays, in the order the fields read on its card. */
+  const terms = (c: Contract) => [
+    c.templateId,
+    c.name,
+    c.rarity,
+    c.cargo,
+    c.amount,
+    c.originId,
+    c.destId,
+    c.payout,
+    c.duration,
+    c.expires,
+  ];
+  const digest = (v: unknown) =>
+    createHash('sha1').update(JSON.stringify(v)).digest('hex').slice(0, 16);
+
+  /**
+   * The goldens were taken from the build that still paid tickets, whose fields went out of every
+   * contract without a draw of the stream changing. They pin the money, the number of offers and
+   * their order: a change that moves one is a change to the game, not a number to update.
+   */
+  it.each([
+    [0, '252115d3bfa83585'],
+    [1, '5f598fa8b1775b06'],
+    [2, 'c9091945ffa95e55'],
+  ])('age %i: forty offers in a row', (tier, want) => {
+    const { builder, economy } = world();
+    economy.tier = tier;
+    const board = new ContractBoard(new Rng(SEED), builder, economy);
+    const offers = draw(board, 40, true);
+    expect(offers.every((c) => c !== null)).toBe(true);
+    expect(digest(offers.map((c) => terms(c!)))).toBe(want);
+  });
+
+  it('a board left to itself for sixty days', () => {
+    const { builder, economy } = world();
+    const board = new ContractBoard(new Rng(SEED), builder, economy);
+    const seen: unknown[] = [];
+    for (let day = 0; day < 60; day++) {
+      board.tick(day * daySeconds());
+      seen.push(board.offers.map(terms));
+    }
+    expect(seen.flat().length).toBeGreaterThan(0);
+    expect(digest(seen)).toBe('6d04fcdf278e6fac');
   });
 });
