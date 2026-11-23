@@ -1023,6 +1023,25 @@ describe('landmarks', () => {
       ]);
   });
 
+  it('reports a salvage effect that is not a grant', () => {
+    expect(
+      problemsAfter(
+        set(0, (lm) => ((lm.salvage as Table).effect = { kind: 'boost', strength: 1 })),
+      ),
+    ).toEqual([expect.stringMatching(/^landmark [a-z_]+: salvage effect must be a grant/)]);
+  });
+
+  it('reports two picks of one restore that share a key', () => {
+    expect(
+      problemsAfter(
+        set(7, (lm) => {
+          const pick = (lm.restore as { pick: Table[] }).pick;
+          pick[1] = { ...pick[0]! };
+        }),
+      ),
+    ).toEqual([expect.stringMatching(/^landmark [a-z_]+: restore pick has two effects alike/)]);
+  });
+
   it('reports a restore path without exactly one of effect and pick, and an unknown condition', () => {
     expect(problemsAfter(set(0, (lm) => delete (lm.restore as Table).effect))).not.toEqual([]);
     expect(

@@ -1180,7 +1180,15 @@ const CHECKS: Record<ContentKey, Check> = {
       for (const p of siteProblems(lm.rule)) at(p);
       const sv: unknown = lm.salvage;
       if (!isObj(sv)) at('salvage needs an effect');
-      else for (const p of effectProblems(sv.effect, ref)) at(`salvage ${p}`);
+      else {
+        for (const p of effectProblems(sv.effect, ref)) at(`salvage ${p}`);
+        // Salvage is one-time: only a grant runs there, the other kinds only run once restored.
+        if (
+          isObj(sv.effect) &&
+          ['boost', 'attraction', 'produce'].includes(sv.effect.kind as string)
+        )
+          at('salvage effect must be a grant');
+      }
       const rs: unknown = lm.restore;
       if (!isObj(rs)) {
         at('restore needs requirements and an effect');
@@ -1197,7 +1205,16 @@ const CHECKS: Record<ContentKey, Check> = {
       if (rs.pick !== undefined) {
         if (!Array.isArray(rs.pick) || rs.pick.length < 2)
           at('restore pick needs two or more effects');
-        else for (const e of rs.pick) for (const p of effectProblems(e, ref)) at(`restore ${p}`);
+        else {
+          for (const e of rs.pick) for (const p of effectProblems(e, ref)) at(`restore ${p}`);
+          // The player names a pick by its key (`pickKey` in the sim), so two alike cannot be told apart.
+          const keys = rs.pick.map((e: unknown) =>
+            isObj(e) && e.kind === 'produce'
+              ? `produce:${String(e.cargo)}`
+              : String(isObj(e) && e.kind),
+          );
+          if (new Set(keys).size < keys.length) at('restore pick has two effects alike');
+        }
       }
     }
     if (bands > 1) out.push(`landmarks: roll bands add up to ${bands.toFixed(4)}, more than 1`);
