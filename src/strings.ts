@@ -2585,6 +2585,8 @@ const EN = {
       surveyed: (name: string) => `${name} surveyed: see what it can become`,
       restored: (name: string) => `${name} restored`,
       salvaged: (name: string) => `${name} salvaged`,
+      /** goods of a grant that found no store with room; `what` is the lost goods, already listed */
+      lost: (name: string, what: string) => `${name}: ${what} lost, no store with room`,
     },
     /** the tile notice when a landmark is surveyed */
     notice: (name: string) => `${name} is surveyed`,

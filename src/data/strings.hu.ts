@@ -2313,6 +2313,7 @@ export const HU: Strings = {
       surveyed: (name: string) => `Felmérve: ${name}. Nézd meg, mi lehet belőle`,
       restored: (name: string) => `Helyreállítva: ${name}`,
       salvaged: (name: string) => `Lebontva: ${name}`,
+      lost: (name: string, what: string) => `${name}: ${what} elveszett, nincs hely a raktárakban`,
     },
     notice: (name: string) => `Felmérve: ${name}`,
     tooltip: (name: string, stage: string) => `${name} (${stage})`,
