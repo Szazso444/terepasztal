@@ -6,6 +6,7 @@ import { STR } from '../strings';
 import {
   conditionHolds,
   effectLine,
+  grantLossLine,
   landmarkView,
   shownName,
   type LandmarkWorld,
@@ -16,6 +17,15 @@ const DAY: LandmarkWorld = { hour: 12, wind: 'calm', reason: '' };
 function item(def: string, stage: LandmarkStage, rest: Partial<LandmarkItem> = {}): LandmarkItem {
   return { id: 1, def, x: 10, y: 10, region: [0, 0], stage, ...rest };
 }
+
+describe('landmark grant loss line', () => {
+  it('names the goods that fitted no store, and says nothing when all arrived', () => {
+    const lost = grantLossLine({ def: 'bellkeepers_refuge' }, { wood: 12 });
+    expect(lost).toBe(STR.landmarks.toasts.lost(STR.landmarks.names.bellkeepers_refuge, '12 wood'));
+    expect(grantLossLine({ def: 'bellkeepers_refuge' }, {})).toBeNull();
+    expect(grantLossLine({ def: 'bellkeepers_refuge' }, { wood: 0 })).toBeNull();
+  });
+});
 
 describe('landmark panel view', () => {
   it('shows nothing of a hidden landmark, and Unknown with the spotted line of a spotted one', () => {

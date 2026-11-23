@@ -17,6 +17,7 @@ import {
 } from '../sim/landmarks';
 import { cargoName, cargoWord } from '../sim/cargo';
 import { fmtCost } from '../sim/stores';
+import type { Cost } from '../data/content';
 import type { WindLevel } from '../sim/wind';
 import { STR } from '../strings';
 import { fmtMoney } from './numberFormat';
@@ -106,6 +107,12 @@ function grantText(e: Extract<LandmarkEffect, { kind: 'grant' }>): string {
   if (e.money) parts.push(fmtMoney(e.money));
   if (e.cargo) parts.push(fmtCost(e.cargo));
   return parts.join(', ');
+}
+
+/** The toast for goods of a grant that found no store with room; null when all of it arrived. */
+export function grantLossLine(item: { def: string }, lost: Cost): string | null {
+  if (!Object.values(lost).some((v) => v > 0)) return null;
+  return STR.landmarks.toasts.lost(landmarkName(item.def), fmtCost(lost));
 }
 
 /** An effect as one line. */

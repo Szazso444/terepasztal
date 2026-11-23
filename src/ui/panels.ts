@@ -80,7 +80,7 @@ import { toastBottom } from './buildBar';
 import { BuildingPanel } from './buildingPanel';
 import { DecorPanel } from './decorPanel';
 import { LandmarkPanel } from './landmarkPanel';
-import { landmarkName } from './landmarkView';
+import { grantLossLine, landmarkName } from './landmarkView';
 import type { LandmarkEvent, LandmarkRegistry } from '../sim/landmarks';
 import type { WindLevel } from '../sim/wind';
 import { AlertBar } from './alertBar';
@@ -666,6 +666,10 @@ export function createPlayUi(host: UiHost, d: PlayUiDomains): PlayUi {
         );
       } else if (e.kind === 'restored') toast(T.restored(name), 'good');
       else if (e.kind === 'salvaged') toast(T.salvaged(name), 'good');
+    } else {
+      // part of a grant that fitted no store is said: the salvaged toast alone would hide it
+      const lost = grantLossLine(e.item, e.lost);
+      if (lost) toast(lost, 'warn');
     }
     if (landmarkPanel.item) landmarkPanel.render();
   };
