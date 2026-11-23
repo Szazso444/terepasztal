@@ -2342,6 +2342,7 @@ export class Game implements UiHost {
       this.build.select(null);
       this.build.selectBuilding(null);
       this.build.selectDecor(null);
+      this.build.selectLandmark(null);
     }
     this.setHoverTrain(t);
   }
@@ -2758,6 +2759,7 @@ export class Game implements UiHost {
           }
         : null,
       props: (this.map.props.get(y * this.map.w + x) ?? []).map((p) => p.kind),
+      landmark: this.landmarks.at(x, y) ?? null,
       powered: this.power.isPowered(x, y),
       trackCostFactor: this.builder.terrainMul(x, y),
       weeklyAtLevel1: weeklyOutput(1, 1),

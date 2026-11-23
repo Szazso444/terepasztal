@@ -58,6 +58,13 @@ function legacyHashIntent(): Intent | null {
   return location.hash.includes('new') ? { action: 'new', seed } : null;
 }
 
+/** The dev server's link to the rare-landmark review scene: `/#landmark-scene`. Nothing in a production build. */
+function sceneHashIntent(): Intent | null {
+  return import.meta.env.DEV && location.hash === '#landmark-scene'
+    ? { action: 'landmarkScene' }
+    : null;
+}
+
 function levelForEdit(i: Extract<Intent, { action: 'edit' }>): LevelData | null {
   if (i.levelId) return getLevel(i.levelId);
   const size = i.size ?? 64;
@@ -174,11 +181,14 @@ async function boot() {
   audio.preload();
   // an intent a menu stored before reloading; with none, the page was opened afresh
   const stored = takeIntent();
-  const intent = stored ?? legacyHashIntent();
+  const intent = stored ?? legacyHashIntent() ?? sceneHashIntent();
   if (location.hash) history.replaceState(null, '', location.pathname);
   // A dev-server reload carries the running game over, so an edit lands where you were.
   const resumed = takeDevSession();
-  const asked = bootPlan(intent, { devReload: resumed !== null, fresh: stored === null });
+  // the review scene boots as a new game does: loading screen, click to begin, reveal
+  const planned: Intent | null =
+    import.meta.env.DEV && intent?.action === 'landmarkScene' ? { action: 'new', seed: 0 } : intent;
+  const asked = bootPlan(planned, { devReload: resumed !== null, fresh: stored === null });
   const screen = asked.loading ? new LoadingScreen() : null;
   const progress = new BootProgress();
   const report = (stage: BootStage, fraction: number) =>
@@ -201,6 +211,13 @@ async function boot() {
     save = resumed;
     spec = resumed.world ?? { kind: 'generated', seed: resumed.seed, params: paramsFromRules() };
     supply = resumed.supply;
+    start = 'play';
+  } else if (import.meta.env.DEV && intent?.action === 'landmarkScene') {
+    // a fixed world; the stored game is left alone (the scene turns autosave off)
+    const scene = await import('./engine/landmarkScene');
+    rules.landmarkChance = scene.LANDMARK_SCENE_CHANCE;
+    setTestingLevel(null);
+    spec = { kind: 'generated', seed: scene.LANDMARK_SCENE_SEED, params: paramsFromRules(160) };
     start = 'play';
   } else if (intent?.action === 'new') {
     clearSave();
@@ -274,6 +291,9 @@ async function boot() {
   // starts 1x at its reveal (`continueFromTitle`).
   if (start !== 'editor' && !resumed && !(intent?.action === 'continue' && intent.keepSpeed))
     game.clock.setSpeed(start === 'menu' ? 0 : 1);
+  // the review scene is built on the fresh game and leaves the clock stopped
+  if (import.meta.env.DEV && intent?.action === 'landmarkScene')
+    (await import('./engine/landmarkScene')).buildLandmarkScene(game);
   const speed = game.clock.speedIndex;
   if (screen) game.clock.setSpeed(0);
   if (start === 'menu') {
