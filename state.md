@@ -4,7 +4,7 @@ Last updated: 2026-11-24 (seeded at setup; no run yet).
 
 ## Lock
 
-none
+cloud run, started 2026-11-25T13:38Z
 
 ## Links
 
