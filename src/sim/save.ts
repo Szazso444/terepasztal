@@ -11,6 +11,7 @@ import type { SignalLevel } from './signals';
 import type { PeopleJSON } from './people';
 import type { RoadJSON } from './roads';
 import type { StoreJSON } from './stores';
+import type { LandmarksJSON } from './landmarks';
 import type { BuildingJSON } from './buildings';
 import type { ChunkStore, MapGenerator } from '../world/chunks';
 import { HU_MIGRATIONS } from '../data/names.hu';
@@ -36,7 +37,7 @@ export type WorldSpec =
     }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 24;
+export const SAVE_VERSION = 25;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
@@ -137,6 +138,11 @@ export interface SaveParts {
   people: PeopleJSON;
   /** v20: road tiles [x, y], level crossings included (`Roads.toJSON`) */
   roads: RoadJSON;
+  /**
+   * v25: the rare landmarks the world placed and where each stands (`LandmarkRegistry.toJSON`).
+   * Optional until the game writes it; a file without one is a v24 file the step has not reached.
+   */
+  landmarks?: LandmarksJSON;
 }
 /** The fields every format version since v1 has; the others arrived later and may be missing. */
 type SaveCore =
@@ -725,6 +731,12 @@ export const MIGRATIONS: Migration[] = [
         delete world.level.start.tickets;
     },
   },
+  {
+    from: 24,
+    quiet: true,
+    note: 'the rare landmarks started empty, and the chunks the first load generates get none: a save that old has its land as it is',
+    run: (j) => (j.landmarks = j.landmarks ?? { nextId: 1, items: [], skipRoll: true }),
+  },
 ];
 /**
  * The oldest format that loads without a word: only quiet steps (`Migration.quiet`) stand between
@@ -762,6 +774,7 @@ const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
   supply: true,
   people: true,
   roads: true,
+  landmarks: true,
 };
 /** The names a type declares, without the `string` and `number` of an index signature. */
 type DeclaredKey<T> = keyof {

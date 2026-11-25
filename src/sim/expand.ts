@@ -76,6 +76,11 @@ export function expandSave(save: SaveGame, ring = 1): SaveGame {
     h.x += d;
     h.y += d;
   }
+  // a landmark's footprint corner moves with the rest; its region is a world one and stays
+  for (const l of save.landmarks?.items ?? []) {
+    l.x += d;
+    l.y += d;
+  }
   for (const t of save.trains as {
     head?: { x: number; y: number } | null;
     trail?: number[][];

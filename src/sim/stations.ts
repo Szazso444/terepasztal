@@ -1,9 +1,8 @@
 import { content, dataName, type StationDef, type Cost } from '../data/content';
 import { LANGUAGE } from '../strings';
 import type { LevelStation } from '../world/level';
-import { weekSeconds } from './rules';
 import { Terrain, inBounds, terrainAt, type GameMap } from '../world/tiles';
-import { rules, type Rules } from './rules';
+import { rules, daySeconds, weekSeconds, type Rules } from './rules';
 import { productionMul as seasonProductionMul, type Season } from './weather';
 import { biomeAt, biomeDef } from './biomes';
 import { cargoDef } from './cargo';
@@ -385,6 +384,11 @@ export class Station {
   waterSupply = false;
   /** Residents within the passenger catchment, updated by the game. */
   passengerPopulation = 0;
+  /**
+   * Visitors a day that restored landmarks in reach bring (`LandmarkRegistry.visitorsAt`, set by
+   * `Builder.refreshStationBoosts`): added to the output after the population cap and the season's and biome's multiplier (`tick`).
+   */
+  visitorsPerDay = 0;
   /** a coaling stage stands within reach (engines refuel from a store) */
   fuelSupply = false;
   /** the upgrade under way (`Builder.upgradeStation`); null when none is */
@@ -652,7 +656,10 @@ export class Station {
     const produced = this.producedCargo();
     if (!produced.length) return;
     const perType =
-      ((this.productionPerWeek * this.productionMul) / weekSeconds() / produced.length) * gameDt;
+      (((this.productionPerWeek * this.productionMul) / weekSeconds() +
+        this.visitorsPerDay / daySeconds()) /
+        produced.length) *
+      gameDt;
     if (this.outlet) {
       for (const c of produced) this.outlet.add(c, perType);
       return;

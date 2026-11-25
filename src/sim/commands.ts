@@ -16,6 +16,7 @@ import type { HouseRegistry } from './houses';
 import type { ContractBoard } from './contracts';
 import type { ContractDispatcher } from './contractDispatch';
 import type { GameClock } from './time';
+import type { LandmarkRegistry, LandmarkResult } from './landmarks';
 import type { Station } from './stations';
 import type { Train, RouteMode, StopPlan } from './trains';
 import { isTrainColour } from './trainColours';
@@ -35,6 +36,8 @@ export interface CommandDeps {
   contracts: ContractBoard;
   contractJobs: ContractDispatcher;
   clock: GameClock;
+  /** the rare landmarks; a game without them (a level) has none */
+  landmarks?: LandmarkRegistry;
 }
 
 /** Longest station name, in characters. */
@@ -56,6 +59,7 @@ export class Commands {
   private readonly economy: Economy;
   private readonly trade: TradeDesk;
   private readonly inventory: Inventory;
+  private readonly landmarks: LandmarkRegistry | undefined;
   /** what an undo reads and changes */
   private readonly buildWorld: BuildWorld;
   /** what the player can take back; belongs to this session and is never saved */
@@ -67,6 +71,7 @@ export class Commands {
     this.economy = deps.economy;
     this.trade = deps.trade;
     this.inventory = deps.inventory;
+    this.landmarks = deps.landmarks;
     this.buildWorld = deps;
   }
 
@@ -214,6 +219,22 @@ export class Commands {
       return refuse(STR.roster.noMoney);
     item.inCab = true;
     return done();
+  }
+
+  // ------------------------------------------------------------ landmarks
+  // The choices are final, so none of them is a step of the history (`act` is not used). A
+  // refusal carries a reason code, not text: the panel words it.
+  /** Start restoring a surveyed landmark; `pick` where its restore has one (`pickKey`). */
+  startLandmark(id: number, pick?: string): LandmarkResult {
+    return this.landmarks?.start(id, pick) ?? { ok: false, reason: 'unknown' };
+  }
+  /** Salvage a surveyed or restoring landmark for its one-time reward. */
+  salvageLandmark(id: number): LandmarkResult {
+    return this.landmarks?.salvage(id) ?? { ok: false, reason: 'unknown' };
+  }
+  /** Cancel a restore: back to surveyed, with no refund of what was delivered. */
+  cancelLandmark(id: number): LandmarkResult {
+    return this.landmarks?.cancel(id) ?? { ok: false, reason: 'unknown' };
   }
 
   // ------------------------------------------------------------ spot market

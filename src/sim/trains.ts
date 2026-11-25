@@ -458,6 +458,10 @@ export interface TickCtx {
   map: GameMap;
   /** apply a delivery to contracts; returns units credited to a contract */
   onDelivery: (e: DeliveryEvent) => number;
+  /** what the restoring landmarks in reach of the station still miss of the cargo (0: none) */
+  landmarkWants: (station: Station, cargo: string) => number;
+  /** credit a delivery to those landmarks, which come before contracts; returns units credited */
+  landmarkCredit: (e: DeliveryEvent) => number;
   /** where goods are kept: trains fill their tanks from them, electric ones run on the grid */
   stores: StoreRegistry;
   /** is the tile inside a live electric network? */
@@ -2741,23 +2745,20 @@ export class Train {
         }
         continue;
       }
-      // where the load can go: a contract for it here first, then the store of a depot, a
-      // warehouse or a Townhouse, up to its room
+      // where the load can go: the landmarks in reach that still miss it (whatever the station
+      // accepts), a contract for it here, then the store of a depot, a warehouse or a Townhouse,
+      // up to its room
       const contractable = !st.def.pool && st.accepts(w.cargo);
-      if (!st.isStore && !contractable) continue;
+      const wanted = ctx.landmarkWants(st, w.cargo);
+      if (!st.isStore && !contractable && wanted <= 1e-6) continue;
       let n = Math.min(w.amount, budget);
       if (n <= 1e-6) continue;
-      const credited = contractable
-        ? ctx.onDelivery({
-            cargo: w.cargo,
-            amount: n,
-            origin: w.origin ?? -1,
-            station: st,
-            train: this,
-          })
-        : 0;
-      const toStore = st.isStore ? Math.min(n - credited, st.roomFor(w.cargo)) : 0;
-      n = credited + toStore;
+      const event = { cargo: w.cargo, origin: w.origin ?? -1, station: st, train: this };
+      const forLandmark =
+        wanted > 1e-6 ? ctx.landmarkCredit({ ...event, amount: Math.min(n, wanted) }) : 0;
+      const credited = contractable ? ctx.onDelivery({ ...event, amount: n - forLandmark }) : 0;
+      const toStore = st.isStore ? Math.min(n - forLandmark - credited, st.roomFor(w.cargo)) : 0;
+      n = forLandmark + credited + toStore;
       if (n <= 1e-6) continue;
       if (toStore > 0) {
         st.store(w.cargo, toStore);
@@ -2800,9 +2801,12 @@ export class Train {
     // of (two warehouses of one town are one store; two unbound warehouses count as one too)
     const oneStore = (a: Station, b: Station) =>
       a.dock && b.dock ? a.dock.key === b.dock.key : !!a.def.stockpile && !!b.def.stockpile;
+    // a station within reach of a restoring landmark that misses the cargo takes it too
     const taker = (c: string) =>
       routeStations.some((s) =>
-        cargoClass(c) === 'people' ? s.accepts(c) : s.isStore ? !oneStore(s, st) : s.accepts(c),
+        cargoClass(c) === 'people'
+          ? s.accepts(c)
+          : (s.isStore ? !oneStore(s, st) : s.accepts(c)) || ctx.landmarkWants(s, c) > 1e-6,
       );
     let allFull = true;
     let canLoadAny = false;
