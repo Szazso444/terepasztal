@@ -3,6 +3,10 @@ import { simWorld, line, station } from '../testing/simWorld';
 import { rules, DEFAULT_RULES } from './rules';
 import type { Station } from './stations';
 import { STR } from '../strings';
+import { landmarkDef } from '../data/content';
+import { footprintOf } from '../world/track';
+import { LandmarkRegistry } from './landmarks';
+import type { Builder, PlacementCheck } from './build';
 
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
@@ -92,5 +96,84 @@ describe('paying from stores', () => {
     expect(w.builder.placeStation(80, 29, 'farm')).not.toBeNull();
     w.builder.removeStation(farm);
     expect([a.get('wood'), a.get('stone')]).toEqual([30, 10]);
+  });
+});
+
+describe('landmark tiles block building', () => {
+  const item = { kind: 'straight', cls: 'branch', cls2: 'branch' } as const;
+  /** One landmark in the registry the builder asks, its footprint reaching down to row 29. */
+  function withLandmark(def: string) {
+    const w = world();
+    w.builder.free = true;
+    const reg = new LandmarkRegistry({
+      clock: w.clock,
+      economy: w.economy,
+      stores: w.stores,
+      windLevel: () => 'calm',
+    });
+    const d = landmarkDef(def)!;
+    const x = 40;
+    const y = 30 - d.d;
+    reg.addPlacements([{ id: def, x, y, cx: 1, cy: 1 }]);
+    w.builder.landmarks = reg;
+    const inside = [];
+    for (let i = 0; i < d.w; i++) for (let j = 0; j < d.d; j++) inside.push({ x: x + i, y: y + j });
+    return { w, inside, outside: { x: x + d.w + 1, y: 29 } };
+  }
+  /** Every tool, as a check of its own on one tile. */
+  const tools: Record<string, (b: Builder, x: number, y: number) => PlacementCheck> = {
+    track: (b, x, y) => b.checkTrack(x, y, item, 0),
+    line: (b, x, y) => {
+      const c = b.checkLine([{ kind: 'track', x, y, item, rot: 0 }]);
+      return { ok: c.ok, cost: c.cost, reason: c.reason };
+    },
+    station: (b, x, y) => b.checkStation(x, y, 'farm'),
+    building: (b, x, y) => b.checkBuilding(x, y, 'windmill'),
+    decor: (b, x, y) => b.checkDecor(x, y, 'townhouse'),
+    road: (b, x, y) => b.checkRoad(x, y),
+  };
+
+  for (const def of ['bellkeepers_refuge', 'house_between_seasons']) {
+    for (const [name, check] of Object.entries(tools)) {
+      it(`${name} is refused on every tile of ${def}, allowed one tile outside`, () => {
+        const { w, inside, outside } = withLandmark(def);
+        for (const t of inside) {
+          const c = check(w.builder, t.x, t.y);
+          expect(c.ok, `${t.x},${t.y}`).toBe(false);
+          expect(c.reason).toBe(STR.build.landmark);
+        }
+        expect(check(w.builder, outside.x, outside.y)).toMatchObject({ ok: true });
+      });
+    }
+  }
+
+  it('placing refuses too, and a stroke of road leaves the landmark tiles out', () => {
+    const { w, inside, outside } = withLandmark('house_between_seasons');
+    const t = inside[0];
+    expect(w.builder.placeTrack(t.x, t.y, item, 0)).toBe(false);
+    expect(w.builder.placeStation(t.x, t.y, 'farm')).toBeNull();
+    expect(w.builder.placeBuilding(t.x, t.y, 'windmill')).toBeNull();
+    expect(w.builder.placeDecor(t.x, t.y, 'townhouse', 0)).toBeNull();
+    const laid = w.builder.placeRoads([t, outside], t);
+    expect(laid).toEqual([outside]);
+  });
+
+  it('a clear member of a curve may not cover a landmark tile either', () => {
+    const { w, inside } = withLandmark('house_between_seasons');
+    const curve = { kind: 'curve', cls: 'branch', cls2: 'branch' } as const;
+    // anchored just outside, its footprint reaches in
+    for (let rot = 0; rot < 4; rot++)
+      for (let dx = -3; dx <= 0; dx++)
+        for (let dy = -3; dy <= 0; dy++) {
+          const c = w.builder.checkTrack(inside[0].x + dx, inside[0].y + dy, curve, rot);
+          const covers = footprintOf(
+            inside[0].x + dx,
+            inside[0].y + dy,
+            'curve',
+            rot,
+            'branch',
+          ).some((f) => w.builder.landmarks!.occupies(f.x, f.y));
+          if (covers) expect(c.ok).toBe(false);
+        }
   });
 });

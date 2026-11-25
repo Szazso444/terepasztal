@@ -417,6 +417,7 @@ export const HU: Strings = {
     },
     bridgeOnWater: 'Híd csak víz fölé kerülhet',
     occupied: 'A csempe foglalt',
+    landmark: 'Itt egy nevezetesség áll',
     funds: 'Nincs elég pénz',
     tierLocked: (t: number) => `Ez kell hozzá: ${ageLabel(t)}`,
     supplyLocked: 'Nem része ennek a játéknak a termelési láncában',
