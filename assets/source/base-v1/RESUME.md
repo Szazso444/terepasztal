@@ -451,3 +451,47 @@ light, dark and checker backgrounds plus filename search.
 Follow-up (2026-09-27): rock only on stacked banks, wider summit fade, tile elevation in
 `src/world/elevation.ts` with tooltip, straight rails on beds over terraces, grade speed 0.5 up /
 1.2 down. Review: `scratchpad/hill-levels/review.html` (trains at 1/4 vs 1/8, preview looks).
+
+## Rare landmark concepts — 2026-10-18
+
+Created and visually reviewed one twelve-panel reference sheet using built-in image_gen.
+Saved in `assets/source/rare-landmarks-concepts-v1/landmarks-concept-sheet.png`;
+exact generation prompt is `prompt.txt` in that folder. Proposed footprints range
+from 1x1 to 5x4 tiles. This is a visual concept sheet, not separate transparent
+sprites or an implemented gameplay feature. Panel scale and grid are illustrative;
+production exports must follow actual tile geometry and anchors. Inverted manor
+orientation needs stronger roof-down clarity in a future production pass.
+
+### Individual landmark PNGs and projection review — 2026-10-18
+
+User requested 12 separate alpha PNGs, correct current-game isometric view and
+believable human proportions. All 12 first-pass images are saved in
+`assets/source/rare-landmarks-v1/`, with prompts, footprint/rarity manifest,
+alpha audit and `review.html`. Initial images are drafts: angle diagnostics found
+projection drift. Built 12 exact 2:1 geometry guides from the game formula, with
+proposed 4m/tile, 2m doors and 3m floors. Use ground slopes +/-0.5 as authority.
+CORRECTION: at azimuth45 the screen slope equals sin(camera elevation), so
+30-degree camera elevation is correct. 26.565 degrees is the SCREEN edge angle,
+not camera elevation. Some historical retry prompts incorrectly conflated these;
+they are retained verbatim for provenance, not as correct projection guidance.
+
+User explicitly directed regeneration where angles/proportions mismatch, rather
+than affine corrections. Preserve originals. `regeneration-plan.json` records
+the selected candidates and exact prompts. Guided archive-v3 and original seasonal
+house are retained for final review; ten other subjects are regenerating from
+guide ONLY into `*-grid-v5.png`. No geometric warp or runtime integration.
+Strong-line diagnostics are approximate and require visual review; do not claim
+these illustrations are mathematically projection-certified.
+
+Final selected source set saved in `assets/source/rare-landmarks-v1/final/`:
+12 separate alpha PNGs, `manifest.json` with footprints/rarities/exact selected
+prompts, `alpha-report.json`, README and review.html. Download package is
+`assets/source/rare-landmarks-v1/rare-landmarks-alpha-pngs.zip` (12 PNGs, verified ZIP).
+Selected versions by row: v5, v6, v4, v3, v5, v6, v5, v6, v6, v5, v5, original.
+All 12 selected PNGs checked: RGBA, alpha-zero pixels, solid silhouettes not
+touching canvas borders, byte-identical copies of generated originals. No image
+warping or resizing. Narrow transparent margins remain on some assets. The
+gallery includes checker/grass/dark backgrounds, exact direction guides, and
+approximate common-scale view. Runtime anchors and pixel-exact alignment still
+require calibration; these are reviewed illustrated source candidates, not
+projection-certified 3D render exports. No game code or save changes.
