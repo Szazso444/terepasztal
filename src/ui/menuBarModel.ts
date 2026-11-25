@@ -2,6 +2,7 @@
  * The top bar's menu bar worked out: its entries and their items in play and in the level editor,
  * and which menu is open. No DOM here, so it runs under Node; `menuBar.ts` draws it.
  */
+import type { Gauge } from '../data/content';
 import type { Fleet } from '../sim/fleet';
 import type { Station } from '../sim/stations';
 import type { StoreRegistry } from '../sim/stores';
@@ -222,7 +223,7 @@ export function entryTip(entry: MenuEntry): TipDoc {
 export interface DepotFacts {
   readonly id: number;
   readonly name: string;
-  readonly gauge: 'regular' | 'narrow';
+  readonly gauge: Gauge;
   /** the trains that belong to it, wherever they are (`Fleet.homeDepot`) */
   readonly trains: number;
   /** the resource bar shows its store, and no other depot's */

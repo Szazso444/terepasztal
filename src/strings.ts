@@ -1122,7 +1122,10 @@ const EN = {
     scopeAll: (n: number) => `All (${n})`,
     noTrainsHere: 'No train has rolled out of this depot yet.',
     noHome: 'No depot',
-    gaugeName: { regular: 'Standard gauge', narrow: 'Narrow gauge' } as Record<string, string>,
+    gaugeName: { regular: 'Standard gauge', narrow: 'Narrow gauge', maglev: 'Maglev' } as Record<
+      string,
+      string
+    >,
     trainCount: (n: number) => `${n} train${n === 1 ? '' : 's'}`,
     gateOpen: 'Gate free',
     gateShut: 'Cannot roll out',

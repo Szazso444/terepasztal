@@ -104,7 +104,7 @@ const STYLE: Record<TrackClass, LineStyle> = {
   // a pale concrete guideway: no ballast, close stator plates, two guide rails
   maglev: {
     ...BRANCH,
-        shoulder: 0.3,
+    shoulder: 0.3,
     ballast: ['#b8bcbd', '#c9cdce', '#a9adae', '#bfc3c4'],
     tie: '#a4aaac',
     tieHi: '#b4babc',
