@@ -1,17 +1,22 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { content } from '../data/content';
 import { forAll, shrinkArray } from '../testing/property';
 import { mapParams, simWorld } from '../testing/simWorld';
 import { BIOME_DEFS } from '../sim/biomes';
 import { DEFAULT_RULES, rules } from '../sim/rules';
 import { STATION_DEFS, harvestBreakdown, weeklyOutput } from '../sim/stations';
+import { BUILDING_DEFS } from '../sim/buildings';
+import { CARGO } from '../sim/cargo';
+import { DEFAULT_SUPPLY, setSupplyMode, type SupplyMode } from '../sim/supply';
 import { STR } from '../strings';
 import { tileLevels } from '../world/elevation';
 import { emptyMap, generateMap } from '../world/mapgen';
 import { TRACK_ITEMS } from '../world/track';
-import { TERRAIN_NAMES, Terrain, type GameMap } from '../world/tiles';
-import { tileTip, type TileSnapshot } from './tileTooltip';
-import { blockText, plain, type Block, type Parts, type TermPart } from './tooltipDoc';
+import { Biome, TERRAIN_NAMES, Terrain, type GameMap } from '../world/tiles';
+import { Dir } from '../engine/iso';
+import { Headwater, fallFeature, withHeadwater } from '../world/waterfalls';
+import { PROP_GOOD, tileGoods, tileTip, type TileSnapshot } from './tileTooltip';
+import { blockText, partsOf, plain, type Block, type TermPart } from './tooltipDoc';
 
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
 
@@ -24,6 +29,7 @@ const NAMES: Record<string, string> = {
   rock: 'Rock',
   sand: 'Sand',
   mountain: 'Mountain',
+  ice: 'Glacier',
 };
 
 const bare = (map: GameMap, x: number, y: number): TileSnapshot => ({
@@ -39,7 +45,6 @@ const bare = (map: GameMap, x: number, y: number): TileSnapshot => ({
   trackCostFactor: 1,
   weeklyAtLevel1: weeklyOutput(1, 1, { productionMul: 1 }),
 });
-const partsOf = (b: Block): Parts => (b.kind === 'row' ? [...b.label, ...b.value] : b.parts);
 const labelOf = (b: Block) => (b.kind === 'row' ? plain(b.label) : '');
 const valueOf = (b: Block) => (b.kind === 'row' ? plain(b.value) : '');
 const termOf = (b: Block) =>
@@ -60,20 +65,25 @@ function checkEveryTile(map: GameMap, seen: Set<string>): void {
       const terrain = map.terrain[i];
       const name = NAMES[TERRAIN_NAMES[terrain]];
       const snowLevel = BIOME_DEFS[climate[i]].snowLevel;
-      const snow = terrain !== Terrain.Water && levels[i] >= snowLevel;
+      const snow = terrain !== Terrain.Water && terrain !== Terrain.Ice && levels[i] >= snowLevel;
+      // a river's own tiles are checked apart below, where their planes are made by hand
+      if (map.flow?.[i]) continue;
       const doc = tileTip(bare(map, x, y));
       const snowRow = doc.find((b) => labelOf(b) === 'Snow line');
-      // one line a tile: block kinds; title; Biome row; Elevation row; Snow line row; the dim line
+      const goods = GIVES.simple[TERRAIN_NAMES[terrain]].length;
+      const said = doc[doc.length - 1 - goods];
+      // one line a tile: block kinds; title; Biome row; Elevation row; Snow line row; the dim line,
+      // which the lines of what the tile gives follow
       const got = [
         doc.map((b) => b.kind).join(),
         blockText(doc[0]),
         `${labelOf(doc[1])}: ${termOf(doc[1])?.term}`,
         `${labelOf(doc[2])}: ${valueOf(doc[2])}`,
         snowRow ? `${labelOf(snowRow)}: ${valueOf(snowRow)}` : '-',
-        blockText(doc[doc.length - 1]),
+        blockText(said),
       ];
       const want = [
-        `title,row,row,${snow ? 'row,' : ''}dim`,
+        `title,row,row,${snow ? 'row,' : ''}dim${',text'.repeat(goods)}`,
         snow ? `${name}, snow` : name,
         `Biome: ${BIOME_DEFS[map.biome[i]].name}`,
         `Elevation: level ${levels[i]}`,
@@ -95,6 +105,240 @@ function checkEveryTile(map: GameMap, seen: Set<string>): void {
       if (terrain === Terrain.Mountain && levels[i] === 4) seen.add('summit');
     }
 }
+
+describe('the tooltip of water and glacier tiles', () => {
+  const tile = (set: (m: GameMap, i: number) => void) => {
+    const map = emptyMap(1, 8, 8);
+    map.climate = new Uint8Array(64);
+    map.waterSurface = new Uint8Array(64);
+    map.flow = new Uint16Array(64);
+    map.flowDir = new Uint8Array(64);
+    map.feature = new Uint8Array(64);
+    const i = 3 * 8 + 3;
+    set(map, i);
+    return tileTip(bare(map, 3, 3));
+  };
+  const river = (m: GameMap, i: number) => {
+    m.terrain[i] = Terrain.Water;
+    m.biome[i] = Biome.River;
+    m.flowDir![i] = 2;
+    m.flow![i] = 57;
+  };
+  const rows = (doc: readonly Block[]) =>
+    doc.filter((b) => b.kind === 'row').map((b) => `${labelOf(b)}: ${valueOf(b)}`);
+  // the dim line about the terrain (what the tile gives follows it)
+  const about = (doc: readonly Block[]) => blockText(doc.filter((b) => b.kind === 'dim').at(-1)!);
+
+  it('names a waterfall before a headwater, with its drop as a term', () => {
+    const doc = tile((m, i) => {
+      river(m, i);
+      m.feature![i] = withHeadwater(fallFeature(2, Dir.E), Headwater.Spring);
+    });
+    expect(blockText(doc[0])).toBe('Waterfall');
+    expect(rows(doc)).toEqual([
+      'Biome: River',
+      'Elevation: level 0',
+      'Drop: 2 levels',
+      'Source: a spring on high ground',
+      'Flow: gathers 57 tiles of rain',
+    ]);
+    expect(about(doc)).toBe('Bridges only; pumps draw from it.');
+    const drop = doc.find((b) => labelOf(b) === 'Drop')!;
+    const tip = termOf(drop)!.tip();
+    expect(blockText(tip[0])).toBe('Waterfall');
+    expect(blockText(tip[1])).toBe(
+      'A river falls 2 levels here, from 1 to 4. Track crosses it on a bridge at the upper ' +
+        'level; nothing is built on it.',
+    );
+  });
+
+  it('says level for a drop of one', () => {
+    const doc = tile((m, i) => {
+      river(m, i);
+      m.feature![i] = fallFeature(1, Dir.E);
+    });
+    expect(rows(doc)).toContain('Drop: 1 level');
+    const tip = termOf(doc.find((b) => labelOf(b) === 'Drop')!)!.tip();
+    expect(blockText(tip[1])).toContain('falls 1 level here');
+  });
+
+  it('names a headwater, melt or spring', () => {
+    const doc = tile((m, i) => {
+      river(m, i);
+      m.feature![i] = withHeadwater(0, Headwater.Melt);
+    });
+    expect(blockText(doc[0])).toBe('Headwater');
+    expect(rows(doc)).toContain('Source: melt below a glacier');
+    expect(about(doc)).toBe('Where a river starts. Bridges cross it; pumps draw from it.');
+  });
+
+  it('reads Glacier / Mountain with no snow in its title', () => {
+    const doc = tile((m, i) => {
+      for (let k = 0; k < 64; k++) m.terrain[k] = Terrain.Mountain;
+      m.terrain[i] = Terrain.Ice;
+      m.biome[i] = Biome.Mountain;
+    });
+    expect(blockText(doc[0])).toBe('Glacier');
+    expect(valueOf(doc[1])).toBe('Mountain');
+    expect(about(doc)).toBe('Glacier ice. Nothing is built on it; its melt starts a river below.');
+  });
+
+  it("reads Water for a lake and for an old chunk's river, Sand on a beach", () => {
+    const lake = tile((m, i) => {
+      m.terrain[i] = Terrain.Water;
+      m.biome[i] = Biome.Lake;
+    });
+    expect([blockText(lake[0]), valueOf(lake[1])]).toEqual(['Water', 'Lake']);
+    expect(rows(lake)).toHaveLength(2);
+    const beach = tile((m, i) => {
+      m.terrain[i] = Terrain.Sand;
+      m.biome[i] = Biome.Beach;
+    });
+    expect([blockText(beach[0]), valueOf(beach[1])]).toEqual(['Sand', 'Beach']);
+  });
+});
+
+/**
+ * What each terrain gives, in each production chain, written out apart from the code: the good, and
+ * the plural of what gets it out of the ground.
+ */
+const GIVES: Record<SupplyMode, Record<string, [string, string][]>> = {
+  simple: {
+    grass: [['wheat', 'farm halts']],
+    forest: [['wood', 'lumber yards']],
+    hill: [['stone', 'quarries']],
+    water: [['water', 'water pumps']],
+    rock: [['stone', 'quarries']],
+    sand: [],
+    mountain: [],
+    ice: [],
+  },
+  full: {
+    grass: [['wheat', 'farm halts']],
+    forest: [['wood', 'lumber yards']],
+    hill: [
+      ['stone', 'quarries'],
+      ['iron_ore', 'iron mines'],
+      ['copper_ore', 'copper mines'],
+      ['coal', 'collieries'],
+    ],
+    water: [['water', 'water pumps']],
+    rock: [
+      ['stone', 'quarries'],
+      ['iron_ore', 'iron mines'],
+      ['copper_ore', 'copper mines'],
+    ],
+    sand: [['sand', 'sand pits']],
+    mountain: [],
+    ice: [],
+  },
+};
+
+describe('what a tile gives', () => {
+  afterEach(() => setSupplyMode(DEFAULT_SUPPLY));
+
+  const tile = (terrain: Terrain, props: string[] = []) => ({
+    ...bare(emptyMap(7, 5, 5, terrain), 2, 2),
+    props,
+  });
+  /** The icon and name of each resource of a document, as its lines put them. */
+  const resources = (doc: readonly Block[]) =>
+    doc.flatMap((b) =>
+      partsOf(b).flatMap((p) => (typeof p !== 'string' && 'res' in p ? [p.res] : [])),
+    );
+  /** The makers a document names, each a term. */
+  const makers = (doc: readonly Block[]) =>
+    doc.flatMap((b) =>
+      b.kind === 'text'
+        ? partsOf(b).flatMap((p) => (typeof p !== 'string' && 'term' in p ? [p.term] : []))
+        : [],
+    );
+
+  for (const mode of ['simple', 'full'] as const)
+    it(`puts the icon of every good before its name, on every terrain of the ${mode} chain`, () => {
+      setSupplyMode(mode);
+      for (const [i, name] of TERRAIN_NAMES.entries()) {
+        const doc = tileTip(tile(i as Terrain));
+        expect(resources(doc), name).toEqual(GIVES[mode][name].map(([cargo]) => cargo));
+        expect(makers(doc), name).toEqual(GIVES[mode][name].map(([, maker]) => maker));
+      }
+    });
+
+  it('finds every harvesting station and every works tied to the ground, in both chains', () => {
+    const givers = (mode: SupplyMode) => {
+      setSupplyMode(mode);
+      const out = new Set<string>();
+      for (const i of TERRAIN_NAMES.keys()) for (const g of tileGoods(i as Terrain)) out.add(g.id);
+      return out;
+    };
+    const tied = (mode: SupplyMode) =>
+      [
+        ...STATION_DEFS.filter((d) => d.terrain && d.produces.length),
+        ...BUILDING_DEFS.filter((b) => b.terrain),
+      ]
+        .filter((d) => !d.supply || d.supply === mode)
+        .map((d) => d.id)
+        .sort();
+    for (const mode of ['simple', 'full'] as const)
+      expect([...givers(mode)].sort()).toEqual(tied(mode));
+  });
+
+  it('opens the maker of a good in its own tooltip', () => {
+    setSupplyMode('full');
+    const doc = tileTip(tile(Terrain.Hill));
+    const terms = doc.flatMap((b) =>
+      b.kind === 'text'
+        ? partsOf(b).filter((p): p is TermPart => typeof p !== 'string' && 'term' in p)
+        : [],
+    );
+    expect(terms.map((t) => blockText(t.tip()[0]))).toEqual([
+      'Quarry',
+      'Iron Mine',
+      'Copper Mine',
+      'Colliery',
+    ]);
+  });
+
+  it('has the icon of its good before a wheat field, a coal seam and an oil seep', () => {
+    setSupplyMode('full');
+    const line = (kind: string) => {
+      const doc = tileTip(tile(Terrain.Grass, [kind, 'bush']));
+      const b = doc.find((x) => blockText(x).includes(STR.tile.prop[kind]));
+      return b ? partsOf(b) : [];
+    };
+    expect(line('wheat')).toEqual([
+      { icon: 'wheat' },
+      STR.tile.prop.wheat,
+      ', ',
+      STR.tile.prop.bush,
+    ]);
+    expect(line('coal')[0]).toEqual({ icon: 'coal' });
+    expect(line('oil')[0]).toEqual({ icon: 'crude' });
+    expect(line('oak')).toEqual([STR.tile.prop.oak, ', ', STR.tile.prop.bush]);
+  });
+
+  it('names what an oil seep gives, and only in the chain that has a derrick', () => {
+    setSupplyMode('full');
+    const seep = tileTip(tile(Terrain.Grass, ['oil']));
+    expect(resources(seep)).toEqual(['wheat', 'crude']);
+    expect(makers(seep)).toEqual(['farm halts', 'oil derricks']);
+    setSupplyMode('simple');
+    const none = tileTip(tile(Terrain.Grass, ['oil']));
+    expect(resources(none)).toEqual(['wheat']);
+    const b = none.find((x) => blockText(x).includes(STR.tile.prop.oil));
+    expect(b && partsOf(b)).toEqual([STR.tile.prop.oil]);
+  });
+
+  it('holds every good of a field or a deposit to the data', () => {
+    for (const id of Object.values(PROP_GOOD))
+      expect(
+        CARGO.some((c) => c.id === id),
+        id,
+      ).toBe(true);
+    const derrick = BUILDING_DEFS.find((b) => b.deposit === 'oil');
+    expect(Object.keys(derrick?.recipe.out ?? {})).toEqual([PROP_GOOD.oil]);
+  });
+});
 
 describe('the tile tooltip on whole maps', () => {
   interface Patch {
@@ -162,7 +406,8 @@ describe('the tile tooltip on whole maps', () => {
     );
     // the property ran on every kind of tile it is about
     for (const kind of [
-      ...Object.keys(NAMES),
+      // the cases paint the terrains a player can; ice comes only from generation
+      ...Object.keys(NAMES).filter((k) => k !== 'ice'),
       'snow',
       'mountain without snow',
       'snow by climate, not biome',
@@ -203,7 +448,7 @@ describe('the tile tooltip on whole maps', () => {
       }
       const water = tileTip(bare(emptyMap(7, 5, 5, Terrain.Water), 2, 2));
       expect(blockText(water[0])).toBe('Water');
-      expect(water.map((b) => b.kind)).toEqual(['title', 'row', 'row', 'dim']);
+      expect(water.map((b) => b.kind)).toEqual(['title', 'row', 'row', 'dim', 'text']);
     } finally {
       BIOME_DEFS.forEach((d, i) => (d.snowLevel = saved[i]));
     }
@@ -226,6 +471,7 @@ describe('what each terrain description says is true of the rules', () => {
     rock: { buildings: false, counted: ['quarry'] },
     sand: { buildings: true, track: 'all' },
     mountain: { buildings: false },
+    ice: {},
   };
   const LAND = Object.keys(CLAIMS);
   const terrainOf = (name: string) => TERRAIN_NAMES.indexOf(name as (typeof TERRAIN_NAMES)[number]);

@@ -1,0 +1,1389 @@
+[
+  {
+    "id": "snow",
+    "file": "snow.png",
+    "prompt": "Use case: stylized-concept. Paint ONE flat ground-material swatch for the isometric railway game Terepasztal, requested canvas 1024x1024 px, real PNG fully opaque. Four attached images are references only: 1 theme town-growth board for palette and quiet painted house style; 2 approved rock-surface for rock family and ground swatch concept; 3 terrain-mountain for rock and snow HUE ONLY, never its blocky pixels or mountain shape; 4 land-biomes Mountain and Taiga snow for MOOD ONLY, never its pixel art or tile shape.\nGeometry: fill the entire square evenly to every edge with flat ground, screen-aligned as an orthographic 2:1 isometric camera sees flat ground from 30 degrees down. There is NO tile shape. Square spans about three tiles across: one tile at source is about 330x165 px; a stone one tenth tile across is about 33 px. Tile offset (x,y) maps to (512+165*(x-y),512+82.5*(x+y)); these numbers explain scale only, draw no guide.\nStyle: smooth painted contours, broad coherent colour clusters, three or four main shades per material, crisp restrained illustration, no stair-stepped pixel edges, no per-pixel noise or photographic grain. One fixed upper-left light. Scenery stays quiet behind rails. No bright cyan (#66CCD6), amber selection (#E8AA48), or cursor white: no colour as bright as #ECE4D0. Palette context forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.\nNever diamond, tile edges, borders, horizon, perspective depth, peaks, silhouettes, standing outcrops, cast shadows, central motif, identical repeated shapes, long parallel lines, trees, people, footprints, text or glow. Material only, no finished game piece. Edge seamlessness desirable but no mirrored repetition. Features should read when the square is reduced to about 199 px wide.\nMATERIAL: Wind-packed snow ONLY with no rock or ground showing through. Broad soft shallow drifts, a few short broken curved ripple marks each UNDER 82 source pixels (quarter tile), irregularly scattered never in rows, small soft blue-grey shadow pockets. Brightest #DCE1E4, body #C9D1D6, shadows #A6B2BC. Desaturated, low detail, soft and quiet, NOT a terrain scene or dune ridges.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/base-v1/terrain-mountain.png",
+      "docs/art-direction/images/01-land-biomes.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "mountain-rock-high",
+    "file": "mountain-rock-high.png",
+    "prompt": "Use case: stylized-concept. Paint ONE flat ground-material swatch for the isometric railway game Terepasztal, requested canvas 1024x1024 px, real PNG fully opaque. Four attached images are references only: 1 theme town-growth board for palette and quiet painted house style; 2 approved rock-surface for rock family and ground swatch concept; 3 terrain-mountain for rock and snow HUE ONLY, never its blocky pixels or mountain shape; 4 land-biomes Mountain and Taiga snow for MOOD ONLY, never its pixel art or tile shape.\nGeometry: fill the entire square evenly to every edge with flat ground, screen-aligned as an orthographic 2:1 isometric camera sees flat ground from 30 degrees down. There is NO tile shape. Square spans about three tiles across: one tile at source is about 330x165 px; a stone one tenth tile across is about 33 px. Tile offset (x,y) maps to (512+165*(x-y),512+82.5*(x+y)); these numbers explain scale only, draw no guide.\nStyle: smooth painted contours, broad coherent colour clusters, three or four main shades per material, crisp restrained illustration, no stair-stepped pixel edges, no per-pixel noise or photographic grain. One fixed upper-left light. Scenery stays quiet behind rails. No bright cyan (#66CCD6), amber selection (#E8AA48), or cursor white: no colour as bright as #ECE4D0. Palette context forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.\nNever diamond, tile edges, borders, horizon, perspective depth, peaks, silhouettes, standing outcrops, cast shadows, central motif, identical repeated shapes, long parallel lines, trees, people, footprints, text or glow. Material only, no finished game piece. Edge seamlessness desirable but no mirrored repetition. Features should read when the square is reduced to about 199 px wide.\nMATERIAL: High mountain rock ONLY, NO snow anywhere. Same slate/limestone family as reference 2 but colder, sharper and more broken: fractured shallow stone plates #626B6C and subdued #BCA98B, rock shades #AAA69C #9A968C #8C887E #78746A. Irregular interlocking fractured plates, short cracks, locally readable facets with quiet gaps. Small stones about 33 px across, some larger flat plates, never huge raised boulders. Ground surface, not a field of standing rocks.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/base-v1/terrain-mountain.png",
+      "docs/art-direction/images/01-land-biomes.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "alpine-ground",
+    "file": "alpine-ground.png",
+    "prompt": "Use case: stylized-concept. Paint ONE flat ground-material swatch for the isometric railway game Terepasztal, requested canvas 1024x1024 px, real PNG fully opaque. Four attached images are references only: 1 theme town-growth board for palette and quiet painted house style; 2 approved rock-surface for rock family and ground swatch concept; 3 terrain-mountain for rock and snow HUE ONLY, never its blocky pixels or mountain shape; 4 land-biomes Mountain and Taiga snow for MOOD ONLY, never its pixel art or tile shape.\nGeometry: fill the entire square evenly to every edge with flat ground, screen-aligned as an orthographic 2:1 isometric camera sees flat ground from 30 degrees down. There is NO tile shape. Square spans about three tiles across: one tile at source is about 330x165 px; a stone one tenth tile across is about 33 px. Tile offset (x,y) maps to (512+165*(x-y),512+82.5*(x+y)); these numbers explain scale only, draw no guide.\nStyle: smooth painted contours, broad coherent colour clusters, three or four main shades per material, crisp restrained illustration, no stair-stepped pixel edges, no per-pixel noise or photographic grain. One fixed upper-left light. Scenery stays quiet behind rails. No bright cyan (#66CCD6), amber selection (#E8AA48), or cursor white: no colour as bright as #ECE4D0. Palette context forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.\nNever diamond, tile edges, borders, horizon, perspective depth, peaks, silhouettes, standing outcrops, cast shadows, central motif, identical repeated shapes, long parallel lines, trees, people, footprints, text or glow. Material only, no finished game piece. Edge seamlessness desirable but no mirrored repetition. Features should read when the square is reduced to about 199 px wide.\nMATERIAL: Thin alpine ground between high rocks below snow: short wiry alpine turf, moss #78804C cooled toward slate #626B6C, pale lichen patches, loose limestone #BCA98B and slate #626B6C scree in small scattered clusters, a little bare grey soil. Cooler greyer sparser than plains grass, warmer than moraine. Medium detail with broad quiet moss/soil gaps; sparse short clustered blades, small shallow angular stones about 33 px. NO snow.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/base-v1/terrain-mountain.png",
+      "docs/art-direction/images/01-land-biomes.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "glacier-ice",
+    "file": "raw/glacier-ice-attempt-1.png",
+    "prompt": "Use case: stylized-concept. Paint ONE flat ground-material swatch for the isometric railway game Terepasztal, requested canvas 1024x1024 px, real PNG fully opaque. Four attached images are references only: 1 theme town-growth board for palette and quiet painted house style; 2 approved rock-surface for rock family and ground swatch concept; 3 terrain-mountain for rock and snow HUE ONLY, never its blocky pixels or mountain shape; 4 land-biomes Mountain and Taiga snow for MOOD ONLY, never its pixel art or tile shape.\nGeometry: fill the entire square evenly to every edge with flat ground, screen-aligned as an orthographic 2:1 isometric camera sees flat ground from 30 degrees down. There is NO tile shape. Square spans about three tiles across: one tile at source is about 330x165 px; a stone one tenth tile across is about 33 px. Tile offset (x,y) maps to (512+165*(x-y),512+82.5*(x+y)); these numbers explain scale only, draw no guide.\nStyle: smooth painted contours, broad coherent colour clusters, three or four main shades per material, crisp restrained illustration, no stair-stepped pixel edges, no per-pixel noise or photographic grain. One fixed upper-left light. Scenery stays quiet behind rails. No bright cyan (#66CCD6), amber selection (#E8AA48), or cursor white: no colour as bright as #ECE4D0. Palette context forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.\nNever diamond, tile edges, borders, horizon, perspective depth, peaks, silhouettes, standing outcrops, cast shadows, central motif, identical repeated shapes, long parallel lines, trees, people, footprints, text or glow. Material only, no finished game piece. Edge seamlessness desirable but no mirrored repetition. Features should read when the square is reduced to about 199 px wide.\nMATERIAL: Matte desaturated blue-grey glacier ICE ONLY: lit top #C8D3D8, body #AEBCC3, shade #8E9EA7, crevasses #66767F slate cooled toward water. Short gently curved crevasses scattered with NO common direction, varied sparse clusters and broad quiet ice gaps, a few faint dirt streaks. Crevasses are small subdued broken marks, not long branching rivers or grid lines. No glassy reflections, no bright blue, no snow drifts, no rocks. Flat material swatch, no ice channel shape.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/base-v1/terrain-mountain.png",
+      "docs/art-direction/images/01-land-biomes.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "moraine",
+    "file": "moraine.png",
+    "prompt": "Use case: stylized-concept. Paint ONE flat ground-material swatch for the isometric railway game Terepasztal, requested canvas 1024x1024 px, real PNG fully opaque. Four attached images are references only: 1 theme town-growth board for palette and quiet painted house style; 2 approved rock-surface for rock family and ground swatch concept; 3 terrain-mountain for rock and snow HUE ONLY, never its blocky pixels or mountain shape; 4 land-biomes Mountain and Taiga snow for MOOD ONLY, never its pixel art or tile shape.\nGeometry: fill the entire square evenly to every edge with flat ground, screen-aligned as an orthographic 2:1 isometric camera sees flat ground from 30 degrees down. There is NO tile shape. Square spans about three tiles across: one tile at source is about 330x165 px; a stone one tenth tile across is about 33 px. Tile offset (x,y) maps to (512+165*(x-y),512+82.5*(x+y)); these numbers explain scale only, draw no guide.\nStyle: smooth painted contours, broad coherent colour clusters, three or four main shades per material, crisp restrained illustration, no stair-stepped pixel edges, no per-pixel noise or photographic grain. One fixed upper-left light. Scenery stays quiet behind rails. No bright cyan (#66CCD6), amber selection (#E8AA48), or cursor white: no colour as bright as #ECE4D0. Palette context forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42.\nNever diamond, tile edges, borders, horizon, perspective depth, peaks, silhouettes, standing outcrops, cast shadows, central motif, identical repeated shapes, long parallel lines, trees, people, footprints, text or glow. Material only, no finished game piece. Edge seamlessness desirable but no mirrored repetition. Features should read when the square is reduced to about 199 px wide.\nMATERIAL: Moraine ground: loose rubble and gravel of limestone #BCA98B and slate #626B6C and subdued rock shades #AAA69C #9A968C #8C887E #78746A, shallow angular stones of mixed sizes in irregular local clusters, quiet fine gravel/grey soil gaps, a LITTLE dirty desaturated ice visible between stones. The rubble that edges a glacier, but draw no glacier edge or channel. Main stones about 33 px, some larger some smaller; smooth painted facets, no dense fine noise. Colder and without alpine vegetation. No snow patches.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/base-v1/terrain-mountain.png",
+      "docs/art-direction/images/01-land-biomes.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "glacier-strip-x-attempt-1",
+    "file": "glacier-strip-x.png",
+    "prompt": "Use case: sketch-to-render. Image EDIT: paint the first attached geometry guide, keeping its flat band footprint, framing and transparent outside. Image 2 is style only; image 3 is HUE ONLY, it is obsolete pixel art: do not copy its pixels, peaks, snow or glow. Output exactly ONE glacier-strip-x.png, request 1024x1024 PNG RGBA, transparent background. Remove all guide grid lines. 2:1 orthographic isometric flat glacier surface, not a raised block, NO vertical front. Three tiles in a straight strip along tile x NW to SE. Centre (512,512), band corners (256,256),(1024,640),(768,768),(0,384), centre line (128,320) to (896,704). Ice edges (230,269) to (998,653) and (26,371) to (794,755). Ice fills 80% of band width; the remaining 10% on each long side is moraine, with clean straight outer band edges. Continuous material across all three tiles with no tile seams. Narrow darker crevasses are short, gently curved strokes ACROSS the flow; sufficiently straight and direction-neutral that the strip can run either way. Rubble ridges are low with broad simplified stone clusters, not huge boulders. Smooth painted contours and broad quiet colour clusters, only three or four shades per material, pastoral illustrated railway game matching the style board's painted material language. One light upper left. Matte desaturated blue-grey glacier ice: lit top #C8D3D8, body #AEBCC3, shade #8E9EA7, crevasses #66767F. Never bright blue/cyan, avoid #66CCD6; no highlights at or above cursor white #ECE4D0. Moraine is low grey rubble with limestone #BCA98B, slate #626B6C, rock #9A968C #8C887E #78746A. No per-pixel noise, no pixel-art stairs, no glow, cast shadows, people, climbers, text, borders, peaks, rock walls, surrounding ground or snow beyond the band. Only light dusting of snow on ice.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/glacier-strip-x.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/terrain-mountain.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "glacier-strip-y-attempt-1",
+    "file": "glacier-strip-y.png",
+    "prompt": "Use case: sketch-to-render. Image EDIT of attached image 1 geometry guide: paint only the guide band; keep exact framing and footprint, remove guide lines, preserve transparent exterior. Image 2 style board is the smooth painterly style reference; image 3 mountain is HUE ONLY, do not copy its pixel art, peaks or glow. ONE material glacier-strip-y.png, requested 1024x1024 RGBA PNG transparent. Flat 2:1 orthographic isometric straight ice channel through three tiles along tile y, NE to SW. Band corners (768,256),(1024,384),(256,768),(0,640); centre (512,512), flow centre line (896,320) to (128,704); ice edges (794,269) to (26,653) and (998,371) to (230,755). 80% band ice, 10% each long side low moraine rubble, clean outer band edges. NO vertical face, no raised tile, continuous surface no tile joints. Crevasses are narrow darker short gently curved strokes crossing the flow, direction neutral, therefore roughly screen upper-left to lower-right, not long channels running along its axis. Quiet ice dominates. Smooth painted contours and broad quiet colour clusters, only three or four shades per material, pastoral illustrated railway game matching the style board's painted material language. One light upper left. Matte desaturated blue-grey glacier ice: lit top #C8D3D8, body #AEBCC3, shade #8E9EA7, crevasses #66767F. Never bright blue/cyan, avoid #66CCD6; no highlights at or above cursor white #ECE4D0. Moraine is low grey rubble with limestone #BCA98B, slate #626B6C, rock #9A968C #8C887E #78746A. No per-pixel noise, no pixel-art stairs, no glow, cast shadows, people, climbers, text, borders, peaks, rock walls, surrounding ground or snow beyond the band. Only light dusting of snow on ice.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/glacier-strip-y.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/terrain-mountain.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "glacier-lobe-attempt-1",
+    "file": "raw/glacier-lobe-attempt-1.png",
+    "prompt": "Use case: sketch-to-render. EDIT image 1 geometry guide into glacier-lobe.png, exactly ONE flat circular glacier ice lobe in 2:1 orthographic isometric seen from above, on requested 1024x1024 RGBA PNG transparent canvas. Image 2 style only; image 3 mountain HUE ONLY, never copy its pixel art, glow, peak forms. Keep exact SMALL centred footprint and large transparent margins as guide. Centre (512,512); ice ellipse half width 145 and half height 72; low moraine rim out to ellipse half width 181 half height 90.5. In total this oval occupies only 362x181 pixels at canvas centre, do not enlarge subject to fill canvas. Broad ice material clusters, short narrow crevasses splaying radially out toward rim. Clean outside rim, sparse low rubble in rim only. Flat material, no vertical front, no raised block, no peak or wall. Smooth painted contours and broad quiet colour clusters, only three or four shades per material, pastoral illustrated railway game matching the style board's painted material language. One light upper left. Matte desaturated blue-grey glacier ice: lit top #C8D3D8, body #AEBCC3, shade #8E9EA7, crevasses #66767F. Never bright blue/cyan, avoid #66CCD6; no highlights at or above cursor white #ECE4D0. Moraine is low grey rubble with limestone #BCA98B, slate #626B6C, rock #9A968C #8C887E #78746A. No per-pixel noise, no pixel-art stairs, no glow, cast shadows, people, climbers, text, borders, peaks, rock walls, surrounding ground or snow beyond the band. Only light dusting of snow on ice.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/glacier-lobe.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/terrain-mountain.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "glacier-lobe-attempt-2",
+    "file": "glacier-lobe.png",
+    "prompt": "EDIT THE FIRST IMAGE, KEEP THE OVAL'S EXACT SIZE AND POSITION IN THAT IMAGE. This is a SMALL distant material sprite with extensive empty transparent margins, not a close-up. Request 1024x1024 RGBA PNG. At 1024 width the complete oval must span x=331 to x=693 ONLY (362 pixels wide), y=421.5 to y=602.5 ONLY (181 pixels high). Centre x512 y512. Most of the canvas stays EMPTY transparent: 331px left and right, 421px above and below. Do not zoom, do not enlarge, do not recenter. Repaint light grey of first guide as matte glacier ice and grey ring as low moraine, change material ONLY while preserving original framing. Style board image 2 is smooth painted style; mountain image 3 is hue only NOT pixel style or subject. Ice ellipse half width145 height72; rubble outer ellipse half width181 height90.5. Sparse narrow short radial crevasses splay toward rim. Quiet broad color clusters, slight snow dust only. NO wall or raised block, no ground outside oval. Smooth painted contours and broad quiet colour clusters, only three or four shades per material, pastoral illustrated railway game matching the style board's painted material language. One light upper left. Matte desaturated blue-grey glacier ice: lit top #C8D3D8, body #AEBCC3, shade #8E9EA7, crevasses #66767F. Never bright blue/cyan, avoid #66CCD6; no highlights at or above cursor white #ECE4D0. Moraine is low grey rubble with limestone #BCA98B, slate #626B6C, rock #9A968C #8C887E #78746A. No per-pixel noise, no pixel-art stairs, no glow, cast shadows, people, climbers, text, borders, peaks, rock walls, surrounding ground or snow beyond the band. Only light dusting of snow on ice.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/glacier-lobe.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/terrain-mountain.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "ice-cliff-lit-attempt-1",
+    "file": "ice-cliff-lit.png",
+    "prompt": "Use case: stylized-concept. Generate a NEW image ice-cliff-lit.png; attached images are references ONLY, no guide, no existing painting is the edit target. Image1 smooth painted railway game's style board, image2 obsolete mountain for HUE ONLY not pixels, mountains, snow or glow. Request exactly 1024x1024 PNG, FULLY OPAQUE square. Entire canvas edge-to-edge is one continuous vertical glacier ICE surface viewed perfectly SQUARE-ON with no isometric projection or perspective. Width one tile edge, height four levels; each level is 256px. It is a material swatch, not a landscape or isolated cliff block. Steep glacier tongue front: thick broad horizontal layered ice bands, thin sparse grey-brown dirt layers and slender upright cracks. Three or four matte desaturated blue-grey ice tones #C8D3D8 #AEBCC3 #8E9EA7, darker cracks #66767F. Lit tone family for wall facing lower left under upper-left light. Even overall illumination over WHOLE face, NO gradient left to right or top to bottom, no darker foot, no vignette. Horizontal layers can gently undulate, edges preferably seamless. Smooth painted contours, broad color clusters, no pixel-art edges or per-pixel noise. No rock wall, no peaks, no sky, no ground, no snow cap or snow outside, no moraine, no cast shadows, people, text, borders, cave or glow. No vivid blue, cyan #66CCD6 or white at/above #ECE4D0. Keep ice visibly ice rather than grey stone.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/terrain-mountain.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "ice-cliff-shade-attempt-1",
+    "file": "ice-cliff-shade.png",
+    "prompt": "Use case: stylized-concept. Generate NEW ice-cliff-shade.png independently, NOT a mirrored or reused picture. Attached image1 style board only, image2 mountain HUE ONLY never pixel style, image3 ice-cliff-lit.png reference for material, layering and detail scale ONLY. Request 1024x1024 FULLY OPAQUE PNG. Whole canvas edge-to-edge square-on vertical glacier ICE front texture; no isometric projection, no perspective, no surrounding objects, sky or ground. Width one tile edge, height four levels. Match lit ice front's broad horizontal thick stratified ice bands, sparse thin grey dirt seams and slender upright cracks. SHADOW family for lower-right facing wall with upper-left light: matte desaturated blue-grey body around #8E9EA7, layer variation around #A0AFB7 and #83939D, narrow deep cracks #66767F. Clearly darker than lit reference, but still layered glacier ice not stone. EVEN tone family across WHOLE face, no top-to-bottom or left-to-right light gradient, no dark foot or vignette. Smooth painted broad quiet clusters, three or four shades, no pixel noise or stairs. No rock wall, peaks, snow cap, cave, moraine, people, text, border, cast shadows, bright cyan/blue, cursor-white #ECE4D0 or glow. Edge seamlessness desirable.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/terrain-mountain.png",
+      "assets/source/mountain-2026-10-11/ice-cliff-lit.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "ice-portal-lit-attempt-1",
+    "file": "raw/ice-portal-lit-attempt-1.png",
+    "prompt": "Use case: stylized-concept. Generate NEW ice-portal-lit.png, ONE small meltwater cave patch on a transparent 1024x1024 RGBA PNG. References ONLY: image1 smooth painted game's style board; image2 lit ice front for matching material and detail scale. This is a front-view SQUARE-ON face texture with NO isometric projection, NO perspective, NO landscape, NO entire cliff. Overall mostly EMPTY transparent canvas. Low arched cave mouth CENTRED ON BOTTOM EDGE: opening x384..640, width256 (one quarter canvas), top at y896, height128 (one eighth canvas), foot y1024. Dark matte blue-grey hollow inside, milky grey meltwater paler and greyer than river #548A92 flows outward over lip at bottom. Ice around cave is ragged lit patch about 512 wide and 256 tall: x256..768, y768..1024, so only bottom middle half-width / quarter-height region contains painting, nothing outside patch. Patch flush bottom, no margin under cave, do not enlarge subject to fill canvas. Broad horizontal layered ice, thin dirt seam, narrow upright cracks around the low arch. Lit lower-left wall family #C8D3D8 #AEBCC3 #8E9EA7 with crevasses #66767F; even face illumination no gradient or darkening at foot. Smooth painted contours, broad quiet clusters, three or four shades, NO white beyond #ECE4D0, no cyan #66CCD6, bright blue, rock wall, boulder ring, peaks, surrounding snow or ground, cast shadows, people, text, borders, glow. No grid guide lines. Output material patch only.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/ice-cliff-lit.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "ice-portal-lit-attempt-2",
+    "file": "ice-portal-lit.png",
+    "prompt": "NEW SMALL SPRITE, NOT a close-up. Requested 1024x1024 RGBA PNG transparent. ENTIRE TOP THREE QUARTERS of canvas y0..768 absolutely EMPTY transparent. ENTIRE LEFT QUARTER x0..256 and RIGHT QUARTER x768..1024 absolutely EMPTY transparent from top to bottom. Only the tiny bottom central rectangle x256..768,y768..1024 can contain ice. Paint ONE SMALL ice meltwater cave patch in this rectangle, FLUSH bottom edge. Do NOT zoom or enlarge it. Subject occupies HALF canvas width, QUARTER canvas height. Arch dark blue-grey opening ONLY x384..640, y896..1024, so opening 256x128 pixels (quarter width, eighth height). Opening centred x512, foot at bottom y1024. Milky grey meltwater over the bottom lip, paler/greyer than #548A92. Ragged low ice around arch in lit glacier front's material: broad horizontal layers, fine dirt seams and upright cracks, no stone. Front perfectly square-on no perspective or projection. References ONLY image1 style board smooth broad painted contours, image2 lit ice front palette and material; do NOT inherit full-canvas framing. Ice lit #C8D3D8/body #AEBCC3/shade #8E9EA7/cracks #66767F, three or four tones, even across face with no overall gradients. No landscape, surrounding ground/snow, mountains, rocks, people, text, borders, glow, cast shadows, per-pixel noise or pixel-art stairs, no vivid blue/cyan, no near-white #ECE4D0.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/ice-cliff-lit.png"
+    ],
+    "returned": [
+      1613,
+      975
+    ]
+  },
+  {
+    "id": "ice-portal-shade-attempt-1",
+    "file": "ice-portal-shade.png",
+    "prompt": "Generate a NEW independent ice-portal-shade.png, no mirror/reuse of a painting. Requested 1024x1024 RGBA PNG transparent. Images are REFERENCE ONLY: image1 house style; image2 shaded ice cliff material/tone family; image3 lit cave reference for small bottom-centred patch and arch proportions ONLY. Output SQUARE canvas even though lit reference may not be square. SMALL SPRITE with huge transparent margins. Top three quarters y0..768 EMPTY. Left quarter x0..256 and right quarter x768..1024 EMPTY. Paint only bottom-central ragged patch x256..768,y768..1024, 512x256. Low arched opening x384..640,y896..1024,256x128, centred x512 FLUSH bottom edge y1024; no bottom margin. Do not zoom subject or fill canvas. Front perfectly square-on no projection/perspective. Matte layered glacier ICE patch, thin dirt layers, narrow upright cracks. Lower-right-facing SHADOW tone family #8E9EA7 with variations #A0AFB7 #83939D, deep #66767F, clearly darker than lit reference. Even whole-face illumination, no overall left-right/top-bottom gradient, no foot darkening. Dark blue-grey interior, milky grey meltwater pale/grey compared to river #548A92 flowing out across bottom lip, no boulders or stone inside. Smooth painted broad clusters with three or four shades, no per-pixel noise, no pixel-art steps. No landscape, peaks, surrounding ground or snow, rock wall, boulder ring, people, climbers, text, borders, cast shadows, glow, vivid blue/cyan #66CCD6, bright #ECE4D0 whites.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/ice-cliff-shade.png",
+      "assets/source/mountain-2026-10-11/ice-portal-lit.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "spring-ne-attempt-1",
+    "file": "raw/spring-ne-attempt-1.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the exact geometry guide, into ONE smooth painted mountain headwater spring tile, 1024x1024 px RGBA with transparent background. Images 2 through 5 are supporting references: 2 style board, 3 and 4 stone shapes and upper-left light ONLY (do not copy their pixel edges), 5 water HUE ONLY, never its pixels or streaks.\nPreserve image 1's framing: large empty upper canvas, all art low in canvas in the same band and rounded end. 2:1 orthographic isometric. One tile 64x32 game px at scale 8. Tile centre/anchor (512,832), diamond top (512,704), right (768,832), bottom (512,960), left (256,832). Tile coordinates project to (512+256*(x-y),832+128*(x+y)).\nPaint the light grey guide region as plain river water; medium grey as low wet gravel and mud bank. Remove all guide outlines, including diamond and pool outlines. Outside band and rounded end fully transparent; no ground elsewhere. Keep all art inside the diamond. Band water |u|<=0.38 tile; wet bank 0.38<=|u|<=0.5. Round end water ellipse half axes 138x69 around (512,832), bank out to181x90.5.\nAt the centre paint a small clear pool 0.3 tile across, half axes54x27, slightly lighter water, soft pale gentle upwelling at centre, restrained single ripple. On the upstream half of the round-end bank, AWAY FROM EXIT, paint a crescent of several small low rounded and angular limestone and slate stones. Stones lie only between radius0.38 and0.5 tile; largest only0.1 tile across (~36 canvas px across isometric width), no giant boulders. Upper-left moss tops, light top planes, darker lower-right sides, contact shade only, selective dark lower/lower-right stone rims.\nSmooth painted contours, broad quiet colour clusters,3 or4 shades per material, crisp readable small game sprite, no texture noise or stair steps. Upper-left light stays fixed. Water #487C84 #548A92 #3E6E78 #649EA2; limestone #BCA98B slate #626B6C moss #78804C; palette forest#294638 oat#E4D5B5 copper#A36B42. Plain downstream band has water and mud/gravel only.\nNever well, pipe, trough, shrine, buildings, people, reeds, trees, grass, ground outside band, cast shadows, text, borders, glow. Do not recenter, enlarge to fill canvas, change camera, mirror a painting, or add a raised tile slab.\nThis unique picture exits NE, the upper-right edge, with the band's centre line from (512,832) to (640,768). Stone crescent on the lower-left upstream half, opposite this exit. Follow THIS guide's silhouette exactly.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-ne.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/props-rock.png",
+      "assets/source/base-v1/props-boulder.png",
+      "assets/source/mountain-2026-10-11/refs/ref-water.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "spring-ne-attempt-2",
+    "file": "raw/spring-ne-attempt-2.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the exact geometry guide, into ONE smooth painted mountain headwater spring tile, 1024x1024 px RGBA with transparent background. Images 2 through 5 are supporting references: 2 style board, 3 and 4 stone shapes and upper-left light ONLY (do not copy their pixel edges), 5 water HUE ONLY, never its pixels or streaks.\nPreserve image 1's framing: large empty upper canvas, all art low in canvas in the same band and rounded end. 2:1 orthographic isometric. One tile 64x32 game px at scale 8. Tile centre/anchor (512,832), diamond top (512,704), right (768,832), bottom (512,960), left (256,832). Tile coordinates project to (512+256*(x-y),832+128*(x+y)).\nPaint the light grey guide region as plain river water; medium grey as low wet gravel and mud bank. Remove all guide outlines, including diamond and pool outlines. Outside band and rounded end fully transparent; no ground elsewhere. Keep all art inside the diamond. Band water |u|<=0.38 tile; wet bank 0.38<=|u|<=0.5. Round end water ellipse half axes 138x69 around (512,832), bank out to181x90.5.\nAt the centre paint a small clear pool 0.3 tile across, half axes54x27, slightly lighter water, soft pale gentle upwelling at centre, restrained single ripple. On the upstream half of the round-end bank, AWAY FROM EXIT, paint a crescent of several small low rounded and angular limestone and slate stones. Stones lie only between radius0.38 and0.5 tile; largest only0.1 tile across (~36 canvas px across isometric width), no giant boulders. Upper-left moss tops, light top planes, darker lower-right sides, contact shade only, selective dark lower/lower-right stone rims.\nSmooth painted contours, broad quiet colour clusters,3 or4 shades per material, crisp readable small game sprite, no texture noise or stair steps. Upper-left light stays fixed. Water #487C84 #548A92 #3E6E78 #649EA2; limestone #BCA98B slate #626B6C moss #78804C; palette forest#294638 oat#E4D5B5 copper#A36B42. Plain downstream band has water and mud/gravel only.\nNever well, pipe, trough, shrine, buildings, people, reeds, trees, grass, ground outside band, cast shadows, text, borders, glow. Do not recenter, enlarge to fill canvas, change camera, mirror a painting, or add a raised tile slab.\nThis unique picture exits NE, the upper-right edge, with the band's centre line from (512,832) to (640,768). Stone crescent on the lower-left upstream half, opposite this exit. Follow THIS guide's silhouette exactly.\nFRAMING LOCK: the entire painted footprint is ONLY HALF the canvas width, exactly x256..768 on requested1024 canvas. Its complete height is only y704..960 (plus very low stone tops). The centre ripple is exactly at (512,832). Keep the guide at its original pixel position and scale. Do not zoom in or expand the tile. If output resolution changes, scale these positions proportionately. The canvas upper two-thirds remains entirely empty. Largest stone width36px, not100px.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-ne.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/props-rock.png",
+      "assets/source/base-v1/props-boulder.png",
+      "assets/source/mountain-2026-10-11/refs/ref-water.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "spring-se-attempt-1",
+    "file": "raw/spring-se-attempt-1.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the exact geometry guide, into ONE smooth painted mountain headwater spring tile, 1024x1024 px RGBA with transparent background. Images 2 through 5 are supporting references: 2 style board, 3 and 4 stone shapes and upper-left light ONLY (do not copy their pixel edges), 5 water HUE ONLY, never its pixels or streaks.\nPreserve image 1's framing: large empty upper canvas, all art low in canvas in the same band and rounded end. 2:1 orthographic isometric. One tile 64x32 game px at scale 8. Tile centre/anchor (512,832), diamond top (512,704), right (768,832), bottom (512,960), left (256,832). Tile coordinates project to (512+256*(x-y),832+128*(x+y)).\nPaint the light grey guide region as plain river water; medium grey as low wet gravel and mud bank. Remove all guide outlines, including diamond and pool outlines. Outside band and rounded end fully transparent; no ground elsewhere. Keep all art inside the diamond. Band water |u|<=0.38 tile; wet bank 0.38<=|u|<=0.5. Round end water ellipse half axes 138x69 around (512,832), bank out to181x90.5.\nAt the centre paint a small clear pool 0.3 tile across, half axes54x27, slightly lighter water, soft pale gentle upwelling at centre, restrained single ripple. On the upstream half of the round-end bank, AWAY FROM EXIT, paint a crescent of several small low rounded and angular limestone and slate stones. Stones lie only between radius0.38 and0.5 tile; largest only0.1 tile across (~36 canvas px across isometric width), no giant boulders. Upper-left moss tops, light top planes, darker lower-right sides, contact shade only, selective dark lower/lower-right stone rims.\nSmooth painted contours, broad quiet colour clusters,3 or4 shades per material, crisp readable small game sprite, no texture noise or stair steps. Upper-left light stays fixed. Water #487C84 #548A92 #3E6E78 #649EA2; limestone #BCA98B slate #626B6C moss #78804C; palette forest#294638 oat#E4D5B5 copper#A36B42. Plain downstream band has water and mud/gravel only.\nNever well, pipe, trough, shrine, buildings, people, reeds, trees, grass, ground outside band, cast shadows, text, borders, glow. Do not recenter, enlarge to fill canvas, change camera, mirror a painting, or add a raised tile slab.\nThis unique picture exits SE, the lower-right edge, with the band's centre line from (512,832) to (640,896). Stone crescent on the upper-left upstream half, opposite this exit. Follow THIS guide's silhouette exactly.\nFRAMING LOCK: the entire painted footprint is ONLY HALF the canvas width, exactly x256..768 on requested1024 canvas. Its complete height is only y704..960 (plus very low stone tops). The centre ripple is exactly at (512,832). Keep the guide at its original pixel position and scale. Do not zoom in or expand the tile. If output resolution changes, scale these positions proportionately. The canvas upper two-thirds remains entirely empty. Largest stone width36px, not100px.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-se.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/props-rock.png",
+      "assets/source/base-v1/props-boulder.png",
+      "assets/source/mountain-2026-10-11/refs/ref-water.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "spring-sw-attempt-1",
+    "file": "raw/spring-sw-attempt-1.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the exact geometry guide, into ONE smooth painted mountain headwater spring tile, 1024x1024 px RGBA with transparent background. Images 2 through 5 are supporting references: 2 style board, 3 and 4 stone shapes and upper-left light ONLY (do not copy their pixel edges), 5 water HUE ONLY, never its pixels or streaks.\nPreserve image 1's framing: large empty upper canvas, all art low in canvas in the same band and rounded end. 2:1 orthographic isometric. One tile 64x32 game px at scale 8. Tile centre/anchor (512,832), diamond top (512,704), right (768,832), bottom (512,960), left (256,832). Tile coordinates project to (512+256*(x-y),832+128*(x+y)).\nPaint the light grey guide region as plain river water; medium grey as low wet gravel and mud bank. Remove all guide outlines, including diamond and pool outlines. Outside band and rounded end fully transparent; no ground elsewhere. Keep all art inside the diamond. Band water |u|<=0.38 tile; wet bank 0.38<=|u|<=0.5. Round end water ellipse half axes 138x69 around (512,832), bank out to181x90.5.\nAt the centre paint a small clear pool 0.3 tile across, half axes54x27, slightly lighter water, soft pale gentle upwelling at centre, restrained single ripple. On the upstream half of the round-end bank, AWAY FROM EXIT, paint a crescent of several small low rounded and angular limestone and slate stones. Stones lie only between radius0.38 and0.5 tile; largest only0.1 tile across (~36 canvas px across isometric width), no giant boulders. Upper-left moss tops, light top planes, darker lower-right sides, contact shade only, selective dark lower/lower-right stone rims.\nSmooth painted contours, broad quiet colour clusters,3 or4 shades per material, crisp readable small game sprite, no texture noise or stair steps. Upper-left light stays fixed. Water #487C84 #548A92 #3E6E78 #649EA2; limestone #BCA98B slate #626B6C moss #78804C; palette forest#294638 oat#E4D5B5 copper#A36B42. Plain downstream band has water and mud/gravel only.\nNever well, pipe, trough, shrine, buildings, people, reeds, trees, grass, ground outside band, cast shadows, text, borders, glow. Do not recenter, enlarge to fill canvas, change camera, mirror a painting, or add a raised tile slab.\nThis unique picture exits SW, the lower-left edge, with the band's centre line from (512,832) to (384,896). Stone crescent on the upper-right upstream half, opposite this exit. Follow THIS guide's silhouette exactly.\nFRAMING LOCK: the entire painted footprint is ONLY HALF the canvas width, exactly x256..768 on requested1024 canvas. Its complete height is only y704..960 (plus very low stone tops). The centre ripple is exactly at (512,832). Keep the guide at its original pixel position and scale. Do not zoom in or expand the tile. If output resolution changes, scale these positions proportionately. The canvas upper two-thirds remains entirely empty. Largest stone width36px, not100px.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-sw.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/props-rock.png",
+      "assets/source/base-v1/props-boulder.png",
+      "assets/source/mountain-2026-10-11/refs/ref-water.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "spring-nw-attempt-1",
+    "file": "raw/spring-nw-attempt-1.png",
+    "prompt": "Use case: sketch-to-render. Edit image 1, the exact geometry guide, into ONE smooth painted mountain headwater spring tile, 1024x1024 px RGBA with transparent background. Images 2 through 5 are supporting references: 2 style board, 3 and 4 stone shapes and upper-left light ONLY (do not copy their pixel edges), 5 water HUE ONLY, never its pixels or streaks.\nPreserve image 1's framing: large empty upper canvas, all art low in canvas in the same band and rounded end. 2:1 orthographic isometric. One tile 64x32 game px at scale 8. Tile centre/anchor (512,832), diamond top (512,704), right (768,832), bottom (512,960), left (256,832). Tile coordinates project to (512+256*(x-y),832+128*(x+y)).\nPaint the light grey guide region as plain river water; medium grey as low wet gravel and mud bank. Remove all guide outlines, including diamond and pool outlines. Outside band and rounded end fully transparent; no ground elsewhere. Keep all art inside the diamond. Band water |u|<=0.38 tile; wet bank 0.38<=|u|<=0.5. Round end water ellipse half axes 138x69 around (512,832), bank out to181x90.5.\nAt the centre paint a small clear pool 0.3 tile across, half axes54x27, slightly lighter water, soft pale gentle upwelling at centre, restrained single ripple. On the upstream half of the round-end bank, AWAY FROM EXIT, paint a crescent of several small low rounded and angular limestone and slate stones. Stones lie only between radius0.38 and0.5 tile; largest only0.1 tile across (~36 canvas px across isometric width), no giant boulders. Upper-left moss tops, light top planes, darker lower-right sides, contact shade only, selective dark lower/lower-right stone rims.\nSmooth painted contours, broad quiet colour clusters,3 or4 shades per material, crisp readable small game sprite, no texture noise or stair steps. Upper-left light stays fixed. Water #487C84 #548A92 #3E6E78 #649EA2; limestone #BCA98B slate #626B6C moss #78804C; palette forest#294638 oat#E4D5B5 copper#A36B42. Plain downstream band has water and mud/gravel only.\nNever well, pipe, trough, shrine, buildings, people, reeds, trees, grass, ground outside band, cast shadows, text, borders, glow. Do not recenter, enlarge to fill canvas, change camera, mirror a painting, or add a raised tile slab.\nThis unique picture exits NW, the upper-left edge, with the band's centre line from (512,832) to (384,768). Stone crescent on the lower-right upstream half, opposite this exit. Follow THIS guide's silhouette exactly.\nFRAMING LOCK: the entire painted footprint is ONLY HALF the canvas width, exactly x256..768 on requested1024 canvas. Its complete height is only y704..960 (plus very low stone tops). The centre ripple is exactly at (512,832). Keep the guide at its original pixel position and scale. Do not zoom in or expand the tile. If output resolution changes, scale these positions proportionately. The canvas upper two-thirds remains entirely empty. Largest stone width36px, not100px.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-nw.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/props-rock.png",
+      "assets/source/base-v1/props-boulder.png",
+      "assets/source/mountain-2026-10-11/refs/ref-water.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "spring-sw-attempt-2",
+    "file": "raw/spring-sw-attempt-2.png",
+    "prompt": "Edit ONLY image1's grey shape into smooth painted teal spring water and wet gravel/mud bank. Request1024x1024 transparent RGBA. Preserve exact guide framing, shape, position and scale: art spans x256..768, y704..960 on1024 canvas; leave all upper space empty. Do not enlarge or shift it. Pool and pale gentle upwelling at(512,832), ellipse54x27. River exit SW lower-left at(384,896). Round end upstream on upper-right: low crescent of SMALL mossy limestone/slate stones on bank only, largest36px across. Plain downstream water and bank. Use2:1 orthographic isometric,64x32 game tile scale8. Water band half-width0.38tile and bank0.38..0.5tile, round end water ellipse138x69 bank181x90.5. Image2 style board, images3/4 stone forms and upper-left light but NOT pixel edges, image5 water hue ONLY. Smooth broad colour clusters,3-4 shades, no pixel noise. Water#487C84 #548A92 #3E6E78 #649EA2,stone#BCA98B #626B6C,moss#78804C. Light ALWAYS upper-left, dark lower-right sides, contact shade only. No outline from guide, no grass, trees,reeds,buildings,well,pipe,trough,ground beyond band,cast shadow,glow,text,border,raised slab. All art inside guide diamond. This is a small tile low on a mostly empty square canvas; keep its centre at81.25% canvas height.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-sw.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/base-v1/props-rock.png",
+      "assets/source/base-v1/props-boulder.png",
+      "assets/source/mountain-2026-10-11/refs/ref-water.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ]
+  },
+  {
+    "id": "spring-ne-attempt-3",
+    "file": "raw/spring-ne-attempt-3.png",
+    "centred": true,
+    "prompt": "Use case: sketch-to-render. EDIT IMAGE 1, do not compose a new scene. Output ONE 1024x1024 RGBA PNG with actual transparent background. Images2-5 are references:2 style board;3 river water and banks;4 wet mud/gravel bank;5 low stone forms, moss and fixed upper-left light. Image1 is the exact POSITION/SCALE silhouette to paint: centred disc occupying71% canvas width, NOT the whole diamond. Erase ALL guide outlines. DO NOT enlarge, recenter, rotate, zoom, mirror or copy a previous painting.\nDisc is ellipse centred(512,512), radius0.5tile, half-width362 half-height181, bounding box x150..874 y331..693. Paint nothing outside this ellipse, except tiny far-rim stone tops max36px above rim. Diamond is ONLY construction geometry:top(512,256),right(1024,512),bottom(512,768),left(0,512); ERASE its thin grey lines, leave rest of tile transparent.\n2:1 orthographic isometric,64x32game tile,scale16canvas px per game px. Tile(x,y) maps to(512+512*(x-y),512+256*(x+y)); radius r maps to ellipse half axes724r,362r.\nPaint grey210 as smooth quiet teal water. Upstream half rounded end: water radius0.38, ellipse275.2x137.6; grey95 is ONLY stone crescent/wet bank ring radius0.38..0.5. Small LOW limestone/slate stones with their entire feet INSIDE this narrow ring, largest72px across (one tenth tile). Stones must not drift inward into pool or outside disc. Moss ONLY on stones' upper-left tops, lit tops and dark lower-right sides, contact shade only, selective dark lower/lower-right rim. No tall boulders. Grey130 downstream bank is wet gravel/mud.\nCentre pool lighter clear water, radius0.15, ellipse108.6x54.3 around(512,512), with soft pale gentle upwelling at exact centre and subtle expanding ripple suggestion. Downstream half is plain water band full half-width0.38tile, with wet bank0.38..0.5 either side; circular disc rim clips band, NEVER narrow it or form a pointed wedge. Finishing will replace downstream half.\nSMOOTH PAINTED WATER: broad softly flowing tone transitions and a few soft curved glints, no square cells, no mosaic, no rectangular patches, no pixel blocks. Stone and mud broad painted clusters,3-4shades per material, smooth contours,no grain or pixel noise. Match references' hue and materials rather than repeating texture shapes. River reference is scale8; this picture scale16 so its pebbles are twice as large in pixels.\nPalette water#487C84 #548A92 #3E6E78 #649EA2,limestone#BCA98B,slate#626B6C,moss#78804C,forest#294638,oat#E4D5B5,copper#A36B42. One light upper-left in every direction. Brightest upwelling#E0DDD2, no bright white. Scenery below cursor#ECE4D0 and amber#E8AA48.\nNo well,pipe,trough,shrine,buildings,people,reeds,trees,grass,ground outside disc,cast shadows,text,borders,glow,raised slab. Preserve guide shape EXACTLY: horizontal oval disc centred mid-canvas, not a river strip, not an enlarged landscape.\nThis independently painted variant exits NE upper-right toward (768,384). The stone crescent is ONLY on the SW upstream half around (256,640), away from exit. Follow image1's grey95 crescent.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-ne-centred.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/reference-river.png",
+      "assets/source/mountain-2026-10-11/reference-bank.png",
+      "assets/source/base-v1/props-boulder.png"
+    ],
+    "returned": null,
+    "measured": {
+      "pass": false,
+      "failed": [
+        "generation_usage_limit"
+      ],
+      "note": "No image returned; no box or stone measurement possible."
+    },
+    "generationError": {
+      "type": "usage_limit_reached",
+      "resets_at": 1791831558,
+      "message": "Built-in image generation refused the request before producing a painting."
+    }
+  },
+  {
+    "id": "spring-ne-attempt-4",
+    "file": "raw/spring-ne-attempt-4.png",
+    "centred": true,
+    "prompt": "Use case: sketch-to-render. EDIT IMAGE 1, do not compose a new scene. Output ONE 1024x1024 RGBA PNG with actual transparent background. Images2-5 are references:2 style board;3 river water and banks;4 wet mud/gravel bank;5 low stone forms, moss and fixed upper-left light. Image1 is the exact POSITION/SCALE silhouette to paint: centred disc occupying71% canvas width, NOT the whole diamond. Erase ALL guide outlines. DO NOT enlarge, recenter, rotate, zoom, mirror or copy a previous painting.\nDisc is ellipse centred(512,512), radius0.5tile, half-width362 half-height181, bounding box x150..874 y331..693. Paint nothing outside this ellipse, except tiny far-rim stone tops max36px above rim. Diamond is ONLY construction geometry:top(512,256),right(1024,512),bottom(512,768),left(0,512); ERASE its thin grey lines, leave rest of tile transparent.\n2:1 orthographic isometric,64x32game tile,scale16canvas px per game px. Tile(x,y) maps to(512+512*(x-y),512+256*(x+y)); radius r maps to ellipse half axes724r,362r.\nPaint grey210 as smooth quiet teal water. Upstream half rounded end: water radius0.38, ellipse275.2x137.6; grey95 is ONLY stone crescent/wet bank ring radius0.38..0.5. Small LOW limestone/slate stones with their entire feet INSIDE this narrow ring, largest72px across (one tenth tile). Stones must not drift inward into pool or outside disc. Moss ONLY on stones' upper-left tops, lit tops and dark lower-right sides, contact shade only, selective dark lower/lower-right rim. No tall boulders. Grey130 downstream bank is wet gravel/mud.\nCentre pool lighter clear water, radius0.15, ellipse108.6x54.3 around(512,512), with soft pale gentle upwelling at exact centre and subtle expanding ripple suggestion. Downstream half is plain water band full half-width0.38tile, with wet bank0.38..0.5 either side; circular disc rim clips band, NEVER narrow it or form a pointed wedge. Finishing will replace downstream half.\nSMOOTH PAINTED WATER: broad softly flowing tone transitions and a few soft curved glints, no square cells, no mosaic, no rectangular patches, no pixel blocks. Stone and mud broad painted clusters,3-4shades per material, smooth contours,no grain or pixel noise. Match references' hue and materials rather than repeating texture shapes. River reference is scale8; this picture scale16 so its pebbles are twice as large in pixels.\nPalette water#487C84 #548A92 #3E6E78 #649EA2,limestone#BCA98B,slate#626B6C,moss#78804C,forest#294638,oat#E4D5B5,copper#A36B42. One light upper-left in every direction. Brightest upwelling#E0DDD2, no bright white. Scenery below cursor#ECE4D0 and amber#E8AA48.\nNo well,pipe,trough,shrine,buildings,people,reeds,trees,grass,ground outside disc,cast shadows,text,borders,glow,raised slab. Preserve guide shape EXACTLY: horizontal oval disc centred mid-canvas, not a river strip, not an enlarged landscape.\nThis independently painted variant exits NE upper-right toward (768,384). The stone crescent is ONLY on the SW upstream half around (256,640), away from exit. Follow image1's grey95 crescent.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-ne-centred.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/reference-river.png",
+      "assets/source/mountain-2026-10-11/reference-bank.png",
+      "assets/source/base-v1/props-boulder.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        115,
+        363,
+        1138,
+        940
+      ],
+      "centre": [
+        626.5,
+        718.345703125
+      ],
+      "centreError": 91.34707154255486,
+      "paintedPixels": 460079,
+      "lowerOutside": 69049,
+      "upperOutside": 18034,
+      "upperBeyondAllowance": 14334,
+      "stonePixels": 19110,
+      "stoneRingPixels": 5975,
+      "stoneTopAllowancePixels": 1283,
+      "stoneRingFraction": 0.3126635269492412,
+      "stoneAllowedFraction": 0.37980115122972263,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": false,
+        "centre": false,
+        "lowerDiamond": false,
+        "upperDiamond": false,
+        "stones": false
+      },
+      "failed": [
+        "box",
+        "centre",
+        "lowerDiamond",
+        "upperDiamond",
+        "stones"
+      ],
+      "pass": false
+    },
+    "selected": false
+  },
+  {
+    "id": "spring-ne-attempt-5",
+    "file": "raw/spring-ne-attempt-5.png",
+    "centred": true,
+    "prompt": "Edit ONLY the filled grey ellipse in IMAGE1. Keep its exact original extent and position. DO NOT zoom or move it. Output1024x1024 transparent RGBA. The untouched transparent canvas margins are crucial: left margin150px,right150px,top331px,bottom331px. Ellipse occupies71% width and35% height, centred halfway in both axes at(512,512). Water/mud feet must stop EXACTLY at that ellipse silhouette x150..874,y331..693. Delete the thin construction diamond outline completely.\nConvert grey210 into smooth teal water, grey130 into wet mud/gravel, grey95 into the narrow bank with small low mossy limestone/slate stones. On this NE-exit tile the stones are ONLY on the SW/lower-left upstream crescent around(256,640). Their FEET and lit tops must remain between elliptical radii0.38 and0.5, radius0.5 half-axes362x181, radius0.38 half-axes275.2x137.6. Keep them short and no larger than72px across. Do NOT add stones toward the water's centre. The rest is plain downstream water extending upper-right inside the disc. Whole-water reflection must be a very quiet broad soft flow, not textured square patches.\nSmall clear lighter spring pool centred exactly(512,512), half-axes108.6x54.3, soft pale upwelling and gentle ring capped#E0DDD2.\nImage2 smooth painted style/palette only;image3 river water/banks;image4 bank mud/pebbles;image5 stone forms and upper-left light only. Do not import their compositions. One upper-left light, moss#78804C on top-left, limestone#BCA98B/slate#626B6C, dark lower-right stone sides, contact shade only. Water#487C84 #548A92 #3E6E78 #649EA2. 2:1 orthographic isometric scale16. Smooth painted contours,3-4 broad shades,no pixel edges,no square cells,mosaic,noise,grass,trees,reeds,well,pipe,trough,shrine,buildings,people,cast shadows,text,borders,glow,raised slab. No white highlight brighter than#E0DDD2.\nThis is a strict material replacement of IMAGE1's mask, preserving transparent margins and shape. Do not expand it to fill the available canvas. The previous incorrect attempt was 15% wider and shifted down; this time follow IMAGE1 directly.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-ne-centred.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/reference-river.png",
+      "assets/source/mountain-2026-10-11/reference-bank.png",
+      "assets/source/base-v1/props-boulder.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        187,
+        438,
+        1067,
+        860
+      ],
+      "centre": [
+        627,
+        638.345703125
+      ],
+      "centreError": 11.345703125,
+      "paintedPixels": 292014,
+      "lowerOutside": 3024,
+      "upperOutside": 0,
+      "upperBeyondAllowance": 0,
+      "stonePixels": 8548,
+      "stoneRingPixels": 6669,
+      "stoneTopAllowancePixels": 33,
+      "stoneRingFraction": 0.7801824988301357,
+      "stoneAllowedFraction": 0.7840430510060833,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": false,
+        "centre": true,
+        "lowerDiamond": false,
+        "upperDiamond": true,
+        "stones": false
+      },
+      "failed": [
+        "box",
+        "lowerDiamond",
+        "stones"
+      ],
+      "pass": false,
+      "brightness": {
+        "aboveCursor": 467,
+        "poolAboveFoamCap": 539,
+        "poolPixels": 27760,
+        "maxPaintedLuma": 252.55719999999997,
+        "maxPoolLuma": 247.68159999999997
+      }
+    },
+    "selected": true,
+    "selection": "closest retained after allowed attempts; not all geometry tests pass"
+  },
+  {
+    "id": "spring-se-attempt-2",
+    "file": "raw/spring-se-attempt-2.png",
+    "centred": true,
+    "prompt": "Edit ONLY the filled grey ellipse in IMAGE1. Keep its exact original extent and position. DO NOT zoom or move it. Output1024x1024 transparent RGBA. The untouched transparent canvas margins are crucial: left margin150px,right150px,top331px,bottom331px. Ellipse occupies71% width and35% height, centred halfway in both axes at(512,512). Water/mud feet must stop EXACTLY at that ellipse silhouette x150..874,y331..693. Delete the thin construction diamond outline completely.\nConvert grey210 into smooth teal water, grey130 into wet mud/gravel, grey95 into the narrow bank with small low mossy limestone/slate stones. On this SE-exit tile the stones are ONLY on the NW/upper-left upstream crescent around(256,384). Their FEET and lit tops must remain between elliptical radii0.38 and0.5, radius0.5 half-axes362x181, radius0.38 half-axes275.2x137.6. Keep them short and no larger than72px across. Do NOT add stones toward the water's centre. The rest is plain downstream water extending lower-right inside the disc. Whole-water reflection must be a very quiet broad soft flow, not textured square patches.\nSmall clear lighter spring pool centred exactly(512,512), half-axes108.6x54.3, soft pale upwelling and gentle ring capped#E0DDD2.\nImage2 smooth painted style/palette only;image3 river water/banks;image4 bank mud/pebbles;image5 stone forms and upper-left light only. Do not import their compositions. One upper-left light, moss#78804C on top-left, limestone#BCA98B/slate#626B6C, dark lower-right stone sides, contact shade only. Water#487C84 #548A92 #3E6E78 #649EA2. 2:1 orthographic isometric scale16. Smooth painted contours,3-4 broad shades,no pixel edges,no square cells,mosaic,noise,grass,trees,reeds,well,pipe,trough,shrine,buildings,people,cast shadows,text,borders,glow,raised slab. No white highlight brighter than#E0DDD2.\nThis is a strict material replacement of IMAGE1's mask, preserving transparent margins and shape. Do not expand it to fill the available canvas. The previous incorrect attempt was 15% wider and shifted down; this time follow IMAGE1 directly.\nKeep the far upper-left stones VERY LOW, with their feet strictly in the guide crescent; tops may rise at most36px. The entire lower rim stays inside the construction diamond. Preserve the guide water/bank proportions, with quiet smooth flow and only one gentle central ring.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-se-centred.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/reference-river.png",
+      "assets/source/mountain-2026-10-11/reference-bank.png",
+      "assets/source/base-v1/props-boulder.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        206,
+        429,
+        1047,
+        856
+      ],
+      "centre": [
+        626.5,
+        634.345703125
+      ],
+      "centreError": 7.3627002112427995,
+      "paintedPixels": 281497,
+      "lowerOutside": 90,
+      "upperOutside": 0,
+      "upperBeyondAllowance": 0,
+      "stonePixels": 10141,
+      "stoneRingPixels": 6305,
+      "stoneTopAllowancePixels": 20,
+      "stoneRingFraction": 0.621733556848437,
+      "stoneAllowedFraction": 0.6237057489399468,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": false,
+        "centre": true,
+        "lowerDiamond": false,
+        "upperDiamond": true,
+        "stones": false
+      },
+      "failed": [
+        "box",
+        "lowerDiamond",
+        "stones"
+      ],
+      "pass": false,
+      "brightness": {
+        "aboveCursor": 357,
+        "poolAboveFoamCap": 355,
+        "poolPixels": 27760,
+        "maxPaintedLuma": 253.91699999999997,
+        "maxPoolLuma": 235.9744
+      }
+    },
+    "selected": true,
+    "selection": "closest retained after allowed attempts; not all geometry tests pass"
+  },
+  {
+    "id": "spring-sw-attempt-3",
+    "file": "raw/spring-sw-attempt-3.png",
+    "centred": true,
+    "prompt": "Edit ONLY the filled grey ellipse in IMAGE1. Keep its exact original extent and position. DO NOT zoom or move it. Output1024x1024 transparent RGBA. The untouched transparent canvas margins are crucial: left margin150px,right150px,top331px,bottom331px. Ellipse occupies71% width and35% height, centred halfway in both axes at(512,512). Water/mud feet must stop EXACTLY at that ellipse silhouette x150..874,y331..693. Delete the thin construction diamond outline completely.\nConvert grey210 into smooth teal water, grey130 into wet mud/gravel, grey95 into the narrow bank with small low mossy limestone/slate stones. On this SW-exit tile the stones are ONLY on the NE/upper-right upstream crescent around(768,384). Their FEET and lit tops must remain between elliptical radii0.38 and0.5, radius0.5 half-axes362x181, radius0.38 half-axes275.2x137.6. Keep them short and no larger than72px across. Do NOT add stones toward the water's centre. The rest is plain downstream water extending lower-left inside the disc. Whole-water reflection must be a very quiet broad soft flow, not textured square patches.\nSmall clear lighter spring pool centred exactly(512,512), half-axes108.6x54.3, soft pale upwelling and gentle ring capped#E0DDD2.\nImage2 smooth painted style/palette only;image3 river water/banks;image4 bank mud/pebbles;image5 stone forms and upper-left light only. Do not import their compositions. One upper-left light, moss#78804C on top-left, limestone#BCA98B/slate#626B6C, dark lower-right stone sides, contact shade only. Water#487C84 #548A92 #3E6E78 #649EA2. 2:1 orthographic isometric scale16. Smooth painted contours,3-4 broad shades,no pixel edges,no square cells,mosaic,noise,grass,trees,reeds,well,pipe,trough,shrine,buildings,people,cast shadows,text,borders,glow,raised slab. No white highlight brighter than#E0DDD2.\nThis is a strict material replacement of IMAGE1's mask, preserving transparent margins and shape. Do not expand it to fill the available canvas. The previous incorrect attempt was 15% wider and shifted down; this time follow IMAGE1 directly.\nKeep the far upper-right stones VERY LOW, with their feet strictly in the guide crescent; tops may rise at most36px. The entire lower rim stays inside the construction diamond. Preserve the guide water/bank proportions, with quiet smooth flow and only one gentle central ring.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-sw-centred.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/reference-river.png",
+      "assets/source/mountain-2026-10-11/reference-bank.png",
+      "assets/source/base-v1/props-boulder.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        224,
+        421,
+        1030,
+        832
+      ],
+      "centre": [
+        627,
+        610.345703125
+      ],
+      "centreError": 16.654296875,
+      "paintedPixels": 260869,
+      "lowerOutside": 0,
+      "upperOutside": 0,
+      "upperBeyondAllowance": 0,
+      "stonePixels": 4554,
+      "stoneRingPixels": 2742,
+      "stoneTopAllowancePixels": 4,
+      "stoneRingFraction": 0.6021080368906456,
+      "stoneAllowedFraction": 0.6029863855950812,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": true,
+        "centre": true,
+        "lowerDiamond": true,
+        "upperDiamond": true,
+        "stones": false
+      },
+      "failed": [
+        "stones"
+      ],
+      "pass": false
+    },
+    "selected": false
+  },
+  {
+    "id": "spring-nw-attempt-2",
+    "file": "raw/spring-nw-attempt-2.png",
+    "centred": true,
+    "prompt": "Edit ONLY the filled grey ellipse in IMAGE1. Keep its exact original extent and position. DO NOT zoom or move it. Output1024x1024 transparent RGBA. The untouched transparent canvas margins are crucial: left margin150px,right150px,top331px,bottom331px. Ellipse occupies71% width and35% height, centred halfway in both axes at(512,512). Water/mud feet must stop EXACTLY at that ellipse silhouette x150..874,y331..693. Delete the thin construction diamond outline completely.\nConvert grey210 into smooth teal water, grey130 into wet mud/gravel, grey95 into the narrow bank with small low mossy limestone/slate stones. On this NW-exit tile the stones are ONLY on the SE/lower-right upstream crescent around(768,640). Their FEET and lit tops must remain between elliptical radii0.38 and0.5, radius0.5 half-axes362x181, radius0.38 half-axes275.2x137.6. Keep them short and no larger than72px across. Do NOT add stones toward the water's centre. The rest is plain downstream water extending upper-left inside the disc. Whole-water reflection must be a very quiet broad soft flow, not textured square patches.\nSmall clear lighter spring pool centred exactly(512,512), half-axes108.6x54.3, soft pale upwelling and gentle ring capped#E0DDD2.\nImage2 smooth painted style/palette only;image3 river water/banks;image4 bank mud/pebbles;image5 stone forms and upper-left light only. Do not import their compositions. One upper-left light, moss#78804C on top-left, limestone#BCA98B/slate#626B6C, dark lower-right stone sides, contact shade only. Water#487C84 #548A92 #3E6E78 #649EA2. 2:1 orthographic isometric scale16. Smooth painted contours,3-4 broad shades,no pixel edges,no square cells,mosaic,noise,grass,trees,reeds,well,pipe,trough,shrine,buildings,people,cast shadows,text,borders,glow,raised slab. No white highlight brighter than#E0DDD2.\nThis is a strict material replacement of IMAGE1's mask, preserving transparent margins and shape. Do not expand it to fill the available canvas. The previous incorrect attempt was 15% wider and shifted down; this time follow IMAGE1 directly.\nThis lower-right stone crescent must lie wholly within the guide disc, with extremely low stones on bank only. The entire lower rim stays inside the construction diamond. Preserve the guide water/bank proportions with quiet smooth flow and only one gentle central ring.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-nw-centred.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/reference-river.png",
+      "assets/source/mountain-2026-10-11/reference-bank.png",
+      "assets/source/base-v1/props-boulder.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        195,
+        418,
+        1055,
+        851
+      ],
+      "centre": [
+        625,
+        629.345703125
+      ],
+      "centreError": 3.0825838432449433,
+      "paintedPixels": 291385,
+      "lowerOutside": 0,
+      "upperOutside": 0,
+      "upperBeyondAllowance": 0,
+      "stonePixels": 9097,
+      "stoneRingPixels": 5947,
+      "stoneTopAllowancePixels": 0,
+      "stoneRingFraction": 0.6537319995602946,
+      "stoneAllowedFraction": 0.6537319995602946,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": true,
+        "centre": true,
+        "lowerDiamond": true,
+        "upperDiamond": true,
+        "stones": false
+      },
+      "failed": [
+        "stones"
+      ],
+      "pass": false,
+      "brightness": {
+        "aboveCursor": 128,
+        "poolAboveFoamCap": 100,
+        "poolPixels": 27760,
+        "maxPaintedLuma": 244.10959999999997,
+        "maxPoolLuma": 232.40359999999998
+      }
+    },
+    "selected": true,
+    "selection": "closest retained after allowed attempts; not all geometry tests pass"
+  },
+  {
+    "id": "spring-se-attempt-3",
+    "file": "raw/spring-se-attempt-3.png",
+    "centred": true,
+    "prompt": "Edit ONLY the filled grey ellipse in IMAGE1. Keep its exact original extent and position. DO NOT zoom or move it. Output1024x1024 transparent RGBA. The untouched transparent canvas margins are crucial: left margin150px,right150px,top331px,bottom331px. Ellipse occupies71% width and35% height, centred halfway in both axes at(512,512). Water/mud feet must stop EXACTLY at that ellipse silhouette x150..874,y331..693. Delete the thin construction diamond outline completely.\nConvert grey210 into smooth teal water, grey130 into wet mud/gravel, grey95 into the narrow bank with small low mossy limestone/slate stones. On this SE-exit tile the stones are ONLY on the NW/upper-left upstream crescent around(256,384). Their FEET and lit tops must remain between elliptical radii0.38 and0.5, radius0.5 half-axes362x181, radius0.38 half-axes275.2x137.6. Keep them short and no larger than72px across. Do NOT add stones toward the water's centre. The rest is plain downstream water extending lower-right inside the disc. Whole-water reflection must be a very quiet broad soft flow, not textured square patches.\nSmall clear lighter spring pool centred exactly(512,512), half-axes108.6x54.3, soft pale upwelling and gentle ring capped#E0DDD2.\nImage2 smooth painted style/palette only;image3 river water/banks;image4 bank mud/pebbles;image5 stone forms and upper-left light only. Do not import their compositions. One upper-left light, moss#78804C on top-left, limestone#BCA98B/slate#626B6C, dark lower-right stone sides, contact shade only. Water#487C84 #548A92 #3E6E78 #649EA2. 2:1 orthographic isometric scale16. Smooth painted contours,3-4 broad shades,no pixel edges,no square cells,mosaic,noise,grass,trees,reeds,well,pipe,trough,shrine,buildings,people,cast shadows,text,borders,glow,raised slab. No white highlight brighter than#E0DDD2.\nThis is a strict material replacement of IMAGE1's mask, preserving transparent margins and shape. Do not expand it to fill the available canvas. The previous incorrect attempt was 15% wider and shifted down; this time follow IMAGE1 directly.\nKeep the far upper-left stones VERY LOW, with their feet strictly in the guide crescent; tops may rise at most36px. The entire lower rim stays inside the construction diamond. Preserve the guide water/bank proportions, with quiet smooth flow and only one gentle central ring.\nTargeted correction: the full ellipse's top must reach y331, not y351. The stone centreline is on r0.45, ellipse half axes326x163, ONLY the NW upstream crescent. Keep ALL beige/grey bright stones and pebbles inside r0.38..0.5, including their visible faces: do not put pale gravel in the water. Between pool r0.15 and bank r0.38 is exclusively uninterrupted cool teal water. The pool is ONLY216px wide and109px high, pale upwelling confined to this pool, no giant ring extending across the water. NO warm white flowing glints beyond r0.15: use cool muted blue highlights there. Keep wet mud dark, stones small and low. Full disc exactx150..874,y331..693.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-se-centred.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/reference-river.png",
+      "assets/source/mountain-2026-10-11/reference-bank.png",
+      "assets/source/base-v1/props-boulder.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        120,
+        364,
+        1133,
+        883
+      ],
+      "centre": [
+        626.5,
+        661.345703125
+      ],
+      "centreError": 34.34934239764474,
+      "paintedPixels": 414293,
+      "lowerOutside": 21959,
+      "upperOutside": 26798,
+      "upperBeyondAllowance": 14331,
+      "stonePixels": 9409,
+      "stoneRingPixels": 3616,
+      "stoneTopAllowancePixels": 4211,
+      "stoneRingFraction": 0.38431289191199913,
+      "stoneAllowedFraction": 0.8318631097885004,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": false,
+        "centre": true,
+        "lowerDiamond": false,
+        "upperDiamond": false,
+        "stones": false
+      },
+      "failed": [
+        "box",
+        "lowerDiamond",
+        "upperDiamond",
+        "stones"
+      ],
+      "pass": false
+    },
+    "selected": false
+  },
+  {
+    "id": "spring-sw-attempt-4",
+    "file": "raw/spring-sw-attempt-4.png",
+    "centred": true,
+    "prompt": "Edit ONLY the filled grey ellipse in IMAGE1. Keep its exact original extent and position. DO NOT zoom or move it. Output1024x1024 transparent RGBA. The untouched transparent canvas margins are crucial: left margin150px,right150px,top331px,bottom331px. Ellipse occupies71% width and35% height, centred halfway in both axes at(512,512). Water/mud feet must stop EXACTLY at that ellipse silhouette x150..874,y331..693. Delete the thin construction diamond outline completely.\nConvert grey210 into smooth teal water, grey130 into wet mud/gravel, grey95 into the narrow bank with small low mossy limestone/slate stones. On this SW-exit tile the stones are ONLY on the NE/upper-right upstream crescent around(768,384). Their FEET and lit tops must remain between elliptical radii0.38 and0.5, radius0.5 half-axes362x181, radius0.38 half-axes275.2x137.6. Keep them short and no larger than72px across. Do NOT add stones toward the water's centre. The rest is plain downstream water extending lower-left inside the disc. Whole-water reflection must be a very quiet broad soft flow, not textured square patches.\nSmall clear lighter spring pool centred exactly(512,512), half-axes108.6x54.3, soft pale upwelling and gentle ring capped#E0DDD2.\nImage2 smooth painted style/palette only;image3 river water/banks;image4 bank mud/pebbles;image5 stone forms and upper-left light only. Do not import their compositions. One upper-left light, moss#78804C on top-left, limestone#BCA98B/slate#626B6C, dark lower-right stone sides, contact shade only. Water#487C84 #548A92 #3E6E78 #649EA2. 2:1 orthographic isometric scale16. Smooth painted contours,3-4 broad shades,no pixel edges,no square cells,mosaic,noise,grass,trees,reeds,well,pipe,trough,shrine,buildings,people,cast shadows,text,borders,glow,raised slab. No white highlight brighter than#E0DDD2.\nThis is a strict material replacement of IMAGE1's mask, preserving transparent margins and shape. Do not expand it to fill the available canvas. The previous incorrect attempt was 15% wider and shifted down; this time follow IMAGE1 directly.\nKeep the far upper-right stones VERY LOW, with their feet strictly in the guide crescent; tops may rise at most36px. The entire lower rim stays inside the construction diamond. Preserve the guide water/bank proportions, with quiet smooth flow and only one gentle central ring.\nTargeted correction: stone centreline MUST be on r0.45, ellipse half axes326x163, ONLY the NE upstream crescent. Keep ALL beige/grey bright stones and pebbles within r0.38..0.5 including visible faces; no pale gravel in water. Between small pool r0.15 and bank r0.38 is exclusively uninterrupted cool teal water. Pool is ONLY216px wide and109px high, pale upwelling confined here, no giant ring across the river. No warm white flow glints beyond r0.15; use muted cool blue highlights. The previous return shrank the disc by9%; follow exactguidex150..874,y331..693 so ring stones cannot drift inward. Wet mud is dark, no bright ground in innerwater.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-sw-centred.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/reference-river.png",
+      "assets/source/mountain-2026-10-11/reference-bank.png",
+      "assets/source/base-v1/props-boulder.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        173,
+        400,
+        1081,
+        850
+      ],
+      "centre": [
+        627,
+        628.345703125
+      ],
+      "centreError": 1.345703125,
+      "paintedPixels": 318188,
+      "lowerOutside": 458,
+      "upperOutside": 116,
+      "upperBeyondAllowance": 99,
+      "stonePixels": 6984,
+      "stoneRingPixels": 6243,
+      "stoneTopAllowancePixels": 33,
+      "stoneRingFraction": 0.8939003436426117,
+      "stoneAllowedFraction": 0.8986254295532646,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": true,
+        "centre": true,
+        "lowerDiamond": false,
+        "upperDiamond": false,
+        "stones": false
+      },
+      "failed": [
+        "lowerDiamond",
+        "upperDiamond",
+        "stones"
+      ],
+      "pass": false,
+      "brightness": {
+        "aboveCursor": 8,
+        "poolAboveFoamCap": 0,
+        "poolPixels": 27760,
+        "maxPaintedLuma": 249.14159999999998,
+        "maxPoolLuma": 217.71879999999996
+      }
+    },
+    "selected": true,
+    "selection": "closest retained after allowed attempts; not all geometry tests pass"
+  },
+  {
+    "id": "spring-nw-attempt-3",
+    "file": "raw/spring-nw-attempt-3.png",
+    "centred": true,
+    "prompt": "Edit ONLY the filled grey ellipse in IMAGE1. Keep its exact original extent and position. DO NOT zoom or move it. Output1024x1024 transparent RGBA. The untouched transparent canvas margins are crucial: left margin150px,right150px,top331px,bottom331px. Ellipse occupies71% width and35% height, centred halfway in both axes at(512,512). Water/mud feet must stop EXACTLY at that ellipse silhouette x150..874,y331..693. Delete the thin construction diamond outline completely.\nConvert grey210 into smooth teal water, grey130 into wet mud/gravel, grey95 into the narrow bank with small low mossy limestone/slate stones. On this NW-exit tile the stones are ONLY on the SE/lower-right upstream crescent around(768,640). Their FEET and lit tops must remain between elliptical radii0.38 and0.5, radius0.5 half-axes362x181, radius0.38 half-axes275.2x137.6. Keep them short and no larger than72px across. Do NOT add stones toward the water's centre. The rest is plain downstream water extending upper-left inside the disc. Whole-water reflection must be a very quiet broad soft flow, not textured square patches.\nSmall clear lighter spring pool centred exactly(512,512), half-axes108.6x54.3, soft pale upwelling and gentle ring capped#E0DDD2.\nImage2 smooth painted style/palette only;image3 river water/banks;image4 bank mud/pebbles;image5 stone forms and upper-left light only. Do not import their compositions. One upper-left light, moss#78804C on top-left, limestone#BCA98B/slate#626B6C, dark lower-right stone sides, contact shade only. Water#487C84 #548A92 #3E6E78 #649EA2. 2:1 orthographic isometric scale16. Smooth painted contours,3-4 broad shades,no pixel edges,no square cells,mosaic,noise,grass,trees,reeds,well,pipe,trough,shrine,buildings,people,cast shadows,text,borders,glow,raised slab. No white highlight brighter than#E0DDD2.\nThis is a strict material replacement of IMAGE1's mask, preserving transparent margins and shape. Do not expand it to fill the available canvas. The previous incorrect attempt was 15% wider and shifted down; this time follow IMAGE1 directly.\nThis lower-right stone crescent must lie wholly within the guide disc, with extremely low stones on bank only. The entire lower rim stays inside the construction diamond. Preserve the guide water/bank proportions with quiet smooth flow and only one gentle central ring.\nTargeted correction: ALL pale beige/grey stones/pebbles are constrained to the outer bank ellipse radii0.38..0.5, with centres at r0.45, ellipse half axes326x163, on SE/lower-right crescent only. NO pale pebbles inside the water. The centre pool is ONLY216px wide by109px high; confine pale upwelling and its ripple inside r0.15. Between r0.15 and0.38 only broad smooth uninterrupted teal tones, no warm-white flow glints or big pale rings. This water must be free of pale non-water patches. Keep exact originalguideextentx150..874,y331..693, centred(512,512), no shifting or enlargement.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-nw-centred.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/reference-river.png",
+      "assets/source/mountain-2026-10-11/reference-bank.png",
+      "assets/source/base-v1/props-boulder.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        187,
+        399,
+        1066,
+        852
+      ],
+      "centre": [
+        626.5,
+        630.345703125
+      ],
+      "centreError": 3.382858170339804,
+      "paintedPixels": 311539,
+      "lowerOutside": 0,
+      "upperOutside": 92,
+      "upperBeyondAllowance": 79,
+      "stonePixels": 8722,
+      "stoneRingPixels": 5442,
+      "stoneTopAllowancePixels": 3,
+      "stoneRingFraction": 0.6239394634258197,
+      "stoneAllowedFraction": 0.624283421233662,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": true,
+        "centre": true,
+        "lowerDiamond": true,
+        "upperDiamond": false,
+        "stones": false
+      },
+      "failed": [
+        "upperDiamond",
+        "stones"
+      ],
+      "pass": false
+    },
+    "selected": false
+  },
+  {
+    "id": "spring-se-attempt-4",
+    "file": "raw/spring-se-attempt-4.png",
+    "centred": true,
+    "prompt": "Replace the grey materials inside IMAGE1's ellipse only, preserving its exact silhouette, scale and position. Canvas1024x1024 transparent RGBA. Do not add any new pixels outside the grey ellipse. ERASE diamond outline and pool outline. This is a centred horizontal oval, x150..874,y331..693, centre(512,512). Leave150px clear eachside,331px clear above/below. 71%canvas width,35%canvas height, no enlargement.\nSE river exit lower-right. Grey95 NW/upstream crescent becomes very low mossy limestone/slate stones, all feet and pale faces confined to the narrow grey95 bank region between ellipticalr0.38 and0.5. Place lit tops along radius0.45, ellipse halfaxes326x163, mostly around(256,384). Bright pebbles only on this outer bank, no pebbles submerged in inner water. Stones maximum72pxwidth, shaded low faces, upper-left moss tops, light upper-left, dark lower-right rim and contact shade only. Grey130 bank elsewhere wet dark mud/gravel.\nGrey210 water becomes smooth, quiet broad teal shading with very few soft blue glints; NO white streaks, squarecells, mosaic, pixelblocks, noise or angular repetitive flow textures. Small pale spring pool/upwelling only inside the centre outlined ellipse108.6x54.3. No enlarged ripple or pale water ring outside this pool. Brightest#E0DDD2, water#487C84 #548A92 #3E6E78 #649EA2,stone#BCA98B #626B6C,moss#78804C. Three orfour broad shades, smooth painted contours.\nImage2 palette/style only,image3 river water and bank materials,image4 mud/pebbles materials,image5 stone light/forms/moss only. Do not copy compositions. Exact2:1 orthographicisometric scale16, tile64x32. No well,pipe,trough,shrine,buildings,people,reeds,trees,grass,castshadows,text,borders,glow,raised slab,ground outside guide disc.\nStrictly keep exact IMAGE1 grey mask. Water through lower-right is plain river within the disc; later finishing replaces this half. One spring painting, no mirror/reuse.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-se-centred.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/reference-river.png",
+      "assets/source/mountain-2026-10-11/reference-bank.png",
+      "assets/source/base-v1/props-boulder.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        139,
+        387,
+        1114,
+        892
+      ],
+      "centre": [
+        626.5,
+        670.345703125
+      ],
+      "centreError": 43.34858682126367,
+      "paintedPixels": 387541,
+      "lowerOutside": 24271,
+      "upperOutside": 8634,
+      "upperBeyondAllowance": 2810,
+      "stonePixels": 15786,
+      "stoneRingPixels": 10033,
+      "stoneTopAllowancePixels": 2403,
+      "stoneRingFraction": 0.6355631572279234,
+      "stoneAllowedFraction": 0.7877866463955403,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": false,
+        "centre": true,
+        "lowerDiamond": false,
+        "upperDiamond": false,
+        "stones": false
+      },
+      "failed": [
+        "box",
+        "lowerDiamond",
+        "upperDiamond",
+        "stones"
+      ],
+      "pass": false
+    },
+    "selected": false
+  },
+  {
+    "id": "spring-sw-attempt-5",
+    "file": "raw/spring-sw-attempt-5.png",
+    "centred": true,
+    "prompt": "Replace the grey materials inside IMAGE1's ellipse only, preserving its exact silhouette, scale and position. Canvas1024x1024 transparent RGBA. Do not add any new pixels outside the grey ellipse. ERASE diamond outline and pool outline. This is a centred horizontal oval, x150..874,y331..693, centre(512,512). Leave150px clear eachside,331px clear above/below. 71%canvas width,35%canvas height, no enlargement.\nSW river exit lower-left. Grey95 NE/upstream crescent becomes very low mossy limestone/slate stones, all feet and pale faces confined to the narrow grey95 bank region between ellipticalr0.38 and0.5. Place lit tops along radius0.45, ellipse halfaxes326x163, mostly around(768,384). Bright pebbles only on this outer bank, no pebbles submerged in inner water. Stones maximum72pxwidth, shaded low faces, upper-left moss tops, light upper-left, dark lower-right rim and contact shade only. Grey130 bank elsewhere wet dark mud/gravel.\nGrey210 water becomes smooth, quiet broad teal shading with very few soft blue glints; NO white streaks, squarecells, mosaic, pixelblocks, noise or angular repetitive flow textures. Small pale spring pool/upwelling only inside the centre outlined ellipse108.6x54.3. No enlarged ripple or pale water ring outside this pool. Brightest#E0DDD2, water#487C84 #548A92 #3E6E78 #649EA2,stone#BCA98B #626B6C,moss#78804C. Three orfour broad shades, smooth painted contours.\nImage2 palette/style only,image3 river water and bank materials,image4 mud/pebbles materials,image5 stone light/forms/moss only. Do not copy compositions. Exact2:1 orthographicisometric scale16, tile64x32. No well,pipe,trough,shrine,buildings,people,reeds,trees,grass,castshadows,text,borders,glow,raised slab,ground outside guide disc.\nStrictly keep exact IMAGE1 grey mask. Water through lower-left is plain river within the disc; later finishing replaces this half. One spring painting, no mirror/reuse.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-sw-centred.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/reference-river.png",
+      "assets/source/mountain-2026-10-11/reference-bank.png",
+      "assets/source/base-v1/props-boulder.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        112,
+        389,
+        1141,
+        884
+      ],
+      "centre": [
+        626.5,
+        662.345703125
+      ],
+      "centreError": 35.349239445858444,
+      "paintedPixels": 395576,
+      "lowerOutside": 23996,
+      "upperOutside": 11859,
+      "upperBeyondAllowance": 5184,
+      "stonePixels": 15306,
+      "stoneRingPixels": 9834,
+      "stoneTopAllowancePixels": 1460,
+      "stoneRingFraction": 0.6424931399451196,
+      "stoneAllowedFraction": 0.7378805697112244,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": false,
+        "centre": true,
+        "lowerDiamond": false,
+        "upperDiamond": false,
+        "stones": false
+      },
+      "failed": [
+        "box",
+        "lowerDiamond",
+        "upperDiamond",
+        "stones"
+      ],
+      "pass": false
+    },
+    "selected": false
+  },
+  {
+    "id": "spring-nw-attempt-4",
+    "file": "raw/spring-nw-attempt-4.png",
+    "centred": true,
+    "prompt": "Replace the grey materials inside IMAGE1's ellipse only, preserving its exact silhouette, scale and position. Canvas1024x1024 transparent RGBA. Do not add any new pixels outside the grey ellipse. ERASE diamond outline and pool outline. This is a centred horizontal oval, x150..874,y331..693, centre(512,512). Leave150px clear eachside,331px clear above/below. 71%canvas width,35%canvas height, no enlargement.\nNW river exit upper-left. Grey95 SE/upstream crescent becomes very low mossy limestone/slate stones, all feet and pale faces confined to the narrow grey95 bank region between ellipticalr0.38 and0.5. Place lit tops along radius0.45, ellipse halfaxes326x163, mostly around(768,640). Bright pebbles only on this outer bank, no pebbles submerged in inner water. Stones maximum72pxwidth, shaded low faces, upper-left moss tops, light upper-left, dark lower-right rim and contact shade only. Grey130 bank elsewhere wet dark mud/gravel.\nGrey210 water becomes smooth, quiet broad teal shading with very few soft blue glints; NO white streaks, squarecells, mosaic, pixelblocks, noise or angular repetitive flow textures. Small pale spring pool/upwelling only inside the centre outlined ellipse108.6x54.3. No enlarged ripple or pale water ring outside this pool. Brightest#E0DDD2, water#487C84 #548A92 #3E6E78 #649EA2,stone#BCA98B #626B6C,moss#78804C. Three orfour broad shades, smooth painted contours.\nImage2 palette/style only,image3 river water and bank materials,image4 mud/pebbles materials,image5 stone light/forms/moss only. Do not copy compositions. Exact2:1 orthographicisometric scale16, tile64x32. No well,pipe,trough,shrine,buildings,people,reeds,trees,grass,castshadows,text,borders,glow,raised slab,ground outside guide disc.\nStrictly keep exact IMAGE1 grey mask. Water through upper-left is plain river within the disc; later finishing replaces this half. One spring painting, no mirror/reuse.",
+    "references": [
+      "assets/source/mountain-2026-10-11/guides/spring-nw-centred.png",
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/mountain-2026-10-11/reference-river.png",
+      "assets/source/mountain-2026-10-11/reference-bank.png",
+      "assets/source/base-v1/props-boulder.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "scale": 1.224609375,
+      "opaqueBackground": false,
+      "expectedBox": [
+        183.69140625,
+        405.345703125,
+        1070.30859375,
+        848.654296875
+      ],
+      "paintedBox": [
+        135,
+        398,
+        1117,
+        888
+      ],
+      "centre": [
+        626,
+        666.345703125
+      ],
+      "centreError": 39.358408941427435,
+      "paintedPixels": 377566,
+      "lowerOutside": 23776,
+      "upperOutside": 4296,
+      "upperBeyondAllowance": 2996,
+      "stonePixels": 13405,
+      "stoneRingPixels": 10938,
+      "stoneTopAllowancePixels": 287,
+      "stoneRingFraction": 0.8159641924654979,
+      "stoneAllowedFraction": 0.8373741141365162,
+      "checks": {
+        "square": true,
+        "rgba": true,
+        "box": false,
+        "centre": true,
+        "lowerDiamond": false,
+        "upperDiamond": false,
+        "stones": false
+      },
+      "failed": [
+        "box",
+        "lowerDiamond",
+        "upperDiamond",
+        "stones"
+      ],
+      "pass": false
+    },
+    "selected": false
+  },
+  {
+    "id": "glacier-ice-attempt-2",
+    "file": "raw/glacier-ice-attempt-2.png",
+    "prompt": "Use case: stylized-concept. Generate ONE NEW glacier ice ground-material swatch, NOT an image edit. Four attached images are references only: 1 theme/town-growth style board for smooth painted house style; 2 approved rock-surface for ground-swatch scale, cluster size and finish ONLY, do not paint its rocks, its interlocking plates, its cracks or pixelated edges; 3 glacier-strip-y.png is the ice palette and short narrow curved crack appearance to MATCH, do not copy its channel shape, rubble, snow whiteness or directional composition; 4 snow.png is the neighbouring material, for quieter soft tone changes ONLY, the ice should be darker than that snow.\nRequested 1024x1024 px PNG FULLY OPAQUE every pixel including every edge and corner. Fill the whole square evenly with flat ground-material matte desaturated blue-grey glacier ice as seen from 30 degrees down, screen aligned, NO perspective or tile shape. One tile about 330x165px. Broad smooth softly changing ice tone clusters in only three or four shades: lit top #C8D3D8 is the BRIGHTEST ice colour, body #AEBCC3, shade #8E9EA7, tiny crevasses #66767F. One upper-left light, subtle flat surface lighting, NO reflections or glossy glass. No snow drifts. A few faint dirt streaks only.\nMost important: a continuous smooth ice field with VERY SPARSE ISOLATED SHORT CRACKS. Aim about 18-25 tiny individual gently curved strokes irregularly scattered across the entire square with widely separated endpoints and large open ice areas. Each stroke only 35-75px long at 1024, absolutely none 100px or longer. Each crack is disconnected from EVERY other crack, no branching, crossings, joining, enclosing shapes or closed cells. Scatter in different orientations with no common direction and no parallel rows. At least 70% of the ice stays broad smooth uncracked surface. Do not surround broad colour patches with lines. Small subdued marks, never slab edges. Never paving, flagstones, tiles, polygon plates, shattered ice, crazed glaze or a crack network.\nSmooth painted contours and broad colour clusters, three or four shades per material, no per-pixel noise, grain, pixel-art stair edges or repeated stamp shapes. Match quiet material language of strip-y. Palette context forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42. No colour brighter than #C8D3D8 ice top, cursor #ECE4D0 or selection amber #E8AA48. No vivid blue/cyan or valid-placement #66CCD6. Edge seamlessness desirable, maintain material even at edges.\nNever: diamond, tile edges, borders, horizon, perspective depth, peaks, rocks, standing walls, cast shadows, central motif, long ribbons or parallel lines, crack network, people, footprints, text or glow. Material ONLY, full-canvas opaque square, no guide.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/mountain-2026-10-11/glacier-strip-y.png",
+      "assets/source/mountain-2026-10-11/snow.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "darkerThanShadeShare": 0.011854887327060583,
+      "darkerThanShadeDefinition": "Rec.709 encoded RGB luma < luma(#8E9EA7)",
+      "shadeLuma": 155.2482,
+      "minAlpha": 255,
+      "minBorderAlpha": 255,
+      "opacityPass": true,
+      "darkComponentsAtLeast8Pixels": 59,
+      "largestDarkComponentDiagonalAt1024": 101.86083136600307,
+      "longestDarkComponents": [
+        {
+          "pixels": 1032,
+          "box": [
+            1106,
+            284,
+            1199,
+            365
+          ],
+          "diagonal": 124.73972903610142
+        },
+        {
+          "pixels": 892,
+          "box": [
+            479,
+            989,
+            575,
+            1058
+          ],
+          "diagonal": 119.6202324023825
+        },
+        {
+          "pixels": 904,
+          "box": [
+            148,
+            675,
+            241,
+            747
+          ],
+          "diagonal": 119.01680553602505
+        },
+        {
+          "pixels": 890,
+          "box": [
+            1022,
+            928,
+            1110,
+            1001
+          ],
+          "diagonal": 115.74541027617468
+        },
+        {
+          "pixels": 753,
+          "box": [
+            49,
+            426,
+            138,
+            486
+          ],
+          "diagonal": 108.72442227944926
+        },
+        {
+          "pixels": 886,
+          "box": [
+            476,
+            838,
+            559,
+            904
+          ],
+          "diagonal": 107.4476616776745
+        },
+        {
+          "pixels": 918,
+          "box": [
+            813,
+            1080,
+            885,
+            1150
+          ],
+          "diagonal": 101.83319694480774
+        },
+        {
+          "pixels": 735,
+          "box": [
+            746,
+            583,
+            829,
+            626
+          ],
+          "diagonal": 94.82615672903758
+        }
+      ],
+      "visualReview": "Disconnected cracks; rejected conservatively because longest full stroke including pale tips is close to the approximately 100px limit."
+    }
+  },
+  {
+    "id": "glacier-ice-attempt-3",
+    "file": "raw/glacier-ice-attempt-3.png",
+    "prompt": "Use case: stylized-concept. Generate ONE NEW glacier ice ground-material swatch, NOT an image edit. Four attached images are references only: 1 theme/town-growth style board for smooth painted house style; 2 approved rock-surface for ground-swatch scale, cluster size and finish ONLY, do not paint its rocks, its interlocking plates, its cracks or pixelated edges; 3 glacier-strip-y.png is the ice palette and short narrow curved crack appearance to MATCH, do not copy its channel shape, rubble, snow whiteness or directional composition; 4 snow.png is the neighbouring material, for quieter soft tone changes ONLY, the ice should be darker than that snow.\nRequested 1024x1024 px PNG FULLY OPAQUE every pixel including every edge and corner. Fill the whole square evenly with flat ground-material matte desaturated blue-grey glacier ice as seen from 30 degrees down, screen aligned, NO perspective or tile shape. One tile about 330x165px. Broad smooth softly changing ice tone clusters in only three or four shades: lit top #C8D3D8 is the BRIGHTEST ice colour, body #AEBCC3, shade #8E9EA7, tiny crevasses #66767F. One upper-left light, subtle flat surface lighting, NO reflections or glossy glass. No snow drifts. A few faint dirt streaks only.\nMost important: a continuous smooth ice field with VERY SPARSE ISOLATED SHORT CRACKS. Aim about 18-25 tiny individual gently curved strokes irregularly scattered across the entire square with widely separated endpoints and large open ice areas. Each stroke only 35-75px long at 1024, absolutely none 100px or longer. Each crack is disconnected from EVERY other crack, no branching, crossings, joining, enclosing shapes or closed cells. Scatter in different orientations with no common direction and no parallel rows. At least 70% of the ice stays broad smooth uncracked surface. Do not surround broad colour patches with lines. Small subdued marks, never slab edges. Never paving, flagstones, tiles, polygon plates, shattered ice, crazed glaze or a crack network.\nSmooth painted contours and broad colour clusters, three or four shades per material, no per-pixel noise, grain, pixel-art stair edges or repeated stamp shapes. Match quiet material language of strip-y. Palette context forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, water #477B82, copper #A36B42. No colour brighter than #C8D3D8 ice top, cursor #ECE4D0 or selection amber #E8AA48. No vivid blue/cyan or valid-placement #66CCD6. Edge seamlessness desirable, maintain material even at edges.\nNever: diamond, tile edges, borders, horizon, perspective depth, peaks, rocks, standing walls, cast shadows, central motif, long ribbons or parallel lines, crack network, people, footprints, text or glow. Material ONLY, full-canvas opaque square, no guide.\nRefinement for this independent new attempt: make the crack marks noticeably SHORTER. Each entire visible stroke including its pale tapered ends must be only 25-50px long at 1024; hard maximum 60px, leaving generous safety below the 100px rejection limit. Around 20 separated tiny strokes, narrow subtle accents against overwhelmingly smooth quiet ice. Broad surface variation should remain soft and low contrast, without any extra line-like brush strokes. Strict highlight ceiling #C8D3D8; keep even light-blue-grey ice material all the way to edges.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/mountain-2026-10-11/glacier-strip-y.png",
+      "assets/source/mountain-2026-10-11/snow.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "darkerThanShadeShare": 0.00784030178389282,
+      "darkerThanShadeDefinition": "Rec.709 encoded RGB luma < luma(#8E9EA7)",
+      "shadeLuma": 155.2482,
+      "minAlpha": 255,
+      "minBorderAlpha": 255,
+      "opacityPass": true,
+      "darkComponentsAtLeast8Pixels": 44,
+      "largestDarkComponentDiagonalAt1024": 72.05425295214901,
+      "longestDarkComponents": [
+        {
+          "pixels": 501,
+          "box": [
+            1083,
+            1157,
+            1151,
+            1211
+          ],
+          "diagonal": 88.23831367382311
+        },
+        {
+          "pixels": 448,
+          "box": [
+            913,
+            1098,
+            989,
+            1135
+          ],
+          "diagonal": 85.86617494683225
+        },
+        {
+          "pixels": 592,
+          "box": [
+            791,
+            198,
+            858,
+            242
+          ],
+          "diagonal": 81.54140052758474
+        },
+        {
+          "pixels": 522,
+          "box": [
+            812,
+            643,
+            882,
+            680
+          ],
+          "diagonal": 80.52949770115296
+        },
+        {
+          "pixels": 416,
+          "box": [
+            630,
+            1122,
+            701,
+            1157
+          ],
+          "diagonal": 80.49844718999243
+        },
+        {
+          "pixels": 474,
+          "box": [
+            218,
+            1142,
+            282,
+            1186
+          ],
+          "diagonal": 79.05694150420948
+        },
+        {
+          "pixels": 517,
+          "box": [
+            383,
+            981,
+            444,
+            1029
+          ],
+          "diagonal": 79.0253124005214
+        },
+        {
+          "pixels": 441,
+          "box": [
+            1102,
+            300,
+            1171,
+            335
+          ],
+          "diagonal": 78.71467461661771
+        }
+      ],
+      "visualReview": {
+        "fullSize": "Pass: short disconnected gently curved strokes with varied orientations; no joining, closed cells or paving network; broad smooth ice occupies most of the surface.",
+        "gameScale": "Pass at 199x199: blue-grey ice remains calm, scattered dark strokes remain distinct, and material agrees with strip-y.",
+        "crackLength": "Entire visible strokes reviewed at native size, approximately under 100px at requested 1024 scale. Dark-component maximum box diagonal is 72.05px; component boxes assist visual review, not a skeleton length measurement."
+      },
+      "paletteReview": "Brightest RGB 223,228,232 exceeds intended ice-top tone; retained while trying darker final attempt.",
+      "highlightReview": {
+        "brightestRgb": [
+          223,
+          228,
+          232
+        ],
+        "maxLuma": 227.2258,
+        "cursorWhiteLuma": 228.2568,
+        "aboveIntendedIceTopShare": 0.04373055663662564,
+        "limitation": "Some highlights exceed intended #C8D3D8 ice tone, while remaining below cursor-white luma; selected as closest after three new attempts because cracks and opacity pass."
+      }
+    },
+    "selected": true
+  },
+  {
+    "id": "glacier-ice-attempt-4",
+    "file": "raw/glacier-ice-attempt-4.png",
+    "prompt": "Generate ONE NEW fully opaque 1024x1024 PNG flat glacier ICE ground-material swatch. Four images are REFERENCES only, no image edit and no guide. 1 house style board, 2 rock-surface for small cluster scale and finish only (do not copy rocks or crack network), 3 strip-y for blue-grey ICE material and short dark crevasses only (do NOT copy white snow highlights or channel), 4 snow for neighbouring material contrast only, do NOT paint snow. Fill every pixel edge to edge with flat screen-aligned ground seen from 30 degrees down, no perspective, no shape, no horizon.\nICE MUST BE MEDIUM DESATURATED BLUE-GREY, not pale white snow. Dominant body #AEBCC3 with subdued #8E9EA7 areas and restrained #C8D3D8 lit areas; #C8D3D8 is an ABSOLUTE ceiling: no painted RGB highlight may exceed R200 G211 B216. Absolutely no white, snow flecks or light rims. Matte surface under gentle upper-left light, no shine or glass reflections. Broad smooth colour clusters and soft low-contrast tone changes, three or four shades total, smooth painted edges, no texture noise or pixel-art stairs. Sparse barely visible dirt flecks only.\nOnly about 15-20 tiny ISOLATED dark #66767F gently curved crack marks across the entire square. Each entire mark is 25-50px long at 1024, NEVER longer than 60px even including its tapered ends. All different orientations, widely separated, no cracks join, intersect, branch or close a cell. More than 75% of surface is broad smooth ice with no cracks. No outlines around tone patches, no paving, plates, tiles or crazed glaze, no repeating shapes. One tile is330x165px, cracks must be a small fraction of it. No long lines, ribbons, shared direction or parallel rows. Edge seamlessness desirable.\nNo cyan, bright blue, diamond, tile edges, border, horizon, perspective, peaks, rocks, landscape, surrounding ground, snow, cast shadows, central motif, people, footprints, text, glow. Fully opaque real PNG including borders and corners. Darker than neighbouring snow, match the BODY tones of strip-y, not its bright snow dust.",
+    "references": [
+      "docs/art-direction/images/03-theme-town-growth.png",
+      "assets/source/terrain-production/rock-surface.png",
+      "assets/source/mountain-2026-10-11/glacier-strip-y.png",
+      "assets/source/mountain-2026-10-11/snow.png"
+    ],
+    "returned": [
+      1254,
+      1254
+    ],
+    "measured": {
+      "darkerThanShadeShare": 0.012758534730330248,
+      "darkerThanShadeDefinition": "Rec.709 encoded RGB luma < luma(#8E9EA7)",
+      "shadeLuma": 155.2482,
+      "minAlpha": 255,
+      "minBorderAlpha": 255,
+      "opacityPass": true,
+      "darkComponentsAtLeast8Pixels": 66,
+      "largestDarkComponentDiagonalAt1024": 126.50773745775018,
+      "longestDarkComponents": [
+        {
+          "pixels": 1118,
+          "box": [
+            564,
+            161,
+            698,
+            236
+          ],
+          "diagonal": 154.92256130079954
+        },
+        {
+          "pixels": 978,
+          "box": [
+            1060,
+            507,
+            1184,
+            584
+          ],
+          "diagonal": 147.33974345029924
+        },
+        {
+          "pixels": 1097,
+          "box": [
+            183,
+            544,
+            312,
+            606
+          ],
+          "diagonal": 144.46106741956464
+        },
+        {
+          "pixels": 806,
+          "box": [
+            85,
+            1104,
+            187,
+            1200
+          ],
+          "diagonal": 141.48498153514387
+        },
+        {
+          "pixels": 1035,
+          "box": [
+            790,
+            1029,
+            901,
+            1101
+          ],
+          "diagonal": 133.68993978605872
+        },
+        {
+          "pixels": 884,
+          "box": [
+            998,
+            851,
+            1117,
+            904
+          ],
+          "diagonal": 131.59027319676787
+        },
+        {
+          "pixels": 920,
+          "box": [
+            379,
+            432,
+            490,
+            499
+          ],
+          "diagonal": 131.0267148332736
+        },
+        {
+          "pixels": 696,
+          "box": [
+            417,
+            649,
+            508,
+            722
+          ],
+          "diagonal": 118.06777714516353
+        }
+      ],
+      "visualReview": "Rejected: several cracks longer than approximately 100px at requested scale; maximum dark component box diagonal 126.51px."
+    }
+  }
+]

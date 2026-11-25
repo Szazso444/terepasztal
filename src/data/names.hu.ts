@@ -92,6 +92,31 @@ export const HU_NAMES = {
     },
     ice1: { era: '1991, Németország első nagysebességű szerelvénye. Többáramnemű motorkocsi.' },
     mk48: { era: 'Magyar keskeny nyomtávú dízel-hidraulikus mozdony.' },
+    mk45: { era: '1958, dízel-hidraulikus mozdony Magyarország gyermek- és erdei vasútjaira.' },
+    nklj_aeg: {
+      era: '1921, AEG rudazatos villamos mozdony a svéd 891 mm-es Nordmark-Klarälven vonalra. Kicsi, de húzza az ércet.',
+    },
+    br45: {
+      era: '1937, német 2-10-2, a Reichsbahn legerősebb gőzöse, 2000 tonnás érccsatokhoz építve.',
+    },
+    e94: {
+      era: '1940, német nehéz tehervonati villamos, a zöld krokodil: két orr a forgóvázakon, köztük a fülke.',
+    },
+    sd70ace: {
+      era: '2004, hattengelyes váltakozó áramú tolató-vonali mozdony, a BNSF és a Union Pacific mai arca.',
+    },
+    '2te10v': {
+      era: '1975, szovjet kétszekciós tehervonati dízel: két fülkés egység háttal összekapcsolva.',
+    },
+    e499: {
+      era: '1953, Škoda gyorsvonati villamos a csehszlovák 3 kV-os vonalakra. Mindenki Bobinának hívja.',
+    },
+    aem7: {
+      era: '1978, svéd tervezésű villamos a Northeast Corridorra. A Kenyérpirító harminc évig 200 km/h-val futott.',
+    },
+    dmir_yellowstone: {
+      era: '1941, Duluth, Missabe & Iron Range 2-8-8-4. Vasérc-szerelvényeket vontatott a Felső-tó kikötőibe.',
+    },
   },
   wagons: {
     water_cart: { name: 'Fa vizeskocsi', era: 'Hordó egy kereten. Csöpög, de gurul.' },
@@ -191,7 +216,7 @@ export const HU_NAMES = {
     farm: {
       name: 'Tanyai megálló',
       flavor:
-        'Búzát termel. Vidd a fűtőházba, és a szélmalom élelmet őröl belőle a lakosoknak és a személyzetnek.',
+        'Búzát termel. Vidd a pályaudvarra, és a szélmalom élelmet őröl belőle a lakosoknak és a személyzetnek.',
     },
     lumber: { name: 'Fatelep', flavor: 'Fát vág építkezéshez és faszénhez.' },
     quarry: { name: 'Kőfejtő', flavor: 'Követ fejt építkezéshez és vashoz.' },
@@ -210,14 +235,14 @@ export const HU_NAMES = {
       flavor: 'Az áruját a város készletével osztja meg; városon kívül saját készlete van.',
     },
     depot: {
-      name: 'Fűtőház',
+      name: 'Pályaudvar',
       flavor:
-        'Kétvágányú fűtőház négy kapuval. Az itt épült vonatok innen gördülnek ki, a kapunál kirakott áru pedig a készletbe kerül. Csak ezen át lehet bejutni.',
+        'Kétvágányú pályaudvar négy kapuval. Az itt épült vonatok innen gördülnek ki, a kapunál kirakott áru pedig a készletbe kerül. Csak ezen át lehet bejutni.',
     },
     narrow_depot: {
-      name: 'Keskeny fűtőház',
+      name: 'Keskeny pályaudvar',
       flavor:
-        'Keskeny nyomtávú fűtőház, egy átmenő vágánnyal. Keskeny vonatokat épít és tankol, amelyek 1×1-es íveken fordulnak: szűk helyekre, és a majdani bányákhoz.',
+        'Keskeny nyomtávú pályaudvar, egy átmenő vágánnyal. Keskeny vonatokat épít és tankol, amelyek 1×1-es íveken fordulnak: szűk helyekre, és a majdani bányákhoz.',
     },
     station: {
       name: 'Állomás',
@@ -385,7 +410,7 @@ export const HU_RULES: Record<string, { label: string; hint?: string }> = {
     hint: 'csempe egy készlettől, városon kívül',
   },
   warehouseCap: { label: 'Raktárkészlet szintenként' },
-  depotCap: { label: 'Fűtőház készletének felső határa' },
+  depotCap: { label: 'Pályaudvar készletének felső határa' },
   repeatCostStep: { label: 'Többletköltség ismételt építésenként' },
   inCabCost: { label: 'Vezetőállás-jelzés beszerelése' },
   trackCostScale: { label: 'Sínköltség szorzója' },
@@ -497,7 +522,7 @@ export const HU_MIGRATIONS: Record<number, string> = {
   3: 'az üzemek listája üresen indult',
   4: 'a saját chunkok az elért szintből újjáépítve: a kezdő chunktól annyi gyűrűn belül minden chunk',
   5: 'az 1. nap évszaka tavasz',
-  6: 'a városok üresen indultak, az állomások 0 forgatással, az útvonalmódok az új nevekre átírva, a kezdőhelyre fűtőház került (betöltéskor érvényesül)',
+  6: 'a városok üresen indultak, az állomások 0 forgatással, az útvonalmódok az új nevekre átírva, a kezdőhelyre pályaudvar került (betöltéskor érvényesül)',
   7: 'a kereskedelmi pult üresen nyílt: nincs állandó ügylet, az üzemanyag alapáron; az útvonalmódok az új nevekre átírva',
   8: 'minden sínelem széles sínnek számít; a feszültség alatti sínekre felsővezeték került (betöltéskor érvényesül); a régi lakóházak 1. szintű, hatlakosú lakóházak lettek; a hírnév megszűnt: az elért szint lett a korszak (legfeljebb a Villamos korszak), az összes bevétel 0-ról indul, a termelési lánc egyszerű; a szerződések gyakoriak, vonat nélkül; az automatikus elfogadás ritkaságonkénti beállítás lett',
   9: 'a járműparkban lévő minden modell receptje megadva; a mozdonymódok az alapszabály szerint (az első egység vezet, a vezérlési osztályába tartozók többes vezérlésben, a többiek kettős vontatásban; betöltéskor érvényesül); az akkumulátorkocsik üresen indulnak',
@@ -508,10 +533,10 @@ export const HU_MIGRATIONS: Record<number, string> = {
   14: 'semmi sem állt fejlesztés alatt: a fejlesztés mostantól játékidőbe telik, addig zárva tartja az épületet, és a mentés megőrzi a folyamatban lévőket',
   15: 'minden üzem úgy néz, ahogy rajzolták (0 forgatás); mostantól az állomások, üzemek és házak négy irány egyikében állnak, és a mentés megőrzi ezt',
   16: 'egyik vonat sem félreállás közben mentődött: a félreálló vonat a beállás helyén vár, a mozgó újratervez, a várakozó újra néz, az útban álló tétlen vonat és a beszorulás azonnal újra próbálkozik, a megjegyzések üresek; mostantól a mentés mindezt megőrzi, és minden vonat ott folytatja, ahol tartott',
-  17: 'a Termelés és a Gyűjtés egy Teherfuvar móddá vált: az ilyen vonatok mostantól Teherfuvarként oda mennek, ahol a legtöbb áru áll, termelőhöz vagy raktárhoz, a termelők áruját raktárba vagy fűtőházba, a raktárakét fűtőházba viszik; mostantól a mentés megőrzi, hol rakott le árut a vonat',
+  17: 'a Termelés és a Gyűjtés egy Teherfuvar móddá vált: az ilyen vonatok mostantól Teherfuvarként oda mennek, ahol a legtöbb áru áll, termelőhöz vagy raktárhoz, a termelők áruját raktárba vagy pályaudvarra, a raktárakét pályaudvarra viszik; mostantól a mentés megőrzi, hol rakott le árut a vonat',
   18: 'a még nem tárolt talajú generált térkép talaja a szokásos módon készül el, chunkonként tárolódik, és a mentés azonnal íródik (betöltéskor érvényesül); mostantól a mentés minden chunk talaját megőrzi, így a térképgenerálás változása csak az új földekre hat',
   19: 'nem épült út: az útlista üresen indult',
-  20: 'a közös készlet a kezdő fűtőházba került; minden raktár megtartja a saját áruját',
+  20: 'a közös készlet a kezdő pályaudvarra került; minden raktár megtartja a saját áruját',
   21: 'a hat vonaltípus váltotta fel a sínosztályokat: a széles és a nagysebességű sín Mellékvonal lett, az átmenetek Mellékvonal-egyenesek',
   22: 'a vonatok színkódot kaptak: a régebbi mentések minden vonata az első színt kapja',
   24: 'a sínek élettel indulnak: minden elem teljes épségű, a kopásról szóló figyelmeztetések még nem jelentek meg',
