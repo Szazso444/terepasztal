@@ -1,10 +1,10 @@
 # Supervisor state
 
-Last updated: 2026-11-25 (cloud run 19:36Z).
+Last updated: 2026-11-25 (cloud run 21:31Z).
 
 ## Lock
 
-cloud run, started 2026-11-25 21:31Z
+none
 
 ## Links
 
@@ -51,8 +51,10 @@ and the check re-running): each needs only the render check before merging.
   #658 #659 #673 #684 (only wiring lines in `src/game.ts`).
 - #702 night flicker: clean, green.
 - People #694, #695: develop merged in, the old ageTooltip failure is gone (check re-running).
-- Track wear #647 (`scope:cross` added) and #693 on it (a timeout fix pushed for the six-train
-  wear test).
+- Track wear #647 (`scope:cross` added) and #693 on it. #647's check went red after the 19:36Z
+  develop merge (the measured F7 made one wear test's three-car train too long for its gap);
+  fixed 21:31Z with the change #693 already carried (`00c09f2`), merged up into #693
+  (`47291e6`). Both green on check (and #647 on scope) again.
 - #697 Tunnels step 1: check green; scope fails only for `gate:approved` (it re-blesses
   `src/world/mapgen.test.ts` for tall mountains). The charter lets you add it; tall mountains
   are the point of the change.
