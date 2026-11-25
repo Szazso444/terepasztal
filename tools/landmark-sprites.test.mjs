@@ -93,7 +93,8 @@ describe('shrink', () => {
   });
 });
 
-const shipped = existsSync(`${FINAL}/calibration.json`) && existsSync('public/assets/landmarks.png');
+const shipped =
+  existsSync(`${FINAL}/calibration.json`) && existsSync('public/assets/landmarks.png');
 
 describe.runIf(shipped)('the exported landmarks', () => {
   const calibration = shipped ? readJson(`${FINAL}/calibration.json`) : null;
