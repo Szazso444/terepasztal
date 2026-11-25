@@ -816,9 +816,11 @@ export class Train {
    * it within half a tile. Where the line ends sooner the train stops at its end.
    */
   private runOn(track: TrackGraph, route: PathSegment[]): PathSegment[] {
-    const L = this.vehicleSpecs[0]?.L ?? 0;
+    const spec = this.vehicleSpecs[0];
+    const L = spec?.L ?? 0;
     const out = [...route];
-    for (let i = Math.round(L * (this.locoDef.plan === 'tender' ? 0.8 : 0.5)); i > 0; i--) {
+    // the plan is the body's, not the definition's: a measured model's comes from its gear
+    for (let i = Math.round(L * (spec?.plan === 'tender' ? 0.8 : 0.5)); i > 0; i--) {
       const last = out[out.length - 1];
       if (!track.connected(last.x, last.y, last.out)) break;
       const x = last.x + DIR_DX[last.out];
