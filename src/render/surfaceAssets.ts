@@ -1,3 +1,4 @@
+import { lampMask, wornPixels } from './landmarkDraw';
 import { ImageSource, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { FrameInfo } from '../engine/atlas';
 import type { Crane } from '../art/buildingLife';
@@ -200,6 +201,7 @@ const unit = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 export class SurfaceAssets {
   private pictures = new Map<string, Texture>();
   private windows = new Map<string, Texture>();
+  private landmarkTextures = new Map<string, Texture>();
   private cranes = new Map<string, { picture: Texture; load: AnchoredTexture }>();
   private groundFits = new Map<string, GroundFitArt>();
   private summits = new Map<string, Texture>();
@@ -501,8 +503,35 @@ export class SurfaceAssets {
     }
     return result;
   }
+  /** A landmark's picture darkened and desaturated (a salvaged one). */
+  landmarkWorn(key: string, f: FrameInfo) {
+    return this.landmarkTexture(`worn:${key}`, f, wornPixels);
+  }
+  /** The lamp-yellow pixels of a landmark's picture, which light up at night (restored). */
+  landmarkWindow(key: string, f: FrameInfo) {
+    return this.landmarkTexture(`lamp:${key}`, f, lampMask);
+  }
+  private landmarkTexture(
+    cacheKey: string,
+    f: FrameInfo,
+    make: (data: Uint8ClampedArray) => Uint8ClampedArray,
+  ) {
+    let result = this.landmarkTextures.get(cacheKey);
+    if (!result) {
+      const { canvas, ctx, pixels } = read(f);
+      ctx.putImageData(
+        new ImageData(new Uint8ClampedArray(make(pixels.data)), pixels.width, pixels.height),
+        0,
+        0,
+      );
+      result = texture(canvas, f);
+      this.landmarkTextures.set(cacheKey, result);
+    }
+    return result;
+  }
   destroy() {
     for (const t of [
+      ...this.landmarkTextures.values(),
       ...this.pictures.values(),
       ...this.windows.values(),
       ...[...this.groundFits.values()].flatMap((g) =>
@@ -514,6 +543,7 @@ export class SurfaceAssets {
       t.destroy(true);
     this.pictures.clear();
     this.windows.clear();
+    this.landmarkTextures.clear();
     this.groundFits.clear();
     this.summits.clear();
     this.shafts.clear();

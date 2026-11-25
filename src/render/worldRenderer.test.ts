@@ -54,6 +54,7 @@ import {
 } from './wheatField';
 import { WheatFields } from './wheatFields';
 import { WorldRenderer } from './worldRenderer';
+import { landmarkDepth } from './landmarkDraw';
 
 /** The paved tiles a world renderer holds (`setCity`), which its `paved` reads. */
 const cityOf = (world: WorldRenderer) => (world as unknown as { city: Set<number> }).city;
@@ -89,6 +90,8 @@ const FRAMES: Record<string, FrameInfo> = {
   'props/oak_2': frame(20, 30),
   'props/bush_0': frame(12, 10),
   'props/coal_0': frame(24, 16),
+  'landmarks/bellkeepers_refuge': frame(40, 110),
+  'landmarks/sleeping_foundry': frame(150, 110),
 };
 
 /** What a ground fit hands out in these tests, one set per picture and scale, as surfaces cache. */
@@ -144,6 +147,8 @@ const noRoads = () => ({
   deckMeshes: new Map(),
   crossings: new Container(),
   propSprites: new Map(),
+  landmarkCover: new Set(),
+  landmarkItems: [],
   flattened: new Set(),
   cutSprites: new WeakSet(),
   deposits: new WeakSet(),
@@ -2443,6 +2448,118 @@ describe('the paving of a town the simulation raises, as the game hands it over'
     );
     expect(alone).toBeGreaterThan(10);
   }, 30_000);
+});
+
+describe('landmarks drawn in the world', () => {
+  const WORN = new Texture({ source: SOURCE, frame: new Rectangle(0, 0, 3, 3) });
+  const LAMP = new Texture({ source: SOURCE, frame: new Rectangle(0, 0, 5, 5) });
+  /** A 10 x 10 world with its first region built, the landmark state its constructor would set. */
+  function landmarkWorld() {
+    const r = renderer();
+    Object.assign(r.world, {
+      map: { w: 10, h: 10, originX: 0, originY: 0, terrain: [0], biome: [0] },
+      landmarkItems: [],
+      landmarkLights: new Map(),
+      landmarkMarks: new Map(),
+      landmarkCover: new Set(),
+      scatterSprites: new Map(),
+      isBuilt: () => true,
+      buildScatterAt: () => {},
+    });
+    Object.assign((r.world as unknown as { surfaces: object }).surfaces, {
+      landmarkWorn: () => WORN,
+      landmarkWindow: () => LAMP,
+    });
+    const structures = (r.world as unknown as { structures: Map<string, Sprite> }).structures;
+    return { ...r, structures };
+  }
+  type Stage = 'hidden' | 'spotted' | 'surveyed' | 'restoring' | 'restored' | 'salvaged';
+  const at = (stage: Stage, def = 'bellkeepers_refuge', x = 4, y = 5) => ({
+    id: 1,
+    def,
+    x,
+    y,
+    stage,
+  });
+
+  it('makes no sprite for a hidden landmark, one for each stage after it', () => {
+    const { world, structures } = landmarkWorld();
+    world.setLandmarks([at('hidden')]);
+    expect(structures.size).toBe(0);
+    for (const stage of ['spotted', 'surveyed', 'restoring', 'restored', 'salvaged'] as const) {
+      world.setLandmarks([at(stage)]);
+      expect(structures.size).toBe(1);
+    }
+    world.setLandmarks([at('hidden')]);
+    expect(structures.size).toBe(0);
+  });
+
+  it('sorts a 1 x 1 and a 3 x 2 footprint by its front tile, centred on the footprint', () => {
+    const { world, structures } = landmarkWorld();
+    world.setLandmarks([at('surveyed'), { ...at('surveyed', 'sleeping_foundry', 1, 1), id: 2 }]);
+    expect(structures.get('landmark:1')!.zIndex).toBe(landmarkDepth(4, 5, 1, 1));
+    expect(structures.get('landmark:2')!.zIndex).toBe(landmarkDepth(1, 1, 3, 2));
+    const centre = tileToWorld(1 + 1, 1 + 0.5);
+    expect(structures.get('landmark:2')!.x).toBeCloseTo(centre.x, 6);
+    expect(structures.get('landmark:2')!.y).toBeCloseTo(centre.y, 6);
+  });
+
+  it('marks spotted landmarks only, lights restored ones only and wears salvaged ones', () => {
+    const { world, structures } = landmarkWorld();
+    const marks = () => (world as unknown as { landmarkMarks: Map<number, unknown> }).landmarkMarks;
+    const lights = () =>
+      (world as unknown as { landmarkLights: Map<number, unknown> }).landmarkLights;
+    world.setLandmarks([at('spotted')]);
+    expect([marks().size, lights().size]).toEqual([1, 0]);
+    world.setLandmarks([at('surveyed')]);
+    expect([marks().size, lights().size]).toEqual([0, 0]);
+    world.setLandmarks([at('restored')]);
+    expect([marks().size, lights().size]).toEqual([0, 1]);
+    world.setWindowNight(1);
+    expect([...lights().values()].map((l) => (l as Sprite).alpha)).toEqual([0.88]);
+    expect(structures.get('landmark:1')!.texture).not.toBe(WORN);
+    world.setLandmarks([at('salvaged')]);
+    expect([marks().size, lights().size]).toEqual([0, 0]);
+    expect(structures.get('landmark:1')!.texture).toBe(WORN);
+    world.setLandmarks([at('restored')]);
+    expect(structures.get('landmark:1')!.texture).not.toBe(WORN);
+  });
+
+  it('hides the vegetation under a footprint without destroying it, and shows it again when it goes', () => {
+    const { world } = landmarkWorld();
+    const props: PropInstance[] = [{ kind: 'bush', variant: 0, ox: 0, oy: 0 }];
+    const build = (i: number) =>
+      (world as unknown as { buildPropsAt(i: number, l: PropInstance[]): void }).buildPropsAt(
+        i,
+        props,
+      );
+    const under = 5 * 10 + 4,
+      beside = 5 * 10 + 5;
+    build(under);
+    build(beside);
+    const sprites = (world as unknown as { propSprites: Map<number, Sprite[]> }).propSprites;
+    world.setLandmarks([at('spotted')]);
+    expect(sprites.get(under)![0].visible).toBe(false);
+    expect(sprites.get(beside)![0].visible).toBe(true);
+    // a hidden landmark is not there yet
+    world.setLandmarks([at('hidden')]);
+    expect(sprites.get(under)![0].visible).toBe(true);
+    world.setLandmarks([at('spotted')]);
+    world.setLandmarks([]);
+    expect(sprites.get(under)![0].visible).toBe(true);
+    expect(sprites.get(under)![0].destroyed).toBe(false);
+  });
+
+  it('draws a landmark only once its region is revealed', () => {
+    const { world, structures } = landmarkWorld();
+    let built = false;
+    Object.assign(world, { isBuilt: () => built });
+    world.setLandmarks([at('spotted')]);
+    expect(structures.size).toBe(0);
+    built = true;
+    world.setLandmarks([at('spotted')]);
+    expect(structures.size).toBe(1);
+  });
 });
 
 /** Points on tile (i, j) the paving picture is read at: a 3 x 3 grid across it. */
