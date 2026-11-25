@@ -377,6 +377,58 @@ describe('validateContent', () => {
   });
 });
 
+describe('the maintenance rolling stock', () => {
+  it('has two Steam wagons that carry nothing and say they are maintenance wagons', () => {
+    const wagons = shipped.content.wagons.filter((w) => w.maintenance);
+    expect(wagons.map((w) => w.id)).toEqual(['maint_wagon_narrow', 'maint_wagon_branch']);
+    for (const w of wagons) {
+      expect([w.tier, w.capacity, w.carries, w.weight, w.rarity, w.body, w.paint], w.id).toEqual([
+        0,
+        0,
+        'bulk',
+        8,
+        'N',
+        'hopper',
+        'yellow',
+      ]);
+    }
+    const [narrow, branch] = wagons;
+    expect([narrow.class, narrow.gauge]).toEqual(['corvette', 'narrow']);
+    expect([branch.class, branch.gauge]).toEqual(['frigate', undefined]);
+    // only the Narrow wagon is starter stock: the narrow start has no regular depot
+    expect([narrow.starter, branch.starter]).toEqual([true, undefined]);
+    // no other wagon claims to be one
+    expect(shipped.content.wagons.filter((w) => !wagons.includes(w) && w.maintenance)).toEqual([]);
+  });
+
+  it('has two yellow Diesel locomotives, none of them a starter', () => {
+    const want = {
+      maint_loco_narrow: { class: 'corvette', gauge: 'narrow', speed: 0.7, weight: 5 },
+      maint_loco_branch: { class: 'frigate', gauge: undefined, speed: 1, weight: 22 },
+    };
+    for (const [id, f] of Object.entries(want)) {
+      const l = shipped.content.locomotives.find((x) => x.id === id)!;
+      expect(l, id).toBeDefined();
+      expect([l.type, l.rarity, l.paint, l.starter], id).toEqual([
+        'diesel',
+        'N',
+        'yellow',
+        undefined,
+      ]);
+      expect([l.class, l.gauge, l.speed, l.weight], id).toEqual([
+        f.class,
+        f.gauge,
+        f.speed,
+        f.weight,
+      ]);
+    }
+  });
+
+  it('validates', () => {
+    expect(shipped.validateContent(clone(shipped.DEFAULT_CONTENT))).toEqual([]);
+  });
+});
+
 describe('stamps', () => {
   it('are short hex hashes, one per table, and the same whatever loads', async () => {
     const stamps = shipped.CONTENT_KEYS.map((k) => shipped.contentStamp(k));

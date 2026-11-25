@@ -1,11 +1,16 @@
 import { STR } from '../strings';
-import { defaultStop, type StopPlan } from '../sim/trains';
+import { defaultStop, DYNAMIC_MODES, type RouteMode, type StopPlan } from '../sim/trains';
 
 /**
  * What the Depot and the stop editor say and decide, as plain functions over plain data: the
  * rows of the train list, the haul meter, whether Dispatch may be pressed and why not, the stop
  * list's edits. DOM-free, so it is tested under Node from literals.
  */
+
+/** The dynamic modes the Depot offers a consist: Maintenance only with the wagon in it. */
+export function dispatchModes(hasMaintenanceWagon: boolean): RouteMode[] {
+  return hasMaintenanceWagon ? [...DYNAMIC_MODES, 'maintenance'] : DYNAMIC_MODES;
+}
 
 /** How a train's state reads in colour: good, info (at a platform), warn (waiting) or bad. */
 export type Tone = '' | 'good' | 'info' | 'warn' | 'bad';
@@ -22,6 +27,7 @@ export function stateTone(state: string, blocked = false): Tone {
     case 'moving':
       return blocked ? 'warn' : 'good';
     case 'loading':
+    case 'repairing':
       return 'info';
     case 'waiting':
     case 'yielding':
@@ -487,6 +493,12 @@ export function serviceResource(service: 'coal' | 'fuel' | 'battery'): string {
   return service === 'battery' ? 'power' : service === 'fuel' ? 'oil' : 'coal';
 }
 
+/** A wagon card's line of capacity and weight: a wagon that holds nothing has no capacity to show. */
+export function wagonSizeLine(capacity: number, weight: number): string {
+  const tonnes = `${STR.depot.weight} ${weight} t`;
+  return capacity > 0 ? `${STR.roster.capacity} ${capacity} · ${tonnes}` : tonnes;
+}
+
 /** What a wagon row says about the wagon; a refuelling cart says what it adds instead. */
 export function wagonStats(
   d: {
@@ -504,9 +516,12 @@ export function wagonStats(
   return [
     STR.roster.carries[d.carries] ?? d.carries,
     STR.roster.size[d.size ?? 'small'],
-    `${Math.round(d.capacity * mul)}u`,
+    // a wagon that holds nothing has no capacity to show
+    d.capacity > 0 ? `${Math.round(d.capacity * mul)}u` : null,
     `${d.weight}t`,
-  ].join(' · ');
+  ]
+    .filter((p) => p !== null)
+    .join(' · ');
 }
 
 // ---------------------------------------------------------------- the stop editor

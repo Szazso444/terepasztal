@@ -115,7 +115,7 @@ describe('the pages, in every chain', () => {
       for (const p of inChain()) {
         const text = pageWords(p);
         expect(text, p.id).not.toMatch(/\{\w+\}/);
-        expect(text, p.id).not.toMatch(/undefined|nan|\[object/);
+        expect(text, p.id).not.toMatch(/undefined|\bnan\b|\[object/);
       }
     });
 

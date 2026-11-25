@@ -229,6 +229,7 @@ describe('the Trains tab', () => {
     });
     const list = trainGroups([t, train(2, 0)], null, context({ expanded: 1 }));
     const [open, closed] = list.rows[0].rows;
+    expect(open.work).toBeNull();
     expect(closed.detail).toBeNull();
     expect(open.detail).toEqual({
       load: 75,

@@ -68,6 +68,10 @@ export const PORTRAIT_IDS: ReadonlySet<string> = new Set([
   'narrow_tank',
   'narrow_box',
   'narrow_coach',
+  'maint_loco_narrow',
+  'maint_loco_branch',
+  'maint_wagon_narrow',
+  'maint_wagon_branch',
 ]);
 
 /** URL of a vehicle's portrait, or null when it has none yet. */

@@ -128,6 +128,11 @@ describe('the wear window', () => {
   it('takes up the Repair tool with its Repair button', () => {
     expect(source).toContain("wearAlert.onRepair = () => toolbar.select({ kind: 'repair' });");
   });
+
+  it('opens the depot of the piece on the maintenance wagon with its Depot button', () => {
+    expect(source).toContain('d.builder.depotForTrack(x, y)');
+    expect(source).toContain('depot.showMaintenance(near)');
+  });
 });
 
 describe('what closes the menu bar', () => {

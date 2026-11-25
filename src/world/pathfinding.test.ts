@@ -979,3 +979,32 @@ describe.each(['narrow', 'branch'] as const)('findPath on seeded %s layouts', (f
     expect(share(n.changed), 'cases the callbacks change').toBeGreaterThanOrEqual(0.2);
   });
 });
+
+describe('findPath from several starts', () => {
+  /** A straight line of ten tiles along x, and a start on it heading each way. */
+  const row = () => {
+    const g = new TrackGraph(10, 3);
+    for (let x = 0; x < 10; x++) g.place(x, 1, 'straight', 1, 'branch');
+    return g;
+  };
+  const eastward = { x: 3, y: 1, in: Dir.W };
+  const westward = { x: 2, y: 1, in: Dir.E };
+
+  it('finds the target nearest to any start, and the path begins at that start', () => {
+    const near = findPath(row(), [eastward, westward], (x) => x === 1 || x === 8)!;
+    expect(near[0]).toMatchObject(westward);
+    expect(near[near.length - 1].x).toBe(1);
+    const far = findPath(row(), [eastward, westward], (x) => x === 8)!;
+    expect(far[0]).toMatchObject(eastward);
+    expect(far[far.length - 1].x).toBe(8);
+  });
+
+  it('counts no start as a target, as one start alone', () => {
+    expect(findPath(row(), [eastward, westward], (x) => x === 2 || x === 3)).toBeNull();
+  });
+
+  it('gives the path a single start gives', () => {
+    const at = (x: number) => x === 7;
+    expect(findPath(row(), [eastward], at)).toEqual(findPath(row(), eastward, at));
+  });
+});

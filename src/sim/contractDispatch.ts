@@ -146,6 +146,7 @@ export class ContractDispatcher {
    * detour when the tanks do not cover the first leg.
    */
   private evaluate(t: Train, c: Contract, origin: Station, dest: Station): Candidate | null {
+    if (t.mode === 'maintenance') return null;
     const cap = Fleet.capacityFor(t, c.cargo);
     if (cap <= 0) return null;
     const unitWeight = cargoDef(c.cargo).weight;

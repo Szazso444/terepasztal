@@ -10,12 +10,13 @@ import {
   consistPhysics,
   defaultLocoMode,
   serviceLocoType,
-  DYNAMIC_MODES,
   type RouteMode,
   type Train,
   type StopPlan,
 } from '../sim/trains';
 import type { Station } from '../sim/stations';
+import { gaugeOf } from '../sim/compat';
+import { nextStopId } from './trainView';
 import { cargoDef } from '../sim/cargo';
 import { TRAIN_COLOURS, shownTrainColour } from '../sim/trainColours';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -49,6 +50,7 @@ import {
   checkLifetime,
   clickedCount,
   copiesLike,
+  dispatchModes,
   draftHolds,
   foldStock,
   gateShown,
@@ -195,6 +197,10 @@ export class DepotScreen implements Screen {
   /** the depot chosen: the new train rolls out of it, and the list shows its trains */
   private depotId: number | null = null;
   private checkCache: { key: string; at: number; value: Check } | null = null;
+  /** the row of the first free maintenance wagon of the depot's gauge, on the consist tab */
+  private maintenanceRow: HTMLElement | null = null;
+  /** the next draw brings that row into view (`showMaintenance`) */
+  private seekMaintenance = false;
   onFocusTrain: ((t: Train) => void) | null = null;
   /** the player pressed Show: the game peeks at the depot and marks the gate */
   onFocusDepot: ((d: Station, gate: { x: number; y: number } | null) => void) | null = null;
@@ -359,6 +365,26 @@ export class DepotScreen implements Screen {
 
   // ---------------------------------------------------------------- the actions
 
+  /**
+   * Stand ready for a maintenance train out of this depot: a new train on the consist tab, with the
+   * maintenance wagon in view. Picks of the other gauge go, as they would rule the depot out. Call
+   * before the screen opens.
+   */
+  showMaintenance(depot: Station) {
+    const gauge = depot.def.gauge ?? 'regular';
+    const own = (kind: typeof locoDef | typeof wagonDef) => (u: number) => {
+      const it = this.inventory.byUid(u);
+      return !!it && gaugeOf(kind(it.defId)) === gauge;
+    };
+    this.locoUids = this.locoUids.filter(own(locoDef));
+    this.wagonUids = this.wagonUids.filter(own(wagonDef));
+    this.editing = null;
+    this.tab = 'consist';
+    this.depotId = depot.id;
+    this.checkCache = null;
+    this.seekMaintenance = true;
+  }
+
   /** New train: the train picked is let go, and the draft stands as it was left. */
   private showDraft() {
     this.editing = null;
@@ -461,7 +487,7 @@ export class DepotScreen implements Screen {
       this.wagonUids,
       this.stops(),
       this.nameField.input.value.trim() || undefined,
-      this.routeMode === 'auto' || this.routeMode === 'custom' ? 'schedule' : this.routeMode,
+      this.sentOn,
       this.depotId,
     );
     // the check can stand a moment behind the track: create has the last word
@@ -668,7 +694,8 @@ export class DepotScreen implements Screen {
     };
     let chipShown = '';
     const update = () => {
-      const next = this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)]);
+      const stop = nextStopId(t);
+      const next = stop === null ? undefined : this.builder.stationById(stop);
       const x = trainRowText({
         locoNames: t.locos.map((l) => l.def.name),
         wagonCount: t.wagons.length,
@@ -749,6 +776,8 @@ export class DepotScreen implements Screen {
     // another train or another tab starts at the top; a pick in the same list keeps its place
     if (key !== this.shown) d.body.scrollTop = 0;
     this.shown = key;
+    if (this.seekMaintenance) this.maintenanceRow?.scrollIntoView({ block: 'center' });
+    this.seekMaintenance = false;
   }
 
   /** The picks that left the free stock go from the draft: the counts and the rows show it. */
@@ -756,6 +785,22 @@ export class DepotScreen implements Screen {
     const free = (k: 'loco' | 'wagon') => this.inventory.free(k).map((i) => i.uid);
     this.locoUids = pruneToFree(this.locoUids, free('loco'));
     this.wagonUids = pruneToFree(this.wagonUids, free('wagon'));
+    this.keepRouteChoice();
+  }
+  /** Does the draft haul a maintenance wagon? Only then is Maintenance on offer. */
+  private get hasMaintenanceWagon() {
+    return this.wagonUids.some((u) => {
+      const it = this.inventory.byUid(u);
+      return !!it && wagonDef(it.defId).maintenance === true;
+    });
+  }
+  /** Maintenance went with the wagon: the route falls back to the automatic one. */
+  private keepRouteChoice() {
+    if (this.routeMode === 'maintenance' && !this.hasMaintenanceWagon) this.routeMode = 'auto';
+  }
+  /** The mode the new train goes out on. */
+  private get sentOn(): RouteMode {
+    return this.routeMode === 'auto' || this.routeMode === 'custom' ? 'schedule' : this.routeMode;
   }
 
   /** The head of a new train: the consist as a train, then the tabs. */
@@ -919,7 +964,7 @@ export class DepotScreen implements Screen {
     for (const w of t.wagons) {
       const sub = el('span');
       this.live.text(sub, () => {
-        if (w.def.service) return wagonStats(w.def, levelMul(w.level));
+        if (w.def.service || w.def.capacity <= 0) return wagonStats(w.def, levelMul(w.level));
         const cap = Math.round(w.def.capacity * levelMul(w.level));
         return w.cargo
           ? `${cargoDef(w.cargo).name} ${Math.round(w.amount)}/${cap}`
@@ -1029,6 +1074,16 @@ export class DepotScreen implements Screen {
       this.showBarred,
     );
     const rows = fold.shown.map((l) => this.stockRow(kind, l.g, l.reason));
+    if (!loco) {
+      const gauge = depot?.def.gauge ?? 'regular';
+      this.maintenanceRow =
+        rows[
+          fold.shown.findIndex((l) => {
+            const def = wagonDef(l.g.defId);
+            return def.maintenance === true && gaugeOf(def) === gauge;
+          })
+        ] ?? null;
+    }
     if (fold.folded) rows.push(this.foldRow(fold.folded, fold.reason));
     return well(
       {
@@ -1133,6 +1188,7 @@ export class DepotScreen implements Screen {
     const r = setPicked(loco ? this.locoUids : this.wagonUids, g.uids, want, max);
     if (loco) this.locoUids = r.list;
     else this.wagonUids = r.list;
+    this.keepRouteChoice();
     const controls = () => [
       ...(this.steppers.get(g.key)?.querySelectorAll<HTMLElement>('button, input') ?? []),
     ];
@@ -1165,7 +1221,10 @@ export class DepotScreen implements Screen {
       }),
       el('small', { text: STR.depot.groupDynamic }),
       segmented({
-        options: DYNAMIC_MODES.map((m) => ({ id: m, label: STR.depot.routeMode[m] })),
+        options: dispatchModes(this.hasMaintenanceWagon).map((m) => ({
+          id: m,
+          label: STR.depot.routeMode[m],
+        })),
         value: staticMode ? '' : this.routeMode,
         onChange: choose,
       }),
@@ -1204,13 +1263,22 @@ export class DepotScreen implements Screen {
    */
   private check(): Check {
     const stops = this.stops();
-    const key = JSON.stringify([this.locoUids, this.wagonUids, stops, this.depotId]);
+    const mode = this.sentOn;
+    const key = JSON.stringify([this.locoUids, this.wagonUids, stops, this.depotId, mode]);
     const now = performance.now();
     const c = this.checkCache;
     if (c && c.key === key && now - c.at < c.value.lifetime) return c.value;
-    const asked = this.fleet.dispatchCheck(this.locoUids, this.wagonUids, stops, this.depotId);
+    const asked = this.fleet.dispatchCheck(
+      this.locoUids,
+      this.wagonUids,
+      stops,
+      this.depotId,
+      mode,
+    );
     // with no engine yet nothing can be checked, but the dock still says where a train would appear
-    const seen = this.locoUids.length ? asked : this.fleet.previewSpawn([], stops, this.depotId);
+    const seen = this.locoUids.length
+      ? asked
+      : this.fleet.previewSpawn([], stops, this.depotId, mode);
     const chosen = this.chosen();
     const depot = chosen ?? seen.depot ?? null;
     const auto = this.fleet.autoSchedule(depot ?? undefined);
@@ -1220,7 +1288,11 @@ export class DepotScreen implements Screen {
     const dock =
       seen.gate && seen.depot && !refused
         ? {
-            text: STR.depot.gateAt(seen.depot.name, seen.gate.x, seen.gate.y, first?.name ?? '?'),
+            // a maintenance train has no first stop: it goes where the track needs it
+            text:
+              mode === 'maintenance'
+                ? STR.depot.gateOut(seen.depot.name, seen.gate.x, seen.gate.y)
+                : STR.depot.gateAt(seen.depot.name, seen.gate.x, seen.gate.y, first?.name ?? '?'),
             ok: true,
           }
         : { text: refused ?? '', ok: false };

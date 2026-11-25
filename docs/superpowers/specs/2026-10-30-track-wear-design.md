@@ -142,25 +142,46 @@ Two yellow maintenance locomotives, available from Diesel: one Narrow, one Branc
 slow, cheap locomotives with no special rule. The mode depends only on the wagon.
 
 A maintenance train is a normal train in every other way: it burns fuel, pays its crew and wears
-the track.
+the track. It calls at no station, so the crew settles at the nearest store, however far, when it
+finishes a job, when it reaches its waiting place and as it waits there.
 
-**Choosing work.** A train picks a job when it starts, finishes or abandons one, never per frame.
+**Choosing work.** A train picks a job when it starts or finishes one, never per frame. It works
+one piece at a time and always to 100 %: it keeps the job and its claim until then, and takes no
+other meanwhile, with one exception: when failed track cuts it off from its job, it mends the failed
+piece that cuts its way first, then returns and finishes the job. Only that piece may go first, and
+the job stays claimed, in the save too. If that piece is out of its reach or another train holds it,
+it stands and looks again. It lets a job go only when the piece is gone, when it leaves the mode, or
+when it is stopped (below).
 It looks in three tiers: unusable, then degraded, then close to degraded. One `findPath` per tier
 with every job of that tier as a target gives the nearest reachable one, so a pick costs at most
-three searches. A claimed piece is left to the train that claimed it. With no work the train returns
-to its nearest depot and looks again every 30 game seconds.
+three searches. A claimed piece is left to the train that claimed it. A train that stops in
+`noFuel`, `noPower` or `stranded` drops its claim, so another can take the job. With no work the
+train returns to its nearest depot and looks again every 30 game seconds. It waits clear of the
+gate, and a train rolling out does not count it as a blocking feature: it moves off for that train.
 
 **Reaching the piece.** Its target for an unusable piece is the sound tile next to an open end,
 since it cannot enter; a broken stretch gets repaired from its near end inward. For any other piece
 it drives on and stands there.
 
+**A train in the way.** Section 4 stops a train on the last sound piece and this section sends the
+worker to that same tile, so on a single line both want one place. A train with no way on (`noRoute`,
+`stranded`, `noFuel` or `noPower`) holds only its own tiles, not its whole section, so a worker,
+like any train, can close up behind it. A worker on an urgent job (see Priority) held behind such a
+train, which stands on or short of its job's tile on the same line, starts work where it stands: the
+crew walks the rest. With a way round the train it takes that instead. The repair runs as usual, and
+the stopped train is not backed off: it leaves by its own retry once the piece carries it.
+
 **Working.** It stands still and HP rises at the rate in section 3, paid as it goes. The result
-stays if it leaves: repair is gradual. It stops at 100 %. If no store can pay it waits, with a
-notice.
+stays if it pulls aside or is taken off the mode: repair is gradual. It stops at 100 %, and a piece
+it pulled away from is finished however far it has come. If no store can pay it waits, with a
+notice, and while it waits unpaid its job is not urgent: it gives way as on a degraded piece.
 
 **Priority.** Heading for or working on an unusable piece, it goes before every other train. On a
 degraded or close to degraded piece it goes after every other train: when a train has been held by
-it for 5 seconds it drops the job, pulls aside by the existing refuge search and takes up work again.
+it for 5 seconds it pulls aside by the existing refuge search, keeping the job, the claim and what
+it owes. It comes back as soon as the way is free, at the latest after 30 game seconds, when it
+sets off and leaves the rest to traffic control. With no way back it stands, looks again every few
+seconds and jams nothing.
 
 ## 7. Hand repair
 

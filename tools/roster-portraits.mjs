@@ -99,6 +99,11 @@ export const SOURCES = {
   narrow_tank: 'renders/roster-portraits/narrow_tank.png',
   narrow_box: 'renders/roster-portraits/narrow_box.png',
   narrow_coach: 'renders/roster-portraits/narrow_coach.png',
+  // the yellow maintenance vehicles: a render of each model, transparent
+  maint_loco_narrow: 'renders/roster-portraits/maint_loco_narrow.png',
+  maint_loco_branch: 'renders/roster-portraits/maint_loco_branch.png',
+  maint_wagon_narrow: 'renders/roster-portraits/maint_wagon_narrow.png',
+  maint_wagon_branch: 'renders/roster-portraits/maint_wagon_branch.png',
 };
 
 const luma = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;

@@ -29,7 +29,6 @@ import type { SignalLevel } from './signals';
 import type { Fleet } from './fleet';
 import type { Builder } from './build';
 import { Traffic } from './traffic';
-import { content } from '../data/content';
 import { locoDef, wagonDef } from '../gacha/items';
 import { rowLengths } from '../testing/modelFixtures';
 
@@ -328,6 +327,12 @@ const stop = (id: number): StopPlan => ({
 
 /** Columns of the lines: track from LINE_X0 to LINE_X1, a road across every line at ROAD_X. */
 const LINE_X0 = 4;
+/**
+ * The uid the first item a run adds gets. The goldens hold each train's save JSON, uids included,
+ * and were recorded when a new game handed out 15 starter items; the run starts its inventory
+ * empty from that point, so a bigger or smaller starter kit does not move a digest.
+ */
+const FIRST_UID = 16;
 const LINE_X1 = 36;
 const ROAD_X = 20;
 
@@ -356,9 +361,7 @@ function linesWorld(
   level: SignalLevel | null,
 ): Lines {
   const w = simWorld({ size: 64, terrain: 'grass', seed });
-  // the goldens hold the item uids of a new game with a third starter engine (Orenstein & Koppel,
-  // since retired), and a train's saved state holds its engine's uid: one more model's copies
-  for (let n = 0; n < content.crafting.starterCopies.loco; n++) w.inventory.add('rocket', 0);
+  w.inventory.load({ items: [], nextUid: FIRST_UID });
   w.builder.free = true;
   for (let i = 0; i < w.regions.unlocked.length; i++) w.regions.own(i);
   w.economy.money = 1e9;

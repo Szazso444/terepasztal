@@ -11,17 +11,25 @@ export interface PathSegment {
   route?: number;
 }
 
+/** Where a search starts: inside a tile, having entered it through `in`. */
+export interface PathStart {
+  x: number;
+  y: number;
+  in: Dir;
+}
+
 /**
  * Dijkstra over (tile, entryEdge) states. A state means "inside tile, having entered through
  * that edge". Trains cannot reverse mid-tile, so this naturally handles switches and curves.
  * A step leaves a tile only where `TrackGraph.connected` joins it to the next, so a path never
  * crosses from one network to another. `access` bars pieces; `tollOf` multiplies the cost of
  * running through a piece entered through `entry`.
+ * Given several starts it searches from all of them at once, for the target nearest to any.
  * Returns the segment list starting at the start tile, or null.
  */
 export function findPath(
   track: TrackGraph,
-  start: { x: number; y: number; in: Dir },
+  start: PathStart | readonly PathStart[],
   isTarget: (x: number, y: number) => boolean,
   maxCost = 100000,
   avoid?: (x: number, y: number) => boolean,
@@ -32,9 +40,13 @@ export function findPath(
   const dist = new Map<number, number>();
   const prev = new Map<number, number>();
   const heap = new MinHeap();
-  const sk = key(start.x, start.y, start.in);
-  dist.set(sk, 0);
-  heap.push(0, sk);
+  const starts = new Set<number>();
+  for (const s of 'x' in start ? [start] : start) {
+    const sk = key(s.x, s.y, s.in);
+    starts.add(sk);
+    dist.set(sk, 0);
+    heap.push(0, sk);
+  }
   let found = -1;
   while (heap.size) {
     const [d, k] = heap.pop();
@@ -44,7 +56,7 @@ export function findPath(
     const x = tile % track.w;
     const y = Math.floor(tile / track.w);
     // target test: the tile itself is a target (train stops at its centre); but not the start tile unless moved
-    if (isTarget(x, y) && k !== sk) {
+    if (isTarget(x, y) && !starts.has(k)) {
       found = k;
       break;
     }
@@ -76,7 +88,7 @@ export function findPath(
   let cur = found;
   while (cur !== undefined) {
     states.push(cur);
-    if (cur === sk) break;
+    if (starts.has(cur)) break;
     cur = prev.get(cur)!;
   }
   states.reverse();

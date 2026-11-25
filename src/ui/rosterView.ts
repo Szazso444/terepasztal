@@ -13,6 +13,7 @@ import {
 import { cargoDef } from '../sim/cargo';
 import { runsOn } from '../sim/compat';
 import { STR } from '../strings';
+import { wagonSizeLine } from './depotView';
 import { dim, good, quiet, richText, text, title, vehicle, type TipDoc } from './tooltipDoc';
 
 export type KindFilter = 'all' | 'loco' | 'wagon';
@@ -135,7 +136,7 @@ export function rosterCard(
   } else {
     const wd = d as WagonDef;
     lines.push(
-      `${STR.roster.capacity} ${Math.round(wd.capacity * m)} · ${STR.depot.weight} ${wd.weight} t`,
+      wagonSizeLine(Math.round(wd.capacity * m), wd.weight),
       (wd.accepts ?? []).map((c) => cargoDef(c).name).join(', '),
     );
     if (wd.service) lines.push(STR.roster.serviceLine(wd.service, wd.serviceCap ?? 0));

@@ -433,6 +433,7 @@ const EN = {
     onContract: (name: string) => `on contract: ${name}`,
     regularRun: 'back on the regular run',
     noTrackToStop: 'no track to the chosen stop',
+    noWork: 'no track to look after',
     noPlatform: (name: string) => `${name} has no platform`,
     parked: 'parked: no way to the chosen stop',
     detouring: 'detouring around an oncoming train',
@@ -851,6 +852,7 @@ const EN = {
       'Track is wearing out. Repair it by hand, or send a maintenance wagon from the depot.',
     trackBroken: (x: number, y: number) => `Track at ${x},${y} is broken and closed to trains`,
     trackBrokenMany: (n: number) => `${n} track pieces are broken and closed to trains`,
+    repairUnpaid: (n: string) => `${n}: no store can pay for the repair`,
   },
   /** track wear: the states and the window of the first piece to fail */
   wear: {
@@ -970,6 +972,12 @@ const EN = {
     renameTip: 'Double-click to rename',
     contractTip: 'Open it in Contracts (C)',
     empty: 'empty',
+    work: {
+      repairing: 'Repairing track',
+      toJob: 'Heading for worn track',
+      toWait: 'Heading for its waiting place',
+      waiting: 'Waiting for work',
+    },
     storage: 'Storage',
     load: 'Load',
     nextStop: 'Next stop',
@@ -981,6 +989,7 @@ const EN = {
       loading: 'Loading',
       waiting: 'Waiting',
       yielding: 'Giving way',
+      repairing: 'Repairing',
       idle: 'Idle',
       held: 'Held',
       noRoute: 'No route',
@@ -1160,6 +1169,7 @@ const EN = {
     rollOut: 'Roll-out',
     gateAt: (d: string, x: number, y: number, first: string) =>
       `${d}: gate at ${x},${y}, first stop ${first}`,
+    gateOut: (d: string, x: number, y: number) => `${d}: gate at ${x},${y}`,
     show: 'Show',
     servedBy: (n: number) => `${n} station${n === 1 ? '' : 's'} on this depot's rails`,
     groupStatic: 'Static',
@@ -1170,6 +1180,7 @@ const EN = {
       transport: 'Transport',
       contract: 'Contract',
       freight: 'Freight',
+      maintenance: 'Maintenance',
     } as Record<string, string>,
     routeHint: {
       auto: 'Static: visits every station with platform track, nearest first, and empties into the depot. Edit stops, dwell times and conditions later in the train details.',
@@ -1181,6 +1192,8 @@ const EN = {
         'Dynamic: works contracts. Waits on its platform until a contract it can carry is accepted, is chosen for it ahead of busier trains, runs it origin to destination and returns to waiting. Refuels on its own.',
       freight:
         'Dynamic: heads for the producer with the fullest, biggest pile within reach, then tops up at another producer while room is left, and takes the goods to the nearest store with room: a depot, a warehouse or a Townhouse. Never takes goods out of a store, and a producer in a town puts its goods into the town store itself. Re-plans at every stop and refuels on its own.',
+      maintenance:
+        'Dynamic: looks after the track. Goes to the most worn piece it can reach and repairs it, paid from the nearest store that holds the price. Needs no stop, only a gate to run out through.',
     } as Record<string, string>,
     dynamicTag: 'dynamic',
     routeAutoHint:
@@ -1290,6 +1303,7 @@ const EN = {
       loading: 'At platform',
       waiting: 'Waiting for platform',
       yielding: 'Pulled aside for traffic',
+      repairing: 'Repairing track',
       idle: 'Idle: nothing worth hauling yet',
       held: 'Held behind a train',
       noRoute: 'No route',
@@ -2180,6 +2194,7 @@ const EN = {
       transport: 'Transport',
       contract: 'Contract',
       freight: 'Freight',
+      maintenance: 'Maintenance',
     } as Record<string, string>,
     modeHint: {
       schedule: 'Static: follows the stop list below exactly.',
@@ -2187,6 +2202,8 @@ const EN = {
       contract: 'Dynamic: carries accepted contracts from origin to destination.',
       freight:
         'Dynamic: fullest producer first, tops up at another producer while room is left. The goods go to the nearest store with room (depot, warehouse or Townhouse); nothing is taken out of a store. Re-plans at every stop and refuels on its own.',
+      maintenance:
+        'Dynamic: looks after the track. Needs a maintenance wagon in the train; the train leaves this mode when the wagon is taken off.',
     } as Record<string, string>,
     coal: 'Coal',
     wood: 'Wood',
@@ -2350,6 +2367,7 @@ const EN = {
     wagonUnavailable: 'Wagon unavailable',
     tooHeavy: (w: number, p: number) => `Wagons weigh ${w} t, engines haul ${p} t`,
     needTwoStops: 'Route needs at least two stations',
+    needMaintenanceWagon: 'Maintenance needs a maintenance wagon in the train',
     missingStation: 'Missing station',
     noPlatform: (n: string) => `${n} has no platform track`,
     platformBusy: (n: string) => `A train stands on every platform at ${n}`,

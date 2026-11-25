@@ -3,7 +3,7 @@ import { Rng } from '../engine/rng';
 import { Economy } from '../sim/economy';
 import { storesWith } from '../testing/storeFixtures';
 import { Inventory } from './inventory';
-import { CRAFT_CONFIG, Crafting, craftPool, craftResources } from './crafting';
+import { CRAFT_CONFIG, Crafting, craftPool, craftResources, craftTier } from './crafting';
 
 /** A workshop and two depot stores far apart: one holds plenty of every material, one nothing. */
 function workshop() {
@@ -58,6 +58,25 @@ describe('Crafting from a store', () => {
     for (const [k, v] of Object.entries(CRAFT_CONFIG.ownedRefund)) {
       expect(poor.get(k), k).toBe(Math.min(Math.floor(v), poor.cap(k)));
       expect(rich.get(k), k).toBe(plenty[k]);
+    }
+  });
+});
+
+describe('the maintenance stock in the crafting pools', () => {
+  it('maintenance locomotives are Diesel', () => {
+    expect(craftTier('maint_loco_narrow')).toBe(1);
+    expect(craftTier('maint_loco_branch')).toBe(1);
+    for (const id of ['maint_loco_narrow', 'maint_loco_branch']) {
+      expect(craftPool('loco', 1), id).toContain(id);
+      for (const t of [0, 2]) expect(craftPool('loco', t), id).not.toContain(id);
+    }
+  });
+
+  it('maintenance wagons are Steam', () => {
+    for (const id of ['maint_wagon_narrow', 'maint_wagon_branch']) {
+      expect(craftTier(id)).toBe(0);
+      expect(craftPool('wagon', 0), id).toContain(id);
+      for (const t of [1, 2]) expect(craftPool('wagon', t), id).not.toContain(id);
     }
   });
 });

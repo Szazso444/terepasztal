@@ -219,6 +219,25 @@ describe('the starter kit of a new game', () => {
     for (const i of wagons) expect(gaugeOf(itemDef(i.defId)), i.defId).toBe('narrow');
   });
 
+  it('maintenance wagons are Steam, the narrow one starter stock, the Branch one a Steam draw', () => {
+    const wagons = content.wagons.filter((w) => w.maintenance);
+    expect(wagons.map((w) => [w.id, w.class, gaugeOf(w)])).toEqual([
+      ['maint_wagon_narrow', 'corvette', 'narrow'],
+      ['maint_wagon_branch', 'frigate', 'regular'],
+    ]);
+    const { inventory, crafting } = newGame();
+    for (const w of wagons) expect(w.tier, w.id).toBe(0);
+    // the narrow start hands out the Narrow wagon only: a regular wagon has no depot to roll out of
+    const [narrow, branch] = wagons;
+    expect(narrow.starter).toBe(true);
+    expect(inventory.count(narrow.id)).toBe(content.crafting.starterCopies.wagon);
+    expect(crafting.knows(narrow.id)).toBe(true);
+    expect(branch.starter).toBeUndefined();
+    expect(inventory.count(branch.id)).toBe(0);
+    expect(crafting.knows(branch.id)).toBe(false);
+    expect(craftPool('wagon', 0)).toContain(branch.id);
+  });
+
   it('hands out each starter in the copies the crafting table says, and nothing else', () => {
     // the author's numbers: one of each engine, three of each wagon
     expect(content.crafting.starterCopies).toEqual({ loco: 1, wagon: 3 });
@@ -228,6 +247,27 @@ describe('the starter kit of a new game', () => {
       expect(inventory.count(l.id), l.id).toBe(l.starter ? copies.loco : 0);
     for (const w of content.wagons)
       expect(inventory.count(w.id), w.id).toBe(w.starter ? copies.wagon : 0);
+  });
+
+  it('a train with a maintenance wagon says so', () => {
+    const rocket = locoDef('rocket');
+    const slot = (uid: number, id: string) => ({
+      uid,
+      def: wagonDef(id),
+      level: 1,
+      cargo: null,
+      amount: 0,
+      origin: null,
+    });
+    const train = new Train([{ uid: 1, level: 1, def: rocket }]);
+    expect(train.hasMaintenanceWagon).toBe(false);
+    train.wagons = [slot(2, 'mine_tub')];
+    expect(train.hasMaintenanceWagon).toBe(false);
+    train.wagons = [slot(2, 'mine_tub'), slot(3, 'maint_wagon_narrow')];
+    expect(train.hasMaintenanceWagon).toBe(true);
+    // taking the wagon off takes the flag with it
+    train.wagons = train.wagons.slice(0, 1);
+    expect(train.hasMaintenanceWagon).toBe(false);
   });
 
   it('knows the recipe of each model it owns and of no other, every one narrow gauge', () => {

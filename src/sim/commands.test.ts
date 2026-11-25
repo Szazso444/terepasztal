@@ -126,6 +126,67 @@ function runTo(w: World, t: Train, s: Station, from: number) {
 }
 
 describe('setTrainMode', () => {
+  /** The wagon that lets a train take the Maintenance mode, coupled behind its hopper. */
+  const coupleMaintenanceWagon = (t: Train) =>
+    t.wagons.push({
+      uid: 3,
+      def: wagonDef('maint_wagon_branch'),
+      level: 1,
+      cargo: null,
+      amount: 0,
+      origin: null,
+    });
+
+  it('refuses the Maintenance mode without the wagon and leaves the mode as it was', () => {
+    const w = world();
+    const t = train(w, 20);
+    expect(w.commands.setTrainMode(t, 'maintenance')).toEqual({
+      ok: false,
+      message: STR.fleet.needMaintenanceWagon,
+    });
+    expect(t.mode).toBe('schedule');
+    w.commands.setTrainMode(t, 'freight');
+    expect(w.commands.setTrainMode(t, 'maintenance')).toMatchObject({ ok: false });
+    expect(t.mode).toBe('freight');
+  });
+
+  it('takes the Maintenance mode with the wagon, and the wagon alone changes no other mode', () => {
+    const w = world();
+    const t = train(w, 20);
+    coupleMaintenanceWagon(t);
+    expect(t.mode).toBe('schedule');
+    expect(w.commands.setTrainMode(t, 'maintenance')).toEqual({ ok: true });
+    expect(t.mode).toBe('maintenance');
+    // it picks no station: it has nothing to do until it is given work
+    expect(w.fleet.chooseNext(t)).toBeNull();
+    w.fleet.tick(GDT, GDT);
+    expect(t.mode).toBe('maintenance');
+  });
+
+  it('leaves the Maintenance mode for its stop list when the wagon is taken off', () => {
+    const w = world();
+    const a = station(w, 'quarry', 40),
+      b = station(w, 'farm', 70);
+    const t = train(w, 20);
+    t.schedule = [defaultStop(a.id), defaultStop(b.id)];
+    coupleMaintenanceWagon(t);
+    w.commands.setTrainMode(t, 'maintenance');
+    t.wagons.pop();
+    w.fleet.tick(GDT, GDT);
+    expect(t.mode).toBe('schedule');
+  });
+
+  it('leaves the Maintenance mode for freight when the wagon is taken off a train with fewer than two stops', () => {
+    const w = world();
+    const t = train(w, 20);
+    coupleMaintenanceWagon(t);
+    expect(t.program.length).toBeLessThan(2);
+    w.commands.setTrainMode(t, 'maintenance');
+    t.wagons.pop();
+    w.fleet.tick(GDT, GDT);
+    expect(t.mode).toBe('freight');
+  });
+
   it('sends a schedule train stuck on dead stops to a reachable producer within one fleet tick', () => {
     const w = world();
     const quarry = station(w, 'quarry', 40);

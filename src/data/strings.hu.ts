@@ -352,6 +352,7 @@ export const HU: Strings = {
     onContract: (name: string) => `szerződést teljesít: ${name}`,
     regularRun: 'vissza a szokásos útvonalra',
     noTrackToStop: 'nem vezet sín a választott megállóhoz',
+    noWork: 'nincs karbantartandó sín',
     noPlatform: (name: string) => `${name}: nincs peronvágány`,
     parked: 'leállt: nincs út a választott megállóhoz',
     detouring: 'kerülőt tesz egy szemből jövő vonat miatt',
@@ -687,6 +688,7 @@ export const HU: Strings = {
     trackBroken: (x: number, y: number) =>
       `Tönkrement a sín (${x},${y}), a vonatok nem járhatnak rajta`,
     trackBrokenMany: (n: number) => `${n} sínelem tönkrement, a vonatok nem járhatnak rajtuk`,
+    repairUnpaid: (n: string) => `${n}: egyik raktár sem tudja fizetni a javítást`,
   },
   wear: {
     state: { healthy: 'ép', degraded: 'kopott', unusable: 'tönkrement' },
@@ -804,6 +806,12 @@ export const HU: Strings = {
     renameTip: 'Dupla kattintás: átnevezés',
     contractTip: 'Megnyitás a Szerződésekben (C)',
     empty: 'üres',
+    work: {
+      repairing: 'Sínt javít',
+      toJob: 'Kopott sínhez tart',
+      toWait: 'Várakozóhelyére tart',
+      waiting: 'Munkára vár',
+    },
     storage: 'Raktár',
     load: 'Rakomány',
     nextStop: 'Következő',
@@ -814,6 +822,7 @@ export const HU: Strings = {
       loading: 'Rakodik',
       waiting: 'Vár',
       yielding: 'Utat enged',
+      repairing: 'Javít',
       idle: 'Tétlen',
       held: 'Feltartva',
       noRoute: 'Nincs útvonal',
@@ -989,6 +998,7 @@ export const HU: Strings = {
     rollOut: 'Kigördülés',
     gateAt: (d: string, x: number, y: number, first: string) =>
       `${d}: kapu ${x},${y}, első megálló: ${first}`,
+    gateOut: (d: string, x: number, y: number) => `${d}: kapu ${x},${y}`,
     show: 'Mutasd',
     servedBy: (n: number) => `${n} állomás e pályaudvar sínhálózatán`,
     groupStatic: 'Statikus',
@@ -999,6 +1009,7 @@ export const HU: Strings = {
       transport: 'Utasszállítás',
       contract: 'Szerződés',
       freight: 'Teherfuvar',
+      maintenance: 'Karbantartás',
     },
     routeHint: {
       auto: 'Statikus: a legközelebbivel kezdve minden peronvágányos állomást felkeres, és a pályaudvarra üríti a rakományt. A megállókat, állásidőket és feltételeket később a vonat részleteinél szerkesztheted.',
@@ -1010,6 +1021,8 @@ export const HU: Strings = {
         'Dinamikus: szerződéseket teljesít. A peronján vár, amíg el nem fogadsz egy általa szállítható szerződést; a forgalmasabb vonatok előtt kapja meg, a kiindulási helyről a célba viszi, aztán újra vár. Magától tankol.',
       freight:
         'Dinamikus: ahhoz a termelőhöz megy az elérhetők közül, ahol a legtöbb áru áll, majd egy másik termelőnél tölt rá, amíg van hely, és az árut a legközelebbi olyan készletbe viszi, ahol még van hely: pályaudvarra, raktárba vagy városházára. Készletből sosem visz el árut, és a városi termelő maga teszi az áruját a város készletébe. Minden megállóban újratervez, és magától tankol.',
+      maintenance:
+        'Dinamikus: a pályát gondozza. A legkopottabb elérhető sínhez megy és megjavítja, az árát a legközelebbi raktár fizeti, amelyikben megvan. Megálló nem kell hozzá, csak egy kapu, amelyen kifuthat.',
     },
     dynamicTag: 'dinamikus',
     routeAutoHint:
@@ -1122,6 +1135,7 @@ export const HU: Strings = {
       loading: 'A peronnál',
       waiting: 'Peronra vár',
       yielding: 'Félreállt a forgalom miatt',
+      repairing: 'Sínt javít',
       idle: 'Tétlen: még nincs mit szállítania',
       held: 'Egy vonat mögött vár',
       noRoute: 'Nincs útvonal',
@@ -1950,6 +1964,7 @@ export const HU: Strings = {
       transport: 'Utasszállítás',
       contract: 'Szerződés',
       freight: 'Teherfuvar',
+      maintenance: 'Karbantartás',
     },
     modeHint: {
       schedule: 'Statikus: pontosan a lenti megállólistát követi.',
@@ -1957,6 +1972,8 @@ export const HU: Strings = {
       contract: 'Dinamikus: az elfogadott szerződéseket viszi a kiindulási helyről a célba.',
       freight:
         'Dinamikus: előbb oda megy, ahol a legtöbb áru áll, majd egy másik termelőnél tölt rá, amíg van hely. Az áru a legközelebbi olyan készletbe megy, ahol még van hely (pályaudvar, raktár vagy városháza); készletből nem visz el semmit. Minden megállóban újratervez, és magától tankol.',
+      maintenance:
+        'Dinamikus: a pályát gondozza. Karbantartó kocsi kell hozzá a vonatban; ha a kocsit leveszik, a vonat kilép ebből az üzemmódból.',
     },
     coal: 'Szén',
     wood: 'Fa',
@@ -2110,6 +2127,7 @@ export const HU: Strings = {
     wagonUnavailable: 'A kocsi nem elérhető',
     tooHeavy: (w: number, p: number) => `A kocsik ${w} t-t nyomnak, a mozdonyok ${p} t-t bírnak`,
     needTwoStops: 'Az útvonalhoz legalább két állomás kell',
+    needMaintenanceWagon: 'A karbantartó üzemmódhoz karbantartó kocsi kell a vonatban',
     missingStation: 'Hiányzó állomás',
     noPlatform: (n: string) => `${n}: nincs peronvágány`,
     platformBusy: (n: string) => `${n}: minden peronon vonat áll`,

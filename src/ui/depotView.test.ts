@@ -14,6 +14,7 @@ import {
   checkLifetime,
   clickedCount,
   copiesLike,
+  dispatchModes,
   draftHolds,
   editorSignature,
   foldStock,
@@ -43,6 +44,7 @@ import {
   trainsByDepot,
   trainsHomeAt,
   trainsShown,
+  wagonSizeLine,
   wagonStats,
   type GateAnswer,
   type StationInput,
@@ -65,6 +67,20 @@ const row = (o: Partial<TrainRowInput> = {}): TrainRowInput => ({
   power: 40,
   message: '',
   ...o,
+});
+
+describe('the modes the Depot offers', () => {
+  it('has Maintenance only for a consist with the wagon', () => {
+    expect(dispatchModes(false)).not.toContain('maintenance');
+    expect(dispatchModes(true)).toEqual([...dispatchModes(false), 'maintenance']);
+  });
+
+  it('says what each of them does, under its own name', () => {
+    for (const m of dispatchModes(true)) {
+      expect(STR.depot.routeMode[m], m).toBeTruthy();
+      expect(STR.depot.routeHint[m], m).toBeTruthy();
+    }
+  });
 });
 
 describe('a train in the list', () => {
@@ -584,6 +600,11 @@ describe('the lines of a vehicle in the stock', () => {
       `${STR.roster.carries.mineral} · ${STR.roster.size.small} · 32u · 8t`,
     );
     expect(wagonStats(wagon, 1.16)).toContain('37u');
+  });
+
+  it('shows no capacity on a wagon card for a wagon that holds nothing', () => {
+    expect(wagonSizeLine(32, 8)).toBe(`${STR.roster.capacity} 32 · ${STR.depot.weight} 8 t`);
+    expect(wagonSizeLine(0, 8)).toBe(`${STR.depot.weight} 8 t`);
   });
 
   it('gives a refuelling cart what it adds instead', () => {

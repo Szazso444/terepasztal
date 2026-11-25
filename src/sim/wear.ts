@@ -141,6 +141,13 @@ export class TrackWear {
       share * rules.trackRepairPrice * rules.buildCostMul * (hand ? rules.trackHandRepairMul : 1);
     return scaleCost(pieceCost(p.kind, p.cls, p.cls2), mul);
   }
+  /** What a maintenance train owes for mending `share` of the piece's HP, in fractions of a unit. */
+  repairDue(p: TrackPiece, share: number): Cost {
+    const mul = share * rules.trackRepairPrice * rules.buildCostMul;
+    const due: Cost = {};
+    for (const [k, v] of Object.entries(pieceCost(p.kind, p.cls, p.cls2))) due[k] = v * mul;
+    return due;
+  }
   /**
    * Give the piece at (x, y) the health it had (an undo lays it back as it stood), and tell the
    * trains if it closes.
