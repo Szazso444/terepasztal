@@ -235,7 +235,7 @@ describe('a game in Hungarian', () => {
     expect(dataName(wheat)).toBe('Wheat');
     expect(cargo.cargoName('wheat')).toBe('Búza');
     expect(cargo.cargoName('power')).toBe('áram');
-    expect(content.stations.defs.find((s) => s.id === 'depot')!.name).toBe('Fűtőház');
+    expect(content.stations.defs.find((s) => s.id === 'depot')!.name).toBe('Pályaudvar');
     expect(content.track.pieces.curve.name).toBe('Ív');
     const rocket = content.locomotives.find((l) => l.id === 'rocket')!;
     expect(rocket.name).toBe("Stephenson's Rocket");
@@ -321,7 +321,7 @@ describe('a game in Hungarian', () => {
     m[8].noteStationsFrom(() => [
       { storedName: 'Farm Halt 2', name: 'Tanyai megálló 2' },
       { storedName: 'Kisvár Station', name: 'Kisvár állomás' },
-      { storedName: 'Narrow Depot', name: 'Keskeny fűtőház' },
+      { storedName: 'Narrow Depot', name: 'Keskeny pályaudvar' },
     ]);
     expect(noteText(en.trainNote.noPlatform('Farm Halt 2'))).toBe(
       'Tanyai megálló 2: nincs peronvágány',
@@ -330,7 +330,7 @@ describe('a game in Hungarian', () => {
       'Kisvár állomás: nincs peronvágány',
     );
     expect(noteText(en.trainNote.noPlatform('Narrow Depot'))).toBe(
-      'Keskeny fűtőház: nincs peronvágány',
+      'Keskeny pályaudvar: nincs peronvágány',
     );
     // a name no station holds, or one the player gave, is printed as it stands
     expect(noteText(en.trainNote.noPlatform('Grand Central Station'))).toBe(

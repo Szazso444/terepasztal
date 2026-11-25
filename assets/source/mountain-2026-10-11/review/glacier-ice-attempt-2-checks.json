@@ -1,0 +1,92 @@
+{
+  "darkerThanShadeShare": 0.011854887327060583,
+  "darkerThanShadeDefinition": "Rec.709 encoded RGB luma < luma(#8E9EA7)",
+  "shadeLuma": 155.2482,
+  "minAlpha": 255,
+  "minBorderAlpha": 255,
+  "opacityPass": true,
+  "darkComponentsAtLeast8Pixels": 59,
+  "largestDarkComponentDiagonalAt1024": 101.86083136600307,
+  "longestDarkComponents": [
+    {
+      "pixels": 1032,
+      "box": [
+        1106,
+        284,
+        1199,
+        365
+      ],
+      "diagonal": 124.73972903610142
+    },
+    {
+      "pixels": 892,
+      "box": [
+        479,
+        989,
+        575,
+        1058
+      ],
+      "diagonal": 119.6202324023825
+    },
+    {
+      "pixels": 904,
+      "box": [
+        148,
+        675,
+        241,
+        747
+      ],
+      "diagonal": 119.01680553602505
+    },
+    {
+      "pixels": 890,
+      "box": [
+        1022,
+        928,
+        1110,
+        1001
+      ],
+      "diagonal": 115.74541027617468
+    },
+    {
+      "pixels": 753,
+      "box": [
+        49,
+        426,
+        138,
+        486
+      ],
+      "diagonal": 108.72442227944926
+    },
+    {
+      "pixels": 886,
+      "box": [
+        476,
+        838,
+        559,
+        904
+      ],
+      "diagonal": 107.4476616776745
+    },
+    {
+      "pixels": 918,
+      "box": [
+        813,
+        1080,
+        885,
+        1150
+      ],
+      "diagonal": 101.83319694480774
+    },
+    {
+      "pixels": 735,
+      "box": [
+        746,
+        583,
+        829,
+        626
+      ],
+      "diagonal": 94.82615672903758
+    }
+  ]
+}
