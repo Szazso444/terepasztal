@@ -9,6 +9,34 @@ function rule(css: string, selector: string): string {
   return css.slice(at, css.indexOf('\n}', at));
 }
 
+describe('the music in the top bar', () => {
+  const css = readFileSync(new URL('./style.css', import.meta.url), 'utf8');
+  /** The z-index of the last rule of `selector`, the one that holds. */
+  const layer = (selector: string) => {
+    const at = css.lastIndexOf(`\n${selector} {`);
+    expect(at, selector).toBeGreaterThan(-1);
+    return Number(/\bz-index: (\d+)/.exec(css.slice(at, css.indexOf('\n}', at)))?.[1]);
+  };
+
+  it('stands over the scrims, so a press on it closes no menu and no screen', () => {
+    const widget = layer('#topbar .now-playing');
+    expect(widget).toBeGreaterThan(layer('.menu-root'));
+    expect(widget).toBeGreaterThan(layer('#modal-root'));
+  });
+
+  it('stands under the name prompt and the tooltips', () => {
+    const widget = layer('#topbar .now-playing');
+    expect(widget).toBeLessThan(layer('#name-prompt-root'));
+    expect(widget).toBeLessThan(layer('.tt'));
+  });
+
+  it('leaves the top bar free of every frame: they stop at 90vh of 720, 36 px from the top', () => {
+    const frame = rule(css, '.k-frame');
+    expect(frame).toContain('max-height: 90vh');
+    expect(rule(css, '#topbar')).toContain('height: 30px');
+  });
+});
+
 describe("the player's saved layout (lwn17qbj)", () => {
   const css = readFileSync(new URL('./style.css', import.meta.url), 'utf8');
   const minimap = readFileSync(new URL('./minimap.ts', import.meta.url), 'utf8');

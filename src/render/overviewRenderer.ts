@@ -77,6 +77,7 @@ const FLAT_COLORS: Record<number, string> = {
   [Terrain.Rock]: css([120, 116, 106]),
   [Terrain.Sand]: css([198, 180, 136]),
   [Terrain.Mountain]: css([134, 130, 122]),
+  [Terrain.Ice]: css([188, 203, 208]),
 };
 
 /** Flat top-down schematic of the whole map (the "strategic" layer). */
