@@ -21,6 +21,8 @@ import type { Editor } from '../editor/editor';
 import type { Terrain } from '../world/tiles';
 import { structureFrame } from '../art/frames';
 import { HALF_H } from '../engine/iso';
+import type { LandmarkItem } from '../sim/landmarks';
+import { pickAt } from './selectPick';
 import { rules } from '../sim/rules';
 import { HarvestCells, harvestBreakdown, weeklyOutput } from '../sim/stations';
 import type { Season } from '../sim/weather';
@@ -111,6 +113,10 @@ export class BuildController {
   onSelectBuilding: ((b: Building | null) => void) | null = null;
   selectedDecor: Decor | null = null;
   onSelectDecor: ((d: Decor | null) => void) | null = null;
+  /** the game's rare landmarks, which the Select tool picks after the rest (#548) */
+  landmarks: { at(x: number, y: number): LandmarkItem | undefined } | null = null;
+  selectedLandmark: LandmarkItem | null = null;
+  onSelectLandmark: ((l: LandmarkItem | null) => void) | null = null;
   /** a town station was just placed: the game asks for its name */
   onTownPlaced: ((s: Station) => void) | null = null;
   /** set in editor mode */
@@ -945,12 +951,11 @@ export class BuildController {
     this.status('');
     for (const c of this.input.clicks) {
       if (c.button === 0 && inMap) {
-        const st = this.builder.stationAt(t.x, t.y);
-        const bld = st ? null : (this.builder.buildingAt(t.x, t.y) ?? null);
-        const dec = st || bld ? null : (this.builder.decorAt(t.x, t.y) ?? null);
-        this.select(st ?? null);
-        this.selectBuilding(bld);
-        this.selectDecor(dec);
+        const pick = pickAt(this.builder, this.landmarks, t.x, t.y);
+        this.select(pick.station);
+        this.selectBuilding(pick.building);
+        this.selectDecor(pick.decor);
+        this.selectLandmark(pick.landmark);
       }
     }
   }
@@ -958,6 +963,11 @@ export class BuildController {
     if (this.selectedBuilding === b) return;
     this.selectedBuilding = b;
     this.onSelectBuilding?.(b);
+  }
+  selectLandmark(l: LandmarkItem | null) {
+    if (this.selectedLandmark === l) return;
+    this.selectedLandmark = l;
+    this.onSelectLandmark?.(l);
   }
   selectDecor(d: Decor | null) {
     if (this.selectedDecor === d) return;
