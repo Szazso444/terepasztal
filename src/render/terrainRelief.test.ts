@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { emptyMap } from '../world/mapgen';
+import { tileLevels } from '../world/elevation';
+import { emptyMap, generateMap } from '../world/mapgen';
+import { groundAllowsAt, groundAllowsOn } from '../world/slope';
 import { Terrain } from '../world/tiles';
 import {
   buildRelief,
@@ -71,7 +73,7 @@ describe('connected illustrated terrain', () => {
         expect(detail).toBeLessThanOrEqual(1);
         expect(Math.abs(detail - grassDetail(x + 0.001, y))).toBeLessThan(0.002);
         surfaceBlend(m, x, y, weights);
-        expect(weights.slice(4).reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10);
+        expect(weights.slice(4, 8).reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10);
         const forest = weights
           .slice(0, 4)
           .reduce((n, t, i) => n + (t === 1 ? weights[i + 4] : 0), 0);
@@ -351,6 +353,69 @@ describe('connected illustrated terrain', () => {
     for (let y = 1; y < 15; y++)
       for (let x = 1; x < 15; x++) expect(surfaceMaterial(m, x, y)).toBe((x + y) % 2 ? 5 : 0);
   });
+});
+
+describe('raised water in the relief', () => {
+  /** A 7 x 7 hill plateau with a 3 x 3 pool at its middle, raised to `level`. */
+  function pool(level: number) {
+    const map = emptyMap(1, 16, 16);
+    const surface = new Uint8Array(16 * 16);
+    for (let y = 4; y < 11; y++)
+      for (let x = 4; x < 11; x++) map.terrain[y * 16 + x] = Terrain.Hill;
+    for (let y = 6; y < 9; y++)
+      for (let x = 6; x < 9; x++) {
+        map.terrain[y * 16 + x] = Terrain.Water;
+        surface[y * 16 + x] = level;
+      }
+    map.waterSurface = surface;
+    return map;
+  }
+  const middle = (k: number) => k * 17 + 7;
+
+  for (const [name, style] of [
+    ['terraces', DEFAULT_RELIEF],
+    ['corners', { ...DEFAULT_RELIEF, shape: 'corners' as const }],
+  ] as const)
+    it(`gives water at level 2 corner level 2 (${name})`, () => {
+      const r = buildRelief(pool(2), new Set(), style);
+      expect(r.corners[middle(7)]).toBe(2);
+      expect(r.corners[middle(8)]).toBe(2);
+    });
+
+  it('leaves the corners of water at level 0 as they are on a map with no levels', () => {
+    const flat = pool(0);
+    const none = pool(0);
+    none.waterSurface = undefined;
+    for (const style of [DEFAULT_RELIEF, { ...DEFAULT_RELIEF, shape: 'corners' as const }])
+      expect(buildRelief(flat, new Set(), style).corners).toEqual(
+        buildRelief(none, new Set(), style).corners,
+      );
+  });
+});
+
+describe('the slope rule', () => {
+  it('agrees with the simulation on every tile of seeded maps', () => {
+    let refused = 0;
+    for (const seed of [15, 2026, 7412]) {
+      const map = generateMap(seed, { w: 96, h: 96 });
+      const relief = buildRelief(map, new Set());
+      const levels = tileLevels(map);
+      for (const need of ['straight', 'level'] as const)
+        for (let y = 0; y < map.h; y++)
+          for (let x = 0; x < map.w; x++) {
+            const sim = groundAllowsAt(map, levels, x, y, need);
+            expect(groundAllows(map, relief, x, y, need), `${seed}, ${x},${y}`).toBe(sim);
+            if (!sim) refused++;
+          }
+      // a sample against the rule the builder asks, which reads no whole-map levels
+      for (let k = 0; k < 400; k += 7) {
+        const x = k % map.w;
+        const y = (k * 13) % map.h;
+        expect(groundAllowsOn(map, x, y, 'level')).toBe(groundAllowsAt(map, levels, x, y, 'level'));
+      }
+    }
+    expect(refused).toBeGreaterThan(0);
+  }, 30_000);
 });
 
 describe('the top of the relief in a box, on any map', () => {

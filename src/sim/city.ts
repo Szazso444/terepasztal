@@ -31,7 +31,13 @@ export function cityTiles(
             t = map.terrain[k];
           // a list of its own, which today leaves out the terrains where nothing can be built
           // (`unbuildable` in build.ts); a change to that helper does not reach it
-          if (t !== Terrain.Water && t !== Terrain.Rock && t !== Terrain.Mountain) out.add(k);
+          if (
+            t !== Terrain.Water &&
+            t !== Terrain.Rock &&
+            t !== Terrain.Mountain &&
+            t !== Terrain.Ice
+          )
+            out.add(k);
         }
     }
   return out;
