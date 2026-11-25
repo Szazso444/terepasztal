@@ -78,6 +78,8 @@ import { ScreenManager } from './ui/modal';
 import type { Train } from './sim/trains';
 import { defaultStop as defaultStopFor } from './sim/trains';
 import { ContractBoard, contractTitle } from './sim/contracts';
+import { LandmarkRegistry } from './sim/landmarks';
+import { placeNewLandmarks } from './engine/landmarkWiring';
 import { Rng } from './engine/rng';
 import { DayNight, Glows, Smoke, GroundLights, Rain, Fog, nightness } from './render/fx';
 import {
@@ -227,6 +229,8 @@ export class Game implements UiHost {
   trainRenderer!: TrainRenderer;
   screens = new ScreenManager();
   contracts!: ContractBoard;
+  /** the rare landmarks of a generated world; empty in a level. #548 sets its `onEvent` */
+  landmarks!: LandmarkRegistry;
   /** hands accepted contracts to trains */
   contractJobs!: ContractDispatcher;
   crafting!: Crafting;
@@ -527,6 +531,7 @@ export class Game implements UiHost {
     this.clock.time = daySeconds() * 0.5;
     this.applySeason(true);
     this.economy.money = start ? start.money : rules.startMoney;
+    this.placeLandmarks();
     if (!start) {
       // the starter engines are narrow gauge, so the first depot is too (unless tuning bars it)
       const d = this.ensureDepot(startDepotKind());
@@ -987,6 +992,14 @@ export class Game implements UiHost {
     this.houses.onUpgraded = (e) => this.onUpgraded(e);
     this.builder.onReclassed = (tiles, dir) => this.onReclassed(tiles, dir);
     this.weather = new Weather(new Rng(this.seed ^ 0x77ea));
+    this.landmarks = new LandmarkRegistry({
+      clock: this.clock,
+      economy: this.economy,
+      stores: this.stores,
+      windLevel: () => this.weather.wind.level,
+    });
+    this.builder.landmarks = this.landmarks;
+    this.landmarks.onEffectsChanged = () => this.builder.refreshStationBoosts();
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
     this.economy.onAgeUp = (t) => this.onAgeUp(t);
     this.inventory.seedStarter(0);
@@ -999,6 +1012,7 @@ export class Game implements UiHost {
     this.fleet.signals.level = this.settings.signalling ?? 'auto';
     this.fleet.onArrive = (t, s) => {
       this.houses.arrival(s, this.clock.time);
+      this.landmarks.onArrive(s);
       this.noteArrival(t, s);
     };
     this.fleet.junctions.onAlert = (a) =>
@@ -1026,6 +1040,9 @@ export class Game implements UiHost {
     this.contracts = new ContractBoard(new Rng(this.seed ^ 0x5eed), this.builder, this.economy);
     this.crafting = new Crafting(new Rng(this.seed ^ 0xc4af7), this.inventory, this.economy);
     this.crafting.grantFromInventory();
+    // landmarks are credited first; contracts see only what they leave
+    this.fleet.landmarkWants = (s, c) => this.landmarks.wants(s, c);
+    this.fleet.landmarkCredit = (e) => this.landmarks.credit(e);
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
     this.contractJobs = new ContractDispatcher(
       this.fleet,
@@ -1171,6 +1188,7 @@ export class Game implements UiHost {
       contracts: this.contracts,
       contractJobs: this.contractJobs,
       clock: this.clock,
+      landmarks: this.landmarks,
     });
     this.build.act = (fn, stroke) => this.commands.act(fn, stroke);
     // every panel, screen and menu, wired to this game; it also sets the build controller's
@@ -1274,6 +1292,7 @@ export class Game implements UiHost {
         houses: this.houses.toJSON(),
         people: this.people.toJSON(),
         roads: this.builder.roads.toJSON(),
+        landmarks: this.landmarks.toJSON(),
       },
       this.saveExtra,
     );
@@ -1351,6 +1370,9 @@ export class Game implements UiHost {
     this.sim.lastDay = j.lastDay;
     this.savedAt = j.savedAt;
     if (j.regions) this.regions.load(j.regions);
+    // before anything is built, so the ground they cover is refused from the first piece
+    this.landmarks.load(j.landmarks);
+    this.placeLandmarks();
     this.world.rebuildFog();
     this.fixBuiltTiles(j);
     this.overview.rebuildRegions();
@@ -1953,6 +1975,7 @@ export class Game implements UiHost {
     }
     this.economy.money -= price;
     this.regions.own(i);
+    this.refreshLandmarks();
     sfx('tier.up');
     const facts = {
       edge:
@@ -2002,6 +2025,23 @@ export class Game implements UiHost {
     }
     for (const p of this.signalHighlight) this.world.setTrackTint(p.x, p.y, 0x7cd7e8);
   }
+  /**
+   * The rolled landmarks of the chunks this build generated (a level has no ground, so none), then
+   * what is revealed is spotted (`placeNewLandmarks`).
+   */
+  private placeLandmarks() {
+    placeNewLandmarks(
+      this.landmarks,
+      this.seed,
+      this.map,
+      this.ground?.added ?? null,
+      rules.landmarkChance,
+    );
+    this.refreshLandmarks();
+  }
+  private refreshLandmarks() {
+    this.landmarks.refreshVisibility((x, y) => this.regions.isTileRevealed(x, y));
+  }
   private refreshCity() {
     this.world.setCity(
       cityTiles(this.map, this.houses.houses.values(), (x, y) => !!this.towns.townAt(x, y)),
@@ -2021,12 +2061,13 @@ export class Game implements UiHost {
     // included, so the interpolation spans every step this tick runs. Below 1x the empty ticks
     // between steps keep them, and `stepAlpha` spreads the step over its ticks.
     if (this.clock.startsSpan()) this.fleet.beginFrame();
-    this.clock.run((gdt) =>
+    this.clock.run((gdt) => {
       this.sim.run(gdt, {
         mode: this.mode,
         weather: this.settings.weather,
-      }),
-    );
+      });
+      if (this.mode === 'play') this.landmarks.tick(gdt);
+    });
   }
 
   /** Debug aid requested for testing: money, and the selected store and the grid filled. */

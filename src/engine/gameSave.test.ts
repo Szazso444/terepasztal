@@ -12,6 +12,7 @@ import { resetTrainIds } from '../sim/trains';
 import { CHUNK_TILES, expandSave, ownsBorderChunk } from '../sim/expand';
 import { unbuildable } from '../sim/build';
 import { Commands } from '../sim/commands';
+import { LandmarkRegistry } from '../sim/landmarks';
 import type { HistoryStep } from '../sim/history';
 import { INTENT_KEY, type Intent } from '../intent';
 import { bootPlan } from './boot';
@@ -444,6 +445,7 @@ describe('Game.buyChunk', () => {
       world: { rebuildFog() {} },
       overview: { rebuildRegions() {} },
       ui: { minimap: { rebuildBase() {} } },
+      landmarks: { refreshVisibility() {} },
       snapshot: () => ({
         ...base(1),
         regions: [...regions.unlocked],
@@ -1093,6 +1095,13 @@ const inert: object = new Proxy(function inert() {}, {
 /** A Game with the prototype's methods over the domains of `w`, and no renderer, panels or DOM. */
 function gameOn(w: SimWorld): Game {
   const host: Record<string, unknown> = Object.create(Game.prototype);
+  const landmarks = new LandmarkRegistry({
+    clock: w.clock,
+    economy: w.economy,
+    stores: w.stores,
+    windLevel: () => w.weather.wind.level,
+  });
+  w.builder.landmarks = landmarks;
   Object.assign(host, {
     seed: w.seed,
     spec: { kind: 'generated', seed: w.seed, params: mapParams(w.map.w) },
@@ -1116,6 +1125,7 @@ function gameOn(w: SimWorld): Game {
     trade: w.trade,
     clock: w.clock,
     notices: w.notices,
+    landmarks,
     commands: new Commands(w),
     camera: { x: 640, y: 320, zoomIndex: 2, zoom: 1, centerOn() {} },
     sim: { lastDay: 0 },
@@ -1593,5 +1603,44 @@ describe('stores through Game.snapshot and Game.applySave', () => {
     gameOn(w).startFresh(levelStart);
     expect(w.builder.depots(), 'no depot is added').toEqual([]);
     expect(goods(w, `town:${w.towns.byStation(hall.id)!.id}`)).toEqual(levelStock());
+  });
+});
+
+// The landmarks go through `Game.snapshot` and `Game.applySave` with the rest. Where a generated
+// chunk gets its landmark is `placeNewLandmarks` (landmarkWiring.test.ts); these pin the save side.
+describe('landmarks through Game.snapshot and Game.applySave', () => {
+  const fresh = () => simWorld({ seed: 11, size: 64, terrain: 'grass' });
+  beforeEach(() => {
+    Object.assign(rules, DEFAULT_RULES);
+    resetStationIds(1);
+    resetTrainIds(1);
+  });
+  const held = {
+    nextId: 3,
+    items: [{ id: 2, def: 'bellkeepers_refuge', x: 20, y: 20, region: [0, 0], stage: 'spotted' }],
+  };
+
+  it('the snapshot writes the registry, and a load reads it back', () => {
+    const w = fresh();
+    const game = gameOn(w);
+    game.landmarks.load(structuredClone(held) as never);
+    const saved = game.snapshot();
+    expect(saved.landmarks).toEqual(held);
+
+    const back = fresh();
+    const again = gameOn(back);
+    again.applySave(structuredClone(saved));
+    expect(again.landmarks.toJSON()).toEqual(held);
+    expect(again.builder.landmarks?.occupies(20, 20)).toBe(true);
+  });
+
+  it('the first load after the v24 step rolls nothing and writes its mark cleared', () => {
+    const game = gameOn(fresh());
+    game.landmarks.load({ nextId: 1, items: [], skipRoll: true });
+    const saved = game.snapshot();
+    expect(saved.landmarks?.skipRoll).toBe(true);
+    const again = gameOn(fresh());
+    again.applySave(structuredClone(saved));
+    expect(again.snapshot().landmarks).toEqual({ nextId: 1, items: [] });
   });
 });
