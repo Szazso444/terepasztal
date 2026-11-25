@@ -168,7 +168,7 @@ display setting); `storm` is wind level `storm` from `windAt` (`src/sim/wind.ts`
 ## 4. Paths and outcomes
 
 Every landmark has **Salvage** (instant, one-time reward) and **Restore** (train deliveries,
-lasting effect). Two landmarks also make a pick when Restore completes. Outcomes use only these
+lasting effect). Two landmarks also make a pick, chosen when Restore starts. Outcomes use only these
 effect kinds in the first version (decision D7):
 
 | Effect       | What it does                                                                           | Built on                         |
@@ -553,5 +553,8 @@ filed issues.
 
 Order of work, one branch stacked on the one before, each a pull request of its own role whose
 base is the branch below it until that merges: this refresh (Core), #528, #543 (Art), #541, #542
-(World), #544, #545 (Gameplay), #546 (Engine), #547 (Rendering), the strings of #548 (Gameplay), the
-panel of #548 (UI/UX), #549 (Engine).
+(World), #544, #545 (Gameplay), #546 (Engine), #547 (Rendering), the `game.ts` lines of #547
+(Engine), the strings of #548 (Gameplay), the panel of #548 (UI/UX), #549 (Engine).
+
+The Restore pick is made when the player starts Restore, not when it completes: the panel shows
+both outcomes before any goods are delivered, and the save keeps the pick on the item from then on.
