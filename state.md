@@ -1,6 +1,6 @@
 # Supervisor state
 
-Last updated: 2026-11-24 (seeded at setup; no run yet).
+Last updated: 2026-11-25 (cloud run 13:38Z).
 
 ## Lock
 
@@ -14,9 +14,34 @@ cloud run, started 2026-11-25T13:38Z
 
 ## In progress
 
-Nothing yet.
+- #606 Maglev: a World agent (cloud run 2026-11-25) merged develop into it and fixed the stale
+  building-kit counts; see the journal for whether it got pushed. Still needs `scope:cross`
+  (the PR body argues for it) and a render check.
+- Fuel stack #690 -> #691 -> #692: `scope:cross` added 2026-11-25 (fuel buildings span art,
+  rendering, uiux). A Gameplay agent brought it up to date with develop; after the merge
+  `fuelBuildings.test.ts` (tender within half a tile of the faced tile) failed and was fixed.
+  Merge bottom first after a render check of the painted fuel buildings.
 
 ## For the local run
+
+Cloud run 2026-11-25 left these green on `check` and `scope` (or with `scope:cross` just added
+and the check re-running): each needs only the render check before merging.
+
+- Landmarks stack #708 -> #709 -> ... -> #718 (#627 and #628 merged; #708 now targets develop).
+  Formatting fixed and carried up the stack. Saves go to v25 (#711): list under Bigger
+  developments when it merges. #718 is a review scene of all twelve.
+- Bridge stack #661 -> #662 -> ... -> #681: all `check` green, `clean`. Review renders exist at
+  https://claude.ai/artifact/TvgwxsHMvu3hH826NLsQ46. Merge bottom first.
+- Weather/nature: #650 (trees sway) is the base of #652, #658, #659, #673 and #684; #683 (nature
+  atlas) is the base of #685. `scope:cross` added to #650 #652 #658 #659 #673 #684 (only
+  wiring lines in `src/game.ts`). #685 still fails scope (192 files of other roles): look first.
+- #702 night flicker: clean, green.
+- People #694, #695: develop merged in, the old ageTooltip failure is gone (check re-running).
+- Track wear #647 (`scope:cross` added) and #693 on it (a timeout fix pushed for the six-train
+  wear test).
+- #697 Tunnels step 1: check green; scope fails only for `gate:approved` (it re-blesses
+  `src/world/mapgen.test.ts` for tall mountains). The charter lets you add it; tall mountains
+  are the point of the change.
 
 - First run: read the local memory index and every memory it names that bears on open work, check
   each "open" item below against GitHub, and rewrite "Unfinished themes" with what is really
@@ -35,23 +60,27 @@ None yet. Format: question, what I chose meanwhile, date asked.
 
 ## Bigger developments (for the next summary)
 
-None yet.
+- 2026-11-25: Hungarian names the Depot Pályaudvar and the Narrow Depot Keskeny pályaudvar (#705).
+- 2026-11-25: AGENTS.md now says the game is English and Hungarian, with no gacha (#629).
 
 ## Unfinished themes
 
 Seeded from the author's local memory index on 2026-11-24. These are notes, some weeks old:
 verify each against GitHub before acting.
 
-- Tunnels: step 1 pull request #697 open into `develop`.
+- Tunnels: step 1 #697 green but for `gate:approved` (mapgen goldens); see For the local run.
 - Track lines: Maglev pull request #606 open; lines-fit-the-ground trial was uncommitted locally.
-- Windmill and building life: stack #650 #652 #658 #659 #673, nature set #683 #684 #685.
-- Fuel buildings: #690 #691 #692, merge in order; narrow depot model waits on Codex.
-- Bridges: stacked pull requests #661-#670 (heights, viaducts, narrow decks).
-- Water chain: stacked pull requests #648-#678 (#678 merged; check the rest).
-- Rare landmarks (#529): a 13-branch stack; pull requests waited on a force push of #627/#628.
-- People walkers: #694 and #695; painted cycles wait on Codex.
+- Windmill and building life: stack #650 #652 #658 #659 #673, nature set #683 #684 #685 (all
+  checks green 2026-11-25; render check and merge are the local run's).
+- Fuel buildings: #690 #691 #692, merge in order (see In progress); narrow depot model waits on
+  Codex.
+- Bridges: stack #661 -> #681, all green 2026-11-25, waits on the local run's render check.
+- Water chain: done; #648, #649, #651, #654, #660, #671, #678 merged (checked 2026-11-25).
+- Rare landmarks (#529): #627 and #628 merged 2026-11-25; #708-#718 green, wait on the local run.
+- People walkers: #694 and #695 green after a develop merge (2026-11-25); painted cycles wait on
+  Codex.
 - Resource modes (#306): all 17 tasks built on `gameplay/306-resource-modes`; final review and
-  pull request were left.
+  pull request were left. The branch is not on GitHub (checked 2026-11-25): local run, push it.
 - Map view (Térkép): design approved, spec on local branch `rendering/terkep-spec`.
 - UI redesign: open #629 gate label, Codex assets.
 - Loco sprites: 7 locos pending; downloaded 3D models have leftovers.
