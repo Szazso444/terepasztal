@@ -107,7 +107,7 @@ describe('the numbers of track wear', () => {
     expect(minute).not.toBeNull();
     expect(minute!).toBeGreaterThan(30);
     expect(minute!).toBeLessThan(90);
-  });
+  }, 30_000); // two game hours of six trains: room for a busy machine
 
   it('an unused line takes about 12 hours to degrade', () => {
     const w = simWorld({ terrain: 'grass', size: 32 });

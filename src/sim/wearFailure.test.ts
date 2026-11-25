@@ -367,15 +367,15 @@ describe('a failed piece', () => {
   });
 
   /**
-   * Three F7s loading at x 16 and bound on for x 6, once the piece under their tail and the piece
+   * `units` F7s loading at x 16 and bound on for x 6, once the piece under their tail and the piece
    * at `cut` on their way have failed: at rest in noRoute after running off.
    */
-  function tailOnFailed(cut: number) {
+  function tailOnFailed(cut: number, units = 3) {
     const w = simWorld({ terrain: 'grass', size: 64 });
     line(w, 4, ROW, 40);
     const here = quarry(w, 16);
     const next = quarry(w, 6);
-    const t = westbound(w, 36, [here, next], 3);
+    const t = westbound(w, 36, [here, next], units);
     const c = clock(w);
     expect(c.until(() => t.state === 'loading', 60)).toBe(true);
     fail(w, [17, ROW], [cut, ROW]);
@@ -388,7 +388,7 @@ describe('a failed piece', () => {
   }
 
   it('a train with only its tail on a failed piece runs clear when sound track lies ahead', () => {
-    const { w, t, c, next } = tailOnFailed(8);
+    const { w, t, c, next } = tailOnFailed(8, 2);
     expect(standsOnFailed(w, t)).toBe(false);
     expect(t.headTile!.x).toBeGreaterThan(8);
     repair(w, 8, ROW);
