@@ -18,6 +18,7 @@ import { harvestBreakdown } from '../sim/stations';
 import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { simWorld, type SimWorld } from '../testing/simWorld';
 import { picture } from '../testing/townPaving';
+import { MAX_LEVEL, tileLevels } from '../world/elevation';
 import { emptyMap } from '../world/mapgen';
 import { RegionState } from '../world/regions';
 import { Terrain, type GameMap, type PropInstance } from '../world/tiles';
@@ -976,6 +977,59 @@ function hills() {
       m.terrain[y * 32 + x] = x > 7 && x < 25 && y > 7 && y < 25 ? Terrain.Mountain : Terrain.Hill;
   return m;
 }
+
+describe('summit peaks', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('give way to track, and show again when the track goes', () => {
+    const world = wholeWorld(hills()) as unknown as {
+      animate(dt: number): void;
+      landscape: object;
+      surfaces: object;
+      summitSprites: Map<number, unknown>;
+      refreshSummits(): void;
+      setTrack(x: number, y: number, frame: string | null): void;
+    };
+    world.animate(0);
+    Object.defineProperties(world.landscape, {
+      active: { value: true },
+      isPainted: { value: () => true },
+      summit: { value: (x: number, y: number) => x === 16 && y === 16 },
+    });
+    vi.spyOn(world.surfaces as { summit(): Texture }, 'summit').mockReturnValue(Texture.WHITE);
+    world.refreshSummits();
+    const tile = 16 * 32 + 16;
+    expect(world.summitSprites.has(tile)).toBe(true);
+    world.setTrack(16, 16, 'track/any');
+    expect(world.summitSprites.has(tile)).toBe(false);
+    world.refreshSummits();
+    expect(world.summitSprites.has(tile)).toBe(false);
+    world.setTrack(16, 16, null);
+    expect(world.summitSprites.has(tile)).toBe(true);
+  });
+});
+
+describe('the ground when the painter has failed', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('lifts mountain and rock to the levels the rail profile reads', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const map = hills();
+    map.terrain[5 * 32 + 5] = Terrain.Rock;
+    const { world } = failed(map);
+    const levels = tileLevels(map);
+    let high = 0;
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const t = map.terrain[y * 32 + x];
+        if (t !== Terrain.Mountain && t !== Terrain.Rock) continue;
+        expect(world.elevationOf(x, y), `${x},${y}`).toBe(-levels[y * 32 + x] * ELEV_PX);
+        if (levels[y * 32 + x] === MAX_LEVEL) high++;
+      }
+    expect(high).toBeGreaterThan(0);
+  });
+});
 
 describe('the building rules on slopes', () => {
   beforeEach(() => {

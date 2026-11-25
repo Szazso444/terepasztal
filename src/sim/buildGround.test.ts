@@ -30,11 +30,11 @@ const name = (t: Terrain) => TERRAIN_NAMES[t];
  * refused before is refused still and one accepted is accepted still.
  */
 const REFUSED_BEFORE: Record<string, readonly Terrain[]> = {
-  station: [Terrain.Water, Terrain.Rock, Terrain.Mountain],
-  works: [Terrain.Water, Terrain.Rock, Terrain.Mountain],
-  decor: [Terrain.Water, Terrain.Rock, Terrain.Mountain],
-  platform: [Terrain.Rock, Terrain.Mountain],
-  depot: [Terrain.Water, Terrain.Rock, Terrain.Mountain],
+  station: [Terrain.Water, Terrain.Rock, Terrain.Mountain, Terrain.Ice],
+  works: [Terrain.Water, Terrain.Rock, Terrain.Mountain, Terrain.Ice],
+  decor: [Terrain.Water, Terrain.Rock, Terrain.Mountain, Terrain.Ice],
+  platform: [Terrain.Rock, Terrain.Mountain, Terrain.Ice],
+  depot: [Terrain.Water, Terrain.Rock, Terrain.Mountain, Terrain.Ice],
 };
 
 /** A builder in editor mode (no cost, no age or chunk lock) on level grass, every chunk owned. */
@@ -73,7 +73,9 @@ describe('unbuildable', () => {
     for (const t of ALL) {
       const r = unbuildable(t);
       if (r === null) continue;
-      expect(r.toLowerCase(), name(t)).toContain(STR.tile.terrain[name(t)].toLowerCase());
+      // the tile reads Glacier and the refusal says ice (#358)
+      const ground = t === Terrain.Ice ? 'ice' : STR.tile.terrain[name(t)].toLowerCase();
+      expect(r.toLowerCase(), name(t)).toContain(ground);
       expect(r, name(t)).not.toMatch(/stone field|grassland/i);
     }
     expect(Object.values(STR.build.nothingOn).sort()).toEqual([...said].sort());

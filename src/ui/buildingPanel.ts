@@ -1,4 +1,4 @@
-import { bridgeCapacity, BRIDGE_SLOW_SHARE } from '../sim/bridges';
+import { bridgeCapacity } from '../sim/bridges';
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Builder } from '../sim/build';
@@ -16,6 +16,7 @@ import { fmtCost, type ResourceStore } from '../sim/stores';
 import { cargoName } from '../sim/cargo';
 import { upgradeView } from './upgradeView';
 import { upgradeRow } from './upgradeRow';
+import { bridgeLimit } from './ruleText';
 import type { WorksStatus } from './tooltipContent';
 
 /** Side panel for a selected processing building: recipe, state and lifetime output. */
@@ -124,13 +125,7 @@ export class BuildingPanel {
     const st = BuildingPanel.status(b, store);
     body.append(el('div', { class: 'flavor', text: def.flavor }));
     const capacity = bridgeCapacity(b);
-    if (capacity !== null)
-      body.append(
-        row(
-          STR.building.bridgeCapacity,
-          STR.building.bridgeLimit(capacity, Math.round(capacity * BRIDGE_SLOW_SHARE)),
-        ),
-      );
+    if (capacity !== null) body.append(row(STR.building.bridgeCapacity, bridgeLimit(capacity)));
     if (!def.bridge) {
       body.append(row(STR.building.recipe, BuildingPanel.recipeText(b.id, b)));
       body.append(row(STR.building.rate, STR.station.perWeek(Math.round(b.rate * 10) / 10)));

@@ -79,12 +79,14 @@ const onePerRarity = (pool: string[]) =>
   RARITIES.flatMap((r) => pool.filter((id) => itemDef(id).rarity === r).slice(0, 1));
 
 describe('retired models', () => {
-  it('retires the Adler and the John Bull, and no other model, without deleting them', () => {
-    expect([...RETIRED].sort()).toEqual(['adler', 'john_bull']);
+  it('retires the Adler, the John Bull, the Crocodile and Orenstein & Koppel, and no other model, without deleting them', () => {
+    expect([...RETIRED].sort()).toEqual(['adler', 'crocodile', 'john_bull', 'orenstein_koppel']);
     // the definitions stay: a save that references them must still resolve
     expect(locoDef('adler').name).toBe('Adler');
     expect(locoDef('john_bull').name).toBe('John Bull');
-    expect(obtainable(['rocket', 'adler', 'john_bull'])).toEqual(['rocket']);
+    expect(locoDef('crocodile').name).toBe('SBB Ce 6/8 Crocodile');
+    expect(locoDef('orenstein_koppel').name).toBe('Orenstein & Koppel');
+    expect(obtainable(['rocket', ...RETIRED])).toEqual(['rocket']);
   });
 
   it('ships content that still validates', () => {
