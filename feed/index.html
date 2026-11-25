@@ -1,0 +1,75 @@
+<title>Terepasztal napló</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column like a dispatcher's day sheet; questions first, then what moved. */
+:root {
+  --bg: #f6f7f4; --panel: #ffffff; --fg: #1d2420; --muted: #5d6963; --line: #d9ded8;
+  --signal: #1f6f4a; --signal-soft: #e3f0e8; --ask: #a35a00; --ask-soft: #fbefdc;
+  --display: "Space Grotesk", "Segoe UI", sans-serif;
+  --body: Inter, "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141815; --panel: #1c221e; --fg: #e6ebe6; --muted: #9aa69f; --line: #2e3731;
+  --signal: #6fcf9a; --signal-soft: #1d3327; --ask: #f0b35c; --ask-soft: #3a2c14; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141815; --panel: #1c221e; --fg: #e6ebe6; --muted: #9aa69f; --line: #2e3731;
+  --signal: #6fcf9a; --signal-soft: #1d3327; --ask: #f0b35c; --ask-soft: #3a2c14; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 16px/1.55 var(--body);
+  padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width: 44rem; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+header { display: flex; flex-direction: column; gap: 6px; }
+h1 { font: 600 1.9rem/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.15rem/1.25 var(--display); margin: 0 0 10px; text-wrap: balance; }
+.stamp { font: 500 0.8rem var(--mono); color: var(--muted); letter-spacing: 0.02em; }
+.lead { margin: 0; color: var(--muted); }
+section { display: flex; flex-direction: column; }
+ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: 6px; }
+p { margin: 0; }
+a { color: var(--signal); }
+.ask { background: var(--ask-soft); border-left: 3px solid var(--ask); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.ask + .ask { margin-top: 10px; }
+.ask .pick { color: var(--muted); font-size: 0.92rem; }
+.big { background: var(--panel); border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+.big + .big { margin-top: 10px; }
+.pr { font: 500 0.85rem var(--mono); white-space: nowrap; }
+.empty { color: var(--muted); }
+footer { border-top: 1px solid var(--line); padding-top: 14px; color: var(--muted); font-size: 0.9rem; }
+</style>
+<main>
+  <header>
+    <span class="stamp">2026-11-24 · még nem volt futás</span>
+    <h1>Terepasztal napló</h1>
+    <p class="lead">A felügyelő napi összefoglalója. Az első a következő reggeli futás után jelenik meg itt.</p>
+  </header>
+
+  <section id="kerdesek">
+    <h2>Iránykérdések</h2>
+    <p class="empty">Még nincs kérdés. Ha lesz, mindegyiknél ott áll, mit választott addig a felügyelő.</p>
+  </section>
+
+  <section id="nagyobb">
+    <h2>Nagyobb fejlemények</h2>
+    <p class="empty">Még nincs.</p>
+  </section>
+
+  <section id="develop">
+    <h2>A develop-ra került</h2>
+    <p class="empty">Még nincs.</p>
+  </section>
+
+  <section id="folyamatban">
+    <h2>Folyamatban</h2>
+    <p class="empty">Még nincs.</p>
+  </section>
+
+  <section id="otletek">
+    <h2>Ötletek</h2>
+    <p class="empty">Még nincs.</p>
+  </section>
+
+  <footer>
+    Kérést és választ ide írj: <a href="https://github.com/Szazso444/terepasztal/issues/707">Felügyelő: kérések (#707)</a>. A triage riportja: <a href="https://github.com/Szazso444/terepasztal/issues/597">#597</a>.
+  </footer>
+</main>
