@@ -139,6 +139,7 @@ describe('where a def is listed', () => {
       'Station',
       'Depot',
       'Narrow Depot',
+      'Maglev Depot',
       'Warehouse',
     ]);
   });

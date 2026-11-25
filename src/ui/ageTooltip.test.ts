@@ -179,11 +179,11 @@ describe('what each age brings', () => {
       ['main'],
       ['trunk'],
       [],
-      [],
+      ['maglev'],
       [],
     ]);
     rules.lineAgeLocks = 0;
-    expect(ageNews(0).lines).toEqual(['narrow', 'branch', 'main', 'trunk']);
+    expect(ageNews(0).lines).toEqual(['narrow', 'branch', 'main', 'trunk', 'maglev']);
     rules.narrowUnlocked = 0;
     expect(ageNews(0).lines).not.toContain('narrow');
     expect(ids(ageNews(0).stations)).not.toContain('narrow_depot');
@@ -204,7 +204,7 @@ describe('what each age brings', () => {
 
   it('sorts the rolling stock by its age, and leaves out what is retired', () => {
     const engines = AGE_DEFS.map((_, i) => ageNews(i).locos);
-    const type = ['steam', 'diesel', 'electric'];
+    const type = ['steam', 'diesel', 'electric', undefined, 'electric'];
     engines.forEach((list, i) => {
       for (const l of list) {
         expect(l.type).toBe(type[i]);
@@ -215,8 +215,9 @@ describe('what each age brings', () => {
     expect(AGE_DEFS.flatMap((_, i) => ageNews(i).wagons).length).toBe(
       data.wagons.filter((w) => !w.retired).length,
     );
-    // the ages after Electric bring no vehicle of their own
-    expect(engines.slice(3).flat()).toEqual([]);
+    // the ages after Electric bring no vehicle of their own, but the Magnetic one's maglev set
+    expect(engines.slice(3, 4).flat()).toEqual([]);
+    expect(engines[5]).toEqual([]);
   });
 
   it('takes contracts by their first age, wires by theirs, and one more level each age', () => {
