@@ -4,7 +4,7 @@ Last updated: 2026-11-25 (cloud run 13:38Z).
 
 ## Lock
 
-cloud run, started 2026-11-25T13:38Z
+none
 
 ## Links
 
@@ -14,13 +14,14 @@ cloud run, started 2026-11-25T13:38Z
 
 ## In progress
 
-- #606 Maglev: a World agent (cloud run 2026-11-25) merged develop into it and fixed the stale
-  building-kit counts; see the journal for whether it got pushed. Still needs `scope:cross`
-  (the PR body argues for it) and a render check.
-- Fuel stack #690 -> #691 -> #692: `scope:cross` added 2026-11-25 (fuel buildings span art,
-  rendering, uiux). A Gameplay agent brought it up to date with develop; after the merge
-  `fuelBuildings.test.ts` (tender within half a tile of the faced tile) failed and was fixed.
-  Merge bottom first after a render check of the painted fuel buildings.
+- #606 Maglev: develop merged in and fixed by a World agent (2026-11-25, head `ebec5292`):
+  conflicts resolved, `tools/building-kit.mjs` no longer counts a station that wears another's
+  art as its own family, Hungarian names and strings added. `scope:cross` added (the PR body
+  argues for it). Needs a render check (temporary art: guideway painted, set and depot borrowed).
+- Fuel stack #690 -> #691 -> #692: develop merged in, `scope:cross` added (fuel buildings span
+  art, rendering, uiux). Root cause of a broken fuel stop after develop's measured-model change:
+  `Train.runOn` read the plan from the definition; it now reads it from the body spec (#690).
+  Needs a render check of the painted fuel buildings; merge bottom first.
 
 ## For the local run
 
@@ -32,6 +33,7 @@ and the check re-running): each needs only the render check before merging.
   developments when it merges. #718 is a review scene of all twelve.
 - Bridge stack #661 -> #662 -> ... -> #681: all `check` green, `clean`. Review renders exist at
   https://claude.ai/artifact/TvgwxsHMvu3hH826NLsQ46. Merge bottom first.
+- Fuel stack #690 -> #692 and Maglev #606: see In progress.
 - Weather/nature: #650 (trees sway) is the base of #652, #658, #659, #673 and #684; #683 (nature
   atlas) is the base of #685. `scope:cross` added to #650 #652 #658 #659 #673 #684 (only
   wiring lines in `src/game.ts`). #685 still fails scope (192 files of other roles): look first.
