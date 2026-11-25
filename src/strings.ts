@@ -2035,6 +2035,7 @@ const EN = {
       track: 'Track',
       crafting: 'Crafting',
       houses: 'Houses',
+      landmarks: 'Landmarks',
     } as Record<string, string>,
     customActive: 'Custom content active',
     shipped: 'Shipped content',

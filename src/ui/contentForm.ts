@@ -90,6 +90,7 @@ export const TAB_FORMS: Record<ContentKey, FormSpec[]> = {
   track: [{ pick: (b) => b.track, list: false }],
   crafting: [{ pick: (b) => b.crafting, list: false }],
   houses: [{ pick: (b) => b.houses, list: false }],
+  landmarks: [{ pick: (b) => b.landmarks, list: true }],
 };
 
 /** The shipped entries a form is built from (one for an object form). */

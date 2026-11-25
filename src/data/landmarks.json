@@ -1,0 +1,168 @@
+[
+  {
+    "id": "merchants_last_stop",
+    "w": 2,
+    "d": 2,
+    "target": 0.06,
+    "roll": 0.071,
+    "rule": { "kind": "climateAll", "climate": "plains" },
+    "salvage": { "effect": { "kind": "grant", "cargo": { "food": 30, "wood": 30 } } },
+    "restore": {
+      "needs": { "wood": 60, "stone": 30, "food": 20 },
+      "effect": { "kind": "boost", "strength": 1 }
+    }
+  },
+  {
+    "id": "overgrown_bathhouse",
+    "w": 3,
+    "d": 2,
+    "target": 0.05,
+    "roll": 0.0522,
+    "rule": { "kind": "near", "what": "fresh water", "r": 3 },
+    "salvage": { "effect": { "kind": "grant", "cargo": { "stone": 60 } } },
+    "restore": {
+      "needs": { "stone": 80, "iron": 20, "water": 40 },
+      "effect": { "kind": "attraction", "perDay": 6 }
+    }
+  },
+  {
+    "id": "bellkeepers_refuge",
+    "w": 1,
+    "d": 1,
+    "target": 0.04,
+    "roll": 0.062,
+    "rule": { "kind": "levelAtLeast", "n": 2 },
+    "salvage": { "effect": { "kind": "grant", "cargo": { "iron": 20 } } },
+    "restore": { "needs": { "wood": 20, "iron": 20 }, "effect": { "kind": "boost", "strength": 1 } }
+  },
+  {
+    "id": "flooded_archive",
+    "w": 2,
+    "d": 2,
+    "target": 0.03,
+    "roll": 0.0313,
+    "rule": { "kind": "near", "what": "fresh water", "r": 2 },
+    "salvage": { "effect": { "kind": "grant", "money": 2000 } },
+    "restore": {
+      "needs": { "stone": 60, "iron": 30, "coal": 30 },
+      "effect": { "kind": "grant", "money": 6000 }
+    }
+  },
+  {
+    "id": "rootbound_workshop",
+    "w": 1,
+    "d": 1,
+    "target": 0.03,
+    "roll": 0.0416,
+    "rule": { "kind": "forestCount", "n": 8, "r": 2 },
+    "salvage": { "effect": { "kind": "grant", "cargo": { "wood": 50 } } },
+    "restore": {
+      "needs": { "wood": 30, "water": 40 },
+      "effect": { "kind": "produce", "cargo": "wood", "perDay": 4 }
+    }
+  },
+  {
+    "id": "cliffside_cable_station",
+    "w": 2,
+    "d": 2,
+    "target": 0.025,
+    "roll": 0.0351,
+    "rule": { "kind": "cliff", "levels": 2, "r": 2 },
+    "salvage": { "effect": { "kind": "grant", "cargo": { "iron": 40 } } },
+    "restore": {
+      "needs": { "iron": 40, "wood": 30, "coal": 20 },
+      "effect": { "kind": "boost", "strength": 2 }
+    }
+  },
+  {
+    "id": "stormglass_observatory",
+    "w": 1,
+    "d": 1,
+    "target": 0.02,
+    "roll": 0.031,
+    "rule": { "kind": "levelAtLeast", "n": 2 },
+    "salvage": { "effect": { "kind": "grant", "money": 1500, "cargo": { "iron": 20 } } },
+    "restore": {
+      "needs": { "stone": 30, "iron": 20 },
+      "condition": "storm",
+      "effect": { "kind": "boost", "strength": 1 }
+    }
+  },
+  {
+    "id": "ashen_conservatory",
+    "w": 2,
+    "d": 1,
+    "target": 0.015,
+    "roll": 0.0325,
+    "rule": { "kind": "near", "what": "desert", "r": 3 },
+    "salvage": { "effect": { "kind": "grant", "cargo": { "wood": 30 } } },
+    "restore": {
+      "needs": { "water": 60, "coal": 30, "wood": 20 },
+      "pick": [
+        { "kind": "produce", "cargo": "food", "perDay": 4 },
+        { "kind": "produce", "cargo": "wheat", "perDay": 4 }
+      ]
+    }
+  },
+  {
+    "id": "inverted_manor",
+    "w": 1,
+    "d": 1,
+    "target": 0.01,
+    "roll": 0.01,
+    "rule": { "kind": "none" },
+    "salvage": { "effect": { "kind": "grant", "money": 4000 } },
+    "restore": {
+      "needs": { "stone": 60, "iron": 40, "wood": 40 },
+      "effect": { "kind": "attraction", "perDay": 10 }
+    }
+  },
+  {
+    "id": "sleeping_foundry",
+    "w": 3,
+    "d": 2,
+    "target": 0.0075,
+    "roll": 0.0238,
+    "rule": { "kind": "near", "what": "rock", "r": 3 },
+    "salvage": { "effect": { "kind": "grant", "cargo": { "iron": 60, "coal": 20 } } },
+    "restore": {
+      "needs": { "coal": 80, "iron": 40, "water": 40 },
+      "effect": {
+        "kind": "produce",
+        "cargo": "iron",
+        "perDay": 6,
+        "consumes": { "cargo": "coal", "perDay": 6 }
+      }
+    }
+  },
+  {
+    "id": "moonwell_pavilion",
+    "w": 1,
+    "d": 1,
+    "target": 0.005,
+    "roll": 0.0058,
+    "rule": { "kind": "near", "what": "lake", "r": 3 },
+    "salvage": { "effect": { "kind": "grant", "money": 8000 } },
+    "restore": {
+      "needs": { "stone": 20, "water": 20 },
+      "condition": "night",
+      "effect": { "kind": "attraction", "perDay": 8 }
+    }
+  },
+  {
+    "id": "house_between_seasons",
+    "w": 3,
+    "d": 3,
+    "target": 0.0025,
+    "siteChance": 0.23,
+    "rule": { "kind": "fourClimates", "climates": ["plains", "desert", "forest", "taiga"], "r": 3 },
+    "salvage": { "effect": { "kind": "grant", "cargo": { "food": 40, "wood": 40 } } },
+    "restore": {
+      "needs": { "wood": 40, "stone": 40, "water": 40, "food": 40 },
+      "pick": [
+        { "kind": "boost", "strength": 2 },
+        { "kind": "produce", "cargo": "food", "perDay": 6 }
+      ]
+    }
+  }
+]

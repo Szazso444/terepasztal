@@ -27,6 +27,8 @@ import trackJson from './track.json';
 import buildingJson from './buildings.json';
 import craftingJson from './crafting.json';
 import houseJson from './houses.json';
+import landmarkJson from './landmarks.json';
+import biomeJson from './biomes.json';
 import cargoFullJson from './cargo_full.json';
 import stationFullJson from './stations_full.json';
 import buildingFullJson from './buildings_full.json';
@@ -451,6 +453,60 @@ export interface TrackConfig {
     batteryChargePerTile: number;
   };
 }
+/**
+ * The terrain a landmark needs around its footprint: a small closed set of kinds, which the world's
+ * placement reads through its own `LandmarkSite` type. "Within r" is the footprint grown by r tiles
+ * on every side.
+ */
+export type SiteRule =
+  /** every footprint tile is of this climate */
+  | { kind: 'climateAll'; climate: string }
+  /** this kind of ground lies within r */
+  | { kind: 'near'; what: NearKind; r: number }
+  /** at least n forest tiles within r */
+  | { kind: 'forestCount'; n: number; r: number }
+  /** the footprint stands at level n or higher */
+  | { kind: 'levelAtLeast'; n: number }
+  /** a tile this many levels higher lies within r */
+  | { kind: 'cliff'; levels: number; r: number }
+  /** all of these climates lie within r */
+  | { kind: 'fourClimates'; climates: string[]; r: number }
+  | { kind: 'none' };
+export type NearKind = 'fresh water' | 'lake' | 'desert' | 'rock';
+/** What a landmark path gives. Cargo goes into a store, per-day amounts run per game day. */
+export type LandmarkEffect =
+  | { kind: 'grant'; money?: number; cargo?: Cost }
+  | {
+      kind: 'produce';
+      cargo: string;
+      perDay: number;
+      consumes?: { cargo: string; perDay: number };
+    }
+  | { kind: 'attraction'; perDay: number }
+  | { kind: 'boost'; strength: number };
+export type LandmarkCondition = 'night' | 'storm';
+export interface LandmarkDef {
+  id: string;
+  /** footprint in tiles: w along the map's +x axis, d along +y */
+  w: number;
+  d: number;
+  /** appearances wanted per 3x3-chunk region (what the roll is calibrated to) */
+  target: number;
+  /** width of its band in the one roll per region; absent for a site-led landmark */
+  roll?: number;
+  /** a site-led landmark: the chance a chunk with a legal site places it */
+  siteChance?: number;
+  rule: SiteRule;
+  /** the instant, one-time path */
+  salvage: { effect: LandmarkEffect };
+  /** the delivery path: what it needs, the condition to finish, and its lasting effect or a pick */
+  restore: {
+    needs: Cost;
+    condition?: LandmarkCondition;
+    effect?: LandmarkEffect;
+    pick?: LandmarkEffect[];
+  };
+}
 /** Model quality tiers the crafting tables are keyed by: the shipped rarities plus a reserved 'L'. */
 export type CraftRarity = Rarity | 'L';
 export type CraftKind = 'loco' | 'wagon';
@@ -491,6 +547,7 @@ export interface ContentBundle {
   track: TrackConfig;
   crafting: CraftingConfig;
   houses: HouseConfig;
+  landmarks: LandmarkDef[];
 }
 export type ContentKey = keyof ContentBundle;
 export const CONTENT_KEYS: ContentKey[] = [
@@ -504,6 +561,7 @@ export const CONTENT_KEYS: ContentKey[] = [
   'track',
   'crafting',
   'houses',
+  'landmarks',
 ];
 
 export const CONTENT_KEY = 'terepasztal.content';
@@ -537,6 +595,7 @@ const SHIPPED: Record<ContentKey, () => unknown> = {
   track: () => trackJson,
   crafting: () => craftingJson,
   houses: () => houseJson,
+  landmarks: () => landmarkJson,
 };
 
 /** Pristine copy of the shipped data; the wagon accept lists are filled in at load, below. */
@@ -811,6 +870,107 @@ interface Refs {
  */
 type Check = (t: unknown, ref: Refs, out: string[]) => void;
 
+const NEAR_KINDS: string[] = ['fresh water', 'lake', 'desert', 'rock'];
+const CONDITIONS: string[] = ['night', 'storm'];
+const BIOME_IDS = new Set(biomeJson.map((b) => b.id));
+const isInt = (v: unknown, min: number, max: number): v is number =>
+  typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max;
+const isChance = (v: unknown): v is number => typeof v === 'number' && v >= 0 && v <= 1;
+const isPositive = (v: unknown): v is number => typeof v === 'number' && v > 0;
+
+/** A landmark's site rule: a known kind with the numbers and names its kind takes. */
+function siteProblems(r: unknown): string[] {
+  if (!isObj(r)) return ['rule must be an object'];
+  const out: string[] = [];
+  const reach = () => {
+    if (!isInt(r.r, 0, 8)) out.push('rule: r must be a whole number from 0 to 8');
+  };
+  const climate = (c: unknown) => {
+    if (typeof c !== 'string' || !BIOME_IDS.has(c))
+      out.push(`rule: unknown climate "${String(c)}"`);
+  };
+  switch (r.kind) {
+    case 'climateAll':
+      climate(r.climate);
+      break;
+    case 'near':
+      if (typeof r.what !== 'string' || !NEAR_KINDS.includes(r.what))
+        out.push(`rule: near needs one of ${NEAR_KINDS.join(', ')}`);
+      reach();
+      break;
+    case 'forestCount':
+      if (!isInt(r.n, 1, 81)) out.push('rule: n must be a whole number from 1 to 81');
+      reach();
+      break;
+    case 'levelAtLeast':
+      if (!isInt(r.n, 1, MAX_LEVEL))
+        out.push(`rule: n must be a whole number from 1 to ${MAX_LEVEL}`);
+      break;
+    case 'cliff':
+      if (!isInt(r.levels, 1, MAX_LEVEL))
+        out.push(`rule: levels must be a whole number from 1 to ${MAX_LEVEL}`);
+      reach();
+      break;
+    case 'fourClimates':
+      if (!Array.isArray(r.climates) || !r.climates.length) out.push('rule: climates needs a list');
+      else r.climates.forEach(climate);
+      reach();
+      break;
+    case 'none':
+      break;
+    default:
+      out.push(`unknown site rule kind "${String(r.kind)}"`);
+  }
+  return out;
+}
+
+/** An amount map that names only known cargo. */
+function cargoMapProblems(c: unknown, what: string, ref: Refs): string[] {
+  if (!isCost(c)) return [`${what} must be a resource map`];
+  return Object.keys(c as Cost)
+    .filter((k) => !ref.cargo.has(k))
+    .map((k) => `unknown cargo "${k}" in ${what}`);
+}
+
+/** One landmark effect: a known kind with its amounts and cargo. */
+function effectProblems(e: unknown, ref: Refs): string[] {
+  if (!isObj(e)) return ['effect must be an object'];
+  const out: string[] = [];
+  const cargo = (c: unknown, what: string) => {
+    if (typeof c !== 'string' || !ref.cargo.has(c))
+      out.push(`unknown cargo "${String(c)}" in ${what}`);
+  };
+  switch (e.kind) {
+    case 'grant':
+      if (e.money === undefined && e.cargo === undefined) out.push('grant needs money or cargo');
+      if (e.money !== undefined && !isPositive(e.money)) out.push('grant: money must be positive');
+      if (e.cargo !== undefined) out.push(...cargoMapProblems(e.cargo, 'grant cargo', ref));
+      break;
+    case 'produce': {
+      cargo(e.cargo, 'produce');
+      if (!isPositive(e.perDay)) out.push('produce: perDay must be positive');
+      const c = e.consumes;
+      if (c !== undefined) {
+        if (!isObj(c)) out.push('produce: consumes needs a cargo and perDay');
+        else {
+          cargo(c.cargo, 'produce consumes');
+          if (!isPositive(c.perDay)) out.push('produce: consumes perDay must be positive');
+        }
+      }
+      break;
+    }
+    case 'attraction':
+      if (!isPositive(e.perDay)) out.push('attraction: perDay must be positive');
+      break;
+    case 'boost':
+      if (!isPositive(e.strength)) out.push('boost: strength must be positive');
+      break;
+    default:
+      out.push(`unknown effect kind "${String(e.kind)}"`);
+  }
+  return out;
+}
+
 const CHECKS: Record<ContentKey, Check> = {
   locomotives(t, _ref, out) {
     const locos = rows<LocoDef>(t, 'locomotives', out);
@@ -1000,6 +1160,64 @@ const CHECKS: Record<ContentKey, Check> = {
       for (const k of ['constructionDays', 'growthDays', 'autoUpgradeDays'] as const)
         if (!(hc[k] > 0)) out.push(`houses: ${k} must be positive`);
     }
+  },
+  landmarks(t, ref, out) {
+    const list = rows<LandmarkDef>(t, 'landmarks', out);
+    checkIds(list, 'landmark', out);
+    let bands = 0;
+    for (const lm of list) {
+      const at = (p: string) => out.push(`landmark ${lm.id}: ${p}`);
+      if (!isInt(lm.w, 1, 5) || !isInt(lm.d, 1, 5))
+        at('footprint sides must be whole numbers from 1 to 5');
+      if (!isChance(lm.target)) at('target must be between 0 and 1');
+      const roll: unknown = lm.roll;
+      const site: unknown = lm.siteChance;
+      if ((roll === undefined) === (site === undefined))
+        at('needs a roll or a siteChance, and not both');
+      if (roll !== undefined && !isChance(roll)) at('roll must be between 0 and 1');
+      else if (typeof roll === 'number') bands += roll;
+      if (site !== undefined && !isChance(site)) at('siteChance must be between 0 and 1');
+      for (const p of siteProblems(lm.rule)) at(p);
+      const sv: unknown = lm.salvage;
+      if (!isObj(sv)) at('salvage needs an effect');
+      else {
+        for (const p of effectProblems(sv.effect, ref)) at(`salvage ${p}`);
+        // Salvage is one-time: only a grant runs there, the other kinds only run once restored.
+        if (
+          isObj(sv.effect) &&
+          ['boost', 'attraction', 'produce'].includes(sv.effect.kind as string)
+        )
+          at('salvage effect must be a grant');
+      }
+      const rs: unknown = lm.restore;
+      if (!isObj(rs)) {
+        at('restore needs requirements and an effect');
+        continue;
+      }
+      for (const p of cargoMapProblems(rs.needs, 'restore needs', ref)) at(p);
+      if (isObj(rs.needs) && !Object.keys(rs.needs).length) at('restore needs something');
+      if (rs.condition !== undefined && !CONDITIONS.includes(rs.condition as string))
+        at(`unknown condition "${String(rs.condition)}"`);
+      if ((rs.effect === undefined) === (rs.pick === undefined))
+        at('restore needs an effect or a pick, and not both');
+      if (rs.effect !== undefined)
+        for (const p of effectProblems(rs.effect, ref)) at(`restore ${p}`);
+      if (rs.pick !== undefined) {
+        if (!Array.isArray(rs.pick) || rs.pick.length < 2)
+          at('restore pick needs two or more effects');
+        else {
+          for (const e of rs.pick) for (const p of effectProblems(e, ref)) at(`restore ${p}`);
+          // The player names a pick by its key (`pickKey` in the sim), so two alike cannot be told apart.
+          const keys = rs.pick.map((e: unknown) =>
+            isObj(e) && e.kind === 'produce'
+              ? `produce:${String(e.cargo)}`
+              : String(isObj(e) && e.kind),
+          );
+          if (new Set(keys).size < keys.length) at('restore pick has two effects alike');
+        }
+      }
+    }
+    if (bands > 1) out.push(`landmarks: roll bands add up to ${bands.toFixed(4)}, more than 1`);
   },
 };
 
@@ -1326,6 +1544,14 @@ finalize(DEFAULT_CONTENT);
 export const sourceContent: ContentBundle = LANGUAGE === 'en' ? bundle : clone(bundle);
 /** The live bundle every module reads from, in the language on screen. */
 export const content: ContentBundle = translated(bundle);
+
+/**
+ * The landmark with this id, or undefined for one the content does not have. Never throws, so a
+ * stored landmark of a kind the content dropped is simply not found.
+ */
+export function landmarkDef(id: string): LandmarkDef | undefined {
+  return content.landmarks.find((l) => l.id === id);
+}
 
 /** What became of the stored overrides at load: which tables apply, which were set aside and why. */
 export function contentOverrideReport(): ContentOverrideReport {
