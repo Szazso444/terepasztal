@@ -1,0 +1,132 @@
+{
+  "total": 1972,
+  "passed": 1947,
+  "failed": 14,
+  "pending": 11,
+  "failures": [
+    {
+      "file": "tools/agents/ownership.test.mjs",
+      "message": "Invalid or unexpected token",
+      "assertions": []
+    },
+    {
+      "file": "tools/asset-pipeline/blender_runner.test.mjs",
+      "message": "",
+      "assertions": [
+        {
+          "name": "blender_runner: which Blender a step may run on reads any `blender --version` back to its release and build, and accepts exactly 5.2.x",
+          "messages": ["Error: spawnSync python ENOENT"]
+        },
+        {
+          "name": "blender_runner: which Blender a step may run on gives the author's Blender 5.2.1 executable and the cloud's bpy 5.2.1 the identity the render profiles lock",
+          "messages": ["Error: spawnSync python ENOENT"]
+        },
+        {
+          "name": "blender_runner: running a step leaves this process as it found it after any sequence of in-process steps, failed or not",
+          "messages": ["Error: spawnSync python ENOENT"]
+        }
+      ]
+    },
+    {
+      "file": "tools/asset-pipeline/filehash.test.mjs",
+      "message": "",
+      "assertions": [
+        {
+          "name": "filehash: one hash for an input on every checkout hashes a text input with CRLF read as LF and any other file as its bytes",
+          "messages": ["Error: spawnSync python ENOENT"]
+        },
+        {
+          "name": "filehash: one hash for an input on every checkout gives an input with a text suffix one hash on an LF and a CRLF checkout, whatever it holds",
+          "messages": ["Error: spawnSync python ENOENT"]
+        },
+        {
+          "name": "filehash: one hash for an input on every checkout keeps every committed lock and manifest hash on a CRLF checkout of its inputs",
+          "messages": ["Error: spawnSync python ENOENT"]
+        }
+      ]
+    },
+    {
+      "file": "tools/asset-pipeline/game_rules.test.mjs",
+      "message": "spawnSync python ENOENT",
+      "assertions": []
+    },
+    {
+      "file": "tools/asset-pipeline/handbuilt-method.test.mjs",
+      "message": "",
+      "assertions": [
+        {
+          "name": "hand-built method, Python tests without Blender runs every Blender step on a Blender 5.2.x executable or the bpy 5.2.x module",
+          "messages": ["Error: spawnSync python ENOENT"]
+        },
+        {
+          "name": "hand-built method, Python tests without Blender keeps recipes locked to their pictures, inside their projects and the same on every checkout",
+          "messages": ["Error: spawnSync python ENOENT"]
+        },
+        {
+          "name": "hand-built method, Python tests without Blender keeps renders locked to their models, atlas pages bounded and installs to owned keys",
+          "messages": ["Error: spawnSync python ENOENT"]
+        }
+      ]
+    },
+    {
+      "file": "asset-pipeline/handbuilt/run.test.mjs",
+      "message": "spawnSync python ENOENT",
+      "assertions": []
+    },
+    {
+      "file": "asset-pipeline/handbuilt/verify_construction.test.mjs",
+      "message": "",
+      "assertions": [
+        {
+          "name": "verify_construction: does a replay match the model matches exactly when all but coordinates are equal and every coordinate is within 1e-6",
+          "messages": ["Error: spawnSync python ENOENT"]
+        },
+        {
+          "name": "verify_construction: does a replay match the model a NaN or an infinity on either side is a mismatch with no difference reported",
+          "messages": ["Error: spawnSync python ENOENT"]
+        },
+        {
+          "name": "verify_construction: does a replayed calibration match matches exactly when the structure is equal and every number is within 1e-6",
+          "messages": ["Error: spawnSync python ENOENT"]
+        }
+      ]
+    },
+    {
+      "file": "asset-pipeline/painted/run.test.mjs",
+      "message": "",
+      "assertions": [
+        {
+          "name": "painted/run.py: the render cache reuses a bundle exactly while its receipt holds for every file it lists",
+          "messages": ["Error: spawnSync python ENOENT"]
+        },
+        {
+          "name": "painted/run.py: the render cache keys a render by the Blender release and build, whether an executable or the bpy module",
+          "messages": ["Error: spawnSync python ENOENT"]
+        }
+      ]
+    }
+  ],
+  "retryWithBundledNodeAndPython": {
+    "total": 29,
+    "passed": 26,
+    "failed": 1,
+    "pending": 2,
+    "failures": [
+      {
+        "file": "tools/agents/ownership.test.mjs",
+        "message": "Invalid or unexpected token",
+        "assertions": []
+      },
+      {
+        "file": "tools/asset-pipeline/handbuilt/run.test.mjs",
+        "message": "",
+        "assertions": [
+          {
+            "name": "handbuilt/run.py: project paths accepts exactly the paths that are relative on Windows and POSIX and use forward slashes, and keeps them inside the project",
+            "messages": ["Error: Property failed for seed 19 (case 19 of 100)."]
+          }
+        ]
+      }
+    ]
+  }
+}
