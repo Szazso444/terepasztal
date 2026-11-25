@@ -1097,7 +1097,13 @@ describe('landmarks', () => {
     const files = import.meta.glob('./*', { query: '?raw', import: 'default', eager: true });
     const ids = shipped.DEFAULT_CONTENT.landmarks.map((l) => l.id);
     const named = Object.entries(files).flatMap(([path, text]) =>
-      path === './landmarks.json' || path === './content.test.ts'
+      // the Hungarian strings and their test name the landmarks for the panel, which is no content
+      [
+        './landmarks.json',
+        './content.test.ts',
+        './strings.hu.ts',
+        './landmarkStrings.test.ts',
+      ].includes(path)
         ? []
         : ids.filter((id) => (text as string).includes(id)).map((id) => `${path}: ${id}`),
     );
