@@ -9,7 +9,9 @@ export type Intent =
   | { action: 'menu' }
   | { action: 'new'; seed: number; supply?: SupplyMode }
   | { action: 'play'; levelId: string; testing?: boolean }
-  | { action: 'edit'; levelId: string | null; seed?: number; blank?: boolean; size?: number };
+  | { action: 'edit'; levelId: string | null; seed?: number; blank?: boolean; size?: number }
+  /** The rare-landmark review scene (#549). Dev server only: `main.ts` drops it from production builds. */
+  | { action: 'landmarkScene' };
 
 export const INTENT_KEY = 'terepasztal.intent';
 export const TESTING_KEY = 'terepasztal.testing';
