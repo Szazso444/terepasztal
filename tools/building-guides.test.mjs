@@ -35,7 +35,6 @@ import {
   writeGuides,
 } from './building-guides.mjs';
 import { loadInventory } from './building-kit.mjs';
-import { structureScale } from '../src/render/assetScale';
 
 const at = (png, [x, y]) => {
   const o = (Math.round(y) * png.width + Math.round(x)) * 4;
@@ -523,62 +522,10 @@ describe('the windmill guides', { timeout: 30_000 }, () => {
     expect(hub.tower.footEllipse.semiMinor / hub.tower.footEllipse.semiMajor).toBeCloseTo(0.5, 4);
   });
 
-  /**
-   * The windmill picture the game draws today, measured on the shipped atlas from its anchor (the
-   * tile's centre on the ground), in game px as the renderer scales it: `structureScale` of the
-   * frame's own height, which is its texels over the atlas's resolution; the texel is that scale
-   * over the resolution.
-   */
-  const current = () => {
-    const atlas = JSON.parse(readFileSync('public/assets/structures.json', 'utf8'));
-    const f = atlas.frames['structures/windmill'];
-    const sheet = PNG.sync.read(readFileSync('public/assets/structures.png'));
-    const solidAt = (x, y) => sheet.data[((f.y + y) * sheet.width + f.x + x) * 4 + 3] > 127;
-    const perTexel =
-      structureScale('structures/windmill', f.h / atlas.resolution) / atlas.resolution;
-    // the run of opaque texels through column x of a row, as [from, to]
-    const run = (y, x) => {
-      if (!solidAt(x, y)) return null;
-      let from = x,
-        to = x;
-      while (from > 0 && solidAt(from - 1, y)) from--;
-      while (to < f.w - 1 && solidAt(to + 1, y)) to++;
-      return [from, to];
-    };
-    const width = (y, x) => {
-      const r = run(y, x);
-      return r ? r[1] - r[0] + 1 : 0;
-    };
-    // the tower's axis runs through its finial: the highest painted texels in the middle of the
-    // frame's width (the sails reach higher, but out at the sides)
-    const middle = Array.from(
-      { length: Math.round(f.w * 0.16) },
-      (_, i) => Math.round(f.w * 0.42) + i,
-    );
-    let top = 0;
-    while (!middle.some((x) => solidAt(x, top))) top++;
-    const finial = middle.filter((x) => solidAt(x, top + 4));
-    const axis = Math.round(finial.reduce((sum, x) => sum + x, 0) / finial.length);
-    // the cone proper starts where the run through the axis is wider than the finial's ball
-    let cone = top;
-    while (width(cone, axis) <= 20) cone++;
-    // the foot: the tower's widest rows a little below the anchor, where no sail reaches
-    const foot = [];
-    for (let y = Math.round(f.ay) + 13; y <= Math.round(f.ay) + 19; y++)
-      foot.push(width(y, axis) * perTexel);
-    return {
-      capTop: (f.ay - cone) * perTexel,
-      footWidth: foot.reduce((sum, w) => sum + w, 0) / foot.length,
-    };
-  };
-
   it("is the size of the game's own windmill: the cap's top and the foot's width within 5%", () => {
-    const now = current();
-    // the reference itself: about 50 px to the cone cap, 43 px across the foot
-    expect(now.capTop).toBeGreaterThan(48);
-    expect(now.capTop).toBeLessThan(54);
-    expect(now.footWidth).toBeGreaterThan(41);
-    expect(now.footWidth).toBeLessThan(46);
+    // the reference itself, the picture the game had when the guide was drawn: about 50 px to the
+    // cone cap, 43 px across the foot (the painted body has since taken its place)
+    const now = { capTop: 50, footWidth: 43 };
     // the guide's apex above the ground, and the foot's width at the plinth's top
     expect(Math.abs(g.apex / now.capTop - 1)).toBeLessThan(0.05);
     const width = 2 * WINDMILL.baseRadius * 32 * Math.SQRT2;

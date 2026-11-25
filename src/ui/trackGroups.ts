@@ -1,4 +1,11 @@
-import { BUILDABLE_CLASSES, LINES, type TrackClass, type TrackItem } from '../world/track';
+import { content } from '../data/content';
+import {
+  BUILDABLE_CLASSES,
+  LINES,
+  type TrackClass,
+  type TrackItem,
+  type TrackKind,
+} from '../world/track';
 import { STR } from '../strings';
 
 /**
@@ -30,6 +37,11 @@ export function trackSlot(item: TrackItem): number {
   if (other === item.cls) return 3;
   const group = trackGroupOf(item);
   return 3 + Math.max(1, LINES[group === item.cls ? other : item.cls].tier);
+}
+
+/** A shape's name for the player, in the language of the page: `kind` itself is an id. */
+export function pieceName(kind: TrackKind): string {
+  return content.track.pieces[kind]?.name ?? kind;
 }
 
 /** A piece's name on its button: the type is on the row above, so only what sets it apart stays. */

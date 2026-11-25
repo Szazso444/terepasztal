@@ -13,7 +13,6 @@
  */
 export interface Rules {
   startMoney: number;
-  startTickets: number;
   buildCostMul: number;
   /** multiplies the game time an upgrade takes; 0 makes every upgrade instant */
   upgradeTimeMul: number;
@@ -96,7 +95,6 @@ export interface RuleMeta {
 
 export const DEFAULT_RULES: Rules = {
   startMoney: 40000,
-  startTickets: 3,
   buildCostMul: 1,
   upgradeTimeMul: 1,
   refundRate: 0.5,
@@ -151,15 +149,6 @@ export const RULE_META: RuleMeta[] = [
     min: 0,
     max: 500000,
     step: 1000,
-    newGame: true,
-  },
-  {
-    key: 'startTickets',
-    label: 'Starting tickets',
-    group: 'Start',
-    min: 0,
-    max: 200,
-    step: 1,
     newGame: true,
   },
   {
@@ -489,6 +478,11 @@ export const RULE_META: RuleMeta[] = [
     hint: 'lower = more forest',
   },
 ];
+if (LANGUAGE === 'hu')
+  for (const m of RULE_META) {
+    m.group = HU_RULE_GROUPS[m.group] ?? m.group;
+    Object.assign(m, HU_RULES[m.key]);
+  }
 
 /**
  * The key the stored tuning used to live under. Nothing reads or writes it any more; a page load
@@ -712,3 +706,5 @@ export function daySeconds() {
 export function weekSeconds() {
   return daySeconds() * 7;
 }
+import { HU_RULES, HU_RULE_GROUPS } from '../data/names.hu';
+import { LANGUAGE } from '../strings';

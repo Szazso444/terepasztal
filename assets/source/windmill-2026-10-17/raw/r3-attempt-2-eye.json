@@ -1,0 +1,13 @@
+{
+  "view": 3,
+  "apexTip": 450,
+  "stub": [
+    [723, 582],
+    [777, 605]
+  ],
+  "hub": [802, 638],
+  "hubBox": [766, 590, 839, 686],
+  "door": [736, 932, 796, 1073],
+  "pass": true,
+  "notes": "Round tower, slate cap/plain tip, right-face door/window/stub, no sails, ground, plinth or other objects; left lighter than right."
+}

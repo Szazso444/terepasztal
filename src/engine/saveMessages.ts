@@ -60,10 +60,10 @@ export function loadStoresGround(ground: GroundReport): boolean {
  * What the end of a load says about the ground of its map. `write` is what became of the write
  * `loadStoresGround` asked for, or null when it asked for none.
  *
- * Stored ground that could not be read is one warning with the number of chunks, as a toast and
- * as a notice. A write that did not store the game is one warning, worded for the ground, whatever
- * stopped it (storage, a broken number, nothing written now): that ground is stored with the next
- * save that goes through. It stands in for the autosave's warning, which tells of progress not
+ * Stored ground that could not be read is one notice with the number of chunks; its row of the
+ * Notifications screen says whether it is a toast as well. A write that did not store the game is
+ * one warning, worded for the ground, whatever stopped it (storage, a broken number, nothing
+ * written now): that ground is stored with the next save that goes through. It stands in for the autosave's warning, which tells of progress not
  * kept, and none has been made since the load; so the write feeds no autosave latch, and the first
  * autosave refused after it still warns with its own text.
  */
@@ -72,7 +72,6 @@ export function groundAfterLoad(ground: GroundReport, write: ImplicitWrite | nul
   const unreadable = ground?.unreadable.length ?? 0;
   if (unreadable > 0) {
     const text = STR.saves.groundUnreadable(unreadable);
-    said.toasts.push({ text, kind: 'warn' });
     said.notices.push({ key: 'save:ground', text, ttl: UNREADABLE_NOTICE_TTL });
   }
   if (write !== null && write !== 'stored')

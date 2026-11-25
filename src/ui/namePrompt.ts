@@ -1,91 +1,151 @@
-import { el, btn } from './dom';
+import { el } from './dom';
 import { STR } from '../strings';
+import { DialogFlow, note, page, well, type ConfirmOptions, type FootSpec } from './kit';
+import { ScreenFrame, type Screen } from './modal';
 
-/** Small centred dialog asking for a name; resolves with the text or null when dismissed. */
+/** A question for the dialog: a yes or no, or with `name` a text to type, starting from it. */
+interface Question extends ConfirmOptions {
+  title: string;
+  text: string;
+  name?: string;
+  /** the longest name it takes */
+  maxLength?: number;
+  /** an empty name is an answer too, not a dismissal */
+  empty?: boolean;
+}
+
+/** The longest name `ask` takes unless it says otherwise. */
+const NAME_MAX = 20;
+
+/** What Enter answers with: the name typed, trimmed; an empty one only where that is an answer. */
+export function nameAnswer(typed: string, empty: boolean): string | null {
+  const text = typed.trim();
+  return text || (empty ? '' : null);
+}
+
+/** What a yes reads as: any text, as `ask` answers with the name typed. */
+const YES = 'yes';
+
+/**
+ * The in-game dialog, over the menus and the screens: a yes or no question, or a name to type. It
+ * replaces the browser's own dialogs, which stall the game loop. Esc or a click beside it says no;
+ * Enter presses the focused answer, and Space presses nothing. A question that destroys something
+ * opens on its no, so neither key can say yes by accident: Tab reaches the yes. No key press reaches
+ * the game or the menu underneath while it is up (key releases still do, so a key held when it
+ * opened does not stay down). When it closes, the focus goes back to what had it.
+ */
 export class NamePrompt {
   readonly root = el('div', { id: 'name-prompt-root' });
-  // focusable, so a click on its text keeps the keys in the dialog
-  private frame = el('div', { id: 'name-prompt', class: 'panel', tabindex: '-1' });
-  private title = el('div', { class: 'panel-title' });
-  private hint = el('div', { class: 'dim' });
-  private input = el('input', { type: 'text', maxlength: '20' }) as HTMLInputElement;
-  private resolve: ((v: string | null) => void) | null = null;
-  private ok = btn(STR.prompt.ok, () => {}, 'accent');
-  private cancel = btn(STR.prompt.keep, () => {}, 'small');
+  private frame = new ScreenFrame(() => this.flow.dismiss());
+  private input = el('input', { class: 'k-cf-in', type: 'text' });
+  /** the question up takes an empty name as an answer */
+  private empty = false;
+  private flow = new DialogFlow<Question, string | null>(
+    { show: (q) => this.draw(q), hide: () => this.hide() },
+    null,
+  );
+  /** what had the focus when the dialog opened */
+  private asker: HTMLElement | null = null;
 
   constructor() {
-    const ok = this.ok;
-    const cancel = this.cancel;
-    ok.addEventListener('click', () => this.finish(this.input.value));
-    cancel.addEventListener('click', () => this.finish(null));
     this.input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') this.finish(this.input.value);
-      else if (e.key === 'Escape') this.finish(null);
+      if (e.key === 'Tab') return;
+      if (e.key === 'Enter') {
+        // the focus goes back to what asked, and this Enter must not press that too
+        e.preventDefault();
+        this.answerName();
+      } else if (e.key === 'Escape') this.flow.dismiss();
       e.stopPropagation();
     });
     this.input.addEventListener('keyup', (e) => e.stopPropagation());
-    // a yes / no question has the focus on its buttons: Escape says no, Enter presses the one
-    // focused, and no key press reaches the game or the menu underneath while it is up (key
-    // releases still do, so a key held when it opened does not stay down)
-    this.frame.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') this.finish(null);
+    this.frame.root.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') this.flow.dismiss();
       e.stopPropagation();
     });
-    this.frame.append(
-      this.title,
-      el(
-        'div',
-        { class: 'panel-body' },
-        this.hint,
-        this.input,
-        el('div', { class: 'row' }, ok, cancel),
-      ),
-    );
-    this.root.append(this.frame);
+    this.root.append(this.frame.root);
     // sits above the menus and the modal screens by stylesheet (`#name-prompt-root`)
     this.root.style.display = 'none';
     this.root.addEventListener('mousedown', (e) => {
-      if (e.target === this.root) this.finish(null);
+      if (e.target === this.root) this.flow.dismiss();
     });
   }
   get open() {
-    return this.root.style.display !== 'none';
+    return this.flow.open;
   }
-  ask(title: string, hint: string, value: string): Promise<string | null> {
-    this.finish(null);
-    this.title.textContent = title;
-    this.hint.textContent = hint;
-    this.input.value = value;
-    this.root.style.display = 'flex';
-    setTimeout(() => {
-      this.input.focus();
-      this.input.select();
-    }, 0);
-    return new Promise((res) => (this.resolve = res));
+  /** Ask for a name; resolves with the text, or null when dismissed. */
+  ask(
+    title: string,
+    hint: string,
+    value: string,
+    maxLength?: number,
+    /** an empty name is an answer too, not a dismissal: a seed left empty is a random one */
+    empty = false,
+  ): Promise<string | null> {
+    return this.flow.ask({ title, text: hint, name: value, maxLength, empty });
   }
-  /** Yes / no question in the same dialog (no text field). */
-  confirm(title: string, text: string): Promise<boolean> {
-    this.finish(null);
-    this.title.textContent = title;
-    this.hint.textContent = text;
-    this.input.value = 'yes';
-    this.input.style.display = 'none';
-    this.okLabel(true);
-    this.root.style.display = 'flex';
-    // like the browser's own confirm: Enter says yes, Escape no
-    setTimeout(() => this.ok.focus(), 0);
-    return new Promise((res) => (this.resolve = (v) => res(v !== null)));
+  /** A yes / no question. The answer names what it does; destroying something, it is red. */
+  confirm(title: string, text: string, o: ConfirmOptions = {}): Promise<boolean> {
+    return this.flow.ask({ ...o, title, text }).then((v) => v !== null);
   }
-  private okLabel(yesNo: boolean) {
-    this.ok.textContent = yesNo ? STR.prompt.yes : STR.prompt.ok;
-    this.cancel.textContent = yesNo ? STR.prompt.no : STR.prompt.keep;
-  }
-  private finish(v: string | null) {
-    this.input.style.display = '';
-    this.okLabel(false);
-    const r = this.resolve;
-    this.resolve = null;
+
+  private hide() {
     this.root.style.display = 'none';
-    r?.(v && v.trim() ? v.trim() : null);
+    const back = this.asker;
+    this.asker = null;
+    // not when the answer took it away, as a deleted save's row
+    if (back?.isConnected) back.focus();
+  }
+
+  private answerName() {
+    this.flow.answer(nameAnswer(this.input.value, this.empty));
+  }
+
+  private draw(q: Question) {
+    const naming = q.name !== undefined;
+    const focused = document.activeElement as HTMLElement | null;
+    this.asker = focused === document.body ? null : focused;
+    const frameFooter = (): FootSpec => ({
+      actions: [
+        {
+          label: q.no ?? (naming ? STR.prompt.keep : STR.prompt.no),
+          onClick: () => this.flow.dismiss(),
+        },
+        {
+          label: q.yes ?? (naming ? STR.prompt.ok : STR.prompt.yes),
+          primary: true,
+          danger: q.danger,
+          onClick: () => (naming ? this.answerName() : this.flow.answer(YES)),
+        },
+      ],
+    });
+    const screen: Screen = {
+      id: 'dialog',
+      title: q.title,
+      frameSize: 'S',
+      formKeys: true,
+      root: page(
+        well(
+          { cls: 'k-cf' },
+          note(q.text, 'k-cf-q'),
+          q.detail ? note(q.detail, 'k-cf-d') : null,
+          naming ? this.input : null,
+        ),
+      ),
+      frameFooter,
+    };
+    this.frame.show(screen, { stacked: false, paused: false });
+    this.root.style.display = 'flex';
+    this.empty = !!q.empty;
+    if (naming) {
+      this.input.maxLength = q.maxLength ?? NAME_MAX;
+      this.input.value = q.name ?? '';
+      setTimeout(() => {
+        this.input.focus();
+        this.input.select();
+      }, 0);
+    } else {
+      const first = q.danger ? this.frame.cancelButton : this.frame.primaryButton;
+      setTimeout(() => first?.focus(), 0);
+    }
   }
 }

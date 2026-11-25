@@ -9,7 +9,7 @@ Issues #465 and #460, branch `art/465-packer-caps-and-waterside-trees`.
   as strong as the selection amber. `LIT_FRAMES` (the Fuel Pump's `structures/fuel_pump` and
   turns) compress luma instead. `tools/atlas-cap.test.mjs` checks every shipped atlas. Re-pack in
   this order: `npm run art:illustrated`, `node tools/finish-fields.mjs`,
-  `node tools/bridge-kit.mjs`, `node tools/pack-atlas.mjs rolling`.
+  `node tools/resource-icons.mjs`, `node tools/bridge-kit.mjs`, `node tools/pack-atlas.mjs rolling`.
 - `trimSource(input, box)` packs a picture by a given box (for the windmill body, #461).
 - `props.mangrove` and `props.willow` in `coverage.json` take their six paintings from
   `assets/source/waterside-trees-2026-10-16/` and its `trees.json` (`sourceDirectory`,

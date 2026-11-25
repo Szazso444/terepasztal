@@ -15,7 +15,6 @@ export const DOOR_REFERENCE_PX: Record<string, number> = {
   warehouse: 11,
   farm: 12,
   lumber: 12,
-  windmill: 13,
   grinder: 12,
 };
 /** Door aperture / trimmed-frame height, reviewed on the packed illustrated atlas. */
@@ -25,7 +24,6 @@ export const DOOR_FRACTION: Record<string, number> = {
   townhouse: 68 / 251,
   warehouse: 53 / 191,
   farm: 47 / 262,
-  windmill: 38 / 240,
 };
 /** Outdoor equipment has no standard door; these explicit estimates need physical references. */
 export const EQUIPMENT_SCALE: Record<string, number> = {
@@ -64,10 +62,12 @@ export const AUTHOR_SCALE: Record<string, number> = {
   fuel_stop: 1.25,
 };
 /**
- * Families drawn from their 3D model's render at its real size, measured against the walker
- * (the author, 2026-10-27; assets/source/models-2026-10-27, tools/illustrated-sprites.mjs): the
- * frame is packed at the size it is drawn, so its scale is 1 and neither the references above
- * nor the author's pick apply to it. Every level of a family shows the same picture.
+ * Families drawn from their 3D model, painted, at its real size measured against the walker and
+ * fitted to its tiles (the author, 2026-10-27 and 10-29; assets/source/models,
+ * tools/illustrated-sprites.mjs): the frame is packed at the size it is drawn, so its scale is 1
+ * and neither the references above nor the author's pick apply to it. Every level of a family
+ * shows the same picture. The windmill has no 3D model, but its painted body comes packed the same
+ * way, at the size its door and tower were measured at (assets/source/windmill-2026-10-17).
  */
 export const MODEL_FAMILIES: ReadonlySet<string> = new Set([
   'farm',
@@ -84,6 +84,7 @@ export const MODEL_FAMILIES: ReadonlySet<string> = new Set([
   'ironworks',
   'diesel_refinery',
   'wire_mill',
+  'windmill',
 ]);
 /** What can say whether a frame exists: the atlas registry, or a set of frame names in a test. */
 export interface FrameNames {

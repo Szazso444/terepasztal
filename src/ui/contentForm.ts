@@ -1,4 +1,5 @@
 import { STR } from '../strings';
+import { parseDecimal } from './decimal';
 import {
   DEFAULT_CONTENT,
   type ContentBundle,
@@ -86,10 +87,6 @@ export const TAB_FORMS: Record<ContentKey, FormSpec[]> = {
   ],
   decor: [{ pick: (b) => b.decor, list: true }],
   buildings: [{ pick: (b) => b.buildings, list: true }],
-  gacha: [
-    { pick: (b) => b.gacha, list: false, title: STR.content.config, skip: ['banners'] },
-    { pick: (b) => b.gacha.banners, list: true, title: STR.content.entries },
-  ],
   track: [{ pick: (b) => b.track, list: false }],
   crafting: [{ pick: (b) => b.crafting, list: false }],
   houses: [{ pick: (b) => b.houses, list: false }],
@@ -214,7 +211,7 @@ export function readField(row: Row, f: FormField, kind: FieldKind, text: string)
       v = text === 'true';
       break;
     case 'number':
-      v = Number(text);
+      v = parseDecimal(text);
       if (!Number.isFinite(v)) return false;
       break;
     case 'text':

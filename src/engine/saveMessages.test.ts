@@ -62,7 +62,7 @@ describe('the end of a load', () => {
     expect(loadStoresGround(report(0, 5))).toBe(false);
   });
 
-  it('gives unreadable ground one notice and one toast with the count, and nothing else does', () => {
+  it('gives unreadable ground one notice with the count, and nothing else does', () => {
     let seen = 0;
     for (const ground of GROUNDS)
       for (const write of [null, ...WRITES]) {
@@ -81,7 +81,7 @@ describe('the end of a load', () => {
         expect(
           said.toasts.filter((t) => t.text === text),
           where,
-        ).toEqual([{ text, kind: 'warn' }]);
+        ).toEqual([]);
       }
     expect(seen).toBeGreaterThan(0);
   });
@@ -243,13 +243,12 @@ function lackingGround(seed: number, size = 64): string {
   const parts = {
     seed,
     clock: { time: 900, speedIndex: 1 },
-    economy: { money: 5000, tickets: 2, tier: 1, granted: [0], earned: 100 },
+    economy: { money: 5000, tier: 1, earned: 100 },
     track: [],
     stations: [],
     trains: [],
     contracts: { contracts: [] },
     inventory: { items: [], nextUid: 1 },
-    gacha: {},
     camera: { x: 0, y: 0, zoomIndex: 2 },
     lastDay: 3,
     world,

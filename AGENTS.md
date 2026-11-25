@@ -74,7 +74,7 @@ builds. `docs/live-loop.md` describes the loop it belongs to.
 - `src/world` map generation, tiles, regions, track graph and geometry, pathfinding, levels
 - `src/sim` the simulation: clock, economy, stations, buildings, power, trains, fleet, traffic
   control, towns, contracts, build rules, save format
-- `src/gacha` crafting and banners
+- `src/gacha` crafting, the inventory and the vehicle items
 - `src/render` world, overview, trains, effects
 - `src/ui` DOM overlay screens and panels; `src/editor` the level editor
 - `src/strings.ts` every player-facing string
@@ -98,16 +98,20 @@ shadows that touch each object's base. Semantic colours stay brighter than any s
 Changing a generator means re-running `scratchpad/art-sheets.mjs` and checking frame counts and
 anchors did not move.
 
-**Music is files, effects are synthesized.** Music is one melody, Pastoral Pulse, in a track set
-per age. `src/engine/musicPlaylist.ts` lists every file by path: `AGE_MUSIC` has a set for each of
-the six ages in `src/data/ages.json`, with its files in `public/assets/audio/music/<age id>/`
-(all six are empty for now), and `MUSIC_TRACKS` is the default set, Pastoral Pulse and its three
-variations in `public/assets/audio/music/*.mp3`. A set plays its first track, then all its tracks
-in shuffled rounds. When the player enters an age (a new game, a load, an age-up) and its set
-differs, the current track fades out and the new set starts. An empty set plays `MUSIC_TRACKS`. A
-file that fails is skipped for the rest of the session; when every file of the age's set has
-failed `MUSIC_TRACKS` plays, and the synth loop takes over only when those have failed too. Volume
-sliders live in both menus and the settings screen and travel with the settings, not the save.
+**Music is files, effects are synthesized.** Music is a track set per age.
+`src/engine/musicPlaylist.ts` lists every file by path: `AGE_MUSIC` has a set for each of the six
+ages in `src/data/ages.json`, with its files in `public/assets/audio/music/<age id>/` (steam has
+four placeholder tracks, the other five are empty for now), and `MUSIC_TRACKS` is the default
+set, Pastoral Pulse and its three variations in `public/assets/audio/music/*.mp3`. A set plays its
+first track, then all its tracks in shuffled rounds. When the player enters an age (a new game, a
+load, an age-up) and its set differs, the current track fades out and the new set starts. An empty
+set plays `MUSIC_TRACKS`. A file that fails is skipped for the rest of the session; when every file
+of the age's set has failed `MUSIC_TRACKS` plays, and the synth loop takes over only when those have
+failed too. Volume sliders live in both menus and the settings screen and travel with the settings,
+not the save.
+
+**A third-party asset goes in the credits.** A model or a track from outside gets its entry in
+`src/data/credits.json` in the change that brings it in; the Credits screen reads only that file.
 
 **A new save format version needs a migration step.** Bumping `SAVE_VERSION` in `src/sim/save.ts`
 means adding an entry to `MIGRATIONS` with `from` set to the version before it, and adding any new
@@ -129,13 +133,14 @@ the generator instead of replacing it, and `resolution` (1 to 8) is texels per w
 (`src/engine/atlas.ts`). `tools/pack-atlas.mjs` writes it; `docs/mcp-setup.md` section 6 has the
 camera, facing and anchor rules for producing the frames in Blender.
 
-**User-facing text lives in `src/strings.ts`.** The game is in English only, for now. Strings are
-kept flat so a translation table can mirror them later. Do not hardcode a string in a panel or in
-the simulation. The one exception is tuning: each rule's English label, group and hint live in
+**User-facing text lives in `src/strings.ts`.** The game is in English and Hungarian:
+`src/data/strings.hu.ts` mirrors that table key for key, `src/data/names.hu.ts` holds the Hungarian
+names of content by id, and the language never reaches the world or a save. Do not hardcode a
+string in a panel or in the simulation. The one exception is tuning: each rule's English label, group and hint live in
 `RULE_META` in `src/sim/rules.ts`, next to its range.
 
-**Content is data.** Locomotives, wagons, cargo, stations, contracts, decor, buildings, crafting
-and gacha are JSON in `src/data`, and the in-client content editor can override any table from
+**Content is data.** Locomotives, wagons, cargo, stations, contracts, decor, buildings and
+crafting are JSON in `src/data`, and the in-client content editor can override any table from
 localStorage. `content.ts` applies overrides once at module load, so content changes take effect on
 the next page load. Entries marked `supply: "full"` and the `*_full.json` files belong to the Full
 production chain, picked when a game starts.
@@ -157,6 +162,8 @@ One step along +tx is half a tile right and a quarter tile down.
 Rolling stock is drawn at `FACINGS = 48` headings, 7.5° apart, but only `DRAWN_FACINGS` (25 of
 them) have sprites: the renderer mirrors a drawn facing to cover its partner, and
 `residualRotation` turns the sprite the rest of the way, at `ROTATION_SHARE` of the remainder.
+A vehicle with a rendered model (`gear.json`, `locoFit.json`) instead has its own sprite sets at
+`spriteFacings` headings (192 today), on WebP pages loaded per vehicle.
 Bodies are rigid and never change length (`src/sim/body.ts`). These constants are a contract
 between Gameplay, Rendering and Art: changing one changes atlas frame counts.
 
@@ -180,6 +187,15 @@ Test the invariant, not the current output. The registry test in `save.test.ts` 
 fails when someone adds a version and forgets the step, which is the actual failure mode. The
 standard for deterministic tests is `docs/process/verification.md`; the ownership test in
 `tools/agents/ownership.test.mjs` follows the same idea for the organisation itself.
+
+A script that opens the game in headless Chrome (a render, a screenshot, a measurement) runs it on
+the real GPU, never on SwiftShader. SwiftShader draws WebGL on the CPU: two such scripts held all
+16 threads of the author's machine at 100%, and the same WebGL test ran 28 times faster on the
+GPU. Playwright takes `args: ['--use-angle=d3d11', '--ignore-gpu-blocklist', '--enable-gpu']` and
+`ignoreDefaultArgs: ['--enable-unsafe-swiftshader', '--disable-gpu']`; do not pass
+`--use-gl=swiftshader` or `--enable-unsafe-swiftshader`. Read `UNMASKED_RENDERER_WEBGL` once to
+see the GPU's name, and close the browser when the shot is taken. A GPU render and a SwiftShader
+render can differ by a few pixels, so never compare one with the other.
 
 ## Conventions
 

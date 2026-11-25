@@ -1,5 +1,5 @@
 import type { GameMap } from './tiles';
-import type { TrackTuple } from './track';
+import { TRACK_ITEMS, type TrackTuple } from './track';
 import { DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import { decorateProps, placeOilFields, emptyMap } from './mapgen';
 
@@ -39,7 +39,8 @@ export interface LevelData {
   buildings?: LevelBuilding[];
   start: {
     money: number;
-    tickets: number;
+    /** a level file from before the tickets left may hold this: read past, never written */
+    tickets?: number;
     /** age the level starts in (0 steam, 1 diesel, 2 electric) */
     tier: number;
     /** multiplier on the default starting goods (1 = normal) */
@@ -87,11 +88,18 @@ export function mapFromLevel(level: LevelData, supply: SupplyMode = DEFAULT_SUPP
   return map;
 }
 
+/** A level without the tickets an older file's start block holds. */
+function withoutTickets(level: LevelData): LevelData {
+  const start = { ...level.start };
+  delete start.tickets;
+  return { ...level, start };
+}
+
 export function listLevels(): LevelData[] {
   try {
     const raw = localStorage.getItem(LEVELS_KEY);
     const list = raw ? (JSON.parse(raw) as LevelData[]) : [];
-    return Array.isArray(list) ? list.filter(isLevel) : [];
+    return Array.isArray(list) ? list.filter(isLevel).map(withoutTickets) : [];
   } catch {
     return [];
   }
@@ -101,7 +109,7 @@ export function getLevel(id: string): LevelData | null {
 }
 export function saveLevel(level: LevelData): boolean {
   const list = listLevels().filter((l) => l.id !== level.id);
-  list.push(level);
+  list.push(withoutTickets(level));
   list.sort((a, b) => b.updatedAt - a.updatedAt);
   try {
     localStorage.setItem(LEVELS_KEY, JSON.stringify(list));
@@ -117,6 +125,28 @@ export function deleteLevel(id: string) {
     /* ignore */
   }
 }
+/**
+ * A level's track as this build can lay it. A bridge piece of an older file becomes a straight over
+ * a bridge, as an old save does; a piece with no picture here stays out, because drawing it would
+ * stop the level from opening.
+ */
+export function layableTrack(track: TrackTuple[], buildings: LevelBuilding[] = []) {
+  const laid: TrackTuple[] = [];
+  const out = [...buildings];
+  for (const [x, y, stored, rot, line, line2] of track) {
+    const kind = stored === 'bridge' ? 'straight' : stored;
+    const cls = line ?? 'branch';
+    const has = TRACK_ITEMS.some(
+      (i) => i.kind === kind && i.cls === cls && (kind !== 'crossing' || i.cls2 === (line2 ?? cls)),
+    );
+    if (!has) continue;
+    laid.push([x, y, kind, rot, line, line2]);
+    if (stored === 'bridge' && !out.some((b) => b[0] === x && b[1] === y))
+      out.push([x, y, 'bridge_wood', 0]);
+  }
+  return { track: laid, buildings: out };
+}
+
 export function isLevel(v: unknown): v is LevelData {
   const l = v as LevelData;
   return (
@@ -151,6 +181,6 @@ export function levelFromMap(map: GameMap, name: string, id = newLevelId()): Lev
     stations: [],
     decor: [],
     buildings: [],
-    start: { money: 25000, tickets: 3, tier: 0, stockMul: 1 },
+    start: { money: 25000, tier: 0, stockMul: 1 },
   };
 }

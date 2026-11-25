@@ -2,7 +2,7 @@ import { inBounds, startRegion, terrainAt, type GameMap } from '../world/tiles';
 import { networkOf, type TrackClass, type TrackItem, type TrackPiece } from '../world/track';
 import { DIRS, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Gauge } from '../data/content';
-import { STR } from '../strings';
+import { ENGLISH, STR } from '../strings';
 import { rules } from './rules';
 import { unbuildable, type Builder } from './build';
 import { stationDef, stationFootprint, stationGates, type Station } from './stations';
@@ -127,7 +127,7 @@ export function depotSiteBlocked(
  * Grant a depot at a site `depotSiteBlocked` passes: the shed, then the gate straight on every gate
  * without track. Track already on a gate is of the depot's gauge, as the site check requires, and
  * is kept as it is: not replaced and not laid again. A regular depot is named
- * `STR.station.depotName`; a narrow one keeps its kind's name, as one the player builds does.
+ * `ENGLISH.station.depotName`; a narrow one keeps its kind's name, as one the player builds does.
  * Announced again once named and served. Null, with nothing left behind, when the site cannot take
  * it.
  */
@@ -155,7 +155,7 @@ export function grantDepot(
       builder.removeStation(d);
       return null;
     }
-    if (gate.item.cls === 'branch') d.name = STR.station.depotName;
+    if (gate.item.cls === 'branch') d.name = ENGLISH.station.depotName;
     builder.onStationChanged?.(d, false);
     return d;
   });

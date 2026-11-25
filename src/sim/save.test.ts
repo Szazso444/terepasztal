@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
+  SAVE_QUIET_VERSION,
   SAVE_VERSION,
   SAVE_MIN_VERSION,
   SAVE_KEY,
@@ -47,6 +48,8 @@ import {
   type BuildingJSON,
 } from './buildings';
 import { MAX_LEVEL } from './levels';
+import { groupGain, heardVolumes, musicGain } from '../engine/audioGroups';
+import { isTrainColour, shownTrainColour } from './trainColours';
 import type { Work } from './upgrade';
 import type { HousesJSON } from './houses';
 import { simWorld } from '../testing/simWorld';
@@ -77,7 +80,8 @@ function oldestSave(): SaveGame {
     savedAt: 1700000000000,
     seed: 12345,
     clock: { time: 0, speedIndex: 1 },
-    economy: { money: 1000, tickets: 0, tier: 0, granted: [] },
+    // the fields of a file that old: the step from v23 drops them and the gacha below
+    economy: { money: 1000, tickets: 0, tier: 0, granted: [] } as SaveGame['economy'],
     track: [],
     stations: [],
     trains: [],
@@ -97,7 +101,7 @@ function fullParts(): SaveParts {
   return {
     seed: 777,
     clock: { time: 1234.5, speedIndex: 2 },
-    economy: { money: 12345, tickets: 3, tier: 2, granted: [0, 1, 2], earned: 9000 },
+    economy: { money: 12345, tier: 2, earned: 9000 },
     track: [
       [4, 8, 'straight', 1, 'branch', 'branch'],
       [12, 8, 'crossing', 0, 'narrow', 'branch'],
@@ -106,7 +110,6 @@ function fullParts(): SaveParts {
     trains: [{ id: 1 }],
     contracts: { contracts: [], rng: 42 },
     inventory: { items: [], nextUid: 1 },
-    gacha: { pity: 0 },
     camera: { x: 10, y: 20, zoomIndex: 3 },
     lastDay: 42,
     decor: [[5, 6, 'signal', 1]],
@@ -253,7 +256,6 @@ const DECLARED: Record<keyof Declared<SaveGame>, true> = {
   trains: true,
   contracts: true,
   inventory: true,
-  gacha: true,
   camera: true,
   lastDay: true,
   decor: true,
@@ -337,7 +339,7 @@ describe('migrate', () => {
     const j = migrate(oldestSave());
     expect(j.version).toBe(SAVE_VERSION);
     expect(j.loadedFrom).toBe(SAVE_MIN_VERSION);
-    expect(j.migrationNotes).toHaveLength(SAVE_VERSION - SAVE_MIN_VERSION);
+    expect(j.migrationNotes).toHaveLength(MIGRATIONS.filter((m) => !m.quiet).length);
     expect(j.migrationNotes?.[0]).toContain('v1→v2');
     // Nothing may be left undone by the steps that promise a default.
     expect(j.decor).toEqual([]);
@@ -663,7 +665,7 @@ describe('v8 to v9', () => {
     return {
       ...oldestSave(),
       version: 8,
-      economy: { money: 5, tickets: 0, tier: 7, granted: [], reputation: 300 },
+      economy: { money: 5, tier: 7, reputation: 300 },
       contracts: { contracts: [{ id: 'c1', reputation: 12 }] },
       decor: [
         [3, 4, 'townhouse', 0],
@@ -685,9 +687,7 @@ describe('v8 to v9', () => {
     expect(j.economy.tier).toBe(2);
     expect(j.economy.earned).toBe(0);
     expect(j.economy.reputation).toBeUndefined();
-    expect(
-      migrate(v8({ economy: { money: 0, tickets: 0, tier: 1, granted: [] } })).economy.tier,
-    ).toBe(1);
+    expect(migrate(v8({ economy: { money: 0, tier: 1 } })).economy.tier).toBe(1);
   });
 
   it('turns every townhouse in the decor into a level 1 house', () => {
@@ -925,7 +925,6 @@ const CORE_PATHS: { path: string[]; kind: 'number' | 'array' }[] = [
     ['clock', 'time'],
     ['clock', 'speedIndex'],
     ['economy', 'money'],
-    ['economy', 'tickets'],
     ['economy', 'tier'],
     ['camera', 'x'],
     ['camera', 'y'],
@@ -1509,11 +1508,11 @@ describe('v16 to v17', () => {
     const step = MIGRATIONS.find((m) => m.from === 16)!;
     const v16 = migrate({ ...oldestSave(), version: 16, trains: [{ id: 1 }] });
     expect(v16.migrationNotes?.[0]).toBe(`v16→v17: ${step.note}`);
-    expect(v16.trains).toEqual([{ id: 1, ...V17_DEFAULTS, ...V18_DEFAULTS }]);
+    expect(v16.trains).toEqual([{ id: 1, ...V17_DEFAULTS, ...V18_DEFAULTS, ...V23_DEFAULTS }]);
     // a v17 file is only given what the later steps fill, and keeps the train making way
     const v17 = { ...oldestSave(), version: 17, trains: [{ id: 1 }, { id: 2, aside: true }] };
     expect(migrate(asStored(v17) as SaveGame).trains).toEqual(
-      v17.trains.map((t) => ({ ...t, ...V18_DEFAULTS })),
+      v17.trains.map((t) => ({ ...t, ...V18_DEFAULTS, ...V23_DEFAULTS })),
     );
   });
 
@@ -1639,9 +1638,9 @@ describe('v17 to v18', () => {
     });
     expect(v17.migrationNotes?.[0]).toBe(`v17→v18: ${step.note}`);
     expect(v17.trains).toEqual([
-      { id: 1, mode: 'freight', ...V18_DEFAULTS },
-      { id: 2, mode: 'transport', ...V18_DEFAULTS },
-      { id: 3, ...V18_DEFAULTS },
+      { id: 1, mode: 'freight', ...V18_DEFAULTS, ...V23_DEFAULTS },
+      { id: 2, mode: 'transport', ...V18_DEFAULTS, ...V23_DEFAULTS },
+      { id: 3, ...V18_DEFAULTS, ...V23_DEFAULTS },
     ]);
     // a file of the current version is not stepped: it holds what it holds
     const v18 = { ...oldestSave(), version: SAVE_VERSION, trains: [{ id: 1, mode: 'production' }] };
@@ -2737,7 +2736,7 @@ describe('storage', () => {
     const v8 = {
       ...oldestSave(),
       version: 8,
-      economy: { money: 50, tickets: 0, tier: 7, granted: [] },
+      economy: { money: 50, tier: 7 },
     };
     store.items.set(SLOTS_KEY, JSON.stringify({ old: JSON.stringify(v8) }));
     expect(listSlots()[0]).toMatchObject({ name: 'old', version: 8, age: 2, money: 50 });
@@ -2776,6 +2775,119 @@ describe('storage', () => {
     writeSlot(long, buildSave(fullParts()));
     expect(hasSlot(long)).toBe(true);
     for (const { name } of listSlots()) expect(hasSlot(name), name).toBe(true);
+  });
+});
+
+describe('the volumes of a settings file', () => {
+  /** What a settings file made a sound play at before the groups: its own arithmetic. */
+  const was = (s: { master: number; sfx: number; music: number; ambient: number }) => ({
+    event: s.master * s.sfx,
+    ambience: s.master * s.ambient,
+    music: s.master * s.music,
+  });
+  /** What the same file plays at now. */
+  const now = (s: Partial<Settings>) => {
+    const heard = heardVolumes(s as Settings);
+    return {
+      event: groupGain(heard, 'trains'),
+      ambience: groupGain(heard, 'weather'),
+      music: musicGain(heard),
+    };
+  };
+  const old = (over: Record<string, number> = {}) => ({
+    master: 0.8,
+    sfx: 0.8,
+    music: 0.5,
+    ambient: 0.35,
+    ...over,
+  });
+  const moved = (over: Record<string, number> = {}) =>
+    migrateSettings<Partial<Settings>>(old(over));
+
+  it.each([
+    ['the defaults', {}],
+    ['a quiet Effects under the ambience', { sfx: 0.2 }],
+    ['no Effects, the ambience on', { sfx: 0 }],
+    ['no ambience', { ambient: 0 }],
+    ['a loud ambience', { sfx: 0.5, ambient: 1 }],
+    ['everything down', { master: 0.1, sfx: 0.1, music: 0.1, ambient: 0.1 }],
+    ['master off', { master: 0 }],
+  ])('keeps the loudness of every sound: %s', (_, over) => {
+    const file = old(over);
+    const heard = now(migrateSettings({ soundOff: {}, ...file }));
+    const before = was(file);
+    expect(heard.event).toBeCloseTo(before.event, 12);
+    expect(heard.ambience).toBeCloseTo(before.ambience, 12);
+    expect(heard.music).toBeCloseTo(before.music, 12);
+  });
+
+  it('makes sfx Effects and sets Weather and Environment from ambient', () => {
+    const m = moved({ sfx: 0.6, ambient: 0.3 });
+    expect(m.sfx).toBe(0.6);
+    expect(m.soundGroups).toEqual({
+      weather: 0.5,
+      environment: 0.5,
+      ui: 1,
+      building: 1,
+      trains: 1,
+      events: 1,
+    });
+    expect(m.ambient).toBeUndefined();
+  });
+
+  it('keeps every level one a slider can show, whatever the file held', () => {
+    for (const sfx of [0, 0.1, 0.35, 0.8, 1])
+      for (const ambient of [0, 0.1, 0.35, 0.8, 1]) {
+        const m = moved({ sfx, ambient });
+        const label = JSON.stringify({ sfx, ambient });
+        for (const level of [m.sfx!, ...Object.values(m.soundGroups!)]) {
+          expect(level, label).toBeGreaterThanOrEqual(0);
+          expect(level, label).toBeLessThanOrEqual(1);
+        }
+      }
+  });
+
+  it('leaves the groups at their defaults when both old volumes were 0, for Effects to raise', () => {
+    const m = moved({ sfx: 0, ambient: 0 });
+    expect(m.sfx).toBe(0);
+    expect(m.soundGroups).toEqual(DEFAULT_SETTINGS.soundGroups);
+  });
+
+  it('runs once: a file with groups keeps what the player set', () => {
+    const once = moved();
+    const set = { ...once, soundGroups: { ...once.soundGroups!, weather: 0.9 }, sfx: 0.2 };
+    const twice = migrateSettings(JSON.parse(JSON.stringify(set)) as Partial<Settings>);
+    expect(twice.soundGroups).toEqual(set.soundGroups);
+    expect(twice.sfx).toBe(0.2);
+  });
+
+  it('reads an old settings file through the store, and writes it back without ambient', () => {
+    const items = new Map([[SETTINGS_KEY, JSON.stringify(old({ sfx: 0.5, ambient: 0.25 }))]]);
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => items.get(k) ?? null,
+      setItem: (k: string, v: string) => void items.set(k, v),
+    });
+    const read = readSettings();
+    expect(read.sfx).toBe(0.5);
+    expect(read.soundGroups.weather).toBe(0.5);
+    expect(read.soundOff).toEqual({});
+    writeSettings(read);
+    expect(JSON.parse(items.get(SETTINGS_KEY)!)).not.toHaveProperty('ambient');
+    vi.unstubAllGlobals();
+  });
+
+  it('fills in a group a stored file does not have, and shares nothing with the defaults', () => {
+    const stored = { ...DEFAULT_SETTINGS, soundGroups: { ui: 0.5 }, soundOff: { ui: true } };
+    const items = new Map([[SETTINGS_KEY, JSON.stringify(stored)]]);
+    vi.stubGlobal('localStorage', { getItem: (k: string) => items.get(k) ?? null });
+    const read = readSettings();
+    expect(read.soundGroups).toEqual({ ...DEFAULT_SETTINGS.soundGroups, ui: 0.5 });
+    expect(read.soundOff).toEqual({ ui: true });
+    read.soundGroups.trains = 0;
+    read.soundOff.trains = true;
+    expect(DEFAULT_SETTINGS.soundGroups.trains).toBe(1);
+    expect(DEFAULT_SETTINGS.soundOff).toEqual({});
+    vi.unstubAllGlobals();
   });
 });
 
@@ -2883,6 +2995,27 @@ describe('settings', () => {
       writeSettings({ ...read, contractPolicy: accept });
       expect(readSettings().contractPolicy).toEqual(accept);
       expect(readSettings().contractPolicy).toEqual(accept);
+    });
+
+    it('keeps Building life with the settings, off by default for reduced motion', () => {
+      expect(DEFAULT_SETTINGS.buildingLife).toBe(true);
+      expect(readSettings().buildingLife).toBe(true);
+      writeSettings({ ...readSettings(), buildingLife: false });
+      expect(readSettings().buildingLife).toBe(false);
+      // what is stored is the player's; anything else is the default
+      store.items.set(SETTINGS_KEY, JSON.stringify({ buildingLife: 'maybe' }));
+      expect(readSettings().buildingLife).toBe(true);
+      const matchMedia = vi.fn(() => ({ matches: true }));
+      vi.stubGlobal('matchMedia', matchMedia);
+      try {
+        expect(readSettings().buildingLife).toBe(false);
+        expect(matchMedia).toHaveBeenCalledWith('(prefers-reduced-motion: reduce)');
+        store.items.set(SETTINGS_KEY, JSON.stringify({ buildingLife: true }));
+        expect(readSettings().buildingLife).toBe(true);
+      } finally {
+        vi.unstubAllGlobals();
+        vi.stubGlobal('localStorage', store);
+      }
     });
 
     it('hands out settings that share no policy with the defaults', () => {
@@ -3249,7 +3382,7 @@ function verdictOf(raw: string): SaveRefusal | 'save' {
     isObject(block) && keys.every((k) => typeof block[k] === 'number');
   const whole =
     numbers(j.clock, ['time', 'speedIndex']) &&
-    numbers(j.economy, ['money', 'tickets', 'tier']) &&
+    numbers(j.economy, ['money', 'tier']) &&
     numbers(j.camera, ['x', 'y', 'zoomIndex']) &&
     Array.isArray(j.track) &&
     Array.isArray(j.stations) &&
@@ -3369,9 +3502,10 @@ describe('a file with one field every version has taken out or retyped', () => {
         // before v9 the tier was a reputation tier, and becomes the age it reached (at most 2)
         expect(save.economy).toMatchObject({
           money: economy.money,
-          tickets: economy.tickets,
           tier: from < 9 ? Math.min(2, economy.tier) : economy.tier,
         });
+        // what the file held of tickets is gone, whatever the version it came from
+        if (from < SAVE_VERSION) expect(save.economy).not.toHaveProperty('tickets');
         for (const key of ['track', 'stations', 'trains'] as const)
           expect(save[key], key).toHaveLength((file[key] as unknown[]).length);
 
@@ -3417,13 +3551,16 @@ describe('readSaveText, for any text', () => {
         const file = fileIn(raw);
         const from = fromVersion(file.version);
         expect(save.version).toBe(Math.max(from, SAVE_VERSION));
-        expect(save.loadedFrom).toBe(from === SAVE_VERSION ? undefined : from);
+        // only a file some step has something to tell about says where it came from
+        const told = from < SAVE_QUIET_VERSION || from > SAVE_VERSION;
+        expect(save.loadedFrom).toBe(told ? from : undefined);
         // the world a save describes is of the save's own seed, and the seed is a number
         if (save.world) expect(save.world.seed).toBe(save.seed);
-        if (from < SAVE_VERSION) {
-          expect(save.migrationNotes).toHaveLength(SAVE_VERSION - from);
+        if (told && from < SAVE_VERSION) {
+          const steps = MIGRATIONS.filter((m) => m.from >= from && !m.quiet);
+          expect(save.migrationNotes).toHaveLength(steps.length);
           save.migrationNotes!.forEach((note, i) =>
-            expect(note.startsWith(`v${from + i}→v${from + i + 1}: `), note).toBe(true),
+            expect(note.startsWith(`v${steps[i].from}→v${steps[i].from + 1}: `), note).toBe(true),
           );
         }
         for (const key of Object.keys(save))
@@ -3854,6 +3991,8 @@ const V17_HELD: Readonly<Record<string, readonly unknown[]>> = {
  * had put no goods down at the stop it stands at.
  */
 const V18_DEFAULTS: Readonly<Record<string, unknown>> = { dropped: false };
+/** The field the step from v22 gives every train: its colour code, the first. */
+const V23_DEFAULTS: Readonly<Record<string, unknown>> = { colour: 0 };
 /** Values a file may already hold in the field the step from v17 fills, none the default. */
 const V18_HELD: Readonly<Record<string, readonly unknown[]>> = { dropped: [true] };
 /** The fields a step fills on every train, by the version the step upgrades from. */
@@ -3861,6 +4000,7 @@ const TRAIN_DEFAULTS: readonly [from: number, defaults: Readonly<Record<string, 
   [13, RESUME_DEFAULTS],
   [16, V17_DEFAULTS],
   [17, V18_DEFAULTS],
+  [22, V23_DEFAULTS],
 ];
 /** A station's turn in a file: none, one of the four, or null. */
 const ROT_VALUES: unknown[] = [undefined, 0, 1, 2, 3, null];
@@ -4559,4 +4699,41 @@ describe('the ground of a file of any version', () => {
     );
     expect(frozenAll).toBeGreaterThan(0);
   }, 15_000);
+});
+
+describe('v22 to v23', () => {
+  it('gives every train of an older save the first colour, and no more than that', () => {
+    const file = {
+      ...oldestSave(),
+      version: 22,
+      trains: [{ id: 3, name: 'Rocket 3' }, 'not a train'],
+    } as SaveGame;
+    const j = runStep(22, file);
+    expect(j.trains).toEqual([{ id: 3, name: 'Rocket 3', colour: 0 }, 'not a train']);
+  });
+
+  it('keeps a colour a file already holds', () => {
+    const file = { ...oldestSave(), version: 22, trains: [{ id: 3, colour: 4 }] } as SaveGame;
+    expect(runStep(22, file).trains).toEqual([{ id: 3, colour: 4 }]);
+  });
+
+  it("a train keeps its colour through a save, a later build's too; what is none is the first", () => {
+    const track = new TrackGraph(8, 8);
+    const t = new Train([{ uid: 1, level: 1, def: locoDef('f7') }]);
+    t.colour = 3;
+    const json = JSON.parse(JSON.stringify(t.toJSON()));
+    const load = (colour: unknown) =>
+      Train.fromJSON({ ...json, colour: colour as number }, track).colour;
+    expect(load(3)).toBe(3);
+    expect(load(99)).toBe(99);
+    expect(shownTrainColour(load(99))).toBe(0);
+    for (const none of [undefined, null, -1, 1.5, 'red']) expect(load(none), String(none)).toBe(0);
+  });
+
+  it('reaches a train of the oldest save, through the whole chain', () => {
+    const file = { ...oldestSave(), trains: [{ id: 3, name: 'Rocket 3' }] };
+    const [train] = migrate(file as SaveGame).trains as { colour: number }[];
+    expect(train.colour).toBe(0);
+    expect(isTrainColour(train.colour)).toBe(true);
+  });
 });

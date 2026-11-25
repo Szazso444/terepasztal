@@ -1,10 +1,13 @@
 import type { Train } from './trains';
 import type { Builder } from './build';
 import type { PowerGrid } from './power';
+import { contractTitle, type ContractBoard } from './contracts';
 import { buildingDef, missingInput } from './buildings';
 import { cargoName } from './cargo';
 import { STR } from '../strings';
 import { rules } from './rules';
+import { RESOURCE_IDS } from './stores';
+import { contractAtRisk, storeStaysFull, type AlertType } from './alerts';
 
 export type NoticeKind = 'info' | 'warn' | 'bad';
 export type NoticeTarget =
@@ -16,8 +19,12 @@ export type NoticeTarget =
 export interface Notice {
   key: string;
   kind: NoticeKind;
+  /** its row of the Notifications screen (`src/sim/alerts.ts`) */
+  type: AlertType;
   text: string;
   target: NoticeTarget;
+  /** what the Toast channel says in place of `text`; null when the event has a toast of its own */
+  toast?: string | null;
   /** wall-clock seconds; transient notices vanish after this */
   expires?: number;
 }
@@ -29,6 +36,8 @@ export interface Notice {
 export class Notices {
   list: Notice[] = [];
   private transient: Notice[] = [];
+  /** `store|good` of each good that counts as full (`storeStaysFull`) */
+  private fullGoods = new Set<string>();
   onChange: (() => void) | null = null;
 
   push(n: Omit<Notice, 'expires'>, ttl = 30) {
@@ -45,6 +54,8 @@ export class Notices {
     builder: Builder;
     power: PowerGrid;
     stuck?: { id: number; since: number }[];
+    /** the contract board and the game time */
+    contracts?: { board: Pick<ContractBoard, 'active' | 'offers' | 'remaining'>; now: number };
   }) {
     const now = performance.now() / 1000;
     this.transient = this.transient.filter((t) => (t.expires ?? 0) > now);
@@ -52,35 +63,68 @@ export class Notices {
     for (const t of src.trains) {
       const target = { kind: 'train' as const, id: t.id };
       if (t.state === 'noFuel')
-        out.push({ key: `t${t.id}:fuel`, kind: 'bad', text: STR.notice.outOfFuel(t.name), target });
+        out.push({
+          key: `t${t.id}:fuel`,
+          kind: 'bad',
+          type: 'nofuel',
+          text: STR.notice.outOfFuel(t.name),
+          target,
+        });
       else if (t.state === 'noPower')
-        out.push({ key: `t${t.id}:power`, kind: 'bad', text: STR.notice.noPower(t.name), target });
+        out.push({
+          key: `t${t.id}:power`,
+          kind: 'bad',
+          type: 'nofuel',
+          text: STR.notice.noPower(t.name),
+          target,
+        });
       else if (t.state === 'overweight')
         out.push({
           key: `t${t.id}:heavy`,
           kind: 'bad',
+          type: 'noroute',
           text: STR.notice.overweight(t.name),
           target,
         });
       else if (t.state === 'noRoute' || t.state === 'stranded')
-        out.push({ key: `t${t.id}:route`, kind: 'warn', text: STR.notice.noRoute(t.name), target });
+        out.push({
+          key: `t${t.id}:route`,
+          kind: 'warn',
+          type: 'noroute',
+          text: STR.notice.noRoute(t.name),
+          target,
+        });
       else if (t.eco)
-        out.push({ key: `t${t.id}:eco`, kind: 'warn', text: STR.notice.ecoMode(t.name), target });
+        out.push({
+          key: `t${t.id}:eco`,
+          kind: 'warn',
+          type: 'slow',
+          text: STR.notice.ecoMode(t.name),
+          target,
+        });
       else if (src.stuck?.some((x) => x.id === t.id))
         out.push({
           key: `t${t.id}:stuck`,
           kind: 'bad',
+          type: 'stuck',
           text: STR.notice.stuck(t.name, Math.round(src.stuck.find((x) => x.id === t.id)!.since)),
           target,
         });
       else if (t.blocked && t.blockedTime > 8)
-        out.push({ key: `t${t.id}:held`, kind: 'info', text: STR.notice.held(t.name), target });
+        out.push({
+          key: `t${t.id}:held`,
+          kind: 'info',
+          type: 'slow',
+          text: STR.notice.held(t.name),
+          target,
+        });
     }
     for (const s of src.builder.stations) {
       if (src.builder.isOrphaned(s))
         out.push({
           key: `s${s.id}:orphan`,
           kind: 'bad',
+          type: 'noroute',
           text: STR.notice.orphaned(s.name),
           target: { kind: 'tile', x: s.x, y: s.y },
         });
@@ -90,6 +134,8 @@ export class Notices {
       if (e.a.plant) plantsWired.add(`${e.a.x},${e.a.y}`);
       if (e.b.plant) plantsWired.add(`${e.b.x},${e.b.y}`);
     }
+    // the places whose works already say they are full
+    const worksFull = new Set<string>();
     for (const b of src.builder.buildings.values()) {
       // closed for its upgrade: off the grid and idle on purpose, nothing to report
       if (b.work) continue;
@@ -99,6 +145,7 @@ export class Notices {
         out.push({
           key: `b${b.x},${b.y}:wire`,
           kind: 'warn',
+          type: 'starved',
           text: STR.notice.unwired(def.name),
           target,
         });
@@ -108,17 +155,68 @@ export class Notices {
         out.push({
           key: `b${b.x},${b.y}:in`,
           kind: 'warn',
+          type: 'starved',
           text: store
             ? STR.notice.starved(def.name, m ? cargoName(m) : '?')
             : STR.notice.noStore(def.name, rules.buildReach),
           target,
         });
-      } else if (b.reason === 'full')
+      } else if (b.reason === 'full') {
+        const store = src.builder.stores.worksStore(b);
+        if (store) worksFull.add(src.builder.stores.networkPool(store).key);
         out.push({
           key: `b${b.x},${b.y}:full`,
           kind: 'info',
+          type: 'full',
           text: STR.notice.full(def.name),
           target,
+        });
+      }
+    }
+    // a place that keeps goods, full of one or more of them; in Simple mode a whole rail network.
+    // A works saying so has already told of that place
+    const stores = src.builder.stores;
+    const fullGoods = new Set<string>();
+    for (const pool of stores.choices()) {
+      const full = RESOURCE_IDS.filter((id) => {
+        if (id === 'power' || pool.cap(id) <= 0) return false;
+        const good = `${pool.key}|${id}`;
+        if (!storeStaysFull(this.fullGoods.has(good), pool.get(id), pool.cap(id))) return false;
+        fullGoods.add(good);
+        return true;
+      });
+      if (full.length && !worksFull.has(pool.key))
+        out.push({
+          key: `store:${pool.key}:full`,
+          kind: 'warn',
+          type: 'full',
+          text: STR.notice.storeFull(stores.label(pool), full.map(cargoName).join(', ')),
+          target: { kind: 'tile', x: pool.anchor.x, y: pool.anchor.y },
+        });
+    }
+    this.fullGoods = fullGoods;
+    if (src.contracts) {
+      const { board, now } = src.contracts;
+      const destOf = (destId: number): NoticeTarget => {
+        const dest = src.builder.stationById(destId);
+        return dest ? { kind: 'tile', x: dest.x, y: dest.y } : null;
+      };
+      for (const c of board.active)
+        if (contractAtRisk(board.remaining(c, now), c.delivered, c.amount))
+          out.push({
+            key: `contract:${c.id}:risk`,
+            kind: 'warn',
+            type: 'contract',
+            text: STR.notice.contractAtRisk(contractTitle(c.name)),
+            target: destOf(c.destId),
+          });
+      for (const c of board.offers)
+        out.push({
+          key: `offer:${c.id}`,
+          kind: 'info',
+          type: 'offer',
+          text: STR.notice.contractOffered(contractTitle(c.name)),
+          target: destOf(c.destId),
         });
     }
     const order = { bad: 0, warn: 1, info: 2 };

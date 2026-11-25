@@ -1,7 +1,8 @@
-import { bridgeCapacity, BRIDGE_SLOW_SHARE } from '../sim/bridges';
+import { bridgeCapacity } from '../sim/bridges';
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Builder } from '../sim/build';
+import type { Commands } from '../sim/commands';
 import {
   buildingDef,
   buildingRecipe,
@@ -15,27 +16,29 @@ import { fmtCost, type ResourceStore } from '../sim/stores';
 import { cargoName } from '../sim/cargo';
 import { upgradeView } from './upgradeView';
 import { upgradeRow } from './upgradeRow';
+import { bridgeLimit } from './ruleText';
 import type { WorksStatus } from './tooltipContent';
 
 /** Side panel for a selected processing building: recipe, state and lifetime output. */
 export class BuildingPanel {
   readonly root: HTMLElement;
   private body = el('div', { class: 'panel-body' });
-  private title = el('span');
+  private title = el('span', { class: 'panel-name' });
   building: Building | null = null;
 
   constructor(
     private readonly builder: Builder,
     private readonly onClose: () => void,
+    private readonly commands: Commands,
   ) {
     this.root = el(
       'div',
-      { id: 'station-panel', class: 'panel' },
+      { id: 'building-panel', class: 'panel' },
       el(
         'div',
         { class: 'panel-title' },
         this.title,
-        btn('x', () => this.close(), 'small'),
+        btn('×', () => this.close(), 'panel-x'),
       ),
       this.body,
     );
@@ -122,13 +125,7 @@ export class BuildingPanel {
     const st = BuildingPanel.status(b, store);
     body.append(el('div', { class: 'flavor', text: def.flavor }));
     const capacity = bridgeCapacity(b);
-    if (capacity !== null)
-      body.append(
-        row(
-          STR.building.bridgeCapacity,
-          STR.building.bridgeLimit(capacity, Math.round(capacity * BRIDGE_SLOW_SHARE)),
-        ),
-      );
+    if (capacity !== null) body.append(row(STR.building.bridgeCapacity, bridgeLimit(capacity)));
     if (!def.bridge) {
       body.append(row(STR.building.recipe, BuildingPanel.recipeText(b.id, b)));
       body.append(row(STR.building.rate, STR.station.perWeek(Math.round(b.rate * 10) / 10)));
@@ -155,7 +152,7 @@ export class BuildingPanel {
     });
     body.append(
       upgradeRow(view, () => {
-        this.builder.upgradeBuilding(b);
+        this.commands.act(() => this.builder.upgradeBuilding(b));
         this.render();
       }),
     );
@@ -167,7 +164,7 @@ export class BuildingPanel {
           STR.station.demolish,
           () => {
             const { x, y } = b;
-            this.builder.removeBuilding(x, y);
+            this.commands.act(() => this.builder.removeBuilding(x, y));
             this.close();
           },
           'small',

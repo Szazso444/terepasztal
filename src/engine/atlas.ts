@@ -17,7 +17,33 @@ export interface AtlasImage {
   resolution?: number;
   /** a file atlas that replaces only its own frames and keeps the generator for the rest */
   partial?: boolean;
+  /** a file atlas too large for one texture: `<group>-2` .. `<group>-<pages>` hold the rest */
+  pages?: number;
+  /**
+   * Pages per vehicle (`{"loco_m62": ["rolling-loco_m62-1", ...]}`): loaded only while that vehicle
+   * is shown (see {@link AtlasRegistry.want}). The group's own file keeps its resident frames.
+   */
+  vehicles?: Record<string, string[]>;
+  /** further resident pages of a group with a vehicle index */
+  shared?: string[];
+  /** the picture file's format; `.png` unless the frames file says `webp` */
+  format?: 'png' | 'webp';
 }
+
+/** The pages of one vehicle, loaded on demand and released when it has gone unused a while. */
+interface VehiclePages {
+  pages: string[];
+  state: 'idle' | 'loading' | 'ready' | 'failed';
+  loading?: Promise<void>;
+  lastUse: number;
+  keys: string[];
+  sources: ImageSource[];
+  textures: Texture[];
+  images: (HTMLCanvasElement | HTMLImageElement)[];
+}
+
+/** How long a vehicle's pages stay after it was last shown (ms). */
+const KEEP_MS = 20000;
 export type AtlasGenerator = () => AtlasImage | Promise<AtlasImage>;
 
 export interface FrameInfo {
@@ -44,7 +70,7 @@ const SHIPPED_GROUPS: ReadonlySet<string> = new Set(
  * `src/render/landscape.ts` finds its sheet. `base` is Vite's `BASE_URL` (`/`, `/sub/` or `./` in
  * the forms Vite documents), so the default `/` gives `/assets/<group>.<ext>`.
  */
-function atlasFileUrl(base: string, group: string, ext: 'json' | 'png') {
+function atlasFileUrl(base: string, group: string, ext: 'json' | 'png' | 'webp') {
   return `${base}assets/${group}.${ext}`;
 }
 
@@ -68,7 +94,12 @@ function atlasFileUrl(base: string, group: string, ext: 'json' | 'png') {
  */
 export class AtlasRegistry {
   private frames = new Map<string, FrameInfo>();
+  /** Counts the changes to the frames: what was worked out from `has` holds until this moves. */
+  framesVersion = 0;
   private sources: ImageSource[] = [];
+  /** vehicle pages by stem (`rolling/loco_m62`) */
+  private vehicles = new Map<string, VehiclePages>();
+  private lastSweep = 0;
   readonly groupOrigin = new Map<string, 'png' | 'procedural' | 'png+procedural'>();
   /** For each group with generated frames, whether this load drew them or read them from the cache. */
   readonly generatedFrom = new Map<string, 'generator' | 'cache'>();
@@ -117,7 +148,7 @@ export class AtlasRegistry {
     const cached = this.cache ? this.cache.read(name) : Promise.resolve(null);
     const fromFile = await this.tryLoadFile(name);
     if (typeof fromFile !== 'string' && !fromFile.partial) {
-      this.register(fromFile);
+      await this.registerFile(name, fromFile);
       this.images.set(name, fromFile.image);
       this.groupOrigin.set(name, 'png');
       return null;
@@ -132,7 +163,7 @@ export class AtlasRegistry {
     // generated first, so a partial file's frames win where the names collide
     this.register(gen);
     if (typeof fromFile !== 'string') {
-      this.register(fromFile);
+      await this.registerFile(name, fromFile);
       this.images.set(name, fromFile.image);
       this.groupOrigin.set(name, 'png+procedural');
     } else {
@@ -140,6 +171,29 @@ export class AtlasRegistry {
       this.groupOrigin.set(name, 'procedural');
     }
     return hit ? null : gen;
+  }
+
+  /** A group's file with its further pages and its index of vehicle pages. */
+  private async registerFile(name: string, file: AtlasImage) {
+    this.register(file);
+    for (const page of file.shared ?? []) {
+      const p = await this.tryLoadFile(page);
+      if (typeof p !== 'string') this.register(p);
+    }
+    for (const [stem, pages] of Object.entries(file.vehicles ?? {}))
+      this.vehicles.set(`${name}/${stem}`, {
+        pages,
+        state: 'idle',
+        lastUse: 0,
+        keys: [],
+        sources: [],
+        textures: [],
+        images: [],
+      });
+    for (let i = 2; i <= (file.pages ?? 1); i++) {
+      const page = await this.tryLoadFile(`${name}-${i}`);
+      if (typeof page !== 'string') this.register(page);
+    }
   }
 
   /**
@@ -155,7 +209,6 @@ export class AtlasRegistry {
   /** The group's file pair, or why it cannot be used. */
   private async tryLoadFile(name: string): Promise<AtlasImage | string> {
     const json = atlasFileUrl(this.base, name, 'json');
-    const png = atlasFileUrl(this.base, name, 'png');
     try {
       const res = await fetch(json, { cache: 'no-cache' });
       if (!res.ok) return `${json} answered ${res.status}`;
@@ -170,28 +223,58 @@ export class AtlasRegistry {
       const resolution = data.resolution ?? 1;
       if (!Number.isFinite(resolution) || resolution < 1 || resolution > 8)
         return `${json} has resolution ${resolution}, outside 1 to 8`;
+      const list = (v: unknown) =>
+        Array.isArray(v) && v.every((p) => typeof p === 'string' && /^[\w.-]+$/.test(p))
+          ? (v as string[])
+          : undefined;
+      const vehicles = isRecord(data.vehicles)
+        ? Object.fromEntries(
+            Object.entries(data.vehicles)
+              .map(([k, v]) => [k, list(v)] as const)
+              .filter((e): e is readonly [string, string[]] => !!e[1]),
+          )
+        : undefined;
+      const picture = atlasFileUrl(this.base, name, data.format === 'webp' ? 'webp' : 'png');
       const image = new Image();
       const loaded = await new Promise<boolean>((done) => {
         image.onload = () => done(true);
         image.onerror = () => done(false);
-        image.src = png;
+        image.src = picture;
       });
-      if (!loaded) return `${png} did not load as an image`;
-      return { image, frames: data.frames, resolution, partial: data.partial === true };
+      if (!loaded) return `${picture} did not load as an image`;
+      const pages =
+        Number.isInteger(data.pages) && data.pages! > 1 && data.pages! <= 256
+          ? data.pages
+          : undefined;
+      return {
+        image,
+        frames: data.frames,
+        resolution,
+        partial: data.partial === true,
+        pages,
+        vehicles,
+        shared: list(data.shared),
+      };
     } catch (err) {
       return `${json} did not load: ${String(err)}`;
     }
   }
 
-  private register(atlas: AtlasImage) {
+  /**
+   * Register an atlas' frames. For a vehicle's page (`own`), frames already present (the resident
+   * preview copies) are kept, and what it adds is recorded so it can be released again.
+   */
+  private register(atlas: AtlasImage, own?: VehiclePages) {
     const resolution = atlas.resolution ?? 1;
     const source = new ImageSource({
       resource: atlas.image,
       scaleMode: resolution > 1 ? 'linear' : 'nearest',
       autoGenerateMipmaps: resolution > 1,
     });
-    this.sources.push(source);
+    if (own) own.sources.push(source);
+    else this.sources.push(source);
     for (const [key, f] of Object.entries(atlas.frames)) {
+      if (own && this.frames.has(key)) continue;
       // UVs address physical texels; orig controls the sprite's world-space dimensions.
       // This also preserves callers that mirror/rotate sprites at scale 1 (rolling stock).
       const texture = new Texture({
@@ -199,6 +282,10 @@ export class AtlasRegistry {
         frame: new Rectangle(f.x, f.y, f.w, f.h),
         orig: new Rectangle(0, 0, f.w / resolution, f.h / resolution),
       });
+      if (own) {
+        own.keys.push(key);
+        own.textures.push(texture);
+      }
       this.frames.set(key, {
         image: atlas.image,
         texture,
@@ -207,11 +294,92 @@ export class AtlasRegistry {
         w: f.w / resolution,
         h: f.h / resolution,
       });
+      this.framesVersion++;
     }
   }
 
   has(key: string) {
     return this.frames.has(key);
+  }
+
+  /**
+   * Whether a vehicle's own frames (stem `rolling/loco_<id>`, `rolling/wagon_<id>`) are in. Asks
+   * for them when they are not: the caller draws nothing of that vehicle until this turns true
+   * (a frame or a few later). A stem without pages of its own (procedural stock, legacy atlases)
+   * is always ready. Each call counts as a use; unused vehicles are released by {@link sweep}.
+   */
+  want(stem: string | null | undefined): boolean {
+    if (!stem) return true;
+    const v = this.vehicles.get(stem);
+    if (!v) return true;
+    v.lastUse = performance.now();
+    if (v.state === 'ready') return true;
+    if (v.state === 'idle') void this.ensure(stem);
+    return false;
+  }
+
+  /** Load a vehicle's pages (see {@link want}); resolves when they are in (or failed). */
+  ensure(stem: string): Promise<void> {
+    const v = this.vehicles.get(stem);
+    if (!v) return Promise.resolve();
+    v.lastUse = performance.now();
+    if (v.state === 'ready' || v.state === 'failed') return Promise.resolve();
+    if (v.loading) return v.loading;
+    v.state = 'loading';
+    v.loading = Promise.all(v.pages.map((p) => this.tryLoadFile(p))).then((pages) => {
+      v.loading = undefined;
+      const failed = pages.find((p) => typeof p === 'string');
+      if (failed !== undefined) {
+        console.warn(`Atlas: pages of ${stem} missing: ${failed}`);
+        v.state = 'failed';
+        return;
+      }
+      for (const p of pages as AtlasImage[]) {
+        this.register(p, v);
+        v.images.push(p.image);
+      }
+      v.state = 'ready';
+    });
+    return v.loading;
+  }
+
+  /** Resolves once no vehicle pages are loading. */
+  async idle(): Promise<void> {
+    for (;;) {
+      const busy = [...this.vehicles.values()].flatMap((v) => (v.loading ? [v.loading] : []));
+      if (!busy.length) return;
+      await Promise.all(busy);
+    }
+  }
+
+  /** Vehicles whose pages are in, by stem. */
+  loadedVehicles(): string[] {
+    return [...this.vehicles].filter(([, v]) => v.state === 'ready').map(([k]) => k);
+  }
+
+  /** Release the pages of vehicles not asked for in the last `keepMs`; checked every few seconds. */
+  sweep(now = performance.now(), keepMs = KEEP_MS) {
+    if (now - this.lastSweep < 2000) return;
+    this.lastSweep = now;
+    for (const [stem, v] of this.vehicles)
+      if (v.state === 'ready' && now - v.lastUse > keepMs) this.release(stem);
+  }
+
+  /** Drop a vehicle's frames and free its textures; it loads again when next wanted. */
+  release(stem: string) {
+    const v = this.vehicles.get(stem);
+    if (!v || v.state !== 'ready') return;
+    for (const k of v.keys) this.frames.delete(k);
+    this.framesVersion++;
+    for (const t of v.textures) t.destroy(false);
+    for (const s of v.sources) s.destroy();
+    for (const im of v.images)
+      if (typeof HTMLImageElement !== 'undefined' && im instanceof HTMLImageElement) im.src = '';
+    v.keys = [];
+    v.textures = [];
+    v.sources = [];
+    v.images = [];
+    v.state = 'idle';
   }
   get(key: string): FrameInfo {
     const f = this.frames.get(key);

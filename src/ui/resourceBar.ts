@@ -1,4 +1,4 @@
-import { el, btn } from './dom';
+import { el } from './dom';
 import { STR } from '../strings';
 import { RESOURCE_IDS, type ResourceStore } from '../sim/stores';
 import type { AtlasRegistry } from '../engine/atlas';
@@ -10,26 +10,21 @@ import { ttTerm, type Tooltip } from './tooltip';
 import { tipBuild } from './tooltipRender';
 import { resourceTip, type ResourceSnapshot } from './tooltipContent';
 import { RESOURCE_GROUPS, barGroups } from './resourceOrder';
+import { needsCompact } from './fit';
 
 /** What a store holds: these have a cap and open the market when clicked. */
 const STOCKPILED = new Set(RESOURCE_IDS);
 
-/** The cells overflow their box: tighten the spacing. */
-export const needsCompact = (scrollWidth: number, clientWidth: number) => scrollWidth > clientWidth;
-
 /**
- * Second row under the top bar: funds first, then the store it shows (a button that steps to the
- * next one) and what that store holds in its groups (`RESOURCE_GROUPS`), each cell a term whose
- * tooltip links the buildings that make and use it. A resource shows once its age has come or it is
- * in stock (`barGroups`); the famine warning and `right` (tickets, age) end it.
+ * Second row under the top bar: funds first, then what the store it shows holds (`stores.selected`:
+ * picked in Fleet or on the map, and named in the cells' tooltips) in its groups
+ * (`RESOURCE_GROUPS`), each cell a term whose tooltip links the buildings that make and use it. A
+ * resource shows once its age has come or it is in stock (`barGroups`); the famine warning ends it.
  */
 export class ResourceBar {
-  readonly root = el('div', { id: 'resbar', class: 'panel' });
-  readonly right = el('div', { class: 'res-right' });
-  /** the groups and the famine warning: it shrinks and clips so `right` stays on screen */
+  readonly root = el('div', { id: 'resbar', class: 'strip' });
+  /** the groups and the famine warning: it shrinks and clips, so nothing leaves the screen */
   private cellsBox = el('div', { class: 'res-cells' });
-  /** the name of the store shown; a click asks for the next one (`onNextStore`) */
-  private storeBtn = btn('', () => this.onNextStore?.(), 'small res-store');
   /** each resource's value, and the term around its cell that is hidden or shown */
   private values = new Map<string, HTMLElement>();
   private cells = new Map<string, HTMLElement>();
@@ -42,9 +37,9 @@ export class ResourceBar {
   people: (() => { residents: number; foodPerWeek: number }) | null = null;
   /** Supplied by the game: the passengers waiting at the player's stations. */
   passengers: (() => number) | null = null;
-  /** the store button was clicked: show the next store */
-  onNextStore: (() => void) | null = null;
   private store: ResourceStore | null = null;
+  /** the name of the store shown */
+  private storeName = '';
   private totals = new Map<string, number>();
   private money = 0;
   private tier = 0;
@@ -56,8 +51,7 @@ export class ResourceBar {
   private laidSupply: SupplyMode | null = null;
   private inStock = new Set<string>();
 
-  constructor(atlas: AtlasRegistry, tooltip: Tooltip, onClick: () => void) {
-    this.storeBtn.title = STR.res.nextStore;
+  constructor(atlas: AtlasRegistry, tooltip: Tooltip, onClick: (resource: string) => void) {
     RESOURCE_GROUPS.forEach((ids, i) => {
       const group = el('div', { class: 'res-group' });
       for (const id of ids) {
@@ -73,7 +67,7 @@ export class ResourceBar {
           cell,
           tipBuild(atlas, () => resourceTip(this.snapshot(id))),
         );
-        if (STOCKPILED.has(id)) term.addEventListener('click', onClick);
+        if (STOCKPILED.has(id)) term.addEventListener('click', () => onClick(id));
         this.values.set(id, v);
         this.cells.set(id, term);
         group.append(term);
@@ -81,12 +75,10 @@ export class ResourceBar {
       const sep = i ? el('div', { class: 'res-sep' }) : null;
       if (sep) this.cellsBox.append(sep);
       this.cellsBox.append(group);
-      // the funds are everyone's, what follows the store's
-      if (!i) this.cellsBox.append(this.storeBtn);
       this.groups.push({ root: group, sep });
     });
     this.cellsBox.append(this.famine);
-    this.root.append(this.cellsBox, this.right);
+    this.root.append(this.cellsBox);
     this.famine.style.display = 'none';
     tooltip.bindTerms(this.root);
     // a window resize changes the room
@@ -124,6 +116,7 @@ export class ResourceBar {
       have: st?.get(id) ?? 0,
       cap: STOCKPILED.has(id) ? (st?.cap(id) ?? Infinity) : Infinity,
       total: this.totals.get(id) ?? 0,
+      store: this.storeName,
       produced: flow?.produced ?? 0,
       consumed: flow?.consumed ?? 0,
       tier,
@@ -148,8 +141,8 @@ export class ResourceBar {
   }
 
   /**
-   * Show `store` (with the grid's power beside it), named `label` on the store button; `totals` is
-   * what every store holds together, for the tooltips.
+   * Show `store` (with the grid's power beside it), named `label` in the tooltips; `totals` is what
+   * every store holds together, for the tooltips.
    */
   update(
     store: ResourceStore,
@@ -159,11 +152,10 @@ export class ResourceBar {
     tier: number,
   ) {
     this.store = store;
+    this.storeName = label;
     this.totals = totals;
     this.money = money;
     this.tier = tier;
-    const renamed = this.storeBtn.textContent !== label;
-    if (renamed) this.storeBtn.textContent = label;
     // the shown cells change only with the age or the chain, or when a stock crosses zero
     let relayout = tier !== this.laidTier || supplyMode() !== this.laidSupply;
     for (const id of this.cells.keys()) {
@@ -178,8 +170,8 @@ export class ResourceBar {
       this.laidSupply = supplyMode();
       this.layout(store);
     }
-    // a longer value or store name can push the bar over too: a new digit, not every frame
-    let longer = relayout || renamed;
+    // a longer value can push the bar over too: a new digit, not every frame
+    let longer = relayout;
     const stats = this.flows.of(store);
     for (const [id, v] of this.values) {
       if (this.cells.get(id)!.style.display === 'none') continue;

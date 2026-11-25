@@ -11,7 +11,8 @@ below have none.
 - `<view>-<arm>-p<pose>.png`: 32 guides, 1024 x 1536, transparent. `view` is `back` or `front`,
   `arm` is `swing`, `shoulder`, `block` or `yoke`, `pose` is 1 to 4.
 - `manifest.json`: for every guide the joints in body units and in canvas px, the ground point, the
-  top of the head and the first and last drawn rows.
+  top of the head, the first and last drawn rows and its `soleRow` (1440 in every guide; also at the top
+  of the file).
 - `identity/<strip>-upper.png`: 28 crops, 512 x 768 (the guide layout at half size), and
   `identity/identity.json`.
 
@@ -54,17 +55,21 @@ the trailing one.
 - The figure is 960 px from the top of the head to the **ground point** (the point on the ground
   under the pelvis), the same in every pose and view. 9 px in the game, so 1 game px is 106.7
   canvas px. The ground point is on column 512 (and `groundPoint` in the manifest gives its row).
-- The lowest sole is on row 1440 in every guide. Because the body is turned, the ground point is not
-  on that row: the foot toward the camera stands lower on the page than the ground point, by up to
-  about 100 px (front views), so rows 1440 and `groundPoint` differ per guide, and the figure's
-  top-to-lowest-sole height is 960 to about 1060 px. Do not "correct" this by putting both soles on
-  one row or by shrinking the figure.
+- The **sole row** is row 1440 in every guide: the lowest row at least 36 px wide (`soleRow` in the
+  manifest), the sole proper that a painted boot also has. The foot box of the mannequin ends below it in
+  a sharp corner a few px wide (up to 16 px lower, `bottom` in the manifest); no painted boot has that
+  corner, so a painting's lowest opaque row falls on the sole row, not on the corner. (Before 21 October
+  2026 the corner was put on row 1440 and the paintings of R7c-1 stopped 9 and 17 px short of it.)
+  Because the body is turned, the ground point is not on that row: the foot toward the camera stands
+  lower on the page than the ground point, by up to about 100 px (front views), so rows 1440 and
+  `groundPoint` differ per guide, and the figure's top-to-sole height is 960 to about 1060 px. Do not
+  "correct" this by putting both soles on one row or by shrinking the figure.
 - **The planted foot slides back 0.123 of the height per pose** against the body (the walker
   advances 0.031 tile = 1.11 world px of a 9 px figure per pose), so the feet do not skate on the
   ground. The guides already have it: heel at pose 1, flat at pose 2, toe at pose 3 of one foot are
   the same spot of ground.
 - A packer who wants the exact anchor takes it from `groundPoint` (the walker's tile position is the
-  ground point); one who anchors at the lowest sole takes row 1440 and is off the exact
+  ground point); one who anchors at the sole row takes row 1440 and is off the exact
   anchor by the depth stagger (under 1 game px, up to 95 canvas px) of the slide.
 
 ## What to attach to a painting call, and what never

@@ -1,6 +1,7 @@
 import { content } from '../data/content';
 import { el } from './dom';
 import { STR } from '../strings';
+import type { FootSpec } from './kit';
 import type { Screen } from './modal';
 import {
   CREDITS,
@@ -37,7 +38,7 @@ function fullEntry(data: CreditsData, c: Credit) {
   return el(
     'div',
     { class: 'credit-entry' },
-    el('div', { class: 'credit-kind dim', text: c.kind }),
+    el('div', { class: 'credit-kind dim', text: STR.credits.kind[c.kind] ?? c.kind }),
     el('div', { class: 'credit-title', text: c.title }),
     el('div', { class: 'credit-author', text: STR.credits.by(c.author) }),
     names.length ? el('div', { class: 'dim', text: STR.credits.usedFor(names.join(', ')) }) : null,
@@ -78,7 +79,9 @@ function authorBlock(author: string, credits: Credit[]) {
 export class CreditsScreen implements Screen {
   readonly id = 'credits';
   readonly title = STR.credits.title;
-  readonly root = el('div', { class: 'credits' });
+  readonly frameSize = 'M';
+  readonly icon = 'scroll';
+  readonly root = el('div', { class: 'k-page credits' });
   private roll = el('div', { class: 'credits-roll' });
   private frame = 0;
   private startAt = 0;
@@ -128,7 +131,10 @@ export class CreditsScreen implements Screen {
         el('div', { class: 'credits-head', text: STR.credits.thanks }),
         el('div', { class: 'credits-note dim', text: STR.credits.thanksNote }),
         ...thanks.flatMap((k) => [
-          el('div', { class: 'credit-kind credits-kind-head dim', text: k.kind }),
+          el('div', {
+            class: 'credit-kind credits-kind-head dim',
+            text: STR.credits.kind[k.kind] ?? k.kind,
+          }),
           ...k.authors.map((g) => authorBlock(g.author, g.credits)),
         ]),
         el(
@@ -142,6 +148,10 @@ export class CreditsScreen implements Screen {
         ),
       );
     r.append(el('div', { class: 'credits-spacer' }));
+  }
+
+  frameFooter(): FootSpec {
+    return { done: true };
   }
 
   onOpen() {

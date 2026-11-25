@@ -19,10 +19,14 @@ import {
 } from './trains';
 import { Station, resetStationIds } from './stations';
 import { locoDef, wagonDef } from '../gacha/items';
+import { sceneLengths } from '../testing/modelFixtures';
 import { rules, DEFAULT_RULES } from './rules';
 import { setSupplyMode, DEFAULT_SUPPLY } from './supply';
 import { setSeasonOffset } from './weather';
 import { STR } from '../strings';
+
+// a scene laid out tile by tile: see sceneLengths
+sceneLengths();
 
 beforeEach(() => {
   Object.assign(rules, DEFAULT_RULES);
@@ -2316,7 +2320,7 @@ describe('with shunting on, an idle train in the way on a single line whose sidi
             parked = {
               state: idle.state,
               note: idle.lastMessage,
-              keys: idle.occupancyKeys(w.track.w),
+              keys: [...idle.occupancyKeys(w.track.w)],
             };
           return broken !== null || (!!parked && sim.arrivals(caller).includes(target.id));
         }, 120);

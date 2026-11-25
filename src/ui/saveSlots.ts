@@ -1,6 +1,6 @@
 import { STR } from '../strings';
 import { ageDef } from '../sim/ages';
-import { SAVE_VERSION, type SlotMeta } from '../sim/save';
+import { SAVE_QUIET_VERSION, SAVE_VERSION, type SlotMeta } from '../sim/save';
 import { fmtMoney } from './dom';
 
 /**
@@ -17,7 +17,7 @@ export interface SlotText {
   saved: string | null;
   /** the date and time it was written, for the title of the `saved` line */
   savedAt: string | null;
-  /** the file's format when it is not this build's; null when it is */
+  /** the file's format when the player is told it is not this build's (`formatNote`) */
   format: string | null;
 }
 
@@ -26,9 +26,12 @@ export function ageName(tier: number): string {
   return STR.ages.name[ageDef(tier).id] ?? '';
 }
 
-/** Says when a save's format is older or newer than this build's; null when it is the same. */
+/**
+ * Says when a save's format is older or newer than this build's; null when it is the same, or
+ * older by nothing the player has to be told (`SAVE_QUIET_VERSION`).
+ */
 export function formatNote(version: number): string | null {
-  if (version < SAVE_VERSION) return STR.saves.olderFormat(version);
+  if (version < SAVE_QUIET_VERSION) return STR.saves.olderFormat(version);
   if (version > SAVE_VERSION) return STR.saves.newerFormat(version);
   return null;
 }
@@ -151,4 +154,89 @@ export function replaceQuestion(kind: Replacement, s: ReplaceSituation): string 
 export function loadQuestion(name: string, s: ReplaceSituation): string | null {
   if (!asksBeforeReplacing('overwrite', s)) return null;
   return gameBeingPlayed(s) ? STR.menu.confirmLoad(name) : STR.menu.confirmLoadStored(name);
+}
+
+// ------------------------------------------------------------------ the Saved games screen
+
+/** The longest name a save has (`writeSlot` cuts a longer one). */
+export const SLOT_NAME_MAX = 32;
+
+/** The name a save is stored under: trimmed, at most `SLOT_NAME_MAX` characters (`writeSlot`'s own). */
+export function slotNameOf(text: string): string {
+  return text.trim().slice(0, SLOT_NAME_MAX).trimEnd();
+}
+
+/**
+ * The Save tab's name field: what is typed (`null`: nothing yet, so the default offered, as
+ * "Day N · seed"), the name it is stored under, whether there is a name to save and whether it
+ * replaces a save of that name.
+ */
+export interface SaveNameState {
+  /** what the field shows */
+  shown: string;
+  /** the name the save is stored under */
+  name: string;
+  canSave: boolean;
+  /** a named save of that name exists: saving replaces it (and asks first) */
+  clash: boolean;
+}
+
+export function saveNameState(
+  typed: string | null,
+  fallback: string,
+  existing: readonly string[],
+): SaveNameState {
+  const shown = typed ?? fallback;
+  const name = slotNameOf(shown);
+  return { shown, name, canSave: name.length > 0, clash: existing.includes(name) };
+}
+
+/** What loading a save does where it is picked: it replaces the game in play, the stored game, or nothing. */
+export type LoadEffect = 'game' | 'stored' | 'none';
+
+export function loadEffect(s: ReplaceSituation): LoadEffect {
+  if (!asksBeforeReplacing('overwrite', s)) return 'none';
+  return gameBeingPlayed(s) ? 'game' : 'stored';
+}
+
+/** Saving needs a game being played: at the title at boot there is none. */
+export function canSaveHere(s: ReplaceSituation): boolean {
+  return gameBeingPlayed(s);
+}
+
+/** The tabs of Saved games: Save is off, with its reason, where there is no game to save. */
+export interface SavedTab {
+  id: 'save' | 'load';
+  label: string;
+  /** the count of named saves, on the Load tab */
+  count: number | null;
+  off: string | null;
+}
+
+/**
+ * Why saving is off where the player stands, null where it is on: the level editor has no game to
+ * save, and the title at boot has none yet.
+ */
+export function saveOffReason(s: ReplaceSituation): string | null {
+  if (canSaveHere(s)) return null;
+  return s.mode === 'editor' ? STR.savedGames.saveOffEditor : STR.savedGames.saveOff;
+}
+
+/** `saveOff` is why the Save tab is off (`saveOffReason`), null when it is on. */
+export function savedGamesTabs(saveOff: string | null, named: number): SavedTab[] {
+  return [
+    { id: 'save', label: STR.savedGames.save, count: null, off: saveOff },
+    { id: 'load', label: STR.savedGames.load, count: named, off: null },
+  ];
+}
+
+/**
+ * What a replacement is about to lose, for the tip of the button that starts it: the game being
+ * played, the stored game, or nothing (`null`: it asks nothing).
+ */
+export type ReplaceEffect = 'game' | 'stored';
+
+export function replaceEffect(kind: Replacement, s: ReplaceSituation): ReplaceEffect | null {
+  if (!asksBeforeReplacing(kind, s)) return null;
+  return gameBeingPlayed(s) ? 'game' : 'stored';
 }

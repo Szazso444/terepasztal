@@ -1,6 +1,7 @@
 import type { AtlasRegistry } from '../engine/atlas';
 import { previewLayers } from './previewLayers';
 import { el } from './dom';
+import { framesToForget } from './inspectView';
 
 const caches = new WeakMap<AtlasRegistry, Map<string, string>>();
 
@@ -37,6 +38,13 @@ export function spriteDataUrl(atlas: AtlasRegistry, frame: string, scale = 2): s
   const url = c.toDataURL();
   cache.set(key, url);
   return url;
+}
+
+/** Forget the frames of one model drawn at one scale: a turntable's headings, once it is closed. */
+export function forgetFrames(atlas: AtlasRegistry, defId: string, scale: number) {
+  const cache = caches.get(atlas);
+  if (!cache) return;
+  for (const key of framesToForget(cache.keys(), defId, scale)) cache.delete(key);
 }
 
 /** Atlas frame that best represents an inventory item (loco or wagon), facing down-right. */

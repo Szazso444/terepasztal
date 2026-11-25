@@ -262,3 +262,217 @@ git commit -m "UI: resource bar in groups, funds first, tooltips link the buildi
 git push -u origin HEAD
 gh pr create --base develop --title "UI: resource bar order, unlocks and building links" --body "<summary, screenshots, test list>"
 ```
+
+---
+
+## PR 2: Date, speed and era
+
+Branch `ui/date-speed-era`, stacked on `ui/resource-bar` (#582), because it touches the same `hud.funds` and `panels.ts` lines.
+
+**Decisions**
+
+- **Saves stay valid.** `SPEEDS` keeps its indexes, so saves (`clock.speedIndex`) read the same. ½× is added as index 4: `SPEEDS = [0, 1, 2, 3, 0.5]`. The order players see and step through is `SPEED_ORDER = [0, 4, 1, 2, 3]`. There is no save version bump, so this cannot collide with the track-lines PRs.
+- **Games start at 1×.** A new or continued game runs at 1× once the loading screen reveals the map, as the user asked ("mindig normál sebességen indul"). Today it starts paused. The clock still stands still behind the loading screen, the editor stays stopped, and a dev reload keeps its speed.
+- **+ and − step the speed** through ½×, 1×, 2×, 3× and stop at the ends. Space pauses. From pause, + or − resumes one step up or down from the speed it had. Digits 1–3 keep 1×, 2×, 3× until PR 3.
+- **The era widget** sits in the top bar immediately left of the date and speed. It replaces `#age-card`, which hung off `document.body`.
+  - It shows the age icon, the age name, and progress to the next age.
+  - Its tooltip is a `TipDoc` listing every age with its goals and their progress.
+  - Tickets stay in `hud.funds`.
+
+**Files**
+
+- Modify: `src/sim/time.ts` (SPEEDS, SPEED_ORDER, fractional steps, `stepSpeed`) and `src/sim/time.test.ts`
+- Modify: `src/ui/keymap.ts` and `src/ui/keymap.test.ts` (+ and −)
+- Modify: `src/main.ts` (start at 1×)
+- Modify: `src/ui/hud.ts`, `src/ui/style.css` (date and speed block, era widget), `src/strings.ts`
+- Create: `src/ui/ageIcons.ts` (one icon per age id)
+- Create: `src/ui/ageTooltip.ts` and `src/ui/ageTooltip.test.ts` (`ageTip`, `ageProgress`)
+
+### Task 1: The clock's ½× speed, stepping, and keys
+
+**Interfaces:**
+
+- Produces:
+  - `SPEEDS = [0, 1, 2, 3, 0.5] as const`
+  - `SPEED_ORDER: readonly number[] = [0, 4, 1, 2, 3]`
+  - `GameClock.stepSpeed(dir: 1 | -1): void`
+  - `KeyHost` gains `stepSpeed(dir: 1 | -1): void`, and the keymap gains the action `'speedStep'`.
+
+- [ ] **Step 1: Write the failing tests** in `src/sim/time.test.ts`
+
+```ts
+describe('½× speed', () => {
+  it('runs one SIM_STEP every second loop tick', () => {
+    const clock = new GameClock();
+    clock.setSpeed(4);
+    expect(clock.speed).toBe(0.5);
+    const ran = [0, 0, 0, 0].map(() => clock.run(() => {}));
+    expect(ran.reduce((a, b) => a + b, 0)).toBeCloseTo(2 * SIM_STEP, 12);
+  });
+  it('gives the same time at ½× over twice the ticks as 1×', () => {
+    const a = new GameClock();
+    const b = new GameClock();
+    a.setSpeed(4);
+    b.setSpeed(1);
+    for (let i = 0; i < 40; i++) a.run(() => {});
+    for (let i = 0; i < 20; i++) b.run(() => {});
+    expect(a.time).toBeCloseTo(b.time, 12);
+  });
+});
+describe('stepSpeed', () => {
+  it('steps ½×, 1×, 2×, 3× and stops at the ends', () => {
+    const c = new GameClock(); // index 1, 1×
+    c.stepSpeed(-1);
+    expect(c.speed).toBe(0.5);
+    c.stepSpeed(-1);
+    expect(c.speed).toBe(0.5);
+    c.stepSpeed(1);
+    c.stepSpeed(1);
+    c.stepSpeed(1);
+    expect(c.speed).toBe(3);
+    c.stepSpeed(1);
+    expect(c.speed).toBe(3);
+  });
+  it('from pause, resumes one step from the speed it had', () => {
+    const c = new GameClock();
+    c.setSpeed(2);
+    c.togglePause();
+    expect(c.speed).toBe(0);
+    c.stepSpeed(1);
+    expect(c.speed).toBe(3);
+  });
+});
+```
+
+Also add to `keymap.test.ts` that `Equal`, `NumpadAdd`, `Minus` and `NumpadSubtract` call `stepSpeed(1)` and `stepSpeed(-1)` in the play and overview contexts. Follow the way that file's table lists bindings.
+
+- [ ] **Step 2: Run them to make sure they fail**
+
+Run: `npx vitest run src/sim/time.test.ts src/ui/keymap.test.ts`
+Expected: FAIL, because `stepSpeed` is not a function.
+
+- [ ] **Step 3: Implement**
+  - **`run()`:** take `floor(carry + speed)` steps and keep the remainder in a private `carry`. Reset `carry` in `setSpeed` and `togglePause`, so integer speeds behave exactly as before. The existing model test must pass unchanged.
+  - **`stepSpeed`:** move along `SPEED_ORDER` without its 0. The base is `prevSpeed` when paused, else `speedIndex`.
+  - **Keymap:** the new bindings call `h.stepSpeed`. Wire `stepSpeed` into the `KeyHost` in `panels.ts` the way `setSpeed` is.
+  - **`main.ts`:** where a fresh or continued game now calls `game.clock.setSpeed(0)`, make it run at 1× (index 1) from the reveal on. Find the loading screen's `onRevealStart` hook. Keep the editor stopped and the dev-reload path as it is.
+
+- [ ] **Step 4: Run them to make sure they pass**
+
+Same command. Expected: PASS.
+
+- [ ] **Step 5: Commit**: `Clock: a ½× speed, + and − step the speed, games start at 1×`
+
+### Task 2: The date and speed block
+
+**Interfaces:**
+
+- Consumes: `SPEED_ORDER` and `GameClock.stepSpeed` from Task 1.
+- Produces: `#topbar .datespeed`, one block holding the day, the clock, and the speed buttons in `SPEED_ORDER`.
+
+- [ ] **Step 1: Implement in `hud.ts`**
+  - **Speed buttons:** build them from `SPEED_ORDER`, and add `'½x'` at index 4 of `STR.hud.speed`. The active state follows `clock.speedIndex` as now.
+  - **Button tooltips:** each speed button's tooltip names its keys, through a new `STR.hud.speedKey: (label: string, key: string) => string`, which returns for example "1× speed (1, + / −)". ½× has only + and −. 1×, 2× and 3× also have digits 1–3.
+  - **Layout:** the day, the clock and the speed buttons sit together in one `div.stat.datespeed` at the right end of the top bar. Weather and the toggles stay where they are.
+  - **Editor:** `setEditor` still disables every speed button.
+
+- [ ] **Step 2: Gates**
+
+Run: `npm run typecheck && npm run lint && npm run format:check && npx vitest run src/ui src/sim`
+Expected: all pass. No test renders the HUD, so this task has no unit test.
+
+- [ ] **Step 3: Commit**: `UI: date and speed in one block, with a ½× button`
+
+### Task 3: The era widget and its tooltip
+
+**Interfaces:**
+
+- Consumes: `AgeStatus`, `GoalStatus` and `ageStatus` from `src/sim/ages.ts`; `ageName` from `hud.ts`; the `tooltipDoc` helpers; `ttTerm` and `tipBuild`.
+- Produces:
+  - `AGE_ICONS: Record<string, string>`: SVG markup for `steam`, `diesel`, `electric`, `nuclear`, `magnetic` and `hyper`.
+  - `ageIcon(id: string): string`, with a generic fallback.
+  - `ageProgress(s: AgeStatus): number`, the fraction 0–1 toward that age:
+    - A plain goal counts `min(current / target, 1)`, and a target of 0 counts as 1.
+    - An `anyOf` group counts its best alternative.
+    - The result is the mean over the entries. An age with no goals is 1.
+  - `ageTip(ages: AgeStatus[]): TipDoc`, which PR 3 reuses for "unlocks in the …" terms.
+
+- [ ] **Step 1: Write the failing tests** in `src/ui/ageTooltip.test.ts`
+
+```ts
+import { describe, expect, it } from 'vitest';
+import { ageProgress, ageTip } from './ageTooltip';
+import { blockText } from './tooltipDoc';
+import { STR } from '../strings';
+
+// the implementer adjusts these literals to GoalStatus / AgeStatus's real field names in src/sim/ages.ts
+const goal = (kind: string, current: number, target: number, group?: number) =>
+  ({ kind, current, target, done: current >= target, group }) as never;
+const age = (id: string, goals: unknown[], current: boolean, unlocked: boolean) =>
+  ({ id, goals, current, unlocked }) as never;
+
+describe('ageProgress', () => {
+  it('is the mean of plain goals, each capped at 1', () => {
+    const a = age('diesel', [goal('depots', 1, 3), goal('population', 2000, 1000)], false, false);
+    expect(ageProgress(a)).toBeCloseTo((1 / 3 + 1) / 2, 6);
+  });
+  it('an anyOf group counts its best alternative', () => {
+    const a = age('x', [goal('earned', 10, 100, 0), goal('depots', 3, 4, 0)], false, false);
+    expect(ageProgress(a)).toBeCloseTo(0.75, 6);
+  });
+  it('an age with no goals is complete', () => {
+    expect(ageProgress(age('steam', [], true, true))).toBe(1);
+  });
+});
+describe('ageTip', () => {
+  it('lists every age with its state and its goals', () => {
+    const lines = ageTip([
+      age('steam', [], true, true),
+      age('diesel', [goal('depots', 1, 3)], false, false),
+    ]).map(blockText);
+    expect(lines.some((l) => l.includes(STR.ages.current))).toBe(true);
+    expect(
+      lines.some((l) => l.includes(STR.ages.goal.depots) && l.includes('1') && l.includes('3')),
+    ).toBe(true);
+  });
+});
+```
+
+- [ ] **Step 2: Run them to make sure they fail**
+
+Run: `npx vitest run src/ui/ageTooltip.test.ts`
+Expected: FAIL, because the module cannot be found.
+
+- [ ] **Step 3: Implement**
+  - **`ageTooltip.ts`:** `ageTip` mirrors the lines of today's `Hud.renderAges`:
+    - each age with Current / Reached / Locked;
+    - its goals as rows of `goal: current / target`, in the good tone once done;
+    - "One of these" for a group;
+    - `STR.ages.start` for an age with no goals;
+    - `STR.ages.hint` at the end.
+  - **`ageIcons.ts`:** 24 × 24 stroke icons, using the shapes of `ICONS.age_*` in `G:\DEV\Terepasztal\specs\ui-workshop\ui-workshop.html`:
+    - steam: a chimney with puffs
+    - diesel: a drop
+    - electric: a lightning bolt
+    - nuclear: an atom
+    - magnetic: a horseshoe magnet
+    - hyper: a ring tube
+  - **`hud.ts`:**
+    - Remove `#age-card`, `renderAges`, `ageHover` and the age stat from `funds`.
+    - Add a `div.stat.era` before the `.datespeed` block. It holds the icon, the current age's name, and a bar with the percent from `ageProgress` of the next age. At the last age there is no bar, and the label reads `STR.ages.current`.
+    - Wrap it in `ttTerm(..., tipBuild(atlas, () => ageTip(this.ages())))`, and call `tooltip.bindTerms` on the top bar. `Hud` now needs the `Tooltip` and the atlas; pass them from `panels.ts`.
+  - **Strings:** every string goes in `STR`.
+
+- [ ] **Step 4: Run them to make sure they pass**
+
+Run: `npx vitest run src/ui/ageTooltip.test.ts`, then all the gates.
+Expected: all pass.
+
+- [ ] **Step 5: Commit**: `UI: an era widget by the date, with age icons and a goals tooltip`
+
+**Review Focus for PR 2**
+
+- **½× determinism:** ½× must not change outcomes. Task 1's same-time test checks this.
+- **Saves:** a save made at ½× loads at ½×, and an old save at 1× loads at 1×. This holds because the indexes stay stable; the final review checks it.
+- **Top bar width:** the top bar must fit at 1280 × 720 with the era widget. The controller checks this in headless Chrome. If it overflows, the weather text gives way first; it already hides when empty.
+- **Starting speed:** a game started from the menu runs at 1× after the reveal. The editor stays stopped.

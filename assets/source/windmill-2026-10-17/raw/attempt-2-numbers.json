@@ -1,0 +1,87 @@
+{
+  "returned": [1254, 1254],
+  "box": [416, 519, 844, 1102],
+  "footWidth": 429,
+  "footCentre": [630, 994.75],
+  "scale": 9.979064898813677,
+  "widthOverShort": 0.34210526315789475,
+  "camera": {
+    "off": true,
+    "by": 4.3,
+    "elevation": 4.3,
+    "turn": 0,
+    "ratio": 0.563,
+    "looking": 34.3
+  },
+  "apexOverW": 1.108974358974359,
+  "stubSlope": 0.3225806451612903,
+  "hubFromAnchorWorld": [-16.033566433566435, -34.939772727272725],
+  "hubOffset": [-0.03356643356643474, -0.9397727272727252],
+  "hubDistance": 0.9403719925582567,
+  "doorPosition": -0.32284382284382285,
+  "doorHeight": 0.2773892773892774,
+  "pixels": {
+    "timber": 8,
+    "white": 1965,
+    "amber": 0
+  },
+  "check": {
+    "ok": false,
+    "problems": [
+      "camera off by 4.3°: it looks down from 34.3° where the game looks down from 30° (the tower's foot is an ellipse 0.56 minor over major, the game's 0.50)"
+    ],
+    "notes": ["placed by its outline: no straight wall base was found"],
+    "fit": {
+      "method": "outline",
+      "sure": [false, false],
+      "measured": [0.5, -0.5],
+      "slopes": [0.5, -0.5],
+      "base": {
+        "w": [416, 1031],
+        "s": [635.5, 1140.8],
+        "e": [842, 1037.5]
+      },
+      "scale": 1.0577,
+      "vertical": 1,
+      "shear": 0,
+      "cx": 629,
+      "cy": 1034.3,
+      "box": {
+        "left": 286.7,
+        "top": 287,
+        "right": 739.4,
+        "bottom": 903.7
+      },
+      "camera": null,
+      "area": 183287
+    },
+    "camera": {
+      "by": 4.3,
+      "was": "It was painted from too high a camera, so too much of its roof showed. The reference shows it put right: paint it as the reference and the block-out are seen."
+    }
+  },
+  "tests": {
+    "camera": false,
+    "tower": true,
+    "stub": false,
+    "hub": true,
+    "doorPosition": true,
+    "doorHeight": true,
+    "timber": true,
+    "amber": true,
+    "white": false,
+    "check": false,
+    "eye": true
+  },
+  "eye": {
+    "stub": [
+      [548, 634],
+      [486, 654]
+    ],
+    "hub": [470, 686],
+    "hubBox": [435, 640, 503, 733],
+    "door": [468, 955, 515, 1074],
+    "pass": true,
+    "notes": "Round smooth tower, plain apex, no sails/ground/plinth/objects. Door and shaft lower-left. Upper-left lighting."
+  }
+}

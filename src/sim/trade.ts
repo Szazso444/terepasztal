@@ -12,7 +12,7 @@ const DEAL_BONUS = 0.9;
 /** Fuels whose market price drifts: a slow random walk, one step per week, within ±40 %. */
 export const DRIFTING = ['oil', 'diesel', 'crude'];
 const DRIFT_MIN = 0.6;
-const DRIFT_MAX = 1.4;
+export const DRIFT_MAX = 1.4;
 const DRIFT_STEP = 0.12;
 
 export interface TradeDeal {

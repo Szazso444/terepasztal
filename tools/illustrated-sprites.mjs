@@ -2,7 +2,8 @@
  * node tools/illustrated-sprites.mjs [output directory]
  * Every frame goes through the atlas cap pass (tools/atlas-cap.mjs) after resampling, before it
  * is packed; the report says per group what the pass changed. Run tools/finish-fields.mjs after
- * it, which lays the wheat frames back into props.png.
+ * it, which lays the wheat frames back into props.png, and tools/resource-icons.mjs, which lays
+ * the painted resource icons back into icons.png.
  * Uses pngjs (existing dev dependency); no model call or runtime dependency.
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -333,13 +334,14 @@ function targets(entry, inventory) {
 }
 
 /**
- * The 3D models' game-camera renders (the author's pick, 2026-10-27): `models.json` names each
- * picture's frames, every level of its building, and its anchor, the footprint's centre on the
- * ground, in texels. A picture is already at DENSITY and its building's real size (measured
- * against the walker), so it is packed as it is, through the cap pass only, and it takes its
- * frames from the painting or the generator that had them.
+ * The 3D models' game-camera views, painted by Codex (the author's pick, 2026-10-27; painted
+ * since 2026-10-29): `models.json` names each picture's frames, every level of its building, and
+ * its anchor, the footprint's centre on the ground, in texels. A picture is already at DENSITY
+ * and its building's size (its real size measured against the walker, fitted to its tiles), so
+ * it is packed as it is, through the cap pass only, and it takes its frames from the painting or
+ * the generator that had them.
  */
-export const MODELS = 'assets/source/models-2026-10-27';
+export const MODELS = 'assets/source/models';
 
 function addModelFrames(groups, capped, report) {
   const models = readJson(join(MODELS, 'models.json'));
@@ -355,6 +357,73 @@ function addModelFrames(groups, capped, report) {
     report.models.push({ id, source: join(MODELS, m.file), frames: m.frames });
   }
   groups.set('structures', frames);
+}
+
+/** The windmill's painted body, without sails, and where its hub is on it (#461). */
+export const WINDMILL = 'assets/source/windmill-2026-10-17';
+/** The sail cross, painted face-on with its hub on the picture's centre (#461). */
+export const SAILS = 'assets/source/windmill-2026-10-16';
+/** The sails' reach from the hub in game px: the guides' radius (buildings-v2/guides). */
+export const SAIL_RADIUS = 40;
+/** A sail cross is this many texels of ink opaque enough to measure its reach by. */
+const SAIL_SOLID = 128;
+
+/** How far the ink of a picture reaches from `pivot`, in its own pixels. */
+export function reach(png, pivot, solid = SAIL_SOLID) {
+  let most = 0;
+  for (let y = 0; y < png.height; y++)
+    for (let x = 0; x < png.width; x++)
+      if (png.data[(y * png.width + x) * 4 + 3] >= solid)
+        most = Math.max(most, Math.hypot(x + 0.5 - pivot[0], y + 0.5 - pivot[1]));
+  return most;
+}
+
+/**
+ * The windmill: its body at its measured size (`hub.json`: the picture's px per game px), standing
+ * on the tile's centre with the tower's foot, in every level's frame; and the sail cross as one
+ * face-on frame of its own, which the renderer turns in the sails' plane. It is no 3D model's
+ * picture, but it packs like one: at DENSITY and its size, uniformly scaled, through the cap pass.
+ */
+function addWindmillFrames(groups, capped, report) {
+  const hub = readJson(join(WINDMILL, 'hub.json'));
+  const frames = groups.get('structures') ?? [];
+  const put = (frame) => {
+    const i = frames.findIndex((f) => f.key === frame.key);
+    if (i >= 0) frames[i] = frame;
+    else frames.push(frame);
+  };
+  const [left, top, right, bottom] = hub.box;
+  const body = PNG.sync.read(readFileSync(join(WINDMILL, hub.picture)));
+  const k = DENSITY / hub.numbers.scale;
+  const crop = new PNG({ width: right - left + 1, height: bottom - top + 1 });
+  PNG.bitblt(body, crop, left, top, crop.width, crop.height, 0, 0);
+  const small = resample(crop, Math.round(crop.width * k), Math.round(crop.height * k));
+  const bodyFrames = ['', '_lv2', '_lv3', '_lv4'].map((l) => `structures/windmill${l}`);
+  for (const key of bodyFrames)
+    put({
+      key,
+      png: capped({ key, group: 'structures' }, small),
+      ax: (hub.footCentre[0] - left) * k,
+      ay: (hub.footCentre[1] - top) * k,
+    });
+
+  const sails = readJson(join(SAILS, 'hub.json')).sails;
+  const cross = PNG.sync.read(readFileSync(join(SAILS, sails.picture)));
+  const side = Math.ceil(
+    (2 * SAIL_RADIUS * DENSITY * cross.width) / (2 * reach(cross, sails.pivot)),
+  );
+  const key = 'structures/windmill_sails';
+  put({
+    key,
+    png: capped({ key, group: 'structures' }, resample(cross, side, side)),
+    ax: (sails.pivot[0] * side) / cross.width,
+    ay: (sails.pivot[1] * side) / cross.width,
+  });
+  groups.set('structures', frames);
+  report.models.push(
+    { id: 'windmill', source: join(WINDMILL, hub.picture), frames: bodyFrames },
+    { id: 'windmill_sails', source: join(SAILS, sails.picture), frames: [key] },
+  );
 }
 
 const smoothedSources = new Map();
@@ -525,6 +594,7 @@ export function build(output = 'public/assets') {
     });
   }
   addModelFrames(groups, capped, report);
+  addWindmillFrames(groups, capped, report);
   mkdirSync(output, { recursive: true });
   for (const [name, frames] of groups) {
     const packed = packFrames(frames);

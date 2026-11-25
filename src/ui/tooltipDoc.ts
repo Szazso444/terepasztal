@@ -5,6 +5,7 @@
  * Node tests read a tooltip's rows, tones and terms.
  */
 import { cargoName } from '../sim/cargo';
+import type { IconName } from './kit';
 import { NO_CHANGE, signedPercent } from './tooltipFormat';
 
 /** A number token, shown whole in bold (its sign, % and × belong to it). */
@@ -22,6 +23,10 @@ export interface IconPart {
   /** the resource id (`money` and `population` too), which names the icon `icons/<id>` */
   readonly icon: string;
 }
+/** One of the kit's line icons, in the text's colour: what a menu entry shows. */
+export interface GlyphPart {
+  readonly glyph: IconName;
+}
 /** A word that opens a nested tooltip with `tip`'s document. */
 export interface TermPart {
   readonly term: string;
@@ -31,28 +36,44 @@ export interface TermPart {
 export interface DimPart {
   readonly dim: string;
 }
-/** A piece of a line: plain text, or one of the five above. */
-export type Inline = string | NumPart | ResPart | IconPart | TermPart | DimPart;
+/** A piece of a line: plain text, or one of the six above. */
+export type Inline = string | NumPart | ResPart | IconPart | GlyphPart | TermPart | DimPart;
 export type Parts = readonly Inline[];
 
-export type Tone = 'good' | 'bad';
+/** green (good), red (bad) or amber (accent: the one that stands out, such as the current age) */
+export type Tone = 'good' | 'bad' | 'accent';
 
 export type Block =
   | { readonly kind: 'title'; readonly parts: Parts }
   | {
       readonly kind: 'text' | 'dim' | 'hint';
       readonly parts: Parts;
-      /** a line of text green (good) or red (bad) */
+      /** a line of text green (good), red (bad) or amber (accent) */
       readonly tone?: Tone;
     }
   | {
       readonly kind: 'row';
       readonly label: Parts;
       readonly value: Parts;
-      /** the whole row green (good) or red (bad) */
+      /** the whole row green (good), red (bad) or amber (accent) */
       readonly tone?: Tone;
       /** a total: a rule above it */
       readonly total?: boolean;
+      /** set in from the left, under the line it belongs to */
+      readonly indent?: boolean;
+    }
+  /** a vehicle's picture and labels, as a Roster card has them; it reads as no text */
+  | { readonly kind: 'vehicle'; readonly defId: string; readonly parts: Parts }
+  /**
+   * An age's picture. It opens a card beside it that holds what follows, up to the next picture or
+   * hint; the cards stand side by side.
+   */
+  | {
+      readonly kind: 'picture';
+      /** the age, whose icon stands in when there is no picture */
+      readonly age: string;
+      /** the picture's URL; null for none */
+      readonly src: string | null;
     };
 /** A tooltip: its title first, then its lines and rows. */
 export type TipDoc = readonly Block[];
@@ -70,6 +91,10 @@ export function res(cargo: string): ResPart {
 /** The icon `icons/<id>` with no name; plain text reads it as nothing. */
 export function icon(id: string): IconPart {
   return { icon: id };
+}
+/** A line icon of the kit; plain text reads it as nothing. */
+export function glyph(name: IconName): GlyphPart {
+  return { glyph: name };
 }
 export function term(label: string, tip: () => TipDoc): TermPart {
   return { term: label, tip };
@@ -93,16 +118,28 @@ export function text(...parts: Inline[]): Block {
 export function bad(...parts: Inline[]): Block {
   return { kind: 'text', parts, tone: 'bad' };
 }
+/** A line of text in green: what is met or done. */
+export function good(...parts: Inline[]): Block {
+  return { kind: 'text', parts, tone: 'good' };
+}
 export function dim(...parts: Inline[]): Block {
   return { kind: 'dim', parts };
 }
 export function hint(...parts: Inline[]): Block {
   return { kind: 'hint', parts };
 }
+export function vehicle(defId: string): Block {
+  return { kind: 'vehicle', defId, parts: [] };
+}
+
+/** An age's picture, which opens a card (`Block`). */
+export function picture(age: string, src: string | null): Block {
+  return { kind: 'picture', age, src };
+}
 export function row(
   label: Inline | Parts,
   value: Inline | Parts,
-  look: { tone?: Tone; total?: boolean } = {},
+  look: { tone?: Tone; total?: boolean; indent?: boolean } = {},
 ): Block {
   return { kind: 'row', label: asParts(label), value: asParts(value), ...look };
 }
@@ -113,11 +150,12 @@ function asParts(p: Inline | Parts): Parts {
 // ---------------------------------------------------------------- numbers in text
 
 /**
- * A number token in a sentence: an optional sign, $, ×, then digits with thousands commas and a
- * decimal part, then an optional % or ×. Not after a letter or a digit, so "Mk2" is a name. The
- * words around it (the "h" of "9 h", the "u" of "12u") stay out.
+ * A number token in a sentence: an optional sign, $, ×, then digits with thousands apart (a comma,
+ * or the space Hungarian writes), a decimal part (a point or a comma), then an optional %, × or
+ * the $ after a Hungarian amount. Not after a letter or a digit, so "Mk2" is a name. The words
+ * around it (the "h" of "9 h", the "u" of "12u") stay out.
  */
-const NUMBER = /(?<![\p{L}\d])[+−]?\$?×?\d+(?:,\d{3})*(?:\.\d+)?[%×]?/gu;
+const NUMBER = /(?<![\p{L}\d])[+−]?\$?×?\d+(?:[,\u00a0]\d{3})*(?:[.,]\d+)?(?:\u00a0\$)?[%×]?/gu;
 
 /** Plain text with each number token made a bold one. */
 export function richText(s: string): Inline[] {
@@ -166,7 +204,7 @@ export function plain(parts: Parts): string {
           ? p.num
           : 'res' in p
             ? p.name.toLowerCase()
-            : 'icon' in p
+            : 'icon' in p || 'glyph' in p
               ? ''
               : 'dim' in p
                 ? p.dim
@@ -175,13 +213,18 @@ export function plain(parts: Parts): string {
     .join('');
 }
 
+/** The parts of a block, in reading order; a picture has none. */
+export function partsOf(b: Block): Parts {
+  if (b.kind === 'picture') return [];
+  return b.kind === 'row' ? [...b.label, ...b.value] : b.parts;
+}
+
 /** A block as one line of plain text: a row is its label, a colon and its value. */
 export function blockText(b: Block): string {
-  return b.kind === 'row' ? `${plain(b.label)}: ${plain(b.value)}` : plain(b.parts);
+  return b.kind === 'row' ? `${plain(b.label)}: ${plain(b.value)}` : plain(partsOf(b));
 }
 
 /** Every term of a document's parts, in order. */
 export function termsOf(doc: TipDoc): TermPart[] {
-  const parts = doc.flatMap((b) => (b.kind === 'row' ? [...b.label, ...b.value] : b.parts));
-  return parts.filter((p): p is TermPart => typeof p !== 'string' && 'term' in p);
+  return doc.flatMap(partsOf).filter((p): p is TermPart => typeof p !== 'string' && 'term' in p);
 }
