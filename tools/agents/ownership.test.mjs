@@ -1,10 +1,19 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   GATE_LABEL,
+  changedPaths,
   gateApproved,
   gatePaths,
   globToRegExp,
@@ -17,8 +26,8 @@ import {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ownership = loadOwnership();
-const tracked = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' })
-  .split('\n')
+const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' })
+  .split('\0')
   .filter(Boolean);
 
 /** The backticked patterns listed under an agent file's `## Scope` heading. */
@@ -59,13 +68,15 @@ describe('globToRegExp', () => {
 });
 
 describe('ownership', () => {
+  // slow because ownersOf compiles every owner pattern again for each tracked file, about 1500 of
+  // them: 0.36 s alone, so a limit of 30 s
   it('gives every tracked file exactly one owner', () => {
     const problems = tracked
       .map((p) => ({ p, owners: ownersOf(p, ownership) }))
       .filter((x) => x.owners.length !== 1)
       .map((x) => `${x.p}: ${x.owners.length ? x.owners.join(', ') : 'no owner'}`);
     expect(problems, 'add the path to one role in tools/agents/ownership.json').toEqual([]);
-  });
+  }, 30_000);
 
   it('names only known roles', () => {
     for (const role of [...Object.keys(ownership.owners), ...Object.keys(ownership.grants)]) {
@@ -184,6 +195,26 @@ describe('labels', () => {
   it('are unique', () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
+});
+
+describe('changedPaths', () => {
+  // slow when the machine is: it starts git six times in a repository it creates, 0.21 s alone and
+  // 2.65 s once in four runs on a loaded machine (#471), so a limit of 30 s
+  it('reads names git would quote, so a non-ASCII path is judged by its real name', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'scope-'));
+    const run = (...a) => execFileSync('git', a, { cwd: repo, encoding: 'utf8' });
+    run('init', '-q', '-b', 'base');
+    run('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'base');
+    run('switch', '-q', '-c', 'task');
+    mkdirSync(join(repo, 'src', 'world'), { recursive: true });
+    writeFileSync(join(repo, 'src', 'world', 'vasút.ts'), '');
+    writeFileSync(join(repo, 'a "b".md'), '');
+    run('add', '-A');
+    run('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'task');
+    const paths = changedPaths('base', 'HEAD', repo).sort();
+    expect(paths).toEqual(['a "b".md', 'src/world/vasút.ts']);
+    expect(ownersOf('src/world/vasút.ts', ownership)).toEqual(['world']);
+  }, 30_000);
 });
 
 describe('roleOfPullRequest', () => {

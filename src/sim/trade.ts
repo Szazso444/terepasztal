@@ -1,7 +1,7 @@
 import { CARGO, cargoDef } from './cargo';
 import { rules, weekSeconds } from './rules';
 import { hash2 } from '../engine/rng';
-import type { Stockpile } from './stockpile';
+import type { ResourceStore, StoreRegistry } from './stores';
 import type { Economy } from './economy';
 
 /** Spot market multipliers on the base price (buying dear, selling cheap). */
@@ -12,7 +12,7 @@ const DEAL_BONUS = 0.9;
 /** Fuels whose market price drifts: a slow random walk, one step per week, within ±40 %. */
 export const DRIFTING = ['oil', 'diesel', 'crude'];
 const DRIFT_MIN = 0.6;
-const DRIFT_MAX = 1.4;
+export const DRIFT_MAX = 1.4;
 const DRIFT_STEP = 0.12;
 
 export interface TradeDeal {
@@ -26,13 +26,21 @@ export interface TradeSettlement {
   money: number;
 }
 
+/** What the desk asks of the stores: the store a key names, its network's pool, the selected one. */
+export type DeskStores = Pick<StoreRegistry, 'byKey' | 'poolOf' | 'networkPool' | 'selected'>;
+
 /**
- * Standing trade deals, settled once per cycle: buy so much of a resource per cycle, or sell
- * so much. A deal settles what is affordable and on hand at the time; the rest is skipped.
- * Also keeps the fuel price walk every market price is multiplied with.
+ * Standing trade deals, settled once per cycle with one store: buy so much of a resource per
+ * cycle, or sell so much. A deal settles what is affordable, on hand and under the cap at the
+ * time; the rest is skipped. Also keeps the fuel price walk every market price is multiplied with.
  */
 export class TradeDesk {
   deals = new Map<string, number>();
+  /**
+   * The key of the store the deals settle with (the one selected when they were set); null, or a
+   * store since gone, settles with the store selected at the time.
+   */
+  storeKey: string | null = null;
   /** game time of the next settlement */
   nextAt = 0;
   /** current fuel price multiplier (oil, diesel, crude) */
@@ -50,6 +58,15 @@ export class TradeDesk {
   /** Market price multiplier of a resource (1 for everything but fuels). */
   priceMul(resource: string) {
     return this.drifts(resource) ? this.fuelMul : 1;
+  }
+  /** One-off spot prices per unit, rounded to the cent: what the market shows and trades at. */
+  spotQuote(resource: string): { buy: number; sell: number } {
+    const price = cargoDef(resource).price;
+    const drift = this.priceMul(resource);
+    return {
+      buy: Math.round(price * BUY_MUL * rules.spotPriceMul * drift * 100) / 100,
+      sell: Math.round(price * SELL_MUL * rules.spotPriceMul * drift * 100) / 100,
+    };
   }
   buyPrice(resource: string) {
     return (
@@ -97,22 +114,29 @@ export class TradeDesk {
     }
     this.driftDay = day;
   }
-  tick(now: number, stock: Stockpile, economy: Economy, cap: (id: string) => number) {
+  /** The store the deals settle with now: `storeKey`'s (its network's pool), else the selected one. */
+  storeIn(stores: DeskStores): ResourceStore | null {
+    const own = this.storeKey !== null ? stores.byKey(this.storeKey) : undefined;
+    return own ? stores.networkPool(stores.poolOf(own)) : stores.selected;
+  }
+  tick(now: number, stores: DeskStores, economy: Economy) {
     this.drift(now);
     if (this.nextAt === 0) this.nextAt = now + this.cycleSeconds();
     if (now < this.nextAt) return;
     this.nextAt += this.cycleSeconds();
+    const stock = this.storeIn(stores);
+    if (!stock) return;
     const out: TradeSettlement[] = [];
     for (const [r, n] of this.deals) {
       if (!CARGO.some((c) => c.id === r)) continue;
       if (n > 0) {
-        const room = Math.max(0, cap(r) - stock.get(r));
+        const room = Math.max(0, stock.cap(r) - stock.get(r));
         const price = this.buyPrice(r);
         const affordable = Math.floor(economy.money / Math.max(0.01, price));
         const qty = Math.floor(Math.min(n, room, affordable));
         if (qty <= 0) continue;
         economy.spend(qty * price);
-        stock.add(r, qty, cap(r));
+        stock.add(r, qty);
         out.push({ resource: r, units: qty, money: -qty * price });
       } else {
         const qty = Math.floor(Math.min(-n, stock.get(r)));
@@ -125,22 +149,38 @@ export class TradeDesk {
     }
     if (out.length) this.onSettled?.(out);
   }
-  toJSON() {
+  /** The desk as saved; `storeKey` only once one is set, so a fresh desk saves as it always has. */
+  toJSON(): {
+    deals: Record<string, number>;
+    nextAt: number;
+    fuelMul: number;
+    driftDay: number;
+    storeKey?: string;
+  } {
     return {
       deals: Object.fromEntries(this.deals),
       nextAt: this.nextAt,
       fuelMul: this.fuelMul,
       driftDay: this.driftDay,
+      ...(this.storeKey !== null ? { storeKey: this.storeKey } : {}),
     };
   }
   load(
     j:
-      | { deals?: Record<string, number>; nextAt?: number; fuelMul?: number; driftDay?: number }
+      | {
+          deals?: Record<string, number>;
+          nextAt?: number;
+          fuelMul?: number;
+          driftDay?: number;
+          /** absent from a desk that settles with the selected store, and from older saves */
+          storeKey?: string | null;
+        }
       | undefined,
   ) {
     this.deals = new Map(Object.entries(j?.deals ?? {}));
     this.nextAt = j?.nextAt ?? 0;
     this.fuelMul = Math.max(DRIFT_MIN, Math.min(DRIFT_MAX, j?.fuelMul ?? 1));
     this.driftDay = j?.driftDay ?? 0;
+    this.storeKey = typeof j?.storeKey === 'string' ? j.storeKey : null;
   }
 }

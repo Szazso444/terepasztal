@@ -1,16 +1,28 @@
 /**
  * Content store. Every data table ships as JSON in this folder; the in-client content editor can
- * replace any table with an edited copy stored in localStorage. Overrides are applied once, here,
- * at module load so every consumer sees one consistent bundle for the session. Editing content
- * therefore takes effect on the next page load (the editor reloads for you).
+ * replace any table with an edited copy stored in localStorage. Each stored table carries a stamp
+ * of the shipped table it was made from and applies only while that table is unchanged, so an
+ * override never masks a later shipped change. A stale or malformed table is set aside with a
+ * console warning and the shipped one loads in its place. An override stored before stamps, in
+ * the old whole-bundle format, holds every table of the bundle, edited or not. At load a table of
+ * it that is today's shipped table or any past shipped version of it (`PAST_SHIPPED`) is an
+ * untouched copy and is dropped without a word; only a table the player edited is converted:
+ * stamped with today's table, checked like any other and stored in the per-table format, which is
+ * how the conversion runs once. A stored contracts table made from the last table that paid
+ * tickets loses their fields and applies, until that table next changes (`ticketedEdit`). Overrides
+ * are applied once, here, at module load so every consumer sees one consistent bundle for the
+ * session. Editing content therefore takes effect on
+ * the next page load (the editor reloads for you).
  */
 import locoJson from './locomotives.json';
+import gearJson from './gear.json';
+import locoFitJson from './locoFit.json';
+import type { Gear } from '../sim/gear';
 import wagonJson from './wagons.json';
 import cargoJson from './cargo.json';
 import stationJson from './stations.json';
 import contractJson from './contracts.json';
 import decorJson from './decor.json';
-import gachaJson from './gacha.json';
 import trackJson from './track.json';
 import buildingJson from './buildings.json';
 import craftingJson from './crafting.json';
@@ -18,8 +30,13 @@ import houseJson from './houses.json';
 import cargoFullJson from './cargo_full.json';
 import stationFullJson from './stations_full.json';
 import buildingFullJson from './buildings_full.json';
+import { HU_NAMES } from './names.hu';
+import { PAST_SHIPPED } from './pastShipped';
+import { LANGUAGE } from '../strings';
 import type { SupplyMode } from '../sim/supply';
-import type { PartKind } from '../sim/body';
+import { OWN_LENGTH, type PartKind } from '../sim/body';
+import { MAX_LEVEL } from '../sim/levels';
+import { doorProblems, spanProblems } from '../sim/doors';
 export type { SupplyMode };
 
 export type Rarity = 'N' | 'R' | 'SR' | 'SSR';
@@ -30,6 +47,13 @@ export type LocoType = 'steam' | 'diesel' | 'electric';
 export type VehicleSize = 'tiny' | 'small' | 'medium' | 'large';
 /** Track gauge: narrow stock runs on narrow track only, regular stock never does. */
 export type Gauge = 'regular' | 'narrow';
+/**
+ * Train class: the smallest track line a vehicle runs on (specs/track-classes.md). Corvette on
+ * Narrow Gauge; Frigate, Destroyer and Cruiser on Branch, Main and Trunk Line and every bigger one
+ * of those; Carrier (nuclear trains) like a Cruiser; Hydrofoil on Maglev, Submarine in Hyperloop.
+ */
+export type TrainClass =
+  'corvette' | 'frigate' | 'destroyer' | 'cruiser' | 'carrier' | 'hydrofoil' | 'submarine';
 export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
 /**
  * Bogie sprites under a vehicle: one style for every bogie, or one per body part. A list goes over
@@ -40,7 +64,42 @@ export type BodyPlan = 'rigid' | 'tender' | 'garratt' | 'meyer';
 export type BogieStyle = string | Partial<Record<PartKind, string | string[]>>;
 export type Collector = 'shoe' | 'pantograph' | 'hv' | 'multi';
 
-export interface LocoDef {
+/**
+ * A vehicle drawn from a rendered 3D model (engines and wagons alike): its own running gear and
+ * length (src/data/gear.json, locoFit.json, keyed by the vehicle's id) replace the size's length and
+ * the plan's segments. Filled in at load, not written in locomotives.json / wagons.json.
+ */
+export interface RenderedModelFields {
+  gear?: Gear;
+  lengthTiles?: number;
+  /** its sprite is a rendered model: the generic bogies are not drawn under it */
+  spriteGear?: boolean;
+  /** trucks rendered as sprites of their own, by part (indices in the gear table) */
+  truckSprites?: Record<string, number[]>;
+  /** Sprite origin behind the measured axle-centre pivot, in tiles along its own heading. */
+  truckOffsets?: Record<string, number>;
+  /**
+   * Wheel layers that turn, by sprite set (`engine`, `engine-t0`, ...): frames per cycle and tiles
+   * of track per cycle. `integrated`: the set's own frames turn (`<set>_w<p>_f<n>`, body and
+   * wheels in one picture); `layer`: its wheels (and rods) are a sprite set of their own
+   * (`<layer>_w<p>_f<n>`, holding only what shows of them over the body), drawn right over it.
+   */
+  wheels?: Record<string, WheelFit>;
+  /** Number of directly rendered headings when a vehicle supplies a denser atlas. */
+  spriteFacings?: number;
+  /**
+   * The box each of its sprite sets fills (`engine`, `engine-t0`, ...), tiles from the set's anchor on
+   * the rail: rear end, front end, half width, height. Its pictures are swung between two facings as
+   * that box (body.ts swingMesh).
+   */
+  boxes?: Record<string, [number, number, number, number]>;
+  /** where smoke leaves it: the part, tiles ahead of that part's centre, pixels above the rail */
+  smoke?: { part: PartKind; along: number; up: number }[];
+  /** its headlamps: the part, tiles ahead of and to the left of that part's centre, pixels above the rail */
+  lamps?: { part: PartKind; along: number; across: number; up: number }[];
+}
+
+export interface LocoDef extends RenderedModelFields {
   id: string;
   name: string;
   rarity: Rarity;
@@ -64,8 +123,21 @@ export interface LocoDef {
   /** electric only: power units per tile */
   powerPerTile?: number;
   starter?: boolean;
-  /** body length class: 1, 2 or 3 tiles (default small) */
+  /**
+   * Withdrawn from the game: neither the starter kit nor the workshop hands out a new one. The
+   * entry stays in the table so copies a player already owns keep loading and running.
+   */
+  retired?: boolean;
+  /**
+   * body class: 0.5, 1, 2 or 3 tiles long (default small). It also sets the plans the body may
+   * take, its default pivots and bogies, and its craft cost.
+   */
   size?: VehicleSize;
+  /**
+   * the engine's own length over the buffers, as its model is built: 0.3 to 3.5 tiles. Without
+   * it the engine is as long as its size.
+   */
+  length?: number;
   /** rigid body, engine + tender, Garratt (engine, cradle, engine) or Meyer (frame on two engine units) */
   plan?: BodyPlan;
   /** pivot spacing as a fraction of body length (default 0.7) */
@@ -79,16 +151,16 @@ export interface LocoDef {
   maxLateralPlay?: number;
   /** diesel and electric: units of the same control class work in multiple */
   controlClass?: string;
-  /** a high-speed type: needs HV catenary for its top speed */
-  highSpeed?: boolean;
   /** electric: which supply it can draw from */
   collector?: Collector;
-  /** fitted with in-cab signalling equipment (required on high-speed track) */
+  /** fitted with in-cab signalling equipment (runs at in-cab headway where the level has it) */
   inCab?: boolean;
+  /** train class: the smallest line it runs on (missing: Corvette on narrow gauge, else Frigate) */
+  class?: TrainClass;
   /** track gauge (default regular) */
   gauge?: Gauge;
 }
-export interface WagonDef {
+export interface WagonDef extends RenderedModelFields {
   id: string;
   name: string;
   rarity: Rarity;
@@ -101,6 +173,8 @@ export interface WagonDef {
   capacity: number;
   weight: number;
   starter?: boolean;
+  /** withdrawn from the game: owned copies keep working, nothing hands out a new one */
+  retired?: boolean;
   size?: VehicleSize;
   /** axles per bogie: 2 (default), 3 or 4 */
   bogieAxles?: number;
@@ -113,6 +187,8 @@ export interface WagonDef {
   service?: 'coal' | 'fuel' | 'battery';
   /** refuelling wagons: units of that fuel (or power) the cart adds to the consist's tanks */
   serviceCap?: number;
+  /** train class: the smallest line it runs on (missing: Corvette on narrow gauge, else Frigate) */
+  class?: TrainClass;
   /** track gauge (default regular) */
   gauge?: Gauge;
 }
@@ -129,6 +205,30 @@ export interface CargoDef {
   /** only exists in this production-chain mode (missing: both) */
   supply?: SupplyMode;
 }
+/**
+ * The ground a station may be held to (`StationDef.standOn`): the terrains something can be
+ * built on, by their `TERRAIN_NAMES`.
+ */
+export const STAND_ON = ['grass', 'forest', 'hill', 'sand'] as const;
+export type StandOn = (typeof STAND_ON)[number];
+/**
+ * What a door is for: a street door is where walkers come and go and where a road to the place
+ * ends; a platform door gives on a station's platform track.
+ */
+export type DoorKind = 'street' | 'platform';
+/** The side of its tile a door faces, as `Dir` names it (src/engine/iso.ts). */
+export type DoorSide = 'N' | 'E' | 'S' | 'W';
+/**
+ * A door of a place (a station, a works, a house or a service stop) as its def holds it, for
+ * rotation 0; src/sim/doors.ts turns it with the place.
+ */
+export interface DoorDef {
+  kind: DoorKind;
+  /** the tile it is in, as [dx, dy] from the corner of the footprint at rotation 0 */
+  tile: [number, number];
+  /** the side of that tile it faces: an edge of the footprint, the tile beyond lies outside it */
+  side: DoorSide;
+}
 export interface StationDef {
   id: string;
   name: string;
@@ -136,6 +236,8 @@ export interface StationDef {
   cost: Cost;
   /** age required to build it (0 steam, 1 diesel, 2 electric) */
   tier: number;
+  /** the last age in which it is upgraded and gets a new model (missing: every age) */
+  lastTier?: number;
   /** only placeable in this production-chain mode (missing: both) */
   supply?: SupplyMode;
   produces: { cargo: string; level: number }[];
@@ -144,9 +246,16 @@ export interface StationDef {
   art?: string;
   /** terrain the station harvests; output scales with how much of it lies nearby */
   terrain?: 'grass' | 'forest' | 'rock' | 'water' | 'sand';
+  /**
+   * the only terrains it is placed on (missing: any ground something can be built on); where it
+   * stands, not what it harvests, which is `terrain`
+   */
+  standOn?: StandOn[];
+  /** placed only with water on one of its four sides, of any biome (pumps) */
+  needsWater?: boolean;
   /** local store: holds anything trains bring, per level */
   stockpile?: boolean;
-  /** deliveries here enter the player's stockpile (depots) */
+  /** deliveries here enter the depot's store */
   pool?: boolean;
   /** engine shed: trains are built here; limited by owned chunks; two gates on two sides */
   depot?: boolean;
@@ -154,6 +263,12 @@ export interface StationDef {
   size?: number;
   /** 1×2 footprint along its axis (rotation 0: x, rotation 1: y) */
   long?: boolean;
+  /**
+   * footprint in tiles at rotation 0, width along x and depth along y, whole tiles, 1 to 3 each
+   * (missing: `long`, then `size`; `placeSpan` in src/sim/doors.ts). A turn of an odd rotation
+   * swaps them. Unlike `long` it makes no shed: its gates are every side of the footprint.
+   */
+  span?: { w: number; h: number };
   /** depot of this gauge: builds and serves only trains of it (default regular) */
   gauge?: Gauge;
   /** trains refuel coal / wood / oil here */
@@ -162,6 +277,12 @@ export interface StationDef {
   water?: boolean;
   /** false: never a contract endpoint */
   contracts?: boolean;
+  /**
+   * its doors at rotation 0: a platform door on its front and a street door on the side away
+   * from it, a depot one street door on a side no track runs through (missing: those of its kind,
+   * `defDoors` in src/sim/doors.ts)
+   */
+  doors?: DoorDef[];
 }
 export interface BuildingDef {
   bridge?: { material: 'wood' | 'stone'; capacity: number };
@@ -172,6 +293,8 @@ export interface BuildingDef {
   crew: number;
   /** age required to build it (0 steam, 1 diesel, 2 electric) */
   tier: number;
+  /** the last age in which it is upgraded and gets a new model (missing: every age) */
+  lastTier?: number;
   /** only placeable in this production-chain mode (missing: both) */
   supply?: SupplyMode;
   /** needs a deposit of this kind (a map prop, e.g. `coal` or `oil`) on the tile */
@@ -189,15 +312,30 @@ export interface BuildingDef {
   terrain?: 'hill' | 'grass' | 'sand' | 'forest';
   /** taps the pole grid and makes electrified track within `radius` live, passing `throughput` units per second */
   substation?: { radius: number; throughput: number };
+  /**
+   * footprint in tiles at rotation 0, width along x and depth along y, whole tiles, 1 to 3 each
+   * (missing: one tile; `placeSpan` in src/sim/doors.ts). A turn of an odd rotation swaps them. It
+   * is the room the works takes on the map, not the size of its model. Its site rules (`terrain`,
+   * `deposit`, `needsWater`) are met by any tile of it (`Builder.checkBuilding`).
+   */
+  span?: { w: number; h: number };
+  /** doors at rotation 0 (missing: a street door on its front, `defDoors` in src/sim/doors.ts) */
+  doors?: DoorDef[];
 }
+/**
+ * Station tables with one value per level, levels 1 to `MAX_LEVEL` (src/sim/levels.ts). How
+ * far a station may rise in an age is a rule, not data: one level per age from the age it appears
+ * in (`levelCap`).
+ */
 export interface StationLevels {
   capacity: number[];
   loadRate: number[];
   platforms: number[];
   production: number[];
+  /** share of the station's build cost that lifts it to this level (the first is never paid) */
   upgradeCostMul: number[];
+  /** the picture each level draws: levels above today's highest picture repeat it */
   spriteByLevel: number[];
-  maxLevelByTier: number[];
   crew: number[];
 }
 export interface ContractTemplate {
@@ -209,7 +347,6 @@ export interface ContractTemplate {
   baseDays: number;
   daysPerTile: number;
   payoutMul: number;
-  tickets: number;
   /** the rarity's deadline multiplier applies (rush orders get tighter with rarity) */
   rarityDeadline?: boolean;
 }
@@ -220,8 +357,6 @@ export interface ContractRarityDef {
   weight: number;
   /** payout multiplier */
   rewardMul: number;
-  /** ticket multiplier */
-  ticketMul: number;
   /** amount multiplier: higher rarities ask for more */
   amountMul: number;
   /** deadline multiplier for templates flagged `rarityDeadline` */
@@ -260,10 +395,12 @@ export interface DecorDef {
    * what a house from an old save starts with.
    */
   residents?: number;
+  /** doors at rotation 0 (missing: a street door on its front, `defDoors` in src/sim/doors.ts) */
+  doors?: DoorDef[];
 }
 /** Townhouse growth rules: capacity per level, how fast people arrive, when towns build more. */
 export interface HouseConfig {
-  /** residents a house holds at level 1, 2, 3 */
+  /** residents a house holds at each level, from level 1 */
   capacity: number[];
   /** people who move in the day a house is finished */
   startResidents: number;
@@ -273,7 +410,7 @@ export interface HouseConfig {
   growthDays: number;
   /** days a full house waits before it grows a storey on its own */
   autoUpgradeDays: number;
-  /** what the player pays to lift a house to level 2, 3 */
+  /** what the player pays to lift a house to each level, from level 2 */
   upgradeCost: Cost[];
   /** a town builds a new house once residents reach this share of its housing */
   spawnAt: number;
@@ -288,24 +425,11 @@ export interface HouseConfig {
   /** newcomers when the first train reaches the town */
   bonusFirstTrain: number;
 }
-export interface Banner {
-  id: string;
-  name: string;
-  tier: number;
-  pool: string[];
-}
-export interface GachaConfig {
-  rates: Record<Rarity, number>;
-  pity: number;
-  tenPullGuarantee: string;
-  pullCost: number;
-  levelCap: number;
-  statPerLevel: number;
-  banners: Banner[];
-}
 export interface TrackConfig {
   pieces: Record<string, { name: string; cost: Cost; rotations: number }>;
   terrainCost: Record<string, number>;
+  /** a road tile the player lays (src/sim/roads.ts), before the build cost tuning */
+  road: { cost: Cost };
   refund: number;
   curveSpeed: number;
   switchSpeed: number;
@@ -323,7 +447,7 @@ export interface TrackConfig {
     /** consumption cut per matching refuelling cart, and the most the carts cut together */
     cartSaving: number;
     cartSavingCap: number;
-    /** power units a battery cart takes from the stockpile per tile on live track */
+    /** power units a battery cart takes from its store per tile on live track */
     batteryChargePerTile: number;
   };
 }
@@ -332,7 +456,7 @@ export type CraftRarity = Rarity | 'L';
 export type CraftKind = 'loco' | 'wagon';
 /**
  * Crafting: recipes are unlocked with money (three cards per draw, keep one), instances are built
- * from stockpile resources with a rarity-dependent failure chance.
+ * from stored resources with a rarity-dependent failure chance.
  */
 export interface CraftingConfig {
   /** money per age (0 steam, 1 diesel, 2 electric), per vehicle kind */
@@ -364,7 +488,6 @@ export interface ContentBundle {
   contracts: ContractConfig;
   decor: DecorDef[];
   buildings: BuildingDef[];
-  gacha: GachaConfig;
   track: TrackConfig;
   crafting: CraftingConfig;
   houses: HouseConfig;
@@ -378,52 +501,237 @@ export const CONTENT_KEYS: ContentKey[] = [
   'contracts',
   'decor',
   'buildings',
-  'gacha',
   'track',
   'crafting',
   'houses',
 ];
 
 export const CONTENT_KEY = 'terepasztal.content';
+/** Shape of the stored overrides: `{ format, tables: { <key>: { stamp, data } } }`. */
+const CONTENT_FORMAT = 2;
 
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v)) as T;
 }
 
+function isObj(v: unknown): v is Record<string, unknown> {
+  return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
 /**
- * Pristine copy of the shipped data. The full production-chain mode ships as a second data set
- * (`*_full.json`, every entry marked `supply: "full"`) appended to the plain tables.
+ * Each table as its JSON files compose it, before anything is derived from it. The full
+ * production-chain mode ships as a second data set (`*_full.json`, every entry marked
+ * `supply: "full"`) appended to the plain tables.
  */
-export const DEFAULT_CONTENT: ContentBundle = {
-  locomotives: clone(locoJson) as unknown as LocoDef[],
-  wagons: clone(wagonJson) as unknown as WagonDef[],
-  cargo: clone([...cargoJson, ...cargoFullJson]) as unknown as CargoDef[],
-  stations: {
-    levels: clone(stationJson.levels) as unknown as StationLevels,
-    defs: clone([...stationJson.defs, ...stationFullJson]) as unknown as StationDef[],
-  },
-  contracts: clone(contractJson) as ContractConfig,
-  decor: clone(decorJson) as unknown as DecorDef[],
-  buildings: clone([...buildingJson, ...buildingFullJson]) as unknown as BuildingDef[],
-  gacha: clone(gachaJson) as GachaConfig,
-  track: clone(trackJson) as unknown as TrackConfig,
-  crafting: clone(craftingJson) as unknown as CraftingConfig,
-  houses: clone(houseJson) as unknown as HouseConfig,
+const SHIPPED: Record<ContentKey, () => unknown> = {
+  locomotives: () => locoJson,
+  wagons: () => wagonJson,
+  cargo: () => [...cargoJson, ...cargoFullJson],
+  stations: () => ({
+    levels: stationJson.levels,
+    defs: [...stationJson.defs, ...stationFullJson],
+  }),
+  contracts: () => contractJson,
+  decor: () => decorJson,
+  buildings: () => [...buildingJson, ...buildingFullJson],
+  track: () => trackJson,
+  crafting: () => craftingJson,
+  houses: () => houseJson,
 };
 
-export function readContentOverrides(): Partial<ContentBundle> | null {
+/** Pristine copy of the shipped data; the wagon accept lists are filled in at load, below. */
+export const DEFAULT_CONTENT = Object.fromEntries(
+  CONTENT_KEYS.map((k) => [k, clone(SHIPPED[k]())]),
+) as unknown as ContentBundle;
+
+/** JSON with every object's keys sorted, so equal data always reads the same. */
+function canonical(v: unknown): string {
+  const sortKeys = (_k: string, x: unknown) => {
+    if (!isObj(x)) return x;
+    const keys = Object.keys(x).sort();
+    return Object.fromEntries(keys.map((k) => [k, x[k]]));
+  };
+  return JSON.stringify(v, sortKeys) ?? 'undefined';
+}
+
+/** 32-bit FNV-1a over the string's code units, as eight hex digits. */
+function fnv1a(s: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(16).padStart(8, '0');
+}
+
+/** The fields `fillModels` lays on a vehicle from gear.json and locoFit.json, never stored in its table. */
+const MODEL_FIELDS: (keyof RenderedModelFields)[] = [
+  'gear',
+  'lengthTiles',
+  'spriteGear',
+  'truckSprites',
+  'truckOffsets',
+  'wheels',
+  'spriteFacings',
+  'boxes',
+  'smoke',
+  'lamps',
+];
+
+/** A table without the fields `finalize` derives at load (wagon accept lists, rendered models). */
+function withoutDerived(key: ContentKey, data: unknown): unknown {
+  if ((key !== 'wagons' && key !== 'locomotives') || !Array.isArray(data)) return data;
+  return data.map((v: unknown) => {
+    if (!isObj(v)) return v;
+    const rest = { ...v };
+    for (const f of MODEL_FIELDS) delete rest[f];
+    if (key === 'wagons') delete rest.accepts;
+    return rest;
+  });
+}
+
+/** A table in the form tables are compared in: sorted keys, derived fields left out. */
+function plain(key: ContentKey, data: unknown): string {
+  return canonical(withoutDerived(key, data));
+}
+
+/**
+ * The eight-digit hash of a table in the form tables are compared in. This is the one recipe
+ * behind the stamps and the list of past shipped tables (`PAST_SHIPPED`): the stamp of a shipped
+ * table is its hash, and an old stored table is an untouched copy when its hash is in the list.
+ */
+export function tableHash(key: ContentKey, data: unknown): string {
+  return fnv1a(plain(key, data));
+}
+
+/** Stamps of the shipped tables, taken from the JSON files themselves, never from a live bundle. */
+const STAMP = Object.fromEntries(
+  CONTENT_KEYS.map((k) => [k, tableHash(k, SHIPPED[k]())]),
+) as Record<ContentKey, string>;
+/** The shipped tables in the form edited tables are compared against. */
+const SHIPPED_PLAIN = Object.fromEntries(
+  CONTENT_KEYS.map((k) => [k, plain(k, SHIPPED[k]())]),
+) as Record<ContentKey, string>;
+
+/**
+ * Stamp of a shipped table: a hash of it as its JSON files compose it. An override is stored with
+ * the stamp of the table it was made from and applies only while the shipped table still has it,
+ * so an override never masks a later change to the shipped data.
+ */
+export function contentStamp(key: ContentKey): string {
+  return STAMP[key];
+}
+
+function sameAsShipped(key: ContentKey, data: unknown) {
+  return plain(key, data) === SHIPPED_PLAIN[key];
+}
+
+/**
+ * True when an old whole-bundle table is an untouched copy: today's shipped table or any version
+ * of it a build that wrote the old format ever shipped. Anything else was edited by the player.
+ */
+function isUntouchedCopy(key: ContentKey, data: unknown) {
+  return sameAsShipped(key, data) || PAST_SHIPPED[key].includes(tableHash(key, data));
+}
+
+/**
+ * The stamps of the contracts table on either side of the tickets leaving: the last table with
+ * their fields, and the first without, which differs from it by those fields alone. A table stored
+ * with the first stamp is an edit of the second once they are gone (`withoutTicketFields`), and is
+ * not stale. That holds only while the second is what ships: the next change to the table makes
+ * such an edit stale like any other (`contentStamp`).
+ */
+const TICKETED_CONTRACTS = '39fa427f';
+const UNTICKETED_CONTRACTS = 'd458f41d';
+
+/** Was this stored contracts table made from the table that ships today, ticket fields aside? */
+function ticketedEdit(key: ContentKey, stamp: string) {
+  return key === 'contracts' && stamp === TICKETED_CONTRACTS && STAMP[key] === UNTICKETED_CONTRACTS;
+}
+
+/** A contracts table without the ticket fields of its templates and rarities. */
+export function withoutTicketFields(data: unknown): unknown {
+  if (!isObj(data)) return data;
+  const without = (list: unknown, field: string): unknown =>
+    Array.isArray(list)
+      ? list.map((row: unknown) => {
+          if (!isObj(row)) return row;
+          const rest = { ...row };
+          delete rest[field];
+          return rest;
+        })
+      : list;
+  return {
+    ...data,
+    templates: without(data.templates, 'tickets'),
+    rarities: without(data.rarities, 'ticketMul'),
+  };
+}
+
+/** The tables of `b` that differ from the shipped ones (derived fields aside). */
+export function changedTables(b: ContentBundle): Partial<ContentBundle> {
+  const out: Partial<Record<ContentKey, unknown>> = {};
+  for (const k of CONTENT_KEYS) if (b[k] !== undefined && !sameAsShipped(k, b[k])) out[k] = b[k];
+  return out as Partial<ContentBundle>;
+}
+
+/** What became of the stored overrides when the content loaded. */
+export interface ContentOverrideReport {
+  /** stored tables this session runs on */
+  applied: ContentKey[];
+  /**
+   * stored tables this session ignores: `stale` when the shipped table changed since the override
+   * was made, `invalid` when it is malformed or fails validation
+   */
+  setAside: { key: ContentKey; reason: 'stale' | 'invalid'; problems: string[] }[];
+}
+
+function readStored(): string | null {
   try {
-    const raw = localStorage.getItem(CONTENT_KEY);
-    if (!raw) return null;
-    const j = JSON.parse(raw) as Partial<ContentBundle>;
-    return j && typeof j === 'object' ? j : null;
+    return localStorage.getItem(CONTENT_KEY);
   } catch {
     return null;
   }
 }
-export function writeContentOverrides(bundle: Partial<ContentBundle>) {
+function parseStored(raw: string | null): Record<string, unknown> | null {
+  if (!raw) return null;
   try {
-    localStorage.setItem(CONTENT_KEY, JSON.stringify(bundle));
+    const j: unknown = JSON.parse(raw);
+    return isObj(j) ? j : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The tables the editor stored, applied or not (`contentOverrideReport` says which applied). */
+export function readContentOverrides(): Partial<ContentBundle> | null {
+  const s = parseStored(readStored());
+  if (!s) return null;
+  const legacy = s.format === undefined;
+  const tables = legacy ? s : isObj(s.tables) ? s.tables : {};
+  const out: Partial<Record<ContentKey, unknown>> = {};
+  for (const k of CONTENT_KEYS) {
+    const e = tables[k];
+    const data = legacy ? e : isObj(e) ? e.data : undefined;
+    if (data !== undefined) out[k] = data;
+  }
+  return Object.keys(out).length ? (out as Partial<ContentBundle>) : null;
+}
+/**
+ * Store edited tables, each with the stamp of the shipped table it was made from. Tables equal to
+ * the shipped ones are left out, and the stored set is replaced as a whole: a table not given is
+ * no longer overridden. Takes effect on the next load.
+ */
+export function writeContentOverrides(tables: Partial<ContentBundle>) {
+  const stored: Partial<Record<ContentKey, { stamp: string; data: unknown }>> = {};
+  for (const k of CONTENT_KEYS) {
+    const data = tables[k];
+    if (data !== undefined && !sameAsShipped(k, data)) stored[k] = { stamp: STAMP[k], data };
+  }
+  try {
+    if (Object.keys(stored).length)
+      localStorage.setItem(CONTENT_KEY, JSON.stringify({ format: CONTENT_FORMAT, tables: stored }));
+    else localStorage.removeItem(CONTENT_KEY);
     return true;
   } catch {
     return false;
@@ -437,91 +745,220 @@ export function clearContentOverrides() {
   }
 }
 
-/** Problems that would break the game if this bundle were applied. Empty means valid. */
-export function validateContent(b: ContentBundle): string[] {
-  const out: string[] = [];
-  const ids = (list: { id: string }[], what: string) => {
-    const seen = new Set<string>();
-    for (const x of list) {
-      if (!x.id || !/^[a-z0-9_]+$/.test(x.id)) out.push(`${what}: bad id "${x.id}"`);
-      if (seen.has(x.id)) out.push(`${what}: duplicate id "${x.id}"`);
-      seen.add(x.id);
+const ID = /^[a-z0-9_]+$/;
+const CARGO_CLASSES: string[] = ['liquid', 'mineral', 'bulk', 'people'];
+const LOCO_TYPES: string[] = ['steam', 'diesel', 'electric'];
+/** station level tables with one value per level */
+const PER_LEVEL = [
+  'capacity',
+  'loadRate',
+  'platforms',
+  'production',
+  'upgradeCostMul',
+  'spriteByLevel',
+  'crew',
+] as const;
+const RARITY_NUMBERS = ['weight', 'rewardMul', 'amountMul', 'deadlineMul'] as const;
+
+function isCost(c: unknown) {
+  return isObj(c) && Object.values(c).every((v) => typeof v === 'number' && v >= 0);
+}
+/** The entries of a list table; a problem when it is not a list of objects. */
+function rows<T>(v: unknown, what: string, out: string[]): T[] {
+  if (!Array.isArray(v)) {
+    out.push(`${what}: must be a list`);
+    return [];
+  }
+  const ok = v.filter(isObj);
+  if (ok.length < v.length) out.push(`${what}: every entry must be an object`);
+  return ok as T[];
+}
+/**
+ * A vehicle's own length, which `vehicleSpec` takes over its size's: absent, or a number of tiles
+ * within `OWN_LENGTH`.
+ */
+function checkLength(v: { id: unknown; length?: unknown }, what: string, out: string[]) {
+  const n = v.length;
+  if (n === undefined || (typeof n === 'number' && n >= OWN_LENGTH.min && n <= OWN_LENGTH.max))
+    return;
+  const got = typeof n === 'number' ? String(n) : JSON.stringify(n);
+  out.push(
+    `${what} ${String(v.id)}: length must be between ${OWN_LENGTH.min} and ${OWN_LENGTH.max} tiles, not ${got}`,
+  );
+}
+function checkIds(list: { id: unknown }[], what: string, out: string[]) {
+  const seen = new Set<unknown>();
+  for (const x of list) {
+    if (typeof x.id !== 'string' || !ID.test(x.id)) out.push(`${what}: bad id "${String(x.id)}"`);
+    if (seen.has(x.id)) out.push(`${what}: duplicate id "${String(x.id)}"`);
+    seen.add(x.id);
+  }
+}
+/** Ids a list table offers the tables that refer to it (none when it is malformed). */
+function idSet(v: unknown) {
+  const out = new Set<string>();
+  if (Array.isArray(v)) for (const x of v) if (isObj(x) && typeof x.id === 'string') out.add(x.id);
+  return out;
+}
+
+interface Refs {
+  cargo: Set<string>;
+}
+/**
+ * One table's checks. They take the table as unknown data and never assume its shape. A problem
+ * about a reference belongs to the table that holds it, and tables refer only to tables before
+ * them in `CONTENT_KEYS`.
+ */
+type Check = (t: unknown, ref: Refs, out: string[]) => void;
+
+const CHECKS: Record<ContentKey, Check> = {
+  locomotives(t, _ref, out) {
+    const locos = rows<LocoDef>(t, 'locomotives', out);
+    checkIds(locos, 'locomotive', out);
+    for (const l of locos) {
+      if (!LOCO_TYPES.includes(l.type)) out.push(`locomotive ${l.id}: bad type "${l.type}"`);
+      if (l.type !== 'electric' && !(l.fuelCap && l.fuelPerTile))
+        out.push(`locomotive ${l.id}: needs fuelCap and fuelPerTile`);
+      if (l.type === 'steam' && !(l.waterCap && l.waterPerTile))
+        out.push(`locomotive ${l.id}: needs waterCap and waterPerTile`);
+      if (l.type === 'electric' && !l.powerPerTile)
+        out.push(`locomotive ${l.id}: needs powerPerTile`);
+      checkLength(l, 'locomotive', out);
     }
-    return seen;
-  };
-  const cargo = ids(b.cargo, 'cargo');
-  const locos = ids(b.locomotives, 'locomotive');
-  const wagons = ids(b.wagons, 'wagon');
-  ids(b.stations.defs, 'station');
-  ids(b.decor, 'decor');
-  ids(b.contracts.templates, 'contract template');
-  for (const w of b.wagons)
-    if (!['liquid', 'mineral', 'bulk', 'people'].includes(w.carries))
-      out.push(`wagon ${w.id}: bad class "${w.carries}"`);
-  ids(b.buildings, 'building');
-  const isCost = (c: unknown) =>
-    !!c &&
-    typeof c === 'object' &&
-    Object.values(c as Cost).every((v) => typeof v === 'number' && v >= 0);
-  for (const s of b.stations.defs)
-    if (!isCost(s.cost)) out.push(`station ${s.id}: cost must be a resource map`);
-  for (const d of b.decor)
-    if (!isCost(d.cost)) out.push(`decor ${d.id}: cost must be a resource map`);
-  for (const bd of b.buildings) {
-    if (!Number.isFinite(bd.perWeek) || bd.perWeek < 0)
-      out.push(`building ${bd.id}: perWeek must be non-negative`);
-    if (!isCost(bd.cost)) out.push(`building ${bd.id}: cost must be a resource map`);
-    for (const k of Object.keys(bd.recipe.in))
-      if (!cargo.has(k)) out.push(`building ${bd.id}: unknown input "${k}"`);
-    for (const k of Object.keys(bd.recipe.out))
-      if (!cargo.has(k) && k !== 'power') out.push(`building ${bd.id}: unknown output "${k}"`);
-  }
-  for (const [k, p] of Object.entries(b.track.pieces))
-    if (!isCost(p.cost)) out.push(`track ${k}: cost must be a resource map`);
-  for (const l of b.locomotives) {
-    if (!['steam', 'diesel', 'electric'].includes(l.type))
-      out.push(`locomotive ${l.id}: bad type "${l.type}"`);
-    if (l.type !== 'electric' && !(l.fuelCap && l.fuelPerTile))
-      out.push(`locomotive ${l.id}: needs fuelCap and fuelPerTile`);
-    if (l.type === 'steam' && !(l.waterCap && l.waterPerTile))
-      out.push(`locomotive ${l.id}: needs waterCap and waterPerTile`);
-    if (l.type === 'electric' && !l.powerPerTile)
-      out.push(`locomotive ${l.id}: needs powerPerTile`);
-  }
-  for (const s of b.stations.defs) {
-    for (const c of s.accepts) if (!cargo.has(c)) out.push(`station ${s.id}: unknown cargo "${c}"`);
-    for (const p of s.produces)
-      if (!cargo.has(p.cargo)) out.push(`station ${s.id}: unknown cargo "${p.cargo}"`);
-  }
-  for (const bn of b.gacha.banners) {
-    if (!bn.pool.length) out.push(`banner ${bn.id}: empty pool`);
-    for (const id of bn.pool)
-      if (!locos.has(id) && !wagons.has(id)) out.push(`banner ${bn.id}: unknown item "${id}"`);
-  }
-  if (!b.locomotives.some((l) => l.starter)) out.push('no starter locomotive');
-  if (!b.wagons.some((w) => w.starter)) out.push('no starter wagon');
-  const lv = b.stations.levels;
-  for (const k of [
-    'capacity',
-    'loadRate',
-    'platforms',
-    'production',
-    'upgradeCostMul',
-    'spriteByLevel',
-  ] as const)
-    if (!Array.isArray(lv[k]) || lv[k].length !== 5)
-      out.push(`station levels: ${k} needs 5 values`);
-  const rateSum = Object.values(b.gacha.rates).reduce((a, v) => a + v, 0);
-  if (Math.abs(rateSum - 1) > 0.01)
-    out.push(`gacha rates sum to ${rateSum.toFixed(2)}, expected 1`);
-  for (const k of Object.keys(DEFAULT_CONTENT.track.pieces))
-    if (!b.track.pieces[k]) out.push(`track: missing piece "${k}"`);
-  const cr = b.crafting;
-  const kinds: CraftKind[] = ['loco', 'wagon'];
-  const sizes: VehicleSize[] = ['small', 'medium', 'large'];
-  const craftRarities: CraftRarity[] = ['N', 'R', 'SR', 'SSR', 'L'];
-  if (!cr || typeof cr !== 'object') out.push('crafting: missing configuration');
-  else {
+    // a retired model is never handed out, so it cannot be the one a new game starts with
+    if (!locos.some((l) => l.starter && l.retired !== true)) out.push('no starter locomotive');
+  },
+  wagons(t, _ref, out) {
+    const wagons = rows<WagonDef>(t, 'wagons', out);
+    checkIds(wagons, 'wagon', out);
+    for (const w of wagons) {
+      if (!CARGO_CLASSES.includes(w.carries)) out.push(`wagon ${w.id}: bad class "${w.carries}"`);
+      // the body geometry is shared, so a wagon that carries a length is held to the same range
+      checkLength(w, 'wagon', out);
+    }
+    if (!wagons.some((w) => w.starter && w.retired !== true)) out.push('no starter wagon');
+  },
+  cargo(t, _ref, out) {
+    checkIds(rows<CargoDef>(t, 'cargo', out), 'cargo', out);
+  },
+  stations(t, ref, out) {
+    if (!isObj(t)) {
+      out.push('stations: needs levels and defs');
+      return;
+    }
+    const defs = rows<StationDef>(t.defs, 'stations', out);
+    checkIds(defs, 'station', out);
+    for (const s of defs) {
+      if (!isCost(s.cost)) out.push(`station ${s.id}: cost must be a resource map`);
+      if (!Array.isArray(s.accepts)) out.push(`station ${s.id}: accepts must be a list`);
+      else
+        for (const c of s.accepts)
+          if (!ref.cargo.has(c)) out.push(`station ${s.id}: unknown cargo "${c}"`);
+      if (!Array.isArray(s.produces)) out.push(`station ${s.id}: produces must be a list`);
+      else
+        for (const p of s.produces as unknown[]) {
+          const c = isObj(p) ? p.cargo : undefined;
+          if (typeof c !== 'string' || !ref.cargo.has(c))
+            out.push(`station ${s.id}: unknown cargo "${String(c)}"`);
+        }
+      const ground: unknown = s.standOn;
+      if (
+        ground !== undefined &&
+        !(
+          Array.isArray(ground) &&
+          ground.length &&
+          ground.every((t) => (STAND_ON as readonly unknown[]).includes(t))
+        )
+      )
+        out.push(`station ${s.id}: standOn must list some of ${STAND_ON.join(', ')}`);
+      if (s.needsWater !== undefined && typeof s.needsWater !== 'boolean')
+        out.push(`station ${s.id}: needsWater must be true or false`);
+      for (const p of spanProblems(s)) out.push(`station ${s.id}: ${p}`);
+      for (const p of doorProblems(s)) out.push(`station ${s.id}: ${p}`);
+    }
+    const lv = t.levels;
+    if (!isObj(lv)) {
+      out.push('station levels: missing');
+      return;
+    }
+    for (const k of PER_LEVEL) {
+      const v = lv[k];
+      if (
+        !Array.isArray(v) ||
+        v.length !== MAX_LEVEL ||
+        v.some((x) => typeof x !== 'number' || !Number.isFinite(x))
+      )
+        out.push(`station levels: ${k} needs ${MAX_LEVEL} values`);
+    }
+  },
+  contracts(t, _ref, out) {
+    if (!isObj(t)) {
+      out.push('contracts: missing configuration');
+      return;
+    }
+    checkIds(
+      rows<ContractTemplate>(t.templates, 'contract templates', out),
+      'contract template',
+      out,
+    );
+    const rarities = rows<ContractRarityDef>(t.rarities, 'contract rarities', out);
+    checkIds(rarities, 'contract rarity', out);
+    for (const r of rarities)
+      for (const k of RARITY_NUMBERS)
+        if (!(typeof r[k] === 'number' && r[k] >= 0))
+          out.push(`contract rarity ${r.id}: ${k} must be >= 0`);
+  },
+  decor(t, _ref, out) {
+    const decor = rows<DecorDef>(t, 'decor', out);
+    checkIds(decor, 'decor', out);
+    for (const d of decor) {
+      if (!isCost(d.cost)) out.push(`decor ${d.id}: cost must be a resource map`);
+      for (const p of doorProblems(d)) out.push(`decor ${d.id}: ${p}`);
+    }
+  },
+  buildings(t, ref, out) {
+    const list = rows<BuildingDef>(t, 'buildings', out);
+    checkIds(list, 'building', out);
+    for (const bd of list) {
+      if (!Number.isFinite(bd.perWeek) || bd.perWeek < 0)
+        out.push(`building ${bd.id}: perWeek must be non-negative`);
+      if (!isCost(bd.cost)) out.push(`building ${bd.id}: cost must be a resource map`);
+      for (const p of spanProblems(bd)) out.push(`building ${bd.id}: ${p}`);
+      for (const p of doorProblems(bd)) out.push(`building ${bd.id}: ${p}`);
+      const r: unknown = bd.recipe;
+      if (!isObj(r) || !isObj(r.in) || !isObj(r.out)) {
+        out.push(`building ${bd.id}: recipe needs in and out`);
+        continue;
+      }
+      for (const k of Object.keys(r.in))
+        if (!ref.cargo.has(k)) out.push(`building ${bd.id}: unknown input "${k}"`);
+      for (const k of Object.keys(r.out))
+        if (!ref.cargo.has(k) && k !== 'power')
+          out.push(`building ${bd.id}: unknown output "${k}"`);
+    }
+  },
+  track(t, _ref, out) {
+    const pieces = isObj(t) ? t.pieces : undefined;
+    if (!isObj(pieces)) {
+      out.push('track: missing pieces');
+      return;
+    }
+    for (const [k, p] of Object.entries(pieces))
+      if (!isObj(p) || !isCost(p.cost)) out.push(`track ${k}: cost must be a resource map`);
+    for (const k of Object.keys(trackJson.pieces))
+      if (!pieces[k]) out.push(`track: missing piece "${k}"`);
+    const road = isObj(t) ? t.road : undefined;
+    if (!isObj(road) || !isCost(road.cost)) out.push('track: road cost must be a resource map');
+  },
+  crafting(t, ref, out) {
+    if (!isObj(t)) {
+      out.push('crafting: missing configuration');
+      return;
+    }
+    const cr = t as unknown as CraftingConfig;
+    const kinds: CraftKind[] = ['loco', 'wagon'];
+    const sizes: VehicleSize[] = ['small', 'medium', 'large'];
+    const craftRarities: CraftRarity[] = ['N', 'R', 'SR', 'SSR', 'L'];
     for (const k of kinds) {
       const prices = cr.unlockPrice?.[k];
       if (!Array.isArray(prices) || prices.length < 3 || prices.some((p) => !(p >= 0)))
@@ -542,53 +979,359 @@ export function validateContent(b: ContentBundle): string[] {
     if (!(cr.failRefund >= 0 && cr.failRefund <= 1))
       out.push('crafting: failRefund must be between 0 and 1');
     if (!isCost(cr.ownedRefund)) out.push('crafting: ownedRefund must be a resource map');
-    for (const k of Object.keys(cr.ownedRefund ?? {}))
-      if (!cargo.has(k)) out.push(`crafting: unknown refund resource "${k}"`);
-  }
-  const hc = b.houses;
-  if (
-    !hc ||
-    !Array.isArray(hc.capacity) ||
-    !hc.capacity.length ||
-    hc.capacity.some((v) => !(v > 0))
-  )
-    out.push('houses: capacity needs one positive value per level');
-  else if (!Array.isArray(hc.upgradeCost) || hc.upgradeCost.length < hc.capacity.length - 1)
-    out.push('houses: upgradeCost needs one entry per level above the first');
-  else {
-    for (const c of hc.upgradeCost)
-      if (!isCost(c)) out.push('houses: upgradeCost must be resource maps');
-    for (const k of ['constructionDays', 'growthDays', 'autoUpgradeDays'] as const)
-      if (!(hc[k] > 0)) out.push(`houses: ${k} must be positive`);
-  }
-  return out;
+    else
+      for (const k of Object.keys(cr.ownedRefund))
+        if (!ref.cargo.has(k)) out.push(`crafting: unknown refund resource "${k}"`);
+  },
+  houses(t, _ref, out) {
+    const hc = t as HouseConfig;
+    if (
+      !isObj(hc) ||
+      !Array.isArray(hc.capacity) ||
+      !hc.capacity.length ||
+      hc.capacity.some((v) => !(v > 0))
+    )
+      out.push('houses: capacity needs one positive value per level');
+    else if (!Array.isArray(hc.upgradeCost) || hc.upgradeCost.length < hc.capacity.length - 1)
+      out.push('houses: upgradeCost needs one entry per level above the first');
+    else {
+      for (const c of hc.upgradeCost)
+        if (!isCost(c)) out.push('houses: upgradeCost must be resource maps');
+      for (const k of ['constructionDays', 'growthDays', 'autoUpgradeDays'] as const)
+        if (!(hc[k] > 0)) out.push(`houses: ${k} must be positive`);
+    }
+  },
+};
+
+function failure(e: unknown) {
+  return e instanceof Error ? e.message : String(e);
 }
 
-function buildContent(): ContentBundle {
-  const base = clone(DEFAULT_CONTENT);
-  const o = readContentOverrides();
-  if (!o) return base;
-  const merged: ContentBundle = { ...base };
-  for (const k of CONTENT_KEYS)
-    if (o[k] !== undefined) (merged as unknown as Record<string, unknown>)[k] = o[k];
-  const problems = validateContent(merged);
-  if (problems.length) {
-    console.warn('[content] stored overrides rejected:', problems);
-    return base;
+/** Problems per table; a check that throws becomes a problem of its own table. */
+function tableProblems(b: ContentBundle): Map<ContentKey, string[]> {
+  const ref: Refs = { cargo: idSet(b.cargo) };
+  const found = new Map<ContentKey, string[]>();
+  for (const k of CONTENT_KEYS) {
+    const out: string[] = [];
+    try {
+      CHECKS[k](b[k], ref, out);
+    } catch (e) {
+      out.push(`${k}: check failed (${failure(e)})`);
+    }
+    if (out.length) found.set(k, out);
   }
-  return merged;
+  return found;
+}
+
+/**
+ * Problems that would break the game if this bundle were applied. Empty means valid. Never
+ * throws: a table of the wrong shape is reported, not dereferenced.
+ */
+export function validateContent(b: ContentBundle): string[] {
+  try {
+    if (!isObj(b)) return ['content: not a bundle'];
+    return [...tableProblems(b).values()].flat();
+  } catch (e) {
+    return [`content: check failed (${failure(e)})`];
+  }
+}
+
+type SetAsideEntry = ContentOverrideReport['setAside'][number];
+
+/**
+ * Replace an override read in the old whole-bundle format by what survives of it: the tables the
+ * player edited, each stamped with today's shipped table and stored in the per-table format.
+ * Edited tables that are set aside as invalid are kept like the others; the untouched copies of
+ * shipped tables are gone, and when nothing else is left the stored value is removed. When the
+ * write fails the old value stays stored, the session runs on the converted tables all the same
+ * and the next load converts again.
+ */
+function rewriteLegacy(edited: Map<ContentKey, unknown>, untouched: ContentKey[]) {
+  if (writeContentOverrides(Object.fromEntries(edited) as Partial<ContentBundle>))
+    console.info(
+      `[content] stored overrides converted from the old whole-bundle format: ${
+        edited.size ? [...edited.keys()].join(', ') : 'no table was edited'
+      } (${untouched.length} untouched ${untouched.length === 1 ? 'copy' : 'copies'} of shipped tables dropped)`,
+    );
+  else
+    console.warn(
+      '[content] stored overrides in the old whole-bundle format could not be rewritten; the old value stays stored and converts again next load',
+    );
+}
+
+/**
+ * The shipped bundle with every stored table that may apply: one stamped with the current shipped
+ * table, that validates together with the others. A table stored in the old whole-bundle format
+ * is first told apart by its hash: an untouched copy of the shipped table or of a past shipped
+ * version (`PAST_SHIPPED`) is dropped, and only an edited table counts as stamped with today's
+ * table. The stored value is then rewritten in the per-table format, with the edited tables
+ * alone. A stored table of no table the bundle has (the gacha's) is passed over without a word.
+ * Everything else is set aside, with a warning, and stays in storage until the editor next writes
+ * or resets.
+ */
+function buildContent(): { bundle: ContentBundle; report: ContentOverrideReport } {
+  const base = clone(DEFAULT_CONTENT);
+  const report: ContentOverrideReport = { applied: [], setAside: [] };
+  const raw = readStored();
+  if (!raw) return { bundle: base, report };
+  const stored = parseStored(raw);
+  if (!stored) {
+    console.warn('[content] stored overrides are unreadable; the shipped tables load');
+    return { bundle: base, report };
+  }
+
+  const notes = new Map<ContentKey, string>();
+  const setAside = (
+    key: ContentKey,
+    reason: SetAsideEntry['reason'],
+    problems: string[],
+    why: string,
+  ) => {
+    report.setAside.push({ key, reason, problems });
+    notes.set(key, why);
+  };
+  const candidates = new Map<ContentKey, unknown>();
+  /** A table stored while contracts paid tickets: one that only changed those is no edit now. */
+  const fromTicketedBuild = (k: ContentKey, data: unknown) => {
+    const table = k === 'contracts' ? withoutTicketFields(data) : data;
+    if (!sameAsShipped(k, table)) candidates.set(k, table);
+  };
+  // The old whole-bundle format holds every table the editor saved, edited or not; only the
+  // edited ones are candidates, the untouched copies of shipped tables are dropped.
+  const legacy =
+    stored.format === undefined ? CONTENT_KEYS.filter((k) => stored[k] !== undefined) : [];
+  const untouched = legacy.filter((k) => isUntouchedCopy(k, stored[k]));
+  if (stored.format === undefined) {
+    for (const k of legacy) if (!untouched.includes(k)) fromTicketedBuild(k, stored[k]);
+  } else if (stored.format !== CONTENT_FORMAT) {
+    const tables = isObj(stored.tables) ? stored.tables : {};
+    const problem = `unknown storage format ${JSON.stringify(stored.format)}`;
+    for (const k of CONTENT_KEYS)
+      if (tables[k] !== undefined) setAside(k, 'invalid', [problem], problem);
+    if (!report.setAside.length)
+      console.warn(
+        `[content] stored overrides are unreadable (${problem}); the shipped tables load`,
+      );
+  } else if (!isObj(stored.tables)) {
+    console.warn('[content] stored overrides hold no tables; the shipped tables load');
+  } else {
+    for (const k of CONTENT_KEYS) {
+      const e = stored.tables[k];
+      if (e === undefined) continue;
+      if (!isObj(e) || typeof e.stamp !== 'string' || e.data === undefined) {
+        const problem = `${k}: stored entry needs a stamp and data`;
+        setAside(k, 'invalid', [problem], problem);
+      } else if (ticketedEdit(k, e.stamp)) fromTicketedBuild(k, e.data);
+      else if (e.stamp !== STAMP[k])
+        setAside(k, 'stale', [], `made for shipped table ${e.stamp}, which is now ${STAMP[k]}`);
+      else candidates.set(k, e.data);
+    }
+  }
+
+  const order = (keys: ContentKey[]) => CONTENT_KEYS.filter((k) => keys.includes(k));
+  const problemsWith = (keys: ContentKey[]) => {
+    const b: Record<string, unknown> = { ...base };
+    for (const k of keys) b[k] = candidates.get(k);
+    return tableProblems(b as unknown as ContentBundle);
+  };
+  let applied = [...candidates.keys()];
+  const invalid = new Map<ContentKey, string[]>();
+  while (applied.length) {
+    const found = problemsWith(applied);
+    if (!found.size) break;
+    // The first stored table with problems of its own: tables refer only to earlier ones, so a
+    // broken table is caught before the tables that refer to it.
+    let culprit = applied.find((k) => found.has(k));
+    let problems = culprit ? found.get(culprit)! : [];
+    if (!culprit) {
+      // The problems sit in shipped tables: blame the stored table whose absence leaves fewest.
+      const all = [...found.values()].flat();
+      let fewest = Infinity;
+      for (const k of applied) {
+        const rest = [...problemsWith(applied.filter((x) => x !== k)).values()].flat();
+        if (rest.length >= fewest) continue;
+        fewest = rest.length;
+        culprit = k;
+        problems = all.filter((p) => !rest.includes(p));
+      }
+      if (!problems.length) problems = all;
+    }
+    invalid.set(culprit!, problems);
+    applied = applied.filter((k) => k !== culprit);
+  }
+  // Give back every table that was caught only through another one.
+  let gaveBack = true;
+  while (gaveBack) {
+    gaveBack = false;
+    for (const k of order([...invalid.keys()])) {
+      if (problemsWith([...applied, k]).size) continue;
+      applied = order([...applied, k]);
+      invalid.delete(k);
+      gaveBack = true;
+    }
+  }
+  for (const [k, problems] of invalid) setAside(k, 'invalid', problems, 'fails validation');
+  if (legacy.length) rewriteLegacy(candidates, untouched);
+
+  report.applied = order(applied);
+  for (const k of report.applied)
+    (base as unknown as Record<string, unknown>)[k] = candidates.get(k);
+  report.setAside.sort((a, b) => CONTENT_KEYS.indexOf(a.key) - CONTENT_KEYS.indexOf(b.key));
+  for (const s of report.setAside)
+    console.warn(
+      `[content] stored "${s.key}" override set aside (${s.reason}): ${notes.get(s.key)}`,
+      ...(s.problems.length ? [s.problems] : []),
+    );
+  return { bundle: base, report };
 }
 
 /** Fill derived fields (wagon accept lists from cargo classes). */
+/** A sprite set's turning wheels (LocoFit.wheels). */
+export interface WheelFit {
+  phases: number;
+  cycle: number;
+  integrated?: boolean;
+  layer?: string;
+}
+/** One vehicle's fit (engines and wagons): its length in tiles, whether its sprite is a rendered model, its smoke outlets. */
+export interface LocoFit {
+  tiles: number;
+  sprite?: boolean;
+  smoke?: { part: PartKind; along: number; up: number }[];
+  lamps?: { part: PartKind; along: number; across: number; up: number }[];
+  trucks?: Record<string, number[]>;
+  truckOffsets?: Record<string, number>;
+  wheels?: Record<string, WheelFit>;
+  spriteFacings?: number;
+  boxes?: Record<string, [number, number, number, number]>;
+}
+/**
+ * Fill each vehicle's rendered-model fields from the measured gear and fit tables (one table for
+ * engines and wagons, keyed by id; the validator keeps the two id sets disjoint). A vehicle needs
+ * both entries; without them it stays as its definition draws it (procedural sprite, size length).
+ */
+export function fillModels(
+  b: Pick<ContentBundle, 'locomotives' | 'wagons'>,
+  gears: Record<string, Gear>,
+  fits: Record<string, LocoFit>,
+) {
+  // a fit that leaves a field out leaves no key behind: a row stays the same through JSON
+  const set = <K extends keyof RenderedModelFields>(
+    d: RenderedModelFields,
+    field: K,
+    value: RenderedModelFields[K],
+  ) => {
+    if (value !== undefined) d[field] = value;
+  };
+  const fill = (d: RenderedModelFields & { id: string }) => {
+    const g = gears[d.id],
+      f = fits[d.id];
+    if (!g || !f) return null;
+    d.gear = g;
+    d.lengthTiles = f.tiles;
+    d.spriteGear = f.sprite === true;
+    set(d, 'truckSprites', f.trucks);
+    set(d, 'truckOffsets', f.truckOffsets);
+    set(d, 'wheels', f.wheels);
+    set(d, 'spriteFacings', f.spriteFacings);
+    set(d, 'boxes', f.boxes);
+    return f;
+  };
+  for (const d of b.locomotives) {
+    const f = fill(d);
+    if (!f) continue;
+    set(d, 'smoke', f.smoke);
+    set(d, 'lamps', f.lamps);
+  }
+  for (const w of b.wagons) fill(w);
+}
 function finalize(b: ContentBundle): ContentBundle {
+  // each vehicle's own running gear and length, where both are measured
+  fillModels(
+    b,
+    gearJson as unknown as Record<string, Gear>,
+    locoFitJson as unknown as Record<string, LocoFit>,
+  );
   for (const w of b.wagons)
     w.accepts = b.cargo.filter((c) => c.class === w.carries).map((c) => c.id);
   return b;
 }
 
-/** The live bundle every module reads from. */
-export const content: ContentBundle = finalize(buildContent());
+/** The name each translated entry has in the data; every other entry's name is its own. */
+const DATA_NAME = new WeakMap<object, string>();
+/**
+ * The name the data gives an entry, in English whatever the language on screen. What the world
+ * keeps is made from this one (a station's default name, a contract's), and what depends on an
+ * order does not move with the language (`Crafting.known`).
+ */
+export function dataName(def: { name: string }): string {
+  return DATA_NAME.get(def) ?? def.name;
+}
+/** Lay a text over an entry, field by field: `keep` says which of the fields stay as they are. */
+function translate(
+  entry: object,
+  text: Partial<Record<string, string>> | undefined,
+  keep: (field: string) => boolean,
+) {
+  const row = entry as Record<string, unknown>;
+  for (const [field, value] of Object.entries(text ?? {})) {
+    if (value === undefined || keep(field)) continue;
+    if (field === 'name') DATA_NAME.set(row, row.name as string);
+    row[field] = value;
+  }
+}
+type Texts = Partial<Record<string, Partial<Record<string, string>>>>;
+/** A table outside the bundle, in the language on screen, by id (the biomes). */
+export function translateRows(rows: { id: string }[], texts: Texts) {
+  if (LANGUAGE !== 'hu') return;
+  for (const r of rows) translate(r, texts[r.id], () => false);
+}
+/**
+ * Put the bundle in the language on screen, once, as the overrides were: every consumer sees one
+ * consistent bundle for the session. A text an override changed stays the player's own, and an
+ * entry the data does not know has no text here.
+ */
+function translated(b: ContentBundle): ContentBundle {
+  if (LANGUAGE !== 'hu') return b;
+  const over = <T extends { id: string }>(rows: T[], shipped: T[], texts: Texts) => {
+    const was = new Map(shipped.map((r) => [r.id, r as unknown as Record<string, unknown>]));
+    for (const r of rows) {
+      const old = was.get(r.id);
+      if (!old) continue;
+      const row = r as unknown as Record<string, unknown>;
+      translate(r, texts[r.id], (field) => row[field] !== old[field]);
+    }
+  };
+  const d = DEFAULT_CONTENT;
+  over(b.locomotives, d.locomotives, HU_NAMES.locomotives);
+  over(b.wagons, d.wagons, HU_NAMES.wagons);
+  over(b.cargo, d.cargo, HU_NAMES.cargo);
+  over(b.stations.defs, d.stations.defs, HU_NAMES.stations);
+  over(b.buildings, d.buildings, HU_NAMES.buildings);
+  over(b.decor, d.decor, HU_NAMES.decor);
+  over(b.contracts.templates, d.contracts.templates, HU_NAMES.contractTemplates);
+  over(b.contracts.rarities, d.contracts.rarities, HU_NAMES.contractRarities);
+  const pieces: Texts = HU_NAMES.trackPieces;
+  for (const [id, piece] of Object.entries(b.track.pieces)) {
+    const old = d.track.pieces[id];
+    if (old) translate(piece, pieces[id], () => piece.name !== old.name);
+  }
+  return b;
+}
+
+const loaded = buildContent();
+const bundle = finalize(loaded.bundle);
 finalize(DEFAULT_CONTENT);
+/** The bundle as the data has it, in English: what the content editor edits and stores. */
+export const sourceContent: ContentBundle = LANGUAGE === 'en' ? bundle : clone(bundle);
+/** The live bundle every module reads from, in the language on screen. */
+export const content: ContentBundle = translated(bundle);
+
+/** What became of the stored overrides at load: which tables apply, which were set aside and why. */
+export function contentOverrideReport(): ContentOverrideReport {
+  return clone(loaded.report);
+}
+/** True when this session runs on at least one stored table. */
 export function contentIsCustom() {
-  return readContentOverrides() !== null;
+  return loaded.report.applied.length > 0;
 }

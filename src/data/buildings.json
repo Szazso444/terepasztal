@@ -2,7 +2,7 @@
   {
     "id": "windmill",
     "name": "Windmill",
-    "flavor": "Mills wheat into food. One wheat makes 5 food, then 7, 9 and 11 with upgrades.",
+    "flavor": "Mills wheat into food. One wheat makes 5 food, then 7, 9, 11, 13 and 15 with upgrades.",
     "cost": {
       "wood": 45,
       "stone": 25
@@ -17,7 +17,14 @@
         "food": 5
       }
     },
-    "perWeek": 60
+    "perWeek": 60,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "kiln",
@@ -29,6 +36,7 @@
     },
     "crew": 3,
     "tier": 0,
+    "lastTier": 2,
     "recipe": {
       "in": {
         "wood": 2
@@ -37,7 +45,14 @@
         "coal": 1
       }
     },
-    "perWeek": 40
+    "perWeek": 40,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "grinder",
@@ -57,7 +72,14 @@
         "iron": 1
       }
     },
-    "perWeek": 20
+    "perWeek": 20,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "refinery",
@@ -81,7 +103,18 @@
         "oil": 1
       }
     },
-    "perWeek": 15
+    "perWeek": 15,
+    "span": {
+      "w": 2,
+      "h": 2
+    },
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 1],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "power_plant",
@@ -110,11 +143,22 @@
       "water": 1
     },
     "power": true,
-    "perWeek": 60
+    "perWeek": 60,
+    "span": {
+      "w": 3,
+      "h": 2
+    },
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [1, 1],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "substation",
-    "name": "Substation",
+    "name": "Battery",
     "flavor": "Taps the pole grid and feeds the wires within six tiles. Too many trains under one and they all slow together.",
     "cost": {
       "iron": 24,
@@ -131,7 +175,14 @@
       "radius": 6,
       "throughput": 3
     },
-    "perWeek": 0
+    "perWeek": 0,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "hydro_plant",
@@ -152,7 +203,14 @@
     },
     "power": true,
     "needsWater": true,
-    "perWeek": 120
+    "perWeek": 120,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "bridge_wood",

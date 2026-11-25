@@ -1,0 +1,14 @@
+{
+  "view": 2,
+  "apexTip": 456,
+  "stub": [
+    [706, 505],
+    [778, 464]
+  ],
+  "hub": [823, 470],
+  "hubBox": [782, 417, 864, 524],
+  "door": null,
+  "noDoorWindow": true,
+  "pass": true,
+  "notes": "Plain round smooth stone tower, slate cone/plain tip, no door/window on visible faces, rear stub root hidden by cap and complete plate above-right; left lighter than right; no sails/plinth/ground/objects."
+}

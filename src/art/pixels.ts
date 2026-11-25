@@ -1,5 +1,6 @@
 import { hash2 } from '../engine/rng';
 import { mix, shade, type RGB } from './palette';
+import { lightX } from './view';
 
 /** Small software pixel buffer used by the procedural sprite generators. */
 export class PixelBuf {
@@ -78,7 +79,7 @@ export class PixelBuf {
         const ny = (y + 0.5 - cy) / ry;
         if (nx * nx + ny * ny > 1) continue;
         // lighting: upper-left brighter
-        const l = -nx * light - ny * light;
+        const l = -lightX() * nx * light - ny * light;
         const n = hash2(x >> 1, y >> 1, seed);
         const idx = Math.max(
           0,

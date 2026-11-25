@@ -1,9 +1,87 @@
-import { Terrain, Biome, type GameMap } from '../world/tiles';
+import { MAX_LEVEL, levelTarget } from '../world/elevation';
+import { Biome, Terrain, climateAtIndex, type GameMap } from '../world/tiles';
 
 export type LandscapeMap = Pick<
   GameMap,
-  'w' | 'h' | 'seed' | 'originX' | 'originY' | 'terrain' | 'biome'
->;
+  'w' | 'h' | 'seed' | 'originX' | 'originY' | 'terrain' | 'biome' | 'climate'
+> &
+  Pick<Partial<GameMap>, 'waterSurface' | 'flowDir' | 'feature'>;
+/**
+ * The cells of the packed surface sheet, by material index (names in tools/terrain-surfaces.mjs),
+ * and after them those of the second, wild sheet (tools/wild-surfaces.mjs), from `FIRST_WILD` on.
+ */
+export const Material = {
+  Grass: 0,
+  Forest: 1,
+  Desert: 2,
+  Taiga: 3,
+  Swamp: 4,
+  Water: 5,
+  Sand: 6,
+  Rock: 7,
+  City: 8,
+  Mountain: 9,
+  River: 10,
+  Bank: 11,
+  Beach: 12,
+  FallLit: 13,
+  FallShade: 14,
+  Snow: 15,
+  HighRock: 16,
+  Alpine: 17,
+  Ice: 18,
+  Moraine: 19,
+  CliffLit: 20,
+  CliffShade: 21,
+} as const;
+/** The first material of the wild sheet, and how many it holds. */
+export const FIRST_WILD = Material.River;
+export const WILD_CELLS = 12;
+/**
+ * The material each biome stands for, by biome id. Ids are appended and never renumbered
+ * (src/sim/biomes.ts), so a biome added later needs its entry here: an id with none paints as
+ * plains grass, never as the material that happens to share its number.
+ */
+export const BIOME_MATERIAL: readonly number[] = [
+  Material.Grass, // 0 plains
+  Material.Forest, // 1 forest
+  Material.Desert, // 2 desert
+  Material.Taiga, // 3 taiga
+  Material.Swamp, // 4 swamp
+  Material.Grass, // 5 ocean: the land in it is an island of plains grass
+  Material.Water, // 6 lake
+  Material.Water, // 7 river
+  Material.Sand, // 8 beach
+  Material.Rock, // 9 mountain
+];
+/** The material of a biome id; plains grass for an id the table does not know. */
+export function biomeMaterial(biome: number): number {
+  return BIOME_MATERIAL[biome] ?? Material.Grass;
+}
+/**
+ * The ground a biome lays under grass and hills, and between the stones of rock. Water and rock
+ * are not ground, so a water or mountain biome (grass or hills there come only from the editor)
+ * gives plains grass.
+ */
+export function groundMaterial(biome: number): number {
+  const material = biomeMaterial(biome);
+  return material === Material.Water || material === Material.Rock ? Material.Grass : material;
+}
+/**
+ * The ground between the stones of the rock or mountain tile with index `tile` (`y * w + x`): its
+ * climate's ground, whatever its biome. A map without a climate plane reads its biome, as before.
+ */
+export function stoneGroundAt(map: LandscapeMap, tile: number): number {
+  return groundMaterial(climateAtIndex(map, tile));
+}
+/**
+ * The level where snow starts to show on the tile with index `tile`: the `snowLevel` of its
+ * climate (src/data/biomes.json), read from `snowLevels` indexed by biome id. The painter runs
+ * in a worker that cannot read the content tables, so the table travels with the map.
+ */
+export function snowLineAt(map: LandscapeMap, snowLevels: readonly number[], tile: number): number {
+  return snowLevels[climateAtIndex(map, tile)] ?? snowLevels[0];
+}
 export const MATERIAL_COLORS = [
   [110, 125, 69],
   [88, 106, 60],
@@ -13,6 +91,20 @@ export const MATERIAL_COLORS = [
   [65, 111, 116],
   [185, 161, 111],
   [127, 130, 118],
+  [150, 140, 122],
+  [127, 130, 118],
+  [70, 122, 128],
+  [120, 108, 88],
+  [192, 170, 124],
+  [190, 196, 192],
+  [170, 178, 178],
+  [214, 219, 223],
+  [132, 134, 124],
+  [116, 124, 96],
+  [196, 208, 214],
+  [120, 114, 104],
+  [170, 186, 196],
+  [150, 166, 178],
 ] as const;
 const clamp = (n: number, hi: number) => Math.max(0, Math.min(hi, n));
 const smooth = (n: number) => n * n * (3 - 2 * n);
@@ -35,12 +127,17 @@ export function landscapeNoise(x: number, y: number, seed: number): number {
 export function materialAt(map: LandscapeMap, x: number, y: number) {
   const k = clamp(Math.round(y), map.h - 1) * map.w + clamp(Math.round(x), map.w - 1);
   const t = map.terrain[k],
-    b = map.biome[k];
-  if (t === Terrain.Water) return 5;
-  if (t === Terrain.Sand) return b === Biome.Desert ? 2 : 6;
-  if (t === Terrain.Rock || t === Terrain.Mountain) return 7;
-  if (t === Terrain.Forest) return b === Biome.Swamp ? 4 : b === Biome.Taiga ? 3 : 1;
-  return b === Biome.Ocean ? 0 : b;
+    own = biomeMaterial(map.biome[k]);
+  if (t === Terrain.Water) return Material.Water;
+  if (t === Terrain.Sand) {
+    if (map.biome[k] === Biome.Beach) return Material.Beach;
+    return own === Material.Desert ? Material.Desert : Material.Sand;
+  }
+  if (t === Terrain.Ice) return Material.Moraine;
+  if (t === Terrain.Rock || t === Terrain.Mountain) return Material.Rock;
+  if (t === Terrain.Forest)
+    return own === Material.Swamp || own === Material.Taiga ? own : Material.Forest;
+  return groundMaterial(map.biome[k]);
 }
 
 /** Visual relief only: generation, terrain membership, costs and saves stay unchanged. */
@@ -49,16 +146,16 @@ export function landscapeHeights(map: LandscapeMap, flat: ReadonlySet<number>): 
   for (let y = 0; y < map.h; y++)
     for (let x = 0; x < map.w; x++) {
       const k = y * map.w + x;
-      if (flat.has(k) || ![Terrain.Hill, Terrain.Mountain].includes(map.terrain[k])) continue;
+      if (flat.has(k) || !levelTarget(map, k)) continue;
       let mass = 0,
         weight = 0;
       for (let dy = -2; dy <= 2; dy++)
         for (let dx = -2; dx <= 2; dx++) {
           const xx = clamp(x + dx, map.w - 1),
             yy = clamp(y + dy, map.h - 1);
-          const t = map.terrain[yy * map.w + xx],
+          const level = levelTarget(map, yy * map.w + xx),
             w = (3 - Math.abs(dx)) * (3 - Math.abs(dy));
-          mass += (t === Terrain.Mountain ? 54 : t === Terrain.Hill ? 31 : 0) * w;
+          mass += (level >= MAX_LEVEL ? 54 : level * 15.5) * w;
           weight += w;
         }
       heights[k] = mass / weight;

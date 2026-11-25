@@ -1,21 +1,26 @@
 import { describe, it, expect } from 'vitest';
-import { emptyMap } from '../world/mapgen';
+import { tileLevels } from '../world/elevation';
+import { emptyMap, generateMap } from '../world/mapgen';
+import { groundAllowsAt, groundAllowsOn } from '../world/slope';
 import { Terrain } from '../world/tiles';
 import {
   buildRelief,
   reliefHeight,
+  reliefTop,
   reliefCorners,
   reliefTileAtWorld,
   surfaceAlongRay,
   hillFamily,
   groundAllows,
   RELIEF_MAX,
+  DEFAULT_RELIEF,
   TILE_SIDE_PX,
   type ReliefStyle,
 } from './terrainRelief';
 import { surfaceMaterial, surfaceColor, surfaceBlend, grassDetail } from './terrainMaterials';
 import { readFileSync } from 'node:fs';
 import { lineSpans, type RailBed } from '../world/railProfile';
+import { SEEDS, forAll, shrinkArray } from '../testing/property';
 import { PNG } from 'pngjs';
 
 /** The corner-slope style these geometry tests were written for (still selectable). */
@@ -68,7 +73,7 @@ describe('connected illustrated terrain', () => {
         expect(detail).toBeLessThanOrEqual(1);
         expect(Math.abs(detail - grassDetail(x + 0.001, y))).toBeLessThan(0.002);
         surfaceBlend(m, x, y, weights);
-        expect(weights.slice(4).reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10);
+        expect(weights.slice(4, 8).reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10);
         const forest = weights
           .slice(0, 4)
           .reduce((n, t, i) => n + (t === 1 ? weights[i + 4] : 0), 0);
@@ -185,6 +190,8 @@ describe('connected illustrated terrain', () => {
       a.forEach((v, i) => expect(v).toBeCloseTo(b[i], 8));
     }
   });
+  // slow because it samples every material over 80 x 80 tiles in steps of 0.4, about 420 000 reads
+  // with an expect each: 2.6 s alone
   it('reads only the opaque painted part of every packed surface', () => {
     // Alpha copied into the colour channels: any sample reaching a transparent tile corner or the
     // packed cell edge comes out below full coverage.
@@ -199,7 +206,7 @@ describe('connected illustrated terrain', () => {
           surfaceColor(alpha, material, x, y, out);
           expect(out[0]).toBeGreaterThan(210);
         }
-  });
+  }, 90_000);
   it('keeps every relief style within its per-edge rise, height budget and picking', () => {
     const m = fixture();
     const styles: ReliefStyle[] = [
@@ -282,7 +289,37 @@ describe('connected illustrated terrain', () => {
         for (let bx = -1; bx < 32; bx += 0.211)
           expect(surfaceAlongRay(m, r, bx, by, 10)).toBe(plain(bx, by));
     }
-  });
+  }, 20_000);
+  it('never lets the surface rise above the top it gives a box', () => {
+    // Bridges stop looking ahead for ground that could hide them at reliefTop: no point of the
+    // box may stand higher, rails, hills, mountains and the map's edge included; and the top is
+    // the box's own, not the map's, where it can be.
+    const m = fixture(),
+      y = 16,
+      natural = buildRelief(m, new Set()),
+      { spans } = lineSpans(Array.from({ length: 32 }, (_, x) => natural.tiles![y * 32 + x])),
+      rails = new Map<number, RailBed>();
+    for (let x = 0; x < 32; x++) rails.set(y * 32 + x, { axis: 'x', spans, flat: false });
+    for (const r of [
+      natural,
+      buildRelief(m, new Set(), undefined, rails),
+      buildRelief(m, new Set(), CORNERS),
+    ]) {
+      const over: string[] = [];
+      for (let y0 = -1; y0 < 32; y0 += 1.7)
+        for (let x0 = -1; x0 < 32; x0 += 2.3) {
+          const x1 = x0 + 2.7,
+            y1 = y0 + 2.7,
+            top = reliefTop(m, r, x0, y0, x1, y1);
+          for (let py = y0; py <= y1; py += 0.05)
+            for (let px = x0; px <= x1; px += 0.05)
+              if (reliefHeight(m, r, px, py) > top) over.push(`${px.toFixed(2)},${py.toFixed(2)}`);
+        }
+      expect(over).toEqual([]);
+    }
+    // Flat ground away from the hills: the box's top is its own, near the ground.
+    expect(reliefTop(m, natural, 0.2, 0.2, 1.4, 1.4)).toBeLessThan(1);
+  }, 20_000);
   it('keeps level pieces and structures on terrace tiles no bank reaches into', () => {
     const m = fixture(),
       r = buildRelief(m, new Set());
@@ -316,4 +353,170 @@ describe('connected illustrated terrain', () => {
     for (let y = 1; y < 15; y++)
       for (let x = 1; x < 15; x++) expect(surfaceMaterial(m, x, y)).toBe((x + y) % 2 ? 5 : 0);
   });
+});
+
+describe('raised water in the relief', () => {
+  /** A 7 x 7 hill plateau with a 3 x 3 pool at its middle, raised to `level`. */
+  function pool(level: number) {
+    const map = emptyMap(1, 16, 16);
+    const surface = new Uint8Array(16 * 16);
+    for (let y = 4; y < 11; y++)
+      for (let x = 4; x < 11; x++) map.terrain[y * 16 + x] = Terrain.Hill;
+    for (let y = 6; y < 9; y++)
+      for (let x = 6; x < 9; x++) {
+        map.terrain[y * 16 + x] = Terrain.Water;
+        surface[y * 16 + x] = level;
+      }
+    map.waterSurface = surface;
+    return map;
+  }
+  const middle = (k: number) => k * 17 + 7;
+
+  for (const [name, style] of [
+    ['terraces', DEFAULT_RELIEF],
+    ['corners', { ...DEFAULT_RELIEF, shape: 'corners' as const }],
+  ] as const)
+    it(`gives water at level 2 corner level 2 (${name})`, () => {
+      const r = buildRelief(pool(2), new Set(), style);
+      expect(r.corners[middle(7)]).toBe(2);
+      expect(r.corners[middle(8)]).toBe(2);
+    });
+
+  it('leaves the corners of water at level 0 as they are on a map with no levels', () => {
+    const flat = pool(0);
+    const none = pool(0);
+    none.waterSurface = undefined;
+    for (const style of [DEFAULT_RELIEF, { ...DEFAULT_RELIEF, shape: 'corners' as const }])
+      expect(buildRelief(flat, new Set(), style).corners).toEqual(
+        buildRelief(none, new Set(), style).corners,
+      );
+  });
+});
+
+describe('the slope rule', () => {
+  it('agrees with the simulation on every tile of seeded maps', () => {
+    let refused = 0;
+    for (const seed of [15, 2026, 7412]) {
+      const map = generateMap(seed, { w: 96, h: 96 });
+      const relief = buildRelief(map, new Set());
+      const levels = tileLevels(map);
+      for (const need of ['straight', 'level'] as const)
+        for (let y = 0; y < map.h; y++)
+          for (let x = 0; x < map.w; x++) {
+            const sim = groundAllowsAt(map, levels, x, y, need);
+            expect(groundAllows(map, relief, x, y, need), `${seed}, ${x},${y}`).toBe(sim);
+            if (!sim) refused++;
+          }
+      // a sample against the rule the builder asks, which reads no whole-map levels
+      for (let k = 0; k < 400; k += 7) {
+        const x = k % map.w;
+        const y = (k * 13) % map.h;
+        expect(groundAllowsOn(map, x, y, 'level')).toBe(groundAllowsAt(map, levels, x, y, 'level'));
+      }
+    }
+    expect(refused).toBeGreaterThan(0);
+  }, 30_000);
+});
+
+describe('the top of the relief in a box, on any map', () => {
+  // A relief per case: about half a second alone
+  it('is never below the surface anywhere in the box, its corners and edges included', () => {
+    // Bridges stop looking ahead for ground that could hide them at reliefTop, so it must bound
+    // the surface everywhere in the box: on maps of hills and mountains in clumps among every
+    // other terrain, tiles built on, a rail line riding the hills, terraces (painted peaks too)
+    // or corner slopes, and boxes reaching off the map.
+    const STYLES = {
+      terraces: DEFAULT_RELIEF,
+      corners: CORNERS,
+      // the preview style whose summits rise as painted rock
+      peaks: { ...DEFAULT_RELIEF, paintedPeaks: 2 },
+    };
+    const KINDS = [
+      Terrain.Grass,
+      Terrain.Forest,
+      Terrain.Water,
+      Terrain.Rock,
+      Terrain.Sand,
+    ] as const;
+    forAll(
+      (rng) => {
+        const w = rng.int(6, 16),
+          h = rng.int(6, 16),
+          terrain = Array.from({ length: w * h }, () => rng.pick(KINDS) as Terrain),
+          built: number[] = [];
+        for (let n = rng.int(1, 6); n > 0; n--) {
+          // the first clump on the map's far edge, whose last cells a bound must cover too
+          const far = n === 1 ? rng.int(0, 1) : -1,
+            cx = far === 0 ? w - 1 : rng.int(0, w - 1),
+            cy = far === 1 ? h - 1 : rng.int(0, h - 1),
+            r = rng.int(1, 4),
+            kind = rng.chance(0.3) ? Terrain.Mountain : Terrain.Hill;
+          for (let y = Math.max(0, cy - r); y <= Math.min(h - 1, cy + r); y++)
+            for (let x = Math.max(0, cx - r); x <= Math.min(w - 1, cx + r); x++)
+              if (rng.chance(0.85)) terrain[y * w + x] = kind;
+        }
+        for (let n = rng.int(0, 4); n > 0; n--) built.push(rng.int(0, w * h - 1));
+        const rail = rng.chance(0.5) ? rng.int(0, h - 1) : -1;
+        return {
+          w,
+          h,
+          seed: rng.int(1, 9999),
+          terrain,
+          built,
+          rail,
+          style: rng.pick(['terraces', 'terraces', 'corners', 'peaks'] as const),
+          // anywhere; narrow, in the map's last column or row of cells; or along the rail line
+          boxes: Array.from({ length: 12 }, (_, i) => {
+            if (i % 3 === 1) {
+              const across = rng.range(-1, w),
+                edge = rng.range(w - 1, w - 0.5),
+                [x0, y0] = rng.chance(0.5) ? [edge, across] : [across, edge - w + h];
+              return [x0, y0, x0 + rng.range(0, 0.4), y0 + rng.range(0, 0.4)];
+            }
+            const x0 = rng.range(-1.5, w),
+              y0 = i % 3 === 2 && rail >= 0 ? rail - rng.range(0, 2) : rng.range(-1.5, h);
+            return [x0, y0, x0 + rng.range(0, 3), y0 + rng.range(0, 3)];
+          }),
+        };
+      },
+      (c) => {
+        const m = emptyMap(c.seed, c.w, c.h);
+        c.terrain.forEach((t, k) => (m.terrain[k] = t));
+        const built = new Set(c.built),
+          rails = new Map<number, RailBed>();
+        if (c.rail >= 0) {
+          const natural = buildRelief(m, built),
+            { spans } = lineSpans(
+              Array.from({ length: c.w }, (_, x) => natural.tiles![c.rail * c.w + x]),
+            );
+          for (let x = 0; x < c.w; x++)
+            rails.set(c.rail * c.w + x, { axis: 'x', spans, flat: false });
+        }
+        const r = buildRelief(m, built, STYLES[c.style], rails);
+        for (const [x0, y0, x1, y1] of c.boxes) {
+          const top = reliefTop(m, r, x0, y0, x1, y1),
+            // the corners, the middles of the edges, and a grid inside
+            at = (k: number) => [
+              x0 + ((x1 - x0) * (k % 9)) / 8,
+              y0 + ((y1 - y0) * Math.floor(k / 9)) / 8,
+            ];
+          for (let k = 0; k < 81; k++) {
+            const [px, py] = at(k);
+            expect(
+              reliefHeight(m, r, px, py),
+              `at ${px},${py} in ${[x0, y0, x1, y1]}`,
+            ).toBeLessThanOrEqual(top);
+          }
+        }
+      },
+      {
+        seeds: SEEDS.slice(0, 50),
+        shrink: function* (c) {
+          for (const boxes of shrinkArray(c.boxes)) if (boxes.length) yield { ...c, boxes };
+          if (c.rail >= 0) yield { ...c, rail: -1 };
+          for (const built of shrinkArray(c.built)) yield { ...c, built };
+        },
+      },
+    );
+  }, 20_000);
 });

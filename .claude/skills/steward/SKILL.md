@@ -21,7 +21,7 @@ description: Repository conventions for driving a terepasztal pull request to me
 - **Ownership test red** (`tools/agents/ownership.test.mjs`). A new file has no owner or two:
   add it to exactly one role in `tools/agents/ownership.json`. An agent file's `## Scope` must list
   exactly its role's patterns.
-- **Golden test red** (map generation hashes, art frame counts). A question for the author, never
+- **Golden test red** (map generation hashes). A question for the author, never
   a number to update in the pull request.
 - **Review findings.** Fixes go to the owning role through Core, as a new brief with the findings.
   A finding outside the change becomes an issue, not a widening of the pull request.

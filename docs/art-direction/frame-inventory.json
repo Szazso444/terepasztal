@@ -224,38 +224,6 @@
     "anchorY": 5
   },
   {
-    "key": "people/crossing_dirt_0",
-    "group": "people",
-    "width": 44,
-    "height": 22,
-    "anchorX": 22,
-    "anchorY": 11
-  },
-  {
-    "key": "people/crossing_dirt_1",
-    "group": "people",
-    "width": 44,
-    "height": 22,
-    "anchorX": 22,
-    "anchorY": 11
-  },
-  {
-    "key": "people/crossing_stone_0",
-    "group": "people",
-    "width": 44,
-    "height": 22,
-    "anchorX": 22,
-    "anchorY": 11
-  },
-  {
-    "key": "people/crossing_stone_1",
-    "group": "people",
-    "width": 44,
-    "height": 22,
-    "anchorX": 22,
-    "anchorY": 11
-  },
-  {
     "key": "people/path_dirt_0",
     "group": "people",
     "width": 61,
@@ -536,6 +504,30 @@
     "anchorY": 7
   },
   {
+    "key": "props/mangrove_0",
+    "group": "props",
+    "width": 26.75,
+    "height": 21.75,
+    "anchorX": 14,
+    "anchorY": 20
+  },
+  {
+    "key": "props/mangrove_1",
+    "group": "props",
+    "width": 36,
+    "height": 28.5,
+    "anchorX": 18,
+    "anchorY": 25
+  },
+  {
+    "key": "props/mangrove_2",
+    "group": "props",
+    "width": 49.25,
+    "height": 34,
+    "anchorX": 25,
+    "anchorY": 31
+  },
+  {
     "key": "props/oak_0",
     "group": "props",
     "width": 34,
@@ -710,6 +702,54 @@
     "height": 38,
     "anchorX": 15,
     "anchorY": 34
+  },
+  {
+    "key": "props/wheat_0",
+    "group": "props",
+    "width": 53.5,
+    "height": 28.75,
+    "anchorX": 27,
+    "anchorY": 16
+  },
+  {
+    "key": "props/wheat_1",
+    "group": "props",
+    "width": 54,
+    "height": 30,
+    "anchorX": 27,
+    "anchorY": 16
+  },
+  {
+    "key": "props/wheat_2",
+    "group": "props",
+    "width": 53.75,
+    "height": 30.25,
+    "anchorX": 27,
+    "anchorY": 16
+  },
+  {
+    "key": "props/willow_0",
+    "group": "props",
+    "width": 35,
+    "height": 30.75,
+    "anchorX": 17,
+    "anchorY": 27
+  },
+  {
+    "key": "props/willow_1",
+    "group": "props",
+    "width": 43.25,
+    "height": 36,
+    "anchorX": 22,
+    "anchorY": 32
+  },
+  {
+    "key": "props/willow_2",
+    "group": "props",
+    "width": 49.25,
+    "height": 40,
+    "anchorX": 25,
+    "anchorY": 36
   },
   {
     "key": "rolling/bogie3_f0",
@@ -22280,6 +22320,38 @@
     "anchorY": 14
   },
   {
+    "key": "track/level_crossing_narrow_0",
+    "group": "track",
+    "width": 22,
+    "height": 11,
+    "anchorX": 11,
+    "anchorY": 6
+  },
+  {
+    "key": "track/level_crossing_narrow_1",
+    "group": "track",
+    "width": 22,
+    "height": 11,
+    "anchorX": 11,
+    "anchorY": 6
+  },
+  {
+    "key": "track/level_crossing_regular_0",
+    "group": "track",
+    "width": 27,
+    "height": 13.5,
+    "anchorX": 14,
+    "anchorY": 7
+  },
+  {
+    "key": "track/level_crossing_regular_1",
+    "group": "track",
+    "width": 27,
+    "height": 13.5,
+    "anchorX": 14,
+    "anchorY": 7
+  },
+  {
     "key": "track/straight_high_speed_0",
     "group": "track",
     "width": 58,
@@ -22710,5 +22782,645 @@
     "height": 30,
     "anchorX": 29,
     "anchorY": 15
+  },
+  {
+    "key": "fx/headwater_f0",
+    "group": "fx",
+    "width": 8,
+    "height": 4,
+    "anchorX": 4,
+    "anchorY": 2
+  },
+  {
+    "key": "fx/headwater_f1",
+    "group": "fx",
+    "width": 12,
+    "height": 6,
+    "anchorX": 6,
+    "anchorY": 3
+  },
+  {
+    "key": "fx/headwater_f2",
+    "group": "fx",
+    "width": 16,
+    "height": 8,
+    "anchorX": 8,
+    "anchorY": 4
+  },
+  {
+    "key": "fx/headwater_f3",
+    "group": "fx",
+    "width": 20,
+    "height": 10,
+    "anchorX": 10,
+    "anchorY": 5
+  },
+  {
+    "key": "terrain/beach_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/beach_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/beach_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/beach_3",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/glacier_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/glacier_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/glacier_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/glacier_3",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/river_0_f0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/river_0_f1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/river_0_f2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/river_0_f3",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/river_1_f0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/river_1_f1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/river_1_f2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/river_1_f3",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/river_2_f0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/river_2_f1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/river_2_f2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/river_2_f3",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_e_1_0",
+    "group": "terrain",
+    "width": 63,
+    "height": 41,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_e_1_1",
+    "group": "terrain",
+    "width": 63,
+    "height": 41,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_e_1_2",
+    "group": "terrain",
+    "width": 63,
+    "height": 41,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_e_2_0",
+    "group": "terrain",
+    "width": 63,
+    "height": 51,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_e_2_1",
+    "group": "terrain",
+    "width": 63,
+    "height": 51,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_e_2_2",
+    "group": "terrain",
+    "width": 63,
+    "height": 51,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_e_3_0",
+    "group": "terrain",
+    "width": 63,
+    "height": 61,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_e_3_1",
+    "group": "terrain",
+    "width": 63,
+    "height": 61,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_e_3_2",
+    "group": "terrain",
+    "width": 63,
+    "height": 61,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_e_4_0",
+    "group": "terrain",
+    "width": 63,
+    "height": 71,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_e_4_1",
+    "group": "terrain",
+    "width": 63,
+    "height": 71,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_e_4_2",
+    "group": "terrain",
+    "width": 63,
+    "height": 71,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_n_1_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_n_1_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_n_1_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_n_2_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_n_2_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_n_2_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_n_3_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_n_3_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_n_3_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_n_4_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_n_4_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_n_4_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_s_1_0",
+    "group": "terrain",
+    "width": 63,
+    "height": 40,
+    "anchorX": 32,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_s_1_1",
+    "group": "terrain",
+    "width": 63,
+    "height": 40,
+    "anchorX": 32,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_s_1_2",
+    "group": "terrain",
+    "width": 63,
+    "height": 40,
+    "anchorX": 32,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_s_2_0",
+    "group": "terrain",
+    "width": 63,
+    "height": 50,
+    "anchorX": 32,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_s_2_1",
+    "group": "terrain",
+    "width": 63,
+    "height": 50,
+    "anchorX": 32,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_s_2_2",
+    "group": "terrain",
+    "width": 63,
+    "height": 50,
+    "anchorX": 32,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_s_3_0",
+    "group": "terrain",
+    "width": 63,
+    "height": 60,
+    "anchorX": 32,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_s_3_1",
+    "group": "terrain",
+    "width": 63,
+    "height": 60,
+    "anchorX": 32,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_s_3_2",
+    "group": "terrain",
+    "width": 63,
+    "height": 60,
+    "anchorX": 32,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_s_4_0",
+    "group": "terrain",
+    "width": 63,
+    "height": 70,
+    "anchorX": 32,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_s_4_1",
+    "group": "terrain",
+    "width": 63,
+    "height": 70,
+    "anchorX": 32,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_s_4_2",
+    "group": "terrain",
+    "width": 63,
+    "height": 70,
+    "anchorX": 32,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_w_1_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_w_1_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_w_1_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_w_2_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_w_2_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_w_2_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_w_3_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_w_3_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_w_3_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_w_4_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_w_4_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/waterfall_w_4_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/moraine_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/moraine_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/moraine_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/moraine_3",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/snow_0",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/snow_1",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/snow_2",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
+  },
+  {
+    "key": "terrain/snow_3",
+    "group": "terrain",
+    "width": 62,
+    "height": 32,
+    "anchorX": 31,
+    "anchorY": 16
   }
 ]

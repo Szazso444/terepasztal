@@ -34,14 +34,19 @@ export function locoFrame(
   ];
   return tries.find((t) => atlas.has(t)) ?? tries[tries.length - 1];
 }
-/** Wagon frame: the wagon's own rendered sprite (`wagon_<id>_…`), then body/size/paint with fallbacks. */
+/**
+ * Wagon frame: the wagon's own rendered model (`wagon_<id>_<part>_f<n>`), its own single sprite
+ * (`wagon_<id>_f<n>`), then body/size/paint with fallbacks.
+ */
 export function wagonFrame(
   atlas: Pick<AtlasRegistry, 'has'>,
   def: WagonDef,
   facing: number,
+  part: PartKind = 'body',
 ): string {
   const size = `${def.size ?? 'small'}${gaugeTag(def)}`;
   const tries = [
+    `rolling/wagon_${def.id}_${part}_f${facing}`,
     `rolling/wagon_${def.id}_f${facing}`,
     `rolling/wagon_${def.body}_${size}_${def.paint}_f${facing}`,
     `rolling/wagon_${def.body}_${size}_iron_f${facing}`,
@@ -49,6 +54,18 @@ export function wagonFrame(
     `rolling/wagon_flat_small_wood_f${facing}`,
   ];
   return tries.find((t) => atlas.has(t)) ?? tries[tries.length - 1];
+}
+/**
+ * The stem of a vehicle's own rendered sprites (`rolling/loco_<id>`, `rolling/wagon_<id>`), or null
+ * when it has none. An engine's own frames are always looked up by its id (as they always were); a
+ * wagon has them only once a rendered model is installed for it (gear.json + locoFit.json, `sprite`).
+ */
+export function ownModelStem(
+  kind: 'loco' | 'wagon',
+  def: { id: string; spriteGear?: boolean },
+): string | null {
+  if (kind === 'loco') return `rolling/loco_${def.id}`;
+  return def.spriteGear ? `rolling/wagon_${def.id}` : null;
 }
 /** The style of the bogie at `index` under `part`, counted from the part's own front. */
 export function bogieStyleOf(
@@ -72,6 +89,22 @@ export function bogieFrame(
   if (own && atlas.has(own)) return own;
   const thin = `rolling/${kind}_n_f${facing}`;
   return narrow && atlas.has(thin) ? thin : `rolling/${kind}_f${facing}`;
+}
+/**
+ * The frame of a building turned to rotation `rot` (taken mod 4, negative values too). `key` is
+ * the frame the game asks for unturned; a depot's and a long station's already carries
+ * `_r<rot % 2>`. Rotation 0 is `key` itself; any other is `${key}_r${rot}` when the atlas has
+ * it, else `key`, so a building without a turned picture keeps its usual one.
+ */
+export function structureFrame(
+  atlas: { has(key: string): boolean },
+  key: string,
+  rot: number,
+): string {
+  const r = ((rot % 4) + 4) % 4;
+  if (r === 0) return key;
+  const turned = `${key}_r${r}`;
+  return atlas.has(turned) ? turned : key;
 }
 /** The cargo overlay frame; narrow wagons have their own, smaller heaps and crates. */
 export function loadFrame(kind: string, facing: number, narrow: boolean) {

@@ -1,0 +1,106 @@
+{
+  "view": 2,
+  "picture": "windmill-a0-r2.png",
+  "size": [1254, 1254],
+  "box": [395, 414, 868, 1096],
+  "footCentre": [629, 978.75],
+  "footWidth": 469,
+  "footWidthR0": 415,
+  "hub": [831, 468],
+  "hubFromAnchorWorld": [18.51594882729211, -50.81693496801706],
+  "hubTarget": [16, -50],
+  "stubSlope": 0.5151515151515151,
+  "door": null,
+  "apexTip": 451,
+  "numbers": {
+    "returned": [1254, 1254],
+    "box": [395, 414, 868, 1096],
+    "footWidth": 469,
+    "footCentre": [629, 978.75],
+    "scale": 10.909513840428007,
+    "widthOverShort": 0.3740031897926635,
+    "camera": {
+      "off": false,
+      "by": 1.8,
+      "elevation": -1.8,
+      "turn": 0,
+      "ratio": 0.473,
+      "looking": 28.2
+    },
+    "apexOverW": 1.1252665245202558,
+    "stubSlope": 0.5151515151515151,
+    "stubDirectionPass": true,
+    "stubSpan": 74.24284477308234,
+    "hubTarget": [16, -50],
+    "hubFromAnchorWorld": [18.51594882729211, -50.81693496801706],
+    "hubOffset": [2.5159488272921102, -0.8169349680170583],
+    "hubDistance": 2.6452563663134008,
+    "doorPosition": null,
+    "doorHeight": null,
+    "pixels": {
+      "timber": 19,
+      "white": 3843,
+      "amber": 0
+    },
+    "check": {
+      "ok": true,
+      "problems": [],
+      "notes": ["placed by its outline: no straight wall base was found"],
+      "fit": {
+        "method": "outline",
+        "sure": [false, false],
+        "measured": [0.5, -0.5],
+        "slopes": [0.5, -0.5],
+        "base": {
+          "w": [395, 1028.5],
+          "s": [629.5, 1145.8],
+          "e": [863, 1029]
+        },
+        "scale": 0.9627,
+        "vertical": 1,
+        "shear": 0,
+        "cx": 629,
+        "cy": 1028.8,
+        "box": {
+          "left": 286.7,
+          "top": 240.2,
+          "right": 742.1,
+          "bottom": 896.7
+        },
+        "camera": null,
+        "area": 232745
+      }
+    },
+    "tests": {
+      "camera": true,
+      "tower": true,
+      "stub": true,
+      "hub": false,
+      "doorPosition": true,
+      "doorHeight": true,
+      "timber": true,
+      "amber": true,
+      "white": false,
+      "check": true,
+      "eye": true,
+      "position": true
+    },
+    "eye": {
+      "view": 2,
+      "apexTip": 451,
+      "stub": [
+        [719, 505],
+        [785, 471]
+      ],
+      "hub": [831, 468],
+      "hubBox": [790, 414, 872, 522],
+      "door": null,
+      "noDoorWindow": true,
+      "pass": true,
+      "notes": "Plain round smooth stone tower, slate cone/plain tip, no door/window on visible faces, rear stub root hidden by cap and complete plate above-right; left lighter than right; no sails/plinth/ground/objects."
+    }
+  },
+  "kept": false,
+  "closestAttempt": 3,
+  "failed": "hub distance2.645256>2game px; near-white3843 not sole miss"
+}

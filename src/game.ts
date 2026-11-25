@@ -1,24 +1,37 @@
 import { Application, Sprite, extensions, CullerPlugin } from 'pixi.js';
 import { AtlasRegistry } from './engine/atlas';
+import { browserAtlasCache } from './engine/atlasCache';
+import type { BootProgressHook } from './engine/boot';
 import { Camera, ZOOM_STEPS } from './engine/camera';
 import { Input } from './engine/input';
-import { GameLoop } from './engine/loop';
+import { GameLoop, type LoopPhase } from './engine/loop';
+import { AutosavePause } from './engine/autosavePause';
+import { bridgeTilesTouched } from './engine/bridgeRefresh';
+import { applyTileRepairs, repairBuiltRoads, repairBuiltTiles } from './engine/loadRepair';
+import {
+  BrokenNumberWarning,
+  StorageRefusalWarning,
+  saveOutcome,
+  type SaveOutcome,
+} from './engine/saveRefusal';
+import {
+  afterPurchase,
+  groundAfterLoad,
+  loadStoresGround,
+  purchaseGrows,
+  type Said,
+} from './engine/saveMessages';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
-import { generateMap } from './world/mapgen';
 import { mapFromLevel, type LevelData } from './world/level';
-import { rules, setRules, daySeconds } from './sim/rules';
+import { rules, applyGameRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
-import { ageStatus, LAST_AGE, type AgeSnapshot } from './sim/ages';
+import { ageDef, LAST_AGE, railAge, type AgeSnapshot } from './sim/ages';
 import { setIntentAndReload, testingLevel, setTestingLevel } from './intent';
-import { rulesDiffer } from './sim/rules';
-import { contentIsCustom } from './data/content';
-import { MainMenu, PauseMenu } from './ui/menu';
 import { Editor } from './editor/editor';
 import { EditorPanel } from './ui/editorPanel';
 import {
-  listLevels,
-  deleteLevel,
+  deleteLevel as dropLevel,
   saveLevel,
   isLevel,
   type LevelData as LevelRecord,
@@ -28,36 +41,43 @@ import { decorateProps, placeOilFields } from './world/mapgen';
 import { Terrain as TerrainEnum } from './world/tiles';
 import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
-import { levelAt } from './world/elevation';
 import { climbAxes, railProfile } from './world/railProfile';
+import { groundAllowsOn } from './world/slope';
 import { RegionState } from './world/regions';
-import { WorldRenderer } from './render/worldRenderer';
+import { WorldRenderer, type TexturedBridge } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
-import { GameClock } from './sim/time';
-import { Hud } from './ui/hud';
-import { Minimap } from './ui/minimap';
-import { DebugPanel } from './ui/debug';
-import { Tooltip } from './ui/tooltip';
-import { el } from './ui/dom';
+import { GameClock, SIM_STEP } from './sim/time';
+import { Tooltip, type TipBuild } from './ui/tooltip';
+import { tipKey, type TipTarget } from './ui/tooltipStack';
+import { tipBuild } from './ui/tooltipRender';
+import type { TipDoc } from './ui/tooltipDoc';
+import {
+  chunkTip,
+  pickTip,
+  stationTip,
+  trainTip,
+  worksTip,
+  type PickSnapshot,
+  type StationSnapshot,
+  type TrainSnapshot,
+  type WorksSnapshot,
+} from './ui/tooltipContent';
+import { tileTip, type TileSnapshot } from './ui/tileTooltip';
 import { STR } from './strings';
-import { TrackGraph } from './world/track';
+import { content, sourceContent } from './data/content';
+import { TrackGraph, liftLegacyTrack } from './world/track';
 import { Builder } from './sim/build';
 import { Economy } from './sim/economy';
-import { Toolbar, type Tool } from './ui/toolbar';
-import { StationPanel } from './ui/stationPanel';
 import { BuildController } from './ui/buildController';
 import { Toasts } from './ui/toast';
 import { Inventory } from './gacha/inventory';
 import { Fleet } from './sim/fleet';
 import { TrainRenderer } from './render/trainRenderer';
+import { FollowCamera } from './ui/followCamera';
 import { ScreenManager } from './ui/modal';
-import { DepotScreen } from './ui/depot';
-import { btn } from './ui/dom';
 import type { Train } from './sim/trains';
 import { defaultStop as defaultStopFor } from './sim/trains';
-import { ContractBoard } from './sim/contracts';
-import { ContractsScreen } from './ui/contractsScreen';
-import { ContractsSide } from './ui/contractsSide';
+import { ContractBoard, contractTitle } from './sim/contracts';
 import { Rng } from './engine/rng';
 import { DayNight, Glows, Smoke, GroundLights, Rain, Fog, nightness } from './render/fx';
 import {
@@ -71,174 +91,165 @@ import {
   type Season,
 } from './sim/weather';
 import { decorOffset, type Decor } from './sim/build';
+import { wrapRotation } from './sim/rotation';
 import { SEMAPHORE_STEPS, semaphoreFrame } from './art/structures';
-import { validateBanners } from './gacha/gacha';
-import { Dir, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
-import { audio, sfx } from './engine/audio';
-import { SettingsScreen } from './ui/settingsScreen';
-import { TuningScreen } from './ui/tuningScreen';
-import { ContentScreen } from './ui/contentScreen';
+import { Dir, DIRS, DIR_DX, DIR_DY, depthKey as depthKeyFor } from './engine/iso';
+import { audio, sfx, silently } from './engine/audio';
+import { heardVolumes } from './engine/audioGroups';
 import {
   SAVE_VERSION,
+  buildSave,
+  importSave as importSaveText,
   readSave,
-  parseSave,
   writeSave,
   clearSave,
-  listSlots,
   writeSlot,
   readSlot,
-  deleteSlot,
+  deleteSlot as dropSlot,
   KNOWN_SAVE_KEYS,
-  DEFAULT_SETTINGS,
+  firstNonFinite,
   readSettings,
   writeSettings,
   contractPolicyFor,
-  uniformContractPolicy,
-  CONTRACT_RARITIES,
   convertOneTileRegular,
   type SaveGame,
+  type SaveRefusal,
   type Settings,
 } from './sim/save';
+import { pruneUnknownContent, type PruneReport } from './sim/saveContent';
 import { ContractDispatcher } from './sim/contractDispatch';
-import { Station, resetStationIds, stationFootprint } from './sim/stations';
-import { scaleCost as scaleCostOf } from './sim/stockpile';
+import { Station, resetStationIds, stationSpan, weeklyOutput } from './sim/stations';
+import { ensureStartDepot, startDepotKind } from './sim/startDepot';
 import { TradeDesk } from './sim/trade';
 import { TownRegistry, TOWN_RADIUS, TOWN_COLORS, type Town } from './sim/towns';
 import { NamePrompt } from './ui/namePrompt';
-import { TownPanel } from './ui/townPanel';
 import { Train as TrainClass, resetTrainIds } from './sim/trains';
-import { footprintOf, pieceFrame, pieceCost, type TrackKind } from './world/track';
+import { pieceFrame } from './world/track';
 import { cargoDef } from './sim/cargo';
 import { fmtMoney } from './ui/dom';
-import { Gacha } from './gacha/gacha';
-import { GachaScreen } from './ui/gachaScreen';
-import { RosterScreen } from './ui/rosterScreen';
 import { Crafting } from './gacha/crafting';
-import { CraftingScreen } from './ui/craftingScreen';
-import { Stockpile, RESOURCE_IDS } from './sim/stockpile';
-import { showSignalGuide } from './ui/signalGuide';
+import { StoreRegistry, RESOURCE_IDS, type ResourceStore } from './sim/stores';
 import { cityTiles } from './sim/city';
 import { bridgeSpan } from './sim/bridges';
-import { tickBuildings, buildingDef, buildingFrame, type Building } from './sim/buildings';
+import {
+  buildingDef,
+  buildingFrame,
+  buildingFromJSON,
+  buildingFromLevel,
+  buildingSpan,
+  buildingRecipe,
+  buildingToJSON,
+  type Building,
+} from './sim/buildings';
 import { PowerGrid } from './sim/power';
-import { TrainScreen } from './ui/trainScreen';
-import { MarketScreen } from './ui/marketScreen';
-import { ResourceBar } from './ui/resourceBar';
 import { BuildingPanel } from './ui/buildingPanel';
-import { TrainSide } from './ui/trainSide';
-import { BuildInfo } from './ui/buildInfo';
 import { Floaters } from './render/floaters';
+import { Halos } from './render/halo';
+import { WorkBars } from './render/workBars';
+import { hoursLeft, type Upgraded } from './sim/upgrade';
+import type { ReclassDir } from './world/reclass';
 import { PowerLines } from './render/powerLines';
 import { buildingDef as buildingDefOf } from './sim/buildings';
 import { Notices, type Notice } from './sim/notices';
-import { NoticePanel } from './ui/noticePanel';
-import { Advisor, type Tip } from './ui/advisor';
-import { resourceStats } from './sim/stats';
-import { locoFrame } from './art/frames';
+import { alertOn } from './sim/alerts';
+import type { Tip } from './ui/advisor';
+import { locoFrame, structureFrame } from './art/frames';
 import { DRAWN_FACINGS, mirrorFacing, vehicleSpec } from './sim/body';
-import { buildCompatTable, withoutInCab } from './sim/compat';
 import { Catenary, type SupplyKind } from './sim/catenary';
-import { biomeDef, biomeAt, biomeSummary } from './sim/biomes';
+import { biomeDef, biomeAt } from './sim/biomes';
 import { decorDef as decorDefOf } from './sim/build';
 import { HouseRegistry } from './sim/houses';
 import { PeopleSim } from './sim/people';
 import { expandSave, ownsBorderChunk } from './sim/expand';
+import { generatorOf, groundOf } from './sim/ground';
 import { DecorPanel } from './ui/decorPanel';
 import { PeopleRenderer } from './render/peopleRenderer';
+import { SimStep, startStock, eaters, ageSnapshot as ageSnapshotOf } from './sim/step';
+import { Commands } from './sim/commands';
+import { createPlayUi, confirmReplaceSave, type PlayUi, type UiHost } from './ui/panels';
+import { handlePlayKeys } from './ui/keymap';
 
-/**
- * Starting stockpile for a brand-new game, before `rules.startStock` scaling. Wood, stone and
- * iron are derived from the track cost matrix (spec §16): about fifty straights, a handful of
- * curves and a switch, plus the crafting of one locomotive and four wagons, and are multiplied
- * by `rules.startingResourceScale`.
- */
-function startStock(): Record<string, number> {
-  const piece = (kind: TrackKind, n: number) => {
-    const c = pieceCost(kind, 'regular');
-    return { wood: (c.wood ?? 0) * n, stone: (c.stone ?? 0) * n, iron: (c.iron ?? 0) * n };
-  };
-  const parts = [piece('straight', 50), piece('curve', 6), piece('switch', 1)];
-  // crafting one locomotive and four wagons (see src/data/crafting.json when present)
-  const craft = { wood: 40, stone: 10, iron: 30 };
-  const sum = (k: 'wood' | 'stone' | 'iron') => parts.reduce((a, p) => a + p[k], 0) + craft[k];
-  const s = rules.startingResourceScale;
-  return {
-    wood: Math.round(sum('wood') * s),
-    stone: Math.round(sum('stone') * s),
-    iron: Math.round(sum('iron') * s),
-    water: 600,
-    wheat: 300,
-    food: 600,
-    coal: 240,
-  };
-}
-
-const SIM_HZ = 20;
+/** Loop ticks per real second: one tick runs `clock.speed` steps of SIM_STEP game seconds. */
+const SIM_HZ = 1 / SIM_STEP;
 const EDGE_MARGIN = 14;
+/** Over the HUD only the very edge pans, so the top bar's buttons can be reached. */
+const EDGE_MARGIN_HUD = 2;
 const PAN_SPEED = 900; // screen px / s at zoom 1
 const TRANSITION_MS = 300;
+/** Relaid track pieces that start their shimmer in one frame; a long stroke's others follow. */
+const PIECE_HALOS_PER_FRAME = 12;
+/** real seconds a "train arrived" notice lasts, for the player who turned that row on */
+const ARRIVAL_NOTICE_TTL = 15;
 
-/** Top-level orchestrator: owns renderer, camera, sim clock, UI and the RTS/overview state machine. */
-export class Game {
+/** What the pointer is on, for the tooltip stack: its target, and its content made when asked. */
+interface HoverTip {
+  target: TipTarget;
+  doc: () => TipDoc;
+}
+/** The targets whose tooltips change while they are up: storage, a works' status, a train's trip. */
+const LIVE_TIPS: ReadonlySet<TipTarget['kind']> = new Set(['station', 'works', 'train']);
+
+/**
+ * Top-level orchestrator: owns renderer, camera, sim clock and the RTS/overview state machine. The
+ * panels, menus and hotkeys are src/ui's (`createPlayUi`, `handlePlayKeys`); the game is their host.
+ */
+export class Game implements UiHost {
   app!: Application;
-  atlas = new AtlasRegistry();
+  /** generated groups come from the cache this build and content bundle drew them into last boot */
+  atlas = new AtlasRegistry(undefined, undefined, browserAtlasCache(sourceContent));
   /** The sound bus, reachable from `window.game` for the debug panel and the art/audio scripts. */
   readonly audio = audio;
   input!: Input;
   camera = new Camera();
   clock = new GameClock();
+  /**
+   * One simulation step over this game's domains (src/sim/step.ts), read at each run so it can be
+   * built before init. Its `lastDay` travels with the save.
+   */
+  readonly sim = new SimStep(this, {
+    refreshCity: () => this.refreshCity(),
+    season: () => this.applySeason(),
+  });
   map!: GameMap;
   regions!: RegionState;
   world!: WorldRenderer;
   overview!: OverviewRenderer;
-  hud!: Hud;
-  minimap!: Minimap;
-  debug!: DebugPanel;
   tooltip = new Tooltip();
   loop!: GameLoop;
   seed: number;
   economy = new Economy();
   track!: TrackGraph;
   builder!: Builder;
-  toolbar!: Toolbar;
-  stationPanel!: StationPanel;
   build!: BuildController;
   toasts = new Toasts();
   inventory = new Inventory();
   fleet!: Fleet;
   trainRenderer!: TrainRenderer;
   screens = new ScreenManager();
-  depot!: DepotScreen;
   contracts!: ContractBoard;
   /** hands accepted contracts to trains */
   contractJobs!: ContractDispatcher;
-  contractsScreen!: ContractsScreen;
-  contractsSide!: ContractsSide;
-  gacha!: Gacha;
-  gachaScreen!: GachaScreen;
-  rosterScreen!: RosterScreen;
   crafting!: Crafting;
-  craftingScreen!: CraftingScreen;
-  stock = new Stockpile();
+  /** every town's, depot's and warehouse's goods; building pays from them */
+  stores = new StoreRegistry();
   power!: PowerGrid;
-  trainScreen!: TrainScreen;
-  marketScreen!: MarketScreen;
-  resourceBar!: ResourceBar;
-  buildingPanel!: BuildingPanel;
-  decorPanel!: DecorPanel;
   houses!: HouseRegistry;
   /** overview: train picked with a click, and a route being recorded for it */
   private ovSelected: number | null = null;
   private recording: { trainId: number; stops: number[] } | null = null;
-  trainSide!: TrainSide;
-  buildInfo!: BuildInfo;
+  /** a route is being recorded for the train picked in the overview */
+  get recordingRoute() {
+    return this.recording !== null;
+  }
+  /** the train picked in the overview */
+  get overviewTrainId() {
+    return this.ovSelected;
+  }
   floaters!: Floaters;
   powerLines!: PowerLines;
   notices = new Notices();
   people!: PeopleSim;
   peopleRenderer!: PeopleRenderer;
-  noticePanel!: NoticePanel;
-  advisor!: Advisor;
   private noticeTimer = 0;
   private noticeMarkers = new Set<string>();
   private lastFailedContract = '';
@@ -246,19 +257,34 @@ export class Game {
   /** train under the cursor in the field view, and the one picked with a click */
   private fieldHover: Train | null = null;
   private fieldSelected: Train | null = null;
+  /** the train the camera stays on */
+  readonly follow = new FollowCamera();
+  /** the seconds each stuck train has stood, as the last look at the notices found them */
+  private stuckNow = new Map<number, number>();
   private spawnMarkTimer = 0;
   private pathHighlight: { x: number; y: number }[][] = [];
   private pathTimer = 0;
-  private lastDay = 1;
   settings: Settings = readSettings();
-  settingsScreen!: SettingsScreen;
-  tuningScreen!: TuningScreen;
-  contentScreen!: ContentScreen;
   dayNight = new DayNight();
   glows!: Glows;
   smoke!: Smoke;
+  /** the halo over whatever finished an upgrade, and the shimmer along track relaid as high speed */
+  halos!: Halos;
+  /** a bar over each building being upgraded */
+  workBars!: WorkBars;
+  /** relaid pieces (their footprints) waiting for their shimmer to start */
+  private pieceHalos: { x: number; y: number; w: number; h: number }[] = [];
   private autosaveTimer = 0;
-  private savedAt: number | null = null;
+  /** the stored save was just replaced and the page is reloading into it: do not save over it */
+  private keepStoredSave = false;
+  /** a loop error stops the game storing itself for the rest of the page's life */
+  private readonly autosavePause = new AutosavePause();
+  /** a stretch of saves refused for a broken number warns once (`saveRefusal.ts`) */
+  private readonly brokenNumberWarning = new BrokenNumberWarning();
+  /** and a stretch of saves refused by storage warns once, with its own text */
+  private readonly storageRefusalWarning = new StorageRefusalWarning();
+  /** when the stored game was last written, for the settings screen */
+  savedAt: number | null = null;
   weather!: Weather;
   groundLights!: GroundLights;
   rain!: Rain;
@@ -269,13 +295,22 @@ export class Game {
   private aspectTimer = 0;
   private bobTime = 0;
   private panelRefresh = 0;
+  /** the tile an alert panned the overview to; null while it shows the whole map */
+  private overviewFocus: { x: number; y: number } | null = null;
   /** 0 = RTS view, 1 = overview. Animated. */
   viewBlend = 0;
   viewTarget: 0 | 1 = 0;
   private cursor!: Sprite;
   private hoverTile = { x: -1, y: -1 };
+  /** the station, works or train the tooltip root stands for, rebuilt while it is up (#361) */
+  private tipLive: { key: string; build: TipBuild } | null = null;
+  /** what was up at the last frame: a tool taken up, a screen or a menu opening closes the tooltips */
+  private tipsSaw: { tool: boolean; screen: object | null; menu: boolean } = {
+    tool: false,
+    screen: null,
+    menu: false,
+  };
   private uiRoot: HTMLElement;
-  private overviewBanner!: HTMLElement;
   private depthOverlay = false;
   private overviewSource: OverviewSource = {
     trackTiles: () => this.trackTilesForOverview(),
@@ -293,7 +328,7 @@ export class Game {
             : s.def.id === 'town'
               ? ('town' as const)
               : ('other' as const),
-        fill: s.def.stockpile ? s.totalStored() / Math.max(1, s.capacity) : undefined,
+        fill: s.def.stockpile ? s.fill() : undefined,
         color:
           s.def.id === 'town'
             ? TOWN_COLORS[(this.towns.byStation(s.id)?.color ?? 0) % TOWN_COLORS.length]
@@ -337,7 +372,7 @@ export class Game {
           flip: !DRAWN_FACINGS.has(t.facingOf(0, t.poses[0])),
         })),
     markers: () =>
-      this.notices.list
+      this.pinnedNotices()
         .map((n) => {
           const p = this.noticePos(n);
           return p ? { x: p.x, y: p.y, kind: n.kind } : null;
@@ -359,20 +394,113 @@ export class Game {
   };
 
   readonly spec: WorldSpec;
+  /** what building a generated world's map from its stored ground did; null for a level */
+  private ground: ReturnType<typeof groundOf> | null = null;
   /** play = normal game; editor = level editor (free building, paused clock) */
   mode: 'play' | 'editor' = 'play';
-  mainMenu!: MainMenu;
-  pauseMenu!: PauseMenu;
   editor: Editor | null = null;
   editorPanel: EditorPanel | null = null;
   towns!: TownRegistry;
   readonly trade = new TradeDesk();
-  private townPanel!: TownPanel;
   private namePrompt = new NamePrompt();
   private paused = false;
   private menuPausedSpeed = 0;
+  /**
+   * Set by the boot while the title screen it opened is up (`main.ts`): leaving that title for the
+   * game under it (its Continue) runs this once in place of starting the music, as the boot
+   * shows its loading screen over the game first and starts the music as that finishes.
+   */
+  onTitleContinue: (() => void) | null = null;
+  /** The panels, screens, menus and hotkeys of the game (src/ui/panels.ts), built in `init`. */
+  ui!: PlayUi;
+  /** What the panels change trains, stations, signals, trade and pulls through; one per game. */
+  commands!: Commands;
+  /** The title or the pause menu is up. */
   get menuOpen() {
-    return this.mainMenu.visible || this.pauseMenu.visible;
+    return this.ui.menuOpen;
+  }
+  /** A loop error has stopped the game storing itself until the page reloads. */
+  get autosavePaused() {
+    return this.autosavePause.paused;
+  }
+
+  // ---------------------------------------------------------------- the play UI's parts
+  // The panels belong to `ui`; these are the names the game has always had them under, which
+  // `window.game` and the browser scripts in scratchpad/ read.
+  get hud() {
+    return this.ui.hud;
+  }
+  get minimap() {
+    return this.ui.minimap;
+  }
+  get debug() {
+    return this.ui.debug;
+  }
+  get toolbar() {
+    return this.ui.toolbar;
+  }
+  get stationPanel() {
+    return this.ui.stationPanel;
+  }
+  get depot() {
+    return this.ui.depot;
+  }
+  get marketScreen() {
+    return this.ui.marketScreen;
+  }
+  get resourceBar() {
+    return this.ui.resourceBar;
+  }
+  get tuningScreen() {
+    return this.ui.tuningScreen;
+  }
+  get contentScreen() {
+    return this.ui.contentScreen;
+  }
+  get settingsScreen() {
+    return this.ui.settingsScreen;
+  }
+  get craftingScreen() {
+    return this.ui.craftingScreen;
+  }
+  get rosterScreen() {
+    return this.ui.rosterScreen;
+  }
+  get contractsScreen() {
+    return this.ui.contractsScreen;
+  }
+  get buildingPanel() {
+    return this.ui.buildingPanel;
+  }
+  get decorPanel() {
+    return this.ui.decorPanel;
+  }
+  get outliner() {
+    return this.ui.outliner;
+  }
+  get trainPanel() {
+    return this.ui.trainPanel;
+  }
+  get buildInfo() {
+    return this.ui.buildInfo;
+  }
+  get alerts() {
+    return this.ui.alerts;
+  }
+  get advisor() {
+    return this.ui.advisor;
+  }
+  get mainMenu() {
+    return this.ui.mainMenu;
+  }
+  get pauseMenu() {
+    return this.ui.pauseMenu;
+  }
+  private get townPanel() {
+    return this.ui.townPanel;
+  }
+  private get overviewBanner() {
+    return this.ui.overviewBanner;
   }
 
   constructor(spec: WorldSpec, supply?: SupplyMode) {
@@ -388,40 +516,44 @@ export class Game {
   }
   /** The live numbers the age goals are measured against. */
   ageSnapshot(): AgeSnapshot {
-    let wires = 0;
-    for (const e of this.catenary.entries()) if (this.catenary.isLive(e.x, e.y)) wires++;
-    return {
-      depots: this.builder.depotsOf('regular').length,
-      population: this.stock.population,
-      earned: this.economy.earned,
-      substations: this.catenary.substations.filter((s) => s.powered).length,
-      wires,
-    };
+    return ageSnapshotOf(this);
   }
-  /** game time of the next age-goal check (once per in-game hour) */
-  private nextAgeCheck = 0;
 
   /** Starting economy for a brand-new game, from the rules (or a level's start block). */
   startFresh(start?: LevelData['start']) {
+    this.commands.history.clear();
     // a new game begins at noon in the player's current season
     setSeasonOffset(seasonFromDate());
     this.clock.time = daySeconds() * 0.5;
     this.applySeason(true);
     this.economy.money = start ? start.money : rules.startMoney;
-    this.economy.tickets = start ? start.tickets : rules.startTickets;
-    const stockMul = start?.stockMul ?? 1;
-    for (const [id, n] of Object.entries(startStock()))
-      this.stock.add(id, Math.round(n * rules.startStock * stockMul));
     if (!start) {
-      const d = this.ensureDepot();
+      // the starter engines are narrow gauge, so the first depot is too (unless tuning bars it)
+      const d = this.ensureDepot(startDepotKind());
       if (d) {
         const p = tileToWorld(d.cx + 0.5, d.cy + 0.5);
         this.camera.centerOn(p.x, p.y);
       }
     }
+    // the start stock waits in the first store there is, whole, past its cap too: the start depot
+    // (a level's first depot), else the store of a level's first warehouse, else its first
+    // town's; a level with none of them gets the start depot a new game gets
+    const firstStore = () => {
+      const st = this.builder.depots()[0] ?? this.builder.stations.find((s) => s.def.stockpile);
+      const dock = st ? this.stores.dockOf(st) : null;
+      if (dock) return this.stores.byKey(dock.key);
+      return this.stores.all().find((s) => s.kind === 'town');
+    };
+    let store = firstStore();
+    if (!store && this.ensureDepot(startDepotKind())) store = firstStore();
+    const stockMul = start?.stockMul ?? 1;
+    if (store)
+      for (const [id, n] of Object.entries(startStock()))
+        store.amounts.set(id, store.get(id) + Math.round(n * rules.startStock * stockMul));
     if (start && start.tier > this.economy.tier) {
       this.economy.tier = Math.min(start.tier, LAST_AGE);
-      const newly = this.regions.applyTier(start.tier);
+      // the land opens with the rail age, which stops at Electric
+      const newly = this.regions.applyTier(railAge(start.tier));
       if (newly.length) {
         this.world.rebuildFog();
         this.overview.rebuildRegions();
@@ -429,15 +561,18 @@ export class Game {
       }
       this.toolbar.refresh();
     }
-    this.stock.beginFlowHistory();
+    this.stores.beginFlowHistory();
+    audio.setAge(ageDef(this.economy.tier).id);
   }
 
   /** Place a level's pre-built content into a fresh world (no economy). */
   placeLevelContent(level: LevelData) {
-    const track = level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track);
+    const track = liftLegacyTrack(
+      level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track),
+    );
     for (const [x, y, kind, rot, cls, cls2] of track) {
       if (!inBounds(this.map, x, y)) continue;
-      for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
+      for (const t of this.track.place(x, y, kind, rot, cls ?? 'branch', cls2))
         this.onTrackChanged(t.x, t.y);
     }
     for (const t of this.track.refreshSwitchForms()) this.onTrackChanged(t.x, t.y);
@@ -450,19 +585,21 @@ export class Game {
     }
     for (const [x, y, id, rot] of level.decor) {
       if (!inBounds(this.map, x, y)) continue;
-      const d: Decor = { id, x, y, rot };
+      const d: Decor = { id, x, y, rot: wrapRotation(rot) };
       this.builder.decor.set(y * this.map.w + x, d);
       this.onDecorChanged(d, false);
     }
     this.houses.finishAll();
-    for (const [x, y, id] of level.buildings ?? []) {
-      if (!inBounds(this.map, x, y)) continue;
-      const b: Building = { id, x, y, acc: 0, active: false, rate: 0 };
-      this.builder.buildings.set(y * this.map.w + x, b);
+    for (const bj of level.buildings ?? []) {
+      const b = buildingFromLevel(bj);
+      if (!inBounds(this.map, b.x, b.y)) continue;
+      this.builder.buildings.set(b.y * this.map.w + b.x, b);
       this.onBuildingChanged(b, false);
     }
     this.builder.refreshStationBoosts();
     this.builder.refreshHarvest();
+    // the stations went in past the builder: the stores are derived from them once
+    this.stores.refresh();
     for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
   }
   applyLevelStart(level: LevelData) {
@@ -471,81 +608,32 @@ export class Game {
   }
 
   // ---------------------------------------------------------------- menus
-  private pauseGame() {
+  /** Stop the clock while a menu is up, remembering its speed. */
+  pauseGame() {
     if (this.paused) return;
     this.paused = true;
     this.menuPausedSpeed = this.clock.speedIndex;
     this.clock.setSpeed(0);
   }
-  private resumeGame() {
+  /** The clock runs again at the speed it had (in a game; the editor stays stopped). */
+  resumeGame() {
+    const begin = this.onTitleContinue;
+    this.onTitleContinue = null;
+    // the title screen holds the music back; closing a menu lets it start, or the boot does
+    if (begin) begin();
+    else audio.startMusic();
     if (!this.paused) return;
     this.paused = false;
     if (this.mode === 'play') this.clock.setSpeed(this.menuPausedSpeed);
   }
   openMainMenu() {
-    this.pauseGame();
-    this.screens.close();
-    this.pauseMenu.hide();
-    this.build.setTool({ kind: 'none' });
-    this.mainMenu.show(!!readSave(), listLevels(), {
-      rules: rulesDiffer().length > 0,
-      content: contentIsCustom(),
-    });
+    this.ui.openMainMenu();
   }
   openPauseMenu() {
-    if (this.mainMenu.visible) return;
-    this.pauseGame();
-    this.screens.close();
-    this.pauseMenu.show({ testing: !!testingLevel(), editor: this.mode === 'editor' });
+    this.ui.openPauseMenu();
   }
   closeMenus() {
-    this.pauseMenu.hide();
-    this.mainMenu.hide();
-    this.resumeGame();
-  }
-  private confirmReplaceSave() {
-    return !readSave() || confirm(STR.menu.confirmReplace);
-  }
-  /** Named-save actions shared by the menus and the settings screen. */
-  private slotActions() {
-    return {
-      slots: () => listSlots(),
-      loadSlot: (name: string) => {
-        const j = readSlot(name);
-        if (!j) {
-          this.toasts.push(STR.settings.noSave, 'warn');
-          return;
-        }
-        if (this.mode === 'play' && !this.mainMenu.visible && !confirm(STR.menu.confirmLoad(name)))
-          return;
-        writeSave(j);
-        location.hash = `seed=${j.seed}`;
-        location.reload();
-      },
-      deleteSlot: (name: string) => {
-        deleteSlot(name);
-        this.toasts.push(STR.settings.slotDeleted(name), 'info');
-      },
-    };
-  }
-  saveSlot(name: string) {
-    const ok = writeSlot(name, this.snapshot());
-    this.toasts.push(
-      ok ? STR.settings.slotSaved(name) : STR.settings.saveFailed,
-      ok ? 'good' : 'warn',
-    );
-    return ok;
-  }
-  /** "Save as..." from the pause menu: asks for a name in the in-game dialog. */
-  private async promptSaveAs() {
-    const fallback = `${STR.menu.day(this.lastDay)} · ${this.seed}`;
-    const name = await this.namePrompt.ask(
-      STR.settings.saveAsTitle,
-      STR.settings.saveAsHint,
-      fallback,
-    );
-    if (!name) return;
-    if (this.saveSlot(name.slice(0, 32))) this.closeMenus();
+    this.ui.closeMenus();
   }
   /** Save plus traffic log for bug reports. */
   diagnostics() {
@@ -561,84 +649,158 @@ export class Game {
     const t = text.trim();
     return t ? (/^\d+$/.test(t) ? Number(t) : hashSeed(t)) : Math.floor(Math.random() * 2 ** 31);
   }
-  /** Music and effects volume for the menus: same settings the Settings screen edits. */
-  private audioActions() {
-    return {
-      volume: (key: 'music' | 'sfx') => this.settings[key],
-      setVolume: (key: 'music' | 'sfx', v: number) => {
-        this.settings[key] = v;
-        this.applySettings();
-      },
-    };
+
+  // ---------------------------------------------------------------- storage and reloads
+  /** Store the settings without applying them. */
+  saveSettings() {
+    writeSettings(this.settings);
   }
-  private buildMenus() {
-    this.mainMenu = new MainMenu({
-      ...this.slotActions(),
-      ...this.audioActions(),
-      continue: () => this.closeMenus(),
-      newGame: (seed, supply) => {
-        if (this.confirmReplaceSave()) this.newGame(seed, supply);
-      },
-      playLevel: (id) => {
-        if (!this.confirmReplaceSave()) return;
-        clearSave();
-        setTestingLevel(null);
-        setIntentAndReload({ action: 'play', levelId: id });
-      },
-      editLevel: (id) => setIntentAndReload({ action: 'edit', levelId: id }),
-      newLevel: (size, generated, seedText) =>
-        setIntentAndReload({
-          action: 'edit',
-          levelId: null,
-          blank: !generated,
-          size,
-          seed: this.parseSeed(seedText),
-        }),
-      deleteLevel: (id) => {
-        deleteLevel(id);
-        this.openMainMenu();
-      },
-      importLevel: (json) => {
-        try {
-          const l = JSON.parse(json) as LevelRecord;
-          if (!isLevel(l)) return false;
-          saveLevel(l);
-          this.openMainMenu();
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      exportLevel: (id) => JSON.stringify(listLevels().find((l) => l.id === id) ?? null),
-      tuning: () => this.screens.open(this.tuningScreen),
-      content: () => this.screens.open(this.contentScreen),
-      settings: () => this.screens.open(this.settingsScreen),
+  /**
+   * Store the game under a name and say so; false when it was refused: by storage, or because the
+   * game holds a broken number (`writeSlot`), and the toast says which.
+   */
+  saveSlot(name: string) {
+    const out = this.storeSnapshot(this.snapshot(), (s) => writeSlot(name, s));
+    this.brokenNumberWarning.note(out.kind);
+    this.storageRefusalWarning.note(out.kind);
+    this.saveToast(out, STR.settings.slotSaved(name));
+    return out.kind === 'stored';
+  }
+  /**
+   * Hand a snapshot to `store` and name what became of it. A refusal for a broken number logs the
+   * path of the first one, which the toast leaves out.
+   */
+  private storeSnapshot(snap: SaveGame, store: (s: SaveGame) => boolean): SaveOutcome {
+    const out = saveOutcome(store(snap), () => firstNonFinite(snap));
+    if (out.kind === 'broken number')
+      console.warn(`[save] refused: the game holds a non-finite number at ${out.path}`);
+    return out;
+  }
+  /** The toast for a save the player asked for: `stored` when it went through, else why not. */
+  private saveToast(out: SaveOutcome, stored: string) {
+    if (out.kind === 'stored') this.toasts.push(stored, 'good');
+    else
+      this.toasts.push(
+        out.kind === 'storage' ? STR.settings.saveFailed : STR.settings.saveBroken,
+        'warn',
+      );
+  }
+  /**
+   * Make a named save the stored game and reload into it; false when there is none. A save storage
+   * will not keep (full or blocked) is not loaded: it says so and the running game goes on, since
+   * reloading would land in the older stored save.
+   */
+  loadSlot(name: string) {
+    const j = readSlot(name);
+    if (!j) return false;
+    if (!writeSave(j)) {
+      this.toasts.push(STR.saves.refused.storage, 'warn');
+      return true;
+    }
+    this.reloadIntoStoredSave();
+    return true;
+  }
+  deleteSlot(name: string) {
+    dropSlot(name);
+  }
+  /** Reload into the stored game; false when there is none. */
+  loadSave() {
+    const j = readSave();
+    if (!j) return false;
+    this.reloadIntoStoredSave();
+    return true;
+  }
+  /** The game as save text. */
+  exportSave() {
+    return JSON.stringify(this.snapshot());
+  }
+  /**
+   * Store a save text the player brought and reload into it; a refused text changes nothing. The
+   * player's settings never come from a save.
+   */
+  importSave(json: string): { ok: true } | { ok: false; error: SaveRefusal } {
+    const read = importSaveText(json);
+    if (!read.ok) return read;
+    this.reloadIntoStoredSave();
+    return { ok: true };
+  }
+  /**
+   * The stored save was just replaced: reload straight into it, as Continue does. The running game
+   * must not save over it on its way out, neither in the unload handler nor in a frame of the
+   * minute autosave that runs while the page reloads.
+   */
+  private reloadIntoStoredSave() {
+    this.keepStoredSave = true;
+    this.loop.stop();
+    // nothing of the game being left stays up, nor opens while the page reloads
+    this.tooltip.stack.closeAll();
+    setIntentAndReload({ action: 'continue' });
+  }
+  /** Clear the stored game and play a level. */
+  playLevel(id: string) {
+    clearSave();
+    setTestingLevel(null);
+    setIntentAndReload({ action: 'play', levelId: id });
+  }
+  editLevel(id: string) {
+    setIntentAndReload({ action: 'edit', levelId: id });
+  }
+  /** Open the editor on a new level, blank or generated from a seed text. */
+  newLevel(size: number, generated: boolean, seedText: string) {
+    setIntentAndReload({
+      action: 'edit',
+      levelId: null,
+      blank: !generated,
+      size,
+      seed: this.parseSeed(seedText),
     });
-    this.pauseMenu = new PauseMenu({
-      ...this.slotActions(),
-      ...this.audioActions(),
-      resume: () => this.closeMenus(),
-      save: () => {
-        this.save();
-        this.closeMenus();
-      },
-      saveAs: () => void this.promptSaveAs(),
-      settings: () => this.screens.open(this.settingsScreen),
-      tuning: () => this.screens.open(this.tuningScreen),
-      content: () => this.screens.open(this.contentScreen),
-      backToEditor: () => {
-        const id = testingLevel();
-        setTestingLevel(null);
-        if (id) setIntentAndReload({ action: 'edit', levelId: id });
-      },
-      mainMenu: () => {
-        if (this.mode === 'editor') {
-          if (!this.editor?.dirty || confirm(STR.editor.unsaved))
-            setIntentAndReload({ action: 'menu' });
-        } else this.openMainMenu();
-      },
-    });
-    this.hud.onMenu = () => (this.menuOpen ? this.closeMenus() : this.openPauseMenu());
+  }
+  deleteLevel(id: string) {
+    dropLevel(id);
+  }
+  /** Store a level from its text; false when the text is not a level. */
+  importLevel(json: string) {
+    try {
+      const l = JSON.parse(json) as LevelRecord;
+      if (!isLevel(l)) return false;
+      // false when storage would not keep it, as when the text is no level
+      return saveLevel(l);
+    } catch {
+      return false;
+    }
+  }
+  /** Leave a play-test for the editor on the level being tested. */
+  backToEditor() {
+    const id = testingLevel();
+    setTestingLevel(null);
+    if (id) setIntentAndReload({ action: 'edit', levelId: id });
+  }
+  reloadToMenu() {
+    setIntentAndReload({ action: 'menu' });
+  }
+  /**
+   * The page again in the language just stored: a game just stored comes back as Continue brings
+   * it, the level editor on its level, the title as the title.
+   */
+  reloadInLanguage(playing: boolean) {
+    const level = this.editor?.level.id;
+    if (level) setIntentAndReload({ action: 'edit', levelId: level });
+    else if (playing) this.reloadIntoStoredSave();
+    else {
+      // the world under the title is no game: the way out does not store it as one
+      this.keepStoredSave = true;
+      this.reloadToMenu();
+    }
+  }
+  /**
+   * The debug panel's Regenerate: a new game on its seed text (a number, other text hashed, empty
+   * a random seed) in the running game's production chain. The new game replaces the stored one,
+   * so the running game is not written back on its way out, as in `reloadIntoStoredSave`.
+   */
+  regenerate(seedText: string) {
+    this.keepStoredSave = true;
+    this.loop.stop();
+    setIntentAndReload({ action: 'new', seed: this.parseSeed(seedText), supply: this.supply });
   }
 
   // ---------------------------------------------------------------- editor
@@ -664,15 +826,21 @@ export class Game {
         if (editor.save()) this.toasts.push(STR.editor.saved(editor.level.name), 'good');
         else this.toasts.push(STR.editor.saveFailed, 'warn');
       },
-      saveAs: () => {
-        const name = prompt(STR.editor.newName, editor.level.name);
-        if (name && name.trim() && editor.saveAs(name.trim().slice(0, 40))) {
+      saveAs: async () => {
+        // the in-game dialog: a browser prompt() stalls the loop and then lurches to catch up
+        const name = await this.namePrompt.ask(
+          STR.editor.saveAs,
+          STR.editor.newName,
+          editor.level.name,
+          40,
+        );
+        if (name && editor.saveAs(name.trim().slice(0, 40))) {
           this.toasts.push(STR.editor.saved(editor.level.name), 'good');
           this.editorPanel?.render();
         }
       },
-      playTest: () => {
-        if (!this.confirmReplaceSave()) return;
+      playTest: async () => {
+        if (!(await confirmReplaceSave(this.namePrompt))) return;
         if (!editor.save()) {
           this.toasts.push(STR.editor.saveFailed, 'warn');
           return;
@@ -681,8 +849,14 @@ export class Game {
         setTestingLevel(editor.level.id);
         setIntentAndReload({ action: 'play', levelId: editor.level.id, testing: true });
       },
-      exit: () => {
-        if (!editor.dirty || confirm(STR.editor.unsaved)) setIntentAndReload({ action: 'menu' });
+      exit: async () => {
+        const leave =
+          !editor.dirty ||
+          (await this.namePrompt.confirm(STR.editor.unsavedTitle, STR.editor.unsaved, {
+            yes: STR.prompt.leave,
+            danger: true,
+          }));
+        if (leave) setIntentAndReload({ action: 'menu' });
       },
       exportJson: () => JSON.stringify(editor.collect()),
       importJson: (json) => {
@@ -697,25 +871,36 @@ export class Game {
         }
       },
       fill: (t) => editor.fillAll(t),
-      regenerate: () => {
-        const v = prompt(STR.settings.seedPlaceholder, String(this.map.seed));
+      regenerate: async () => {
+        // an empty seed is a random one, so it is an answer here
+        const v = await this.namePrompt.ask(
+          STR.editor.regenerate,
+          STR.settings.seedPlaceholder,
+          String(this.map.seed),
+          200,
+          true,
+        );
         if (v === null) return;
         const seed = this.parseSeed(v);
-        const fresh = generateMapForEditor(seed, {
-          w: this.map.w,
-          h: this.map.h,
-          waterLevel: rules.waterLevel,
-          hillLevel: rules.hillLevel,
-          rockLevel: rules.rockLevel,
-          forestDensity: rules.forestDensity,
-        });
+        const fresh = generateMapForEditor(
+          seed,
+          {
+            w: this.map.w,
+            h: this.map.h,
+            waterLevel: rules.waterLevel,
+            hillLevel: rules.hillLevel,
+            rockLevel: rules.rockLevel,
+            forestDensity: rules.forestDensity,
+          },
+          this.supply,
+        );
         editor.fillAll(TerrainEnum.Grass);
         this.map.terrain.set(fresh.terrain);
         this.map.variant.set(fresh.variant);
         this.map.biome.set(fresh.biome);
         this.map.seed = seed;
         decorateProps(this.map, seed);
-        placeOilFields(this.map, seed);
+        placeOilFields(this.map, seed, this.supply);
         for (let y = 0; y < this.map.h; y++)
           for (let x = 0; x < this.map.w; x++) this.world.retile(x, y);
         editor.dirty = true;
@@ -725,7 +910,12 @@ export class Game {
     this.toasts.push(STR.editor.hint, 'info');
   }
 
-  async init() {
+  /**
+   * Build the game: the renderer, the pictures, the map and everything on it. `onProgress` hears
+   * how far each boot stage has got (`src/engine/boot.ts`) and is awaited at each stage's end, so
+   * a loading screen can paint its bar before the next stage holds the thread.
+   */
+  async init(onProgress?: BootProgressHook) {
     extensions.add(CullerPlugin);
     const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
     this.app = new Application();
@@ -745,13 +935,19 @@ export class Game {
       void import('@pixi/devtools').then((d) => d.initDevtools({ app: this.app }));
     canvas.tabIndex = 0;
     this.input = new Input(canvas);
-    await this.atlas.load(ATLAS_GROUPS);
-    buildCompatTable();
+    await this.atlas.load(
+      ATLAS_GROUPS,
+      (settled, total) => void onProgress?.('pictures', settled / total),
+    );
+    await onProgress?.('pictures', 1);
 
-    this.map =
-      this.spec.kind === 'level'
-        ? mapFromLevel(this.spec.level)
-        : generateMap(this.spec.seed, this.spec.params);
+    if (this.spec.kind === 'level') this.map = mapFromLevel(this.spec.level, this.supply);
+    else {
+      // a generated world's stored ground, the chunks it lacks generated with its chain and stored
+      this.ground = groundOf(this.spec, generatorOf(this.supply));
+      this.map = this.ground.map;
+    }
+    await onProgress?.('map', 1);
     this.regions = new RegionState(this.map, 0);
     this.camera.setMapSize(this.map.w, this.map.h);
     this.camera.viewW = this.app.screen.width;
@@ -760,51 +956,57 @@ export class Game {
     this.camera.centerOn(c.x, c.y);
 
     this.track = new TrackGraph(this.map.w, this.map.h);
-    this.builder = new Builder(this.map, this.regions, this.track, this.economy, this.stock);
+    this.builder = new Builder(this.map, this.regions, this.track, this.economy, this.stores);
     this.towns = new TownRegistry(this.builder);
-    this.houses = new HouseRegistry(this.builder, this.towns, this.stock);
+    this.stores.attach({ builder: this.builder, towns: this.towns, track: this.track });
+    this.houses = new HouseRegistry(this.builder, this.towns);
     this.towns.residentsAt = (x, y) => this.houses.residentsAt(x, y);
     this.houses.onMessage = (m, k) => this.toasts.push(m, k);
+    // a house is turned the way its decor piece was placed
     this.houses.onChanged = (h) =>
-      this.world.setStructure(`decor:${h.x},${h.y}`, h.x, h.y, this.houses.frame(h), 20);
+      this.world.setStructure(
+        `decor:${h.x},${h.y}`,
+        h.x,
+        h.y,
+        structureFrame(this.atlas, this.houses.frame(h), this.builder.decorAt(h.x, h.y)?.rot ?? 0),
+        20,
+      );
     this.builder.onIndustryPlaced = (x, y) => this.houses.industryPlaced(x, y);
     this.power = new PowerGrid(this.map);
     this.catenary = new Catenary(this.map);
     this.builder.catenary = this.catenary;
     this.builder.onSupplyChanged = (x, y) => this.onSupplyChanged(x, y);
-    this.stock.onMessage = (m, k) => this.toasts.push(m, k);
+    this.stores.onMessage = (m, k) => this.toasts.push(m, k);
     this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
-    this.builder.groundCheck = (x, y, need) => this.world.groundAllows(x, y, need);
+    this.builder.groundCheck = (x, y, need) => groundAllowsOn(this.map, x, y, need);
     this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
     this.builder.onDecorChanged = (d, removed) => this.onDecorChanged(d, removed);
     this.builder.onStationOrphaned = (s, orphaned) => this.onStationOrphaned(s, orphaned);
+    this.builder.onUpgraded = (e) => this.onUpgraded(e);
+    this.houses.onUpgraded = (e) => this.onUpgraded(e);
+    this.builder.onReclassed = (tiles, dir) => this.onReclassed(tiles, dir);
     this.weather = new Weather(new Rng(this.seed ^ 0x77ea));
-    validateBanners();
     this.economy.onMessage = (m, k) => this.toasts.push(m, k);
     this.economy.onAgeUp = (t) => this.onAgeUp(t);
     this.inventory.seedStarter(0);
-    this.fleet = new Fleet(
-      this.track,
-      this.builder,
-      this.map,
-      this.inventory,
-      this.economy,
-      this.stock,
-    );
+    this.fleet = new Fleet(this.track, this.builder, this.map, this.inventory, this.economy);
     this.fleet.powered = (x, y) => this.catenary.isLive(x, y);
     this.fleet.supplyAt = (x, y) => this.catenary.supplyAt(x, y);
     this.fleet.gridFactor = (x, y) => this.catenary.loadFactor(x, y);
     this.fleet.gridDraw = (x, y, u) => this.catenary.addDraw(x, y, u);
     this.fleet.gridBegin = () => this.catenary.beginTick();
     this.fleet.signals.level = this.settings.signalling ?? 'auto';
-    this.fleet.onArrive = (_t, s) => this.houses.arrival(s, this.clock.time);
-    this.fleet.stockCap = (id) => this.stockCap(id);
+    this.fleet.onArrive = (t, s) => {
+      this.houses.arrival(s, this.clock.time);
+      this.noteArrival(t, s);
+    };
     this.fleet.junctions.onAlert = (a) =>
       this.notices.push(
         {
           key: `j${a.id}`,
           kind: a.kind,
+          type: 'jam',
           text: STR.notice.junction(
             STR.notice.junctionLevel[a.level] ?? a.level,
             a.x,
@@ -822,13 +1024,7 @@ export class Game {
       b ? this.people.board(st, n) : this.people.alight(st, n);
     this.people = new PeopleSim(this.map, this.builder);
     this.contracts = new ContractBoard(new Rng(this.seed ^ 0x5eed), this.builder, this.economy);
-    this.gacha = new Gacha(new Rng(this.seed ^ 0x9ac4a), this.inventory);
-    this.crafting = new Crafting(
-      new Rng(this.seed ^ 0xc4af7),
-      this.inventory,
-      this.economy,
-      this.stock,
-    );
+    this.crafting = new Crafting(new Rng(this.seed ^ 0xc4af7), this.inventory, this.economy);
     this.crafting.grantFromInventory();
     this.fleet.onDelivery = (e) => this.contracts.onDelivery(e);
     this.contractJobs = new ContractDispatcher(
@@ -845,47 +1041,69 @@ export class Game {
         if (policy === 'accept') this.contracts.accept(e.contract, this.clock.time);
         else if (policy === 'deny') this.contracts.decline(e.contract);
       }
+      const dest = this.builder.stationById(e.contract.destId);
       if (e.kind === 'completed') {
-        this.toasts.push(
-          STR.contracts.completed(e.contract.name, fmtMoney(e.contract.payout)),
-          'good',
-        );
+        this.notices.push({
+          key: `contract:${e.contract.id}:done`,
+          kind: 'info',
+          type: 'done',
+          text: STR.notice.contractDone(contractTitle(e.contract.name)),
+          toast: STR.contracts.completed(
+            contractTitle(e.contract.name),
+            fmtMoney(e.contract.payout),
+          ),
+          target: dest ? { kind: 'tile', x: dest.x, y: dest.y } : null,
+        });
         sfx('contract.done');
       } else if (e.kind === 'cancelled') {
         this.toasts.push(
           STR.contracts.cancelledMsg(
-            e.contract.name,
+            contractTitle(e.contract.name),
             fmtMoney(this.contracts.cancelFine(e.contract)),
           ),
           'warn',
         );
       } else if (e.kind === 'failed') {
-        this.toasts.push(
-          STR.contracts.failedMsg(e.contract.name, fmtMoney(this.contracts.failFine(e.contract))),
-          'warn',
-        );
-        const dest = this.builder.stationById(e.contract.destId);
         this.notices.push(
           {
             key: `contract:${e.contract.id}`,
             kind: 'bad',
-            text: STR.notice.contractFailed(e.contract.name),
+            type: 'ctfail',
+            text: STR.notice.contractFailed(contractTitle(e.contract.name)),
+            toast: STR.contracts.failedMsg(
+              contractTitle(e.contract.name),
+              fmtMoney(this.contracts.failFine(e.contract)),
+            ),
             target: dest ? { kind: 'tile', x: dest.x, y: dest.y } : null,
           },
           60,
         );
-        this.lastFailedContract = e.contract.name;
+        this.lastFailedContract = contractTitle(e.contract.name);
         sfx('contract.fail');
       } else if (e.kind === 'accepted') sfx('contract.accept');
     };
 
     this.world = new WorldRenderer(this.atlas, this.map, this.regions);
+    await this.world.loadBridgeSurfaces();
+    this.world.onBridgeStyle = () => this.refreshBridges();
     this.world.occupied = (x, y) =>
       !!(
         this.builder.stationAt(x, y) ||
         this.builder.buildingAt(x, y) ||
         this.builder.decorAt(x, y)
       );
+    this.world.roadAt = (x, y) => this.builder.roads.has(x, y);
+    // an undo gave the tile its props back; what stands on it keeps them out of sight
+    this.builder.onPropsBack = (x, y) => {
+      if (!this.world.occupied(x, y)) this.world.rebuildProps(x, y);
+    };
+    this.builder.onRoadChanged = (x, y) => {
+      this.world.roadChanged(x, y);
+      // a road on a platform changes its span, and its neighbours' (#496); refreshed once a frame
+      if (bridgeTilesTouched((nx, ny) => !!this.builder.bridgeAt(nx, ny), x, y))
+        this.bridgesDirty = true;
+    };
+    this.world.harvest.canStand = (x, y, id, rot) => this.builder.checkStation(x, y, id, rot).ok;
     this.overview = new OverviewRenderer(this.map, this.regions, this.overviewSource);
     this.overview.atlas = this.atlas;
     this.overview.root.visible = false;
@@ -897,23 +1115,30 @@ export class Game {
     this.fog = new Fog(this.atlas);
     this.world.root.addChildAt(
       this.dayNight.overlay,
-      this.world.root.getChildIndex(this.world.objects),
+      this.world.root.getChildIndex(this.world.harvest.layer),
     );
     this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.world.overlay.addChild(this.fog.patches);
     this.app.stage.addChild(this.world.root, this.fog.haze, this.rain.root, this.overview.root);
-    this.glows = new Glows(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
+    this.glows = new Glows(
+      this.atlas,
+      this.world.overlay,
+      (x, y) => this.world.surfacePoint(x, y),
+      (x, y) => this.world.railAt(x, y).dz,
+    );
     this.groundLights = new GroundLights(
       this.atlas,
       this.world.lights,
       (x, y) => this.world.surfacePoint(x, y),
       (x, y) => inBounds(this.map, x, y),
     );
-    this.smoke = new Smoke(this.atlas, this.world.overlay);
+    this.smoke = new Smoke(this.atlas, this.world.overlay, (x, y) => this.world.railAt(x, y).dz);
     this.floaters = new Floaters(this.atlas, this.world.overlay, (x, y) =>
       this.world.surfacePoint(x, y),
     );
+    this.halos = new Halos(this.atlas, this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
+    this.workBars = new WorkBars(this.world.overlay, (x, y) => this.world.surfacePoint(x, y));
     this.powerLines = new PowerLines((n) => {
       const p = this.world.surfacePoint(n.x, n.y);
       if (n.plant) return { x: p.x - 12, y: p.y - 42 };
@@ -935,49 +1160,83 @@ export class Game {
     this.build = new BuildController(this.input, this.builder, this.world, () =>
       this.tileUnderMouse(),
     );
-    this.buildUi();
-    this.build.onSelect = (s) => {
-      if (s) this.selectFieldTrain(null);
-      if (s) this.stationPanel.open(s);
-      else if (this.stationPanel.station) this.stationPanel.close();
-    };
-    this.build.onSelectBuilding = (b) =>
-      b ? this.buildingPanel.open(b) : this.buildingPanel.building && this.buildingPanel.close();
-    this.build.onSelectDecor = (d) =>
-      d ? this.decorPanel.open(d) : this.decorPanel.decor && this.decorPanel.close();
+    this.commands = new Commands({
+      fleet: this.fleet,
+      builder: this.builder,
+      economy: this.economy,
+      trade: this.trade,
+      inventory: this.inventory,
+      towns: this.towns,
+      houses: this.houses,
+      contracts: this.contracts,
+      contractJobs: this.contractJobs,
+      clock: this.clock,
+    });
+    this.build.act = (fn, stroke) => this.commands.act(fn, stroke);
+    // every panel, screen and menu, wired to this game; it also sets the build controller's
+    // selection and status callbacks
+    this.ui = createPlayUi(this, {
+      clock: this.clock,
+      economy: this.economy,
+      inventory: this.inventory,
+      fleet: this.fleet,
+      builder: this.builder,
+      contracts: this.contracts,
+      crafting: this.crafting,
+      trade: this.trade,
+      towns: this.towns,
+      houses: this.houses,
+      power: this.power,
+      notices: this.notices,
+      atlas: this.atlas,
+      map: this.map,
+      regions: this.regions,
+      camera: this.camera,
+      settings: this.settings,
+      toasts: this.toasts,
+      screens: this.screens,
+      namePrompt: this.namePrompt,
+      commands: this.commands,
+      build: this.build,
+      tooltip: this.tooltip,
+      uiRoot: this.uiRoot,
+    });
+    // Watched once the toast layer is on the page, so the toast gets its full time. Failed is final
+    // and replayed to a late watcher, so this toasts once, even for a failure during init.
+    this.world.landscape.watchStatus((s) => {
+      if (s.state === 'failed') this.toasts.push(STR.debug.landscapeLost, 'warn');
+    });
     this.fleet.waitingAt = (id) => this.people.waitingAt(id).length;
     this.fleet.contractDest = (cargo, origin) => {
       const c = this.contracts.active.find((k) => k.cargo === cargo && k.originId === origin);
       return c ? c.destId : null;
     };
-    this.build.onStatus = (t) => this.toolbar.setStatus(t);
-    this.build.barredTrains = () => withoutInCab(this.fleet.trains);
-    this.build.onToolChanged = (t) => {
-      this.toolbar.setActive(t);
-      this.buildInfo.show(this.toolbar.item(t));
-    };
     this.loop = new GameLoop(
       SIM_HZ,
       (dt) => this.update(dt),
       (a, dt) => this.render(a, dt),
+      (err, phase) => this.frameError(err, phase),
     );
     this.loop.start();
     window.addEventListener('beforeunload', () => {
-      if (this.settings.autosave && this.mode === 'play') this.save(true);
+      // the world under the title at boot is no game: a reload does not store it as one
+      if (this.settings.autosave && this.mode === 'play' && this.ui.gameInPlay) this.save(true);
     });
+    await onProgress?.('renderer', 1);
   }
 
   // ---------------------------------------------------------------- settings / save
   applySettings() {
-    audio.master = this.settings.master;
-    audio.sfx = this.settings.sfx;
-    audio.music = this.settings.music;
-    audio.ambient = this.settings.ambient ?? 0.35;
+    Object.assign(audio, heardVolumes(this.settings));
     writeSettings(this.settings);
     audio.applyMusic();
     if (!this.settings.weather && this.weather) this.weather.visible = 0;
     if (this.world) this.applySeason();
-    if (this.hud) this.hud.setToggles(this.settings.weather, this.settings.dayNight);
+    if (this.world) {
+      this.world.buildingLife.enabled = this.settings.buildingLife;
+      this.world.movingWater = this.settings.movingWater;
+    }
+    if (this.ui) this.hud.setToggles(this.settings.weather, this.settings.dayNight);
     if (this.fleet) this.fleet.signals.level = this.settings.signalling ?? 'auto';
   }
 
@@ -987,109 +1246,118 @@ export class Game {
     const track: SaveGame['track'] = [];
     for (const t of this.track.anchors())
       track.push([t.x, t.y, t.piece.kind, t.piece.rot, t.piece.cls, t.piece.cls2]);
-    return {
-      ...this.saveExtra,
-      version: SAVE_VERSION,
-      savedAt: Date.now(),
-      seed: this.seed,
-      clock: { time: this.clock.time, speedIndex: this.clock.speedIndex },
-      economy: this.economy.toJSON(),
-      track,
-      stations: this.builder.stations.map((st) => st.toJSON()),
-      trains: this.fleet.trains.map((t) => t.toJSON()),
-      contracts: this.contracts.toJSON(),
-      trade: this.trade.toJSON(),
-      inventory: this.inventory.toJSON(),
-      gacha: this.gacha.toJSON(),
-      crafting: this.crafting.toJSON(),
-      camera: { x: this.camera.x, y: this.camera.y, zoomIndex: this.camera.zoomIndex },
-      lastDay: this.lastDay,
-      decor: [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
-      weather: this.weather.toJSON(),
-
-      world: this.spec,
-      supply: supplyMode(),
-      rules: { ...rules },
-      stockpile: this.stock.toJSON(),
-      regions: this.regions.toJSON(),
-      seasonOffset: getSeasonOffset(),
-      towns: this.towns.toJSON(),
-      settings: { ...this.settings },
-      buildings: [...this.builder.buildings.values()].map((b) => [
-        b.x,
-        b.y,
-        b.id,
-        b.acc,
-        b.level ?? 1,
-      ]),
-      wires: this.catenary.toJSON(),
-      houses: this.houses.toJSON(),
-    };
-  }
-
-  save(silent = false) {
-    const snap = this.snapshot();
-    const ok = writeSave(snap);
-    if (ok) this.savedAt = snap.savedAt;
-    if (!silent)
-      this.toasts.push(ok ? STR.settings.saved : STR.settings.saveFailed, ok ? 'good' : 'warn');
-    return ok;
+    return buildSave(
+      {
+        seed: this.seed,
+        clock: { time: this.clock.time, speedIndex: this.clock.speedIndex },
+        economy: this.economy.toJSON(),
+        track,
+        stations: this.builder.stations.map((st) => st.toJSON()),
+        trains: this.fleet.trains.map((t) => t.toJSON()),
+        contracts: this.contracts.toJSON(),
+        trade: this.trade.toJSON(),
+        inventory: this.inventory.toJSON(),
+        crafting: this.crafting.toJSON(),
+        camera: { x: this.camera.x, y: this.camera.y, zoomIndex: this.camera.zoomIndex },
+        lastDay: this.sim.lastDay,
+        decor: [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]),
+        weather: this.weather.toJSON(),
+        world: this.spec,
+        supply: supplyMode(),
+        rules: { ...rules },
+        stores: this.stores.toJSON(),
+        regions: this.regions.toJSON(),
+        seasonOffset: getSeasonOffset(),
+        towns: this.towns.toJSON(),
+        buildings: [...this.builder.buildings.values()].map(buildingToJSON),
+        wires: this.catenary.toJSON(),
+        houses: this.houses.toJSON(),
+        people: this.people.toJSON(),
+        roads: this.builder.roads.toJSON(),
+      },
+      this.saveExtra,
+    );
   }
 
   /**
-   * Terrain is regenerated on load; anything the player built must still stand on buildable
-   * ground (a regenerated stone field or lake under a station would strand it).
+   * Store the game; says so unless `silent`; false when it was refused: by storage, or because the
+   * game holds a broken number (`writeSave`). Nothing is written while the page reloads into a save
+   * just stored (`reloadIntoStoredSave`). A silent save is one the player did not ask for, and none
+   * is written after a loop error (`autosavePause`); a silent one refused warns once for each
+   * reason (a broken number, storage) until some save has gone through.
+   */
+  save(silent = false) {
+    const out = this.writeGame(silent);
+    if (!out) return false;
+    const broken = this.brokenNumberWarning.note(out.kind);
+    const storage = this.storageRefusalWarning.note(out.kind);
+    if (!silent) this.saveToast(out, STR.settings.saved);
+    else if (broken) this.toasts.push(STR.settings.autosaveBroken, 'warn');
+    else if (storage) this.toasts.push(STR.settings.autosaveFailed, 'warn');
+    return out.kind === 'stored';
+  }
+  /**
+   * Write the game as Continue loads it, saying nothing and feeding no latch: what became of the
+   * write, or null when nothing is written now (a reload into a stored save; a write the player
+   * did not ask for after a loop error).
+   */
+  private writeGame(implicit: boolean): SaveOutcome | null {
+    if (this.keepStoredSave) return null;
+    if (!this.autosavePause.allows(implicit ? 'implicit' : 'manual')) return null;
+    const snap = this.snapshot();
+    const out = this.storeSnapshot(snap, writeSave);
+    if (out.kind === 'stored') this.savedAt = snap.savedAt;
+    return out;
+  }
+  /** Show what a decision about a write says (`src/engine/saveMessages.ts`). */
+  private say(said: Said) {
+    for (const t of said.toasts) this.toasts.push(t.text, t.kind);
+    for (const n of said.notices)
+      this.notices.push(
+        { key: n.key, kind: 'warn', type: 'note', text: n.text, target: null },
+        n.ttl,
+      );
+  }
+
+  /**
+   * Ground generated on load (a save's first load, a stored chunk that could not be read) need not
+   * be what was built on; anything the player built must still stand on ground that allows it. The
+   * repair is `repairBuiltTiles`; it changes the map in memory and never a stored chunk's text.
    */
   private fixBuiltTiles(j: SaveGame) {
-    const bridges = new Set(
-      (j.buildings ?? [])
-        .filter((b) => buildingDef(b[2]).bridge)
-        .map((b) => b[1] * this.map.w + b[0]),
-    );
-    const fix = (x: number, y: number, bridge = false) => {
-      if (!inBounds(this.map, x, y)) return;
-      const t = terrainAt(this.map, x, y);
-      if (
-        bridge
-          ? t !== Terrain.Water
-          : t === Terrain.Water || t === Terrain.Rock || t === Terrain.Mountain
-      ) {
-        this.map.terrain[y * this.map.w + x] = bridge ? Terrain.Water : Terrain.Grass;
-        this.map.props.delete(y * this.map.w + x);
-        this.world.retile(x, y);
-      }
-    };
-    for (const [x, y, kind, rot, cls] of j.track)
-      for (const f of footprintOf(x, y, kind, rot, cls ?? 'regular'))
-        fix(f.x, f.y, kind === 'bridge' || bridges.has(f.y * this.map.w + f.x));
-    for (const s of j.stations)
-      for (const f of stationFootprint(s.defId, s.x, s.y, s.rot ?? 0)) fix(f.x, f.y);
-    for (const [x, y] of j.decor ?? []) fix(x, y);
-    for (const [x, y, id] of j.buildings ?? []) fix(x, y, !!buildingDef(id).bridge);
+    const repairs = repairBuiltTiles(this.map, j);
+    applyTileRepairs(this.map, repairs);
+    for (const r of repairs) this.world.retile(r.x, r.y);
   }
   /** Populate a freshly initialised game from a save with the same seed. */
   applySave(j: SaveGame) {
+    this.commands.history.clear();
+    // content the game no longer defines goes first, before anything looks it up
+    const pruned = pruneUnknownContent(j);
+    // nothing the game held before the load stays in its stores
+    this.stores.clear();
     this.restoringWorld = true;
     this.saveExtra = {};
     for (const [k, v] of Object.entries(j)) if (!KNOWN_SAVE_KEYS.has(k)) this.saveExtra[k] = v;
     if (j.loadedFrom !== undefined) this.warnDeprecated(j);
-    if (j.rules) setRules(j.rules);
+    if (pruned.dropped.length) this.warnPruned(pruned);
+    // the game's own tuning, for this session only: the stored tuning stays as it was
+    applyGameRules(j.rules);
     setSupplyMode(j.supply);
-    setSeasonOffset(j.seasonOffset ?? 0);
+    if (j.seasonOffset !== undefined) setSeasonOffset(j.seasonOffset);
     this.clock.time = j.clock.time;
     this.clock.setSpeed(j.clock.speedIndex);
     this.economy.load(j.economy);
-    this.lastDay = j.lastDay;
+    this.sim.lastDay = j.lastDay;
     this.savedAt = j.savedAt;
     if (j.regions) this.regions.load(j.regions);
-    else this.regions.applyTier(this.economy.tier);
     this.world.rebuildFog();
     this.fixBuiltTiles(j);
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
     this.toolbar.refresh();
     for (const [x, y, kind, rot, cls, cls2] of j.track) {
-      for (const t of this.track.place(x, y, kind, rot, cls ?? 'regular', cls2))
+      for (const t of this.track.place(x, y, kind, rot, cls ?? 'branch', cls2))
         this.onTrackChanged(t.x, t.y);
     }
     // switch forms follow the track around them: chosen again once every piece is down
@@ -1101,6 +1369,10 @@ export class Game {
         this.onSupplyChanged(x, y);
       }
     } else this.legacySupplyPending = true;
+    this.builder.roads.load(j.roads);
+    // a road on ground that can no longer hold one comes off, with no refund (`repairBuiltRoads`)
+    for (const r of repairBuiltRoads(this.map, j)) this.builder.roads.remove(r.x, r.y);
+    this.world.setRoads(this.builder.roads.list());
     resetStationIds(1);
     for (const sj of j.stations) {
       const st = Station.fromJSON(sj);
@@ -1108,7 +1380,6 @@ export class Game {
       this.onStationChanged(st, false);
     }
     this.inventory.load(j.inventory as ReturnType<typeof this.inventory.toJSON>);
-    this.gacha.load(j.gacha as ReturnType<typeof this.gacha.toJSON>);
     this.crafting.load(j.crafting as ReturnType<typeof this.crafting.toJSON> | undefined);
     this.contracts.load(j.contracts as ReturnType<typeof this.contracts.toJSON>);
     this.trade.load(j.trade as ReturnType<typeof this.trade.toJSON> | undefined);
@@ -1117,25 +1388,31 @@ export class Game {
       const t = TrainClass.fromJSON(tj, this.track);
       this.fleet.trains.push(t);
     }
+    this.fleet.settleHomes();
     this.contractJobs.reconcile();
     for (const [x, y, id, rot] of j.decor ?? []) {
-      const d: Decor = { id, x, y, rot };
+      const d: Decor = { id, x, y, rot: wrapRotation(rot) };
       this.builder.decor.set(y * this.map.w + x, d);
       this.onDecorChanged(d, false);
     }
     this.houses.load(j.houses);
-    for (const [x, y, id, acc, level] of j.buildings ?? []) {
-      const b: Building = { id, x, y, acc: acc ?? 0, level: level ?? 1, active: false, rate: 0 };
-      this.builder.buildings.set(y * this.map.w + x, b);
+    for (const bj of j.buildings ?? []) {
+      const b = buildingFromJSON(bj);
+      this.builder.buildings.set(b.y * this.map.w + b.x, b);
       this.onBuildingChanged(b, false);
     }
-    if (j.stockpile) this.stock.load(j.stockpile as ReturnType<Stockpile['toJSON']>);
     this.towns.load(j.towns);
-    this.refreshCity();
+    // every game has a depot; goods saved with no place of their own wait in it
     this.ensureDepot();
+    // the stations and towns went in past the builder: the stores are derived from them, then
+    // filled with what the save holds
+    this.stores.load(j.stores ?? []);
+    this.refreshCity();
     this.builder.refreshStationBoosts();
     this.builder.refreshHarvest();
     if (j.weather) this.weather.load(j.weather as ReturnType<Weather['toJSON']>);
+    // without a saved stream the walkers keep the one seeded from the map
+    if (j.people) this.people.load(j.people);
 
     for (const s of this.builder.stations) this.onStationOrphaned(s, this.builder.isOrphaned(s));
     this.applySeason(true);
@@ -1145,9 +1422,20 @@ export class Game {
     this.camera.zoomIndex = j.camera.zoomIndex;
     this.camera.zoom = ZOOM_STEPS[j.camera.zoomIndex];
     this.camera.centerOn(j.camera.x, j.camera.y);
-    this.stock.beginFlowHistory();
+    this.stores.beginFlowHistory();
     this.restoringWorld = false;
     this.refreshBridges();
+    audio.setAge(ageDef(this.economy.tier).id);
+    this.storeLoadedGround();
+  }
+  /**
+   * The end of a load: ground it generated is stored at once (`loadStoresGround`), and what became
+   * of the ground is said (`groundAfterLoad`). A refused write gets one warning, worded for the
+   * ground, and feeds no autosave latch.
+   */
+  private storeLoadedGround() {
+    const write = loadStoresGround(this.ground) ? (this.writeGame(true)?.kind ?? 'held') : null;
+    this.say(groundAfterLoad(this.ground, write));
   }
 
   newGame(seedText: string, supply: SupplyMode = 'simple') {
@@ -1174,7 +1462,7 @@ export class Game {
     this.railsDirty = true;
     this.builder.refreshBridgeCapacity(x, y);
     this.refreshBridges();
-    this.depot?.onTrackChanged();
+    this.ui?.depot.onTrackChanged();
     const p = this.track.get(x, y);
     const t = terrainAt(this.map, x, y);
     if (p) {
@@ -1195,6 +1483,7 @@ export class Game {
     if (removed) {
       this.world.removeStructure(id);
       this.signalAspect.delete(d.y * this.map.w + d.x);
+      this.semaphoreArms.delete(d.y * this.map.w + d.x);
       if (
         d.id !== 'signal' &&
         terrainAt(this.map, d.x, d.y) === Terrain.Hill &&
@@ -1218,7 +1507,8 @@ export class Game {
       const t = terrainAt(this.map, d.x, d.y);
       if (t === Terrain.Hill) this.world.setFlattened(d.x, d.y, true);
       this.world.removeProps(d.x, d.y);
-      this.world.setStructure(id, d.x, d.y, this.houses?.frameFor(d) ?? `structures/${d.id}`, 20);
+      const key = this.houses?.frameFor(d) ?? `structures/${d.id}`;
+      this.world.setStructure(id, d.x, d.y, structureFrame(this.atlas, key, d.rot), 20);
     }
   }
   private onStationOrphaned(s: Station, orphaned: boolean) {
@@ -1233,8 +1523,13 @@ export class Game {
     }
   }
   private restoringWorld = false;
+  /** A road changed on or beside a bridge platform: the spans are redrawn once, next frame. */
+  private bridgesDirty = false;
   private refreshBridges() {
     if (this.restoringWorld) return;
+    this.bridgesDirty = false;
+    const mode = this.world.bridgeMode,
+      textured: TexturedBridge[] = [];
     for (const b of this.builder.buildings.values())
       if (buildingDef(b.id).bridge) {
         const s = bridgeSpan(this.builder, b);
@@ -1256,7 +1551,28 @@ export class Game {
               ? `structures/landspan_${s.material}_${s.axis}`
               : `structures/landpad_${s.material}`;
         const id = 'bridge:' + b.x + ',' + b.y;
-        if (this.world.bridgeKit) {
+        if (mode === 'textured') {
+          // Meshes for every tile at once, so side-by-side bridges merge (setTexturedBridges).
+          for (const layer of [0, 1]) this.world.setPlatform(b.x, b.y, null, layer);
+          this.world.removeStructure(id);
+          this.world.removeStructure('bridge-detail:' + b.x + ',' + b.y);
+          this.world.setBridgePiers(b.x, b.y, null);
+          this.world.setBridgeKit(b.x, b.y, null);
+          // A member of a wide curve or switch, or a crossing, stands on a square pad.
+          const span = !piece || (!piece.unit && climbAxes(piece.links).length === 1);
+          textured.push({
+            x: b.x,
+            y: b.y,
+            material: s.material,
+            carries: !piece && this.builder.roads.has(b.x, b.y) ? 'road' : 'rail',
+            axis: span ? (s.axis as 0 | 1) : null,
+            open: DIRS.map((d) => !!piece?.links.some((l) => l.includes(d))),
+            water,
+            level: b.level ?? 1,
+          });
+          continue;
+        }
+        if (mode === 'kit') {
           // The illustrated kit: deck or pad, near railing, and the parts under the deck.
           const dir = s.axis ? 'x' : 'y';
           this.world.setPlatform(
@@ -1311,6 +1627,7 @@ export class Game {
           this.world.setStructure(detailId, b.x, b.y, detail + '_rail', 36, dy);
         else this.world.removeStructure(detailId);
       }
+    this.world.setTexturedBridges(textured);
   }
   private onBuildingChanged(b: Building, removed: boolean) {
     const id = `building:${b.x},${b.y}`;
@@ -1337,7 +1654,18 @@ export class Game {
     } else {
       if (t === Terrain.Hill) this.world.setFlattened(b.x, b.y, true);
       this.world.removeProps(b.x, b.y);
-      this.world.setStructure(id, b.x, b.y, buildingFrame(b));
+      // a works' picture stands with its anchor on its footprint's centre, sorted with its front tile
+      const { w, h } = buildingSpan(buildingDef(b.id), b.rot ?? 0);
+      const off = tileToWorld(-(w - 1) / 2, -(h - 1) / 2);
+      this.world.setStructure(
+        id,
+        b.x + w - 1,
+        b.y + h - 1,
+        structureFrame(this.atlas, buildingFrame(b), b.rot ?? 0),
+        20,
+        off.y,
+        off.x,
+      );
     }
     if (buildingDef(b.id).power || buildingDef(b.id).substation) this.rebuildPower();
   }
@@ -1375,10 +1703,6 @@ export class Game {
     this.overview.rebuildPower(this.power);
     this.powerLines.rebuild(this.power);
   }
-  /** Storage cap for one resource at the current warehouse and plant count. */
-  stockCap(id: string) {
-    return this.stock.cap(id, this.builder.depotCount(), this.builder.plantCount());
-  }
   /** Arm positions of every semaphore, stepped towards the aspect they should show. */
   private semaphoreArms = new Map<number, { m: number; d: number; frame: string }>();
   private semaphoreClock = 0;
@@ -1403,10 +1727,12 @@ export class Game {
     const step = this.semaphoreClock >= 0.07;
     if (step) this.semaphoreClock = 0;
     const top = SEMAPHORE_STEPS - 1;
+    // the simulation keeps each post's aspect, looking again only where a train came or went
+    const aspects = this.fleet.postAspects();
     for (const d of this.builder.decor.values()) {
       if (d.id !== 'signal') continue;
       const key = d.y * this.map.w + d.x;
-      const aspect = this.signalAspectAt(d);
+      const aspect = aspects.get(key) ?? this.signalAspectAt(d);
       this.signalAspect.set(key, aspect);
       const want =
         aspect === 'red'
@@ -1430,7 +1756,7 @@ export class Game {
     }
   }
   /** Re-tint the world and adjust production when the season changes. */
-  private applySeason(force = false) {
+  applySeason(force = false) {
     const s = this.settings.weather ? seasonOf(this.clock.day) : 'spring';
     if (s === this.season && !force) return;
     this.season = s;
@@ -1440,6 +1766,7 @@ export class Game {
       st.productionMul = productionMul(st.def.id, s) * this.biomeProduction(st);
   }
   private onStationChanged(s: Station, removed: boolean) {
+    if (s.def.depot) this.fleet.settleHomes();
     const id = `station:${s.id}`;
     if (removed) {
       this.onStationOrphaned(s, false);
@@ -1461,7 +1788,7 @@ export class Game {
           id,
           front.x,
           front.y,
-          `structures/${s.def.art}_r${s.rot % 2}`,
+          structureFrame(this.atlas, `structures/${s.def.art}_r${s.rot % 2}`, s.rot),
           20,
           off.y,
           off.x,
@@ -1472,17 +1799,31 @@ export class Game {
           id,
           s.x + 1,
           s.y + 1,
-          `structures/${s.def.art}_r${s.rot % 2}${s.level > 1 ? '_lv' + s.level : ''}`,
+          structureFrame(
+            this.atlas,
+            `structures/${s.def.art}_r${s.rot % 2}${s.spriteLevel > 1 ? '_lv' + s.spriteLevel : ''}`,
+            s.rot,
+          ),
           20,
           -HALF_H_PX,
         );
       } else {
+        // one picture on its footprint's centre, sorted with its front tile (a Town Hall of 2 x 1)
+        const { w, h } = stationSpan(s.def, s.rot);
+        const off = tileToWorld(-(w - 1) / 2, -(h - 1) / 2);
         const fam = `structures/${s.def.art}_${s.spriteLevel}`;
         this.world.setStructure(
           id,
-          s.x,
-          s.y,
-          this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`,
+          s.x + w - 1,
+          s.y + h - 1,
+          structureFrame(
+            this.atlas,
+            this.atlas.has(fam) ? fam : `structures/station_${s.spriteLevel}`,
+            s.rot,
+          ),
+          20,
+          off.y,
+          off.x,
         );
       }
       if (this.stationPanel.station === s) this.stationPanel.render();
@@ -1497,90 +1838,95 @@ export class Game {
       ? STR.settings.newerSave(from, SAVE_VERSION)
       : STR.settings.olderSave(from, SAVE_VERSION, j.migrationNotes ?? []);
     this.deprecatedSave = text;
-    this.toasts.push(newer ? STR.settings.newerToast(from) : STR.settings.olderToast(from), 'warn');
-    this.notices.push({ key: 'save:deprecated', kind: 'warn', text, target: null }, 180);
+    const toast = newer ? STR.settings.newerToast(from) : STR.settings.olderToast(from);
+    this.notices.push(
+      { key: 'save:deprecated', kind: 'warn', type: 'note', text, toast, target: null },
+      180,
+    );
+  }
+  /** A save named content the game no longer has: say what went and what was refunded. */
+  private warnPruned(report: PruneReport) {
+    const list = report.dropped.map((d) => `${d.id} ×${d.count}`).join(', ');
+    const text = STR.saves.pruned(list, report.money ? fmtMoney(report.money) : '');
+    this.notices.push({ key: 'save:pruned', kind: 'warn', type: 'note', text, target: null }, 180);
   }
   /** warning text for the settings screen while a converted save is in play */
   deprecatedSave: string | null = null;
   /** Ask for a town's name; `fresh` marks a just-placed station (the default name is offered). */
-  private async renameTown(t: Town, fresh = false) {
+  async renameTown(t: Town, fresh = false) {
     const n = await this.namePrompt.ask(STR.town.namePrompt, STR.town.nameHint, t.name);
     if (n && n !== t.name) {
-      this.towns.rename(t, n);
+      // a town just founded is named as part of placing it: that step takes the name back
+      if (fresh) this.towns.rename(t, n);
+      else {
+        const did = this.commands.renameTown(t, n);
+        if (!did.ok) {
+          this.toasts.push(did.message, 'warn');
+          return;
+        }
+      }
       this.townPanel.render(true);
       if (!fresh) this.toasts.push(STR.town.renamed(n), 'info');
     }
   }
   /**
-   * Every game has a depot: the start grants one at the middle of the start chunk, an older save
-   * gets one on load. Gate track is laid where nothing stands yet. Returns the depot, or null when
-   * no room could be found nearby.
+   * Every game has a depot (`ensureStartDepot`): a new game's is narrow, for its narrow starter
+   * engines; an older save's regular, as its roster is. Returns the depot, or null after saying
+   * on the console that no site near the start could take one.
    */
-  ensureDepot(): Station | null {
-    const have = this.builder.depots()[0];
-    if (have) return have;
-    const rs = this.map.regionSize;
-    const cx = Math.floor((Math.floor((this.map.regionsX - 1) / 2) + 0.5) * rs);
-    const cy = Math.floor((Math.floor((this.map.regionsY - 1) / 2) + 0.5) * rs);
-    const clear = (x: number, y: number, allowTrack: boolean) => {
-      if (!inBounds(this.map, x, y) || !this.regions.isTileUnlocked(x, y)) return false;
-      const t = terrainAt(this.map, x, y);
-      if (t === Terrain.Water || t === Terrain.Rock || t === Terrain.Mountain) return false;
-      if (this.builder.stationAt(x, y) || this.builder.decorAt(x, y)) return false;
-      if (this.builder.buildingAt(x, y)) return false;
-      if (!allowTrack && this.track.has(x, y)) return false;
-      return true;
-    };
-    const fits = (x: number, y: number, rot: number) => {
-      for (let dy = 0; dy < 2; dy++)
-        for (let dx = 0; dx < 2; dx++) if (!clear(x + dx, y + dy, false)) return false;
-      const gates =
-        rot === 0
-          ? [
-              [x - 1, y],
-              [x - 1, y + 1],
-              [x + 2, y],
-              [x + 2, y + 1],
-            ]
-          : [
-              [x, y - 1],
-              [x + 1, y - 1],
-              [x, y + 2],
-              [x + 1, y + 2],
-            ];
-      return gates.every(([gx, gy]) => clear(gx, gy, true));
-    };
-    for (let r = 0; r <= 24; r++)
-      for (let dy = -r; dy <= r; dy++)
-        for (let dx = -r; dx <= r; dx++) {
-          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-          for (const rot of [0, 1]) {
-            const x = cx + dx - 1;
-            const y = cy + dy - 1;
-            if (!fits(x, y, rot)) continue;
-            const wasFree = this.builder.free;
-            this.builder.free = true;
-            const d = this.builder.placeStation(x, y, 'depot', rot);
-            if (d) {
-              for (const g of d.gateTiles())
-                if (!this.track.has(g.x, g.y))
-                  this.builder.placeTrackKind(g.x, g.y, 'straight', rot === 0 ? 1 : 0);
-              d.name = STR.station.depotName;
-              this.onStationChanged(d, false);
-            }
-            this.builder.free = wasFree;
-            return d;
-          }
-        }
-    return null;
+  ensureDepot(defId = 'depot'): Station | null {
+    const d = silently(() => ensureStartDepot(this.builder, defId));
+    if (!d) console.warn(`[depot] no site near the start takes a ${defId} and its gate track`);
+    return d;
   }
   /** A new age begins: its works, stations and rolling stock unlock. */
   private onAgeUp(tier: number) {
     this.toolbar.refresh();
     const text = STR.hud.ageUp(tier);
-    this.toasts.push(text, 'good');
-    this.notices?.push({ key: `age:${tier}`, kind: 'info', text, target: null }, 120);
+    this.notices?.push({ key: `age:${tier}`, kind: 'info', type: 'goal', text, target: null }, 120);
     sfx('tier.up');
+    audio.setAge(ageDef(tier).id);
+  }
+  /**
+   * A station, works or house finished its upgrade: a halo over it, the chime, a toast, and in play
+   * a notice that leads to it. A house's level already has its toast (`HouseRegistry.onMessage`),
+   * so it gets no second one here.
+   */
+  private onUpgraded(e: Upgraded) {
+    this.halos.spawn(e.x, e.y, e.w, e.h, 'building');
+    sfx('upgrade.done');
+    const text = STR.upgrade.done(e.name, e.level);
+    if (e.kind !== 'house') this.toasts.push(text, 'good');
+    if (this.mode === 'play')
+      this.notices.push({
+        key: `upgrade:${e.x},${e.y}`,
+        kind: 'info',
+        type: 'note',
+        text,
+        toast: null,
+        target: { kind: 'tile', x: e.x, y: e.y },
+      });
+  }
+  /**
+   * Track raised to a bigger line shimmers piece by piece (`startPieceHalos`); track lowered does
+   * not. Each halo covers its whole piece, not only the anchor tile.
+   */
+  private onReclassed(anchors: { x: number; y: number }[], dir: ReclassDir) {
+    if (dir === 'down') return;
+    for (const a of anchors) {
+      const tiles = this.track.unitTiles(a.x, a.y);
+      if (!tiles.length) continue;
+      const x = Math.min(...tiles.map((t) => t.x));
+      const y = Math.min(...tiles.map((t) => t.y));
+      const w = Math.max(...tiles.map((t) => t.x)) - x + 1;
+      const h = Math.max(...tiles.map((t) => t.y)) - y + 1;
+      this.pieceHalos.push({ x, y, w, h });
+    }
+  }
+  /** Start the next relaid pieces' shimmer, a few a frame, so a long stroke ripples along. */
+  private startPieceHalos() {
+    for (const p of this.pieceHalos.splice(0, PIECE_HALOS_PER_FRAME))
+      this.halos.spawn(p.x, p.y, p.w, p.h, 'piece');
   }
   /** Biome multiplier on a station's output. */
   private biomeProduction(s: Station) {
@@ -1597,7 +1943,9 @@ export class Game {
     if (!confirmed) {
       // an in-game dialog: a browser confirm() stalls the loop and then lurches to catch up
       void this.namePrompt
-        .confirm(STR.overview.buyTitle, STR.overview.buyConfirm(fmtMoney(price)))
+        .confirm(STR.overview.buyTitle, STR.overview.buyConfirm(fmtMoney(price)), {
+          yes: STR.prompt.buy,
+        })
         .then((ok) => {
           if (ok) this.buyChunk(i, true);
         });
@@ -1606,22 +1954,29 @@ export class Game {
     this.economy.money -= price;
     this.regions.own(i);
     sfx('tier.up');
-    if (
-      this.spec.kind === 'generated' &&
-      ownsBorderChunk(this.regions.unlocked, this.map.w, this.map.h)
-    ) {
-      // the grid needs another ring: persist, grow the world and come back into it
-      const snap = expandSave(this.snapshot(), 1);
-      if (writeSave(snap)) {
-        this.toasts.push(STR.overview.growing, 'info');
-        setIntentAndReload({ action: 'continue', keepSpeed: true });
-        return true;
-      }
+    const facts = {
+      edge:
+        this.spec.kind === 'generated' &&
+        ownsBorderChunk(this.regions.unlocked, this.map.w, this.map.h),
+      implicitWrites: this.autosavePause.allows('implicit'),
+      autosaves: this.settings.autosave && this.mode === 'play',
+    };
+    // the grid needs another ring: persist, grow the world and come back into it. A loop error
+    // holds it until the player saves and reloads (`main.ts` grows such a save as it loads)
+    const grown = purchaseGrows(facts) ? writeSave(expandSave(this.snapshot(), 1)) : null;
+    const after = afterPurchase(facts, grown);
+    if (after.reload) {
+      this.say(after.said);
+      setIntentAndReload({ action: 'continue', keepSpeed: true });
+      return true;
     }
     this.world.rebuildFog();
     this.overview.rebuildRegions();
     this.minimap.rebuildBase();
-    this.toasts.push(STR.overview.bought, 'good');
+    this.say(after.said);
+    // as the autosave stores: every refusal of it applies (autosave off, a loop error, a reload
+    // into a stored save, storage, a broken number) and warns as it does
+    if (after.store) this.save(true);
     return true;
   }
   private trackTilesForOverview() {
@@ -1631,343 +1986,26 @@ export class Game {
     return out;
   }
 
-  private buildUi() {
-    this.hud = new Hud(this.clock, () => ageStatus(this.economy.tier, this.ageSnapshot()));
-    this.depot = new DepotScreen(
-      this.inventory,
-      this.fleet,
-      this.builder,
-      (m, k) => this.toasts.push(m, k),
-      this.atlas,
-    );
-    this.depot.onFocusTrain = (t) => this.focusTrain(t);
-    this.depot.onFocusDepot = (d, gate) => {
-      // peek at the shed behind the dimmed screen and mark the gate the train would take
-      const p = tileToWorld(d.cx + 0.5, d.cy + 0.5);
-      this.camera.zoomIndex = 2;
-      this.camera.zoom = ZOOM_STEPS[2];
-      this.camera.centerOn(p.x, p.y);
-      this.setView(0);
-      this.spawnMarkTimer = gate ? 6 : 0;
-      if (gate) {
-        const sp = this.world.setStructure('spawn-preview', gate.x, gate.y, 'terrain/ghost_ok', 30);
-        sp.alpha = 0.9;
-      } else this.world.removeStructure('spawn-preview');
-      this.screens.root.classList.add('peek');
-    };
-    this.screens.onChange = (sc) => {
-      if (sc) this.build.setTool({ kind: 'none' });
-      if (!sc) {
-        this.screens.root.classList.remove('peek');
-        this.world.removeStructure('spawn-preview');
-      }
-      sfx(sc ? 'ui.open' : 'ui.close');
-    };
-    this.trainScreen = new TrainScreen(this.fleet, this.builder, this.stock, this.atlas, (m, k) =>
-      this.toasts.push(m, k),
-    );
-    this.trainScreen.onLocate = (t) => this.focusTrain(t);
-    this.depot.onDetails = (t) => {
-      this.trainScreen.open(t);
-      this.screens.open(this.trainScreen);
-    };
-    this.marketScreen = new MarketScreen(
-      this.stock,
-      this.economy,
-      (id) => this.stockCap(id),
-      (m, k) => this.toasts.push(m, k),
-      this.trade,
-      () => this.clock.time,
-    );
-    this.trade.onSettled = (lines) =>
-      this.toasts.push(
-        STR.market.settled(
-          lines
-            .map(
-              (l) =>
-                `${l.units > 0 ? '+' : ''}${l.units} ${cargoDef(l.resource).name.toLowerCase()} (${fmtMoney(l.money)})`,
-            )
-            .join(', '),
-        ),
-        'info',
-      );
-    this.resourceBar = new ResourceBar(this.atlas, () => {
-      if (this.mode === 'play' && !this.menuOpen) this.screens.toggle(this.marketScreen);
-    });
-    this.resourceBar.right.append(this.hud.funds);
-    this.resourceBar.stats = () => resourceStats(this.stock, RESOURCE_IDS);
-    this.tuningScreen = new TuningScreen(() => {
-      this.applySeason(true);
-      this.toolbar.refresh();
-    });
-    this.contentScreen = new ContentScreen(() => {
-      if (this.mode === 'play' && !this.menuOpen) this.save(true);
-      setIntentAndReload({ action: 'menu' });
-    });
-    this.settingsScreen = new SettingsScreen(
-      this.settings,
-      () => this.applySettings(),
-      {
-        save: () => this.save(),
-        load: () => {
-          const j = readSave();
-          if (!j) {
-            this.toasts.push(STR.settings.noSave, 'warn');
-            return;
-          }
-          location.hash = `seed=${j.seed}`;
-          location.reload();
-        },
-        newGame: (seed) => this.newGame(seed, supplyMode()),
-        exportSave: () => JSON.stringify(this.snapshot()),
-        exportDiagnostics: () => this.diagnostics(),
-        saveAs: (name) => this.saveSlot(name),
-        ...this.slotActions(),
-        importSave: (json) => {
-          try {
-            const j = parseSave(json);
-            if (!j) throw new Error('bad');
-            if (j.settings) writeSettings({ ...DEFAULT_SETTINGS, ...j.settings });
-            writeSave(j);
-            location.hash = `seed=${j.seed}`;
-            location.reload();
-            return true;
-          } catch {
-            this.toasts.push(STR.settings.badSave, 'warn');
-            return false;
-          }
-        },
-      },
-      () => ({
-        seed: this.seed,
-        savedAt: this.savedAt,
-        version: `v${SAVE_VERSION}`,
-        warning: this.deprecatedSave,
-      }),
-    );
-    this.gachaScreen = new GachaScreen(
-      this.gacha,
-      this.economy,
-      () => this.clock.time,
-      (m, k) => this.toasts.push(m, k),
-      this.atlas,
-      () => this.clock.day,
-    );
-    this.craftingScreen = new CraftingScreen(
-      this.crafting,
-      this.economy,
-      this.stock,
-      this.inventory,
-      () => this.clock.time,
-      (m, k) => this.toasts.push(m, k),
-      this.atlas,
-    );
-    this.rosterScreen = new RosterScreen(this.inventory, this.fleet, this.atlas, (m, k) =>
-      this.toasts.push(m, k),
-    );
-    this.contractsScreen = new ContractsScreen(this.contracts, this.builder, this.clock, (m, k) =>
-      this.toasts.push(m, k),
-    );
-    this.contractsScreen.trainName = (id) => this.fleet.byId(id)?.name ?? null;
-    this.contractsScreen.autoAccept = {
-      get: () => CONTRACT_RARITIES.every((r) => contractPolicyFor(this.settings, r) === 'accept'),
-      set: (v) => {
-        this.settings.contractPolicy = uniformContractPolicy(v ? 'accept' : 'prompt');
-        this.applySettings();
-      },
-    };
-    this.rosterScreen.spendMoney = (amount) => {
-      if (this.economy.money < amount) return false;
-      this.economy.money -= amount;
-      return true;
-    };
-    this.contractsSide = new ContractsSide(this.contracts, this.builder, this.clock);
-    this.contractsSide.onOpenBoard = () => this.screens.toggle(this.contractsScreen);
-    this.hud.actions.append(
-      btn(STR.topbar.depot, () => this.screens.toggle(this.depot), 'small'),
-      btn(STR.topbar.contracts, () => this.screens.toggle(this.contractsScreen), 'small'),
-      btn(STR.topbar.craft, () => this.screens.toggle(this.craftingScreen), 'small'),
-      btn(STR.topbar.roster, () => this.screens.toggle(this.rosterScreen), 'small'),
-      btn(STR.topbar.market, () => this.screens.toggle(this.marketScreen), 'small'),
-      btn(STR.topbar.cheat, () => this.cheat(), 'small cheat'),
-      btn(STR.topbar.settings, () => this.screens.toggle(this.settingsScreen), 'small'),
-    );
-
-    this.minimap = new Minimap(this.map, this.regions, this.camera, (wx, wy) =>
-      this.camera.centerOn(wx, wy),
-    );
-    this.debug = new DebugPanel(this.seed, {
-      giveMoney: () => (this.economy.money += 10000),
-      giveTickets: () => (this.economy.tickets += 10),
-      nextAge: () => this.economy.setAge(this.economy.tier + 1),
-      giveResources: () => {
-        for (const id of RESOURCE_IDS) this.stock.add(id, 200, this.stockCap(id));
-      },
-      spawnContract: () => {
-        const c = this.contracts.generate(this.clock.time, true);
-        this.toasts.push(c ? `Offer: ${c.name}` : STR.contracts.needStations, c ? 'info' : 'warn');
-      },
-      toggleDepth: () => {
-        this.depthOverlay = !this.depthOverlay;
-        this.applyDepthOverlay();
-        return this.depthOverlay;
-      },
-      regenerate: () => {
-        const v = this.debug.seedValue.trim();
-        const seed = /^\d+$/.test(v) ? Number(v) : hashSeed(v);
-        location.hash = `seed=${seed}`;
-        location.reload();
-      },
-    });
-    this.overviewBanner = el('div', {
-      id: 'overview-banner',
-      class: 'panel',
-      text: STR.overview.hint,
-    });
-    this.toolbar = new Toolbar(
-      (t: Tool) => this.build.setTool(t),
-      () => (this.mode === 'editor' ? 99 : this.economy.tier),
-      this.atlas,
-    );
-    this.toolbar.onHover = (it) =>
-      this.buildInfo.show(it ?? this.toolbar.item(this.toolbar.active));
-    // the next one of a kind costs more: show the live price on the cards
-    for (const c of this.toolbar.categories)
-      for (const it of c.items) {
-        const tool = it.tool;
-        if (tool.kind === 'station' || tool.kind === 'decor' || tool.kind === 'building') {
-          const id = tool.defId;
-          it.costNow = () =>
-            scaleCostOf(
-              it.cost,
-              tool.kind === 'station' && id === 'depot' ? 1 : this.builder.kindMul(id),
-            );
-        }
-      }
-    this.toolbar.refresh();
-    this.buildingPanel = new BuildingPanel(
-      this.builder,
-      this.stock,
-      () => this.build.selectedBuilding && this.build.selectBuilding(null),
-    );
-    this.decorPanel = new DecorPanel(this.builder, this.power, () => {
-      if (this.build.selectedDecor) this.build.selectDecor(null);
-    });
-    this.decorPanel.houses = this.houses;
-    this.decorPanel.onSignalGuide = showSignalGuide;
-    this.decorPanel.onSignalBlock = (d) => {
-      for (const p of this.signalHighlight) this.world.setTrackTint(p.x, p.y, 0xffffff);
-      this.signalHighlight = [];
-      if (d) {
-        const post = this.fleet.signals.postAt(d.x, d.y);
-        if (post) this.signalHighlight = this.fleet.signals.blockBeyond(post).tiles;
-      }
-      for (const p of this.signalHighlight) this.world.setTrackTint(p.x, p.y, 0x7cd7e8);
-    };
-    this.trainSide = new TrainSide(this.builder, this.atlas);
-    this.noticePanel = new NoticePanel();
-    this.noticePanel.onFocus = (n) => this.focusNotice(n);
-    this.advisor = new Advisor(this.settings.advisor === false);
-    this.advisor.onSilence = (v) => {
-      this.settings.advisor = !v;
-      writeSettings(this.settings);
-    };
-    this.hud.rightActions.append(this.advisor.button, btn('Signals?', showSignalGuide, 'small'));
-    this.hud.onToggleWeather = () => {
-      this.settings.weather = !this.settings.weather;
-      this.applySettings();
-    };
-    this.hud.onToggleDay = () => {
-      this.settings.dayNight = !this.settings.dayNight;
-      this.applySettings();
-    };
-    this.trainSide.onRefuel = (trains) => {
-      const ok = this.fleet.refuelAll(trains);
-      this.toasts.push(
-        ok
-          ? 'Trains refuelled to full at twice the resource cost'
-          : 'Not enough fuel and water to fill this group; no resources spent',
-        ok ? 'good' : 'warn',
-      );
-      this.trainSide.update(trains, this.viewTarget === 1, true);
-    };
-    this.trainSide.onDetails = (t) => {
-      this.trainScreen.open(t);
-      this.screens.open(this.trainScreen);
-    };
-    this.trainSide.onLocate = (t) => this.focusTrain(t);
-    this.trainSide.onHover = (t) => this.setHoverTrain(t);
-    this.buildInfo = new BuildInfo(this.atlas, this.stock, this.builder);
-    this.buildInfo.onTrainDetails = (t) => {
-      this.trainScreen.open(t);
-      this.screens.open(this.trainScreen);
-    };
-    this.buildInfo.onTrainLocate = (t) => this.focusTrain(t);
-    this.buildInfo.onTrainClose = () => this.selectFieldTrain(null);
-    this.stationPanel = new StationPanel(
-      this.builder,
-      () => this.build.selected && this.build.select(null),
-      this.contracts,
-      this.clock,
-      this.towns,
-      (t) => this.renameTown(t),
-    );
-    this.townPanel = new TownPanel(this.towns, this.houses);
-    this.townPanel.onGo = (t) => {
-      const st = this.towns.station(t);
-      if (st) this.returnToRts(st.x, st.y);
-    };
-    this.townPanel.onRename = (t) => this.renameTown(t);
-    this.towns.onChanged = () => {
-      if (this.stationPanel.station) this.stationPanel.render();
-      this.depot.refresh();
-    };
-    this.build.onTownPlaced = (st) => {
-      const t = this.towns.found(st);
-      this.renameTown(t, true);
-    };
-    this.buildMenus();
-    this.uiRoot.append(
-      this.mainMenu.root,
-      this.pauseMenu.root,
-      this.screens.root,
-      this.advisor.root,
-      el(
-        'div',
-        { id: 'right-col' },
-        this.noticePanel.root,
-        this.contractsSide.root,
-        this.trainSide.root,
-        this.buildInfo.root,
-      ),
-      el('div', { class: 'vignette' }),
-      this.hud.root,
-      this.resourceBar.root,
-      this.minimap.root,
-      this.debug.root,
-      this.overviewBanner,
-      this.townPanel.root,
-      this.namePrompt.root,
-      el('div', { id: 'hint', text: STR.hints.camera }),
-      this.toolbar.root,
-      this.stationPanel.root,
-      this.buildingPanel.root,
-      this.decorPanel.root,
-      this.toasts.root,
-      this.tooltip.root,
-    );
-  }
-
   setOverviewSource(src: OverviewSource) {
     this.overviewSource = src;
     (this.overview as unknown as { source: OverviewSource }).source = src;
   }
 
   private signalHighlight: { x: number; y: number }[] = [];
-  private nextCityCheck = 0;
+  /** Tint the block a signal guards; null clears it. */
+  highlightSignalBlock(d: Decor | null) {
+    for (const p of this.signalHighlight) this.world.setTrackTint(p.x, p.y, 0xffffff);
+    this.signalHighlight = [];
+    if (d) {
+      const post = this.fleet.signals.postAt(d.x, d.y);
+      if (post) this.signalHighlight = this.fleet.signals.blockBeyond(post).tiles;
+    }
+    for (const p of this.signalHighlight) this.world.setTrackTint(p.x, p.y, 0x7cd7e8);
+  }
   private refreshCity() {
     this.world.setCity(
       cityTiles(this.map, this.houses.houses.values(), (x, y) => !!this.towns.townAt(x, y)),
+      this.builder.streetDoors(),
     );
   }
   // ---------------------------------------------------------------- sim
@@ -1979,104 +2017,29 @@ export class Game {
         this.save(true);
       }
     }
-    const gdt = this.clock.advance(dt);
-    if (gdt > 0) {
-      this.stock.population = this.houses.residentsTotal();
-      this.stock.workforce = this.builder.crewTotal() + this.fleet.crewTotal();
-      this.stock.tick(gdt);
-      this.houses.tick(gdt, this.clock.time, this.mode === 'play');
-      if (this.clock.time >= this.nextCityCheck) {
-        this.nextCityCheck = this.clock.time + 10;
-        this.refreshCity();
-      }
-      if (this.mode === 'play')
-        this.people.tick(
-          gdt,
-          this.builder.crewTotal() + this.houses.residentsTotal(),
-          this.clock.dayFraction,
-        );
-      const famineMul = this.stock.famine ? 0.5 : 1;
-      for (const s of this.builder.stations) {
-        if (s.def.id === 'station')
-          s.passengerPopulation = [...this.houses.houses.values()]
-            .filter(
-              (h) => h.progress >= 1 && Math.max(Math.abs(h.x - s.x), Math.abs(h.y - s.y)) <= 7,
-            )
-            .reduce((n, h) => n + h.residents, 0);
-        s.tick(gdt * famineMul);
-      }
-      tickBuildings(
-        this.builder.buildings.values(),
-        this.stock,
-        gdt,
-        this.stock.famine,
-        this.builder.plantCount(),
-        this.builder.depotCount(),
-      );
-      if (this.settings.weather) this.weather.tick(this.clock.time, this.clock.day, dt);
-      this.applySeason();
-      const wf =
-        (this.settings.weather ? this.weather.speedFactor() : 1) * (this.stock.famine ? 0.7 : 1);
-      this.fleet.tick(gdt, this.clock.time, wf);
-      this.contracts.tick(this.clock.time);
-      this.trade.tick(this.clock.time, this.stock, this.economy, (id) => this.stockCap(id));
-      if (this.mode === 'play' && this.clock.time >= this.nextAgeCheck) {
-        this.nextAgeCheck = this.clock.time + daySeconds() / 24;
-        const snap = this.ageSnapshot();
-        this.economy.advanceAge(snap);
-      }
-      if (this.clock.day !== this.lastDay) {
-        this.lastDay = this.clock.day;
-        if (this.contracts.completedToday > 0) {
-          this.economy.tickets += 1;
-          this.toasts.push(STR.contracts.dailyTicket, 'good');
-        }
-        this.contracts.completedToday = 0;
-      }
-    }
+    // Poses the renderer interpolates from: once per loop tick that runs a step, paused ticks
+    // included, so the interpolation spans every step this tick runs. Below 1x the empty ticks
+    // between steps keep them, and `stepAlpha` spreads the step over its ticks.
+    if (this.clock.startsSpan()) this.fleet.beginFrame();
+    this.clock.run((gdt) =>
+      this.sim.run(gdt, {
+        mode: this.mode,
+        weather: this.settings.weather,
+      }),
+    );
   }
 
-  /** Debug aid requested for testing: money plus a full stockpile. */
+  /** Debug aid requested for testing: money, and the selected store and the grid filled. */
   cheat() {
     this.economy.money += 10000;
-    this.economy.tickets += 10;
-    for (const id of RESOURCE_IDS) this.stock.add(id, 1e9, this.stockCap(id));
+    const store = this.stores.selected;
+    if (store) for (const id of RESOURCE_IDS) this.stores.withGrid(store).add(id, 1e9);
     this.toasts.push(STR.topbar.cheated, 'info');
   }
 
   /** Traffic control and statistics (`game.traffic.report()` in the console; `verbose` logs episodes). */
   get traffic() {
     return this.fleet.traffic;
-  }
-  /** What a bare tile is and what sits on it, for the hover tooltip. */
-  private tileInfo(x: number, y: number): { title: string; lines: string[] } {
-    const t = terrainAt(this.map, x, y);
-    const T = STR.tile;
-    const title = T.terrain[TERRAIN_NAMES[t]] ?? TERRAIN_NAMES[t];
-    const lines: string[] = [
-      biomeSummary(biomeAt(this.map, x, y)),
-      T.elevation(levelAt(this.map, x, y)),
-    ];
-    if (!this.regions.isTileUnlocked(x, y)) lines.push(T.uncharted);
-    const piece = this.track.get(x, y);
-    if (piece) lines.push(T.track(piece.kind));
-    const dec = this.builder.decorAt(x, y);
-    if (dec) {
-      lines.push(decorDefOf(dec.id).name);
-      lines.push(...DecorPanel.lines(dec, this.builder, this.power, this.houses));
-    }
-    const props = this.map.props.get(y * this.map.w + x);
-    if (props?.length) {
-      const kinds = new Map<string, number>();
-      for (const p of props) kinds.set(p.kind, (kinds.get(p.kind) ?? 0) + 1);
-      lines.push([...kinds].map(([k, n]) => (n > 1 ? `${n}× ${k}` : k)).join(', '));
-    }
-    if (this.power.isPowered(x, y)) lines.push(T.powered);
-    const tm = this.builder.terrainMul(x, y);
-    if (tm === 0) lines.push(T.noTrack);
-    else if (tm !== 1) lines.push(T.trackCost(tm));
-    if (t === Terrain.Water) lines.push(T.water);
-    return { title, lines };
   }
   /** Tile position of a notice's object, or null. */
   private noticePos(n: Notice): { x: number; y: number } | null {
@@ -2087,18 +2050,37 @@ export class Game {
     const p = t?.poses[0];
     return p ? { x: p.x, y: p.y } : null;
   }
-  private focusNotice(n: Notice) {
+  /** Look at a notice's object: the overview pans to it and stays, the field view goes there. */
+  focusNotice(n: Notice) {
     const p = this.noticePos(n);
     if (!p) return;
-    if (n.target?.kind === 'train') {
-      const t = this.fleet.byId(n.target.id);
-      if (t) {
-        this.trainScreen.open(t);
-        this.screens.open(this.trainScreen);
-      }
-    } else if (n.target?.kind === 'junction')
+    this.follow.note('alert');
+    if (n.target?.kind === 'junction')
       this.flashJunction(this.fleet.junctions.contributingTiles(n.target.id) ?? n.target.tiles);
-    this.returnToRts(p.x, p.y);
+    if (this.viewTarget === 1) {
+      this.overviewFocus = p;
+      // leaving the overview lands on it too
+      const w = tileToWorld(p.x, p.y);
+      this.centerCamera(w.x, w.y);
+    } else this.returnToRts(p.x, p.y);
+  }
+  /** What the Map pin cells let through. */
+  private pinnedNotices() {
+    return this.notices.list.filter((n) => alertOn(this.settings.alerts, n.type, 'pin'));
+  }
+  /** A train reached a station: routine, so a notice only if the player turned its row on. */
+  private noteArrival(t: Train, s: Station) {
+    if (!Object.values(this.settings.alerts.channels.arrived).some(Boolean)) return;
+    this.notices.push(
+      {
+        key: `arrived:${t.id}:${this.clock.time}`,
+        kind: 'info',
+        type: 'arrived',
+        text: STR.notice.arrived(t.name, s.name),
+        target: { kind: 'train', id: t.id },
+      },
+      ARRIVAL_NOTICE_TTL,
+    );
   }
   /** Tint the tiles of a contended junction for a few seconds. */
   private junctionFlash: { tiles: { x: number; y: number }[]; until: number } | null = null;
@@ -2123,7 +2105,7 @@ export class Game {
   /** Keep one world marker per notice with a target. */
   private syncNoticeMarkers() {
     const live = new Set<string>();
-    for (const n of this.notices.list) {
+    for (const n of this.pinnedNotices()) {
       const p = this.noticePos(n);
       if (!p) continue;
       const id = `notice:${n.key}`;
@@ -2180,9 +2162,22 @@ export class Game {
     }
     if (this.lastFailedContract)
       tips.push({ key: 'failed', kind: 'warn', text: T.failed(this.lastFailedContract) });
-    if (this.stock.famine) tips.push({ key: 'famine', kind: 'bad', text: T.famine });
-    else if (this.stock.foodPerWeek() > 0 && this.stock.get('food') < this.stock.foodPerWeek() * 2)
-      tips.push({ key: 'wheat', kind: 'warn', text: T.lowWheat });
+    // a famine at any store; else the first store (a network as one) whose food lasts its residents
+    // and crews less than two weeks; a train's crew pays at its next store, so it is left out
+    if (this.stores.all().some((s) => s.famine))
+      tips.push({ key: 'famine', kind: 'bad', text: T.famine });
+    else {
+      const eating = new Map<ResourceStore, number>();
+      for (const [pool, n] of eaters(this.houses, b)) {
+        const at = this.stores.networkPool(pool);
+        eating.set(at, (eating.get(at) ?? 0) + n);
+      }
+      for (const [pool, n] of eating)
+        if (pool.get('food') < n * rules.wheatPerCrew * 2) {
+          tips.push({ key: 'wheat', kind: 'warn', text: T.lowWheat(this.stores.label(pool)) });
+          break;
+        }
+    }
     if (b.stations.length === 0) tips.push({ key: 'nostations', kind: 'info', text: T.noStations });
     else if (b.stations.length === 1)
       tips.push({ key: 'onestation', kind: 'info', text: T.oneStation });
@@ -2198,13 +2193,17 @@ export class Game {
       !b.decorHas('water_tower')
     )
       tips.push({ key: 'water', kind: 'warn', text: T.noWater });
-    if (steam && this.stock.get('coal') < 10 && !b.buildingHas('kiln'))
+    if (steam && (this.stores.totals().get('coal') ?? 0) < 10 && !b.buildingHas('kiln'))
       tips.push({ key: 'coal', kind: 'warn', text: T.lowCoal });
-    for (const id of RESOURCE_IDS)
-      if (this.stock.get(id) >= this.stockCap(id) - 1e-6 && id !== 'power') {
-        tips.push({ key: `cap:${id}`, kind: 'info', text: T.capFull(id) });
-        break;
-      }
+    // the store the player looks at is full of a good
+    const shown = this.stores.selected;
+    if (shown)
+      for (const id of RESOURCE_IDS)
+        if (id !== 'power' && shown.cap(id) > 0 && shown.get(id) >= shown.cap(id) - 1e-6) {
+          const text = T.capFull(id, this.stores.label(shown));
+          tips.push({ key: `cap:${id}`, kind: 'info', text });
+          break;
+        }
     const offers = this.contracts.offers.length;
     if (offers > 0 && !this.contracts.active.length)
       tips.push({ key: 'offers', kind: 'info', text: T.offers(offers) });
@@ -2218,22 +2217,10 @@ export class Game {
     return tips.slice(0, 8);
   }
 
-  /** Trains whose head is inside the camera view (field) or all of them (overview). */
-  private updateTrainSide(dt: number) {
-    const all = this.viewTarget === 1;
-    let list: Train[];
-    if (all) list = this.fleet.trains;
-    else {
-      const r = this.camera.viewRect();
-      list = this.fleet.trains.filter((t) => {
-        const p = t.poses[0];
-        if (!p) return false;
-        const w = tileToWorld(p.x, p.y);
-        return w.x >= r.x - 40 && w.x <= r.x + r.w + 40 && w.y >= r.y - 40 && w.y <= r.y + r.h + 40;
-      });
-    }
-    this.trainSide.update(list, all);
-    if (all) this.townPanel.render();
+  /** The outliner, the overview's town list, the depot's gate mark and the traced train path. */
+  private updateTrainMarks(dt: number) {
+    this.outliner.update(dt);
+    if (this.viewTarget === 1) this.townPanel.render();
     if (this.spawnMarkTimer > 0) {
       this.spawnMarkTimer -= dt;
       const sp = this.world.getStructure('spawn-preview');
@@ -2250,7 +2237,7 @@ export class Game {
       }
     }
   }
-  private setHoverTrain(t: Train | null) {
+  setHoverTrain(t: Train | null) {
     this.hoverTrain = t;
     this.pathTimer = 1;
     if (!t) this.applyPathHighlight([]);
@@ -2274,12 +2261,14 @@ export class Game {
       }
     return best;
   }
-  /** Pick a train in the field view: its path lights up and the card above the survey map follows it. */
+  /** Pick a train in the field view: its path lights up, its panel opens, the camera follows it. */
   selectFieldTrain(t: Train | null) {
+    if (t) this.follow.start(t.id);
+    else this.follow.stop();
     if (this.fieldSelected === t) return;
     this.fieldSelected = t;
     this.trainRenderer.selectedId = t ? t.id : null;
-    this.buildInfo.showTrain(t);
+    this.trainPanel.show(t);
     if (t) {
       this.build.select(null);
       this.build.selectBuilding(null);
@@ -2287,7 +2276,7 @@ export class Game {
     }
     this.setHoverTrain(t);
   }
-  private updateFieldTrains(active: boolean) {
+  private updateFieldTrains(active: boolean, dt: number) {
     if (this.fieldSelected && !this.fleet.byId(this.fieldSelected.id)) this.selectFieldTrain(null);
     const canPick = active && this.build.tool.kind === 'none';
     const hover = canPick ? this.trainUnderMouse() : null;
@@ -2306,7 +2295,38 @@ export class Game {
         } else if (this.fieldSelected) this.selectFieldTrain(null);
       }
     }
-    if (this.fieldSelected) this.buildInfo.refreshTrain();
+    if (this.fieldSelected) this.trainPanel.update(dt);
+  }
+  get selectedTrain() {
+    return this.fieldSelected;
+  }
+  /** Pick a train from the outliner: from the overview, the camera lands on it first. */
+  pickTrain(t: Train) {
+    if (this.viewTarget === 1) this.focusTrain(t);
+    this.selectFieldTrain(t);
+  }
+  /** What the camera shows, in world pixels; null in the overview, which shows everything. */
+  viewRect() {
+    return this.viewTarget === 1 ? null : this.camera.viewRect();
+  }
+  /** Where a tile point is drawn, its ground's height included, in world pixels. */
+  tilePoint(x: number, y: number) {
+    const w = tileToWorld(x, y);
+    return { x: w.x, y: w.y + this.world.elevationOf(Math.floor(x + 0.5), Math.floor(y + 0.5)) };
+  }
+  stuckFor(id: number) {
+    return this.stuckNow.get(id) ?? null;
+  }
+  /** Keep the camera on the train followed; a train gone ends the following. */
+  private followTrain(dt: number) {
+    const find = (id: number) => {
+      const t = this.fleet.byId(id);
+      if (!t) return undefined;
+      const p = t.poses[0];
+      return p ? this.tilePoint(p.x, p.y) : null;
+    };
+    const to = this.follow.step(this.camera, find, dt);
+    if (to) this.camera.centerOn(to.x, to.y);
   }
   private applyPathHighlight(legs: { x: number; y: number }[][]) {
     for (const leg of this.pathHighlight)
@@ -2322,23 +2342,76 @@ export class Game {
   focusTrain(t: Train) {
     const p = t.poses[0];
     if (!p) return;
+    const following = this.follow.trainId === t.id;
     this.screens.close();
     this.returnToRts(p.x, p.y);
+    if (following) this.follow.start(t.id);
+  }
+  /** Look at a depot behind the dimmed screen and mark the gate a train would leave by. */
+  peekDepot(depot: Station, gate: { x: number; y: number } | null) {
+    this.follow.note('jump');
+    const p = tileToWorld(depot.cx + 0.5, depot.cy + 0.5);
+    this.camera.zoomIndex = 2;
+    this.camera.zoom = ZOOM_STEPS[2];
+    this.camera.centerOn(p.x, p.y);
+    this.setView(0);
+    this.spawnMarkTimer = gate ? 6 : 0;
+    if (gate) {
+      const sp = this.world.setStructure('spawn-preview', gate.x, gate.y, 'terrain/ghost_ok', 30);
+      sp.alpha = 0.9;
+    } else this.world.removeStructure('spawn-preview');
+  }
+  /** Take down the gate mark `peekDepot` put up. */
+  endDepotPeek() {
+    this.world.removeStructure('spawn-preview');
+  }
+  /** The camera over a world point (the minimap). */
+  centerCamera(wx: number, wy: number) {
+    // a pan from the minimap closes the tooltips as the field's own pans do
+    this.tooltip.stack.closeAll();
+    this.follow.note('pan');
+    this.camera.centerOn(wx, wy);
   }
 
   // ---------------------------------------------------------------- frame
+  /** messages of loop errors already toasted this session */
+  private readonly frameErrors = new Set<string>();
+  /**
+   * A loop callback threw and the loop carried on: stop the game storing itself, since the throw
+   * may have left it half-applied, log it with its stack every time, and toast each distinct
+   * message once, so an error repeating every frame does not flood the screen.
+   */
+  private frameError(err: unknown, phase: LoopPhase) {
+    this.autosavePause.trip();
+    console.error(`[loop] ${phase} threw; the game keeps running`, err);
+    const message = err instanceof Error ? err.message : String(err);
+    if (this.frameErrors.has(message)) return;
+    this.frameErrors.add(message);
+    this.toasts.push(STR.debug.frameError(message), 'warn');
+  }
   private render(alpha: number, dt: number) {
+    try {
+      this.drawFrame(alpha, dt);
+    } finally {
+      // input is read once per frame: a frame that throws must not replay its keys and clicks
+      this.input.endFrame();
+    }
+  }
+  private drawFrame(alpha: number, dt: number) {
     this.camera.viewW = this.app.screen.width;
     this.camera.viewH = this.app.screen.height;
     this.handleInput(dt);
+    this.closeTipsOnChange();
+    this.followTrain(dt);
     this.camera.update(dt);
     this.updateViewBlend(dt);
     if (this.railsDirty) this.refreshRails();
+    if (this.bridgesDirty) this.refreshBridges();
     this.world.animate(dt);
     this.world.applyCamera(this.camera);
     this.layoutViews();
     this.updateCursor();
-    this.trainRenderer.update(this.fleet.trains, this.clock.speed === 0 ? 1 : alpha, dt);
+    this.trainRenderer.update(this.fleet.trains, this.clock.stepAlpha(alpha), dt);
     const night = this.settings.dayNight ? nightness(this.clock.dayFraction) : 0;
     const rainI = this.settings.weather && this.weather.kind === 'rain' ? this.weather.visible : 0;
     const fogI = this.settings.weather && this.weather.kind === 'fog' ? this.weather.visible : 0;
@@ -2376,6 +2449,13 @@ export class Game {
     this.glows.update(this.builder.stations, this.fleet.trains, night);
     this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
     this.peopleRenderer.update(this.people, dt * this.clock.speed);
+    this.world.wind = this.weather.wind;
+    this.world.rain = this.weather.kind === 'rain' ? this.weather.visible : 0;
+    this.world.buildingLife.update(
+      this.clock.speed ? dt : 0,
+      this.weather.wind,
+      this.camera.viewRect(),
+    );
     this.world.setAtmosphereTint(this.dayNight.color);
     const fieldActive =
       this.viewTarget === 0 &&
@@ -2383,33 +2463,51 @@ export class Game {
       !this.input.overUi &&
       !this.screens.current &&
       !this.menuOpen;
-    this.updateFieldTrains(fieldActive);
+    this.updateFieldTrains(fieldActive, dt);
     this.build.update(fieldActive);
+    this.world.harvest.follow(
+      fieldActive ? this.hoverTile : null,
+      this.build,
+      this.season ?? 'spring',
+      this.build.placingAt(fieldActive ? this.hoverTile : null),
+    );
+    // the hovered tile's outline takes the colour the harvest layer gives it (#335)
+    this.cursor.tint = this.world.harvest.outline;
     this.updateRtsTooltip();
     this.hud.update(this.economy);
-    this.resourceBar.update(this.stock, (id) => this.stockCap(id));
+    // the selected store, with the grid's power beside it; none but the grid in an empty world
+    const shown = this.stores.selected ?? this.stores.grid;
+    this.resourceBar.update(
+      this.stores.withGrid(shown),
+      this.stores.label(shown),
+      this.stores.totals(),
+      this.economy.money,
+      this.economy.tier,
+    );
     this.hud.setFps(this.settings.showFps ? this.loop.fps : null);
     this.panelRefresh += dt;
     if (this.panelRefresh > 0.5) {
       this.panelRefresh = 0;
+      this.resourceBar.refreshFlows();
       if (this.stationPanel.station) this.stationPanel.render();
       if (this.buildingPanel.building) this.buildingPanel.render();
       if (this.decorPanel.decor) this.decorPanel.render();
-      this.contractsSide.update();
       this.screens.refresh();
       this.buildInfo.refresh();
     }
     this.noticeTimer += dt;
     if (this.noticeTimer > 0.5) {
       this.noticeTimer = 0;
+      const stuck = this.traffic.stuckTrains(this.clock.time);
+      this.stuckNow = new Map(stuck.map((s) => [s.id, s.since]));
       this.notices.refresh({
         trains: this.fleet.trains,
         builder: this.builder,
-        stock: this.stock,
         power: this.power,
-        stuck: this.traffic.stuckTrains(this.clock.time),
+        stuck,
+        contracts: { board: this.contracts, now: this.clock.time },
       });
-      this.noticePanel.render(this.notices.list);
+      this.alerts.update(this.notices.list);
       this.advisor.update(this.computeTips(), this.notices.list);
       this.syncNoticeMarkers();
       this.syncContractMarker();
@@ -2418,18 +2516,30 @@ export class Game {
     if (this.junctionFlash && performance.now() / 1000 > this.junctionFlash.until)
       this.clearJunctionFlash();
     this.floaters.update(dt);
+    this.startPieceHalos();
+    this.halos.update(dt);
+    this.workBars.sync([...this.builder.works(), ...this.houses.works()]);
     this.powerLines.update(dt);
-    this.updateTrainSide(dt);
+    this.updateTrainMarks(dt);
     this.minimap.draw(this.minimapMarks());
     if (this.debug.open) this.updateDebug();
-    this.input.endFrame();
   }
 
+  /** The track tiles the minimap marks, listed again only when the track changes. */
+  private minimapTrack: {
+    track: TrackGraph;
+    version: number;
+    tiles: { x: number; y: number }[];
+  } | null = null;
   private minimapMarks() {
-    const track: { x: number; y: number }[] = [];
-    for (const t of this.track.tiles()) track.push({ x: t.x, y: t.y });
+    let kept = this.minimapTrack;
+    if (kept?.track !== this.track || kept.version !== this.track.version) {
+      const tiles: { x: number; y: number }[] = [];
+      for (const t of this.track.tiles()) tiles.push({ x: t.x, y: t.y });
+      kept = this.minimapTrack = { track: this.track, version: this.track.version, tiles };
+    }
     return {
-      track,
+      track: kept.tiles,
       stations: this.builder.stations.map((s) => ({ x: s.x, y: s.y })),
       trains: this.fleet.trains
         .filter((t) => t.poses.length)
@@ -2437,105 +2547,191 @@ export class Game {
     };
   }
 
+  /**
+   * The field's tooltip (#337, #361): what the pointer is on goes to the tooltip stack. With a
+   * tool in hand the stack is the build controller's (#336), so the game leaves it alone.
+   */
   private updateRtsTooltip() {
-    if (this.viewTarget !== 0 || this.input.overUi) return;
+    if (this.viewTarget !== 0 || this.build.tool.kind !== 'none') return;
+    this.hoverTip(this.fieldTip());
+  }
+
+  /** What the pointer is on in the field and its tooltip: a train, a station, a works, a tile. */
+  private fieldTip(): HoverTip | null {
+    const ht = this.fieldHover;
     const st = this.build.hoverStation;
     const bld = this.build.hoverBuilding;
-    const ht = this.fieldHover;
-    if (ht && this.build.tool.kind === 'none') {
-      const d = this.describePick({ kind: 'train', id: ht.id });
-      this.tooltip.show(this.input.mouseX, this.input.mouseY, d.title, [
-        ...d.lines,
-        STR.train.clickHint,
-      ]);
-    } else if (st && this.build.tool.kind === 'none') {
-      this.tooltip.show(this.input.mouseX, this.input.mouseY, st.name, [
-        STR.station.level(st.level),
-        `${STR.station.storage}: ${Math.floor(st.totalStored())} / ${st.capacity}`,
-        biomeSummary(biomeAt(this.map, st.x, st.y)),
-      ]);
-    } else if (
-      this.build.tool.kind === 'none' &&
-      !st &&
-      !bld &&
-      inBounds(this.map, this.hoverTile.x, this.hoverTile.y)
-    ) {
-      const info = this.tileInfo(this.hoverTile.x, this.hoverTile.y);
-      this.tooltip.show(this.input.mouseX, this.input.mouseY, info.title, info.lines);
-    } else if (bld && this.build.tool.kind === 'none') {
-      const def = buildingDefOf(bld.id);
-      const status = BuildingPanel.status(bld, this.stock);
-      this.tooltip.show(this.input.mouseX, this.input.mouseY, def.name, [
-        BuildingPanel.recipeText(bld.id),
-        status.text,
-        `${STR.building.rate}: ${STR.station.perWeek(Math.round(bld.rate * 10) / 10)}`,
-      ]);
-    } else this.tooltip.hide();
+    const { x, y } = this.hoverTile;
+    if (ht)
+      return {
+        target: { kind: 'train', id: ht.id },
+        doc: () => trainTip(this.trainSnap(ht), true),
+      };
+    if (st)
+      return {
+        target: { kind: 'station', id: st.id },
+        doc: () => stationTip(this.stationSnap(st)),
+      };
+    if (bld)
+      return {
+        target: { kind: 'works', id: `${bld.x},${bld.y}` },
+        doc: () => worksTip(this.worksSnap(bld)),
+      };
+    if (!inBounds(this.map, x, y)) return null;
+    return {
+      target: { kind: 'tile', x, y, tool: 'none' },
+      doc: () => tileTip(this.tileSnap(x, y)),
+    };
+  }
+
+  /**
+   * Tell the tooltip stack where the pointer is (#361). Over the map it gets the target and a
+   * builder it runs only once the pointer has rested there, so a sweep builds nothing. Over a
+   * panel or out of the window the pointer has left; in the stack itself the stack follows it on
+   * its own. Then the root's live content is rebuilt, wherever the pointer is (`update` keeps that
+   * to 4 times a second).
+   */
+  private hoverTip(tip: HoverTip | null) {
+    const stack = this.tooltip.stack;
+    const inp = this.input;
+    if (inp.overTips) {
+      // in a locked tooltip: the stack has the pointer
+    } else if (inp.overUi || !inp.mouseInside) stack.leave();
+    else {
+      const build: TipBuild = tip ? tipBuild(this.atlas, tip.doc) : () => [];
+      // a locked root goes on standing for its own target while the pointer moves on
+      if (!stack.isLocked(0))
+        this.tipLive =
+          tip && LIVE_TIPS.has(tip.target.kind) ? { key: tipKey(tip.target), build } : null;
+      stack.hover(tip && tipKey(tip.target), inp.mouseX, inp.mouseY, build);
+    }
+    if (this.tipLive) stack.update(this.tipLive.key, this.tipLive.build);
+  }
+
+  /**
+   * Close the tooltip stack on what only the game sees (#361): a click on the map (the stack
+   * closes itself on a click outside it, but only while a tooltip is open), a tool taken up, a
+   * screen or a menu opening. The camera, the view switch and a load close it where they happen.
+   */
+  private closeTipsOnChange() {
+    const was = this.tipsSaw;
+    const now = {
+      tool: this.build.tool.kind !== 'none',
+      screen: this.screens.current,
+      menu: this.menuOpen,
+    };
+    this.tipsSaw = now;
+    if (
+      this.input.buttonPressed.size > 0 ||
+      (now.tool && !was.tool) ||
+      (now.screen && now.screen !== was.screen) ||
+      (now.menu && !was.menu)
+    )
+      this.tooltip.stack.closeAll();
+  }
+
+  // ---------------------------------------------------------------- tooltip snapshots (src/ui)
+  private stationSnap(st: Station): StationSnapshot {
+    return {
+      name: st.name,
+      level: st.level,
+      work: st.work ? { to: st.work.to, hoursLeft: hoursLeft(st.work) } : null,
+      stored: st.shownStored(),
+      capacity: st.capacity,
+      biome: biomeAt(this.map, st.x, st.y),
+      weeklyAtLevel1: weeklyOutput(1, 1),
+    };
+  }
+  private worksSnap(b: Building): WorksSnapshot {
+    const def = buildingDefOf(b.id);
+    return {
+      name: def.name,
+      // the recipe it runs at its level
+      recipe: buildingRecipe(b),
+      altIn: def.altIn,
+      status: BuildingPanel.statusKind(b, this.stores.worksStore(b)),
+      work: b.work ? { to: b.work.to, hoursLeft: hoursLeft(b.work) } : null,
+      rate: b.rate,
+    };
+  }
+  private trainSnap(t: Train): TrainSnapshot {
+    const next = this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)]);
+    return {
+      name: t.name,
+      state: t.state,
+      blocked: t.blocked,
+      next: next?.name ?? null,
+      cargo: t.totalCargo(),
+      weight: t.weight,
+      power: t.power,
+    };
+  }
+  /** The piece on a tile with its line, as the toolbar names it: "Curve (Main Line)". */
+  private trackName(x: number, y: number): string | null {
+    const p = this.track.get(x, y);
+    if (!p) return null;
+    const L = STR.toolbar.trackClass;
+    const line = p.cls2 && p.cls2 !== p.cls ? `${L[p.cls]} × ${L[p.cls2]}` : L[p.cls];
+    return `${content.track.pieces[p.kind]?.name ?? p.kind} (${line})`;
+  }
+  private tileSnap(x: number, y: number): TileSnapshot {
+    const dec = this.builder.decorAt(x, y);
+    return {
+      map: this.map,
+      x,
+      y,
+      charted: this.regions.isTileUnlocked(x, y),
+      track: this.trackName(x, y),
+      decor: dec
+        ? {
+            name: decorDefOf(dec.id).name,
+            lines: DecorPanel.lines(dec, this.builder, this.power, this.houses),
+          }
+        : null,
+      props: (this.map.props.get(y * this.map.w + x) ?? []).map((p) => p.kind),
+      powered: this.power.isPowered(x, y),
+      trackCostFactor: this.builder.terrainMul(x, y),
+      weeklyAtLevel1: weeklyOutput(1, 1),
+    };
+  }
+  /** What the overview picked, as it is now; a station or a train since gone says so. */
+  private pickSnap(p: { kind: 'station' | 'train'; id: number }): PickSnapshot {
+    if (p.kind === 'station') {
+      const s = this.builder.stationById(p.id);
+      if (s)
+        return {
+          kind: 'station',
+          name: s.name,
+          level: s.level,
+          stored: s.shownStored(),
+          capacity: s.capacity,
+        };
+    } else {
+      const t = this.fleet.byId(p.id);
+      if (t) return { kind: 'train', ...this.trainSnap(t) };
+    }
+    return { kind: 'gone', of: p.kind, id: p.id };
   }
 
   private handleInput(dt: number) {
     const inp = this.input;
-    if (inp.wasPressed('Backquote')) this.debug.toggle();
-    if (this.menuOpen) {
-      if (inp.wasPressed('Escape') && this.screens.current) this.screens.close();
-      else if (inp.wasPressed('Escape') && this.pauseMenu.visible) this.closeMenus();
-      return;
-    }
-    if (
-      inp.wasPressed('Escape') &&
-      !this.screens.current &&
-      this.build.tool.kind === 'none' &&
-      !this.build.selected &&
-      this.viewTarget === 0
-    ) {
-      this.openPauseMenu();
-      return;
-    }
-    if (this.mode === 'play' && inp.wasPressed('KeyF')) this.screens.toggle(this.depot);
-    if (this.mode === 'play' && inp.wasPressed('KeyC')) this.screens.toggle(this.contractsScreen);
-    if (this.mode === 'play' && inp.wasPressed('KeyG')) this.screens.toggle(this.craftingScreen);
-    if (this.mode === 'play' && inp.wasPressed('KeyV')) this.screens.toggle(this.rosterScreen);
-    if (this.mode === 'play' && inp.wasPressed('KeyK')) this.screens.toggle(this.marketScreen);
-    if (inp.wasPressed('Escape') && this.screens.current) {
-      this.screens.close();
-      return;
-    }
-    if (inp.wasPressed('KeyM')) this.toggleOverview();
-    if (inp.wasPressed('Tab') && this.toolbar.open && this.viewTarget === 0)
-      this.toolbar.cycle(inp.isDown('ShiftLeft') || inp.isDown('ShiftRight') ? -1 : 1);
-    // U / Shift+U: the tools that upgrade wide track to high speed and downgrade it
-    if (inp.wasPressed('KeyU') && this.viewTarget === 0 && !this.screens.current)
-      this.toolbar.toggleReclass(
-        inp.isDown('ShiftLeft') || inp.isDown('ShiftRight') ? 'regular' : 'high_speed',
-      );
-    // Q / E: the previous and the next type of the open category (track by gauge)
-    if (this.toolbar.open && this.viewTarget === 0) {
-      if (inp.wasPressed('KeyQ')) this.toolbar.cycleGroup(-1);
-      if (inp.wasPressed('KeyE')) this.toolbar.cycleGroup(1);
-    }
-    if (inp.wasPressed('Escape') && this.viewTarget === 1) {
-      if (this.recording) this.cancelRecording();
-      else if (this.ovSelected !== null) {
-        this.ovSelected = null;
-        this.setHoverTrain(null);
-        this.updateOverviewBanner();
-      } else this.setView(0);
-    }
-    if (inp.wasPressed('Space')) this.clock.togglePause();
-    const catOpen = this.toolbar.open !== null && this.viewTarget === 0;
-    for (let d = 1; d <= 9; d++)
-      if (inp.wasPressed(`Digit${d}`)) {
-        if (catOpen) this.toolbar.selectIndex(d - 1);
-        else if (d <= 3) this.clock.setSpeed(d);
-      }
-    void catOpen;
+    // the hotkeys (src/ui/keymap.ts); the camera stays still over a menu, and on a frame where
+    // Escape opened or closed something
+    if (handlePlayKeys(inp, this.ui.keys)) return;
 
     // wheel zoom (also crosses the RTS/overview threshold)
     if (inp.wheelDelta !== 0) {
       const dir = inp.wheelDelta > 0 ? -1 : 1; // wheel down = zoom out
       if (this.viewTarget === 0) {
         if (dir < 0 && this.camera.zoomIndex === 0) this.setView(1);
-        else this.camera.zoomBy(dir, inp.mouseX, inp.mouseY);
+        else {
+          // a zoom moves the map under the tooltips: they close
+          this.tooltip.stack.closeAll();
+          // a train followed stays in the middle: the zoom is about it, not about the pointer
+          if (this.follow.trainId !== null) this.camera.zoomBy(dir);
+          else this.camera.zoomBy(dir, inp.mouseX, inp.mouseY);
+          this.follow.note('zoom');
+        }
       } else if (dir > 0) {
         const t = this.overviewTileAt(inp.mouseX, inp.mouseY);
         if (t) this.returnToRts(t.x, t.y);
@@ -2556,20 +2752,29 @@ export class Game {
         inp.mouseInside &&
         document.hasFocus() &&
         !inp.buttons.size &&
-        !this.screens.current
+        !this.screens.current &&
+        // a pointer on the HUD at the edge of the screen does not take the camera off a train
+        !(inp.overUi && this.follow.trainId !== null)
       ) {
-        if (inp.mouseX < EDGE_MARGIN) dx -= 1;
-        if (inp.mouseX > this.camera.viewW - EDGE_MARGIN) dx += 1;
-        if (inp.mouseY < EDGE_MARGIN) dy -= 1;
-        if (inp.mouseY > this.camera.viewH - EDGE_MARGIN) dy += 1;
+        const edge = inp.overUi ? EDGE_MARGIN_HUD : EDGE_MARGIN;
+        if (inp.mouseX < edge) dx -= 1;
+        if (inp.mouseX > this.camera.viewW - edge) dx += 1;
+        if (inp.mouseY < edge) dy -= 1;
+        if (inp.mouseY > this.camera.viewH - edge) dy += 1;
       }
+      // a pan moves the map under the tooltips: they close
       if (dx || dy) {
         const l = Math.hypot(dx, dy);
+        this.tooltip.stack.closeAll();
+        this.follow.note('pan');
         this.camera.pan((dx / l) * PAN_SPEED * dt, (dy / l) * PAN_SPEED * dt);
       }
       // middle-drag
-      if (inp.buttons.has(1) && (inp.dragDX || inp.dragDY))
+      if (inp.buttons.has(1) && (inp.dragDX || inp.dragDY)) {
+        this.tooltip.stack.closeAll();
+        this.follow.note('pan');
         this.camera.pan(-inp.dragDX, -inp.dragDY);
+      }
     } else if (this.viewBlend > 0.99) {
       this.handleOverviewPointer();
     }
@@ -2584,19 +2789,16 @@ export class Game {
     const hoverChunk = hoverTile ? this.regions.regionIndex(hoverTile.x, hoverTile.y) : -1;
     const buyable =
       hoverChunk >= 0 && !this.regions.unlocked[hoverChunk] && this.regions.isRevealed(hoverChunk);
-    if (pick) {
-      const info = this.describePick(pick);
-      this.tooltip.show(inp.mouseX, inp.mouseY, info.title, info.lines);
-    } else if (buyable)
-      this.tooltip.show(
-        inp.mouseX,
-        inp.mouseY,
-        STR.overview.chunkTitle,
-        STR.overview.chunkLines(fmtMoney(this.regions.price(hoverChunk))),
-      );
-    else this.tooltip.hide();
-    if (inp.wasPressed('KeyR')) this.toggleRecording();
-    if (this.recording && inp.wasPressed('Enter')) this.finishRecording();
+    this.hoverTip(
+      pick
+        ? { target: { kind: pick.kind, id: pick.id }, doc: () => pickTip(this.pickSnap(pick)) }
+        : buyable
+          ? {
+              target: { kind: 'chunk', id: hoverChunk },
+              doc: () => chunkTip({ price: this.regions.price(hoverChunk) }),
+            }
+          : null,
+    );
     for (const c of inp.clicks) {
       if (c.button !== 0) continue;
       const p = this.overview.pick(...this.overviewLocalTuple(c.x, c.y));
@@ -2630,7 +2832,7 @@ export class Game {
     }
   }
   /** R in the overview: start recording stops for the selected train, or finish. */
-  private toggleRecording() {
+  toggleRecording() {
     if (this.recording) {
       this.finishRecording();
       return;
@@ -2640,22 +2842,33 @@ export class Game {
     this.recording = { trainId: t.id, stops: [] };
     this.updateOverviewBanner();
   }
-  private finishRecording() {
+  /**
+   * Give the train the recorded stops, each with the plan it already had for that station. A
+   * train on a contract job finishes the job first (`Commands.setSchedule`).
+   */
+  finishRecording() {
     const rec = this.recording;
     this.recording = null;
     const t = rec ? this.fleet.byId(rec.trainId) : null;
-    if (rec && t && rec.stops.length >= 2) {
+    if (rec && t) {
       const stops = rec.stops.map(
-        (id) => t.schedule.find((s) => s.stationId === id) ?? defaultStopFor(id),
+        (id) => t.program.find((s) => s.stationId === id) ?? defaultStopFor(id),
       );
-      t.mode = 'schedule';
-      this.fleet.setSchedule(t, stops);
-      this.toasts.push(STR.overview.recorded(t.name, stops.length), 'good');
+      const done = this.commands.setSchedule(t, stops);
+      if (done.ok) this.toasts.push(STR.overview.recorded(t.name, stops.length), 'good');
+      else this.toasts.push(done.message, 'warn');
     } else if (rec) this.toasts.push(STR.depot.needTwoStops, 'warn');
     this.updateOverviewBanner();
   }
-  private cancelRecording() {
+  /** Drop the recording; the train keeps its schedule. */
+  cancelRecording() {
     this.recording = null;
+    this.updateOverviewBanner();
+  }
+  /** Forget the train picked in the overview. */
+  dropOverviewTrain() {
+    this.ovSelected = null;
+    this.setHoverTrain(null);
     this.updateOverviewBanner();
   }
   private updateOverviewBanner() {
@@ -2669,35 +2882,6 @@ export class Game {
     else this.overviewBanner.textContent = STR.overview.hint;
   }
 
-  /** Overridable hooks for later milestones. */
-  describePick(p: { kind: 'station' | 'train'; id: number }): { title: string; lines: string[] } {
-    if (p.kind === 'station') {
-      const s = this.builder.stationById(p.id);
-      if (s)
-        return {
-          title: s.name,
-          lines: [
-            STR.station.level(s.level),
-            `${STR.station.storage}: ${Math.floor(s.totalStored())} / ${s.capacity}`,
-          ],
-        };
-    }
-    if (p.kind === 'train') {
-      const t = this.fleet.byId(p.id);
-      if (t) {
-        const next = this.builder.stationById(t.route[t.routeIndex % Math.max(1, t.route.length)]);
-        return {
-          title: t.name,
-          lines: [
-            `${t.blocked && t.state === 'moving' ? STR.depot.state.held : STR.depot.state[t.state]}${next ? ` → ${next.name}` : ''}`,
-            STR.depot.cargo(Math.round(t.totalCargo())),
-            `${Math.round(t.weight)} / ${Math.round(t.power)} t`,
-          ],
-        };
-      }
-    }
-    return { title: `${p.kind} #${p.id}`, lines: [] };
-  }
   pickPosition(p: { kind: 'station' | 'train'; id: number }): { x: number; y: number } | null {
     const list =
       p.kind === 'station' ? this.overviewSource.stations() : this.overviewSource.trains();
@@ -2712,12 +2896,19 @@ export class Game {
   setView(v: 0 | 1) {
     if (this.viewTarget === v) return;
     this.viewTarget = v;
+    // kept on the way out, so the view blends from where the overview stood
+    if (v === 1) this.overviewFocus = null;
+    // the map and the overview do not share their tooltips
+    this.tooltip.stack.closeAll();
     this.overviewBanner.classList.toggle('show', v === 1);
     this.toolbar.root.style.display = v === 1 ? 'none' : '';
     this.townPanel.show(v === 1);
-    if (v === 1) this.build.setTool({ kind: 'none' });
+    this.trainPanel.setOverview(v === 1);
+    if (v === 1) {
+      this.follow.note('overview');
+      this.build.setTool({ kind: 'none' });
+    }
     if (v === 0) {
-      this.tooltip.hide();
       this.overview.hover = null;
       this.ovSelected = null;
       this.recording = null;
@@ -2726,6 +2917,7 @@ export class Game {
     }
   }
   returnToRts(tx: number, ty: number) {
+    this.follow.note('jump');
     const p = tileToWorld(tx, ty);
     this.camera.zoomIndex = 1;
     this.camera.zoom = ZOOM_STEPS[1];
@@ -2759,8 +2951,11 @@ export class Game {
     const fit = Math.min((vw - 300) / ob.w, (vh - 90) / ob.h);
     const camTile = worldToTileInt(this.camera.x, this.camera.y);
     const s = fit * (1.6 - 0.6 * e);
-    const centerX = lerp((camTile.x + 0.5) * OV_UNIT, ob.x + ob.w / 2, e);
-    const centerY = lerp((camTile.y + 0.5) * OV_UNIT, ob.y + ob.h / 2, e);
+    const focus = this.overviewFocus;
+    const endX = focus ? (focus.x + 0.5) * OV_UNIT : ob.x + ob.w / 2;
+    const endY = focus ? (focus.y + 0.5) * OV_UNIT : ob.y + ob.h / 2;
+    const centerX = lerp((camTile.x + 0.5) * OV_UNIT, endX, e);
+    const centerY = lerp((camTile.y + 0.5) * OV_UNIT, endY, e);
     o.scale.set(s);
     o.position.set(vw / 2 - centerX * s, vh / 2 + 18 - centerY * s);
     if (o.visible) this.overview.refresh();
@@ -2796,6 +2991,12 @@ export class Game {
       this.cursor.position.set(p.x, p.y);
     }
   }
+  /** Colour every sprite by its depth key; returns whether the overlay is now on. */
+  toggleDepth() {
+    this.depthOverlay = !this.depthOverlay;
+    this.applyDepthOverlay();
+    return this.depthOverlay;
+  }
   private applyDepthOverlay() {
     for (const ch of this.world.objects.children) {
       if (!this.depthOverlay) {
@@ -2817,6 +3018,15 @@ export class Game {
     );
     d.set(STR.debug.zoom, `${this.camera.targetZoom}x (${this.viewTarget ? 'overview' : 'rts'})`);
     d.set(STR.debug.camera, `${Math.round(this.camera.x)}, ${Math.round(this.camera.y)}`);
+    const ls = this.world.landscape.status;
+    d.set(
+      STR.debug.landscape,
+      ls.state === 'failed'
+        ? STR.debug.landscapeFailed(ls.reason)
+        : ls.state === 'active'
+          ? STR.debug.landscapeActive
+          : STR.debug.landscapeLoading,
+    );
     const tc = this.traffic.counters;
     d.set(STR.debug.recovery, this.traffic.recoverySummary(this.fleet.trains));
     d.set(

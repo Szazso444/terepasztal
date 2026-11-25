@@ -84,7 +84,17 @@ const REPORT = {
     },
     gate: { type: 'string', description: 'each gate command and its result' },
     testsAdded: { type: 'array', items: { type: 'string' } },
-    openQuestions: { type: 'array', items: { type: 'string' } },
+    questionsForAuthor: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'product or rule decisions only the author can make; any entry stops the task',
+    },
+    notesForCore: {
+      type: 'array',
+      items: { type: 'string' },
+      description:
+        'choices made inside the brief that Core should confirm; they do not stop the gate',
+    },
     outOfScope: { type: 'array', items: { type: 'string' } },
   },
   required: [
@@ -94,7 +104,8 @@ const REPORT = {
     'changed',
     'gate',
     'testsAdded',
-    'openQuestions',
+    'questionsForAuthor',
+    'notesForCore',
     'outOfScope',
   ],
 };
@@ -180,7 +191,7 @@ const HANDOFF = `When you finish: commit on the branch with an "Area: outcome" s
 function implementPrompt(t) {
   return `${t.brief}
 
-Branch: create \`${branchOf(t)}\` from origin/develop in your worktree (\`git fetch origin develop && git switch -c ${branchOf(t)} origin/develop\`).
+Branch: if \`${branchOf(t)}\` already exists (\`git branch --list ${branchOf(t)}\`), \`git switch ${branchOf(t)}\` and continue from its head; never reset, recreate or delete it, and if its state is unclear stop and report. Otherwise create it from origin/develop in your worktree (\`git fetch origin develop && git switch -c ${branchOf(t)} origin/develop\`).
 Run the local gate of docs/process/lifecycle.md step 4 before you report.
 ${HANDOFF}
 Return the result report of docs/process/context.md.`;
@@ -228,52 +239,86 @@ ${HANDOFF}
 Return the result report of docs/process/context.md.`;
 }
 
+/** An agent call that is retried once when the agent returns nothing. */
+async function once(prompt, opts) {
+  return (
+    (await agent(prompt, opts)) ?? (await agent(prompt, { ...opts, label: `${opts.label}:retry` }))
+  );
+}
+
 async function gateLoop(t, first) {
   let report = first;
   let qa = null;
   let verified = null;
-  for (let round = 1; round <= MAX_ROUNDS; round++) {
-    if (!report)
-      return {
-        task: t.key,
-        issue: t.issue,
-        branch: branchOf(t),
-        status: 'failed',
-        reason: 'agent returned nothing',
-        round,
-      };
-    if (report.outcome === 'blocked' || report.openQuestions.length) {
-      return { task: t.key, issue: t.issue, branch: branchOf(t), status: 'blocked', report, round };
+  const notes = [];
+  const result = (status, extra) => ({
+    task: t.key,
+    issue: t.issue,
+    branch: branchOf(t),
+    status,
+    notesForCore: notes,
+    ...extra,
+  });
+  // Round 0 gates the first implementation; rounds 1 to MAX_ROUNDS gate each fix.
+  for (let round = 0; round <= MAX_ROUNDS; round++) {
+    if (!report) {
+      const who = round ? 'fixing' : 'implementing';
+      return result('failed', { reason: `the ${who} agent returned nothing`, round });
     }
-    verified = t.verification
-      ? await agent(verifyPrompt(t, report), {
-          agentType: 'verification',
-          isolation: 'worktree',
-          schema: VERIFIED,
-          label: `verify:${t.key}#${round}`,
-          phase: 'Gate',
-        })
-      : null;
-    const verificationFailed = t.verification && (!verified || verified.failures.length > 0);
-    if (!verificationFailed) {
-      qa = await agent(qaPrompt(t, report, verified), {
+    notes.push(...(report.notesForCore ?? []));
+    // Only the author's decisions and a role's own stop stop a task; choices made inside the brief
+    // go on to the gate and come back to Core with the result.
+    if (report.outcome === 'blocked' || report.questionsForAuthor.length) {
+      return result('blocked', { report, round });
+    }
+    qa = null;
+    verified = null;
+    if (t.verification) {
+      verified = await once(verifyPrompt(t, report), {
+        agentType: 'verification',
+        isolation: 'worktree',
+        schema: VERIFIED,
+        label: `verify:${t.key}#${round}`,
+        phase: 'Gate',
+      });
+      if (!verified) {
+        return result('failed', {
+          reason: 'the verification agent returned nothing',
+          report,
+          round,
+        });
+      }
+    }
+    if (!verified || verified.failures.length === 0) {
+      qa = await once(qaPrompt(t, report, verified), {
         agentType: 'qa',
         schema: VERDICT,
         label: `qa:${t.key}#${round}`,
         phase: 'Gate',
       });
-      if (qa && qa.verdict === 'approve') {
-        return {
-          task: t.key,
-          issue: t.issue,
-          branch: branchOf(t),
-          status: 'passed',
-          sha: qa.sha,
-          rounds: round,
+      if (!qa)
+        return result('failed', {
+          reason: 'the QA agent returned nothing',
+          report,
+          verified,
+          round,
+        });
+      if (qa.verdict === 'approve') {
+        return result('passed', { sha: qa.sha, rounds: round, report, qa, verified });
+      }
+      const actionable =
+        qa.findings.some((f) => f.severity === 'blocking') ||
+        qa.criteria.some((c) => !c.met) ||
+        !qa.scopeOk;
+      if (!actionable) {
+        return result('failed', {
+          reason:
+            'QA asked for changes without a blocking finding, an unmet criterion or a scope problem',
           report,
           qa,
           verified,
-        };
+          round,
+        });
       }
     }
     if (round === MAX_ROUNDS) break;
@@ -282,20 +327,16 @@ async function gateLoop(t, first) {
       agentType: t.role,
       isolation: 'worktree',
       schema: REPORT,
-      label: `fix:${t.key}#${round}`,
+      label: `fix:${t.key}#${round + 1}`,
       phase: 'Fix',
     });
   }
-  return {
-    task: t.key,
-    issue: t.issue,
-    branch: branchOf(t),
-    status: 'failed',
-    reason: `not accepted after ${MAX_ROUNDS} rounds; file a Bug issue with these findings`,
+  return result('failed', {
+    reason: `not accepted after ${MAX_ROUNDS} fix rounds; file a Bug issue with these findings`,
     report,
     qa,
     verified,
-  };
+  });
 }
 
 phase('Plan');
@@ -303,11 +344,21 @@ const plan = await agent(
   `Plan the delivery of this work for terepasztal, as your role file's "Planning a request" says.
 ${input.issues?.length ? `GitHub issues: ${input.issues.map((n) => `#${n}`).join(', ')} in Szazso444/terepasztal; read them and their parents.` : ''}
 ${input.request ? `Request: ${input.request}` : ''}
-Each task's brief must be complete on its own: the agent that receives it sees nothing else.`,
+Each task's brief must be complete on its own: the agent that receives it sees nothing else.
+Work that changes what the player sees and has no spec the author approved is a question, not a task.
+Give every task the number of the GitHub issue it delivers; a task with no issue yet gets issue null, and Core files it before anything is implemented.`,
   { agentType: 'core', schema: PLAN, label: 'plan', phase: 'Plan' },
 );
 if (!plan) return { error: 'the plan agent returned nothing' };
 if (plan.questions.length) return { questions: plan.questions, tasks: plan.tasks };
+// Every task is an issue before it is a branch (docs/process/lifecycle.md, step 3).
+const unfiled = plan.tasks.filter((t) => t.issue == null);
+if (unfiled.length) {
+  return {
+    fileFirst: plan.tasks,
+    note: 'File each task without an issue (Task template, status:ready, Blocked by #n), then run again with { issues }.',
+  };
+}
 
 const inPlan = new Set(plan.tasks.map((t) => t.key));
 const ready = plan.tasks.filter((t) => t.blockedBy.every((k) => !inPlan.has(k)));

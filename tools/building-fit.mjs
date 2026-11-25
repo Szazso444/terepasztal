@@ -9,10 +9,14 @@
  * whose foot is not two straight walls (a round tower, a yard of machinery) is placed by its
  * outline, without a camera correction. The check, the review sheets and the game's atlas all use
  * this one measurement.
+ *
+ * The correction is for small differences only. It stretches the picture, so a camera further
+ * than FIT.camera degrees from the game's is not corrected into use: the check fails the picture
+ * and it is painted again (`cameraOff`).
  */
 import { existsSync, readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
+import { isMain } from './is-main.mjs';
 import { FOOTPRINTS, loadInventory, pictureFile, wallBase } from './building-kit.mjs';
 
 export const FIT = {
@@ -20,6 +24,13 @@ export const FIT = {
   span: 0.6,
   /** how far a measured ground slope is used; the game's slopes are 0.5 and -0.5 */
   slope: [0.33, 0.67],
+  /** degrees a picture's camera may be from the game's, in height and in turn */
+  camera: 2,
+  /**
+   * a picture kept as the closest of its attempts is near enough within this many degrees: it is
+   * marked, but not held against its family
+   */
+  near: 3,
   /** pixels more solid than this belong to the building */
   alpha: 128,
 };
@@ -30,7 +41,8 @@ function columns(png) {
   const low = new Int32Array(W).fill(-1),
     top = new Int32Array(W).fill(-1);
   let minX = W,
-    maxX = -1;
+    maxX = -1,
+    area = 0;
   for (let x = 0; x < W; x++)
     for (let y = 0; y < H; y++)
       if (data[(y * W + x) * 4 + 3] > FIT.alpha) {
@@ -38,8 +50,9 @@ function columns(png) {
         low[x] = y;
         if (x < minX) minX = x;
         maxX = x;
+        area++;
       }
-  return { low, top, minX, maxX };
+  return { low, top, minX, maxX, area };
 }
 
 /**
@@ -100,7 +113,7 @@ function restLine(pts, a) {
  * whether a straight base was found.
  */
 export function measureBase(png) {
-  const { low, top, minX, maxX } = columns(png);
+  const { low, top, minX, maxX, area } = columns(png);
   if (maxX < 0) return null;
   const tol = Math.max(3, Math.round((maxX - minX) * 0.006));
   const side = (from, to) => {
@@ -163,28 +176,128 @@ export function measureBase(png) {
     low,
     minX,
     maxX,
+    area,
   };
 }
 
+/** The game's camera looks down at this many degrees, on a building turned 45 degrees. */
+const ELEVATION = 30;
+
 const clamp = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
+const rad = (deg) => (deg * Math.PI) / 180;
 // `+ 0` turns a rounded -0 into 0, so the record reads the same either way
 const round = (v, digits = 1) => Math.round(v * 10 ** digits) / 10 ** digits + 0;
+
+/**
+ * Where the camera stood, read from the two ground lines. The game's camera looks down at 30
+ * degrees on a building turned 45 degrees, which draws the lines at 0.5 and -0.5. `elevation` is
+ * how far it looked down (lower: both lines flatter, less roof seen); `turn` is how far the
+ * building was turned from 45 degrees, positive towards its lower-right wall (that wall's foot
+ * flatter, the other steeper).
+ */
+function cameraOf([pos, neg]) {
+  const elevation = (Math.asin(Math.min(1, Math.sqrt(pos * -neg))) * 180) / Math.PI;
+  const turn = (Math.atan(Math.sqrt(pos / -neg)) * 180) / Math.PI - 45;
+  return { elevation: round(elevation), turn: round(turn) };
+}
+
+/**
+ * How far a picture's camera is from the game's, from its measurement. With both wall feet found:
+ * `elevation` and `turn`, degrees from the game's (looking down from higher, and turned towards
+ * the lower-right wall, are positive), and `by`, the larger of the two. With one foot found there
+ * is no telling the camera's height from the building's turn: `foot` is that wall (0 lower left,
+ * 1 lower right) and `slope` its foot's, and the camera is off when no camera near the game's
+ * draws a foot so steep or so flat. `off` says the picture has to be painted again. Null when no
+ * straight wall foot was found: there is nothing to judge the camera by.
+ */
+export function cameraOff(fit) {
+  const camera = fit.camera ?? (fit.sure[0] && fit.sure[1] ? cameraOf(fit.measured) : null);
+  if (camera) {
+    const elevation = round(camera.elevation - ELEVATION);
+    const by = Math.max(Math.abs(elevation), Math.abs(camera.turn));
+    return { off: by > FIT.camera, by, elevation, turn: camera.turn };
+  }
+  const foot = fit.sure.indexOf(true);
+  if (foot < 0) return null;
+  const slope = fit.measured[foot];
+  // the flattest and the steepest foot a camera within the limit draws
+  const flat = Math.sin(rad(ELEVATION - FIT.camera)) * Math.tan(rad(45 - FIT.camera)),
+    steep = Math.sin(rad(ELEVATION + FIT.camera)) * Math.tan(rad(45 + FIT.camera));
+  return { off: Math.abs(slope) < flat || Math.abs(slope) > steep, by: null, foot, slope };
+}
+
+/**
+ * The camera of a round building (a tower), read from its foot. A circle on the ground is drawn
+ * as an ellipse whose minor over major axis is the sine of the camera's height, 0.50 for the
+ * game's 30 degrees; a round building has no straight wall feet to read the camera from, and the
+ * slopes the wall-foot measure takes from a curve are not the camera's. The lowest pixel of every
+ * column along the foot is the front half of that ellipse: fitted for its half-width `a`, as
+ * y = yc + b * sqrt(1 - (x - xc)^2 / a^2), the ratio is b / a. The turn cannot be read from a
+ * round building: it is 0. Returns the same record as `cameraOff` for the camera of two feet
+ * (`elevation` and `turn` degrees from the game's, `by`, `off`) with the `ratio` and the height
+ * the camera looked down from, `looking`; null when the foot is too small a part of the picture
+ * to be an ellipse.
+ */
+export function roundCamera(png) {
+  const { low, minX, maxX } = columns(png);
+  if (maxX < 0) return null;
+  const width = maxX - minX + 1;
+  let maxY = -1;
+  for (let x = minX; x <= maxX; x++) maxY = Math.max(maxY, low[x]);
+  // the lowest part of the picture is the foot; its middle is the tower's axis (a shaft or a hub
+  // that stands out to one side widens the picture, but is not at the foot)
+  const cols = [];
+  for (let x = minX; x <= maxX; x++) if (low[x] >= maxY - 0.4 * width) cols.push(x);
+  if (cols.length < 16) return null;
+  const xc = (cols[0] + cols[cols.length - 1]) / 2;
+  // the foot's half-width is where its columns end: the ellipse is upright there, level with its
+  // centre. Only the depth is fitted, so that a flat facet cannot trade width for depth
+  const a = (cols[cols.length - 1] - cols[0] + 1) / 2;
+  const f = cols.map((x) => Math.sqrt(Math.max(0, 1 - ((x - xc) / a) ** 2)));
+  const n = cols.length;
+  const mf = f.reduce((s, v) => s + v, 0) / n,
+    my = cols.reduce((s, x) => s + low[x], 0) / n;
+  let cov = 0,
+    varf = 0;
+  for (let i = 0; i < n; i++) {
+    cov += (f[i] - mf) * (low[cols[i]] - my);
+    varf += (f[i] - mf) ** 2;
+  }
+  if (varf < 1e-9 || cov <= 0) return null;
+  const ratio = cov / varf / a;
+  const looking = (Math.asin(Math.min(1, ratio)) * 180) / Math.PI;
+  const elevation = round(looking - ELEVATION);
+  const by = Math.abs(elevation);
+  return {
+    off: by > FIT.camera,
+    by,
+    elevation,
+    turn: 0,
+    ratio: round(ratio, 3),
+    looking: round(looking),
+  };
+}
 
 /**
  * How a picture goes onto its footprint's canvas. A point (x, y) of the picture lands at
  * X = centre.x + scale * (x - cx), Y = centre.y + scale * (vertical * y + shear * x - cy):
  * `vertical` and `shear` turn the measured ground slopes into 0.5 and -0.5 and leave upright edges
  * upright; `scale` makes the foot as wide as the walls of the footprint; (cx, cy) is the middle of
- * the foot. Null when the picture is empty.
+ * the foot. Null when the picture is empty. With `rectify: false` the camera is left as the
+ * generator drew it and only scale and place are set (for looking at what came back). With
+ * `fully` the measured slopes are used however far they are from the game's: for a picture that
+ * is shown to the generator as a reference, where the wall feet it will copy matter more than
+ * the picture's proportions.
  */
-export function fitPicture(png, fpId, rot) {
+export function fitPicture(png, fpId, rot, { rectify = true, fully = false } = {}) {
   const m = measureBase(png);
   if (!m) return null;
   const fp = FOOTPRINTS[fpId];
   const target = wallBase(fp, rot);
+  const used = (slope) => (fully ? slope : clamp(slope, FIT.slope));
   const slopes = [
-    m.sure[0] ? clamp(m.slopes[0], FIT.slope) : 0.5,
-    m.sure[1] ? -clamp(-m.slopes[1], FIT.slope) : -0.5,
+    rectify && m.sure[0] ? used(m.slopes[0]) : 0.5,
+    rectify && m.sure[1] ? -used(-m.slopes[1]) : -0.5,
   ];
   const vertical = 1 / (slopes[0] - slopes[1]),
     shear = (-(slopes[0] + slopes[1]) * vertical) / 2;
@@ -217,7 +330,49 @@ export function fitPicture(png, fpId, rot) {
       right: round(place(m.maxX, 0)[0]),
       bottom: round(lowY),
     },
+    camera: m.sure[0] && m.sure[1] ? cameraOf(m.slopes) : null,
+    // picture pixels the building covers
+    area: m.area,
   };
+}
+
+/** The same fit with the building `g` times as large, grown about the footprint's centre. */
+function rescaled(fit, fp, g) {
+  if (Math.abs(g - 1) < 1e-9) return fit;
+  const about = (v, c) => round(c + (v - c) * g);
+  return {
+    ...fit,
+    scale: round(fit.scale * g, 4),
+    box: {
+      left: about(fit.box.left, fp.centre[0]),
+      top: about(fit.box.top, fp.centre[1]),
+      right: about(fit.box.right, fp.centre[0]),
+      bottom: about(fit.box.bottom, fp.centre[1]),
+    },
+  };
+}
+
+/**
+ * The views of one building (index = rotation, null where a view is not made), brought to one
+ * size.
+ *
+ * A generator fills its canvas rather than keeping a scale, so the same building comes back
+ * larger in one view than in the next. Its wall base is no sure measure either: a silo that stands
+ * beside the barn in one view and behind it in another makes the base wider there, and the barn
+ * would be laid down smaller. What every view of a building shares is how much building there is
+ * to see, the area it covers. So each view is fitted by its own base, and then the views are
+ * scaled to cover the same area, their mean scale staying what the bases said. `size` then makes
+ * the whole family larger or smaller on its tile (a depot stands a little larger than its
+ * footprint, so that the rails fit its portals).
+ */
+export function fitGroup(pngs, fpId, { size = 1, rectify = true } = {}) {
+  const fp = FOOTPRINTS[fpId];
+  const fits = pngs.map((png, rot) => (png ? fitPicture(png, fpId, rot, { rectify }) : null));
+  const made = fits.filter(Boolean);
+  if (!made.length) return fits;
+  const sizeOf = (f) => Math.sqrt(f.area * f.vertical) * f.scale;
+  const mean = Math.exp(made.reduce((a, f) => a + Math.log(sizeOf(f)), 0) / made.length);
+  return fits.map((f) => (f ? rescaled(f, fp, (mean / sizeOf(f)) * size) : null));
 }
 
 /** One sample of a picture between its pixels, colour weighted by coverage. */
@@ -301,5 +456,4 @@ function main(ids) {
   return bad ? 1 : 0;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url))
-  process.exitCode = main(process.argv.slice(2));
+if (isMain(import.meta.url)) process.exitCode = main(process.argv.slice(2));

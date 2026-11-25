@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { content } from '../data/content';
-import { bogieFrame, bogieStyleOf, locoFrame, wagonFrame, loadFrame } from './frames';
+import {
+  bogieFrame,
+  bogieStyleOf,
+  locoFrame,
+  wagonFrame,
+  loadFrame,
+  structureFrame,
+} from './frames';
 import { pieceFrame, makePiece, TrackGraph } from '../world/track';
 
 const atlas = (...keys: string[]) => ({ has: (k: string) => keys.includes(k) });
@@ -57,13 +64,13 @@ describe('prototype frames', () => {
 describe('track frames', () => {
   it('names the members of a parallel switch apart from a turning one', () => {
     const g = new TrackGraph(20, 20);
-    g.place(4, 4, 'switch', 1, 'regular', undefined, 'parallel');
-    expect(pieceFrame(g.get(4, 4)!)).toBe('track/switch_regular_1p_m0');
-    g.place(10, 4, 'switch', 1, 'regular');
-    expect(pieceFrame(g.get(10, 4)!)).toBe('track/switch_regular_1_m0');
+    g.place(4, 4, 'switch', 1, 'branch', undefined, 'parallel');
+    expect(pieceFrame(g.get(4, 4)!)).toBe('track/switch_branch_1p_m0');
+    g.place(10, 4, 'switch', 1, 'branch');
+    expect(pieceFrame(g.get(10, 4)!)).toBe('track/switch_branch_1_m0');
     expect(pieceFrame(makePiece('curve', 2, 'narrow'))).toBe('track/curve_narrow_2');
-    expect(pieceFrame(makePiece('crossing', 1, 'narrow', 'regular'))).toBe(
-      'track/crossing_narrow_regular_1',
+    expect(pieceFrame(makePiece('crossing', 1, 'narrow', 'branch'))).toBe(
+      'track/crossing_narrow_branch_1',
     );
   });
 });
@@ -82,5 +89,38 @@ describe('narrow stock frames', () => {
     expect(bogieFrame(atlas('rolling/bogie_f2'), undefined, 'bogie', 2)).toBe('rolling/bogie_f2');
     expect(loadFrame('heap', 3, true)).toBe('rolling/load_heap_n_f3');
     expect(loadFrame('heap', 3, false)).toBe('rolling/load_heap_f3');
+  });
+});
+
+describe('structure frames', () => {
+  const key = 'structures/farm_2';
+  const turned = atlas(`${key}_r1`, `${key}_r2`, `${key}_r3`);
+
+  it('keep the unturned frame at rotation 0 and every full turn', () => {
+    expect(structureFrame(turned, key, 0)).toBe(key);
+    expect(structureFrame(turned, key, 4)).toBe(key);
+    expect(structureFrame(turned, key, 8)).toBe(key);
+  });
+
+  it('take the turned frame when the atlas has it, else the unturned one', () => {
+    for (const rot of [1, 2, 3]) expect(structureFrame(turned, key, rot)).toBe(`${key}_r${rot}`);
+    expect(structureFrame(turned, key, 5)).toBe(`${key}_r1`);
+    expect(structureFrame(atlas(`${key}_r2`), key, 1)).toBe(key);
+    expect(structureFrame(atlas(), key, 3)).toBe(key);
+    // a depot's frame already carries rot % 2: rot 2 asks for depot_r0's turn
+    expect(structureFrame(atlas('structures/depot_r0_r2'), 'structures/depot_r0', 2)).toBe(
+      'structures/depot_r0_r2',
+    );
+    expect(structureFrame(atlas('structures/depot_r1_r3'), 'structures/depot_r1', 1)).toBe(
+      'structures/depot_r1',
+    );
+  });
+
+  it('take a negative rotation mod 4', () => {
+    expect(structureFrame(turned, key, -1)).toBe(`${key}_r3`);
+    expect(structureFrame(turned, key, -2)).toBe(`${key}_r2`);
+    expect(structureFrame(turned, key, -3)).toBe(`${key}_r1`);
+    expect(structureFrame(turned, key, -4)).toBe(key);
+    expect(structureFrame(atlas(), key, -1)).toBe(key);
   });
 });

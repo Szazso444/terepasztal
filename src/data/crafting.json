@@ -45,6 +45,6 @@
   "failRefund": 0.5,
   "starterCopies": {
     "loco": 1,
-    "wagon": 2
+    "wagon": 3
   }
 }

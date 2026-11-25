@@ -15,8 +15,8 @@ organisation.
 - **Subagents do not delegate.** Only the main session starts agents. A subagent that needs work
   from another role reports it, and Core decides.
 - **A repeatable delivery** can run as the saved workflow `.claude/workflows/deliver-issue.js`
-  where the Workflow tool is available: plan, implement in worktrees, QA and Verification in
-  parallel, fix loop, report.
+  where the Workflow tool is available: plan, implement in worktrees, Verification then QA on each
+  branch's head (different tasks' gates run in parallel), up to three fix rounds, report.
 - **Hosted sessions** that may push only their assigned `claude/...` branch use it as the task
   branch and label the pull request `agent:<role>`; Core creates other branches through the
   GitHub API.

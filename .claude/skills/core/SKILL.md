@@ -35,7 +35,8 @@ the order to run them in a Claude Code session.
   tasks in one message. The prompt is the task brief and nothing else.
 - Hosted sessions that cannot push other branches create them with the GitHub API
   (`create_branch` from `develop`) and push the worktree's files with `push_files`, or use the
-  session's own branch for a single task.
+  session's own branch for a single task. A `push_files` commit has a new hash: check that its tree
+  equals the tree QA approved before opening the pull request.
 - Label the issue `status:in-progress`.
 
 ## 4. Gate
@@ -63,9 +64,12 @@ Do not accept "tests pass" from the implementer; QA's re-run and CI are the evid
   written reason.
 - A pull request that changes gate files waits for the author's `gate:approved` (lifecycle
   step 7). Tell the author it is waiting and what it changes; never add the label yourself.
-- Merge when CI is green on the head commit, QA approved that commit, required tests exist and
-  pass, and nothing waits on the author. Merge commit titled `Merge <branch>: <outcome>`; delete
-  the branch.
+- Read every note for Core in the result: accept it, send it back as a finding, or put it to the
+  author as a question.
+- Merge when CI is green on the head commit, QA approved that commit or one with the same tree,
+  required tests exist and pass, and nothing waits on the author. Merge commit titled
+  `Merge <branch>: <outcome>`; delete the branch; close the issue yourself, since `Closes #n` only
+  closes issues on merges into `main`.
 - A red `develop` comes first: revert the breaking merge with a revert pull request, or fix it in
   this session.
 

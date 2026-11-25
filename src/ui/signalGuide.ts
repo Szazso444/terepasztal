@@ -1,40 +1,65 @@
-import { el, btn } from './dom';
+import { el } from './dom';
+import { STR } from '../strings';
+import { choiceRows, note, page, well, type FootSpec } from './kit';
+import type { Screen } from './modal';
+import { signalHint } from './ruleText';
+import type { Settings } from '../sim/save';
+import { SIGNAL_LEVELS, type SignalLevel } from '../sim/signals';
 
-export function showSignalGuide() {
-  const root = el('div', { class: 'vehicle-preview-overlay' });
-  const close = () => root.remove();
-  root.append(
-    el(
-      'div',
-      { class: 'panel vehicle-preview-panel' },
-      el('div', { class: 'panel-title' }, 'Semaphores and track blocks', btn('×', close, 'small')),
-      el(
-        'div',
-        { class: 'panel-body' },
-        el('p', {
-          text: 'Place semaphores on the rails from Utility. Press R before placement, or use Rotate direction after selecting a post. The direction shown in the selection panel is the direction of travel it governs.',
+/**
+ * Fleet > Signals: the signalling level at the head, then the semaphore guide, how signals and
+ * track blocks work, as a screen in the frame, so Esc, the × and Done close it and a letter key
+ * does not reach the game behind it.
+ */
+export class SignalGuideScreen implements Screen {
+  readonly id = 'signals';
+  readonly title = STR.signals.guideTitle;
+  readonly frameSize = 'M';
+  readonly icon = 'semaphore';
+  /** it is read, not used on the map: the tool in hand stays in hand while it is up */
+  readonly keepsTool = true;
+  /** the levels are controls, as they were in Settings: Tab goes round them */
+  readonly formKeys = true;
+  readonly root = page();
+
+  constructor(
+    private readonly settings: Settings,
+    private readonly onChange: () => void,
+  ) {}
+
+  /** Drawn as it opens: the level may have been changed since, by a load of settings. */
+  onOpen() {
+    const S = STR.signals;
+    this.root.replaceChildren(
+      well(
+        STR.settings.signalling,
+        choiceRows({
+          options: SIGNAL_LEVELS.map((lv) => ({
+            id: lv,
+            label: STR.settings.signalLevel[lv],
+            hint: signalHint(lv),
+          })),
+          value: this.settings.signalling ?? 'auto',
+          onChange: (id) => {
+            this.settings.signalling = id as SignalLevel;
+            this.onChange();
+          },
         }),
-        el('pre', {
-          class: 'signal-diagram',
-          text: '→ A  ═════ protected block ═════  → B  ═════ next block ═════  → C\n       one train at a time                  another train may follow',
-        }),
-        el('p', {
-          text: 'Red / horizontal arm: stop before entering the protected block. Yellow: this block is clear, but the next is occupied. Green / raised arm: both are clear. A block ends at the next signal facing the same travel direction.',
-        }),
-        el('p', {
-          text: 'Fence a stretch by putting posts at its entry and exit. Leave at least your longest train plus one tile between posts. Select a signal to highlight its protected stretch. Posts work in Automatic mode as soon as you place them; unsignalled track still uses traffic reservations.',
-        }),
-        el('p', {
-          text: 'Before a junction, put the entry signal on its approach and exit signals beyond each branch, leaving room for a complete train. Junction reservations still require a clear exit, so a green signal alone cannot force a train into a blocked crossing.',
-        }),
-        el('p', {
-          text: 'On a two-way single line, put signals on both approaches to a passing loop, facing into the shared line. Keep the loop long enough for the entire train. Token working in Settings allows one train per shared plain section. Signals regulate entry; they cannot create a missing siding.',
-        }),
+        note(STR.settings.signallingNote),
       ),
-    ),
-  );
-  root.onmousedown = (e) => {
-    if (e.target === root) close();
-  };
-  document.body.append(root);
+      well(
+        null,
+        note(S.guidePlace, 'k-guide'),
+        el('pre', { class: 'signal-diagram', text: S.guideDiagram }),
+        note(S.guideAspects, 'k-guide'),
+        note(S.guideFence, 'k-guide'),
+        note(S.guideJunction, 'k-guide'),
+        note(S.guideSingleLine, 'k-guide'),
+      ),
+    );
+  }
+
+  frameFooter(): FootSpec {
+    return { done: true };
+  }
 }

@@ -5,6 +5,7 @@ import { type LevelData, packBytes, saveLevel, EDITOR_DRAFT_KEY, newLevelId } fr
 import type { Builder } from '../sim/build';
 import type { WorldRenderer } from '../render/worldRenderer';
 import { rules } from '../sim/rules';
+import { buildingToLevel } from '../sim/buildings';
 
 /**
  * Level editor state: terrain brush, level metadata, and conversion between the live world and
@@ -44,8 +45,10 @@ export class Editor {
       const st = this.builder.stationAt(t.x, t.y);
       if (st) this.builder.removeStation(st);
       if (this.builder.decorAt(t.x, t.y)) this.builder.removeDecor(t.x, t.y);
-      if (this.builder.buildingAt(t.x, t.y)) this.builder.removeBuilding(t.x, t.y);
+      // a bridge platform stands only bare: its road comes off, as its track does, before it
+      this.builder.removeRoad(t.x, t.y);
       if (this.builder.track.has(t.x, t.y)) this.builder.removeTrack(t.x, t.y);
+      if (this.builder.buildingAt(t.x, t.y)) this.builder.removeBuilding(t.x, t.y);
       this.map.terrain[i] = terrain;
       this.map.variant[i] = Math.floor(hash2(t.x, t.y, this.map.seed + terrain) * 4);
       this.world.setFlattened(t.x, t.y, false);
@@ -70,8 +73,10 @@ export class Editor {
   fillAll(terrain: Terrain) {
     for (const s of [...this.builder.stations]) this.builder.removeStation(s);
     for (const d of [...this.builder.decor.values()]) this.builder.removeDecor(d.x, d.y);
-    for (const b of [...this.builder.buildings.values()]) this.builder.removeBuilding(b.x, b.y);
+    // a bridge platform stands only bare: its road and its track come off before it
+    for (const r of this.builder.roads.list()) this.builder.removeRoad(r.x, r.y);
     for (const t of [...this.builder.track.tiles()]) this.builder.removeTrack(t.x, t.y);
+    for (const b of [...this.builder.buildings.values()]) this.builder.removeBuilding(b.x, b.y);
     for (let i = 0; i < this.map.terrain.length; i++) {
       this.map.terrain[i] = terrain;
       this.map.variant[i] = Math.floor(
@@ -107,7 +112,7 @@ export class Editor {
     ]);
     l.stations = this.builder.stations.map((s) => s.toLevel());
     l.decor = [...this.builder.decor.values()].map((d) => [d.x, d.y, d.id, d.rot]);
-    l.buildings = [...this.builder.buildings.values()].map((b) => [b.x, b.y, b.id]);
+    l.buildings = [...this.builder.buildings.values()].map(buildingToLevel);
     l.updatedAt = Date.now();
     return l;
   }
@@ -140,7 +145,6 @@ export class Editor {
   static defaultStart(): LevelData['start'] {
     return {
       money: rules.startMoney,
-      tickets: rules.startTickets,
       tier: 0,
     };
   }

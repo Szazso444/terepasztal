@@ -1,4 +1,10 @@
-# Current phase spec: fit against the codebase
+# v0.8.0 phase spec: fit against the codebase
+
+This file is a record of the v0.8.0 phase, written against the codebase of that time. The spec
+whose sections it numbers, `current-phase-spec.md`, is not kept in the repository. The code and
+`AGENTS.md` say what is true now: file and function names below are as of v0.8.0, and some, such as
+`src/render/vehicleVisual.ts`, are gone. What the review calls in place or not yet implemented is
+as of then too.
 
 Review of `current-phase-spec.md` (sections numbered as in the spec) against the repository at
 commit `7872306`. Items are numbered R1… so answers can refer to them. Nothing below has been

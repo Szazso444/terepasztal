@@ -1,0 +1,29 @@
+[
+  {
+    "file": "wheat-0.png",
+    "returned": [1254, 1254],
+    "sha256": "a91df91007251e22a19f5161a03efc7928974fb9033e10d89088a9e4a9767a6b",
+    "transparentPixels": 1417121,
+    "partialAlphaPixels": 155348,
+    "previewCanvas": [128, 128],
+    "previewTileWidth": 64
+  },
+  {
+    "file": "wheat-1.png",
+    "returned": [1254, 1254],
+    "sha256": "2188cf3c33a94b6277953c1c03e93f8530130483b5b12a4ec590e30382b9d753",
+    "transparentPixels": 1425260,
+    "partialAlphaPixels": 147233,
+    "previewCanvas": [128, 128],
+    "previewTileWidth": 64
+  },
+  {
+    "file": "wheat-2.png",
+    "returned": [1254, 1254],
+    "sha256": "dd34162a133524278e587c14f50e82792a35232516ae821a70c5ef5a3d62ae26",
+    "transparentPixels": 1417744,
+    "partialAlphaPixels": 154737,
+    "previewCanvas": [128, 128],
+    "previewTileWidth": 64
+  }
+]

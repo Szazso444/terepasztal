@@ -1,8 +1,16 @@
-import { describe, it, expect } from 'vitest';
-import { STR } from './strings';
+import { readdirSync, readFileSync } from 'node:fs';
+import ts from 'typescript';
+import { describe, it, expect, vi } from 'vitest';
+import { AGE_ORDER, STR } from './strings';
+import { AGE_DEFS } from './sim/ages';
 import { RULE_META } from './sim/rules';
-import { runsOn, withoutInCab } from './sim/compat';
-import { content } from './data/content';
+import { runsOn } from './sim/compat';
+import { content, type Cost } from './data/content';
+import { fmtCost } from './sim/stores';
+import { DYNAMIC_MODES } from './sim/trains';
+
+// the train module plays sounds; this test only reads its list of modes
+vi.mock('./engine/audio', () => ({ sfx: vi.fn() }));
 
 /** Every string a group of STR can show, with the functions called on stand-in arguments. */
 function texts(node: unknown, out: string[] = []): string[] {
@@ -25,11 +33,14 @@ function texts(node: unknown, out: string[] = []): string[] {
 }
 
 describe('track names the player reads', () => {
-  it('calls the regular class wide', () => {
-    expect(STR.toolbar.trackClass).toMatchObject({
-      regular: 'Wide',
-      high_speed: 'High-speed',
-      narrow: 'Narrow',
+  it('names the six lines', () => {
+    expect(STR.toolbar.trackClass).toEqual({
+      narrow: 'Narrow Gauge',
+      branch: 'Branch Line',
+      main: 'Main Line',
+      trunk: 'Trunk Line',
+      maglev: 'Maglev Guideway',
+      hyperloop: 'Hyperloop Tube',
     });
   });
 
@@ -39,41 +50,479 @@ describe('track names the player reads', () => {
   });
 
   it('names the tuning value and the track a vehicle runs on', () => {
-    expect(RULE_META.find((m) => m.key === 'lineSpeedRegular')!.label).toBe('Wide line speed');
+    expect(RULE_META.find((m) => m.key === 'lineSpeedBranch')!.label).toBe('Branch Line speed');
     const boxcar = content.wagons.find((w) => w.id === 'boxcar')!;
-    expect(runsOn(boxcar)).toBe('Runs on wide and high-speed track');
-    expect(STR.compat.wrongGauge(true)).toBe('Wide gauge: cannot run on narrow track');
+    expect(runsOn(boxcar)).toBe('Frigate · runs on Branch Line, Main Line, Trunk Line');
+    const blackFive = content.locomotives.find((l) => l.id === 'black_five')!;
+    expect(runsOn(blackFive)).toBe('Destroyer · runs on Main Line, Trunk Line');
+    expect(STR.build.crossingLine).toBe('No level crossings on this line');
+  });
+
+  it('names the train classes and says which one is too big for a line', () => {
+    expect(STR.trainClass).toEqual({
+      corvette: 'Corvette',
+      frigate: 'Frigate',
+      destroyer: 'Destroyer',
+      cruiser: 'Cruiser',
+      carrier: 'Carrier',
+      hydrofoil: 'Hydrofoil',
+      submarine: 'Submarine',
+    });
+    expect(STR.compat.tooBig('Destroyer', 'Branch Line')).toBe(
+      'a Destroyer is too big for Branch Line',
+    );
+    expect(STR.compat.runsOn('Hydrofoil', [])).toBe('Hydrofoil · runs on no track yet');
   });
 });
 
 describe('what the upgrade tool tells the player', () => {
-  it('counts the trains that cannot run on high-speed track', () => {
-    const loco = (own: boolean, built: boolean) => ({ inCab: own, def: { inCab: built } });
-    const trains = [
-      { locos: [loco(false, false)] },
-      // fitted to one locomotive of the consist, or built into its type: the train may run
-      { locos: [loco(false, false), loco(true, false)] },
-      { locos: [loco(false, true)] },
-      { locos: [loco(false, false), loco(false, false)] },
-    ];
-    expect(withoutInCab(trains)).toEqual({ barred: 2, total: 4 });
-    expect(withoutInCab([])).toEqual({ barred: 0, total: 0 });
-  });
-
-  it('says what an upgrade does to trains without in-cab signalling', () => {
-    expect(STR.toolbar.upgradeHint).toMatch(/in-cab signalling/);
-    expect(STR.build.reclassBarred(2, 5)).toBe(
-      '2 of 5 trains have no in-cab signalling and cannot run on high-speed track',
-    );
-    expect(STR.build.reclassBarred(1, 1)).toBe(
-      '1 of 1 train has no in-cab signalling and cannot run on high-speed track',
-    );
+  it('says what Upgrade and Downgrade do, and why a piece stays as it is', () => {
+    expect(STR.toolbar.upgradeHint).toMatch(/Branch to Main, Main to Trunk/);
+    expect(STR.toolbar.downgradeHint).toMatch(/Trunk to Main, Main to Branch/);
+    for (const why of ['separate', 'size', 'noLine', 'nothing'])
+      expect(STR.build.reclass[why], why).toBeTruthy();
     // a tool in hand over empty ground still says what it is for
     expect(STR.build.reclassIdle('Upgrade')).toBe('Upgrade: click a piece or drag along the line');
   });
 
   it('lists the track keys among the controls', () => {
-    for (const key of ['Q / E', 'U', 'Shift+U', '1-5'])
-      expect(STR.settings.controlsText).toContain(key);
+    const shown = STR.settings.keyGroups.flatMap((g) => [
+      ...('short' in g ? g.short : []),
+      ...g.rows,
+    ]);
+    const keys = shown.flatMap((r) => [...r.keys]);
+    for (const key of ['Q', 'E', 'U', 'Shift+U', '1–5']) expect(keys).toContain(key);
+  });
+});
+
+describe('the ages the player reads about', () => {
+  it('names every age in order, in the order the age data lists them', () => {
+    expect(AGE_ORDER).toHaveLength(6);
+    for (const id of AGE_ORDER) expect(STR.ages.name[id], id).toBeTruthy();
+    // the data may list fewer ages than there are names, never different ones
+    AGE_DEFS.forEach((a, i) => expect(a.id).toBe(AGE_ORDER[i]));
+  });
+
+  it('labels each age by its index', () => {
+    for (let t = 0; t < AGE_ORDER.length; t++)
+      expect(STR.hud.ageUp(t)).toContain(STR.ages.name[AGE_ORDER[t]]);
+    expect(STR.hud.ageUp(3)).toContain('Nuclear Age');
+  });
+
+  it('names the population goal after the residents it counts', () => {
+    // the goal counts the people living in houses (`residentsTotal`), which the card says
+    expect(STR.ages.goal.population).toMatch(/\bresidents\b/i);
+    expect(STR.ages.goal.population).not.toMatch(/population/i);
+  });
+
+  it('heads a group of alternatives, says when it is met, and the hint names the heading', () => {
+    const heading = STR.ages.anyOf.replace(/:\s*$/, '');
+    expect(heading.trim()).not.toBe('');
+    expect(STR.ages.anyOfMet).not.toBe(STR.ages.anyOf);
+    // the hint explains the heading the card shows, so a rewording of one must reach the other
+    expect(STR.ages.hint(1)).toContain(heading);
+  });
+});
+
+describe('what an upgrade shows', () => {
+  const cost = '60 wood, 40 stone';
+
+  it('rounds the time up on the button and leaves it out with none', () => {
+    expect(STR.upgrade.button(3, cost, 9)).toContain(cost);
+    expect(STR.upgrade.button(3, cost, 9)).toMatch(/\b3\b.*· 9 h$/);
+    expect(STR.upgrade.button(3, cost, 8.2)).toBe(STR.upgrade.button(3, cost, 9));
+    expect(STR.upgrade.button(3, cost, 0)).toMatch(new RegExp(`\\b3\\b.*${cost}$`));
+  });
+
+  it('leaves an empty cost out the way it leaves out no time, with no dangling separator', () => {
+    const bare = STR.upgrade.button(3, '', 0);
+    expect(bare).toMatch(/\b3$/);
+    expect(bare).not.toContain('·');
+    expect(STR.upgrade.button(3, cost, 0)).toBe(`${bare} · ${cost}`);
+    expect(STR.upgrade.button(3, '', 9)).toBe(`${bare} · 9 h`);
+    expect(STR.upgrade.button(3, '', 8.2)).toBe(STR.upgrade.button(3, '', 9));
+    expect(STR.upgrade.button(3, cost, 9)).toBe(`${bare} · ${cost} · 9 h`);
+  });
+
+  it('never says no time is left while it runs', () => {
+    expect(STR.upgrade.running(3, 3.2)).toBe(STR.upgrade.running(3, 4));
+    expect(STR.upgrade.running(3, 3.2)).toContain('4 h left');
+    expect(STR.upgrade.running(3, 0.2)).toContain('1 h left');
+    expect(STR.upgrade.running(3, 0)).toContain('1 h left');
+  });
+});
+
+describe('what a cost reads', () => {
+  it('reads as free when nothing is to be paid, and lists only what is', () => {
+    for (const nothing of [{}, { wood: 0 }, { wood: 0, stone: 0 }] as Cost[])
+      expect(fmtCost(nothing)).toBe(STR.build.free);
+    const some = fmtCost({ wood: 30, stone: 0 });
+    expect(some).not.toContain(STR.build.free);
+    expect(some).toMatch(/\b30\b/);
+    expect(some).not.toMatch(/\b0\b/);
+  });
+
+  it('has no words of its own: the empty cost is a string from STR', () => {
+    const file = new URL('./sim/stores.ts', import.meta.url);
+    const sf = ts.createSourceFile('stores.ts', readFileSync(file, 'utf8'), ts.ScriptTarget.Latest);
+    const fn = sf.statements.find(
+      (s): s is ts.FunctionDeclaration => ts.isFunctionDeclaration(s) && s.name?.text === 'fmtCost',
+    );
+    expect(fn).toBeDefined();
+    const words: string[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node))
+        words.push(node.text);
+      else if (ts.isTemplateExpression(node))
+        words.push(node.head.text, ...node.templateSpans.map((s) => s.literal.text));
+      ts.forEachChild(node, visit);
+    };
+    visit(fn!);
+    expect(words.filter((w) => /[a-z]/i.test(w))).toEqual([]);
+  });
+});
+
+describe('what the content editor says about edits it set aside', () => {
+  it('says Apply or Reset deletes them for good', () => {
+    const t = STR.content.setAsideTitle;
+    // names the two buttons that do it, by the first word of their labels
+    for (const button of [STR.content.apply, STR.content.reset])
+      expect(t).toContain(button.split(' ')[0]);
+    expect(t).toMatch(/\bdeletes?\b/i);
+    expect(t).toMatch(/\bfor good\b/i);
+    expect(t).not.toMatch(/\bremoves?\b/i);
+  });
+});
+
+describe('what the save list shows', () => {
+  const sec = 1000;
+  const min = 60 * sec;
+  const hour = 60 * min;
+  const day = 24 * hour;
+
+  it('says how long ago in whole units, rounded down', () => {
+    expect(STR.saves.ago(0)).toBe(STR.saves.ago(59 * sec));
+    expect(STR.saves.ago(0)).not.toMatch(/\d/);
+    expect(STR.saves.ago(61 * sec)).toMatch(/^1 min\b/);
+    expect(STR.saves.ago(59 * min)).toMatch(/^59 min\b/);
+    expect(STR.saves.ago(2 * hour)).toMatch(/^2 h\b/);
+    expect(STR.saves.ago(1 * day)).toMatch(/^1 day\b/);
+    expect(STR.saves.ago(3 * day)).toMatch(/^3 days\b/);
+    // a clock that moved backwards is still "just now", not a negative count
+    expect(STR.saves.ago(-5 * min)).toBe(STR.saves.ago(0));
+  });
+
+  it('says what was removed and what came back, without an empty refund', () => {
+    const refund = '$50';
+    expect(STR.saves.pruned('Old loco', refund)).toContain('Old loco');
+    expect(STR.saves.pruned('Old loco', refund)).toContain(refund);
+    expect(STR.saves.pruned('Old loco', '')).not.toMatch(/Refunded/);
+  });
+
+  it('tells the three autosave states apart', () => {
+    const states = [
+      STR.saves.autosaveStatus(true, STR.saves.ago(2 * min)),
+      STR.saves.autosaveStatus(true, null),
+      STR.saves.autosaveStatus(false, null),
+    ];
+    expect(new Set(states).size).toBe(3);
+    expect(states[0]).toContain(STR.saves.ago(2 * min));
+    expect(STR.saves.autosaveStatus(false, 'x')).toBe(states[2]);
+  });
+});
+
+describe('what the tuning presets say', () => {
+  const t = STR.tuning;
+  const messages = [
+    t.confirmOverwritePreset,
+    t.confirmDeletePreset,
+    t.presetSaved,
+    t.presetSaveFailed,
+    t.confirmLoadPreset,
+    t.presetLoaded,
+    t.presetDeleted,
+  ];
+
+  it('names the preset in every question and status, and tells them apart', () => {
+    for (const m of messages) expect(m('Hilly 2')).toContain('Hilly 2');
+    expect(new Set(messages.map((m) => m('Hilly 2'))).size).toBe(messages.length);
+  });
+
+  it('labels the block, the input and every button', () => {
+    const labels = [t.presets, t.presetName, t.savePreset, t.loadPreset, t.deletePreset];
+    for (const s of [...labels, t.noPresets, t.scope]) expect(s.trim()).not.toBe('');
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  it('labels the screen, the tag, the note and the reset, each its own', () => {
+    const own = [t.title, t.newGameOnly, t.note, t.reset, t.scope];
+    for (const s of own) expect(s.trim()).not.toBe('');
+    expect(new Set(own).size).toBe(own.length);
+  });
+
+  it('never calls a tuning the start or the default of new games', () => {
+    // a saved tuning only starts a game when it is picked under New game
+    for (const s of texts(t)) expect(s).not.toMatch(/starting point|\bdefaults?\b/i);
+    // the tag covers more than map values, and the note names the tag it explains
+    expect(t.newGameOnly).not.toMatch(/\bmap\b/i);
+    expect(t.note).toContain(t.newGameOnly);
+    // the reset says whose rules it puts back, and to what
+    expect(t.reset).toMatch(/shipped/i);
+  });
+
+  it('says it of no rule either: no label, group or hint calls a value a starting point or a default', () => {
+    // the sliders and their hints are shown on the same screen, under the same promise
+    for (const m of RULE_META)
+      for (const s of [m.label, m.group, m.hint ?? ''])
+        expect(s, m.key).not.toMatch(/starting point|\bdefaults?\b/i);
+  });
+
+  it('points to the New game block of the title screen, where a saved tuning is picked', () => {
+    expect(t.scope).toContain(STR.menu.newGame);
+  });
+});
+
+describe('what the New game tuning choice says', () => {
+  const m = STR.menu;
+
+  it('labels the choice, its hint and its first entry, each its own', () => {
+    const labels = [m.newGameTuning, m.newGameTuningHint, m.shippedRules];
+    for (const s of labels) expect(s.trim()).not.toBe('');
+    expect(new Set(labels).size).toBe(labels.length);
+    // the choice sits beside the production chain, not in place of the button that opens Game tuning
+    expect(m.newGameTuning).not.toBe(m.tuning);
+    expect(m.newGameTuning).not.toBe(m.supply);
+  });
+
+  it('names the pick that could not be used, and is none of the other messages', () => {
+    expect(m.tuningUnusable('Hilly 2')).toContain('Hilly 2');
+    expect(m.tuningUnusable(m.shippedRules)).toContain(m.shippedRules);
+    const others = [m.confirmReplace, m.confirmReplaceGame(true), m.confirmReplaceGame(false)];
+    for (const o of others) expect(m.tuningUnusable('Hilly 2')).not.toBe(o);
+  });
+});
+
+describe('what the route-mode menus say about each mode', () => {
+  const said = (set: Record<string, string>, mode: string) => {
+    expect(typeof set[mode], `a text for ${mode}`).toBe('string');
+    expect(set[mode].trim(), `a text for ${mode}`).not.toBe('');
+  };
+  // the menus read this list, so a mode that joins it needs its words before it can ship
+  const modes = ['schedule', ...DYNAMIC_MODES];
+
+  it('names and explains every mode on the train screen', () => {
+    expect(DYNAMIC_MODES.length).toBeGreaterThan(0);
+    for (const m of modes) {
+      said(STR.train.mode, m);
+      said(STR.train.modeHint, m);
+    }
+  });
+
+  it('names and explains every route in the depot panel', () => {
+    for (const m of ['auto', 'custom', ...DYNAMIC_MODES]) {
+      said(STR.depot.routeMode, m);
+      said(STR.depot.routeHint, m);
+    }
+  });
+
+  it('has the words for the freight mode before the simulation has the mode', () => {
+    for (const set of [
+      STR.train.mode,
+      STR.train.modeHint,
+      STR.depot.routeMode,
+      STR.depot.routeHint,
+    ])
+      said(set, 'freight');
+  });
+
+  it('gives each mode a name of its own', () => {
+    for (const set of [STR.train.mode, STR.depot.routeMode]) {
+      const names = Object.values(set);
+      expect(new Set(names).size).toBe(names.length);
+    }
+  });
+});
+
+describe('what the loading screen says', () => {
+  const L = STR.loadingScreen;
+
+  it('has tips to pick from, each a sentence of its own', () => {
+    expect(L.tips.length).toBeGreaterThan(1);
+    for (const t of L.tips) expect(t.trim(), t).not.toBe('');
+    expect(new Set(L.tips).size).toBe(L.tips.length);
+    for (const t of L.tips) expect(t, t).toMatch(/[.!]$/);
+  });
+
+  it('ends in a prompt and names the bar, none of them one of the tips', () => {
+    for (const s of [L.begin, L.progress]) {
+      expect(s.trim()).not.toBe('');
+      expect(L.tips).not.toContain(s);
+    }
+    expect(L.begin).not.toBe(L.progress);
+  });
+});
+
+/** Attributes and properties whose value the player reads. */
+const SHOWN = new Set(['text', 'title', 'placeholder', 'aria-label', 'textContent']);
+/** A literal that reads as English: a capital letter, then a lowercase one. */
+const ENGLISH = /^[A-Z][a-z]/;
+
+function literalText(node: ts.Node): string | null {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+  if (ts.isTemplateExpression(node)) return node.head.text;
+  return null;
+}
+
+/** The literals an expression can show: through parentheses, conditionals, fallbacks and `+`. */
+function shownLiterals(e: ts.Expression, out: ts.Expression[] = []): ts.Expression[] {
+  if (ts.isParenthesizedExpression(e) || ts.isAsExpression(e)) shownLiterals(e.expression, out);
+  else if (ts.isConditionalExpression(e)) {
+    shownLiterals(e.whenTrue, out);
+    shownLiterals(e.whenFalse, out);
+  } else if (
+    ts.isBinaryExpression(e) &&
+    [
+      ts.SyntaxKind.QuestionQuestionToken,
+      ts.SyntaxKind.BarBarToken,
+      ts.SyntaxKind.PlusToken,
+    ].includes(e.operatorToken.kind)
+  ) {
+    shownLiterals(e.left, out);
+    shownLiterals(e.right, out);
+  } else if (literalText(e) !== null) out.push(e);
+  return out;
+}
+
+function nameOf(name: ts.Node): string {
+  return ts.isIdentifier(name) || ts.isStringLiteral(name) ? name.text : '';
+}
+
+/**
+ * `file:line: text` for every English literal a panel hands the player directly: the text, title,
+ * placeholder or aria-label it sets, the label of `btn()`, a child of `el()`, or a toast.
+ */
+function hardcodedText(file: string, source: string): string[] {
+  const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+  const found: string[] = [];
+  const check = (e: ts.Expression | undefined) => {
+    if (!e) return;
+    for (const lit of shownLiterals(e)) {
+      const text = literalText(lit)!;
+      if (!ENGLISH.test(text)) continue;
+      const line = sf.getLineAndCharacterOfPosition(lit.getStart(sf)).line + 1;
+      found.push(`${file}:${line}: ${text.split('\n')[0]}`);
+    }
+  };
+  const visit = (node: ts.Node) => {
+    if (ts.isCallExpression(node)) {
+      const callee = node.expression;
+      const fn = ts.isIdentifier(callee)
+        ? callee.text
+        : ts.isPropertyAccessExpression(callee)
+          ? callee.name.text
+          : '';
+      if (fn === 'btn' || fn === 'toast') check(node.arguments[0]);
+      else if (fn === 'el') node.arguments.slice(2).forEach(check);
+      else if (
+        fn === 'push' &&
+        ts.isPropertyAccessExpression(callee) &&
+        /toasts$/i.test(callee.expression.getText(sf))
+      )
+        check(node.arguments[0]);
+    } else if (
+      (ts.isPropertyAssignment(node) || ts.isPropertyDeclaration(node)) &&
+      SHOWN.has(nameOf(node.name))
+    )
+      check(node.initializer);
+    else if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      ts.isPropertyAccessExpression(node.left) &&
+      SHOWN.has(node.left.name.text)
+    )
+      check(node.right);
+    ts.forEachChild(node, visit);
+  };
+  visit(sf);
+  return found;
+}
+
+describe('where a station is placed', () => {
+  const held = content.stations.defs.filter((d) => d.standOn || d.needsWater);
+
+  it('has a hint of its own for every station held to its own ground, naming each ground', () => {
+    expect(held.map((d) => d.id)).toContain('pump');
+    for (const d of held) {
+      const hint = STR.toolbar.place.stationOn[d.id];
+      expect(hint, d.id).toMatch(/\S/);
+      for (const g of d.standOn ?? []) expect(hint.toLowerCase(), `${d.id}: ${g}`).toContain(g);
+    }
+  });
+
+  it('says water beside it where a station needs it, and nowhere else', () => {
+    // the generic hint is for stations that stand on any ground with no water needed
+    for (const d of held)
+      if (d.needsWater) expect(STR.toolbar.place.stationOn[d.id], d.id).toMatch(/water/);
+    expect(STR.toolbar.place.station).not.toMatch(/water/);
+  });
+});
+
+describe('what the terrains are called', () => {
+  it('names the ground Grass and Rock in every title, row, label and refusal', () => {
+    expect(STR.tile.terrain).toMatchObject({ grass: 'Grass', rock: 'Rock' });
+    const old = /Grassland|Stone field/;
+    for (const s of [...texts(STR), ...texts(RULE_META)]) expect(s).not.toMatch(old);
+    for (const dir of [new URL('./ui/', import.meta.url), new URL('./editor/', import.meta.url)])
+      for (const f of readdirSync(dir).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts')))
+        expect(readFileSync(new URL(f, dir), 'utf8'), f).not.toMatch(old);
+  });
+
+  it('describes every land terrain the tile tooltip titles', () => {
+    for (const name of Object.keys(STR.tile.terrain).filter((n) => n !== 'water'))
+      expect(STR.tile.about[name], name).toMatch(/\S/);
+  });
+
+  it('ends every dim terrain line, water included, the same way', () => {
+    const lines = [...Object.values(STR.tile.about), STR.tile.water];
+    for (const l of lines) expect(l, l).toMatch(/\.$/);
+  });
+});
+
+describe('text the panels show', () => {
+  const dir = new URL('./ui/', import.meta.url);
+  const files = readdirSync(dir).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'));
+
+  // slow because it reads and scans every file of src/ui for hardcoded text: 0.6 s alone
+  it('comes from STR in every src/ui file', () => {
+    expect(files).toContain('dom.ts');
+    const found = files.flatMap((f) =>
+      hardcodedText(`src/ui/${f}`, readFileSync(new URL(f, dir), 'utf8')),
+    );
+    expect(found, 'move these into src/strings.ts').toEqual([]);
+  }, 30_000);
+
+  it('catches a hardcoded label, child, attribute or toast, and leaves classes and keys alone', () => {
+    const panel = [
+      "btn('Foo', () => {});",
+      "el('div', {}, 'Foo bar');",
+      "el('div', { class: 'k', text: on ? 'Shown' : `Hidden ${n}` });",
+      "input.placeholder = 'Type here';",
+      "this.toast('Done', 'good');",
+      "el('div', { class: 'Panel title', id: 'Root' }, STR.title, '×');",
+      "if (inp.wasPressed('Escape')) close();",
+      "btn('x', close, 'small');",
+    ].join('\n');
+    expect(hardcodedText('panel.ts', panel)).toEqual([
+      'panel.ts:1: Foo',
+      'panel.ts:2: Foo bar',
+      'panel.ts:3: Shown',
+      'panel.ts:3: Hidden ',
+      'panel.ts:4: Type here',
+      'panel.ts:5: Done',
+    ]);
+  });
+
+  it('names a direction for every signal rotation', () => {
+    expect(STR.signals.directions).toHaveLength(4);
   });
 });

@@ -9,8 +9,9 @@ import {
   type StopPlan,
   type LocoSlotInit,
   type RouteMode,
+  type TrainState,
 } from './trains';
-import type { TrackGraph, TrackClass } from '../world/track';
+import type { TrackGraph, TrackClass, TrackPiece } from '../world/track';
 import { findPath } from '../world/pathfinding';
 import { pieceClassFor, vehicleAccess, consistGauge, gaugeOf } from './compat';
 import { content, type Gauge } from '../data/content';
@@ -28,16 +29,23 @@ export interface GateInfo {
 import type { Builder } from './build';
 import type { GameMap } from '../world/tiles';
 import type { Inventory } from '../gacha/inventory';
-import { wagonDef, locoDef, levelMul, type LocoDef, type WagonDef } from '../gacha/items';
-import { DIR_DX, DIR_DY, DIRS } from '../engine/iso';
+import {
+  wagonDef,
+  locoDef,
+  levelMul,
+  type Item,
+  type LocoDef,
+  type WagonDef,
+} from '../gacha/items';
+import { DIR_DX, DIR_DY, DIRS, type Dir } from '../engine/iso';
 import type { Economy } from './economy';
-import type { Stockpile } from './stockpile';
+import { previewOf, type ResourceStore } from './stores';
 import { cargoDef } from './cargo';
 import type { Station } from './stations';
 import { sfx } from '../engine/audio';
-import { STR } from '../strings';
+import { ENGLISH, STR } from '../strings';
 import { biomeDef, biomeAt } from './biomes';
-import { rules, daySeconds } from './rules';
+import { daySeconds } from './rules';
 import { Traffic } from './traffic';
 import { Junctions } from './junctions';
 import { Signals, HEADWAY } from './signals';
@@ -45,6 +53,14 @@ import type { SupplyKind } from './catenary';
 
 export const MAX_WAGONS = 16;
 export const MAX_LOCOS = 4;
+
+/**
+ * What a try at a depot's gates came to. `routeFailed`: a gate was usable and no route was found
+ * from it, the one refusal that searched the track. Without a usable gate nothing was searched.
+ */
+type RollOut =
+  | { gate: { x: number; y: number }; reason: null; routeFailed: false }
+  | { gate: null; reason: string; routeFailed: boolean };
 
 /** Owns all trains: creation from inventory items, recall, per-tick simulation. */
 export class Fleet {
@@ -69,7 +85,6 @@ export class Fleet {
   gridFactor: (x: number, y: number) => number = () => 1;
   gridDraw: (x: number, y: number, u: number) => void = () => {};
   gridBegin: () => void = () => {};
-  stockCap: (id: string) => number = () => Infinity;
   /** a train entered or left service */
   onChanged: (() => void) | null = null;
 
@@ -79,7 +94,6 @@ export class Fleet {
     readonly map: GameMap,
     readonly inventory: Inventory,
     readonly economy: Economy,
-    readonly stock: Stockpile,
   ) {
     this.traffic = new Traffic(track, builder);
     this.signals = new Signals(track);
@@ -87,26 +101,56 @@ export class Fleet {
     this.traffic.junctionReport = () => this.junctions.report();
   }
 
+  /**
+   * The store that supplies the tile the train's head stands on (`StoreRegistry.supplierFor`):
+   * where an emergency delivery comes from, and its tanks go back to on a recall.
+   */
+  supplierOf(t: Train): ResourceStore | null {
+    const head = t.headTile;
+    return head ? this.builder.stores.supplierFor(head.x, head.y) : null;
+  }
+  /**
+   * Emergency refuel: carts bring every tank full from the train's supplier (`supplierOf`), the
+   * battery from the grid, at twice the materials; the crew settles what it owes there. With no
+   * supplier only the battery charges. Returns what was taken.
+   */
+  emergencyRefuel(t: Train): Record<string, number> {
+    const store = this.supplierOf(t);
+    const grid = this.builder.stores.grid;
+    if (!store) return t.refuel(grid, { fuel: true, water: false }, 2);
+    return t.fillUp(store, grid, { fuel: true, water: true }, 2);
+  }
+  /**
+   * Emergency refuel for every train of the group, or for none: each fills from its own supplier
+   * (`emergencyRefuel`), and it is done only when, tried out on copies of the stores first, every
+   * one of them would be full.
+   */
   refuelAll(trains: Train[]) {
     const valid = [...new Set(trains)].filter((t) => this.trains.includes(t));
-    const preview = new (this.stock.constructor as typeof Stockpile)();
-    preview.amounts = new Map(this.stock.amounts);
-    const clones = valid.map((t) => {
+    // trains that share a supplier, or a rail network of stores, draw on one copy of it
+    const copies = new Map<ResourceStore, ResourceStore>();
+    const copyOf = (r: ResourceStore) => {
+      const whole = this.builder.stores.networkPool(r);
+      let c = copies.get(whole);
+      if (!c) copies.set(whole, (c = previewOf(whole)));
+      return c;
+    };
+    const grid = copyOf(this.builder.stores.grid);
+    for (const t of valid) {
+      const store = this.supplierOf(t);
       const c = Object.create(Object.getPrototypeOf(t)) as Train;
       Object.assign(c, t);
-      return c;
-    });
-    for (const t of clones) {
-      t.refuel(preview, { fuel: true, water: true }, 2);
+      if (store) c.refuel(copyOf(store), { fuel: true, water: true }, 2);
+      c.refuel(grid, { fuel: true, water: false }, 2);
       if (
-        t.coal < t.coalCap - 1e-6 ||
-        t.oil < t.oilCap - 1e-6 ||
-        t.water < t.waterCap - 1e-6 ||
-        t.battery < t.batteryCap - 1e-6
+        c.coal < c.coalCap - 1e-6 ||
+        c.oil < c.oilCap - 1e-6 ||
+        c.water < c.waterCap - 1e-6 ||
+        c.battery < c.batteryCap - 1e-6
       )
         return false;
     }
-    for (const t of valid) t.refuel(this.stock, { fuel: true, water: true }, 2);
+    for (const t of valid) this.emergencyRefuel(t);
     return true;
   }
   byId(id: number) {
@@ -168,9 +212,10 @@ export class Fleet {
    * away from the shed, with its route index at that stop. Tries every free gate and both ways
    * of standing on it. Returns the gate, or the reason nothing worked.
    */
-  private rollOut(t: Train, depot: Station): { x: number; y: number } | string {
+  private rollOut(t: Train, depot: Station): RollOut {
     const report = this.gateReport(t, depot);
-    if (!report.some((g) => g.cls !== null)) return STR.fleet.depotNoGate(depot.name);
+    if (!report.some((g) => g.cls !== null))
+      return { gate: null, reason: STR.fleet.depotNoGate(depot.name), routeFailed: false };
     const usable = report.filter((g) => g.ok);
     const stops = t.schedule;
     for (let si = 0; si < stops.length; si++) {
@@ -184,7 +229,8 @@ export class Fleet {
         for (const entry of entries) {
           if (!t.spawnAt(this.track, g.x, g.y, entry)) continue;
           t.routeIndex = si;
-          if (t.dispatch(this.track, this.builder, this.map)) return { x: g.x, y: g.y };
+          if (t.dispatch(this.track, this.builder, this.map))
+            return { gate: { x: g.x, y: g.y }, reason: null, routeFailed: false };
         }
       }
     }
@@ -211,9 +257,12 @@ export class Fleet {
           : STR.compat.gateNoRoute(g.x, g.y, first?.name ?? '?'),
       );
     }
-    return (
-      lines.filter(Boolean).join(' · ') || STR.fleet.depotNoRoute(depot.name, first?.name ?? '?')
-    );
+    return {
+      gate: null,
+      reason:
+        lines.filter(Boolean).join(' · ') || STR.fleet.depotNoRoute(depot.name, first?.name ?? '?'),
+      routeFailed: usable.length > 0,
+    };
   }
 
   /** The tile where a route from a gate to a station first uses track the consist may not. */
@@ -305,7 +354,8 @@ export class Fleet {
         if (out2 === undefined) break;
         run += this.track.segLength(cx, cy, cin, out2);
         tiles++;
-        if (run >= need + 0.5) break;
+        // a consist shorter than half a tile still needs the gate's onward tile checked
+        if (run >= need + 0.5 && tiles >= 2) break;
         const nx = cx + DIR_DX[out2];
         const ny = cy + DIR_DY[out2];
         if (!this.track.connected(cx, cy, out2)) break;
@@ -374,6 +424,39 @@ export class Fleet {
     if (!depot) return own === 'narrow' ? STR.fleet.noNarrowDepot : STR.fleet.noDepot;
     return depot;
   }
+  /** The gauge a train runs on: its leading engine's. */
+  private gaugeOfTrain(t: Train): Gauge {
+    return t.locos[0] ? gaugeOf(t.locos[0].def) : 'regular';
+  }
+  /**
+   * The depot a train belongs to, read and never searched for: `settleHomes` keeps it. Station ids
+   * start again past the highest on a load, so a station may hold an id a train still has: only a
+   * depot of the train's gauge is its home. None when its gauge has no depot left.
+   */
+  homeDepot(t: Train): Station | null {
+    const st = t.depotId !== null ? this.builder.stationById(t.depotId) : undefined;
+    return st?.def.depot && gaugeOf(st.def) === this.gaugeOfTrain(t) ? st : null;
+  }
+  /**
+   * Find a home for every train without one: after a load, and when a depot is removed or stands
+   * again. It goes to the first depot of its gauge on its rails, else to the first of its gauge.
+   * Each depot's rails are walked once, and only for such a train. Nothing here moves a train.
+   */
+  settleHomes() {
+    const rails = new Map<Station, Set<number>>();
+    const reaches = (d: Station, key: number) => {
+      let r = rails.get(d);
+      if (!r) rails.set(d, (r = this.reachableFrom(d)));
+      return r.has(key);
+    };
+    for (const t of this.trains) {
+      if (this.homeDepot(t)) continue;
+      const depots = this.builder.depotsOf(this.gaugeOfTrain(t));
+      const head = t.headTile;
+      const key = head ? head.y * this.map.w + head.x : -1;
+      t.depotId = (depots.find((d) => reaches(d, key)) ?? depots[0])?.id ?? null;
+    }
+  }
   /** A stand-in engine of a gauge for previews: one the player owns, else a starter. */
   probeLoco(gauge: Gauge): LocoSlotInit {
     const owned = this.inventory.items.find(
@@ -395,15 +478,18 @@ export class Fleet {
     depot: Station | null;
     reason: string | null;
     stops: StopPlan[];
+    routeFailed: boolean;
   } {
     const gauge = consistGauge(
       locoUids.map((u) => this.inventory.byUid(u)).flatMap((l) => (l ? [locoDef(l.defId)] : [])),
     );
     const depot = this.depotFor(gauge, depotId);
-    if (typeof depot === 'string') return { gate: null, depot: null, reason: depot, stops: [] };
+    if (typeof depot === 'string')
+      return { gate: null, depot: null, reason: depot, stops: [], routeFailed: false };
     let stops = schedule.map((s) => (typeof s === 'number' ? defaultStop(s) : s));
     if (stops.length < 2) stops = this.autoSchedule(depot);
-    if (stops.length < 2) return { gate: null, depot, reason: STR.fleet.needTwoStops, stops };
+    if (stops.length < 2)
+      return { gate: null, depot, reason: STR.fleet.needTwoStops, stops, routeFailed: false };
     const items = locoUids
       .map((u) => this.inventory.byUid(u))
       .filter((l) => l && l.kind === 'loco');
@@ -417,20 +503,21 @@ export class Fleet {
       : [this.probeLoco(depot.def.gauge ?? 'regular')];
     const probe = new Train(locos, 'probe', -1);
     probe.schedule = stops;
-    const r = this.rollOut(probe, depot);
-    return typeof r === 'string'
-      ? { gate: null, depot, reason: r, stops }
-      : { gate: r, depot, reason: null, stops };
+    return { ...this.rollOut(probe, depot), depot, stops };
   }
-  /** Assemble a train and roll it out of a depot gate. Returns an error string on failure. */
-  create(
+  /**
+   * The train a consist, a route and a depot make, ready to roll out, or the reason it cannot be
+   * made: every refusal `create` has before the gate, in its order. `id` is for a probe, which
+   * takes no train number. Nothing is changed.
+   */
+  private assemble(
     locoUids: number[],
     wagonUids: number[],
     schedule: (StopPlan | number)[],
-    name?: string,
-    mode: RouteMode = 'schedule',
-    depotId: number | null = null,
-  ): Train | string {
+    name: string | undefined,
+    depotId: number | null,
+    id?: number,
+  ): { train: Train; depot: Station; locoItems: Item[]; wagonItems: Item[] } | string {
     if (!locoUids.length) return STR.fleet.needLoco;
     if (locoUids.length > MAX_LOCOS) return STR.fleet.tooManyLocos(MAX_LOCOS);
     if (wagonUids.length > MAX_WAGONS) return STR.fleet.tooManyWagons(MAX_WAGONS);
@@ -446,7 +533,7 @@ export class Fleet {
       level: l!.level,
       inCab: l!.inCab,
     }));
-    const t = new Train(locos, name);
+    const t = new Train(locos, name, id);
     t.wagons = wagons.map((w) => ({
       uid: w!.uid,
       def: wagonDef(w!.defId),
@@ -464,9 +551,50 @@ export class Fleet {
     if (stops.length < 2) stops = this.autoSchedule(depot);
     if (stops.length < 2) return STR.fleet.needTwoStops;
     t.schedule = stops;
+    return { train: t, depot, locoItems: locoItems as Item[], wagonItems: wagons as Item[] };
+  }
+
+  /**
+   * Whether `create` would roll this train out, and where, with no side effects: the one question
+   * `create` and the depot screen both ask, so they never disagree. The consist is the real one,
+   * wagons and length included, rolled out of the depot's gates as it would be. `reason` is what
+   * `create` would answer, null when it would go; `gate`, `depot` and `stops` are what is known by
+   * then (the route is the automatic one when `schedule` has fewer than two stops).
+   */
+  dispatchCheck(
+    locoUids: number[],
+    wagonUids: number[],
+    schedule: (StopPlan | number)[],
+    depotId: number | null,
+  ): {
+    reason: string | null;
+    gate: { x: number; y: number } | null;
+    depot: Station | null;
+    stops: StopPlan[];
+    routeFailed: boolean;
+  } {
+    const made = this.assemble(locoUids, wagonUids, schedule, 'probe', depotId, -1);
+    if (typeof made === 'string')
+      return { reason: made, gate: null, depot: null, stops: [], routeFailed: false };
+    const { train, depot } = made;
+    return { ...this.rollOut(train, depot), depot, stops: train.schedule };
+  }
+
+  /** Assemble a train and roll it out of a depot gate. Returns an error string on failure. */
+  create(
+    locoUids: number[],
+    wagonUids: number[],
+    schedule: (StopPlan | number)[],
+    name?: string,
+    mode: RouteMode = 'schedule',
+    depotId: number | null = null,
+  ): Train | string {
+    const made = this.assemble(locoUids, wagonUids, schedule, name, depotId);
+    if (typeof made === 'string') return made;
+    const { train: t, depot, locoItems, wagonItems: wagons } = made;
     t.mode = mode;
     const placed = this.rollOut(t, depot);
-    if (typeof placed === 'string') return placed;
+    if (placed.gate === null) return placed.reason;
     if (t.mode !== 'schedule') {
       // a roaming train starts with the stop it would pick, not the automatic loop
       const next = this.chooseNext(t);
@@ -476,12 +604,14 @@ export class Fleet {
         t.dispatch(this.track, this.builder, this.map);
       }
     }
+    t.depotId = depot.id;
     t.trip = newTrip(this.clockTime);
     for (const l of locoItems) l!.assigned = t.id;
     for (const w of wagons) w!.assigned = t.id;
     this.trains.push(t);
-    // tanks start with whatever the stockpile can spare
-    t.refuel(this.stock, { fuel: true, water: true });
+    // tanks start with whatever the depot's store can spare
+    const dock = this.builder.stores.dockOf(depot);
+    if (dock) t.fillUp(dock, this.builder.stores.grid, { fuel: true, water: true });
     sfx('train.dispatch');
     this.rebuildOccupancy();
     if (t.dispatch(this.track, this.builder, this.map)) t.onPathReady(this.ctx(0, 1));
@@ -495,7 +625,71 @@ export class Fleet {
     t.routeIndex = Math.min(t.routeIndex, Math.max(0, schedule.length - 1));
   }
 
-  /** Remove a train; cargo aboard is salvaged at 40 % of base price, tank contents return to the stockpile. */
+  /**
+   * Switch a train's routing mode. `schedule` keeps the stops the train runs and is refused with
+   * fewer than two, the mode left as it was. A roaming mode re-plans the train the way `create`
+   * does: the stop it would pick becomes a one-stop schedule. A train standing without a route,
+   * idling or running a plain leg heads there at once; one at a platform, in a yield, backing off
+   * or stopped for fuel, power or weight goes when that wait ends. With nothing worth picking, a
+   * train without a route idles and asks again, as a roaming train does. A contract job keeps its
+   * two stops: the new mode takes over when the train goes back to its own program. The program
+   * `schedule` checks is the one the train goes back to (`Train.program`), also after a job
+   * closed and before the train has taken its program up again.
+   */
+  setMode(t: Train, mode: RouteMode): { ok: true } | { ok: false; message: string } {
+    if (mode === 'schedule') {
+      if (t.program.length < 2) return { ok: false, message: STR.fleet.needTwoStops };
+      t.mode = mode;
+      return { ok: true };
+    }
+    t.mode = mode;
+    if (!t.job) this.replan(t);
+    return { ok: true };
+  }
+  /** Point a roaming train at the stop it would pick now (see `setMode`). */
+  private replan(t: Train) {
+    const next = this.chooseNext(t);
+    if (next === null) {
+      // rather than retry a dead stop, wait and choose again later
+      if (t.state === 'noRoute') this.idle(t);
+      return;
+    }
+    const was = { schedule: t.schedule, routeIndex: t.routeIndex };
+    t.schedule = [defaultStop(next)];
+    t.routeIndex = 0;
+    // the train's own logic heads for the new stop once the platform work, yield or back-off ends
+    if (t.state === 'loading' || t.state === 'waiting' || t.state === 'yielding' || t.holding)
+      return;
+    // an idle train may stand on a platform: it leaves it when it sets off
+    const st = t.atStation;
+    st?.occupants.delete(t.id);
+    t.atStation = null;
+    if (t.dispatch(this.track, this.builder, this.map)) {
+      // stopped for fuel, power or weight: it rolls onto the new path when that clears
+      if (t.state === 'moving' || t.state === 'noRoute' || t.state === 'idle')
+        t.onPathReady(this.ctx(this.clockTime, 1));
+      return;
+    }
+    // no way there from where it stands: it stays at the station it stood at (an idle train
+    // holding no platform there)
+    t.atStation = st;
+    if (st && t.state !== 'idle') st.occupants.add(t.id);
+    if (t.state === 'noRoute') this.idle(t);
+    else if (t.state !== 'idle') {
+      // under way or stopped on the line: carry on with what it was doing and choose at the stop
+      t.schedule = was.schedule;
+      t.routeIndex = was.routeIndex;
+    }
+  }
+  /** A roaming train with nowhere to go waits where it stands and chooses again shortly. */
+  private idle(t: Train) {
+    t.idle();
+  }
+
+  /**
+   * Remove a train; cargo aboard is salvaged at 40 % of base price, tank contents go to
+   * `drainStore` (the battery to the grid).
+   */
   recall(t: Train): number {
     t.recall();
     let salvage = 0;
@@ -503,7 +697,7 @@ export class Fleet {
       if (w.cargo && w.amount > 0) salvage += w.amount * cargoDef(w.cargo).price * 0.4;
     salvage = Math.round(salvage);
     if (salvage > 0) this.economy.earn(salvage);
-    t.drainTo(this.stock);
+    t.drainTo(this.drainStore(t), this.builder.stores.grid);
     const i = this.trains.indexOf(t);
     if (i >= 0) this.trains.splice(i, 1);
     for (const it of this.inventory.items) if (it.assigned === t.id) it.assigned = null;
@@ -511,6 +705,20 @@ export class Fleet {
     // its tiles are free at once: a train built right after (clock paused) must see the gate clear
     this.rebuildOccupancy();
     return salvage;
+  }
+
+  /**
+   * Where a recalled train's tanks go: the store that supplies the tile of its head (or of the
+   * station it stands at), else the nearest store at all; with no place on the map, the first
+   * depot's store.
+   */
+  private drainStore(t: Train): ResourceStore | null {
+    const stores = this.builder.stores;
+    const at = t.headTile ?? t.atStation;
+    if (at)
+      return stores.supplierFor(at.x, at.y) ?? stores.nearest(at.x, at.y, Infinity)[0] ?? null;
+    const depot = this.builder.stations.find((s) => s.def.depot);
+    return depot ? stores.dockOf(depot) : null;
   }
 
   /** Token working: a plain section may hold one train; another must wait outside it. */
@@ -523,6 +731,23 @@ export class Fleet {
       if (l && l.some((t) => t !== self)) return true;
     }
     return false;
+  }
+  /**
+   * Each semaphore's own aspect by tile key, for the trains where they stand now: what
+   * `signals.aspect(post, (x, y) => this.occupied(x, y, -1))` gives, kept between calls
+   * (`Signals.postAspects`).
+   */
+  postAspects() {
+    return this.signals.postAspects(this.occ);
+  }
+  /** The train standing on one of `tiles`, read from the cars as they stand now. */
+  trainOn(tiles: readonly { x: number; y: number }[]): Train | undefined {
+    const keys = new Set(tiles.map((t) => t.y * this.map.w + t.x));
+    return this.trains.find((t) => t.occupancyKeys(this.map.w).some((k) => keys.has(k)));
+  }
+  /** The train standing at a station's platform now. A stop or a job there still to come is not. */
+  trainAt(s: Station): Train | undefined {
+    return this.trains.find((t) => s.occupants.has(t.id));
   }
   /** Is `tile` under any train other than `self`? Rebuilt each tick from car poses. */
   occupied(x: number, y: number, self: number) {
@@ -554,8 +779,7 @@ export class Fleet {
       occupants: (x, y) => this.occ.get(y * this.map.w + x) ?? [],
       now,
       speedFactor,
-      stockpile: this.stock,
-      stockCap: (id) => this.stockCap(id),
+      stores: this.builder.stores,
       powered: (x, y) => this.powered(x, y),
       supplyAt: (x, y) => this.supplyAt(x, y),
       gridFactor: (x, y) => this.gridFactor(x, y),
@@ -585,6 +809,7 @@ export class Fleet {
         return { speedMul: d.speedMul, waterUseMul: d.waterUseMul };
       },
       gradeAt: (s) => railGrade(this.railBeds, this.map.w, s.x, s.y, s.in, s.out),
+      framed: this.framed,
     };
   }
   /** tile key -> train id for the next stretch of every moving train's path */
@@ -605,6 +830,7 @@ export class Fleet {
         t.dynamic &&
         t.id !== except &&
         t.route.length &&
+        !t.makingWay &&
         (t.state === 'moving' || t.state === 'yielding' || t.state === 'waiting')
       )
         out.add(t.route[t.routeIndex % t.route.length]);
@@ -625,11 +851,14 @@ export class Fleet {
   }
   /**
    * Stops chosen on the fly. With cargo aboard: a contract's destination, else a town for
-   * passengers, else the nearest depot (the only way into the stockpile). Empty, `dynamic` picks
-   * the producer whose cargo the stockpile lacks most; `collect` picks the producer or warehouse
-   * with the biggest load waiting, weighed against the way there and on to the nearest depot.
-   * Stations other free-roaming trains are bound for are skipped, and so are stations the tanks
-   * could not reach and leave again.
+   * passengers, else where the goods go, after a top-up at another producer while room is left
+   * and the dump is not nearer. Goods go to the nearest store with room for them (a depot, a
+   * warehouse or a Townhouse) that they did not come from. Empty, a freight train picks the
+   * producer with the biggest load waiting in its own pile (`Station.pickupPile`: never a store,
+   * nor a harvester whose goods go to its town's), weighed against the way there and on to where
+   * it would go, the time since a train last loaded there and how full the station is. Stations
+   * other free-roaming trains are bound for are skipped, and so are stations the tanks could not
+   * reach and leave again.
    */
   chooseNext(t: Train): number | null {
     const head = t.poses[0] ?? { x: 0, y: 0 };
@@ -644,8 +873,7 @@ export class Fleet {
       if (!plat.length) return false;
       return !reach || plat.some((p) => reach.has(p.y * this.map.w + p.x));
     });
-    const depots = withPlat.filter((s) => s.def.pool);
-    const warehouses = withPlat.filter((s) => s.def.stockpile);
+    const stores = withPlat.filter((s) => s.isStore);
     const fuelPoints = withPlat.filter((s) => s.refuelsFuel && s.refuelsWater);
     const range = t.rangeTiles;
     const now = this.clockTime;
@@ -657,35 +885,22 @@ export class Fleet {
       const onward = f ? between(f, s) : 0;
       return (dist(s) + onward) * 1.3 + 4 <= range;
     };
-    // where a load of goods goes: production dumps into a warehouse with room (a depot when
-    // none is nearer), collection only into a depot
+    // where a load of goods goes: the nearest store with room for some of it (the cap is per
+    // kind), never back to a station it came from (`origins`)
     const origins = new Set(t.wagons.map((w) => w.origin).filter((o): o is number => o !== null));
-    const dumpFor = (from: { x: number; y: number }, loadUnits: number) => {
-      const okDepots = depots.filter(ok);
-      if (t.mode === 'production') {
-        // never back into the store the load came from
-        const roomy = warehouses.filter(
-          (s) => ok(s) && !origins.has(s.id) && s.room >= Math.min(loadUnits, 5),
-        );
-        const w = this.nearest(roomy, from);
-        const d = this.nearest(okDepots, from);
-        if (
-          w &&
-          (!d ||
-            between(w, { cx: from.x, cy: from.y } as Station) <=
-              between(d, { cx: from.x, cy: from.y } as Station) * 1.5)
-        )
-          return w;
-        return d ?? w ?? null;
-      }
-      return (
-        this.nearest(okDepots, from) ??
-        this.nearest(
-          warehouses.filter((s) => ok(s) && !origins.has(s.id) && s.room > 1),
-          from,
-        )
+    const dumpFor = (
+      from: { x: number; y: number },
+      loadUnits: number,
+      cargos: readonly string[],
+      not: ReadonlySet<number>,
+    ) =>
+      this.nearest(
+        stores.filter(
+          (s) =>
+            ok(s) && !not.has(s.id) && cargos.some((c) => s.roomFor(c) >= Math.min(loadUnits, 5)),
+        ),
+        from,
       );
-    };
     const taken = this.dynamicTargets(t.id);
     const trainCap = t.wagons.reduce((a, w) => a + w.def.capacity * levelMul(w.level), 0) || 1;
     const loaded = t.wagons.filter((w) => w.cargo && w.amount > 0);
@@ -709,9 +924,15 @@ export class Fleet {
         );
       }
       const units = loaded.reduce((a, w) => a + w.amount, 0);
-      const dump = dumpFor(head, units);
-      // room left for the kinds already aboard (and empty wagons): top up at another source
-      // before dumping, unless a dump is nearer or lies on the way there
+      const dump = dumpFor(
+        head,
+        units,
+        loaded.map((w) => w.cargo!),
+        origins,
+      );
+      // room left for the kinds already aboard (and empty wagons): top up at another producer
+      // before dumping, unless a dump is nearer or lies on the way there. A store is no place to
+      // top up: it is no pickup
       const kinds = new Set(loaded.map((w) => w.cargo!));
       const spare = Math.max(0, t.power - t.weight);
       let room = 0;
@@ -724,8 +945,7 @@ export class Fleet {
       if (roomFrac > 0.15 && spare > 1) {
         let best: { s: Station; score: number } | null = null;
         for (const s of withPlat) {
-          if (s.def.pool || !ok(s) || taken.has(s.id) || !reachable(s)) continue;
-          if (t.mode === 'collection' ? !s.def.stockpile : s.def.stockpile) continue;
+          if (!s.pickupPile || !ok(s) || taken.has(s.id) || !reachable(s)) continue;
           let top = 0;
           for (const c of kinds) {
             if (!s.availableCargo().includes(c)) continue;
@@ -733,7 +953,6 @@ export class Fleet {
           }
           // worth a detour only for a real share of the room left
           if (top < Math.max(4, room * 0.25)) continue;
-          if (t.mode === 'collection' && top < rules.collectMin * 0.5) continue;
           const sc = top / (12 + 0.5 * dist(s));
           if (!best || sc > best.score) best = { s, score: sc };
         }
@@ -761,41 +980,29 @@ export class Fleet {
         // distance counts at half weight and a town left alone climbs in priority
         score = ((waiting + 0.5) * this.neglect(s.id, now)) / (10 + 0.5 * dist(s));
       } else {
-        // production takes from producers, collection from warehouses
-        if (t.mode === 'collection' ? !s.def.stockpile : s.def.stockpile) continue;
+        // a producer's own pile: a store's goods are never picked up
+        if (!s.pickupPile) continue;
         let haul = 0;
         const spare = Math.max(0, t.power - t.weight);
-        let ripe = 1;
         for (const c of s.availableCargo()) {
           if (cargoDef(c).class === 'people') continue;
           // what the wagons hold and the engines can pull
           const cap = Math.min(Fleet.capacityFor(t, c), spare / cargoDef(c).weight);
           if (cap < 1) continue;
           const stored = s.stored(c);
-          // a collection train lets a warehouse accumulate: nothing below the threshold, and
-          // an ever stronger pull as the pile grows past it
-          if (t.mode === 'collection') {
-            if (stored < rules.collectMin) continue;
-            ripe = Math.max(ripe, 1 + (stored - rules.collectMin) / rules.collectMin);
-          }
           haul = Math.max(haul, Math.min(cap, stored) + 0.25 * stored);
         }
         // a producer that is filling up counts even before the pile is big
-        if (
-          t.mode === 'production' &&
-          haul > 0 &&
-          haul < trainCap * 0.15 &&
-          s.productionPerWeek > 0
-        )
-          haul = Math.max(haul, Math.min(trainCap, s.totalStored()) + 0.25 * s.totalStored());
+        if (haul > 0 && haul < trainCap * 0.15 && s.productionPerWeek > 0)
+          haul = Math.max(haul, Math.min(trainCap, s.fullest()) + 0.25 * s.fullest());
         if (haul < Math.min(trainCap * 0.15, 8)) continue;
-        const dump = dumpFor({ x: s.cx, y: s.cy }, haul);
+        const dump = dumpFor({ x: s.cx, y: s.cy }, haul, s.availableCargo(), new Set([s.id]));
         const onward = dump ? between(dump, s) : 0;
-        // fuller producers first: their pile stops growing when it hits the cap
-        // a producer near its cap is throwing output away; distance counts at half weight so a
-        // full pile far away beats a thin one next door; stations left alone climb in priority
-        const fill = s.totalStored() / Math.max(1, s.capacity);
-        const pressure = s.def.stockpile ? ripe : 1 + fill + (fill >= 0.8 ? 1 : 0);
+        // fuller stations first: a producer near its cap is throwing output away; distance counts
+        // at half weight so a full pile far away beats a thin one next door; stations left alone
+        // climb in priority
+        const fill = s.fill();
+        const pressure = 1 + fill + (fill >= 0.8 ? 1 : 0);
         score =
           (pressure * this.neglect(s.id, now) * haul) / trainCap / (12 + 0.5 * (dist(s) + onward));
       }
@@ -851,7 +1058,7 @@ export class Fleet {
         if (!t.dispatch(this.track, this.builder, this.map, avoid)) continue;
         if (was.atStation) was.atStation.occupants.delete(t.id);
         if (wasReversed !== t.reversed) t.updatePoses();
-        t.lastMessage = 'moving out of the way';
+        t.lastMessage = ENGLISH.trainNote.movingAway;
         t.onPathReady(ctx);
         return true;
       }
@@ -876,6 +1083,18 @@ export class Fleet {
   /** fired once each time a train pulls into a station (passing through does not count) */
   onArrive: ((t: Train, s: Station) => void) | null = null;
 
+  /** set by the first `beginFrame`: from then on the loop tick, not each step, captures poses */
+  private framed = false;
+  /**
+   * Call once per loop tick, before its simulation steps: every train's poses become the ones the
+   * renderer interpolates from, and until the next call no `tick` overwrites them, so the
+   * interpolation spans all the steps the loop tick runs. Without it each `tick` captures them.
+   */
+  beginFrame() {
+    this.framed = true;
+    for (const t of this.trains) t.capturePoses();
+  }
+
   tick(gdt: number, now: number, speedFactor = 1) {
     this.clockTime = now;
     this.rebuildOccupancy();
@@ -894,9 +1113,11 @@ export class Fleet {
     // Build the complete wait-for graph once, including queues feeding other queues. A
     // group's chosen train owns its escape corridor before any other group can plan a move.
     this.rebuildOccupancy();
+    this.makeWay(ctx, now, gdt);
     const groups = blockingGroups(this.trains).sort(
       (a, b) => Math.max(...b.map((t) => t.blockedTime)) - Math.max(...a.map((t) => t.blockedTime)),
     );
+    this.keepJamNotes(groups);
     for (const group of groups) {
       if (!group.some((t) => t.blockedTime >= MUTUAL_GRACE)) continue;
       if (!this.traffic.canRecover(group, now)) continue;
@@ -941,15 +1162,180 @@ export class Fleet {
       for (const { train: t, other, plan } of candidates) {
         if (t.retreat(ctx, ids, plan)) {
           this.traffic.yielded(t, other, now);
+          // giving way to the same train again before reaching its stop: the line keeps the two
+          // from passing, so the jam is counted though one of them could pull aside
+          if (t.gaveWay(other)) this.traffic.deadlock(group, now);
           this.rebuildOccupancy();
           this.rebuildReservations();
           moved = true;
           break;
         }
       }
-      if (!moved && group.some((t) => t.blockedTime >= MUTUAL_GRACE * 4))
+      if (!moved && group.some((t) => t.blockedTime >= MUTUAL_GRACE * 4)) {
         this.traffic.deadlock(group, now);
+        // the trains held in it say why (an idle train in the way says so itself, `makeWay`)
+        for (const t of group) {
+          const head = t.poses[0];
+          if (!head || t.holding || this.jams.has(t.id)) continue;
+          if (t.state !== 'moving' && t.state !== 'yielding') continue;
+          if (!t.blocked && t.claimBlocker === null) continue;
+          this.jams.set(t.id, { x: head.x, y: head.y, state: t.state, was: t.lastMessage });
+          t.lastMessage = ENGLISH.traffic.jammed;
+        }
+      }
     }
+  }
+
+  /**
+   * Trains held in a jam no train of it could pull aside from, with where each stood, what it was
+   * doing and the note it had: its note says it is jammed until it moves, does something else or
+   * leaves the jam.
+   */
+  private jams = new Map<number, { x: number; y: number; state: TrainState; was: string }>();
+  /**
+   * Keep each jammed train's note while the jam lasts. Once it ends the train gets its own note
+   * back, unless it has set off from where it pulled aside, which a note of then no longer fits.
+   */
+  private keepJamNotes(groups: Train[][]) {
+    if (!this.jams.size) return;
+    const inJam = new Set(groups.flat().map((t) => t.id));
+    for (const [id, jam] of this.jams) {
+      const t = this.byId(id);
+      const head = t?.poses[0];
+      if (!t || !head) {
+        this.jams.delete(id);
+        continue;
+      }
+      const held =
+        inJam.has(id) &&
+        !t.holding &&
+        t.state === jam.state &&
+        Math.hypot(head.x - jam.x, head.y - jam.y) <= JAM_MOVED;
+      if (held) t.lastMessage = ENGLISH.traffic.jammed;
+      else {
+        this.jams.delete(id);
+        if (t.lastMessage === ENGLISH.traffic.jammed)
+          t.lastMessage = t.state === jam.state ? jam.was : '';
+      }
+    }
+  }
+
+  /**
+   * Idle trains make way. An idle train standing on a tile another train's route crosses (the
+   * path it runs, or the one it waits on a siding to take) moves aside to the nearest place off
+   * every train's route that holds it, a siding first (`Train.planAside`), reserved as an escape
+   * is, so the trains it makes way for hold back until it has passed, and idles where it parks.
+   * When those trains stand in the way out, it shows them the way it would take
+   * (`Train.wantAside`), so the jam resolution backs one of them off once it has to wait; with no
+   * way out at all it stands and says so. Runs after the trains have moved, so the claims of the
+   * next tick hold the others back before any train moves again.
+   */
+  private makeWay(ctx: TickCtx, now: number, gdt: number) {
+    // a few looks a second, on the ticks that pass a multiple of WAY_CHECK of game time: a game
+    // loaded from a save looks on the ticks the saved one would have
+    if (Math.floor(now / WAY_CHECK) === Math.floor((now - gdt) / WAY_CHECK)) return;
+    const idle = this.trains.filter((t) => t.state === 'idle' && !t.holding);
+    if (!idle.length) return;
+    const w = this.map.w;
+    const notes: string[] = [
+      ENGLISH.traffic.waitAside,
+      ENGLISH.traffic.noWayAside,
+      ENGLISH.traffic.replan,
+    ];
+    const routes = new Map(this.trains.map((t) => [t.id, t.pathTileKeys(w)]));
+    let sidings: Set<number> | null = null;
+    for (const t of idle) {
+      const mine = t.occupancyKeys(w);
+      const group = this.trains.filter(
+        (o) => o !== t && mine.some((k) => routes.get(o.id)!.has(k)),
+      );
+      if (!group.length) {
+        // nobody needs its tiles (any more): it wants nothing and has nothing to say about it
+        t.wantAside(null);
+        if (notes.includes(t.lastMessage)) t.lastMessage = '';
+        continue;
+      }
+      // the train keeps when it may look again, so a game loaded from a save looks when the saved
+      // one would have
+      if (t.asideRetry > now) continue;
+      t.asideRetry = now + ASIDE_RETRY;
+      // off every other train's route, and off the platforms of every station another train
+      // is bound for
+      const theirs = new Set<number>();
+      const stops = new Set<number>();
+      for (const o of this.trains) {
+        if (o === t) continue;
+        for (const k of routes.get(o.id)!) theirs.add(k);
+        for (const s of [...o.schedule, ...o.program]) stops.add(s.stationId);
+        for (const j of o.job ? [o.job, ...o.jobs] : o.jobs) stops.add(j.originId).add(j.destId);
+      }
+      const bound = new Set<number>();
+      for (const id of stops) {
+        const s = this.builder.stationById(id);
+        if (s) for (const p of this.builder.platformTiles(s)) bound.add(p.y * w + p.x);
+      }
+      sidings ??= this.sidingTiles();
+      const ids = group.map((o) => o.id);
+      const plan = t.planAside(ctx, ids, { theirs, bound, sidings });
+      if (plan && t.retreat(ctx, ids, plan)) {
+        this.traffic.yielded(t, ids[0], now);
+        this.rebuildOccupancy();
+        this.rebuildReservations();
+        routes.set(t.id, t.pathTileKeys(w));
+        continue;
+      }
+      // the way out is taken by the trains it is in the way of, or there is none. The way it would
+      // take were they to back off ends off their lines too: not under them, nor on the line
+      // behind them, which they would back over and cross again
+      const lines = new Set(theirs);
+      for (const o of group)
+        for (const k of [...o.occupancyKeys(w), ...o.lineBehind(this.track)]) lines.add(k);
+      const wanted = t.planAside(ctx, ids, { theirs: lines, bound, sidings }, true);
+      t.wantAside(wanted?.path ?? null);
+      routes.set(t.id, t.pathTileKeys(w));
+      t.lastMessage = wanted ? ENGLISH.traffic.waitAside : ENGLISH.traffic.noWayAside;
+    }
+  }
+  /**
+   * Tile keys of the sidings: runs of plain track from a switch to a dead end with no platform on
+   * them. No train runs through one, so a train parked there is in nobody's way.
+   */
+  private sidingTiles(): Set<number> {
+    const w = this.map.w;
+    const track = this.track;
+    const platforms = new Set<number>();
+    for (const s of this.builder.stations)
+      for (const p of this.builder.platformTiles(s)) platforms.add(p.y * w + p.x);
+    const plain = (p: TrackPiece | undefined): p is TrackPiece =>
+      !!p && p.links.length === 1 && !(p.unit && p.kind !== 'curve');
+    const out = new Set<number>();
+    for (const { x: tx, y: ty, piece } of track.tiles()) {
+      if (!plain(piece)) continue;
+      const [a, b] = piece.links[0];
+      // walk from a dead end towards the switch the run hangs off
+      const openA = track.connected(tx, ty, a);
+      if (openA === track.connected(tx, ty, b)) continue;
+      const run = [ty * w + tx];
+      let x = tx;
+      let y = ty;
+      let dir = openA ? a : b;
+      let switched = false;
+      for (let i = 0; i < w * this.map.h && track.connected(x, y, dir); i++) {
+        x += DIR_DX[dir];
+        y += DIR_DY[dir];
+        const next = track.get(x, y);
+        if (!plain(next)) {
+          switched = true;
+          break;
+        }
+        run.push(y * w + x);
+        const exits = track.exits(x, y, ((dir + 2) % 4) as Dir);
+        if (exits.length !== 1) break;
+        dir = exits[0];
+      }
+      if (switched && run.every((k) => !platforms.has(k))) for (const k of run) out.add(k);
+    }
+    return out;
   }
 
   /** Total capacity of a train for a cargo type. */
@@ -960,3 +1346,9 @@ export class Fleet {
   }
 }
 const MUTUAL_GRACE = 4;
+/** tiles a jammed train's head moves before its note no longer says it is jammed */
+const JAM_MOVED = 0.5;
+/** seconds an idle train in another train's way waits before looking again for a way aside */
+const ASIDE_RETRY = 2;
+/** seconds between looks at whether an idle train stands in another train's way */
+const WAY_CHECK = 0.25;

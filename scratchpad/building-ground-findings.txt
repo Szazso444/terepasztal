@@ -1,0 +1,664 @@
+394 building frames, 321 with findings
+  156  door-shaped opening on E the data has no door for, 
+  142  door-shaped opening on S the data has no door for, 
+  111  baked ground: N world px² opaque below the foot (a yard, a pond, props)
+   68  street door on S: not seen
+   60  street door on E: not seen
+   30  street door on E: the picture's door is N tile off the middle
+   18  platform door on E: not seen
+   17  platform door on S: not seen
+   17  street door on S: the picture's door is N tile off the middle
+   14  platform door on E: the picture's door is N tile off the middle
+   11  platform door on S: the picture's door is N tile off the middle
+    6  foot: no straight base, the silhouette stands in for it
+
+structures/colliery: street door at tile 0,0 on S: not seen
+structures/colliery_lv2: street door at tile 0,0 on S: not seen
+structures/colliery_lv2_r1: door-shaped opening on S the data has no door for, at x -16
+structures/colliery_lv2_r1: door-shaped opening on E the data has no door for, at x 1
+structures/colliery_lv2_r2: door-shaped opening on E the data has no door for, at x 10
+structures/colliery_lv2_r3: street door at tile 0,0 on E: not seen
+structures/colliery_lv2_r3: door-shaped opening on S the data has no door for, at x -16
+structures/colliery_lv3: street door at tile 0,0 on S: not seen
+structures/colliery_lv3_r1: baked ground: 45 world px² opaque below the foot (a yard, a pond, props)
+structures/colliery_lv3_r1: door-shaped opening on E the data has no door for, at x 1
+structures/colliery_lv3_r2: baked ground: 45 world px² opaque below the foot (a yard, a pond, props)
+structures/colliery_lv3_r2: door-shaped opening on S the data has no door for, at x -7
+structures/colliery_lv3_r3: baked ground: 45 world px² opaque below the foot (a yard, a pond, props)
+structures/colliery_lv3_r3: street door at tile 0,0 on E: the picture's door is +0.19 tile off the middle
+structures/colliery_lv3_r3: door-shaped opening on E the data has no door for, at x 1
+structures/colliery_lv4: street door at tile 0,0 on S: not seen
+structures/colliery_lv4_r1: baked ground: 41 world px² opaque below the foot (a yard, a pond, props)
+structures/colliery_lv4_r1: door-shaped opening on E the data has no door for, at x 5
+structures/colliery_lv4_r2: baked ground: 41 world px² opaque below the foot (a yard, a pond, props)
+structures/colliery_lv4_r2: door-shaped opening on S the data has no door for, at x -7
+structures/colliery_lv4_r3: baked ground: 41 world px² opaque below the foot (a yard, a pond, props)
+structures/colliery_lv4_r3: street door at tile 0,0 on E: the picture's door is +0.18 tile off the middle
+structures/colliery_r1: baked ground: 148 world px² opaque below the foot (a yard, a pond, props)
+structures/colliery_r1: door-shaped opening on S the data has no door for, at x -14
+structures/colliery_r2: baked ground: 148 world px² opaque below the foot (a yard, a pond, props)
+structures/colliery_r3: baked ground: 148 world px² opaque below the foot (a yard, a pond, props)
+structures/colliery_r3: street door at tile 0,0 on E: not seen
+structures/colliery_r3: door-shaped opening on S the data has no door for, at x -14
+structures/depot_1: baked ground: 116 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_1: street door at tile 0,1 on S: not seen
+structures/depot_1: door-shaped opening on S the data has no door for, at x -5
+structures/depot_1: door-shaped opening on E the data has no door for, at x 20
+structures/depot_1: door-shaped opening on E the data has no door for, at x 52
+structures/depot_narrow_1: baked ground: 81 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_narrow_1: street door at tile 0,0 on S: not seen
+structures/depot_narrow_1: door-shaped opening on E the data has no door for, at x 22
+structures/depot_narrow_r0: baked ground: 81 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_narrow_r0: street door at tile 0,0 on S: not seen
+structures/depot_narrow_r0: door-shaped opening on E the data has no door for, at x 22
+structures/depot_narrow_r0_r2: baked ground: 81 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_narrow_r0_r2: door-shaped opening on E the data has no door for, at x 22
+structures/depot_narrow_r1: baked ground: 77 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_narrow_r1: door-shaped opening on S the data has no door for, at x -30
+structures/depot_narrow_r1_r3: baked ground: 77 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_narrow_r1_r3: street door at tile 0,1 on E: not seen
+structures/depot_narrow_r1_r3: door-shaped opening on S the data has no door for, at x -30
+structures/depot_r0: baked ground: 116 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r0: street door at tile 0,1 on S: not seen
+structures/depot_r0: door-shaped opening on S the data has no door for, at x -5
+structures/depot_r0: door-shaped opening on E the data has no door for, at x 20
+structures/depot_r0: door-shaped opening on E the data has no door for, at x 52
+structures/depot_r0_lv2: baked ground: 116 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r0_lv2: street door at tile 0,1 on S: not seen
+structures/depot_r0_lv2: door-shaped opening on S the data has no door for, at x -5
+structures/depot_r0_lv2: door-shaped opening on E the data has no door for, at x 20
+structures/depot_r0_lv2: door-shaped opening on E the data has no door for, at x 52
+structures/depot_r0_lv2_r2: baked ground: 133 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r0_lv2_r2: door-shaped opening on E the data has no door for, at x 20
+structures/depot_r0_lv2_r2: door-shaped opening on E the data has no door for, at x 52
+structures/depot_r0_lv3: baked ground: 116 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r0_lv3: street door at tile 0,1 on S: not seen
+structures/depot_r0_lv3: door-shaped opening on S the data has no door for, at x -5
+structures/depot_r0_lv3: door-shaped opening on E the data has no door for, at x 20
+structures/depot_r0_lv3: door-shaped opening on E the data has no door for, at x 52
+structures/depot_r0_lv3_r2: baked ground: 133 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r0_lv3_r2: door-shaped opening on E the data has no door for, at x 20
+structures/depot_r0_lv3_r2: door-shaped opening on E the data has no door for, at x 52
+structures/depot_r0_lv4: baked ground: 116 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r0_lv4: street door at tile 0,1 on S: not seen
+structures/depot_r0_lv4: door-shaped opening on S the data has no door for, at x -5
+structures/depot_r0_lv4: door-shaped opening on E the data has no door for, at x 20
+structures/depot_r0_lv4: door-shaped opening on E the data has no door for, at x 52
+structures/depot_r0_lv4_r2: baked ground: 133 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r0_lv4_r2: door-shaped opening on E the data has no door for, at x 20
+structures/depot_r0_lv4_r2: door-shaped opening on E the data has no door for, at x 52
+structures/depot_r0_lv5: baked ground: 116 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r0_lv5: street door at tile 0,1 on S: not seen
+structures/depot_r0_lv5: door-shaped opening on S the data has no door for, at x -5
+structures/depot_r0_lv5: door-shaped opening on E the data has no door for, at x 20
+structures/depot_r0_lv5: door-shaped opening on E the data has no door for, at x 52
+structures/depot_r0_lv5_r2: baked ground: 133 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r0_lv5_r2: door-shaped opening on E the data has no door for, at x 20
+structures/depot_r0_lv5_r2: door-shaped opening on E the data has no door for, at x 52
+structures/depot_r0_r2: baked ground: 133 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r0_r2: door-shaped opening on E the data has no door for, at x 20
+structures/depot_r0_r2: door-shaped opening on E the data has no door for, at x 52
+structures/depot_r1: baked ground: 94 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r1_lv2: baked ground: 94 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r1_lv2_r3: baked ground: 95 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r1_lv2_r3: street door at tile 1,1 on E: not seen
+structures/depot_r1_lv2_r3: door-shaped opening on E the data has no door for, at x 0
+structures/depot_r1_lv3: baked ground: 94 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r1_lv3_r3: baked ground: 95 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r1_lv3_r3: street door at tile 1,1 on E: not seen
+structures/depot_r1_lv3_r3: door-shaped opening on E the data has no door for, at x 0
+structures/depot_r1_lv4: baked ground: 94 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r1_lv4_r3: baked ground: 95 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r1_lv4_r3: street door at tile 1,1 on E: not seen
+structures/depot_r1_lv4_r3: door-shaped opening on E the data has no door for, at x 0
+structures/depot_r1_lv5: baked ground: 94 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r1_lv5_r3: baked ground: 95 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r1_lv5_r3: street door at tile 1,1 on E: not seen
+structures/depot_r1_lv5_r3: door-shaped opening on E the data has no door for, at x 0
+structures/depot_r1_r3: baked ground: 95 world px² opaque below the foot (a yard, a pond, props)
+structures/depot_r1_r3: street door at tile 1,1 on E: not seen
+structures/depot_r1_r3: door-shaped opening on E the data has no door for, at x 0
+structures/diesel_refinery: street door at tile 0,0 on S: not seen
+structures/diesel_refinery_lv2: street door at tile 0,0 on S: not seen
+structures/diesel_refinery_lv2_r1: baked ground: 81 world px² opaque below the foot (a yard, a pond, props)
+structures/diesel_refinery_lv2_r1: door-shaped opening on E the data has no door for, at x 1
+structures/diesel_refinery_lv2_r2: baked ground: 81 world px² opaque below the foot (a yard, a pond, props)
+structures/diesel_refinery_lv2_r2: door-shaped opening on S the data has no door for, at x -4
+structures/diesel_refinery_lv2_r3: baked ground: 81 world px² opaque below the foot (a yard, a pond, props)
+structures/diesel_refinery_lv2_r3: street door at tile 0,0 on E: not seen
+structures/diesel_refinery_lv3: street door at tile 0,0 on S: not seen
+structures/diesel_refinery_lv3_r1: door-shaped opening on E the data has no door for, at x 8
+structures/diesel_refinery_lv3_r2: door-shaped opening on S the data has no door for, at x -11
+structures/diesel_refinery_lv3_r3: street door at tile 0,0 on E: not seen
+structures/diesel_refinery_lv3_r3: door-shaped opening on E the data has no door for, at x -1
+structures/diesel_refinery_lv4: street door at tile 0,0 on S: not seen
+structures/diesel_refinery_lv4_r1: door-shaped opening on E the data has no door for, at x 6
+structures/diesel_refinery_lv4_r2: door-shaped opening on S the data has no door for, at x -11
+structures/diesel_refinery_lv4_r3: street door at tile 0,0 on E: not seen
+structures/diesel_refinery_lv4_r3: door-shaped opening on E the data has no door for, at x -1
+structures/diesel_refinery_r1: baked ground: 48 world px² opaque below the foot (a yard, a pond, props)
+structures/diesel_refinery_r1: door-shaped opening on S the data has no door for, at x -16
+structures/diesel_refinery_r1: door-shaped opening on S the data has no door for, at x -10
+structures/diesel_refinery_r2: baked ground: 48 world px² opaque below the foot (a yard, a pond, props)
+structures/diesel_refinery_r3: baked ground: 48 world px² opaque below the foot (a yard, a pond, props)
+structures/diesel_refinery_r3: street door at tile 0,0 on E: not seen
+structures/diesel_refinery_r3: door-shaped opening on S the data has no door for, at x -16
+structures/diesel_refinery_r3: door-shaped opening on S the data has no door for, at x -10
+structures/farm_1: platform door at tile 0,0 on S: not seen
+structures/farm_1: door-shaped opening on E the data has no door for, at x 10.1
+structures/farm_1: door-shaped opening on E the data has no door for, at x 28.2
+structures/farm_1_r1: baked ground: 233 world px² opaque below the foot (a yard, a pond, props)
+structures/farm_1_r1: street door at tile 0,0 on E: not seen
+structures/farm_1_r2: baked ground: 233 world px² opaque below the foot (a yard, a pond, props)
+structures/farm_1_r2: street door at tile 0,0 on S: not seen
+structures/farm_1_r3: baked ground: 233 world px² opaque below the foot (a yard, a pond, props)
+structures/farm_1_r3: platform door at tile 0,0 on E: not seen
+structures/farm_2: platform door at tile 0,0 on S: not seen
+structures/farm_2: door-shaped opening on E the data has no door for, at x 12.1
+structures/farm_2: door-shaped opening on E the data has no door for, at x 29.4
+structures/farm_2_r1: baked ground: 298 world px² opaque below the foot (a yard, a pond, props)
+structures/farm_2_r1: street door at tile 0,0 on E: not seen
+structures/farm_2_r1: door-shaped opening on S the data has no door for, at x -22
+structures/farm_2_r2: baked ground: 298 world px² opaque below the foot (a yard, a pond, props)
+structures/farm_2_r2: street door at tile 0,0 on S: not seen
+structures/farm_2_r2: door-shaped opening on E the data has no door for, at x 16
+structures/farm_2_r3: baked ground: 298 world px² opaque below the foot (a yard, a pond, props)
+structures/farm_2_r3: platform door at tile 0,0 on E: not seen
+structures/farm_2_r3: door-shaped opening on S the data has no door for, at x -22
+structures/farm_3: platform door at tile 0,0 on S: not seen
+structures/farm_3: door-shaped opening on E the data has no door for, at x 11.9
+structures/farm_3: door-shaped opening on E the data has no door for, at x 30.6
+structures/farm_3_r1: baked ground: 222 world px² opaque below the foot (a yard, a pond, props)
+structures/farm_3_r1: street door at tile 0,0 on E: not seen
+structures/farm_3_r1: door-shaped opening on E the data has no door for, at x -9
+structures/farm_3_r2: baked ground: 222 world px² opaque below the foot (a yard, a pond, props)
+structures/farm_3_r2: street door at tile 0,0 on S: not seen
+structures/farm_3_r2: door-shaped opening on S the data has no door for, at x 4
+structures/farm_3_r3: baked ground: 222 world px² opaque below the foot (a yard, a pond, props)
+structures/farm_3_r3: platform door at tile 0,0 on E: not seen
+structures/farm_3_r3: door-shaped opening on E the data has no door for, at x -9
+structures/farm_4: platform door at tile 0,0 on S: not seen
+structures/farm_4: door-shaped opening on E the data has no door for, at x -7
+structures/farm_4: door-shaped opening on E the data has no door for, at x 12.2
+structures/farm_4: door-shaped opening on E the data has no door for, at x 31.5
+structures/farm_4_r1: door-shaped opening on S the data has no door for, at x -14
+structures/farm_4_r2: street door at tile 0,0 on S: not seen
+structures/farm_4_r2: door-shaped opening on E the data has no door for, at x 11
+structures/farm_4_r3: door-shaped opening on S the data has no door for, at x -14
+structures/farm_4_r3: door-shaped opening on E the data has no door for, at x 2
+structures/farm_5: platform door at tile 0,0 on S: not seen
+structures/farm_5: door-shaped opening on E the data has no door for, at x -7
+structures/farm_5: door-shaped opening on E the data has no door for, at x 12.2
+structures/farm_5: door-shaped opening on E the data has no door for, at x 31.5
+structures/farm_5_r1: door-shaped opening on S the data has no door for, at x -14
+structures/farm_5_r2: street door at tile 0,0 on S: not seen
+structures/farm_5_r2: door-shaped opening on E the data has no door for, at x 11
+structures/farm_5_r3: door-shaped opening on S the data has no door for, at x -14
+structures/fuel_stop: street door at tile 0,0 on S: not seen
+structures/fuel_stop_r1: foot: no straight base, the silhouette stands in for it
+structures/fuel_stop_r2: foot: no straight base, the silhouette stands in for it
+structures/fuel_stop_r3: foot: no straight base, the silhouette stands in for it
+structures/fuel_stop_r3: street door at tile 0,0 on E: not seen
+structures/grinder: street door at tile 0,0 on S: the picture's door is -0.14 tile off the middle
+structures/grinder_lv2: street door at tile 0,0 on S: the picture's door is -0.13 tile off the middle
+structures/grinder_lv2_r3: street door at tile 0,0 on E: not seen
+structures/grinder_lv2_r3: door-shaped opening on E the data has no door for, at x 0
+structures/grinder_lv3: street door at tile 0,0 on S: the picture's door is -0.13 tile off the middle
+structures/grinder_lv3_r3: door-shaped opening on E the data has no door for, at x 0
+structures/grinder_lv4: street door at tile 0,0 on S: the picture's door is -0.13 tile off the middle
+structures/grinder_lv4_r3: door-shaped opening on E the data has no door for, at x -1
+structures/grinder_r1: baked ground: 188 world px² opaque below the foot (a yard, a pond, props)
+structures/grinder_r2: baked ground: 188 world px² opaque below the foot (a yard, a pond, props)
+structures/grinder_r3: baked ground: 188 world px² opaque below the foot (a yard, a pond, props)
+structures/grinder_r3: street door at tile 0,0 on E: the picture's door is +0.2 tile off the middle
+structures/hydro_plant: street door at tile 0,0 on S: not seen
+structures/hydro_plant: door-shaped opening on S the data has no door for, at x -15.2
+structures/hydro_plant: door-shaped opening on E the data has no door for, at x 10.3
+structures/hydro_plant_lv2: street door at tile 0,0 on S: not seen
+structures/hydro_plant_lv2: door-shaped opening on S the data has no door for, at x -16
+structures/hydro_plant_lv2_r3: street door at tile 0,0 on E: not seen
+structures/hydro_plant_lv2_r3: door-shaped opening on E the data has no door for, at x 1
+structures/hydro_plant_lv3: street door at tile 0,0 on S: not seen
+structures/hydro_plant_lv3: door-shaped opening on S the data has no door for, at x -16
+structures/hydro_plant_lv3_r3: street door at tile 0,0 on E: not seen
+structures/hydro_plant_lv3_r3: door-shaped opening on E the data has no door for, at x 1
+structures/hydro_plant_lv4: street door at tile 0,0 on S: not seen
+structures/hydro_plant_lv4: door-shaped opening on S the data has no door for, at x -16
+structures/hydro_plant_lv4_r3: street door at tile 0,0 on E: not seen
+structures/hydro_plant_lv4_r3: door-shaped opening on E the data has no door for, at x 1
+structures/hydro_plant_r3: street door at tile 0,0 on E: not seen
+structures/ironworks: street door at tile 0,0 on S: the picture's door is -0.1 tile off the middle
+structures/ironworks: door-shaped opening on S the data has no door for, at x 0.4
+structures/ironworks_lv2: street door at tile 0,0 on S: not seen
+structures/ironworks_lv2_r1: door-shaped opening on S the data has no door for, at x -15
+structures/ironworks_lv2_r2: door-shaped opening on E the data has no door for, at x 8
+structures/ironworks_lv2_r3: street door at tile 0,0 on E: the picture's door is +0.29 tile off the middle
+structures/ironworks_lv2_r3: door-shaped opening on S the data has no door for, at x -15
+structures/ironworks_lv2_r3: door-shaped opening on E the data has no door for, at x 15
+structures/ironworks_lv3: street door at tile 0,0 on S: not seen
+structures/ironworks_lv3_r1: door-shaped opening on S the data has no door for, at x -15
+structures/ironworks_lv3_r1: door-shaped opening on E the data has no door for, at x 5
+structures/ironworks_lv3_r2: door-shaped opening on S the data has no door for, at x -9
+structures/ironworks_lv3_r2: door-shaped opening on E the data has no door for, at x 11
+structures/ironworks_lv3_r3: street door at tile 0,0 on E: the picture's door is +0.27 tile off the middle
+structures/ironworks_lv3_r3: door-shaped opening on S the data has no door for, at x -15
+structures/ironworks_lv3_r3: door-shaped opening on E the data has no door for, at x 15
+structures/ironworks_lv4: street door at tile 0,0 on S: not seen
+structures/ironworks_lv4_r1: door-shaped opening on E the data has no door for, at x 5
+structures/ironworks_lv4_r2: door-shaped opening on S the data has no door for, at x -14
+structures/ironworks_lv4_r2: door-shaped opening on S the data has no door for, at x -9
+structures/ironworks_lv4_r3: street door at tile 0,0 on E: not seen
+structures/ironworks_lv4_r3: door-shaped opening on E the data has no door for, at x -1
+structures/ironworks_lv4_r3: door-shaped opening on E the data has no door for, at x 15
+structures/ironworks_r1: door-shaped opening on E the data has no door for, at x 14
+structures/ironworks_r2: door-shaped opening on S the data has no door for, at x -21
+structures/ironworks_r3: street door at tile 0,0 on E: the picture's door is -0.29 tile off the middle
+structures/kiln: street door at tile 0,0 on S: not seen
+structures/kiln: door-shaped opening on E the data has no door for, at x -2.1
+structures/kiln: door-shaped opening on E the data has no door for, at x 8.9
+structures/kiln_lv2: street door at tile 0,0 on S: not seen
+structures/kiln_lv2: door-shaped opening on E the data has no door for, at x -1.8
+structures/kiln_lv2: door-shaped opening on E the data has no door for, at x 9.9
+structures/kiln_lv2_r1: door-shaped opening on E the data has no door for, at x 4
+structures/kiln_lv2_r3: street door at tile 0,0 on E: the picture's door is +0.29 tile off the middle
+structures/kiln_lv3: street door at tile 0,0 on S: not seen
+structures/kiln_lv3: door-shaped opening on E the data has no door for, at x -1.8
+structures/kiln_lv3: door-shaped opening on E the data has no door for, at x 9.9
+structures/kiln_lv3_r1: door-shaped opening on E the data has no door for, at x 5
+structures/kiln_lv3_r3: street door at tile 0,0 on E: the picture's door is +0.25 tile off the middle
+structures/kiln_lv4: street door at tile 0,0 on S: not seen
+structures/kiln_lv4: door-shaped opening on E the data has no door for, at x -1.8
+structures/kiln_lv4: door-shaped opening on E the data has no door for, at x 9.9
+structures/kiln_lv4_r1: door-shaped opening on E the data has no door for, at x 5
+structures/kiln_lv4_r3: street door at tile 0,0 on E: the picture's door is +0.28 tile off the middle
+structures/kiln_r3: street door at tile 0,0 on E: not seen
+structures/lumber_1: platform door at tile 0,0 on S: not seen
+structures/lumber_1_r1: baked ground: 152 world px² opaque below the foot (a yard, a pond, props)
+structures/lumber_1_r1: street door at tile 0,0 on E: not seen
+structures/lumber_1_r2: baked ground: 152 world px² opaque below the foot (a yard, a pond, props)
+structures/lumber_1_r2: street door at tile 0,0 on S: not seen
+structures/lumber_1_r3: baked ground: 152 world px² opaque below the foot (a yard, a pond, props)
+structures/lumber_1_r3: platform door at tile 0,0 on E: not seen
+structures/lumber_2: platform door at tile 0,0 on S: not seen
+structures/lumber_2_r1: street door at tile 0,0 on E: not seen
+structures/lumber_2_r1: door-shaped opening on S the data has no door for, at x -22
+structures/lumber_2_r1: door-shaped opening on S the data has no door for, at x -18
+structures/lumber_2_r2: street door at tile 0,0 on S: not seen
+structures/lumber_2_r2: door-shaped opening on E the data has no door for, at x 14
+structures/lumber_2_r2: door-shaped opening on E the data has no door for, at x 20
+structures/lumber_2_r3: platform door at tile 0,0 on E: not seen
+structures/lumber_2_r3: door-shaped opening on S the data has no door for, at x -22
+structures/lumber_2_r3: door-shaped opening on S the data has no door for, at x -18
+structures/lumber_3: platform door at tile 0,0 on S: not seen
+structures/lumber_3_r1: street door at tile 0,0 on E: the picture's door is +0.07 tile off the middle
+structures/lumber_3_r1: door-shaped opening on S the data has no door for, at x -22
+structures/lumber_3_r2: street door at tile 0,0 on S: the picture's door is +0.3 tile off the middle
+structures/lumber_3_r2: door-shaped opening on S the data has no door for, at x -3
+structures/lumber_3_r2: door-shaped opening on E the data has no door for, at x 14
+structures/lumber_3_r2: door-shaped opening on E the data has no door for, at x 20
+structures/lumber_3_r3: platform door at tile 0,0 on E: the picture's door is +0.07 tile off the middle
+structures/lumber_3_r3: door-shaped opening on S the data has no door for, at x -22
+structures/lumber_4: platform door at tile 0,0 on S: not seen
+structures/lumber_4_r1: baked ground: 53 world px² opaque below the foot (a yard, a pond, props)
+structures/lumber_4_r1: street door at tile 0,0 on E: not seen
+structures/lumber_4_r1: door-shaped opening on S the data has no door for, at x -22
+structures/lumber_4_r1: door-shaped opening on S the data has no door for, at x -16
+structures/lumber_4_r1: door-shaped opening on E the data has no door for, at x 2
+structures/lumber_4_r1: door-shaped opening on E the data has no door for, at x 22
+structures/lumber_4_r2: baked ground: 53 world px² opaque below the foot (a yard, a pond, props)
+structures/lumber_4_r2: street door at tile 0,0 on S: not seen
+structures/lumber_4_r2: door-shaped opening on S the data has no door for, at x -26
+structures/lumber_4_r2: door-shaped opening on S the data has no door for, at x -5
+structures/lumber_4_r2: door-shaped opening on E the data has no door for, at x 14
+structures/lumber_4_r2: door-shaped opening on E the data has no door for, at x 17
+structures/lumber_4_r3: baked ground: 53 world px² opaque below the foot (a yard, a pond, props)
+structures/lumber_4_r3: platform door at tile 0,0 on E: not seen
+structures/lumber_4_r3: door-shaped opening on S the data has no door for, at x -22
+structures/lumber_4_r3: door-shaped opening on S the data has no door for, at x -16
+structures/lumber_4_r3: door-shaped opening on E the data has no door for, at x 22
+structures/lumber_5: platform door at tile 0,0 on S: not seen
+structures/lumber_5_r1: baked ground: 53 world px² opaque below the foot (a yard, a pond, props)
+structures/lumber_5_r1: street door at tile 0,0 on E: not seen
+structures/lumber_5_r1: door-shaped opening on S the data has no door for, at x -22
+structures/lumber_5_r1: door-shaped opening on E the data has no door for, at x 2
+structures/lumber_5_r1: door-shaped opening on E the data has no door for, at x 22
+structures/lumber_5_r2: baked ground: 53 world px² opaque below the foot (a yard, a pond, props)
+structures/lumber_5_r2: street door at tile 0,0 on S: not seen
+structures/lumber_5_r2: door-shaped opening on S the data has no door for, at x -26
+structures/lumber_5_r2: door-shaped opening on S the data has no door for, at x -5
+structures/lumber_5_r2: door-shaped opening on E the data has no door for, at x 17
+structures/lumber_5_r3: baked ground: 53 world px² opaque below the foot (a yard, a pond, props)
+structures/lumber_5_r3: platform door at tile 0,0 on E: not seen
+structures/lumber_5_r3: door-shaped opening on S the data has no door for, at x -22
+structures/lumber_5_r3: door-shaped opening on E the data has no door for, at x 22
+structures/oil_derrick: baked ground: 53 world px² opaque below the foot (a yard, a pond, props)
+structures/oil_derrick: street door at tile 0,0 on S: not seen
+structures/oil_derrick_lv2: baked ground: 55 world px² opaque below the foot (a yard, a pond, props)
+structures/oil_derrick_lv2: street door at tile 0,0 on S: not seen
+structures/oil_derrick_lv2_r3: street door at tile 0,0 on E: the picture's door is +0.25 tile off the middle
+structures/oil_derrick_lv3: baked ground: 55 world px² opaque below the foot (a yard, a pond, props)
+structures/oil_derrick_lv3: street door at tile 0,0 on S: not seen
+structures/oil_derrick_lv3_r3: street door at tile 0,0 on E: the picture's door is +0.3 tile off the middle
+structures/oil_derrick_lv4: baked ground: 55 world px² opaque below the foot (a yard, a pond, props)
+structures/oil_derrick_lv4: street door at tile 0,0 on S: not seen
+structures/oil_derrick_lv4_r3: street door at tile 0,0 on E: the picture's door is +0.27 tile off the middle
+structures/oil_derrick_r1: foot: no straight base, the silhouette stands in for it
+structures/oil_derrick_r2: foot: no straight base, the silhouette stands in for it
+structures/oil_derrick_r3: foot: no straight base, the silhouette stands in for it
+structures/oil_derrick_r3: street door at tile 0,0 on E: not seen
+structures/power_plant: street door at tile 0,0 on S: the picture's door is +0.07 tile off the middle
+structures/power_plant: door-shaped opening on S the data has no door for, at x -25.1
+structures/power_plant: door-shaped opening on S the data has no door for, at x -4.1
+structures/power_plant_lv2: street door at tile 0,0 on S: the picture's door is +0.07 tile off the middle
+structures/power_plant_lv2: door-shaped opening on S the data has no door for, at x -25.9
+structures/power_plant_lv2: door-shaped opening on S the data has no door for, at x -4.2
+structures/power_plant_lv2_r1: door-shaped opening on E the data has no door for, at x 10
+structures/power_plant_lv2_r2: door-shaped opening on S the data has no door for, at x -12
+structures/power_plant_lv2_r2: door-shaped opening on E the data has no door for, at x 18
+structures/power_plant_lv3: street door at tile 0,0 on S: the picture's door is +0.07 tile off the middle
+structures/power_plant_lv3: door-shaped opening on S the data has no door for, at x -25.9
+structures/power_plant_lv3: door-shaped opening on S the data has no door for, at x -4.2
+structures/power_plant_lv3_r1: door-shaped opening on E the data has no door for, at x 22
+structures/power_plant_lv3_r2: door-shaped opening on E the data has no door for, at x 18
+structures/power_plant_lv3_r3: street door at tile 0,0 on E: the picture's door is +0.27 tile off the middle
+structures/power_plant_lv4: street door at tile 0,0 on S: the picture's door is +0.07 tile off the middle
+structures/power_plant_lv4: door-shaped opening on S the data has no door for, at x -25.9
+structures/power_plant_lv4: door-shaped opening on S the data has no door for, at x -4.2
+structures/power_plant_lv4_r1: door-shaped opening on E the data has no door for, at x 22
+structures/power_plant_lv4_r2: door-shaped opening on E the data has no door for, at x 18
+structures/power_plant_lv4_r3: street door at tile 0,0 on E: the picture's door is -0.26 tile off the middle
+structures/power_plant_r1: door-shaped opening on E the data has no door for, at x 10
+structures/power_plant_r2: door-shaped opening on S the data has no door for, at x -12
+structures/power_plant_r2: door-shaped opening on E the data has no door for, at x 5
+structures/pump_1: platform door at tile 0,0 on S: the picture's door is +0.19 tile off the middle
+structures/pump_1_r1: baked ground: 175 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_1_r1: street door at tile 0,0 on E: not seen
+structures/pump_1_r2: baked ground: 175 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_1_r2: street door at tile 0,0 on S: not seen
+structures/pump_1_r3: baked ground: 175 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_1_r3: platform door at tile 0,0 on E: not seen
+structures/pump_2: baked ground: 58 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_2: platform door at tile 0,0 on S: the picture's door is +0.21 tile off the middle
+structures/pump_2_r1: baked ground: 269 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_2_r1: street door at tile 0,0 on E: not seen
+structures/pump_2_r1: door-shaped opening on S the data has no door for, at x -20
+structures/pump_2_r2: baked ground: 269 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_2_r2: street door at tile 0,0 on S: not seen
+structures/pump_2_r2: door-shaped opening on E the data has no door for, at x 13
+structures/pump_2_r3: baked ground: 269 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_2_r3: platform door at tile 0,0 on E: not seen
+structures/pump_2_r3: door-shaped opening on S the data has no door for, at x -20
+structures/pump_3: baked ground: 83 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_3: platform door at tile 0,0 on S: the picture's door is +0.19 tile off the middle
+structures/pump_3: door-shaped opening on S the data has no door for, at x 14.6
+structures/pump_3_r1: baked ground: 239 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_3_r1: street door at tile 0,0 on E: not seen
+structures/pump_3_r1: door-shaped opening on S the data has no door for, at x -21
+structures/pump_3_r1: door-shaped opening on S the data has no door for, at x -11
+structures/pump_3_r2: baked ground: 239 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_3_r2: street door at tile 0,0 on S: not seen
+structures/pump_3_r2: door-shaped opening on E the data has no door for, at x 9
+structures/pump_3_r2: door-shaped opening on E the data has no door for, at x 15
+structures/pump_3_r3: baked ground: 239 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_3_r3: platform door at tile 0,0 on E: not seen
+structures/pump_3_r3: door-shaped opening on S the data has no door for, at x -21
+structures/pump_3_r3: door-shaped opening on S the data has no door for, at x -11
+structures/pump_4: baked ground: 113 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_4: door-shaped opening on S the data has no door for, at x 10.3
+structures/pump_4_r1: baked ground: 72 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_4_r1: street door at tile 0,0 on E: not seen
+structures/pump_4_r1: door-shaped opening on S the data has no door for, at x -23
+structures/pump_4_r1: door-shaped opening on S the data has no door for, at x -12
+structures/pump_4_r2: baked ground: 72 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_4_r2: street door at tile 0,0 on S: not seen
+structures/pump_4_r2: door-shaped opening on E the data has no door for, at x 9
+structures/pump_4_r2: door-shaped opening on E the data has no door for, at x 21
+structures/pump_4_r3: baked ground: 72 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_4_r3: platform door at tile 0,0 on E: the picture's door is +0.27 tile off the middle
+structures/pump_4_r3: door-shaped opening on S the data has no door for, at x -23
+structures/pump_4_r3: door-shaped opening on S the data has no door for, at x -12
+structures/pump_5: baked ground: 113 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_5: door-shaped opening on S the data has no door for, at x 10.3
+structures/pump_5_r1: baked ground: 393 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_5_r1: street door at tile 0,0 on E: not seen
+structures/pump_5_r1: door-shaped opening on S the data has no door for, at x 4
+structures/pump_5_r1: door-shaped opening on S the data has no door for, at x 12
+structures/pump_5_r2: baked ground: 393 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_5_r2: street door at tile 0,0 on S: not seen
+structures/pump_5_r2: door-shaped opening on E the data has no door for, at x -15
+structures/pump_5_r2: door-shaped opening on E the data has no door for, at x 9
+structures/pump_5_r3: baked ground: 393 world px² opaque below the foot (a yard, a pond, props)
+structures/pump_5_r3: platform door at tile 0,0 on E: not seen
+structures/pump_5_r3: door-shaped opening on S the data has no door for, at x 4
+structures/pump_5_r3: door-shaped opening on S the data has no door for, at x 12
+structures/quarry_1: platform door at tile 0,0 on S: not seen
+structures/quarry_1_r1: street door at tile 0,0 on E: not seen
+structures/quarry_1_r1: door-shaped opening on S the data has no door for, at x -7
+structures/quarry_1_r2: street door at tile 0,0 on S: not seen
+structures/quarry_1_r2: door-shaped opening on E the data has no door for, at x 2
+structures/quarry_1_r3: platform door at tile 0,0 on E: not seen
+structures/quarry_1_r3: door-shaped opening on S the data has no door for, at x -7
+structures/quarry_2: platform door at tile 0,0 on S: the picture's door is -0.12 tile off the middle
+structures/quarry_2_r1: street door at tile 0,0 on E: the picture's door is +0.28 tile off the middle
+structures/quarry_2_r1: door-shaped opening on S the data has no door for, at x -9
+structures/quarry_2_r2: street door at tile 0,0 on S: the picture's door is +0.25 tile off the middle
+structures/quarry_2_r2: door-shaped opening on E the data has no door for, at x 1
+structures/quarry_2_r3: platform door at tile 0,0 on E: the picture's door is +0.28 tile off the middle
+structures/quarry_2_r3: door-shaped opening on S the data has no door for, at x -9
+structures/quarry_3: platform door at tile 0,0 on S: the picture's door is -0.12 tile off the middle
+structures/quarry_3_r1: street door at tile 0,0 on E: not seen
+structures/quarry_3_r1: door-shaped opening on S the data has no door for, at x -13
+structures/quarry_3_r2: street door at tile 0,0 on S: not seen
+structures/quarry_3_r2: door-shaped opening on S the data has no door for, at x -4
+structures/quarry_3_r3: door-shaped opening on S the data has no door for, at x -13
+structures/quarry_4: platform door at tile 0,0 on S: the picture's door is -0.1 tile off the middle
+structures/quarry_4_r1: street door at tile 0,0 on E: not seen
+structures/quarry_4_r2: street door at tile 0,0 on S: not seen
+structures/quarry_4_r3: platform door at tile 0,0 on E: the picture's door is +0.3 tile off the middle
+structures/quarry_4_r3: door-shaped opening on E the data has no door for, at x 18
+structures/quarry_5: platform door at tile 0,0 on S: the picture's door is -0.1 tile off the middle
+structures/quarry_5_r1: street door at tile 0,0 on E: not seen
+structures/quarry_5_r2: street door at tile 0,0 on S: not seen
+structures/quarry_5_r3: platform door at tile 0,0 on E: not seen
+structures/quarry_5_r3: door-shaped opening on E the data has no door for, at x 18
+structures/refinery: street door at tile 0,0 on S: not seen
+structures/refinery_lv2: street door at tile 0,0 on S: not seen
+structures/refinery_lv2_r1: baked ground: 81 world px² opaque below the foot (a yard, a pond, props)
+structures/refinery_lv2_r1: door-shaped opening on E the data has no door for, at x 1
+structures/refinery_lv2_r2: baked ground: 81 world px² opaque below the foot (a yard, a pond, props)
+structures/refinery_lv2_r2: door-shaped opening on S the data has no door for, at x -4
+structures/refinery_lv2_r3: baked ground: 81 world px² opaque below the foot (a yard, a pond, props)
+structures/refinery_lv2_r3: street door at tile 0,0 on E: not seen
+structures/refinery_lv3: street door at tile 0,0 on S: not seen
+structures/refinery_lv3_r1: door-shaped opening on E the data has no door for, at x 8
+structures/refinery_lv3_r2: door-shaped opening on S the data has no door for, at x -11
+structures/refinery_lv3_r3: street door at tile 0,0 on E: not seen
+structures/refinery_lv3_r3: door-shaped opening on E the data has no door for, at x -1
+structures/refinery_lv4: street door at tile 0,0 on S: not seen
+structures/refinery_lv4_r1: door-shaped opening on E the data has no door for, at x 6
+structures/refinery_lv4_r2: door-shaped opening on S the data has no door for, at x -11
+structures/refinery_lv4_r3: street door at tile 0,0 on E: not seen
+structures/refinery_lv4_r3: door-shaped opening on E the data has no door for, at x -1
+structures/refinery_r1: baked ground: 48 world px² opaque below the foot (a yard, a pond, props)
+structures/refinery_r1: door-shaped opening on S the data has no door for, at x -16
+structures/refinery_r1: door-shaped opening on S the data has no door for, at x -10
+structures/refinery_r2: baked ground: 48 world px² opaque below the foot (a yard, a pond, props)
+structures/refinery_r3: baked ground: 48 world px² opaque below the foot (a yard, a pond, props)
+structures/refinery_r3: street door at tile 0,0 on E: not seen
+structures/refinery_r3: door-shaped opening on S the data has no door for, at x -16
+structures/refinery_r3: door-shaped opening on S the data has no door for, at x -10
+structures/station_1: platform door at tile 0,0 on S: not seen
+structures/station_1_r1: street door at tile 0,0 on E: not seen
+structures/station_1_r2: street door at tile 0,0 on S: not seen
+structures/station_1_r3: baked ground: 77 world px² opaque below the foot (a yard, a pond, props)
+structures/station_1_r3: platform door at tile 0,0 on E: not seen
+structures/station_2: door-shaped opening on E the data has no door for, at x 11.5
+structures/station_2: door-shaped opening on E the data has no door for, at x 25.3
+structures/station_2_r1: street door at tile 0,0 on E: not seen
+structures/station_2_r2: street door at tile 0,0 on S: not seen
+structures/station_2_r3: baked ground: 158 world px² opaque below the foot (a yard, a pond, props)
+structures/station_2_r3: platform door at tile 0,0 on E: the picture's door is -0.28 tile off the middle
+structures/station_3: door-shaped opening on E the data has no door for, at x 14.1
+structures/station_3: door-shaped opening on E the data has no door for, at x 29.3
+structures/station_3_r1: street door at tile 0,0 on E: not seen
+structures/station_3_r2: street door at tile 0,0 on S: not seen
+structures/station_3_r3: platform door at tile 0,0 on E: not seen
+structures/station_3_r3: door-shaped opening on S the data has no door for, at x -3
+structures/station_4: door-shaped opening on E the data has no door for, at x 14.7
+structures/station_4: door-shaped opening on E the data has no door for, at x 30.5
+structures/station_4_r1: baked ground: 46 world px² opaque below the foot (a yard, a pond, props)
+structures/station_4_r1: street door at tile 0,0 on E: not seen
+structures/station_4_r2: baked ground: 46 world px² opaque below the foot (a yard, a pond, props)
+structures/station_4_r2: street door at tile 0,0 on S: not seen
+structures/station_4_r3: baked ground: 64 world px² opaque below the foot (a yard, a pond, props)
+structures/station_4_r3: platform door at tile 0,0 on E: the picture's door is +0.3 tile off the middle
+structures/station_4_r3: door-shaped opening on S the data has no door for, at x -3
+structures/station_5: door-shaped opening on E the data has no door for, at x 14.7
+structures/station_5: door-shaped opening on E the data has no door for, at x 30.5
+structures/station_5_r1: baked ground: 46 world px² opaque below the foot (a yard, a pond, props)
+structures/station_5_r1: street door at tile 0,0 on E: not seen
+structures/station_5_r2: baked ground: 46 world px² opaque below the foot (a yard, a pond, props)
+structures/station_5_r2: street door at tile 0,0 on S: not seen
+structures/station_5_r3: baked ground: 64 world px² opaque below the foot (a yard, a pond, props)
+structures/station_5_r3: platform door at tile 0,0 on E: the picture's door is +0.3 tile off the middle
+structures/station_5_r3: door-shaped opening on S the data has no door for, at x -3
+structures/substation: street door at tile 0,0 on S: not seen
+structures/substation_lv2: street door at tile 0,0 on S: not seen
+structures/substation_lv2_r1: door-shaped opening on E the data has no door for, at x 2
+structures/substation_lv2_r2: door-shaped opening on S the data has no door for, at x -4
+structures/substation_lv2_r3: street door at tile 0,0 on E: not seen
+structures/substation_lv2_r3: door-shaped opening on E the data has no door for, at x 2
+structures/substation_lv3: street door at tile 0,0 on S: not seen
+structures/substation_lv3_r3: street door at tile 0,0 on E: the picture's door is +0.25 tile off the middle
+structures/substation_lv4: street door at tile 0,0 on S: not seen
+structures/substation_lv4_r1: door-shaped opening on S the data has no door for, at x -14
+structures/substation_lv4_r3: street door at tile 0,0 on E: the picture's door is +0.2 tile off the middle
+structures/substation_lv4_r3: door-shaped opening on S the data has no door for, at x -14
+structures/substation_r3: street door at tile 0,0 on E: not seen
+structures/town_1: platform door at tile 0,0 on S: the picture's door is -0.09 tile off the middle
+structures/town_1_r1: street door at tile 0,0 on E: not seen
+structures/town_1_r2: street door at tile 0,0 on S: not seen
+structures/town_1_r3: platform door at tile 0,0 on E: not seen
+structures/town_2: door-shaped opening on S the data has no door for, at x -24.2
+structures/town_2: door-shaped opening on S the data has no door for, at x -13.5
+structures/town_2: door-shaped opening on S the data has no door for, at x 0.8
+structures/town_2_r1: door-shaped opening on S the data has no door for, at x -11
+structures/town_2_r1: door-shaped opening on S the data has no door for, at x -6
+structures/town_2_r2: door-shaped opening on S the data has no door for, at x -5
+structures/town_2_r2: door-shaped opening on E the data has no door for, at x 8
+structures/town_2_r3: platform door at tile 0,0 on E: the picture's door is +0.06 tile off the middle
+structures/town_2_r3: door-shaped opening on S the data has no door for, at x -11
+structures/town_2_r3: door-shaped opening on S the data has no door for, at x -6
+structures/town_3: platform door at tile 0,0 on S: the picture's door is -0.1 tile off the middle
+structures/town_3: door-shaped opening on S the data has no door for, at x -24.6
+structures/town_3: door-shaped opening on S the data has no door for, at x -1.1
+structures/town_3_r1: door-shaped opening on S the data has no door for, at x -7
+structures/town_3_r1: door-shaped opening on E the data has no door for, at x 0
+structures/town_3_r2: door-shaped opening on S the data has no door for, at x -5
+structures/town_3_r3: platform door at tile 0,0 on E: not seen
+structures/town_4: platform door at tile 0,0 on S: the picture's door is -0.13 tile off the middle
+structures/town_4: door-shaped opening on S the data has no door for, at x -25.2
+structures/town_4: door-shaped opening on S the data has no door for, at x -1.2
+structures/town_4_r1: street door at tile 0,0 on E: not seen
+structures/town_4_r1: door-shaped opening on E the data has no door for, at x 22
+structures/town_4_r3: platform door at tile 0,0 on E: the picture's door is +0.1 tile off the middle
+structures/town_4_r3: door-shaped opening on S the data has no door for, at x -17
+structures/town_4_r3: door-shaped opening on E the data has no door for, at x -1
+structures/town_4_r3: door-shaped opening on E the data has no door for, at x 22
+structures/town_5: platform door at tile 0,0 on S: the picture's door is -0.13 tile off the middle
+structures/town_5: door-shaped opening on S the data has no door for, at x -25.2
+structures/town_5: door-shaped opening on S the data has no door for, at x -1.2
+structures/town_5_r1: street door at tile 0,0 on E: not seen
+structures/town_5_r1: door-shaped opening on E the data has no door for, at x 22
+structures/town_5_r3: platform door at tile 0,0 on E: the picture's door is +0.1 tile off the middle
+structures/town_5_r3: door-shaped opening on S the data has no door for, at x -17
+structures/town_5_r3: door-shaped opening on E the data has no door for, at x -1
+structures/town_5_r3: door-shaped opening on E the data has no door for, at x 22
+structures/townhouse_2_r3: street door at tile 0,0 on E: the picture's door is +0.06 tile off the middle
+structures/townhouse_3_r3: street door at tile 0,0 on E: not seen
+structures/townhouse_4_r3: street door at tile 0,0 on E: not seen
+structures/townhouse_r3: street door at tile 0,0 on E: the picture's door is +0.06 tile off the middle
+structures/townhouse_s0_r1: door-shaped opening on E the data has no door for, at x 2
+structures/townhouse_s0_r2: door-shaped opening on S the data has no door for, at x -4
+structures/townhouse_s0_r3: street door at tile 0,0 on E: the picture's door is +0.26 tile off the middle
+structures/townhouse_s1_r3: street door at tile 0,0 on E: not seen
+structures/townhouse_s2_r3: street door at tile 0,0 on E: not seen
+structures/warehouse_1: platform door at tile 0,0 on S: not seen
+structures/warehouse_1_r1: baked ground: 131 world px² opaque below the foot (a yard, a pond, props)
+structures/warehouse_1_r1: street door at tile 0,0 on E: not seen
+structures/warehouse_1_r2: baked ground: 131 world px² opaque below the foot (a yard, a pond, props)
+structures/warehouse_1_r2: street door at tile 0,0 on S: not seen
+structures/warehouse_1_r3: baked ground: 131 world px² opaque below the foot (a yard, a pond, props)
+structures/warehouse_1_r3: platform door at tile 0,0 on E: the picture's door is -0.08 tile off the middle
+structures/warehouse_2: platform door at tile 0,0 on S: not seen
+structures/warehouse_2_r1: street door at tile 0,0 on E: the picture's door is -0.09 tile off the middle
+structures/warehouse_2_r1: door-shaped opening on S the data has no door for, at x -6
+structures/warehouse_2_r2: street door at tile 0,0 on S: the picture's door is -0.09 tile off the middle
+structures/warehouse_2_r2: door-shaped opening on E the data has no door for, at x 3
+structures/warehouse_2_r3: platform door at tile 0,0 on E: not seen
+structures/warehouse_2_r3: door-shaped opening on S the data has no door for, at x -6
+structures/warehouse_3: platform door at tile 0,0 on S: not seen
+structures/warehouse_3: door-shaped opening on E the data has no door for, at x 19.6
+structures/warehouse_3_r1: street door at tile 0,0 on E: the picture's door is +0.26 tile off the middle
+structures/warehouse_3_r1: door-shaped opening on S the data has no door for, at x -27
+structures/warehouse_3_r1: door-shaped opening on S the data has no door for, at x -6
+structures/warehouse_3_r2: street door at tile 0,0 on S: not seen
+structures/warehouse_3_r2: door-shaped opening on E the data has no door for, at x 3
+structures/warehouse_3_r2: door-shaped opening on E the data has no door for, at x 25
+structures/warehouse_3_r3: platform door at tile 0,0 on E: the picture's door is -0.28 tile off the middle
+structures/warehouse_3_r3: door-shaped opening on S the data has no door for, at x -27
+structures/warehouse_3_r3: door-shaped opening on S the data has no door for, at x -6
+structures/warehouse_4: platform door at tile 0,0 on S: not seen
+structures/warehouse_4: door-shaped opening on E the data has no door for, at x 19.9
+structures/warehouse_4_r1: baked ground: 55 world px² opaque below the foot (a yard, a pond, props)
+structures/warehouse_4_r1: street door at tile 0,0 on E: the picture's door is +0.11 tile off the middle
+structures/warehouse_4_r1: door-shaped opening on S the data has no door for, at x -28
+structures/warehouse_4_r1: door-shaped opening on S the data has no door for, at x -25
+structures/warehouse_4_r2: baked ground: 55 world px² opaque below the foot (a yard, a pond, props)
+structures/warehouse_4_r2: street door at tile 0,0 on S: the picture's door is -0.13 tile off the middle
+structures/warehouse_4_r2: door-shaped opening on E the data has no door for, at x 3
+structures/warehouse_4_r2: door-shaped opening on E the data has no door for, at x 26
+structures/warehouse_4_r3: baked ground: 55 world px² opaque below the foot (a yard, a pond, props)
+structures/warehouse_4_r3: platform door at tile 0,0 on E: the picture's door is -0.24 tile off the middle
+structures/warehouse_4_r3: door-shaped opening on S the data has no door for, at x -28
+structures/warehouse_4_r3: door-shaped opening on S the data has no door for, at x -25
+structures/warehouse_4_r3: door-shaped opening on S the data has no door for, at x -12
+structures/warehouse_4_r3: door-shaped opening on S the data has no door for, at x -6
+structures/warehouse_4_r3: door-shaped opening on E the data has no door for, at x 2
+structures/warehouse_5: platform door at tile 0,0 on S: not seen
+structures/warehouse_5: door-shaped opening on E the data has no door for, at x 19.9
+structures/warehouse_5_r1: baked ground: 49 world px² opaque below the foot (a yard, a pond, props)
+structures/warehouse_5_r1: street door at tile 0,0 on E: the picture's door is +0.1 tile off the middle
+structures/warehouse_5_r1: door-shaped opening on S the data has no door for, at x -28
+structures/warehouse_5_r1: door-shaped opening on S the data has no door for, at x -25
+structures/warehouse_5_r2: baked ground: 49 world px² opaque below the foot (a yard, a pond, props)
+structures/warehouse_5_r2: street door at tile 0,0 on S: the picture's door is -0.14 tile off the middle
+structures/warehouse_5_r2: door-shaped opening on E the data has no door for, at x 3
+structures/warehouse_5_r2: door-shaped opening on E the data has no door for, at x 26
+structures/warehouse_5_r3: baked ground: 49 world px² opaque below the foot (a yard, a pond, props)
+structures/warehouse_5_r3: platform door at tile 0,0 on E: the picture's door is -0.24 tile off the middle
+structures/warehouse_5_r3: door-shaped opening on S the data has no door for, at x -28
+structures/warehouse_5_r3: door-shaped opening on S the data has no door for, at x -25
+structures/warehouse_5_r3: door-shaped opening on S the data has no door for, at x -16
+structures/warehouse_5_r3: door-shaped opening on S the data has no door for, at x -6
+structures/warehouse_5_r3: door-shaped opening on E the data has no door for, at x 2
+structures/water_tower: street door at tile 0,0 on S: not seen
+structures/water_tower_r3: street door at tile 0,0 on E: not seen
+structures/windmill_lv2_r3: street door at tile 0,0 on E: the picture's door is +0.16 tile off the middle
+structures/windmill_lv3_r3: street door at tile 0,0 on E: the picture's door is +0.16 tile off the middle
+structures/windmill_lv4_r3: street door at tile 0,0 on E: the picture's door is +0.16 tile off the middle
+structures/windmill_r3: street door at tile 0,0 on E: the picture's door is -0.16 tile off the middle
+structures/windmill_r3: door-shaped opening on E the data has no door for, at x 0
+structures/wire_mill: street door at tile 0,0 on S: not seen
+structures/wire_mill_lv2: street door at tile 0,0 on S: the picture's door is -0.2 tile off the middle
+structures/wire_mill_lv2_r3: street door at tile 0,0 on E: not seen
+structures/wire_mill_lv3: street door at tile 0,0 on S: the picture's door is -0.2 tile off the middle
+structures/wire_mill_lv3_r3: street door at tile 0,0 on E: not seen
+structures/wire_mill_lv3_r3: door-shaped opening on E the data has no door for, at x 2
+structures/wire_mill_lv4: street door at tile 0,0 on S: the picture's door is -0.2 tile off the middle
+structures/wire_mill_lv4_r3: street door at tile 0,0 on E: not seen
+structures/wire_mill_lv4_r3: door-shaped opening on E the data has no door for, at x 2
+structures/wire_mill_r1: baked ground: 80 world px² opaque below the foot (a yard, a pond, props)
+structures/wire_mill_r2: baked ground: 80 world px² opaque below the foot (a yard, a pond, props)
+structures/wire_mill_r3: baked ground: 80 world px² opaque below the foot (a yard, a pond, props)
+structures/wire_mill_r3: street door at tile 0,0 on E: the picture's door is +0.29 tile off the middle

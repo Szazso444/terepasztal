@@ -23,7 +23,10 @@ the current state and decisions.
 
 ## Versions
 
-See `CHANGELOG.md` for what each version and pull request added; releases are tagged `vX.Y.Z`.
+See `CHANGELOG.md` for what each version and pull request added. Only `v0.1.0` is tagged today,
+on `83a4c68` (the merge of pull request #6, in `main`); v0.2.0 to v0.8.0 are labels given after
+the fact and have no tag. Every release from the next one on is tagged `vX.Y.Z`
+(`docs/process/lifecycle.md`, step 9).
 
 ## Menus, tuning and editing
 
@@ -32,30 +35,31 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
   generated, import JSON). Esc or the Menu button opens the pause menu in play.
 - **Game tuning**: live sliders for economy, contracts, trains, time, weather and map generation;
   stored with the save.
-- **Content editor**: edit or add locomotives, wagons, cargo, stations, contracts, decor, gacha
-  banners and track data inside the client; applies on reload, export/import as JSON.
+- **Content editor**: edit or add locomotives, wagons, cargo, stations, contracts, decor and track
+  data inside the client; applies on reload, export/import as JSON.
 - **Level editor**: paint terrain, build anything for free, set the player's start, save and
   play-test levels; export/import as JSON.
 
 ## Gameplay loop
 
 - **Resources** replace money for building: water, wheat, stone, wood, and later coal, oil, iron.
-  Trains collect at producing stations and only cargo unloaded at a **Depot** reaches the
-  stockpile (top bar, second row); Warehouses hold goods locally (1000 per level) for trains to
-  move on later. Crews eat wheat every day; run out and production halves, trains slow.
+  Goods are kept in local stores: towns (Townhouse plus Warehouses), depots, stand-alone
+  Warehouses (1000 per level) and the power grid. Trains unload into them, building pays from the
+  nearest store holding the material, and the top bar shows the selected store. Crews eat wheat
+  every day; run out and production halves, trains slow.
 - **Depot**: a two-by-two engine shed with four gates. Every game starts with one; another unlocks
-  per nine owned chunks. New trains roll out of the depot you pick, and each depot raises the
-  stockpile cap.
+  per nine owned chunks. New trains roll out of the depot you pick, and each depot is a store of its
+  own.
 - **Towns**: a Town Station (25 tiles from any other) with a Townhouse and a Warehouse within seven
   tiles founds a town; name it when placing (rename any time). Stations inside carry the town's
   name, the overview colours its reach and the left-hand panel lists population, output and use.
 - **Ages**: every game starts in the **Steam Age**. The **Diesel Age** begins once you own three
   depots and the population reaches 1000; the **Electric Age** once $250,000 has been earned in
   total (goals in `src/data/ages.json`, checked every in-game hour). Each age unlocks its works,
-  stations, station levels, contract templates and gacha banners; the top bar shows the current
-  age and hovering it lists the goals with progress bars.
+  stations, station levels and contract templates; the top bar shows the current age and hovering
+  it lists the goals with progress bars.
 - **Works**: Charcoal Kiln (wood → coal), Stone Grinder (stone → iron), Oil Refinery
-  (coal + water → oil), Power Plant (coal or oil + wood + water → power). The Market (`M`) buys
+  (coal + water → oil), Power Plant (coal or oil + wood + water → power). The Market (`K`) buys
   and sells any resource for money; fuel prices (oil, diesel, crude) wander up to ±40 % on a slow
   daily walk.
 - **Production chain** (picked when a new game starts, stored in the save): **Simple** is the
@@ -87,8 +91,9 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
   use and speed (see `src/data/biomes.json`); rivers and islands are generated.
 - **People**: the population idles around its buildings by day, gathers nearby and waits at
   stations for coaches; towns produce passengers who pay a fare when they reach another town.
-- **Notices and Advisor**: blockers show up in the notices panel and as markers on both maps; the
-  Advisor (top right) explains what to do and can be silenced.
+- **Alerts and Advisor**: blockers show up as icons in the alert bar, one for each kind, and as
+  markers on both maps; a click on an icon goes through them, and the Notifications screen sets
+  what each kind does. The Advisor (top right) explains what to do and can be silenced.
 - **Track classes**: Regular and High-speed. High-speed curves and switches are 2×2 with a
   1.5-tile radius (nearly full speed through the turn), joined to regular track through a
   transition piece; three crossings cross the classes at grade. Everything derives from the class
@@ -101,7 +106,7 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
 - **Crafting**: unlock a recipe with money (three cards, keep one), craft copies with iron, wood,
   stone and coal; failure chance grows with quality. Unlimited copies; spares level a model.
 - **Electrification**: third rail, catenary and HV catenary over track, live within reach of a
-  substation on a powered pole grid; substations have a throughput the trains under them share.
+  battery on a powered pole grid; batteries have a throughput the trains under them share.
 - **Towns grow**: townhouses build in stages, hold 10 / 25 / 50 residents by level, fill slowly
   while fed and spawn near track and other houses as traffic grows.
 - **Semaphores**: home and distant arms on a post, animated between danger, caution and clear.
@@ -110,21 +115,24 @@ See `CHANGELOG.md` for what each version and pull request added; releases are ta
 
 ## Controls
 
-| Action   | Keys                                                                                                            |
-| -------- | --------------------------------------------------------------------------------------------------------------- |
-| Pan      | WASD / arrows / middle-drag / edge scroll                                                                       |
-| Zoom     | mouse wheel (0.5x-2x); zoom out past 0.5x opens the overview                                                    |
-| Overview | Tab (Esc, scroll in or click a station/train to return)                                                         |
-| Build    | toolbar buttons, `R` rotate (track and signals), drag to lay straights, right-click / Delete remove, Esc cancel |
-| Time     | Space pause, `1` `2` `3` speed                                                                                  |
-| Screens  | `F` depot, `C` contracts, `G` craft, `V` roster, `M` market, `` ` `` debug                                      |
+| Action   | Keys                                                                                                                                |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Pan      | WASD / arrows / middle-drag / edge scroll                                                                                           |
+| Zoom     | mouse wheel (0.5x-4x); zoom out past 0.5x opens the overview                                                                        |
+| Overview | `M` toggles it (Esc, scroll in or click the map to return); `R` records stops for the picked train, `Enter` finishes                |
+| Build    | `1`-`5` open a category, `1`-`9` pick an item, `Tab` / `Shift+Tab` next / previous item, `Q` `E` type, `Shift+Q` `Shift+E` category |
+| Place    | drag to lay straights, `R` turn, `U` / `Shift+U` upgrade / downgrade track                                                          |
+| Remove   | `X` demolish, right-click / Delete remove, Esc close the tool                                                                       |
+| Undo     | Ctrl+Z undo, Ctrl+Y or Ctrl+Shift+Z redo, or the buttons in the top bar                                                             |
+| Time     | Space pause, `+` `-` faster / slower, or the speed buttons in the top bar                                                           |
+| Screens  | `F` depot, `C` contracts, `G` craft, `V` roster, `K` market, `` ` `` debug; Esc closes the top one                                  |
 
 ## Layout
 
 - `src/engine` loop, camera, input, iso math, atlas pipeline, audio hooks, RNG
 - `src/world` map generation, tiles, regions, track graph, pathfinding
 - `src/sim` clock, economy, stockpile, stations, buildings, power grid, trains, fleet, traffic control, towns, contracts, build rules, save format (versioned, migration registry, unknown fields preserved)
-- `src/gacha` items, inventory, gacha
+- `src/gacha` items, inventory, crafting
 - `src/render` world, overview, trains, fx
 - `src/ui` DOM overlay screens and panels
 - `src/art` procedural placeholder generators (one file per atlas group)
@@ -138,9 +146,17 @@ light, broad colour clusters and selective contours. Sound effects are synthesiz
 Audio synthesizer in `src/engine/synth.ts`. Nothing is taken from other games. Sprites and
 individual sound effects can be overridden file by file (see below).
 
-Music is the looping track in `public/assets/audio/music`. Remove it and the synthesized ambient
-loop in `src/engine/synth.ts` takes over, so a build without the file still has music. Music and
-effects volume are on sliders in the title screen, the pause menu and the settings screen.
+Music is the default set of eight tracks in `public/assets/audio/music`, their titles in
+`src/engine/musicPlaylist.ts`. Pastoral Pulse opens the game once a tab, as `sessionStorage`
+remembers; after that they play in shuffled rounds. Each of the six ages can have its own set in
+`public/assets/audio/music/<age id>/`, and none has one yet. A set opens on its first track and
+then plays all its tracks in shuffled rounds; entering an age with a different set fades the
+current track out and starts that set. If every file of an age's set fails to play, the default
+set takes over, and if those fail too, the synthesized ambient loop in `src/engine/synth.ts`
+plays, so a build without any music file still has music. The top bar shows what plays, with back,
+pause and forward. The Audio screen sets the volumes, Master over Music and Effects and Effects
+over Weather, Environment, UI, Building, Trains and Events, each row with a slider and a switch
+(`src/engine/audioGroups.ts`).
 
 ## Replacing placeholder art
 
@@ -151,14 +167,19 @@ and generated procedurally otherwise. The JSON is
 pixels from the frame's top-left. Frame names are listed by the generators in `src/art`.
 
 Drop `public/assets/audio/<event>.ogg` (event names in `src/engine/audio.ts`) to replace a
-synthesized sound. The music track is `public/assets/audio/music/pastoral-pulse.mp3`; the path is
-`MUSIC_TRACK` in `src/engine/audio.ts`.
+synthesized sound. Music files are listed by path in `src/engine/musicPlaylist.ts`: `MUSIC_TRACKS`
+is the default set and `AGE_MUSIC` holds each age's set, keyed by the age ids in
+`src/data/ages.json`. To give an age its own music, put the files in
+`public/assets/audio/music/<age id>/` and list them under that age as
+`/assets/audio/music/<age id>/<file>.mp3`; the first one listed plays first.
 
 ## Modelling tools
 
-`.mcp.json` wires Claude Code up to MCP for Blender, MCP for Unity and Chrome DevTools MCP;
-`docs/mcp-setup.md` covers the same for Codex, the Blender addon and the Unity package, and the
-camera, facing and anchor rules that make a Blender render drop straight into `public/assets`.
+`.mcp.json` wires Claude Code up to MCP for Blender and Chrome DevTools MCP. MCP for Unity is not in
+the shared files: Unity's own setup registers it on each machine, since it only answers where Unity
+runs. `docs/mcp-setup.md` covers the same for Codex, the Blender addon, the Unity package and its
+per-machine registration, and the camera, facing and anchor rules that make a Blender render drop
+straight into `public/assets`.
 
 `npm run pack-atlas -- <group>` packs a folder of rendered frames (`art-src/<group>/*.png`, with
 one `atlas.json` carrying the group's anchor) into `public/assets/<group>.png` + `.json`. It trims

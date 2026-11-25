@@ -74,6 +74,19 @@ export interface UnitMember {
   dx: number;
   dy: number;
   links: MemberLink[];
+  /** no rail runs within RAIL_CLEARANCE of this tile: the block reserves it, but it may be built on */
+  clear: boolean;
+}
+
+/**
+ * How far (tiles) the rail itself reaches either side of its centre line: half the longest
+ * sleeper (Trunk Line, 0.51) plus a sliver. A member tile no route comes this close to is clear.
+ */
+export const RAIL_CLEARANCE = 0.26;
+
+/** Distance from a point to the square of the tile centred on (tx, ty). */
+function toTile(p: Vec2, tx: number, ty: number) {
+  return Math.hypot(Math.max(Math.abs(p.x - tx) - 0.5, 0), Math.max(Math.abs(p.y - ty) - 0.5, 0));
 }
 export interface UnitDef {
   n: number;
@@ -141,7 +154,8 @@ export function unitDef(
   if (kind === 'curve') routes[0].radius = R;
 
   const members: UnitMember[] = [];
-  for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) members.push({ dx, dy, links: [] });
+  for (let dy = 0; dy < n; dy++)
+    for (let dx = 0; dx < n; dx++) members.push({ dx, dy, links: [], clear: false });
   const memberIndex = (dx: number, dy: number) => dy * n + dx;
   const def: UnitDef = { n, members, routes: [] };
   routes.forEach((r, ri) => {
@@ -166,6 +180,10 @@ export function unitDef(
     }
     def.routes.push({ members: seq, length, diverging: r.diverging, pts: r.pts });
   });
+  for (const m of members)
+    m.clear =
+      !m.links.length &&
+      routes.every((r) => r.pts.every((p) => toTile(p, m.dx, m.dy) >= RAIL_CLEARANCE));
   unitCache.set(key, def);
   return def;
 }

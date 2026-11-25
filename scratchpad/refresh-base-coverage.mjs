@@ -46,6 +46,8 @@ try {
 const byId = new Map(entries.map((entry) => [entry.id, entry]));
 
 for (const entry of entries) {
+  // an entry painted in a folder of its own keeps its pictures: they are not in this folder
+  if (entry.sourceDirectory) continue;
   delete entry.generated;
   entry.generatedBase = false;
   entry.variantsPending = true;
@@ -81,7 +83,7 @@ coverage.summary = {
     generatedBase: entries.filter((entry) => entry.status === 'generatedBase').length,
     pending: entries.filter((entry) => entry.status === 'pending').length,
   },
-  notes: 'Generated files cover a base family image only; required level, rotation, palette, and frame variants remain pending. Runtime atlas integration remains false for every entry.',
+  notes: 'Generated files cover a base family image only; required level, rotation, palette, and frame variants remain pending. Runtime atlas integration remains false for every entry. An entry with a sourceDirectory (props.mangrove, props.willow) takes one picture per variant from that folder, measured in its measurements file; generatedSourceFiles counts this folder\'s pictures only.',
 };
 // Match the actual generator rather than the early hand-written variant notes.
 for (const entry of coverage.categories.terrain) {

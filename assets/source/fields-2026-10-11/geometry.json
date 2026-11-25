@@ -1,0 +1,65 @@
+{
+  "projection": "2:1 orthographic isometric",
+  "tileGamePx": [64, 32],
+  "footprint": "FOOTPRINTS.t1",
+  "tiles": [1, 1],
+  "canvas": [1024, 1024],
+  "canvasPxPerGamePx": 8,
+  "centre": [512, 832],
+  "anchor": [512, 832],
+  "tileCorners": {
+    "top": [512, 704],
+    "right": [768, 832],
+    "bottom": [512, 960],
+    "left": [256, 832]
+  },
+  "tileAxes": {
+    "x": "NW to SE",
+    "y": "NE to SW"
+  },
+  "edges": {
+    "NE": "upper-right",
+    "SE": "lower-right",
+    "SW": "lower-left",
+    "NW": "upper-left"
+  },
+  "pointFormula": ["512 + 256 * (x - y)", "832 + 128 * (x + y)"],
+  "projectionCoefficients": [256, 128],
+  "patch": {
+    "absoluteTileBounds": {
+      "x": 0.42,
+      "y": 0.42
+    },
+    "cornersRounded": [
+      [512, 724],
+      [727, 832],
+      [512, 940],
+      [297, 832]
+    ],
+    "edgeWanderTile": 0.04,
+    "edgeWander": {
+      "SE": "inward and outward",
+      "SW": "inward and outward",
+      "NE": "inward only",
+      "NW": "inward only"
+    },
+    "edge": "soft and irregular; neighbouring patches do not touch"
+  },
+  "rows": {
+    "axis": "tile y",
+    "parallelEdges": ["NW", "SE"],
+    "directionCanvas": [
+      [256, 832],
+      [512, 704]
+    ],
+    "periodGamePx": 6,
+    "cropGamePx": 4,
+    "furrowGamePx": 2,
+    "approximateCount": 9,
+    "phaseFormulaGamePx": "(screenX + 2 * screenY) % 6",
+    "pitchTileX": 0.09375,
+    "cropToFurrowRatio": 2
+  },
+  "earsMaxHeightGamePx": 2,
+  "earsMaxHeightCanvasPx": 16
+}

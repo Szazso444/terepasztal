@@ -1,5 +1,5 @@
-import { content, type ContractTemplate, type ContractRarityDef } from '../data/content';
-import { rules, daySeconds } from './rules';
+import { content, dataName, type ContractTemplate, type ContractRarityDef } from '../data/content';
+import { rules, daySeconds, type Rules } from './rules';
 import { Rng } from '../engine/rng';
 import type { Station } from './stations';
 import type { Builder } from './build';
@@ -7,6 +7,7 @@ import type { Economy } from './economy';
 import { cargoDef } from './cargo';
 import type { DeliveryEvent } from './trains';
 import { CONTRACT_RARITIES, type ContractRarity } from './save';
+import { railAge } from './ages';
 
 export type { ContractTemplate, ContractRarityDef };
 export type { ContractRarity };
@@ -24,7 +25,6 @@ export interface Contract {
   originId: number;
   destId: number;
   payout: number;
-  tickets: number;
   /** duration in in-game seconds once accepted */
   duration: number;
   /** absolute game time when the offer disappears / the active contract fails */
@@ -40,9 +40,21 @@ export interface ContractEvent {
   contract: Contract;
 }
 
+/** What each age up to the last rail age adds to a contract's amount, and to its pay. */
+export const AMOUNT_PER_AGE = 0.25;
+export const PAY_PER_AGE = 0.15;
+
 const contractData = content.contracts;
 const TEMPLATES: ContractTemplate[] = contractData.templates;
 const RARITIES: ContractRarityDef[] = contractData.rarities;
+const TITLES = new Map(TEMPLATES.map((t) => [dataName(t), t.name]));
+/**
+ * A contract's name as the player reads it. A contract keeps the name the data gives its template,
+ * in English whatever the language on screen; the save holds that one.
+ */
+export function contractTitle(name: string): string {
+  return TITLES.get(name) ?? name;
+}
 
 /** Numbers behind a rarity (Common when the data lacks it). */
 export function rarityDef(id: ContractRarity): ContractRarityDef {
@@ -53,11 +65,22 @@ export function rarityDef(id: ContractRarity): ContractRarityDef {
       name: 'Common',
       weight: 1,
       rewardMul: 1,
-      ticketMul: 1,
       amountMul: 1,
       deadlineMul: 1,
     }
   );
+}
+
+/**
+ * Contracts the player's land supports: the most open offers, and the most active contracts. The
+ * start chunk alone gives `contractOfferCount`; each chunk owned beyond it adds
+ * `contractOffersPerChunk`, rounded down; `contractOfferMax` caps the sum.
+ */
+export function contractLimit(ownedChunks: number, r: Rules = rules): number {
+  const extra = Math.max(0, ownedChunks - 1) * r.contractOffersPerChunk;
+  // a hair over the product, so ten chunks at 0.1 count the whole offer they make
+  const n = r.contractOfferCount + Math.floor(extra + 1e-9);
+  return Math.max(1, Math.min(r.contractOfferMax, n));
 }
 
 /** Generates offers, tracks active contracts and applies deliveries. */
@@ -65,7 +88,6 @@ export class ContractBoard {
   contracts: Contract[] = [];
   private nextId = 1;
   private nextRefresh = 0;
-  completedToday = 0;
   stats = { completed: 0, failed: 0 };
   onEvent: ((e: ContractEvent) => void) | null = null;
 
@@ -83,6 +105,14 @@ export class ContractBoard {
   }
   byId(id: number) {
     return this.contracts.find((c) => c.id === id);
+  }
+  /** Open offers, and active contracts, the land the player owns now supports (`contractLimit`). */
+  limit() {
+    return contractLimit(this.builder.regions.ownedCount());
+  }
+  /** True when the player holds as many active contracts as their land supports, or more. */
+  activeFull() {
+    return this.active.length >= this.limit();
   }
 
   /** Every valid (origin, destination, cargo) triple given current stations. */
@@ -129,7 +159,8 @@ export class ContractBoard {
   generate(now: number, force = false): Contract | null {
     const pairs = this.pairs();
     if (!pairs.length) return null;
-    const tier = this.economy.tier;
+    // the ages after electric bring no contracts of their own: they ask and pay as electric does
+    const tier = railAge(this.economy.tier);
     const templates = TEMPLATES.filter((t) => t.minTier <= tier);
     const totalW = templates.reduce((a, t) => a + t.weight, 0);
     let r = this.rng.next() * totalW;
@@ -155,7 +186,7 @@ export class ContractBoard {
     )
       return null;
     const rar = this.rollRarity();
-    const scale = 1 + tier * 0.25;
+    const scale = 1 + tier * AMOUNT_PER_AGE;
     const amount = Math.round(this.rng.int(tpl.amount[0], tpl.amount[1]) * scale * rar.amountMul);
     const dist = Math.abs(pair.from.x - pair.to.x) + Math.abs(pair.from.y - pair.to.y);
     const durationDays =
@@ -168,13 +199,13 @@ export class ContractBoard {
         price *
         tpl.payoutMul *
         (1 + dist / 80) *
-        (1 + tier * 0.15) *
+        (1 + tier * PAY_PER_AGE) *
         rar.rewardMul,
     );
     const c: Contract = {
       id: this.nextId++,
       templateId: tpl.id,
-      name: tpl.name,
+      name: dataName(tpl),
       rarity: rar.id as ContractRarity,
       cargo: pair.cargo,
       amount,
@@ -182,7 +213,6 @@ export class ContractBoard {
       originId: pair.from.id,
       destId: pair.to.id,
       payout,
-      tickets: Math.round(tpl.tickets * rar.ticketMul),
       duration: durationDays * rules.deadlineMul * daySeconds(),
       expires: now + contractData.offerLifetimeDays * daySeconds(),
       acceptedAt: 0,
@@ -194,8 +224,9 @@ export class ContractBoard {
     return c;
   }
 
+  /** Take an offer on. Refused (false) for anything but an offer, or while `activeFull()`. */
   accept(c: Contract, now: number) {
-    if (c.status !== 'offer') return false;
+    if (c.status !== 'offer' || this.activeFull()) return false;
     c.status = 'active';
     c.acceptedAt = now;
     c.expires = now + c.duration;
@@ -207,6 +238,15 @@ export class ContractBoard {
   decline(c: Contract) {
     if (c.status !== 'offer') return;
     c.status = 'expired';
+  }
+
+  /**
+   * The station a contract lapsed for is back (an undo): it stands as it did, its deadline as it
+   * was, in the list again if the list has pruned it.
+   */
+  revive(c: Contract, status: 'offer' | 'active') {
+    c.status = status;
+    if (!this.contracts.includes(c)) this.contracts.push(c);
   }
 
   /** Fine for cancelling an active contract. */
@@ -236,9 +276,10 @@ export class ContractBoard {
   tick(now: number) {
     if (now >= this.nextRefresh) {
       this.nextRefresh = now + rules.contractRefreshDays * daySeconds();
-      const want = rules.contractOfferCount;
+      const want = this.limit();
+      // a skipped duplicate or an offer taken at once costs a try: five to spare
       let tries = 0;
-      while (this.offers.length < want && tries++ < 6) this.generate(now);
+      while (this.offers.length < want && tries++ < want + 5) this.generate(now);
     }
     for (const c of this.contracts) {
       if (c.status === 'offer' && now >= c.expires) c.status = 'expired';
@@ -289,9 +330,7 @@ export class ContractBoard {
     c.status = 'done';
     c.delivered = c.amount;
     this.stats.completed++;
-    this.completedToday++;
     this.economy.earn(c.payout);
-    this.economy.tickets += c.tickets;
     this.onEvent?.({ kind: 'completed', contract: c });
   }
 
@@ -301,10 +340,11 @@ export class ContractBoard {
       nextId: this.nextId,
       nextRefresh: this.nextRefresh,
       stats: this.stats,
-      completedToday: this.completedToday,
+      /** offer generator state; a save without it stays on the stream seeded from the map */
+      rng: this.rng.state,
     };
   }
-  load(j: ReturnType<ContractBoard['toJSON']>) {
+  load(j: Omit<ReturnType<ContractBoard['toJSON']>, 'rng'> & { rng?: unknown }) {
     this.contracts = j.contracts.map((c) => ({
       ...c,
       rarity: CONTRACT_RARITIES.includes(c.rarity) ? c.rarity : 'common',
@@ -313,6 +353,6 @@ export class ContractBoard {
     this.nextId = j.nextId;
     this.nextRefresh = j.nextRefresh;
     this.stats = j.stats;
-    this.completedToday = j.completedToday;
+    if (typeof j.rng === 'number') this.rng.state = j.rng;
   }
 }

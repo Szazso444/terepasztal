@@ -7,12 +7,16 @@
     "id": "diesel",
     "goals": [
       {
-        "kind": "depots",
-        "target": 3
-      },
-      {
-        "kind": "population",
-        "target": 1000
+        "anyOf": [
+          {
+            "kind": "population",
+            "target": 100
+          },
+          {
+            "kind": "chunks",
+            "target": 9
+          }
+        ]
       }
     ]
   },
@@ -22,6 +26,33 @@
       {
         "kind": "earned",
         "target": 100000
+      }
+    ]
+  },
+  {
+    "id": "nuclear",
+    "goals": [
+      {
+        "kind": "substations",
+        "target": 1
+      }
+    ]
+  },
+  {
+    "id": "magnetic",
+    "goals": [
+      {
+        "kind": "earned",
+        "target": 150000
+      }
+    ]
+  },
+  {
+    "id": "hyper",
+    "goals": [
+      {
+        "kind": "earned",
+        "target": 500000
       }
     ]
   }

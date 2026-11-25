@@ -1,0 +1,904 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PAST_SHIPPED } from './pastShipped';
+import { forAll } from '../testing/property';
+import type { ContentBundle, ContentKey, HouseConfig, StationLevels, TrackConfig } from './content';
+
+type ContentModule = typeof import('./content');
+type Table = Record<string, unknown>;
+
+const KEY = 'terepasztal.content';
+
+function clone<T>(v: T): T {
+  return JSON.parse(JSON.stringify(v)) as T;
+}
+
+/** A Storage over a map, holding `value` under the overrides key; writes are spied on. */
+function memoryStorage(value?: unknown) {
+  const m = new Map<string, string>();
+  if (value !== undefined) m.set(KEY, typeof value === 'string' ? value : JSON.stringify(value));
+  return {
+    getItem: (k: string) => m.get(k) ?? null,
+    setItem: vi.fn((k: string, v: string) => void m.set(k, String(v))),
+    removeItem: vi.fn((k: string) => void m.delete(k)),
+    clear: () => m.clear(),
+    key: (i: number) => [...m.keys()][i] ?? null,
+    get length() {
+      return m.size;
+    },
+  };
+}
+
+/** A fresh content module, loaded over `storage`. */
+async function loadOver(storage: ReturnType<typeof memoryStorage>): Promise<ContentModule> {
+  vi.stubGlobal('localStorage', storage);
+  vi.resetModules();
+  return import('./content');
+}
+
+/** A fresh content module, loaded with `value` stored under the overrides key. */
+async function load(value?: unknown): Promise<ContentModule> {
+  return loadOver(memoryStorage(value));
+}
+
+/** The module loaded again over what the last load left in storage, counting only new writes. */
+async function reload(): Promise<ContentModule> {
+  vi.mocked(localStorage.setItem).mockClear();
+  vi.mocked(localStorage.removeItem).mockClear();
+  vi.mocked(console.warn).mockClear();
+  vi.mocked(console.info).mockClear();
+  vi.resetModules();
+  return import('./content');
+}
+
+/** The module as it loads with nothing stored. */
+let shipped: ContentModule;
+
+/** A stored value in the current format, every table stamped with its current shipped stamp. */
+function stamped(tables: Partial<Record<ContentKey, unknown>>, stamp?: string) {
+  const out: Record<string, { stamp: string; data: unknown }> = {};
+  for (const [k, data] of Object.entries(tables))
+    out[k] = { stamp: stamp ?? shipped.contentStamp(k as ContentKey), data };
+  return { format: 2, tables: out };
+}
+
+/** The shipped locomotives with one number changed. */
+function editedLocomotives() {
+  const locos = clone(shipped.DEFAULT_CONTENT.locomotives);
+  locos[0].speed += 1;
+  return locos;
+}
+
+function warnedAbout(key: string) {
+  return vi.mocked(console.warn).mock.calls.some((c) => String(c[0]).includes(`"${key}"`));
+}
+
+/** The level table and houses of an override stored before one level per age (#92), verbatim. */
+const PRE_92_STATION_LEVELS = {
+  capacity: [60, 120, 200, 320, 500],
+  loadRate: [4, 6, 9, 13, 18],
+  platforms: [1, 1, 2, 2, 3],
+  production: [30, 50, 80, 120, 170],
+  upgradeCostMul: [0, 0.8, 1.2, 1.8, 2.6],
+  spriteByLevel: [1, 2, 3, 4, 5],
+  maxLevelByTier: [3, 4, 5],
+  crew: [2, 3, 5, 8, 12],
+};
+const PRE_92_HOUSES: HouseConfig = {
+  capacity: [20, 60, 140, 300],
+  startResidents: 8,
+  constructionDays: 2,
+  growthDays: 0.5,
+  autoUpgradeDays: 3,
+  upgradeCost: [
+    { wood: 60, stone: 40 },
+    { wood: 80, stone: 140, iron: 30 },
+    { stone: 260, iron: 90 },
+  ],
+  spawnAt: 0.8,
+  spawnMulCap: 3,
+  trafficPerMul: 10,
+  trafficWindowDays: 3,
+  bonusIndustry: 5,
+  bonusFirstTrain: 3,
+};
+
+/** What the editor stored before stamps: the whole live bundle, edited or not, with no format. */
+function oldBundle(edit: (b: ContentBundle) => void) {
+  const b = clone(shipped.content);
+  edit(b);
+  return b;
+}
+
+/**
+ * Tables the build at 8a03538 (main, the newest build that writes the old format) shipped:
+ * houses verbatim, the others as today's table with exactly the differences that build had.
+ */
+const PAST = {
+  houses: () => clone(PRE_92_HOUSES),
+  stations: () => {
+    const defs = clone(shipped.DEFAULT_CONTENT.stations.defs);
+    // before stations had doors (#406), and before one could cover tiles by a span of its own
+    // (the Town Hall and the warehouse, 2026-10-27)
+    for (const d of defs) {
+      delete d.doors;
+      delete d.span;
+    }
+    // the pump before it had ground rules of its own (#320)
+    const pump = defs.find((d) => d.id === 'pump')!;
+    delete pump.standOn;
+    delete pump.needsWater;
+    pump.flavor = 'Pumps water for steam engines and the works. Fills water tanks completely.';
+    // the warehouse before the stores (#306)
+    defs.find((d) => d.id === 'warehouse')!.flavor =
+      'Local store: holds 1000 units per level of anything trains bring. Trains take goods out again; only a Depot feeds the stockpile.';
+    return { levels: clone(PRE_92_STATION_LEVELS) as unknown as StationLevels, defs };
+  },
+  buildings: () => {
+    const list = clone(shipped.DEFAULT_CONTENT.buildings);
+    // before works had doors (#406), and before they could cover more than a tile (#525)
+    for (const b of list) {
+      delete b.doors;
+      delete b.span;
+    }
+    // the Battery was the Substation
+    list.find((b) => b.id === 'substation')!.name = 'Substation';
+    delete list.find((b) => b.id === 'kiln')!.lastTier;
+    list.find((b) => b.id === 'windmill')!.flavor =
+      'Mills wheat into food. One wheat makes 5 food, then 7, 9 and 11 with upgrades.';
+    return list;
+  },
+};
+type PastKey = keyof typeof PAST;
+const PAST_KEYS = Object.keys(PAST) as PastKey[];
+
+/**
+ * A past shipped table. It is checked against the list first: a fixture that is not a listed
+ * version means a shipped table changed after 8a03538 (the list never changes), so the fixture
+ * is what to rebuild, from `git show 8a03538:src/data/<table>.json`.
+ */
+function past<K extends PastKey>(key: K): ReturnType<(typeof PAST)[K]> {
+  const table = PAST[key]() as ReturnType<(typeof PAST)[K]>;
+  expect(
+    PAST_SHIPPED[key],
+    `the ${key} fixture is no past shipped version: a shipped table changed since 8a03538, rebuild the fixture`,
+  ).toContain(shipped.tableHash(key, table));
+  return table;
+}
+
+/** The tables in the form the old editor stored them, all of them untouched past versions. */
+function untouchedPastBundle() {
+  return oldBundle((b) => {
+    for (const k of PAST_KEYS) (b as unknown as Table)[k] = past(k);
+  });
+}
+
+beforeEach(async () => {
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  vi.spyOn(console, 'info').mockImplementation(() => {});
+  shipped = await load();
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+describe('a bad stored override never stops the load', () => {
+  it.each(['{"contracts":{}}', '{"locomotives":null}', '{"stations":{"defs":[]}}', '{"track":{}}'])(
+    'old whole-bundle value %s: shipped tables, set aside as invalid, kept in storage',
+    async (raw) => {
+      const mod = await load(raw);
+      expect(mod.content).toEqual(shipped.content);
+      const [[key, data]] = Object.entries(JSON.parse(raw) as Table);
+      const { applied, setAside } = mod.contentOverrideReport();
+      expect(applied).toEqual([]);
+      expect(setAside.map((s) => [s.key, s.reason])).toEqual([[key, 'invalid']]);
+      expect(setAside[0].problems.length).toBeGreaterThan(0);
+      expect(mod.contentIsCustom()).toBe(false);
+      expect(warnedAbout(key)).toBe(true);
+      expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual(stamped({ [key]: data }));
+    },
+  );
+
+  it.each([
+    ['contracts', {}],
+    ['locomotives', null],
+    ['stations', { defs: [] }],
+    ['track', {}],
+    ['houses', 'x'],
+    ['cargo', [null]],
+  ] as [ContentKey, unknown][])(
+    'current-stamped %s table of the wrong shape: shipped tables, set aside as invalid',
+    async (key, data) => {
+      const mod = await load(stamped({ [key]: data }));
+      expect(mod.content).toEqual(shipped.content);
+      const { applied, setAside } = mod.contentOverrideReport();
+      expect(applied).toEqual([]);
+      expect(setAside.map((s) => [s.key, s.reason])).toEqual([[key, 'invalid']]);
+      expect(setAside[0].problems.length).toBeGreaterThan(0);
+      expect(warnedAbout(key)).toBe(true);
+    },
+  );
+
+  it.each([
+    'not json{',
+    '[]',
+    '42',
+    '{"format":2}',
+    '{"format":2,"tables":{"locomotives":5}}',
+    '{"format":2,"tables":{"locomotives":{"data":[]}}}',
+    '{"format":3,"tables":{"locomotives":{"stamp":"0","data":[]}}}',
+  ])('stored value %s: shipped tables', async (raw) => {
+    const mod = await load(raw);
+    expect(mod.content).toEqual(shipped.content);
+    expect(mod.contentIsCustom()).toBe(false);
+    expect(mod.contentOverrideReport().applied).toEqual([]);
+  });
+});
+
+describe('validateContent', () => {
+  it('passes the shipped tables', () => {
+    expect(shipped.validateContent(shipped.DEFAULT_CONTENT)).toEqual([]);
+  });
+
+  it('requires contract rarities and every station level table', () => {
+    const noRarities = clone(shipped.DEFAULT_CONTENT) as unknown as { contracts: Table };
+    delete noRarities.contracts.rarities;
+    expect(shipped.validateContent(noRarities as unknown as ContentBundle)).not.toEqual([]);
+    for (const k of Object.keys(shipped.DEFAULT_CONTENT.stations.levels)) {
+      const b = clone(shipped.DEFAULT_CONTENT) as unknown as { stations: { levels: Table } };
+      delete b.stations.levels[k];
+      expect(shipped.validateContent(b as unknown as ContentBundle), k).not.toEqual([]);
+    }
+  });
+
+  it('reports a table of the wrong shape instead of throwing', () => {
+    for (const k of shipped.CONTENT_KEYS)
+      for (const v of [null, 42, 'x', {}, [null]]) {
+        const b = { ...shipped.DEFAULT_CONTENT, [k]: v } as ContentBundle;
+        expect(() => shipped.validateContent(b), `${k} = ${JSON.stringify(v)}`).not.toThrow();
+        expect(shipped.validateContent(b), `${k} = ${JSON.stringify(v)}`).not.toEqual([]);
+      }
+    expect(shipped.validateContent(null as unknown as ContentBundle)).not.toEqual([]);
+  });
+
+  it('reports missing or malformed fields inside a table instead of throwing', () => {
+    const breaks: ((b: Table & ContentBundle) => void)[] = [
+      (b) => ((b.stations.defs[0] as unknown as Table).accepts = null),
+      (b) => ((b.stations.defs[0] as unknown as Table).produces = [null]),
+      (b) => ((b.stations as unknown as Table).levels = null),
+      (b) => (b.stations.levels.capacity = b.stations.levels.capacity.slice(0, -1)),
+      (b) => ((b.buildings[0] as unknown as Table).recipe = null),
+      (b) => ((b.buildings[0].recipe as unknown as Table).in = 'coal'),
+      (b) => ((b.track as unknown as Table).pieces = null),
+      (b) => ((b.track.pieces as unknown as Table)[Object.keys(b.track.pieces)[0]] = null),
+      (b) => ((b.contracts as unknown as Table).templates = null),
+      (b) => ((b.contracts.rarities as unknown[])[0] = null),
+      (b) => ((b.contracts.rarities[0] as unknown as Table).weight = 'heavy'),
+      (b) => ((b.locomotives[0] as unknown as Table).id = null),
+      (b) => ((b.crafting as unknown as Table).ownedRefund = null),
+    ];
+    breaks.forEach((brk, i) => {
+      const b = clone(shipped.DEFAULT_CONTENT) as Table & ContentBundle;
+      brk(b);
+      expect(() => shipped.validateContent(b), `break ${i}`).not.toThrow();
+      expect(shipped.validateContent(b), `break ${i}`).not.toEqual([]);
+    });
+  });
+
+  describe('a vehicle length of its own (#344)', () => {
+    /** The shipped bundle's problems with `length` set on the first entry of `table`. */
+    function withLength(length: unknown, table: 'locomotives' | 'wagons' = 'locomotives') {
+      const b = clone(shipped.DEFAULT_CONTENT);
+      (b[table][0] as unknown as Table).length = length;
+      return shipped.validateContent(b);
+    }
+    const IN_RANGE = [0.3, 0.82, 1, 1.56, 2.5, 3.5];
+    const OUT = [0.29, 3.51, 0, -1, NaN, Infinity, null, '1', true, [1], { tiles: 1 }];
+
+    it('takes a locomotive length from 0.3 to 3.5 tiles', () => {
+      for (const n of IN_RANGE) expect(withLength(n), String(n)).toEqual([]);
+    });
+
+    it('refuses anything else with one problem naming the locomotive and the field', () => {
+      const id = shipped.DEFAULT_CONTENT.locomotives[0].id;
+      for (const v of OUT) {
+        const problems = withLength(v);
+        expect(problems, JSON.stringify(v)).toHaveLength(1);
+        expect(problems[0], JSON.stringify(v)).toMatch(
+          new RegExp(`^locomotive ${id}: length must be between 0\\.3 and 3\\.5 tiles, not `),
+        );
+      }
+    });
+
+    it('holds a wagon that carries a length to the same range', () => {
+      const id = shipped.DEFAULT_CONTENT.wagons[0].id;
+      for (const n of IN_RANGE) expect(withLength(n, 'wagons'), String(n)).toEqual([]);
+      for (const v of OUT)
+        expect(withLength(v, 'wagons'), JSON.stringify(v)).toEqual([
+          expect.stringMatching(new RegExp(`^wagon ${id}: length must be between`)),
+        ]);
+    });
+
+    it('applies a stored locomotives table with a length, and sets one out of range aside with its problem', async () => {
+      const locos = clone(shipped.DEFAULT_CONTENT.locomotives);
+      locos[1].length = 0.82;
+      let mod = await load(stamped({ locomotives: locos }));
+      expect(mod.contentOverrideReport()).toEqual({ applied: ['locomotives'], setAside: [] });
+      expect(mod.content.locomotives[1].length).toBe(0.82);
+      locos[1].length = 4;
+      mod = await load(stamped({ locomotives: locos }));
+      expect(mod.content.locomotives).toEqual(shipped.content.locomotives);
+      expect(mod.contentOverrideReport().setAside).toEqual([
+        {
+          key: 'locomotives',
+          reason: 'invalid',
+          problems: [`locomotive ${locos[1].id}: length must be between 0.3 and 3.5 tiles, not 4`],
+        },
+      ]);
+    });
+
+    /** A value as written in a failure: JSON writes NaN and the infinities as null, -0 as 0. */
+    const spell = (v: unknown) =>
+      Object.is(v, -0) ? '-0' : typeof v === 'number' ? String(v) : JSON.stringify(v);
+
+    it('takes exactly the numbers from 0.3 to 3.5 on any entry, and names the entry it refuses', () => {
+      forAll(
+        (rng) => {
+          const table = rng.pick(['locomotives', 'wagons'] as const);
+          const at = rng.int(0, shipped.DEFAULT_CONTENT[table].length - 1);
+          const end = rng.pick([0.3, 3.5]);
+          const value: unknown = rng.pick([
+            () => rng.range(-1, 5),
+            () => rng.range(0.3, 3.5),
+            // either side of an end, by a hair or a step
+            () => end * (1 + rng.pick([-1e-12, 0, 1e-12, -1e-3, 1e-3])),
+            () =>
+              rng.pick([NaN, Infinity, -Infinity, -0, null, '1.5', true, [1.5], { tiles: 1.5 }]),
+          ])();
+          return { table, at, value };
+        },
+        ({ table, at, value }) => {
+          const b = clone(shipped.DEFAULT_CONTENT);
+          (b[table][at] as unknown as Table).length = value;
+          const problems = shipped.validateContent(b);
+          const fits = typeof value === 'number' && value >= 0.3 && value <= 3.5;
+          if (fits) {
+            expect(problems).toEqual([]);
+            return;
+          }
+          const kind = table === 'locomotives' ? 'locomotive' : 'wagon';
+          const named = `${kind} ${shipped.DEFAULT_CONTENT[table][at].id}: length must be between 0.3 and 3.5 tiles`;
+          expect(problems).toHaveLength(1);
+          expect(problems[0].slice(0, named.length)).toBe(named);
+        },
+        { format: (c) => `${c.table}[${c.at}].length = ${spell(c.value)}` },
+      );
+    });
+  });
+});
+
+describe('stamps', () => {
+  it('are short hex hashes, one per table, and the same whatever loads', async () => {
+    const stamps = shipped.CONTENT_KEYS.map((k) => shipped.contentStamp(k));
+    for (const s of stamps) expect(s).toMatch(/^[0-9a-f]{8}$/);
+    expect(new Set(stamps).size).toBe(stamps.length);
+    // a session running on an edited table still stamps from the shipped files
+    const mod = await load(stamped({ locomotives: editedLocomotives() }));
+    expect(mod.contentIsCustom()).toBe(true);
+    expect(mod.CONTENT_KEYS.map((k) => mod.contentStamp(k))).toEqual(stamps);
+  });
+});
+
+describe('applying stored tables', () => {
+  it('applies a locomotives table stamped with the current shipped table', async () => {
+    const locos = editedLocomotives();
+    const mod = await load(stamped({ locomotives: locos }));
+    expect(mod.content.locomotives).toEqual(locos);
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['locomotives'], setAside: [] });
+    expect(mod.contentIsCustom()).toBe(true);
+    for (const k of mod.CONTENT_KEYS)
+      if (k !== 'locomotives') expect(mod.content[k], k).toEqual(shipped.content[k]);
+  });
+
+  it('sets aside the same table stamped from another shipped table, and keeps it stored', async () => {
+    const other = shipped.contentStamp('locomotives') === '00000000' ? '00000001' : '00000000';
+    const value = stamped({ locomotives: editedLocomotives() }, other);
+    const mod = await load(value);
+    expect(mod.content.locomotives).toEqual(shipped.content.locomotives);
+    expect(mod.contentOverrideReport()).toEqual({
+      applied: [],
+      setAside: [{ key: 'locomotives', reason: 'stale', problems: [] }],
+    });
+    expect(mod.contentIsCustom()).toBe(false);
+    expect(warnedAbout('locomotives')).toBe(true);
+    expect(localStorage.getItem(KEY)).toBe(JSON.stringify(value));
+  });
+
+  it('applies a valid table and sets aside an invalid one stored with it', async () => {
+    const locos = editedLocomotives();
+    const houses = { ...clone(shipped.DEFAULT_CONTENT.houses), capacity: [] };
+    const mod = await load(stamped({ locomotives: locos, houses }));
+    expect(mod.content.locomotives).toEqual(locos);
+    expect(mod.content.houses).toEqual(shipped.content.houses);
+    const report = mod.contentOverrideReport();
+    expect(report.applied).toEqual(['locomotives']);
+    expect(report.setAside.map((s) => [s.key, s.reason])).toEqual([['houses', 'invalid']]);
+    expect(report.setAside[0].problems.length).toBeGreaterThan(0);
+    expect(mod.contentIsCustom()).toBe(true);
+  });
+
+  it('applies tables that only validate together', async () => {
+    const cargo = clone(shipped.DEFAULT_CONTENT.cargo);
+    cargo.push({ ...cargo[0], id: 'test_cargo' });
+    const stations = clone(shipped.DEFAULT_CONTENT.stations);
+    stations.defs[0].accepts.push('test_cargo');
+    const mod = await load(stamped({ cargo, stations }));
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['cargo', 'stations'], setAside: [] });
+    expect(mod.content.stations.defs[0].accepts).toContain('test_cargo');
+  });
+
+  it('sets aside a table that breaks a shipped one and keeps the tables valid without it', async () => {
+    const used = shipped.DEFAULT_CONTENT.stations.defs.flatMap((s) => s.accepts)[0];
+    const cargo = clone(shipped.DEFAULT_CONTENT.cargo).filter((c) => c.id !== used);
+    const stations = clone(shipped.DEFAULT_CONTENT.stations);
+    stations.defs[0].flavor += ' (edited)';
+    const mod = await load(stamped({ cargo, stations }));
+    const report = mod.contentOverrideReport();
+    expect(report.applied).toEqual(['stations']);
+    expect(report.setAside.map((s) => [s.key, s.reason])).toEqual([['cargo', 'invalid']]);
+    expect(report.setAside[0].problems.some((p) => p.includes(`"${used}"`))).toBe(true);
+    expect(mod.content.stations).toEqual(stations);
+    expect(mod.content.cargo).toEqual(shipped.content.cargo);
+  });
+
+  it('sets aside a broken table and applies a table that refers to it once it is gone', async () => {
+    const stations = clone(shipped.DEFAULT_CONTENT.stations);
+    stations.defs[0].flavor += ' (edited)';
+    const mod = await load(stamped({ cargo: null, stations }));
+    const report = mod.contentOverrideReport();
+    expect(report.applied).toEqual(['stations']);
+    expect(report.setAside.map((s) => [s.key, s.reason])).toEqual([['cargo', 'invalid']]);
+  });
+});
+
+describe('an override in the old whole-bundle format', () => {
+  /** The past houses table with one edit, which the shipped table of today is not. */
+  function editedHouses() {
+    const houses = past('houses');
+    houses.startResidents += 1;
+    return houses;
+  }
+  /** The past stations table with one edit. */
+  function editedStations() {
+    const stations = past('stations');
+    stations.defs[0].flavor += ' (edited)';
+    return stations;
+  }
+
+  it('converts an edited table into an applied override stamped with the shipped table', async () => {
+    const old = oldBundle((b) => (b.houses.startResidents += 1));
+    const mod = await load(old);
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['houses'], setAside: [] });
+    expect(mod.contentIsCustom()).toBe(true);
+    expect(mod.content.houses).toEqual(old.houses);
+    for (const k of mod.CONTENT_KEYS)
+      if (k !== 'houses') expect(mod.content[k], k).toEqual(shipped.content[k]);
+    expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual(stamped({ houses: old.houses }));
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it.each(PAST_KEYS)('drops an untouched past %s table without a word', async (key) => {
+    const table = past(key);
+    expect(shipped.tableHash(key, table), 'a version other than the shipped one').not.toBe(
+      shipped.contentStamp(key),
+    );
+    const mod = await load(oldBundle((b) => ((b as unknown as Table)[key] = table)));
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(mod.contentIsCustom()).toBe(false);
+    expect(mod.content).toEqual(shipped.content);
+    expect(console.warn).not.toHaveBeenCalled();
+    expect(localStorage.getItem(KEY)).toBeNull();
+  });
+
+  it('knows a past table by its data, not by the order of its keys', async () => {
+    const reversed = Object.fromEntries(Object.entries(past('houses')).reverse());
+    const mod = await load(oldBundle((b) => (b.houses = reversed as unknown as HouseConfig)));
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(localStorage.getItem(KEY)).toBeNull();
+  });
+
+  it('loads a bundle of untouched past versions as the shipped content and finds nothing to do next time', async () => {
+    const old = untouchedPastBundle();
+    // converted, these would have changed the game or been set aside as invalid
+    expect(old.houses).not.toEqual(shipped.content.houses);
+    expect(
+      shipped.validateContent({ ...shipped.DEFAULT_CONTENT, stations: old.stations }),
+    ).not.toEqual([]);
+    expect(old.buildings).not.toEqual(shipped.content.buildings);
+
+    const mod = await load(old);
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(mod.contentIsCustom()).toBe(false);
+    expect(mod.content).toEqual(shipped.content);
+    expect(console.warn).not.toHaveBeenCalled();
+    expect(localStorage.getItem(KEY)).toBeNull();
+
+    const second = await reload();
+    expect(second.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(second.content).toEqual(shipped.content);
+    expect(localStorage.setItem).not.toHaveBeenCalled();
+    expect(localStorage.removeItem).not.toHaveBeenCalled();
+    expect(console.warn).not.toHaveBeenCalled();
+    expect(console.info).not.toHaveBeenCalled();
+  });
+
+  it('converts only the edited table of a bundle of past versions, once', async () => {
+    const houses = editedHouses();
+    const mod = await load(
+      oldBundle((b) => {
+        b.houses = houses;
+        b.stations = past('stations');
+        b.buildings = past('buildings');
+      }),
+    );
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['houses'], setAside: [] });
+    expect(mod.content.houses).toEqual(houses);
+    for (const k of mod.CONTENT_KEYS)
+      if (k !== 'houses') expect(mod.content[k], k).toEqual(shipped.content[k]);
+    expect(console.warn).not.toHaveBeenCalled();
+    const rewritten = localStorage.getItem(KEY)!;
+    expect(JSON.parse(rewritten)).toEqual(stamped({ houses }));
+
+    const second = await reload();
+    expect(second.contentOverrideReport()).toEqual({ applied: ['houses'], setAside: [] });
+    expect(second.content).toEqual(mod.content);
+    expect(localStorage.setItem).not.toHaveBeenCalled();
+    expect(localStorage.removeItem).not.toHaveBeenCalled();
+    expect(localStorage.getItem(KEY)).toBe(rewritten);
+  });
+
+  it('sets aside only an edited past table that fails validation and converts one whose shipped table changed', async () => {
+    const houses = editedHouses();
+    const stations = editedStations();
+    const mod = await load(
+      oldBundle((b) => {
+        b.houses = houses;
+        b.stations = stations;
+        b.buildings = past('buildings');
+      }),
+    );
+    const report = mod.contentOverrideReport();
+    expect(report.applied).toEqual(['houses']);
+    expect(report.setAside.map((s) => [s.key, s.reason])).toEqual([['stations', 'invalid']]);
+    expect(report.setAside[0].problems.some((p) => p.startsWith('station levels:'))).toBe(true);
+    expect(warnedAbout('stations')).toBe(true);
+    expect(warnedAbout('houses')).toBe(false);
+    expect(warnedAbout('buildings')).toBe(false);
+    expect(mod.content.stations).toEqual(shipped.content.stations);
+    expect(mod.content.houses).toEqual(houses);
+    // the set-aside table stays stored until the editor next writes or resets
+    expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual(stamped({ stations, houses }));
+  });
+
+  it('sets aside a past stations table with one edit alone, as invalid', async () => {
+    const stations = editedStations();
+    const mod = await load(oldBundle((b) => (b.stations = stations)));
+    const report = mod.contentOverrideReport();
+    expect(report.applied).toEqual([]);
+    expect(report.setAside.map((s) => [s.key, s.reason])).toEqual([['stations', 'invalid']]);
+    expect(mod.content).toEqual(shipped.content);
+    expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual(stamped({ stations }));
+  });
+
+  it('converts once: the next load reads the per-table overrides and writes nothing', async () => {
+    const old = oldBundle((b) => {
+      b.houses.startResidents += 1;
+      b.track = {} as TrackConfig;
+    });
+    const first = await load(old);
+    const rewritten = localStorage.getItem(KEY)!;
+    expect(JSON.parse(rewritten)).toMatchObject({ format: 2 });
+    const second = await reload();
+    expect(localStorage.setItem).not.toHaveBeenCalled();
+    expect(localStorage.removeItem).not.toHaveBeenCalled();
+    expect(localStorage.getItem(KEY)).toBe(rewritten);
+    expect(console.info).not.toHaveBeenCalled();
+    expect(second.contentOverrideReport()).toEqual(first.contentOverrideReport());
+    expect(second.contentOverrideReport().applied).toEqual(['houses']);
+    expect(second.content).toEqual(first.content);
+  });
+
+  it('clears the stored value when no table differs from the shipped ones', async () => {
+    const mod = await load(oldBundle(() => {}));
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(console.warn).not.toHaveBeenCalled();
+    expect(localStorage.getItem(KEY)).toBeNull();
+  });
+
+  describe('when the stored value cannot be rewritten', () => {
+    const rewriteWarned = () =>
+      vi
+        .mocked(console.warn)
+        .mock.calls.some((c) => String(c[0]).includes('could not be rewritten'));
+
+    it('applies the edited tables, drops the untouched ones, warns and keeps the old value', async () => {
+      const houses = editedHouses();
+      const old = oldBundle((b) => {
+        b.houses = houses;
+        b.stations = past('stations');
+      });
+      const storage = memoryStorage(old);
+      storage.setItem.mockImplementation(() => {
+        throw new Error('storage is full');
+      });
+      const mod = await loadOver(storage);
+      expect(mod.contentOverrideReport()).toEqual({ applied: ['houses'], setAside: [] });
+      expect(mod.content.houses).toEqual(houses);
+      expect(mod.content.stations).toEqual(shipped.content.stations);
+      expect(rewriteWarned()).toBe(true);
+      expect(storage.getItem(KEY)).toBe(JSON.stringify(old));
+    });
+
+    it('drops untouched tables and keeps the old value when only they are stored', async () => {
+      const old = untouchedPastBundle();
+      const storage = memoryStorage(old);
+      storage.removeItem.mockImplementation(() => {
+        throw new Error('storage is locked');
+      });
+      const mod = await loadOver(storage);
+      expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+      expect(mod.content).toEqual(shipped.content);
+      expect(rewriteWarned()).toBe(true);
+      expect(storage.getItem(KEY)).toBe(JSON.stringify(old));
+    });
+  });
+});
+
+describe('a stored gacha table, from before the gacha left the game', () => {
+  /** A table the old editor stored; nothing today checks it, so it may name anything. */
+  const gacha = { rates: { N: 2 }, banners: [{ id: 'gone', tier: 0, pool: ['no_such_model'] }] };
+  const STAMP = 'fc9d4ee3';
+
+  it('is no table of the bundle: not shipped, listed, checked or hashed', () => {
+    expect(shipped.CONTENT_KEYS).not.toContain('gacha');
+    expect('gacha' in shipped.DEFAULT_CONTENT).toBe(false);
+    expect('gacha' in PAST_SHIPPED).toBe(false);
+    expect(shipped.validateContent(clone(shipped.DEFAULT_CONTENT))).toEqual([]);
+  });
+
+  it.each([
+    ['a table', { stamp: STAMP, data: gacha }],
+    ['a table stamped by no build', { stamp: 'x', data: gacha }],
+    ['a table with no stamp', { data: gacha }],
+    ['malformed data', { stamp: STAMP, data: null }],
+    ['no entry at all', 'x'],
+  ])('alone in the store as %s: the shipped tables load, without a word', async (_, entry) => {
+    const mod = await load({ format: 2, tables: { gacha: entry } });
+    expect(mod.content).toEqual(shipped.content);
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(mod.contentIsCustom()).toBe(false);
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it('beside an edited table: the edit applies and nothing is set aside', async () => {
+    const stored = stamped({ locomotives: editedLocomotives() });
+    const mod = await load({
+      ...stored,
+      tables: { ...stored.tables, gacha: { stamp: STAMP, data: gacha } },
+    });
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['locomotives'], setAside: [] });
+    expect(mod.content.locomotives[0].speed).toBe(shipped.content.locomotives[0].speed + 1);
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it('holds Apply up for nothing, and the next Apply takes it out of storage', async () => {
+    const mod = await load({ format: 2, tables: { gacha: { stamp: STAMP, data: gacha } } });
+    const draft = clone(mod.sourceContent);
+    expect(mod.validateContent(draft)).toEqual([]);
+    expect(mod.changedTables(draft)).toEqual({});
+    draft.locomotives[0].speed += 1;
+    expect(mod.validateContent(draft)).toEqual([]);
+    expect(mod.writeContentOverrides(mod.changedTables(draft))).toBe(true);
+    const stored = JSON.parse(localStorage.getItem(KEY)!) as { tables: Table };
+    expect(Object.keys(stored.tables)).toEqual(['locomotives']);
+  });
+
+  it('in the old whole-bundle format: dropped with the conversion, without a warning', async () => {
+    const mod = await load({
+      ...oldBundle((b) => void (b.locomotives[0].speed += 1)),
+      gacha,
+    });
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['locomotives'], setAside: [] });
+    expect(console.warn).not.toHaveBeenCalled();
+    const stored = JSON.parse(localStorage.getItem(KEY)!) as { format: number; tables: Table };
+    expect(stored.format).toBe(2);
+    expect(Object.keys(stored.tables)).toEqual(['locomotives']);
+  });
+
+  it('alone in the old whole-bundle format: the shipped tables load, without a word', async () => {
+    const mod = await load({ gacha });
+    expect(mod.content).toEqual(shipped.content);
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+});
+
+describe('a stored contracts edit, from before the tickets left', () => {
+  /**
+   * The stamp of the last contracts table that shipped with its ticket fields. The next change to
+   * `contracts.json` ends all this: such an edit is stale, as the test of that says, and the
+   * branch in `content.ts` and the tests here that apply one can go with it.
+   */
+  const STAMP = '39fa427f';
+  /** That table: today's with the fields it held. */
+  function withTickets() {
+    const t = clone(shipped.DEFAULT_CONTENT.contracts);
+    const tickets = [1, 1, 2, 3, 2];
+    const ticketMul = [1, 2, 3, 5, 10];
+    t.templates.forEach((row, i) => ((row as unknown as Table).tickets = tickets[i]));
+    t.rarities.forEach((row, i) => ((row as unknown as Table).ticketMul = ticketMul[i]));
+    return t;
+  }
+  const noTicket = (v: unknown) => expect(JSON.stringify(v)).not.toMatch(/ticket/i);
+
+  it('ships a table that names no ticket, whose rarities are checked without one', () => {
+    noTicket(shipped.DEFAULT_CONTENT.contracts);
+    expect(shipped.validateContent(clone(shipped.DEFAULT_CONTENT))).toEqual([]);
+  });
+
+  it('has that table as its fixture: it hashes to the stamp, and is a past shipped version', () => {
+    expect(shipped.tableHash('contracts', withTickets())).toBe(STAMP);
+    expect(PAST_SHIPPED.contracts).toContain(STAMP);
+  });
+
+  it("applies over today's table without its ticket fields, and without a word", async () => {
+    const edited = withTickets();
+    edited.rarities[0].rewardMul = 7;
+    const mod = await load(stamped({ contracts: edited }, STAMP));
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['contracts'], setAside: [] });
+    expect(mod.content.contracts.rarities[0].rewardMul).toBe(7);
+    noTicket(mod.content.contracts);
+    noTicket(mod.sourceContent.contracts);
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it('is no edit at all when all it changed was a ticket field', async () => {
+    const edited = withTickets();
+    (edited.templates[0] as unknown as Table).tickets = 9;
+    const mod = await load(stamped({ contracts: edited }, STAMP));
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(mod.contentIsCustom()).toBe(false);
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it("is stored under today's stamp by the next Apply", async () => {
+    const edited = withTickets();
+    edited.cancelFine = 0.5;
+    const mod = await load(stamped({ contracts: edited }, STAMP));
+    const draft = clone(mod.sourceContent);
+    expect(mod.validateContent(draft)).toEqual([]);
+    expect(Object.keys(mod.changedTables(draft))).toEqual(['contracts']);
+    expect(mod.writeContentOverrides(mod.changedTables(draft))).toBe(true);
+    const stored = localStorage.getItem(KEY)!;
+    noTicket(stored);
+    expect(JSON.parse(stored)).toEqual(stamped({ contracts: draft.contracts }));
+  });
+
+  it('still answers to validation: a broken edit is set aside as invalid', async () => {
+    const edited = withTickets();
+    (edited.rarities[0] as unknown as Table).weight = 'heavy';
+    const mod = await load(stamped({ contracts: edited }, STAMP));
+    const { applied, setAside } = mod.contentOverrideReport();
+    expect(applied).toEqual([]);
+    expect(setAside.map((s) => [s.key, s.reason])).toEqual([['contracts', 'invalid']]);
+  });
+
+  it('is stale as before when it was made from an older table than that', async () => {
+    const mod = await load(stamped({ contracts: withTickets() }, '16aa0709'));
+    const { applied, setAside } = mod.contentOverrideReport();
+    expect(applied).toEqual([]);
+    expect(setAside.map((s) => [s.key, s.reason])).toEqual([['contracts', 'stale']]);
+  });
+
+  it('goes stale like any other edit once the shipped table changes again', async () => {
+    const changed = clone(shipped.DEFAULT_CONTENT.contracts);
+    changed.failFine += 1;
+    vi.doMock('./contracts.json', () => ({ default: changed }));
+    try {
+      const edited = withTickets();
+      edited.cancelFine = 0.5;
+      const mod = await load(stamped({ contracts: edited }, STAMP));
+      const { applied, setAside } = mod.contentOverrideReport();
+      expect(applied).toEqual([]);
+      expect(setAside.map((s) => [s.key, s.reason])).toEqual([['contracts', 'stale']]);
+      expect(mod.content.contracts.cancelFine).toBe(changed.cancelFine);
+      expect(warnedAbout('contracts')).toBe(true);
+    } finally {
+      vi.doUnmock('./contracts.json');
+    }
+  });
+
+  it('in the old whole-bundle format: an edit converts without the ticket fields', async () => {
+    const edited = withTickets();
+    edited.cancelFine = 0.5;
+    const mod = await load(oldBundle((b) => (b.contracts = edited)));
+    expect(mod.contentOverrideReport().applied).toEqual(['contracts']);
+    expect(mod.content.contracts.cancelFine).toBe(0.5);
+    noTicket(mod.content.contracts);
+    noTicket(localStorage.getItem(KEY));
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it('in the old whole-bundle format: the table as it shipped is an untouched copy', async () => {
+    const mod = await load(oldBundle((b) => (b.contracts = withTickets())));
+    expect(mod.contentOverrideReport()).toEqual({ applied: [], setAside: [] });
+    expect(mod.content).toEqual(shipped.content);
+  });
+});
+
+describe('the list of past shipped tables', () => {
+  it('hashes a shipped table to the stamp it is stored under, whatever load derived from it', () => {
+    for (const k of shipped.CONTENT_KEYS) {
+      expect(shipped.tableHash(k, shipped.DEFAULT_CONTENT[k]), k).toBe(shipped.contentStamp(k));
+      expect(shipped.tableHash(k, shipped.content[k]), k).toBe(shipped.contentStamp(k));
+    }
+    expect(shipped.content.wagons.some((w) => w.accepts?.length)).toBe(true);
+  });
+
+  it('holds at least one version of every table, each a unique eight-digit hex hash', () => {
+    expect(Object.keys(PAST_SHIPPED).sort()).toEqual([...shipped.CONTENT_KEYS].sort());
+    for (const k of shipped.CONTENT_KEYS) {
+      expect(PAST_SHIPPED[k].length, k).toBeGreaterThan(0);
+      for (const h of PAST_SHIPPED[k]) expect(h, k).toMatch(/^[0-9a-f]{8}$/);
+      expect(new Set(PAST_SHIPPED[k]).size, k).toBe(PAST_SHIPPED[k].length);
+    }
+  });
+
+  it('is frozen', () => {
+    expect(Object.isFrozen(PAST_SHIPPED)).toBe(true);
+    for (const k of shipped.CONTENT_KEYS) expect(Object.isFrozen(PAST_SHIPPED[k]), k).toBe(true);
+  });
+});
+
+describe('writing overrides', () => {
+  it('stores only the changed tables, each with the current stamp', () => {
+    const draft = clone(shipped.content);
+    draft.locomotives[0].speed += 1;
+    expect(shipped.changedTables(draft)).toEqual({ locomotives: draft.locomotives });
+    expect(shipped.writeContentOverrides(draft)).toBe(true);
+    expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual({
+      format: 2,
+      tables: {
+        locomotives: { stamp: shipped.contentStamp('locomotives'), data: draft.locomotives },
+      },
+    });
+  });
+
+  it('takes no notice of derived wagon accept lists', () => {
+    const draft = clone(shipped.content);
+    expect(draft.wagons.some((w) => w.accepts?.length)).toBe(true);
+    expect(shipped.changedTables(draft)).toEqual({});
+  });
+
+  it('applies what it wrote on the next load', async () => {
+    const draft = clone(shipped.content);
+    draft.wagons[0].capacity += 5;
+    shipped.writeContentOverrides(draft);
+    const mod = await load(localStorage.getItem(KEY)!);
+    expect(mod.contentOverrideReport()).toEqual({ applied: ['wagons'], setAside: [] });
+    expect(mod.content.wagons).toEqual(draft.wagons);
+  });
+
+  it('clears the stored value when nothing differs from the shipped tables', async () => {
+    const mod = await load(stamped({ locomotives: editedLocomotives() }, '00000000'));
+    expect(mod.writeContentOverrides(clone(mod.content))).toBe(true);
+    expect(localStorage.getItem(KEY)).toBeNull();
+    expect(mod.readContentOverrides()).toBeNull();
+  });
+
+  it('reads back the stored tables whether or not they applied', async () => {
+    const locos = editedLocomotives();
+    const mod = await load(stamped({ locomotives: locos }, '00000000'));
+    expect(mod.readContentOverrides()).toEqual({ locomotives: locos });
+  });
+});

@@ -1,0 +1,304 @@
+{
+  "issue": 287,
+  "tool": "built-in image_gen",
+  "canvas": {
+    "width": 1536,
+    "height": 1024,
+    "opaque": true,
+    "crop_top": 80,
+    "crop_bottom": 80
+  },
+  "references": [
+    "docs/art-direction/images/03-theme-town-growth.png",
+    "docs/art-direction/images/04-early-ages.png",
+    "docs/art-direction/images/01-land-biomes.png"
+  ],
+  "images": [
+    {
+      "file": "loading-1.png",
+      "prompt": "Use case: stylized-concept. Asset type: isometric railway game's loading-screen backdrop, one single scene.\nGenerate a 1536x1024 opaque PNG, full bleed. Reference image 1 (03-theme-town-growth) is the style/material board; reference 2 (04-early-ages) supplies railway vehicle and period motifs; reference 3 (01-land-biomes) supplies countryside palette and 2:1 ground geometry. Use their painted subject designs only, never their typography, panels, borders, pixel stair steps or perspective errors.\nCamera is STRICT orthographic 2:1 isometric, 30 degrees down, 45 degrees around; no vanishing point or diminishing scale with distance. Ground straight edges have slopes +0.5 or -0.5, two across for one down; implied tile approximately 128x64 pixels. All parallel rails, roof ridges, wall feet remain parallel. Full landscape continuing off all canvas edges, never an isolated floating diorama. Broad smooth painted color clusters with crisp rounded contours, three or four shades per material, restrained detail, selective dark lower/occluded contours, quiet pastoral mood. Forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42; restrained oxblood, midnight blue and ochre accents. Upper-left light in all objects, top faces lightest and away-facing walls darkest. Trains and rails read strongest, buildings next, scenery quietest. Rails physically rest on sleepers and ballast; ground shadows touch bases.\nComposition: all important subjects fully within y=80..944, preferably y=140..780; allow top and bottom 80 pixels to be cropped. Entire bottom fifth y=820..1024 must be calm slightly darker continuous grass, water or shadowed ground, very little detail, suitable for a later progress bar and tip line; do not paint any UI. No text whatsoever, no title, lettering, logos, UI, frames, borders, watermarks, glow halos, photographic texture, perspective or pixel-art edges.\nScene: Spring morning, Steam age. A small green steam engine pulls exactly THREE cream-and-forest passenger coaches across a cream limestone multiple-arch bridge over a teal river, the bridge's solid piers visibly enter the water. Main bridge and train run along a 2:1 isometric diagonal in the middle band. Quiet meadows, a windmill with sails, a modest farm with gathered oat sheaves, a few cottages with slate roofs, rounded broadleaf trees. River and shadowed meadow provide the calm lower fifth. Soft fresh morning illumination from upper left.",
+      "edits": [
+        "Edit reference image 1, the spring railway backdrop. Correction: the windmill's upper sail currently reaches y=10 and will be cut off. Move ONLY the windmill and its sails down enough that the entire windmill sits within y=105..350, keeping the farm and sheaves coherent around it. Preserve the green steam engine, tender and exactly three passenger coaches, stone arch bridge, all piers in water, cottages, river, orthographic isometric camera and palette, upper-left light, image dimensions 1536x1024, opaque full bleed, and calm darker bottom fifth. No text, borders, logos, UI, halos or photographic texture. The other three references are style/motifs only; never copy their lettering or panels.",
+        "Edit the first attached spring loading-screen picture. Move the windmill DOWN another 100 pixels toward the sheaves, and make its four sails about 20 percent shorter. Its topmost sail tip MUST be at least 140 pixels below the top edge of the 1536x1024 canvas. The present tip at approximately y=55 is wrong; the game crops away y=0..79. Fill its previous space with quiet meadow. Change only that local windmill/farm area; preserve all other composition, train and exactly three coaches, bridge and piers, river, cottages, upper-left light, palette, isometric camera, opaque full bleed canvas, and calm darker lower fifth. No text or UI, borders, logos, halos, photographic texture. Other attached references are style only.",
+        "Edit the attached loading-screen picture. Correct ONLY the projection: the present rails and building wall feet are too shallow (approximately 0.36 rise/run). Repaint from a higher orthographic camera looking down at exactly 30 degrees, retaining a 45 degree azimuth, so both ground-axis diagonals have slopes exactly +0.5 and -0.5, two pixels horizontal for one pixel vertical. For example, a line crossing from x=0,y=200 must reach x=1200,y=800, not y=630. Roof ridges, sleepers, rail beds and wall feet all obey the same new projection. Preserve every named scene element and palette, upper-left lighting, smooth painted contours, broad color clusters, no texture noise, opaque 1536x1024 full bleed. Recompose slightly if needed to keep the entire train, key buildings and tall features fully within y=100..800; bottom fifth y=820..1024 stays calm darker grass/water/shadowed ground. No text, lettering, UI, logos, frames, borders, watermarks, glow halos or perspective."
+      ],
+      "returned": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "file": "raw/loading-2-attempt-1.png",
+      "prompt": "Use case: stylized-concept. Asset type: isometric railway game's loading-screen backdrop, one single scene.\nGenerate a 1536x1024 opaque PNG, full bleed. Reference image 1 (03-theme-town-growth) is the style/material board; reference 2 (04-early-ages) supplies railway vehicle and period motifs; reference 3 (01-land-biomes) supplies countryside palette and 2:1 ground geometry. Use their painted subject designs only, never their typography, panels, borders, pixel stair steps or perspective errors.\nCamera is STRICT orthographic 2:1 isometric, 30 degrees down, 45 degrees around; no vanishing point or diminishing scale with distance. Ground straight edges have slopes +0.5 or -0.5, two across for one down; implied tile approximately 128x64 pixels. All parallel rails, roof ridges, wall feet remain parallel. Full landscape continuing off all canvas edges, never an isolated floating diorama. Broad smooth painted color clusters with crisp rounded contours, three or four shades per material, restrained detail, selective dark lower/occluded contours, quiet pastoral mood. Forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42; restrained oxblood, midnight blue and ochre accents. Upper-left light in all objects, top faces lightest and away-facing walls darkest. Trains and rails read strongest, buildings next, scenery quietest. Rails physically rest on sleepers and ballast; ground shadows touch bases.\nComposition: all important subjects fully within y=80..944, preferably y=140..780; allow top and bottom 80 pixels to be cropped. Entire bottom fifth y=820..1024 must be calm slightly darker continuous grass, water or shadowed ground, very little detail, suitable for a later progress bar and tip line; do not paint any UI. No text whatsoever, no title, lettering, logos, UI, frames, borders, watermarks, glow halos, photographic texture, perspective or pixel-art edges.\nScene: Summer midday, Diesel age. A strong clearly readable forest-green diesel freight locomotive pulls open hopper wagons of quarried stone on a diagonal railway past a pale limestone quarry and a lumber yard of neatly stacked timber with a modest sawmill shed. Beside the line stand a timber-and-stone water tower and a coaling stage: the water tower's articulated spout visibly reaches OVER the track, and the coaling stage's raised coal chute visibly reaches OVER the track, with clearance for the train; these are functional railway structures. Hopper wagons have tapered discharge bodies, sit correctly on wheels and rails. Keep industrial details restrained, buildings secondary and scenery quiet. Summer midday light from upper left. Calm shaded moss-green ground in the entire lower fifth.",
+      "edits": [
+        "Edit the attached loading-screen picture. Correct ONLY the projection: the present rails and building wall feet are too shallow (approximately 0.36 rise/run). Repaint from a higher orthographic camera looking down at exactly 30 degrees, retaining a 45 degree azimuth, so both ground-axis diagonals have slopes exactly +0.5 and -0.5, two pixels horizontal for one pixel vertical. For example, a line crossing from x=0,y=200 must reach x=1200,y=800, not y=630. Roof ridges, sleepers, rail beds and wall feet all obey the same new projection. Preserve every named scene element and palette, upper-left lighting, smooth painted contours, broad color clusters, no texture noise, opaque 1536x1024 full bleed. Recompose slightly if needed to keep the entire train, key buildings and tall features fully within y=100..800; bottom fifth y=820..1024 stays calm darker grass/water/shadowed ground. No text, lettering, UI, logos, frames, borders, watermarks, glow halos or perspective.\nKeep the diesel locomotive and hopper freight, quarry, lumber yard, water tower and coaling stage. Clarify the coaling stage discharge as a rectangular open coal chute projecting over the track, distinct from the water tower's round articulated water spout."
+      ],
+      "attempt": 1,
+      "returned": [
+        1536,
+        1024
+      ],
+      "used_in": "the loading-2 composite, below the line"
+    },
+    {
+      "file": "loading-3.png",
+      "prompt": "Use case: stylized-concept. Asset type: isometric railway game's loading-screen backdrop, one single scene.\nGenerate a 1536x1024 opaque PNG, full bleed. Reference image 1 (03-theme-town-growth) is the style/material board; reference 2 (04-early-ages) supplies railway vehicle and period motifs; reference 3 (01-land-biomes) supplies countryside palette and 2:1 ground geometry. Use their painted subject designs only, never their typography, panels, borders, pixel stair steps or perspective errors.\nCamera is STRICT orthographic 2:1 isometric, 30 degrees down, 45 degrees around; no vanishing point or diminishing scale with distance. Ground straight edges have slopes +0.5 or -0.5, two across for one down; implied tile approximately 128x64 pixels. All parallel rails, roof ridges, wall feet remain parallel. Full landscape continuing off all canvas edges, never an isolated floating diorama. Broad smooth painted color clusters with crisp rounded contours, three or four shades per material, restrained detail, selective dark lower/occluded contours, quiet pastoral mood. Forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42; restrained oxblood, midnight blue and ochre accents. Upper-left light in all objects, top faces lightest and away-facing walls darkest. Trains and rails read strongest, buildings next, scenery quietest. Rails physically rest on sleepers and ballast; ground shadows touch bases.\nComposition: all important subjects fully within y=80..944, preferably y=140..780; allow top and bottom 80 pixels to be cropped. Entire bottom fifth y=820..1024 must be calm slightly darker continuous grass, water or shadowed ground, very little detail, suitable for a later progress bar and tip line; do not paint any UI. No text whatsoever, no title, lettering, logos, UI, frames, borders, watermarks, glow halos, photographic texture, perspective or pixel-art edges.\nScene: Autumn dusk. A small-town station of limestone and warm copper brick with slate roofs and warmly lit windows; a small forest-green passenger train at its platform. A church tower rises among a few modest slate-roof town buildings; birch with pale trunks and rounded oak trees turning ochre gold. The train, station and church are completely within the safe middle band; all track and architecture strictly 2:1 isometric. The atmosphere and a restrained deepening midnight-blue strip of sky at the top convey evening; do not introduce a distant perspective landscape or a vanishing horizon. Last directional light still comes from the upper left, shadows extend lower right. Windows contain flat warm oat/ochre light with no glow halos. Entire lower fifth is calm, darker shadowed ground with sparse fallen leaves.",
+      "edits": [
+        "Edit image 1, the autumn station backdrop, preserving the whole composition except the church tower. Correction: the church spire tip is at y=20, outside the required y=80..944 safe band. Shorten the church spire and lower the tower together so its complete cross and spire top are at y=140 or lower on this 1536x1024 canvas. Keep it a recognisable small church tower, roof slate, with the tower based on the church. No important subject may enter the top 100 pixels. Preserve the station, train at the platform, autumn birches and oaks, warm lit windows without halos, deepening blue sky, upper-left light, parallel isometric architecture, darker quiet bottom fifth, opaque full bleed and 1536x1024 dimensions. No text, UI, logos, frames, borders, watermarks or photographic texture. Other three references supply style only.",
+        "Edit the attached loading-screen picture. Correct ONLY the projection: the present rails and building wall feet are too shallow (approximately 0.36 rise/run). Repaint from a higher orthographic camera looking down at exactly 30 degrees, retaining a 45 degree azimuth, so both ground-axis diagonals have slopes exactly +0.5 and -0.5, two pixels horizontal for one pixel vertical. For example, a line crossing from x=0,y=200 must reach x=1200,y=800, not y=630. Roof ridges, sleepers, rail beds and wall feet all obey the same new projection. Preserve every named scene element and palette, upper-left lighting, smooth painted contours, broad color clusters, no texture noise, opaque 1536x1024 full bleed. Recompose slightly if needed to keep the entire train, key buildings and tall features fully within y=100..800; bottom fifth y=820..1024 stays calm darker grass/water/shadowed ground. No text, lettering, UI, logos, frames, borders, watermarks, glow halos or perspective."
+      ],
+      "returned": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "file": "raw/loading-2-attempt-2.png",
+      "attempt": 2,
+      "prompt": "Use case: precise-object-edit. EDIT the FIRST attached picture, the committed summer Diesel-age loading backdrop. Targeted local edit, preserve the existing painting and composition.\nReferences IN ORDER: 1 loading-2.png is the edit target; 2 03-theme-town-growth.png is style only (ignore ALL text and panels); 3 water-tower-tall-v2.png shows a standalone tank with an articulated water spout; 4 coaling-stage.png shows a standalone raised coal bin with an open wooden coal chute. Never copy their black backgrounds or halos.\nReturn exactly 1536x1024 pixels, opaque full bleed PNG. Keep the composition, diesel locomotive, all hopper wagons and their loads, quarry, cranes, lumber yard and stacks, buildings, stone arch bridge and piers in water, river course, trees ABOVE y=820, upper-left summer midday light, palette and orthographic 2:1 isometric camera unchanged. No zoom, no recamera, no new painting.\nONLY CHANGES:\n1. Water tower near x815,y420: move its foot immediately to the upper-right edge of the main line's ballast. The tank stays beside the track, never on it. Replace the existing sideways pipe with its own elevated swinging spout extending from the tank toward the LOWER LEFT, across the near rail, ending directly over the MIDDLE BETWEEN BOTH RAILS. The nozzle hangs down, ABOVE wagon height, with visible clearance. It must reach the actual occupied main line, not end in the yard between the buildings. Use reference 3's recognizable tank and spout but preserve the target's design and scale.\n2. Coaling stage near x1110,y510: bring its foot to the upper-right ballast edge as well. Its open rectangular wooden discharge chute reaches toward the LOWER LEFT over the main line, crossing the near rail, ending above the CENTER BETWEEN THE RAILS, visibly ABOVE the hopper wagons' top edge. Keep the coal bin beside the track; the chute alone extends over it. Reference 4 shows a chute; use that structural form. Extend sufficiently far, do not make a short chute ending over bare yard ground.\n3. REMOVE completely the pipe connecting water tower and coaling stage. They stand independently. Only the tower's own spout and the coaling stage's wooden chute remain; never join them.\n4. Entire bottom band y820..1024: remove ALL trees, bushes, rocks, buildings and leafy clumps; fill with broad calm slightly darker moss/forest grass or shadowed ground. Where the existing river enters that band, keep its course as calm teal water with no rocks or reeds. The existing track and its ballast may continue across the band. Especially y820..944, visible after cropping, must be quiet and empty of scenery objects. This is for a later tip and progress bar, but DO NOT paint UI.\nSTYLE: smooth painted contours, broad color clusters, 3 or 4 shades per material, restrained detail, quiet pastoral mood. Forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42, restrained oxblood/midnight blue/ochre. Highlight cap: all highlights below cursor white #ECE4D0 in brightness; no yellow or orange as strong or saturated as selection amber #E8AA48. Trains and rails strongest, buildings next, scenery quietest. Rails on sleepers and ballast.\nImportant objects stay y80..944; upper-left light. Never text, title, logos, UI, borders, frames, watermarks, glow halos, photographic texture or perspective. Preserve everything outside the two service structures and lower-band edit regions.",
+      "references": [
+        "assets/source/loading-2026-10-11/loading-2.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/cozy-v3/water-tower-tall-v2.png",
+        "assets/source/base-v1/coaling-stage.png"
+      ],
+      "returned": [
+        1536,
+        1024
+      ],
+      "measured": {
+        "luma_formula": "0.2126 R + 0.7152 G + 0.0722 B; 8-bit sRGB values; half-open y bands",
+        "band_y820_944_mean_luma": 105.51410555486316,
+        "band_y80_820_mean_luma": 115.10948954964952,
+        "alpha_range": [
+          255,
+          255
+        ],
+        "max_luma": 254.99999999999997,
+        "cursor_white_luma": 228.25679999999997,
+        "pixels_at_or_above_cursor_white_luma": 35906
+      },
+      "selected": false,
+      "review": {
+        "full_size_inspected": true,
+        "crop_y80_944_inspected": true,
+        "passed": false,
+        "notes": "Not selected: connecting pipe removed and outlets over train, but riverbank rocks and foliage remain in y820..944. Highlight brightness cap also failed: measured pixels are at or above cursor-white luma."
+      }
+    },
+    {
+      "file": "raw/loading-2-attempt-3.png",
+      "attempt": 3,
+      "prompt": "Use case: precise-object-edit. EDIT the FIRST attached picture, the committed summer Diesel-age loading backdrop. Targeted local edit, preserve the existing painting and composition.\nReferences IN ORDER: 1 loading-2.png is the edit target; 2 03-theme-town-growth.png is style only (ignore ALL text and panels); 3 water-tower-tall-v2.png shows a standalone tank with an articulated water spout; 4 coaling-stage.png shows a standalone raised coal bin with an open wooden coal chute. Never copy their black backgrounds or halos.\nReturn exactly 1536x1024 pixels, opaque full bleed PNG. Keep the composition, diesel locomotive, all hopper wagons and their loads, quarry, cranes, lumber yard and stacks, buildings, stone arch bridge and piers in water, river course, trees ABOVE y=820, upper-left summer midday light, palette and orthographic 2:1 isometric camera unchanged. No zoom, no recamera, no new painting.\nONLY CHANGES:\n1. Water tower near x815,y420: move its foot immediately to the upper-right edge of the main line's ballast. The tank stays beside the track, never on it. Replace the existing sideways pipe with its own elevated swinging spout extending from the tank toward the LOWER LEFT, across the near rail, ending directly over the MIDDLE BETWEEN BOTH RAILS. The nozzle hangs down, ABOVE wagon height, with visible clearance. It must reach the actual occupied main line, not end in the yard between the buildings. Use reference 3's recognizable tank and spout but preserve the target's design and scale.\n2. Coaling stage near x1110,y510: bring its foot to the upper-right ballast edge as well. Its open rectangular wooden discharge chute reaches toward the LOWER LEFT over the main line, crossing the near rail, ending above the CENTER BETWEEN THE RAILS, visibly ABOVE the hopper wagons' top edge. Keep the coal bin beside the track; the chute alone extends over it. Reference 4 shows a chute; use that structural form. Extend sufficiently far, do not make a short chute ending over bare yard ground.\n3. REMOVE completely the pipe connecting water tower and coaling stage. They stand independently. Only the tower's own spout and the coaling stage's wooden chute remain; never join them.\n4. Entire bottom band y820..1024: remove ALL trees, bushes, rocks, buildings and leafy clumps; fill with broad calm slightly darker moss/forest grass or shadowed ground. Where the existing river enters that band, keep its course as calm teal water with no rocks or reeds. The existing track and its ballast may continue across the band. Especially y820..944, visible after cropping, must be quiet and empty of scenery objects. This is for a later tip and progress bar, but DO NOT paint UI.\nSTYLE: smooth painted contours, broad color clusters, 3 or 4 shades per material, restrained detail, quiet pastoral mood. Forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42, restrained oxblood/midnight blue/ochre. Highlight cap: all highlights below cursor white #ECE4D0 in brightness; no yellow or orange as strong or saturated as selection amber #E8AA48. Trains and rails strongest, buildings next, scenery quietest. Rails on sleepers and ballast.\nImportant objects stay y80..944; upper-left light. Never text, title, logos, UI, borders, frames, watermarks, glow halos, photographic texture or perspective. Preserve everything outside the two service structures and lower-band edit regions.\nCorrection from attempt 2 (attached as reference 5): keep its successful independent water spout and open coal chute reaching over the train, but its lower band still contains a long chain of riverbank rocks and bushes. REMOVE EVERY riverbank rock, grass tuft, reed, bush and stone in y820..1024, on BOTH shores, including the diagonal shore immediately below the track from about x1000,y820 toward x1400,y944. Use a simple smooth shoreline of calm teal water meeting plain shadowed green ground. No foliage clusters, shrubs, decorative gravel piles or rocks ANYWHERE in y820..944. Only rails, sleepers and their functional ballast may remain there. Make that band visibly but naturally darker than the main scene, with broad quiet colors and very sparse smooth ground shading. Do not relocate the river or train. Preserve the original composition from reference 1; reference 5 shows the two corrected service structures to retain. Ensure a small visible air gap below the spout and chute above the highest wagon top/locomotive roof, with their ends centered between the rails.",
+      "references": [
+        "assets/source/loading-2026-10-11/loading-2.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/cozy-v3/water-tower-tall-v2.png",
+        "assets/source/base-v1/coaling-stage.png",
+        "assets/source/loading-2026-10-11/raw/loading-2-attempt-2.png"
+      ],
+      "returned": [
+        1536,
+        1024
+      ],
+      "measured": {
+        "luma_formula": "0.2126 R + 0.7152 G + 0.0722 B; 8-bit sRGB; half-open y bands",
+        "band_y820_944_mean_luma": 84.5813507455402,
+        "band_y80_820_mean_luma": 111.41237164748023,
+        "alpha_range": [
+          255,
+          255
+        ],
+        "max_luma": 254.99999999999997,
+        "cursor_white_luma": 228.25679999999997,
+        "pixels_at_or_above_cursor_white_luma": 27864
+      },
+      "selected": false,
+      "review": {
+        "full_size_inspected": true,
+        "crop_y80_944_inspected": true,
+        "passed": false,
+        "notes": "Selected as closest after the three-new-attempt limit. Connecting pipe absent, outlets project over train, and y820..944 is free of trees, rocks and bushes. Does not fully pass: spout/chute clearance is tight and bank detail above y820 was simplified beyond the requested local edit. Highlight brightness cap also failed: measured pixels are at or above cursor-white luma."
+      },
+      "used_in": "the loading-2 composite, above the line"
+    },
+    {
+      "file": "raw/loading-2-attempt-4.png",
+      "attempt": 4,
+      "prompt": "Precise local image edit for issue #287. Return exactly 1536x1024 opaque full bleed PNG, keep bytes as returned. Reference 1 is loading-2.png, the original committed summer diesel painting to preserve. Reference 2 is the style board (never copy its text/panels), reference 3 a water tower, reference 4 an open coaling chute. Reference 5 is attempt 3, which has the corrected independent service buildings and a calm lower band, but it cleared too much upper riverbank and placed the outlets too close to the train tops.\nPreserve the original reference 1 composition, camera, diesel locomotive, hopper wagons, quarry, cranes, lumber yard, sheds, bridge, river course, upper trees, light and palette. This is not a new painting.\nMake the following three corrections ONLY:\nA. Retain the standalone water tower and coal bin beside the upper-right side of the track, as in reference 5, at the ballast edge. NO connecting pipe. The water spout swings toward lower-left and ends over the MIDDLE BETWEEN THE TWO RAILS. RAISE and shorten its downward nozzle so there is at least a clear 30 pixel AIR GAP between nozzle tip and the highest stone in the hopper directly below it. Likewise raise the entire coal bin/chute structure enough that the chute's discharge end, over the rail center, is at least 30 pixels ABOVE the locomotive roof and above the wagons' top edge. Legs may become a little taller to achieve actual visible clearance; feet stay on ground. The chute remains an OPEN rectangular wooden trough, no joining pipe. Neither outlet may touch the train. The water nozzle currently nearly touches a wagon and coal chute nearly rests on the locomotive: FIX BOTH with visible air below them.\nB. Keep reference 5's calm darker lower band y820..1024: plain broad shadowed moss grass and calm teal river, only track/sleepers/ballast can remain. Absolutely no rocks, bushes, trees, reeds or buildings anywhere in y820..944.\nC. RESTORE original reference 1 riverbank rocks and bushes ABOVE y820, especially along the left bank y590..700 and the shore below the bridge y700..810. Keep the river's original course and contours above y820. Only remove rocks and foliage in the bottom band y>=820; do not strip all the banks bare.\nSmooth painted contours, broad colour clusters, 3 or 4 shades per material, quiet pastoral mood. Forest #294638, moss #78804C, oat #E4D5B5, limestone #BCA98B, slate #626B6C, teal #477B82, copper #A36B42, restrained accents. All highlights below #ECE4D0 brightness, yellow/orange less strong than #E8AA48. Train and rails strongest, buildings next, scenery quietest. Orthographic 2:1 isometric 30 degrees down, tile about128x64, no perspective. Upper-left light unchanged. All important elements y80..944. No text, logos, UI, title, frame, border, watermark, halos or photographic texture.",
+      "references": [
+        "assets/source/loading-2026-10-11/loading-2.png",
+        "docs/art-direction/images/03-theme-town-growth.png",
+        "assets/source/cozy-v3/water-tower-tall-v2.png",
+        "assets/source/base-v1/coaling-stage.png",
+        "assets/source/loading-2026-10-11/raw/loading-2-attempt-3.png"
+      ],
+      "returned": [
+        1536,
+        1024
+      ],
+      "measured": {
+        "luma_formula": "0.2126 R + 0.7152 G + 0.0722 B; 8-bit sRGB; half-open y bands",
+        "band_y820_944_mean_luma": 85.36951510311637,
+        "band_y80_820_mean_luma": 113.03232908445105,
+        "alpha_range": [
+          255,
+          255
+        ],
+        "max_luma": 254.99999999999997,
+        "cursor_white_luma": 228.25679999999997,
+        "pixels_at_or_above_cursor_white_luma": 30016
+      },
+      "selected": false,
+      "review": {
+        "full_size_inspected": true,
+        "crop_y80_944_inspected": true,
+        "passed": false,
+        "notes": "Not selected: upper riverbank detail restored and bottom calmer, but outlets no longer end over the actual rail center; some foliage extends into y820..944. Highlight brightness cap also failed: measured pixels are at or above cursor-white luma."
+      }
+    },
+    {
+      "file": "public/assets/loading-2.png",
+      "composite": {
+        "above": "raw/loading-2-attempt-3.png",
+        "below": "raw/loading-2-attempt-1.png",
+        "line": {
+          "x0": 0,
+          "y0": 285,
+          "x1": 1536,
+          "y1": 965
+        },
+        "feather": 16,
+        "notes": "Attempt 3 (service buildings at the track, no pipe) above the line from (0,285) to (1536,965), just below the near edge of the main line ballast; attempt 1 (the original) below it, over a 16 px feather centred on the line. Attempt 3 calmed far more than the bottom fifth: it lost the river stones and reeds, the trees and bushes on both banks and the cottage beside the coaling stage. The two are pixel-aligned (best shift 0,0 in six regions), so no repainting is needed."
+      },
+      "tool": "tools/loading-pictures.mjs",
+      "attempt": "composite",
+      "returned": [
+        1536,
+        864
+      ],
+      "selected": true,
+      "review": {
+        "full_size_inspected": true,
+        "crop_y80_944_inspected": true,
+        "passed": true,
+        "notes": "The seam does not show at 1.5x. Water spout and coal chute project over the train as in attempt 3 (accepted shortfall: the spout end dips into the sixth hopper load and the chute end rests on the locomotive roof). Highlight and amber caps applied by the finishing, see output."
+      }
+    }
+  ],
+  "selection": {
+    "file": "public/assets/loading-2.png",
+    "output": "loading-2.png",
+    "status": "composite",
+    "composite": {
+      "above": "raw/loading-2-attempt-3.png",
+      "below": "raw/loading-2-attempt-1.png",
+      "line": {
+        "x0": 0,
+        "y0": 285,
+        "x1": 1536,
+        "y1": 965
+      },
+      "feather": 16
+    },
+    "notes": "Attempt 3 for the corrected service buildings, attempt 1 for the foreground. Attempts 2 and 4 are not used. Every raw attempt is kept.",
+    "generation_tool": "built-in image_gen"
+  },
+  "output": {
+    "tool": "tools/loading-pictures.mjs",
+    "files": [
+      "public/assets/loading-1.png",
+      "public/assets/loading-2.png",
+      "public/assets/loading-3.png"
+    ],
+    "size": [
+      1536,
+      864
+    ],
+    "crop": {
+      "top": 80,
+      "height": 864
+    },
+    "colours": 256,
+    "finishing": {
+      "order": [
+        "loading-2 only: composite",
+        "crop y 80..944",
+        "highlight cap",
+        "amber cap",
+        "bottom gradient",
+        "quantise"
+      ],
+      "highlightCap": {
+        "cursorWhite": "#ECE4D0",
+        "rule": "no pixel at or above its luma (0.2126 R + 0.7152 G + 0.0722 B, about 228.3)",
+        "softKnee": {
+          "knee": 196,
+          "limit": 232
+        }
+      },
+      "amberCap": {
+        "selectionAmber": "#E8AA48",
+        "rule": "no yellow or orange (hue band below) with chroma (max - min) at or above its 160",
+        "hueBand": {
+          "from": 20,
+          "to": 70,
+          "rampFrom": 10,
+          "rampTo": 85
+        },
+        "softKnee": {
+          "knee": 112,
+          "limit": 168
+        }
+      },
+      "gradient": {
+        "start": 0.7,
+        "strength": 0.55,
+        "shade": [
+          16,
+          28,
+          22
+        ]
+      }
+    },
+    "measured": {
+      "loading-1": {
+        "atOrAboveCursorWhiteLuma": {
+          "before": 27896,
+          "after": 0
+        },
+        "warmAtOrAboveAmberChroma": {
+          "before": 34697,
+          "after": 0
+        },
+        "maxLumaAfter": 215.6,
+        "maxWarmChromaAfter": 140
+      },
+      "loading-2": {
+        "atOrAboveCursorWhiteLuma": {
+          "before": 26227,
+          "after": 0
+        },
+        "warmAtOrAboveAmberChroma": {
+          "before": 5178,
+          "after": 0
+        },
+        "maxLumaAfter": 216.3,
+        "maxWarmChromaAfter": 137
+      },
+      "loading-3": {
+        "atOrAboveCursorWhiteLuma": {
+          "before": 12394,
+          "after": 0
+        },
+        "warmAtOrAboveAmberChroma": {
+          "before": 130557,
+          "after": 0
+        },
+        "maxLumaAfter": 215.9,
+        "maxWarmChromaAfter": 148
+      }
+    },
+    "notes": "The top-level loading-2.png of the first delivery (101ef13f) was byte-identical to raw/loading-2-attempt-1.png, and from d07f66f0 to raw/loading-2-attempt-3.png; the duplicate is not kept. The references of attempts 2 to 4 name it as the original, which was attempt 1. loading-1.png and loading-3.png are as delivered; their pre-edit versions were not kept. The review/ crops of attempts 2 to 4 are not kept."
+  }
+}

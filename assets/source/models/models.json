@@ -1,0 +1,319 @@
+{
+ "farm": {
+  "file": "farm.png",
+  "ax": 126.42,
+  "ay": 188.39,
+  "frames": [
+   "structures/farm_1",
+   "structures/farm_2",
+   "structures/farm_3",
+   "structures/farm_4",
+   "structures/farm_5"
+  ],
+  "scale": 1.0282,
+  "fit": 0.8619,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "lumber": {
+  "file": "lumber.png",
+  "ax": 80.07,
+  "ay": 170.63,
+  "frames": [
+   "structures/lumber_1",
+   "structures/lumber_2",
+   "structures/lumber_3",
+   "structures/lumber_4",
+   "structures/lumber_5"
+  ],
+  "scale": 1.1802,
+  "fit": 1.0927,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "quarry": {
+  "file": "quarry.png",
+  "ax": 100.09,
+  "ay": 177.08,
+  "frames": [
+   "structures/quarry_1",
+   "structures/quarry_2",
+   "structures/quarry_3",
+   "structures/quarry_4",
+   "structures/quarry_5"
+  ],
+  "scale": 0.9341,
+  "fit": 0.85,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "town": {
+  "file": "town.png",
+  "ax": 153.79,
+  "ay": 289.53,
+  "frames": [
+   "structures/town_1",
+   "structures/town_2",
+   "structures/town_3",
+   "structures/town_4",
+   "structures/town_5"
+  ],
+  "scale": 0.9562,
+  "fit": 0.85,
+  "span": [
+   2,
+   1
+  ]
+ },
+ "warehouse": {
+  "file": "warehouse.png",
+  "ax": 186.74,
+  "ay": 211.63,
+  "frames": [
+   "structures/warehouse_1",
+   "structures/warehouse_2",
+   "structures/warehouse_3",
+   "structures/warehouse_4",
+   "structures/warehouse_5"
+  ],
+  "scale": 0.9809,
+  "fit": 0.85,
+  "span": [
+   2,
+   1
+  ]
+ },
+ "station": {
+  "file": "station.png",
+  "ax": 116.88,
+  "ay": 168.25,
+  "frames": [
+   "structures/station_1",
+   "structures/station_2",
+   "structures/station_3",
+   "structures/station_4",
+   "structures/station_5"
+  ],
+  "scale": 1.1277,
+  "fit": 0.8872,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "depot-r0": {
+  "file": "depot-r0.png",
+  "ax": 238.78,
+  "ay": 313.26,
+  "frames": [
+   "structures/depot_r0",
+   "structures/depot_r0_lv2",
+   "structures/depot_r0_lv3",
+   "structures/depot_r0_lv4",
+   "structures/depot_r0_lv5",
+   "structures/depot_1"
+  ],
+  "scale": 0.9927,
+  "fit": 1.0516,
+  "span": [
+   2,
+   2
+  ]
+ },
+ "depot-r1": {
+  "file": "depot-r1.png",
+  "ax": 219.69,
+  "ay": 284.73,
+  "frames": [
+   "structures/depot_r1",
+   "structures/depot_r1_lv2",
+   "structures/depot_r1_lv3",
+   "structures/depot_r1_lv4",
+   "structures/depot_r1_lv5"
+  ],
+  "scale": 0.9927,
+  "fit": 1.0516,
+  "span": [
+   2,
+   2
+  ]
+ },
+ "depot-r2": {
+  "file": "depot-r2.png",
+  "ax": 238.74,
+  "ay": 291.68,
+  "frames": [
+   "structures/depot_r0_r2",
+   "structures/depot_r0_lv2_r2",
+   "structures/depot_r0_lv3_r2",
+   "structures/depot_r0_lv4_r2",
+   "structures/depot_r0_lv5_r2"
+  ],
+  "scale": 0.9927,
+  "fit": 1.0516,
+  "span": [
+   2,
+   2
+  ]
+ },
+ "depot-r3": {
+  "file": "depot-r3.png",
+  "ax": 258.84,
+  "ay": 299.21,
+  "frames": [
+   "structures/depot_r1_r3",
+   "structures/depot_r1_lv2_r3",
+   "structures/depot_r1_lv3_r3",
+   "structures/depot_r1_lv4_r3",
+   "structures/depot_r1_lv5_r3"
+  ],
+  "scale": 0.9927,
+  "fit": 1.0516,
+  "span": [
+   2,
+   2
+  ]
+ },
+ "kiln": {
+  "file": "kiln.png",
+  "ax": 94.88,
+  "ay": 164.89,
+  "frames": [
+   "structures/kiln",
+   "structures/kiln_lv2",
+   "structures/kiln_lv3",
+   "structures/kiln_lv4"
+  ],
+  "scale": 1.0005,
+  "fit": 1.15,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "grinder": {
+  "file": "grinder.png",
+  "ax": 112.3,
+  "ay": 166.39,
+  "frames": [
+   "structures/grinder",
+   "structures/grinder_lv2",
+   "structures/grinder_lv3",
+   "structures/grinder_lv4"
+  ],
+  "scale": 0.9843,
+  "fit": 0.85,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "refinery": {
+  "file": "refinery.png",
+  "ax": 225.56,
+  "ay": 316.1,
+  "frames": [
+   "structures/refinery",
+   "structures/refinery_lv2",
+   "structures/refinery_lv3",
+   "structures/refinery_lv4"
+  ],
+  "scale": 1.912,
+  "fit": 0.8951,
+  "span": [
+   2,
+   2
+  ]
+ },
+ "power_plant": {
+  "file": "power_plant.png",
+  "ax": 317.39,
+  "ay": 334.67,
+  "frames": [
+   "structures/power_plant",
+   "structures/power_plant_lv2",
+   "structures/power_plant_lv3",
+   "structures/power_plant_lv4"
+  ],
+  "scale": 1.1352,
+  "fit": 1.0122,
+  "span": [
+   3,
+   2
+  ]
+ },
+ "substation": {
+  "file": "substation.png",
+  "ax": 71.64,
+  "ay": 150.79,
+  "frames": [
+   "structures/substation",
+   "structures/substation_lv2",
+   "structures/substation_lv3",
+   "structures/substation_lv4"
+  ],
+  "scale": 0.4098,
+  "fit": 0.8963,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "ironworks": {
+  "file": "ironworks.png",
+  "ax": 115.05,
+  "ay": 135.27,
+  "frames": [
+   "structures/ironworks",
+   "structures/ironworks_lv2",
+   "structures/ironworks_lv3",
+   "structures/ironworks_lv4"
+  ],
+  "scale": 0.5035,
+  "fit": 0.85,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "diesel_refinery": {
+  "file": "diesel_refinery.png",
+  "ax": 296.96,
+  "ay": 357.81,
+  "frames": [
+   "structures/diesel_refinery",
+   "structures/diesel_refinery_lv2",
+   "structures/diesel_refinery_lv3",
+   "structures/diesel_refinery_lv4"
+  ],
+  "scale": 1.4956,
+  "fit": 0.9103,
+  "span": [
+   3,
+   2
+  ]
+ },
+ "wire_mill": {
+  "file": "wire_mill.png",
+  "ax": 255.03,
+  "ay": 332.73,
+  "frames": [
+   "structures/wire_mill",
+   "structures/wire_mill_lv2",
+   "structures/wire_mill_lv3",
+   "structures/wire_mill_lv4"
+  ],
+  "scale": 1.1154,
+  "fit": 1.0206,
+  "span": [
+   2,
+   2
+  ]
+ }
+}

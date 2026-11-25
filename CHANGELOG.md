@@ -2,7 +2,14 @@
 
 Terepasztal uses semantic versions from v0.6.0 on. Earlier work is mapped to versions after the
 fact; the git history keeps its original commit messages (rewriting merged history would break
-every clone), the pull requests were retitled to carry the version. Tags: `git tag -l`.
+every clone), the pull requests were retitled to carry the version.
+
+Only `v0.1.0` is tagged today. The tag stands on `83a4c68`, the merge of pull request #6 in `main`,
+which is later than where the table's v0.1.0 row ends (`dde51b7`): the tag's history also holds the
+commits the table lists for v0.2.0 to v0.6.0 and the first v0.7.0 commits (`6a34390`, `31bda73`).
+v0.2.0 to v0.8.0 are labels given after the fact and have no tag. Every release from the next one
+on is tagged `vX.Y.Z` on its release pull request's merge commit (`docs/process/lifecycle.md`,
+step 9); `git ls-remote --tags origin` lists the tags that exist.
 
 | Version | Pull request                                                                                                                                                        | Commits                         | Summary                                                                                                                                                                                                                |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -54,10 +61,73 @@ Asset redesign to the art direction in `docs/art-direction/README.md`, plus the 
   file is missing the synthesized ambient loop takes over, so a build without it still has music.
 - Music and effects volume sliders in the title screen and the pause menu, alongside the existing
   settings screen sliders. They drive the live bus and travel with the settings.
+- All eight tracks play in every age with no set of its own. Pastoral Pulse opens the game once a
+  tab; a reload, a restart or a new game goes on with the shuffled rounds, not starting with what
+  played last.
+- A now-playing widget in the top bar, left of the weather: back, pause, forward and a rolling
+  title. Its pause holds the music alone.
+- An Audio screen of its own under Settings, in place of the Settings tab and the sliders in the
+  menus: Master over Music and Effects, Effects over Weather, Environment, UI, Building, Trains and
+  Events, each with a slider and a switch that keeps its level. Ambience now passes through
+  Effects; the defaults and the migration of an old settings file keep every sound as loud as it
+  was.
 
 Atlas frame counts (2,839), atlas dimensions and anchors are unchanged, generation cost is
 unchanged on the same machine, curve compatibility verdicts are byte-identical and map generation
 is untouched. Evidence and commands: `scratchpad/README.md`.
+
+### Local stores (replace the stockpile)
+
+- Goods are kept in local stores, not in one global stockpile: each town (its Townhouse holds 300 of
+  every good, and every Warehouse in the town's reach adds 1,000 per level), each depot (3,000),
+  each stand-alone Warehouse (1,000 per level) and the power grid (batteries).
+- Trains on a schedule load and unload at a depot, a Warehouse or a Townhouse, out of and into its
+  store (a Townhouse's, and a Warehouse's in a town, is the town's), and load a harvester's goods
+  in a town out of the town store. That is how goods, the start stock too, reach a town or a
+  forward Warehouse. Freight trains never take goods out of a store: they collect from producers
+  that keep their own pile and take the goods to the nearest store with room, a depot, a Warehouse
+  or a Townhouse. The Freight tuning for the Warehouse pile before pickup is gone.
+- Building and every upgrade, a house's too, pay from the nearest store that holds all the
+  material, within 24 tiles of the spot; the build card names the store and says what it lacks.
+  Fuel buildings outside a town (coaling stage, water tower) fill trains from the nearest store
+  within 8 tiles.
+- Simple mode shares the stores on one rail network: a network is one place with one pool, named
+  after its towns. Full mode keeps every store alone.
+- Trains refuel at the stores. Residents eat at their town's store, the crews of stations and works
+  at their town's store or the nearest store in reach, and a train's crew pays for its food at the
+  next store it fills up at. A store whose residents or crews go short for ten seconds is in
+  famine: the stations and works it supplies make half as much, nobody moves into its town, and
+  the top bar says so while it shows that store. A train whose crew owes more than a day of food
+  runs slower.
+- A store that goes (its station pulled down, a Warehouse taken into a town) hands all its goods to
+  the town store that covers its place, else the nearest store, however far; goods are lost only
+  when no store is left.
+- The top bar shows the selected store (click its name to step through the stores; clicking a town,
+  depot or warehouse also selects it). The weekly flow colours and the Received / Spent card follow
+  the shown store. Crafting and the market use it too.
+- A new game's start stock waits in the start depot; a level's in its first depot, else its first
+  Warehouse's or town's store, else in the depot it is granted.
+- Old saves load without error: the old stockpile moves into the start depot (its famine does not),
+  and each warehouse keeps its own goods. Saves now carry a `stores` part in place of `stockpile`.
+- The `stockpileCap` tuning is gone; the depot, warehouse and Townhouse caps are tuned on their own,
+  and a change to a cap or a reach on the Tuning screen holds at once.
+
+### The gacha's leftovers go
+
+- Crafting replaced the gacha in v0.8.0; now the rest of it is gone: the Gacha screen, banners and
+  rates, pulls, the `gacha` content table and its Content editor tab.
+- Tickets are gone everywhere: the starting tickets and their tuning row, contract rewards, the
+  daily bonus, the age milestone, the debug panel's button, the level editor's field and the ticket
+  part of the refund for a save that held content the game no longer has. Nothing replaces them,
+  and contracts pay the same money. The Cheat row stays.
+- The title screen says "Rails, contracts and industry".
+- Saves are format v24. A v23 save loads without a note and lists as before: its gacha and tickets
+  are dropped and nothing refunds them. An older save is told only of its other steps.
+- A stored `gacha` table is passed over without a warning, a stored contracts edit keeps applying
+  without its ticket fields until the shipped table next changes, a bundle exported with them comes
+  in without them, and a level file with `start.tickets` loads and is written without it.
+- A vehicle no longer keeps duplicate points (`dupes`): nothing read them since copies stopped
+  merging, and the step from v23 drops them.
 
 ## v0.8.0
 

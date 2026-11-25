@@ -61,6 +61,25 @@ export const PAL = {
     [42, 80, 66],
     [86, 134, 106],
   ] as RGB[],
+  /**
+   * Ripe wheat, the oat family turned golder. Its brightest shade stays under the selection amber
+   * and the cursor white in red (224 against 232 and 236), so a field never reads as selected.
+   */
+  wheat: [
+    [206, 168, 80],
+    [218, 182, 92],
+    [170, 134, 62],
+    [224, 194, 108],
+  ] as RGB[],
+  /** wheat still green at a field's far end */
+  wheatGreen: [
+    [112, 146, 70],
+    [128, 162, 82],
+    [90, 122, 56],
+    [144, 176, 94],
+  ] as RGB[],
+  /** the bare earth in the furrows between the rows, in the shade of the stalks */
+  furrow: [138, 112, 68] as RGB,
   trunk: [112, 80, 50] as RGB,
   trunkDark: [78, 54, 34] as RGB,
   // rails and structures

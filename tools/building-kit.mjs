@@ -2,11 +2,46 @@
  * buildings, read from the game's own data files so the art work cannot drift from the game.
  * See docs/superpowers/specs/2026-10-02-building-eras-art-package-design.md.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /** Where the pictures and their work list live. */
 export const ROOT = 'assets/source/buildings-v2';
+
+/**
+ * Write a file whole or not at all: under a name beside it first, then into its place. A write
+ * that a full disk cuts short then leaves the file as it was, where writing in place would leave
+ * half a list behind. Where the file cannot be replaced in one step (something has it open), it
+ * is written in place after all, as it used to be. The name beside it is the process's own, so
+ * that two tools writing at once do not take each other's copy; a copy that cannot be cleared
+ * away (a scanner holds it) is left, and never keeps the write from being tried. `io` stands in
+ * for the disk in the tests.
+ */
+export function writeWhole(file, data, io = {}) {
+  const write = io.writeFileSync ?? writeFileSync;
+  const rename = io.renameSync ?? renameSync;
+  const rm = io.rmSync ?? rmSync;
+  const part = `${file}.${process.pid}.part`;
+  const drop = () => {
+    try {
+      rm(part, { force: true });
+    } catch {
+      // held by another process: left where it is (git does not take *.part)
+    }
+  };
+  try {
+    write(part, data);
+  } catch (e) {
+    drop();
+    throw e;
+  }
+  try {
+    rename(part, file);
+  } catch {
+    drop();
+    write(file, data);
+  }
+}
 
 export const AGES = ['steam', 'diesel', 'electric', 'nuclear', 'magnetic', 'hyper'].map(
   (id, index) => ({ index, id, tag: `a${index}`, name: id[0].toUpperCase() + id.slice(1) }),
@@ -87,13 +122,22 @@ const KIND_ORDER = { station: 2, depot: 3, works: 4, house: 5, service: 6 };
 
 /**
  * Every building family of the game, in working order.
- * Stations and works are upgradeable: one model per age from the age they unlock in.
+ * Stations and works are upgradeable: one model per age from the age they unlock in (`tier`) to
+ * the last age, or to their own last one (`lastTier`): a building of one period, the charcoal
+ * kiln, is not modernised after it.
  */
 export function loadInventory(root = '.') {
   const data = (file) => JSON.parse(readFileSync(join(root, 'src/data', file), 'utf8'));
   const out = [];
-  const add = (f) =>
-    out.push({ ...f, ages: f.upgradeable ? AGES.length - f.firstAge : 1, order: out.length });
+  const add = ({ lastTier, ...f }) => {
+    const last = f.upgradeable ? (lastTier ?? AGES.length - 1) : f.firstAge;
+    if (!AGES[last]) throw new Error(`${f.id}: there is no age ${last} (lastTier)`);
+    if (last < f.firstAge)
+      throw new Error(
+        `${f.id}: its last age (lastTier ${last}) is before its first (tier ${f.firstAge})`,
+      );
+    out.push({ ...f, lastAge: last, ages: last - f.firstAge + 1, order: out.length });
+  };
   const footprint = (d) => (d.long ? 't1x2' : (d.size ?? 1) > 1 ? 't2x2' : 't1');
   for (const d of data('stations.json').defs)
     add({
@@ -103,6 +147,7 @@ export function loadInventory(root = '.') {
       kind: d.depot ? 'depot' : 'station',
       footprint: footprint(d),
       firstAge: d.tier ?? 0,
+      lastTier: d.lastTier,
       upgradeable: true,
     });
   // the full-chain mines share the quarry's picture in the game today; each gets its own
@@ -114,6 +159,7 @@ export function loadInventory(root = '.') {
       kind: 'station',
       footprint: footprint(d),
       firstAge: d.tier ?? 0,
+      lastTier: d.lastTier,
       upgradeable: true,
     });
   for (const file of ['buildings.json', 'buildings_full.json'])
@@ -126,6 +172,7 @@ export function loadInventory(root = '.') {
           kind: 'works',
           footprint: 't1',
           firstAge: d.tier ?? 0,
+          lastTier: d.lastTier,
           upgradeable: true,
         });
   for (const d of data('decor.json')) {

@@ -1,29 +1,113 @@
-import { Container, Sprite, Rectangle, Graphics, Mesh, MeshGeometry } from 'pixi.js';
-import type { AtlasRegistry } from '../engine/atlas';
+import {
+  Assets,
+  Container,
+  Sprite,
+  Rectangle,
+  Graphics,
+  Mesh,
+  MeshGeometry,
+  Texture,
+} from 'pixi.js';
+import type { AtlasRegistry, FrameInfo } from '../engine/atlas';
 import {
   tileToWorld,
+  worldToTile,
   worldToTileInt,
   depthKey,
+  DIRS,
+  DIR_DX,
+  DIR_DY,
   ELEV_PX,
   HALF_W,
   HALF_H,
   TILE_H,
 } from '../engine/iso';
-import { Terrain, Biome, type GameMap, type PropInstance, idx } from '../world/tiles';
+import {
+  Terrain,
+  Biome,
+  type GameMap,
+  type PropInstance,
+  type PropKind,
+  idx,
+} from '../world/tiles';
 import type { RegionState } from '../world/regions';
 import type { Camera } from '../engine/camera';
-import { MATERIAL_COLORS, materialAt } from './landscapeModel';
-import { structureScale, hasScaleReference, TREE_SCALE, isTree } from './assetScale';
-import { SurfaceAssets, windowSprite } from './surfaceAssets';
+import { MATERIAL_COLORS, Material, materialAt } from './landscapeModel';
+import { scaleReference, TREE_SCALE, isTree, type ScaleReference } from './assetScale';
+import { SurfaceAssets, fieldFrames, fieldTexture, windowSprite } from './surfaceAssets';
+import { footGround, footScatter, type Foot } from './groundFit';
 import { hash2 } from '../engine/rng';
 import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
-import { scatterFor } from './scatter';
+import { clearedByPaving, scatterFor } from './scatter';
 import { levelAt } from '../world/elevation';
+import { WaterMotion, type WaterWind } from './waterMotion';
+import { isRiver } from './waterPaint';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
+import { underPaintedWater } from './terrainMaterials';
+import { doorstepChanges, pavingDoorsteps, type PavingDoor } from './townPaving';
 import { PAL, type RGB } from '../art/palette';
 import BRIDGE_KIT_JSON from './bridgeKit.json';
+import {
+  bridgeTileMeshes,
+  destroyBridgeParts,
+  GROUND_BOX,
+  prepareSurface,
+  WATER_TILES,
+  WATERLINE,
+  type BridgeSurfaces,
+} from './bridgeMeshes';
+import {
+  bridgeJoins,
+  bridgePlan,
+  deckSamples,
+  roadDeckSamples,
+  type BridgeCarries,
+  type BridgeSite,
+} from './bridgeLayout';
+import { HarvestHighlight } from './harvestHighlight';
+import { groundOf as groundDataOf, type FrameGround } from '../art/buildingGround';
+import { buildingYard, footprintTiles, sameYard, yardTiles, type Yard } from './buildingYard';
+import { plinthColour, plinthOf, plinthShapes } from './plinth';
+import {
+  CELL_BLOCKED,
+  CELL_FIELD,
+  CELL_OPEN,
+  RUN_S,
+  RUN_W,
+  readSite,
+  type FieldCell,
+  type FieldFrame,
+  type FieldPicture,
+} from './wheatField';
+import { FIELD_BUDGET_MS, WheatFields, type WheatHost } from './wheatFields';
+import { BuildingLife } from './buildingLife';
+import { doorSides, roadCode, roadSides } from './roadShape';
+import { paintedRoads } from './roadPaint';
+import { RoadWalk, roadWalks } from './roadWalk';
+import { crossingAxis, levelCrossingFrame } from './levelCrossing';
+import { AtmosphereTint, setOwnTint } from './atmosphere';
+import { cullByChunk } from './chunkCull';
+import { surfaceVersions } from './fx';
+
+export type BridgeStyle = 'textured' | 'kit' | 'procedural';
+/** One bridge tile as the game knows it, for the textured style (setTexturedBridges). */
+export type TexturedBridge = Omit<BridgeSite, 'deck'> & {
+  /** Rail, or a road where the platform has a road and no rail (bridgeSpan's road case). */
+  carries: BridgeCarries;
+  /** Over water: supports stand in it, and the deck never sinks below the waterline's. */
+  water: boolean;
+  /** The bridge's upgrade level. */
+  level: number;
+};
+
+/**
+ * Tile offsets at which a textured bridge tile notices the ground under it and in front of it
+ * (toward +x +y, as far as bridgeMeshes.ts looks for ground hiding its supports).
+ */
+const GROUND_AT = [-0.45, 0, 0.45, 0.55, 1, 1.5, 1.95],
+  GROUND_SAMPLES = GROUND_AT.flatMap((a) => GROUND_AT.map((b) => [a, b]));
 
 /** Measured kit geometry in world px (tools/bridge-kit.mjs). */
 const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
@@ -32,6 +116,112 @@ const BRIDGE_KIT = BRIDGE_KIT_JSON as Record<
 >;
 
 const CHUNK = 8;
+/** How far (world px) past the view's edge a water ripple is still drawn. */
+const RIPPLE_MARGIN = 20;
+
+/**
+ * The tiles of a `w` x `h` map whose centres can lie in `view` grown by `margin` world px on
+ * every side, as rows: `y0` to `y1`, and in row y from `x0(y)` to `x1(y)` (an empty row has
+ * `x0(y) > x1(y)`). Each bound reaches one tile further than the exact edge, so a caller that
+ * tests the centre itself sees every tile that passes in the same order as a scan of the whole
+ * map, row by row.
+ */
+export function viewTileRows(
+  view: { x: number; y: number; w: number; h: number },
+  margin: number,
+  w: number,
+  h: number,
+) {
+  // a tile centre is at ((x - y) * HALF_W, (x + y) * HALF_H)
+  const u0 = (view.x - margin) / HALF_W,
+    u1 = (view.x + view.w + margin) / HALF_W,
+    s0 = (view.y - margin) / HALF_H,
+    s1 = (view.y + view.h + margin) / HALF_H;
+  return {
+    y0: Math.max(0, Math.floor((s0 - u1) / 2) - 1),
+    y1: Math.min(h - 1, Math.ceil((s1 - u0) / 2) + 1),
+    x0: (y: number) => Math.max(0, Math.floor(Math.max(y + u0, s0 - y)) - 1),
+    x1: (y: number) => Math.min(w - 1, Math.ceil(Math.min(y + u1, s1 - y)) + 1),
+  };
+}
+/** How far off a road deck's run (tiles) the bank's ground it meets is read (`roadDeckProfile`). */
+const BANK_READ = 0.02;
+
+/**
+ * Props a railway cuts instead of pushing aside. A wheat field lies over its whole tile, so
+ * moved beside the rails it would land half on the next tile and over the sleepers; the track
+ * cuts it, and the field shows again when the track goes.
+ */
+const CUT_BY_TRACK: ReadonlySet<PropKind> = new Set<PropKind>(['wheat']);
+
+/** An illustrated picture: more texels than world pixels (an atlas `resolution` above 1). */
+function illustrated(f: FrameInfo) {
+  return f.texture.frame.width / f.w > 1;
+}
+
+/** What fits one building to the ground, beside its picture (`setStructure`). */
+interface GroundFitSprites {
+  /** The soft shadow it casts, in the contact ground layer. */
+  shadow: Sprite;
+  /** The shade over its picture's foot, drawn right after the picture. */
+  foot: Sprite;
+  /** Weeds and pebbles over the front of its base, in its depth. */
+  weeds: Sprite;
+  /** The texture they are drawn on, the building's own; null when nothing grows. */
+  weedsTexture: Texture | null;
+  /** The picture's feet and the tile it stands on, which the weeds grow from. */
+  feet: readonly Foot[];
+  x: number;
+  y: number;
+  /** What the weeds were last drawn for: the feet, and the tile with its ground. */
+  drawn: { feet: readonly Foot[]; on: string } | null;
+}
+
+/**
+ * Show `texture` as a building's weeds and free the one shown before: each building has its own
+ * (the shadow's and the foot's are shared by every building with the same picture).
+ */
+function showWeeds(fit: GroundFitSprites, texture: Texture | null) {
+  const old = fit.weedsTexture;
+  fit.weedsTexture = texture;
+  if (!fit.weeds.destroyed) fit.weeds.texture = texture ?? Texture.EMPTY;
+  old?.destroy(true);
+}
+
+/**
+ * What fits one building to the ground under it beyond its ground fit (#436): its yard, which the
+ * painter wears into the ground, and the plinth under its picture where the ground drops away.
+ */
+interface Footing {
+  frame: string;
+  ground: FrameGround;
+  scale: number;
+  /** its anchor, the footprint's centre, in map tile coordinates */
+  x: number;
+  y: number;
+  /** the tile it was placed on (`setStructure`), whose ground height its picture stands at */
+  tx: number;
+  ty: number;
+  yard: Yard;
+  /** the colour of its walls' base (`baseColour`), which its plinth is built in */
+  wall: RGB | null;
+  /** how far (world px) its picture is lifted onto the highest ground under its foot */
+  lift: number;
+  /** the plinth, drawn just under its picture; null where the ground under it is level */
+  plinth: Graphics | null;
+  /** what the plinth was last drawn for */
+  drawn: string;
+}
+
+/** Put a building's ground fit where its picture `s` stands, at its scale and depth. */
+function placeGroundFit(fit: GroundFitSprites, s: Sprite) {
+  fit.shadow.position.copyFrom(s.position);
+  fit.foot.position.copyFrom(s.position);
+  fit.foot.scale.copyFrom(s.scale);
+  fit.foot.zIndex = s.zIndex + 0.005;
+  fit.weeds.position.copyFrom(s.position);
+  fit.weeds.zIndex = s.zIndex + 0.02;
+}
 
 /**
  * Isometric world view. Ground tiles live in chunked static containers (culled per chunk);
@@ -41,6 +231,11 @@ export class WorldRenderer {
   readonly root = new Container();
   readonly ground = new Container();
   readonly track = new Container();
+  /**
+   * The level-crossing decks (#309, #329) laid over the track where a road crosses it: over the
+   * track and under the ground lights, the harvest highlight and everything that stands.
+   */
+  readonly crossings = new Container();
   readonly platforms = new Container();
   /** Piers of bridges carried over land, standing on the ground under their decks. */
   private piers = new Container();
@@ -48,13 +243,27 @@ export class WorldRenderer {
   private platformSprites = new Map<number, Sprite>();
   private platformMasks = new Map<number, Graphics>();
   readonly objects = new Container();
+  /** The night and season colour over the objects (`setAtmosphereTint`). */
+  private readonly atmosphere = new AtmosphereTint(this.objects);
   readonly overlay = new Container(); // cursors, ghosts – drawn over objects
   readonly fog = new Container();
   /** additive ground lights (per-tile lighting), drawn over track and under objects */
   readonly lights = new Container();
+  /**
+   * The tiles a harvest station counts, lit over the ground and its lights and under objects; the
+   * game puts the night overlay under it, so the night does not darken it.
+   */
+  readonly harvest: HarvestHighlight;
+  /** chimney smoke, the crane's load and the windmills' sails */
+  readonly buildingLife: BuildingLife;
   /** out-of-map void ring */
   readonly border = new Container();
   private trackSprites = new Map<number, Sprite>();
+  /** The frame each track sprite shows (`setTrack`): a plain straight takes a level crossing. */
+  private trackFrames = new Map<number, string>();
+  /** The level-crossing decks by tile, and the meshes of those on a climbing straight. */
+  private decks = new Map<number, Sprite>();
+  private deckMeshes = new Map<number, Mesh>();
   private structures = new Map<string, Sprite>();
   private groundSprites: Sprite[] = [];
   private fogShapes = new Map<number, Graphics>();
@@ -66,6 +275,12 @@ export class WorldRenderer {
   /** number of void tiles drawn around the playable map */
   static readonly BORDER = 8;
   private propSprites = new Map<number, Sprite[]>();
+  /** The prop sprites that track cuts rather than displaces (CUT_BY_TRACK). */
+  private cutSprites = new WeakSet<Sprite>();
+  /** The prop sprites of deposits (coal, oil): a road hides no deposit, as the player needs it. */
+  private deposits = new WeakSet<Sprite>();
+  /** The prop sprites that town paving hides (`clearedByPaving`): bushes, flowers, rocks. */
+  private paveCleared = new WeakSet<Sprite>();
   /** Visual-only nature (scatter.ts) per tile, with each sprite's offset inside its tile. */
   private scatterSprites = new Map<number, { s: Sprite; ox: number; oy: number }[]>();
   /** Stations, buildings and placed decor, as the game knows them; scatter keeps clear. */
@@ -82,12 +297,81 @@ export class WorldRenderer {
   private structureAnchors = new Map<string, { x: number; y: number; dx: number; dy: number }>();
   private surfaces = new SurfaceAssets();
   private windowLights = new Map<string, Sprite>();
-  private contactPatches = new Map<string, Graphics>();
+  /** Each building's fit to the ground (groundFit.ts), keyed like its structure. */
+  private groundFits = new Map<string, GroundFitSprites>();
+  /** The buildings' cast shadows: on the ground, under the track and everything that stands. */
   private contactGround = new Container({ cullableChildren: true });
+  /** Each building's yard and plinth, keyed like its structure. */
+  private footings = new Map<string, Footing>();
+  /** Whether a road lies on tile (x, y) (src/sim/roads.ts): a door path runs on to it. */
+  roadAt: (x: number, y: number) => boolean = () => false;
+  /** The street doors of every place (`setCity`), by the tile they are in. */
+  private doorsByTile = new Map<number, PavingDoor[]>();
+  /** The same doors by the tile each reaches: a road there runs an arm to its door. */
+  private doorsByReach = new Map<number, PavingDoor[]>();
+  /** The road tiles as the renderer last heard of them (`setRoads`, `roadChanged`). */
+  private roads = new Set<number>();
+  /** The code of each road tile as the painter was last handed it (`roadCode`, roadShape.ts). */
+  private roadCodes = new Map<number, number>();
+  /**
+   * The tiles a bridge deck is drawn on, in any style, as last drawn (`setTexturedBridges`): a
+   * road there is the deck, and the painter is handed it as such (`paintedRoads`).
+   */
+  private bridgeDecks = new Set<number>();
+  /**
+   * Where walkers are drawn on the roads (#477), by the codes the painter was handed; the people
+   * renderer finds it by this renderer's object layer (`roadWalks`).
+   */
+  readonly roadWalk = new RoadWalk(
+    () => this.map,
+    (x, y) => {
+      const k = y * this.map.w + x;
+      // no road is painted on the town paving
+      return this.city.has(k) ? -1 : (this.roadCodes.get(k) ?? -1);
+    },
+  );
   private waterDetails = new Graphics();
   private waterClock = 0;
   private rippleRefresh = 0;
+  /** Whether all water moves (the setting); off, the still water of before #365. */
+  movingWater = true;
+  /** The wind the water moves in (`Weather`); the game sets it each frame. */
+  wind: WaterWind | undefined;
+  /** How much rain shows, 0 to 1, for the rings on the water; the game sets it each frame. */
+  rain = 0;
+  private waterMotion: WaterMotion | undefined;
   private view: { x: number; y: number; w: number; h: number } | null = null;
+  /** The wheat fields' pictures (#444), one per field tile's sprite. */
+  private wheat: WheatFields;
+  /** What the fields' pictures read of the world (`fieldSite`). */
+  private wheatHost: WheatHost;
+  /**
+   * The variants' pictures the fields are coloured from: undefined before they are asked for,
+   * 'wait' while they are read, null where none can be.
+   */
+  private fieldFrames: readonly (FieldFrame | null)[] | null | 'wait' | undefined = undefined;
+  /**
+   * The footprint tiles of the buildings with ground data, with the sides a field runs up to
+   * (RUN_W, RUN_S); worked out again after a building or its door paths change.
+   */
+  private fieldRuns: Map<number, number> | null = null;
+  /**
+   * How the fields' pictures read the variants' atlas frames (0 to 2, null for one the atlas lacks)
+   * and are made into textures: through a canvas, which Node has none of, so there the sprites
+   * keep their atlas frames. Tests hand in their own.
+   */
+  fieldArt: {
+    frames(
+      frames: readonly (FrameInfo | null)[],
+    ): Promise<(FieldFrame | null)[]> | (FieldFrame | null)[] | null;
+    texture(p: FieldPicture): Texture;
+  } = {
+    frames: (frames) =>
+      typeof document === 'undefined' || typeof createImageBitmap === 'undefined'
+        ? null
+        : fieldFrames(frames),
+    texture: (p) => fieldTexture(p),
+  };
 
   constructor(
     readonly atlas: AtlasRegistry,
@@ -95,29 +379,64 @@ export class WorldRenderer {
     readonly regions: RegionState,
   ) {
     this.landscape = new Landscape(map, this.flattened, this.railBeds);
+    this.harvest = new HarvestHighlight(map, (x, y) => this.surfacePoint(x, y));
+    this.buildingLife = new BuildingLife(this.atlas, this.objects, this.surfaces);
+    this.waterMotion = new WaterMotion(
+      this.map,
+      (x, y) => this.elevationOf(x, y),
+      (x, y) => this.isBuilt(x, y),
+    );
+    this.wheat = new WheatFields(map.w, map.h);
+    this.wheatHost = {
+      site: (x, y) => this.fieldSite(x, y),
+      frames: () => this.readFieldFrames(),
+      texture: (p) => this.fieldArt.texture(p),
+      view: () => this.view,
+    };
     this.landscape.root.visible = false;
-    this.root.on('destroyed', () => this.surfaces.destroy());
+    this.root.on('destroyed', () => {
+      this.surfaces.destroy();
+      for (const fit of this.groundFits.values()) showWeeds(fit, null);
+      this.wheat.destroy();
+    });
+    roadWalks.set(this.objects, this.roadWalk);
+    // the ground lights stand on the surface, and move only when it does
+    surfaceVersions.set(this.lights, () => this.landscape.surfaceVersion);
     this.objects.sortableChildren = true;
-    this.objects.cullableChildren = true;
-    this.ground.cullableChildren = true;
-    this.fog.cullableChildren = true;
-    this.track.cullableChildren = true;
-    this.border.cullableChildren = true;
-    this.lights.cullableChildren = true;
+    this.piers.sortableChildren = true;
     this.root.addChild(
       this.border,
       this.landscape.root,
       this.ground,
       this.waterDetails,
+      this.waterMotion!.root,
       this.contactGround,
       this.piers,
       this.platforms,
       this.track,
+      this.crossings,
       this.lights,
+      this.harvest.layer,
       this.objects,
       this.fog,
       this.overlay,
     );
+    // Pixi's culler measured every child of these layers each frame; they are culled by chunk
+    // instead (chunkCull.ts), keeping their children, and so the depth order, as they are
+    cullByChunk(this.root, [
+      this.border,
+      this.landscape.root,
+      this.ground,
+      this.contactGround,
+      this.piers,
+      this.platforms,
+      this.track,
+      this.crossings,
+      this.lights,
+      this.objects,
+      this.fog,
+      this.overlay,
+    ]);
     this.buildBorder();
     this.buildGround();
     this.buildProps();
@@ -125,16 +444,182 @@ export class WorldRenderer {
   }
 
   private city = new Set<number>();
-  setCity(tiles: Set<number>) {
+  /** The doorsteps the painter lays (`pavingDoorsteps`), four numbers each. */
+  private doorsteps: readonly number[] = [];
+  /**
+   * The towns' paved tiles (`cityTiles`, src/sim/city.ts) and the street doors of the places that
+   * stand among them (src/sim/doors.ts): the painter paves the tiles and lays a doorstep in front
+   * of each door on a paved tile.
+   */
+  setCity(tiles: Set<number>, doors: Iterable<PavingDoor> = []) {
+    const { w, h } = this.map;
     const changed = new Set([...this.city, ...tiles]);
     const old = this.city;
+    const list = [...doors];
+    const oldSteps = this.doorsteps,
+      steps = pavingDoorsteps(list, (k) => tiles.has(k), w, h);
     this.city = tiles;
-    this.landscape.setCity(tiles);
+    this.doorsteps = steps;
+    this.landscape.setCity(tiles, steps);
     for (const k of changed)
       if (old.has(k) !== tiles.has(k)) {
-        this.refreshGround(k % this.map.w, Math.floor(k / this.map.w));
-        this.refreshScatter(k % this.map.w, Math.floor(k / this.map.w), 0);
+        // the painter paves a town's tiles over their water too (refreshGround tells bridges)
+        this.refreshGround(k % w, Math.floor(k / w));
+        this.refreshScatter(k % w, Math.floor(k / w), 0);
+        // the map's own bushes and the like hide under the paving, or show again
+        this.showProps(k);
+        // a field ends short of paving
+        this.wheat.near(k % w, Math.floor(k / w));
       }
+    // a doorstep laid or taken up is painted again where it reaches
+    for (const k of doorstepChanges(oldSteps, steps, w, h))
+      this.refreshGround(k % w, Math.floor(k / w));
+    // nothing grows at a building's foot on paving
+    for (const fit of this.groundFits.values()) this.growWeeds(fit);
+    // a door's path follows the doors the places have now
+    this.doorsByTile = new Map();
+    this.doorsByReach = new Map();
+    for (const d of list) {
+      const k = d.tile.y * w + d.tile.x,
+        at = this.doorsByTile.get(k);
+      if (at) at.push(d);
+      else this.doorsByTile.set(k, [d]);
+      const rx = d.tile.x + DIR_DX[d.side],
+        ry = d.tile.y + DIR_DY[d.side];
+      if (rx < 0 || ry < 0 || rx >= w || ry >= h) continue;
+      const to = this.doorsByReach.get(ry * w + rx);
+      if (to) to.push(d);
+      else this.doorsByReach.set(ry * w + rx, [d]);
+    }
+    this.refreshYards(() => true);
+    // and a road on a door's reach runs an arm to it
+    this.updateRoads(this.roads);
+  }
+  /**
+   * A road was laid on tile (x, y) or taken off it (`roadAt` says which): the yards of the
+   * buildings beside it take their door paths on to it, or back to their own edge; the tile and
+   * its four neighbours are painted again with the road's new shape, a level crossing's deck is
+   * laid or lifted, and the nature on the tile hides under the road or comes back.
+   */
+  roadChanged(x: number, y: number) {
+    const { w, h } = this.map;
+    if (x >= 0 && y >= 0 && x < w && y < h) {
+      const k = y * w + x;
+      if (this.roadAt(x, y)) this.roads.add(k);
+      else this.roads.delete(k);
+      this.roadShown(x, y);
+      const around = [k];
+      for (const d of DIRS) {
+        const nx = x + DIR_DX[d],
+          ny = y + DIR_DY[d];
+        if (nx >= 0 && ny >= 0 && nx < w && ny < h) around.push(ny * w + nx);
+      }
+      this.updateRoads(around, around);
+    }
+    this.refreshYards((f) => Math.abs(f.x - x) < 3 && Math.abs(f.y - y) < 3);
+    // a field ends short of a road
+    this.wheat.near(x, y);
+  }
+  /**
+   * The roads a save holds (`Roads.list`), in place of any the renderer knew: every road tile is
+   * painted (none on the paving), every level crossing gets its deck, and the nature on each tile
+   * hides under its road; where a road it knew is gone, the ground is painted again without it.
+   */
+  setRoads(tiles: Iterable<{ x: number; y: number }>) {
+    const { w, h } = this.map,
+      old = this.roads;
+    this.roads = new Set();
+    for (const { x, y } of tiles)
+      if (Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < w && y < h)
+        this.roads.add(y * w + x);
+    const touched = new Set([...old, ...this.roads]);
+    for (const k of touched) {
+      this.roadShown(k % w, Math.floor(k / w));
+      this.wheat.near(k % w, Math.floor(k / w));
+    }
+    this.updateRoads(touched, touched);
+    this.refreshYards(() => true);
+  }
+  /** What stands on tile (x, y) follows its road: nature hides under it, a deck lies over track. */
+  private roadShown(x: number, y: number) {
+    this.showProps(idx(this.map, x, y));
+    this.refreshScatter(x, y, 0);
+    this.refreshDeck(x, y);
+  }
+  /** Is there a road on tile (x, y), as the renderer last heard? False off the map. */
+  private hasRoad(x: number, y: number) {
+    const { w, h } = this.map;
+    return x >= 0 && y >= 0 && x < w && y < h && this.roads.has(y * w + x);
+  }
+  /**
+   * The axis the road on tile (x, y) runs along where it is a level crossing: a road on a plain
+   * straight of a line with level crossings, square to it. Null for any other tile.
+   */
+  private crossingAt(x: number, y: number) {
+    if (!this.hasRoad(x, y)) return null;
+    const frame = this.trackFrames.get(idx(this.map, x, y));
+    return frame === undefined ? null : crossingAxis(frame);
+  }
+  /**
+   * The code of the road on tile (x, y) (`roadCode`, roadShape.ts), -1 for none: the sides it
+   * joins (its road neighbours and its street doors), the sides it meets in the middle (an edge it
+   * shares with a level crossing, and a door's), and whether it is a level crossing itself.
+   */
+  private roadCodeAt(x: number, y: number) {
+    if (!this.hasRoad(x, y)) return -1;
+    const doors = this.doorsByReach.get(idx(this.map, x, y)) ?? [],
+      sides = roadSides((rx, ry) => this.hasRoad(rx, ry), doors, x, y);
+    let pinned = doorSides(doors, x, y);
+    for (const d of DIRS)
+      if (sides & (1 << d) && this.crossingAt(x + DIR_DX[d], y + DIR_DY[d])) pinned |= 1 << d;
+    return roadCode(sides, pinned, this.crossingAt(x, y));
+  }
+  /**
+   * Work out again the codes of the road tiles among `tiles`; if any changed, the painter is handed
+   * the roads and repaints those tiles, and the tiles `also` lists.
+   */
+  private updateRoads(tiles: Iterable<number>, also: Iterable<number> = []) {
+    const { w } = this.map,
+      repaint = new Set(also);
+    for (const k of tiles) {
+      const code = this.roadCodeAt(k % w, Math.floor(k / w));
+      if ((code < 0 ? undefined : code) === this.roadCodes.get(k)) continue;
+      if (code < 0) this.roadCodes.delete(k);
+      else this.roadCodes.set(k, code);
+      repaint.add(k);
+    }
+    if (repaint.size) this.handRoads(repaint);
+  }
+  /** Hands the painter the roads, a road on a bridge deck as the deck's, and repaints `tiles`. */
+  private handRoads(tiles: Iterable<number>) {
+    const { w } = this.map;
+    this.landscape.setRoads(paintedRoads(this.roadCodes, (k) => this.bridgeDecks.has(k)));
+    for (const k of tiles) this.landscape.repaint(k % w, Math.floor(k / w));
+  }
+  /**
+   * The tiles bridge decks are drawn on now: the textured style's `drawn` and the platforms of the
+   * others. Where a road tile went on to a deck or came off one, it and the tiles beside it are
+   * painted again: no road on the deck, and the road beside it run up to its edge or on over it.
+   */
+  private refreshDecks(drawn: Iterable<number>) {
+    const { w, h } = this.map,
+      decks = new Set(drawn);
+    for (const key of this.platformSprites.keys()) if (key < w * h) decks.add(key);
+    const old = this.bridgeDecks,
+      repaint = new Set<number>();
+    this.bridgeDecks = decks;
+    for (const k of this.roads) {
+      if (old.has(k) === decks.has(k)) continue;
+      const x = k % w,
+        y = Math.floor(k / w);
+      repaint.add(k);
+      for (const d of DIRS) {
+        const nx = x + DIR_DX[d],
+          ny = y + DIR_DY[d];
+        if (nx >= 0 && ny >= 0 && nx < w && ny < h) repaint.add(ny * w + nx);
+      }
+    }
+    if (repaint.size) this.handRoads(repaint);
   }
   private groundFrame(x: number, y: number): string {
     if (this.city.has(y * this.map.w + x)) return 'terrain/city_' + (x % 3) + '_' + (y % 3);
@@ -158,13 +643,22 @@ export class WorldRenderer {
       case Terrain.Hill:
         return this.flattened.has(i) ? `terrain/hillcut_${v}` : `terrain/hill_${v % 3}`;
       case Terrain.Water:
-        return `terrain/water_${v % 3}_f0`;
+        return isRiver(this.map, i) ? `terrain/river_${v % 3}_f0` : `terrain/water_${v % 3}_f0`;
       case Terrain.Rock:
         return `terrain/rock_${v}`;
       case Terrain.Mountain:
         return `terrain/mountain_${v % 3}`;
       case Terrain.Sand:
-        return b === Biome.Desert ? `terrain/desert_${v}` : `terrain/sand_${v}`;
+        return b === Biome.Desert
+          ? `terrain/desert_${v}`
+          : b === Biome.Beach
+            ? `terrain/beach_${v}`
+            : `terrain/sand_${v}`;
+      case Terrain.Ice:
+        return `terrain/glacier_${v}`;
+      default:
+        // a terrain with no frame of its own yet reads as the high ground it lies on
+        return `terrain/mountain_${v % 3}`;
     }
   }
 
@@ -244,6 +738,8 @@ export class WorldRenderer {
   /** Re-texture a ground tile (after flattening a hill, etc). */
   refreshGround(x: number, y: number) {
     this.landscape.invalidate(x, y);
+    // the water painted there may have moved under a bridge: it is drawn again (animate)
+    if (!this.bridgeWaterChanged && this.nearTexturedBridge(x, y)) this.bridgeWaterChanged = true;
     const i = idx(this.map, x, y);
     const s = this.groundSprites[i];
     if (!s) return;
@@ -261,7 +757,9 @@ export class WorldRenderer {
 
   /**
    * Track was laid on the tile: push its trees and bushes to the sides of the rails (straight
-   * pieces) or clear them (curves, switches, crossings need the whole tile).
+   * pieces) or clear them (curves, switches, crossings need the whole tile). A field is neither
+   * moved nor cleared: it stays in the map at its own place and is not drawn while track lies on
+   * the tile (CUT_BY_TRACK).
    */
   displaceProps(x: number, y: number, links: [number, number][]) {
     const i = idx(this.map, x, y);
@@ -269,13 +767,20 @@ export class WorldRenderer {
     if (!list?.length) return;
     const ns = links.length === 1 && links[0].includes(0) && links[0].includes(2);
     const ew = links.length === 1 && links[0].includes(1) && links[0].includes(3);
-    if (!ns && !ew) {
+    // curves, switches and crossings clear everything but a field
+    const kept = ns || ew ? list : list.filter((p) => CUT_BY_TRACK.has(p.kind));
+    if (!kept.length) {
       this.map.props.delete(i);
       this.removeProps(x, y);
       return;
     }
-    for (const p of list) {
-      if (ns) {
+    if (kept.length < list.length) this.map.props.set(i, kept);
+    for (const p of kept) {
+      if (CUT_BY_TRACK.has(p.kind)) {
+        // the field is only cut, never moved: one a save kept pushed aside is put back
+        p.ox = 0;
+        p.oy = 0;
+      } else if (ns) {
         p.ox = p.ox >= 0 ? 0.4 : -0.4;
         p.oy = Math.max(-0.3, Math.min(0.3, p.oy));
       } else {
@@ -284,6 +789,9 @@ export class WorldRenderer {
       }
     }
     this.rebuildProps(x, y);
+    // the track sprite follows this call: the tile counts as railed from here
+    this.showProps(i, true);
+    this.wheat.near(x, y);
   }
   /** Re-create the prop sprites of one tile from the map data (after terrain edits). */
   rebuildProps(x: number, y: number) {
@@ -292,6 +800,7 @@ export class WorldRenderer {
     const list = this.map.props.get(i);
     if (list) this.buildPropsAt(i, list);
     else this.buildScatterAt(x, y);
+    this.wheat.near(x, y);
   }
 
   /** Re-tile after terrain edits: ground texture, props, and objects standing on the tile. */
@@ -309,7 +818,8 @@ export class WorldRenderer {
     if (flat) this.flattened.add(i);
     else this.flattened.delete(i);
     this.refreshGround(x, y);
-    for (const s of this.propSprites.get(i) ?? []) s.visible = !flat;
+    this.showProps(i);
+    this.wheat.near(x, y);
   }
   isFlattened(x: number, y: number) {
     return this.flattened.has(idx(this.map, x, y));
@@ -322,8 +832,10 @@ export class WorldRenderer {
       ty = Math.round(y);
     if (tx < 0 || ty < 0 || tx >= this.map.w || ty >= this.map.h) return 0;
     const i = idx(this.map, tx, ty);
-    if (this.map.terrain[i] === Terrain.Mountain) return -2 * ELEV_PX;
-    return this.map.terrain[i] === Terrain.Hill && !this.flattened.has(i) ? -ELEV_PX : 0;
+    // high ground stands at the levels the rail profile reads, so track sits at its own height
+    const t = this.map.terrain[i];
+    if (t === Terrain.Mountain || t === Terrain.Rock) return -levelAt(this.map, tx, ty) * ELEV_PX;
+    return t === Terrain.Hill && !this.flattened.has(i) ? -ELEV_PX : 0;
   }
 
   private buildProps() {
@@ -340,11 +852,35 @@ export class WorldRenderer {
       for (const p of list) {
         const s = this.propSprite(x, y, p);
         if (!s) continue;
-        s.visible = !this.flattened.has(i);
+        if (CUT_BY_TRACK.has(p.kind)) this.cutSprites.add(s);
+        if (p.kind === 'coal' || p.kind === 'oil') this.deposits.add(s);
+        if (clearedByPaving(p.kind)) this.paveCleared.add(s);
+        // a field shows its picture once it is painted (#444)
+        if (p.kind === 'wheat' && !this.wheat.sprite(i)) this.wheat.set(i, s);
         sprites.push(s);
       }
-      if (sprites.length) this.propSprites.set(i, sprites);
+      if (sprites.length) {
+        this.propSprites.set(i, sprites);
+        this.showProps(i);
+      }
     }
+  }
+  /**
+   * Show or hide the prop sprites of tile `i`: all of them are hidden on flattened ground, those
+   * track cuts while track lies on the tile (`railed`, by default whether it has a sprite), and all
+   * but a deposit while a road does, and those that give way to paving (`clearedByPaving`) while
+   * the tile is paved. The map's props stay as they are, so they show again when the paving goes.
+   */
+  private showProps(i: number, railed = this.trackSprites.has(i)) {
+    const flat = this.flattened.has(i),
+      road = this.roads.has(i),
+      paved = this.paved(i);
+    for (const s of this.propSprites.get(i) ?? [])
+      s.visible =
+        !flat &&
+        !(railed && this.cutSprites.has(s)) &&
+        !(road && !this.deposits.has(s)) &&
+        !(paved && this.paveCleared.has(s));
   }
 
   private propSprite(x: number, y: number, p: PropInstance) {
@@ -370,7 +906,10 @@ export class WorldRenderer {
     this.scatterSprites.delete(i);
     if (!this.isBuilt(x, y)) return;
     const list = scatterFor(this.map, x, y, {
-      occupied: (xx, yy) => this.trackSprites.has(idx(this.map, xx, yy)) || this.occupied(xx, yy),
+      occupied: (xx, yy) =>
+        this.trackSprites.has(idx(this.map, xx, yy)) ||
+        this.roads.has(idx(this.map, xx, yy)) ||
+        this.occupied(xx, yy),
       city: (xx, yy) => this.city.has(idx(this.map, xx, yy)),
       // A stacked bank passes through: one neighbour a level up, another a level down.
       steep: (xx, yy) => {
@@ -406,6 +945,8 @@ export class WorldRenderer {
     const i = idx(this.map, x, y);
     for (const s of this.propSprites.get(i) ?? []) s.destroy();
     this.propSprites.delete(i);
+    if (this.wheat.sprite(i)) this.wheat.set(i, null);
+    this.wheat.near(x, y);
   }
 
   /** One translucent diamond per revealed-but-unowned region; hidden regions draw nothing. */
@@ -450,6 +991,7 @@ export class WorldRenderer {
   animate(dt: number) {
     if (this.landscape.flush()) {
       this.refreshSummits();
+      this.harvest.refresh();
       for (const [i, s] of this.trackSprites)
         this.placeTrackSprite(s, i % this.map.w, Math.floor(i / this.map.w));
       for (const [i, list] of this.scatterSprites) {
@@ -475,7 +1017,10 @@ export class WorldRenderer {
         if (!s) continue;
         const p = this.surfacePoint(a.x, a.y);
         s.position.set(p.x + a.dx, p.y + a.dy);
-        this.contactPatches.get(id)?.position.copyFrom(s.position);
+        const footing = this.footings.get(id);
+        if (footing) this.fitPlinth(footing, s);
+        const fit = this.groundFits.get(id);
+        if (fit) placeGroundFit(fit, s);
         this.windowLights.get(id)?.position.copyFrom(s.position);
       }
       for (let i = 0; i < this.groundSprites.length; i++) {
@@ -486,6 +1031,9 @@ export class WorldRenderer {
             !this.landscape.isPainted(i % this.map.w, Math.floor(i / this.map.w));
       }
     }
+    // Bridges follow the water painted round them: a tile whose water changed is drawn again.
+    if (this.bridgeWaterChanged || this.texturedFailed !== this.landscape.failed)
+      this.setTexturedBridges(this.texturedTiles);
     this.landscape.root.visible = this.landscape.active;
     this.ground.visible = !this.landscape.active || !this.landscape.ready;
     if (
@@ -504,19 +1052,20 @@ export class WorldRenderer {
     if (this.rippleRefresh > 0.12 && this.view) {
       this.rippleRefresh = 0;
       this.waterDetails.clear();
-      const view = this.view;
-      for (let y = 0; y < this.map.h; y++)
-        for (let x = 0; x < this.map.w; x++) {
+      const view = this.view,
+        rows = viewTileRows(view, RIPPLE_MARGIN, this.map.w, this.map.h);
+      for (let y = rows.y0; y <= rows.y1; y++)
+        for (let x = rows.x0(y), x1 = rows.x1(y); x <= x1; x++) {
           if (this.map.terrain[y * this.map.w + x] !== Terrain.Water || !this.isBuilt(x, y))
             continue;
           const h = hash2(x + this.map.originX, y + this.map.originY, this.map.seed + 95);
           if (h > 0.28) continue;
           const p = tileToWorld(x, y);
           if (
-            p.x < view.x - 20 ||
-            p.x > view.x + view.w + 20 ||
-            p.y < view.y - 20 ||
-            p.y > view.y + view.h + 20
+            p.x < view.x - RIPPLE_MARGIN ||
+            p.x > view.x + view.w + RIPPLE_MARGIN ||
+            p.y < view.y - RIPPLE_MARGIN ||
+            p.y > view.y + view.h + RIPPLE_MARGIN
           )
             continue;
           const phase = this.waterClock * 0.7 + h * 71,
@@ -527,6 +1076,15 @@ export class WorldRenderer {
             .stroke({ color: 0xb7d1be, width: 0.6, alpha: 0.04 + 0.055 * (1 + Math.sin(phase)) });
         }
     }
+    this.waterMotion?.update(
+      dt,
+      this.waterClock,
+      this.movingWater ? this.view : null,
+      () => viewTileRows(this.view!, RIPPLE_MARGIN, this.map.w, this.map.h),
+      this.builtRegions.size,
+      this.wind,
+      this.rain,
+    );
     this.waterPhase += dt;
     if (this.waterPhase > 0.28) {
       this.waterPhase = 0;
@@ -535,6 +1093,113 @@ export class WorldRenderer {
         w.s.texture = this.atlas.get(`${w.base}_f${this.waterFrame}`).texture;
       }
     }
+    this.updateFields();
+  }
+
+  /**
+   * Paint the wheat fields' pictures (#444) for at most `budget` ms, the tiles in view first; a
+   * picture that takes longer goes on in the next call, and is made into its texture in a call of
+   * its own. With no limit (`Infinity`), every picture there is to paint.
+   */
+  updateFields(budget = FIELD_BUDGET_MS) {
+    if (!this.wheat.busy) return;
+    const end = performance.now() + budget,
+      more = () => performance.now() < end;
+    do this.wheat.update(this.wheatHost, more);
+    while (budget === Infinity && this.wheat.busy && this.fieldFrames !== 'wait');
+  }
+  /** The variants' pictures, read once; 'wait' while they are read, null where none can be. */
+  private readFieldFrames() {
+    if (this.fieldFrames === undefined) {
+      const usable = (frames: readonly (FieldFrame | null)[] | null) =>
+        frames?.some((f) => f) ? frames : null;
+      let read: ReturnType<typeof this.fieldArt.frames> = null;
+      try {
+        read = this.fieldArt.frames(
+          [0, 1, 2].map((v) => {
+            const key = `props/wheat_${v}`;
+            return this.atlas.has(key) ? this.atlas.get(key) : null;
+          }),
+        );
+      } catch {
+        read = null;
+      }
+      if (read && 'then' in read) {
+        this.fieldFrames = 'wait';
+        read.then(
+          (frames) => (this.fieldFrames = usable(frames)),
+          () => (this.fieldFrames = null),
+        );
+      } else this.fieldFrames = usable(read);
+    }
+    return this.fieldFrames;
+  }
+  /**
+   * The site of the field tile at (x, y) (wheatField.ts), or null where its sprite shows no field:
+   * gone, hidden under track or on flattened ground, or on a tile that is no field to its
+   * neighbours either.
+   */
+  private fieldSite(x: number, y: number) {
+    const s = this.wheat.sprite(idx(this.map, x, y));
+    if (!s || s.destroyed || !s.visible || this.fieldCell(x, y).kind !== CELL_FIELD) return null;
+    const { originX, originY } = this.map;
+    return readSite(x + originX, y + originY, (wx, wy) =>
+      this.fieldCell(wx - originX, wy - originY),
+    );
+  }
+  /**
+   * What tile (x, y) is to a wheat field beside it: a building's footprint, and off the map, are
+   * blocked; a field where its wheat is drawn (not under track, not on flattened ground, its
+   * sprite not taken away, as under a station; in a region not built yet, where it will be drawn);
+   * blocked by track, a road, paving, water and anything standing there; otherwise open land. Each
+   * with its level. It reads the map and what stands on it, never which regions were built first.
+   */
+  private fieldCell(x: number, y: number): FieldCell {
+    const { w, h } = this.map;
+    if (x < 0 || y < 0 || x >= w || y >= h)
+      return { kind: CELL_BLOCKED, variant: 0, level: 0, run: 0 };
+    const i = y * w + x,
+      level = levelAt(this.map, x, y),
+      run = this.footprintRuns().get(i);
+    if (run !== undefined) return { kind: CELL_BLOCKED, variant: 0, level, run };
+    const wheat =
+      this.flattened.has(i) || this.trackSprites.has(i) || this.roads.has(i)
+        ? undefined
+        : this.map.props.get(i)?.find((p) => p.kind === 'wheat');
+    if (wheat && (!this.isBuilt(x, y) || this.wheat.sprite(i)))
+      return { kind: CELL_FIELD, variant: wheat.variant, level, run: 0 };
+    if (
+      this.trackSprites.has(i) ||
+      this.city.has(i) ||
+      this.map.terrain[i] === Terrain.Water ||
+      this.roadAt(x, y) ||
+      this.roads.has(i) ||
+      this.occupied(x, y)
+    )
+      return { kind: CELL_BLOCKED, variant: 0, level, run: 0 };
+    return { kind: CELL_OPEN, variant: 0, level, run: 0 };
+  }
+  /**
+   * The footprint tiles of the buildings with ground data (the ones with a yard, #436), each with
+   * the sides of it a wheat field runs up to: W and S (screen NW and SW), but not a side the
+   * building's yard has a door path on.
+   */
+  private footprintRuns() {
+    if (this.fieldRuns) return this.fieldRuns;
+    const { w, h } = this.map,
+      runs = new Map<number, number>();
+    for (const f of this.footings.values()) {
+      const open = (dx: number, dy: number) =>
+          !f.yard.paths.some((p) => p.dx === dx && p.dy === dy),
+        run = (open(-1, 0) ? RUN_W : 0) | (open(0, 1) ? RUN_S : 0);
+      for (const t of footprintTiles(f.ground, f.x, f.y))
+        if (t.x >= 0 && t.y >= 0 && t.x < w && t.y < h) {
+          const k = t.y * w + t.x;
+          runs.set(k, (runs.get(k) ?? RUN_W | RUN_S) & run);
+        }
+    }
+    this.fieldRuns = runs;
+    return runs;
   }
 
   /** Void ring outside the playable area so zooming out never shows raw background. */
@@ -590,47 +1255,52 @@ export class WorldRenderer {
   private propTint = 0xffffff;
   private refreshSummits() {
     for (let y = 0; y < this.map.h; y++)
-      for (let x = 0; x < this.map.w; x++) {
-        if (!this.isBuilt(x, y)) continue;
-        const k = idx(this.map, x, y),
-          show =
-            this.landscape.active && this.landscape.isPainted(x, y) && this.landscape.summit(x, y);
-        let s = this.summitSprites.get(k);
-        if (!show) {
-          s?.destroy();
-          this.summitSprites.delete(k);
-          continue;
-        }
-        const key = `terrain/mountain_${this.map.variant[k] % 3}`,
-          f = this.atlas.get(key),
-          style = this.landscape.style,
-          // With a match set, lit like the ground it stands on (the painter's height light).
-          texture = this.surfaces.summit(
-            key,
-            f,
-            style.summitMatch ?? 0,
-            style.summitMatch === undefined
-              ? 1
-              : 1 + (style.heightLight ?? 0) * levelAt(this.map, x, y),
-          );
-        if (s) s.texture = texture;
-        else {
-          s = new Sprite({ texture, cullable: true });
-          s.anchor.set(f.anchorX, f.anchorY);
-          s.scale.set(1.05 + hash2(x + this.map.originX, y + this.map.originY, 27) * 0.3);
-          s.zIndex = depthKey(x, y, 2);
-          this.objects.addChild(s);
-          this.summitSprites.set(k, s);
-        }
-        const p = this.surfacePoint(x, y);
-        s.position.set(p.x, p.y);
-        s.tint = this.groundTint;
-      }
+      for (let x = 0; x < this.map.w; x++) this.refreshSummit(x, y);
+  }
+  /** The summit of tile (x, y): a peak gives way to track, and comes back when the track goes. */
+  private refreshSummit(x: number, y: number) {
+    if (!this.isBuilt(x, y)) return;
+    const k = idx(this.map, x, y),
+      show =
+        !this.trackFrames.has(k) &&
+        this.landscape.active &&
+        this.landscape.isPainted(x, y) &&
+        this.landscape.summit(x, y);
+    let s = this.summitSprites.get(k);
+    if (!show) {
+      s?.destroy();
+      this.summitSprites.delete(k);
+      return;
+    }
+    const key = `terrain/mountain_${this.map.variant[k] % 3}`,
+      f = this.atlas.get(key),
+      style = this.landscape.style,
+      // With a match set, lit like the ground it stands on (the painter's height light).
+      texture = this.surfaces.summit(
+        key,
+        f,
+        style.summitMatch ?? 0,
+        style.summitMatch === undefined
+          ? 1
+          : 1 + (style.heightLight ?? 0) * levelAt(this.map, x, y),
+      );
+    if (s) s.texture = texture;
+    else {
+      s = new Sprite({ texture, cullable: true });
+      s.anchor.set(f.anchorX, f.anchorY);
+      s.scale.set(1.05 + hash2(x + this.map.originX, y + this.map.originY, 27) * 0.3);
+      s.zIndex = depthKey(x, y, 2);
+      this.objects.addChild(s);
+      this.summitSprites.set(k, s);
+    }
+    const p = this.surfacePoint(x, y);
+    s.position.set(p.x, p.y);
+    setOwnTint(s, this.groundTint);
   }
   setSeasonTint(ground: number, props: number) {
     this.groundTint = ground;
     this.landscape.setTint(ground);
-    for (const s of this.summitSprites.values()) s.tint = ground;
+    for (const s of this.summitSprites.values()) setOwnTint(s, ground);
     this.propTint = props;
     for (let i = 0; i < this.groundSprites.length; i++) {
       const s = this.groundSprites[i];
@@ -638,7 +1308,8 @@ export class WorldRenderer {
       if (this.map.terrain[i] === Terrain.Water) continue;
       s.tint = this.city.has(i) ? 0xffffff : ground;
     }
-    for (const list of this.propSprites.values()) for (const s of list) s.tint = props;
+    for (const list of this.propSprites.values()) for (const s of list) setOwnTint(s, props);
+    for (const fit of this.groundFits.values()) setOwnTint(fit.weeds, props);
   }
   /** Apply the current season tint to a freshly built region. */
   private applyTintTo(x0: number, y0: number, x1: number, y1: number) {
@@ -648,8 +1319,8 @@ export class WorldRenderer {
         const s = this.groundSprites[i];
         if (s && this.map.terrain[i] !== Terrain.Water)
           s.tint = this.city.has(i) ? 0xffffff : this.groundTint;
-        for (const p of this.propSprites.get(i) ?? []) p.tint = this.propTint;
-        for (const p of this.scatterSprites.get(i) ?? []) p.s.tint = this.propTint;
+        for (const p of this.propSprites.get(i) ?? []) setOwnTint(p, this.propTint);
+        for (const p of this.scatterSprites.get(i) ?? []) setOwnTint(p.s, this.propTint);
       }
   }
 
@@ -661,10 +1332,13 @@ export class WorldRenderer {
     const i = idx(this.map, x, y);
     if (color === 0xffffff) this.trackHighlight.delete(i);
     else this.trackHighlight.set(i, color);
-    const s = this.trackSprites.get(i);
-    if (s) s.tint = this.trackColour(i);
-    const m = this.trackMeshes.get(i);
-    if (m) m.tint = this.trackColour(i);
+    for (const s of [
+      this.trackSprites.get(i),
+      this.trackMeshes.get(i),
+      this.decks.get(i),
+      this.deckMeshes.get(i),
+    ])
+      if (s) s.tint = this.trackColour(i);
   }
   private trackColour(i: number) {
     const hl = this.trackHighlight.get(i);
@@ -681,8 +1355,8 @@ export class WorldRenderer {
   setTrackNight(night: number) {
     if (Math.abs(night - this.trackNight) < 0.04) return;
     this.trackNight = night;
-    for (const [i, s] of this.trackSprites) s.tint = this.trackColour(i);
-    for (const [i, m] of this.trackMeshes) m.tint = this.trackColour(i);
+    for (const pieces of [this.trackSprites, this.trackMeshes, this.decks, this.deckMeshes])
+      for (const [i, s] of pieces) s.tint = this.trackColour(i);
   }
   /**
    * Piers for a bridge platform over land: each stands on the ground under it and reaches up to
@@ -794,9 +1468,232 @@ export class WorldRenderer {
       }
     }
   }
-  /** The illustrated bridge kit is packed (tools/bridge-kit.mjs); else the procedural spans. */
-  get bridgeKit() {
-    return this.atlas.has('bridgekit/stone-deck-x');
+  /**
+   * How bridges draw: `textured` the procedural shapes wearing the kit's surfaces
+   * (bridgeMeshes.ts), merged with their neighbours into wide bridges; `kit` the illustrated kit
+   * pieces; `procedural` the generated spans. Setting it redraws the bridges (onBridgeStyle).
+   */
+  get bridgeStyle() {
+    return this.style;
+  }
+  set bridgeStyle(style: BridgeStyle) {
+    if (style === this.style) return;
+    this.style = style;
+    this.onBridgeStyle();
+  }
+  private style: BridgeStyle = 'textured';
+  /** Called when the bridge style changes; the game redraws its bridges. */
+  onBridgeStyle: () => void = () => {};
+  /** The style bridges draw in: the chosen one, or the next whose assets are there. */
+  get bridgeMode(): BridgeStyle {
+    if (this.style === 'textured' && this.bridgeSurfaces) return 'textured';
+    if (this.style !== 'procedural' && this.atlas.has('bridgekit/stone-deck-x')) return 'kit';
+    return 'procedural';
+  }
+  private bridgeSurfaces: BridgeSurfaces | null = null;
+  /** Loads the kit's repeating surfaces (public/assets/bridge-surface-*.png). */
+  async loadBridgeSurfaces() {
+    if (this.bridgeSurfaces) return true;
+    const base = `${import.meta.env.BASE_URL}assets/bridge-surface-`;
+    try {
+      const [stoneTop, stoneWall, woodTop, woodGrain] = await Promise.all(
+        ['stone-top', 'stone-wall', 'wood-top', 'wood-grain'].map((n) =>
+          Assets.load<Texture>(`${base}${n}.png`),
+        ),
+      );
+      for (const t of [stoneTop, stoneWall, woodTop, woodGrain]) prepareSurface(t.source);
+      this.bridgeSurfaces = { stoneTop, stoneWall, woodTop, woodGrain };
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  private texturedParts = new Map<number, { key: string; under: Container; near: Container }>();
+  /** The bridge tiles last drawn, drawn again when the water painted round them may change. */
+  private texturedTiles: readonly TexturedBridge[] = [];
+  /** A town's paving or a terrain edit came near a textured bridge since it was drawn. */
+  private bridgeWaterChanged = false;
+  /** Whether the landscape had failed when the bridges were drawn (bridgeGround). */
+  private texturedFailed = false;
+  /**
+   * Every bridge tile in the textured style (none in the others): supports, deck and far
+   * parapets under the trains, near parapets over them. Tiles merge with their neighbours
+   * (bridgeLayout.ts); a tile whose parts did not change keeps its meshes.
+   */
+  setTexturedBridges(tiles: readonly TexturedBridge[]) {
+    this.texturedTiles = tiles;
+    this.bridgeWaterChanged = false;
+    this.texturedFailed = this.landscape.failed;
+    const surfaces = this.bridgeMode === 'textured' ? this.bridgeSurfaces : null,
+      roadDecks = new Map<number, TexturedBridge>();
+    for (const t of tiles)
+      if (t.carries === 'road' && t.axis !== null) roadDecks.set(idx(this.map, t.x, t.y), t);
+    const sites = surfaces
+        ? tiles.map((t) =>
+            roadDecks.has(idx(this.map, t.x, t.y))
+              ? { ...t, open: this.roadDeckEnds(t), deck: this.roadDeckProfile(t, roadDecks) }
+              : { ...t, deck: this.deckProfile(t.x, t.y, t.axis, t.water) },
+          )
+        : [],
+      joins = bridgeJoins(sites, this.map.w),
+      ground = (tx: number, ty: number) => this.bridgeGround(tx, ty),
+      keep = new Set<number>();
+    for (const site of sites) {
+      const k = idx(this.map, site.x, site.y),
+        j = joins.get(k)!,
+        // Everything the meshes depend on, to a tenth of a pixel: the ground is sampled under
+        // the tile and in front of it, where it can hide the tile's faces, and the water painted
+        // there is given by what it is painted from.
+        key = JSON.stringify([
+          site.material,
+          site.carries,
+          site.axis,
+          site.water,
+          site.level,
+          site.open,
+          j,
+          site.deck.map((z) => Math.round(z * 10)),
+          GROUND_SAMPLES.map(([dx, dy]) => Math.round(ground(site.x + dx, site.y + dy) * 10)),
+          this.bridgeWaterKey(site.x, site.y),
+        ]);
+      keep.add(k);
+      const old = this.texturedParts.get(k);
+      if (old?.key === key) continue;
+      if (old) for (const c of [old.under, old.near]) destroyBridgeParts(c);
+      const [from, to] = GROUND_BOX,
+        parts = bridgeTileMeshes(
+          {
+            ...site,
+            ground,
+            top: this.groundTop(site.x + from, site.y + from, site.x + to, site.y + to),
+          },
+          bridgePlan(site, j, site.water),
+          surfaces!,
+        );
+      parts.under.zIndex = site.x + site.y;
+      parts.near.zIndex = depthKey(site.x, site.y, 35);
+      this.piers.addChild(parts.under);
+      this.objects.addChild(parts.near);
+      this.texturedParts.set(k, { key, ...parts });
+    }
+    for (const [k, old] of this.texturedParts)
+      if (!keep.has(k)) {
+        for (const c of [old.under, old.near]) destroyBridgeParts(c);
+        this.texturedParts.delete(k);
+      }
+    this.refreshDecks(keep);
+  }
+  /**
+   * The edges of road deck `t` its road leaves through (N, E, S, W): its ends along its axis where
+   * a road runs on. Over water each rests on the bank's abutment there, as a rail deck's does
+   * where its track runs on (`bridgePlan`).
+   */
+  private roadDeckEnds(t: TexturedBridge) {
+    return DIRS.map(
+      (d) =>
+        (t.axis === 1 ? DIR_DX[d] !== 0 : DIR_DY[d] !== 0) &&
+        this.hasRoad(t.x + DIR_DX[d], t.y + DIR_DY[d]),
+    );
+  }
+  /**
+   * Road deck `t`'s top in world px up at DECK_SAMPLES along its axis (`roadDeckSamples`): straight
+   * from the ground where its run of road decks (`decks`, by tile, on one axis) meets the bank at
+   * one end to the ground at the other. Over water it never sinks below the waterline's deck.
+   */
+  private roadDeckProfile(t: TexturedBridge, decks: ReadonlyMap<number, TexturedBridge>) {
+    const alongX = t.axis === 1,
+      { w, h } = this.map,
+      inRun = (k: number) => {
+        const x = alongX ? t.x + k : t.x,
+          y = alongX ? t.y : t.y + k;
+        return (
+          x >= 0 && y >= 0 && x < w && y < h && decks.get(idx(this.map, x, y))?.axis === t.axis
+        );
+      };
+    let back = 0,
+      on = 0;
+    while (back < w + h && inRun(-back - 1)) back++;
+    while (on < w + h && inRun(on + 1)) on++;
+    const centre = alongX ? t.x : t.y,
+      start = centre - back - 0.5,
+      end = centre + on + 0.5,
+      // the ground just off the run's end, on the bank
+      bank = (l: number) => -(alongX ? this.groundAt(l, t.y) : this.groundAt(t.x, l)).dz,
+      floor = t.water ? Math.max(0, -this.groundAt(t.x, t.y).dz) : -Infinity;
+    return roadDeckSamples(
+      centre,
+      start,
+      bank(start - BANK_READ),
+      end,
+      bank(end + BANK_READ),
+      floor,
+    );
+  }
+  /**
+   * A bridge deck's top (the rail level) in world px up at DECK_SAMPLES along its axis; one level
+   * for a pad. Over water it never sinks below the waterline's deck.
+   */
+  private deckProfile(x: number, y: number, axis: 0 | 1 | null, water: boolean): number[] {
+    const tile = this.railBeds.get(idx(this.map, x, y)),
+      dir = axis === 1 ? 'x' : 'y',
+      bed = tile?.axis === dir ? tile : tile?.cross?.axis === dir ? tile.cross : undefined,
+      floor = (z: number) => (water ? Math.max(0, z) : z);
+    if (axis === null || !bed || this.landscape.failed) return [floor(-this.railAt(x, y).dz)];
+    return deckSamples(bed, axis === 1 ? x : y, this.levelPx).map(floor);
+  }
+  /**
+   * Ground under a bridge, world px up: the terrain, or the waterline where the landscape paints
+   * water (`underPaintedWater`, the painter's own waterline inside the tile). With the landscape
+   * off for the session the per-tile ground shows instead, its water a whole tile.
+   */
+  private bridgeGround(tx: number, ty: number) {
+    let water: boolean;
+    if (!this.landscape.failed) water = underPaintedWater(this.map, tx, ty, this.paved);
+    else {
+      const x = Math.round(tx),
+        y = Math.round(ty);
+      water =
+        x >= 0 &&
+        y >= 0 &&
+        x < this.map.w &&
+        y < this.map.h &&
+        this.map.terrain[idx(this.map, x, y)] === Terrain.Water;
+    }
+    return water ? WATERLINE : -this.elevationOf(tx, ty);
+  }
+  /** A height (world px up) the ground under bridges never exceeds in the box given. */
+  private groundTop(x0: number, y0: number, x1: number, y1: number) {
+    // The per-tile ground stands a mountain's two steps up at most (elevationOf).
+    return this.landscape.failed ? 2 * ELEV_PX : this.landscape.heightTop(x0, y0, x1, y1);
+  }
+  /** A town's tile, paved by the painter (`setCity`). */
+  private readonly paved = (tile: number) => this.city.has(tile);
+  /**
+   * What the water painted round bridge tile (x, y) is made from: per tile of WATER_TILES (the
+   * painter's blend reads no others for the points the tile's faces are cut to), whether it is
+   * water and whether it is paved, and whether the per-tile ground stands in for the landscape.
+   * Off the map, the edge tile, as the painter reads it.
+   */
+  private bridgeWaterKey(x: number, y: number) {
+    const { w, h } = this.map,
+      [from, to] = WATER_TILES;
+    let key = this.landscape.failed ? 'tiles:' : 'painted:';
+    for (let ty = y + from; ty <= y + to; ty++)
+      for (let tx = x + from; tx <= x + to; tx++) {
+        const k = Math.max(0, Math.min(h - 1, ty)) * w + Math.max(0, Math.min(w - 1, tx));
+        key += (this.map.terrain[k] === Terrain.Water ? 1 : 0) + (this.city.has(k) ? 2 : 0);
+      }
+    return key;
+  }
+  /** Is tile (x, y) among the tiles whose water a textured bridge tile is cut to (WATER_TILES)? */
+  private nearTexturedBridge(x: number, y: number) {
+    const [from, to] = WATER_TILES;
+    for (const k of this.texturedParts.keys()) {
+      const dx = x - (k % this.map.w),
+        dy = y - Math.floor(k / this.map.w);
+      if (dx >= from && dx <= to && dy >= from && dy <= to) return true;
+    }
+    return false;
   }
   private kitParts = new Map<number, Container>();
   /**
@@ -949,6 +1846,9 @@ export class WorldRenderer {
   setTrack(x: number, y: number, frame: string | null) {
     const i = idx(this.map, x, y);
     let s = this.trackSprites.get(i);
+    if (frame) this.trackFrames.set(i, frame);
+    else this.trackFrames.delete(i);
+    this.refreshSummit(x, y);
     if (!frame) {
       if (s) {
         s.destroy();
@@ -956,7 +1856,10 @@ export class WorldRenderer {
       }
       this.trackMeshes.get(i)?.destroy();
       this.trackMeshes.delete(i);
+      this.showProps(i);
       this.refreshScatter(x, y, 0);
+      this.wheat.near(x, y);
+      this.trackUnderRoad(x, y);
       return;
     }
     const f = this.atlas.get(frame);
@@ -969,7 +1872,59 @@ export class WorldRenderer {
     s.anchor.set(f.anchorX, f.anchorY);
     s.tint = this.trackColour(i);
     this.placeTrackSprite(s, x, y);
+    this.showProps(i);
     this.refreshScatter(x, y, 0);
+    this.wheat.near(x, y);
+    this.trackUnderRoad(x, y);
+  }
+  /**
+   * The track on tile (x, y) changed: where a road lies on it, its level crossing's deck follows,
+   * and the road there and beside it is painted again where its shape changed (a level crossing's
+   * road runs straight through the middle, and so its neighbours meet it there).
+   */
+  private trackUnderRoad(x: number, y: number) {
+    this.refreshDeck(x, y);
+    if (!this.hasRoad(x, y)) return;
+    const { w, h } = this.map,
+      around = [y * w + x];
+    for (const d of DIRS) {
+      const nx = x + DIR_DX[d],
+        ny = y + DIR_DY[d];
+      if (nx >= 0 && ny >= 0 && nx < w && ny < h) around.push(ny * w + nx);
+    }
+    this.updateRoads(around);
+  }
+  /**
+   * The level-crossing deck on tile (x, y) (#309): its frame over a plain straight of a line with
+   * level crossings where a road lies on it, at the place and with the transform of the track piece
+   * under it, tinted as the piece is. None where the road or the track is gone, nor where the
+   * atlas lacks the frame.
+   */
+  private refreshDeck(x: number, y: number) {
+    const i = idx(this.map, x, y),
+      track = this.trackFrames.get(i),
+      frame =
+        this.roads.has(i) && track !== undefined && this.trackSprites.has(i)
+          ? levelCrossingFrame(track)
+          : null;
+    let s = this.decks.get(i);
+    if (!frame || !this.atlas.has(frame)) {
+      s?.destroy();
+      this.decks.delete(i);
+      this.deckMeshes.get(i)?.destroy();
+      this.deckMeshes.delete(i);
+      return;
+    }
+    const f = this.atlas.get(frame);
+    if (!s) {
+      s = new Sprite(f.texture);
+      s.cullable = true;
+      this.crossings.addChild(s);
+      this.decks.set(i, s);
+    } else s.texture = f.texture;
+    s.anchor.set(f.anchorX, f.anchorY);
+    s.tint = this.trackColour(i);
+    this.seat(s, x, y, this.deckMeshes, this.crossings);
   }
   /**
    * New rail profile after a track or bridge change. Tiles whose bed changed repaint their ground
@@ -1019,15 +1974,28 @@ export class WorldRenderer {
     const bed = this.railBeds.get(idx(this.map, x, y));
     return bed?.bridge ? -this.railAt(x, y).dz + this.elevationOf(x, y) : 0;
   }
-  /** Track rests on the rail profile; a bending or climbing piece is a mesh following it. */
+  /**
+   * Track rests on the rail profile; a bending or climbing piece is a mesh following it. A level
+   * crossing's deck over it goes with it.
+   */
   private placeTrackSprite(s: Sprite, x: number, y: number) {
+    this.seat(s, x, y, this.trackMeshes, this.track);
+    const deck = this.decks.get(idx(this.map, x, y));
+    if (deck) this.seat(deck, x, y, this.deckMeshes, this.crossings);
+  }
+  /**
+   * Seat picture `s` of tile (x, y) on the rail profile: standing at the rail's height where the
+   * line runs level, else hidden behind a mesh of its texture (`meshes`, in `layer` just under it)
+   * whose vertices follow the profile.
+   */
+  private seat(s: Sprite, x: number, y: number, meshes: Map<number, Mesh>, layer: Container) {
     const i = idx(this.map, x, y),
       p = tileToWorld(x, y),
       bed = this.railBeds.get(i);
-    let mesh = this.trackMeshes.get(i);
+    let mesh = meshes.get(i);
     if (!bed || bed.flat || this.landscape.failed) {
       mesh?.destroy();
-      this.trackMeshes.delete(i);
+      meshes.delete(i);
       s.renderable = true;
       standOnGround(s, p.x, p.y, { ...LEVEL_GROUND, dz: this.railAt(x, y).dz });
       return;
@@ -1036,8 +2004,8 @@ export class WorldRenderer {
     if (!mesh) {
       mesh = new Mesh({ geometry, texture: s.texture });
       mesh.cullable = true;
-      this.track.addChildAt(mesh, this.track.getChildIndex(s));
-      this.trackMeshes.set(i, mesh);
+      layer.addChildAt(mesh, layer.getChildIndex(s));
+      meshes.set(i, mesh);
     } else {
       mesh.geometry.destroy();
       mesh.geometry = geometry;
@@ -1092,9 +2060,13 @@ export class WorldRenderer {
     const g = this.landscape.slope(x, y);
     return { dz: -g.z, sgx: -g.gx, sgy: -g.gy };
   }
-  /** Rails climb only straight, at most one level per tile; everything else needs level ground. */
+  /**
+   * Rails climb only straight, at most one level per tile; everything else needs level ground.
+   * The relief that decides is built on the main thread, so the answer is the same whether the
+   * paint workers run or have failed.
+   */
   groundAllows(x: number, y: number, need: 'straight' | 'level') {
-    return this.landscape.failed || this.landscape.groundAllows(x, y, need);
+    return this.landscape.groundAllows(x, y, need);
   }
 
   /** Place or update a tall structure sprite keyed by id in the depth-sorted object layer. */
@@ -1103,64 +2075,246 @@ export class WorldRenderer {
     this.structureAnchors.set(id, { x, y, dx, dy });
     let s = this.structures.get(id);
     if (!s) {
-      s = new Sprite(f.texture);
+      s = new Sprite();
       s.cullable = true;
       this.objects.addChild(s);
       this.structures.set(id, s);
-    } else s.texture = f.texture;
-    s.anchor.set(f.anchorX, f.anchorY);
+    }
+    // texture, anchor and size: a reused sprite never keeps the size of the frame it showed
+    const building = this.setSpriteFrame(s, frame);
     const p = tileToWorld(x, y);
     s.position.set(p.x + dx, p.y + this.elevationOf(x, y) + dy);
     s.zIndex = depthKey(x, y, layer);
-    const building = hasScaleReference(frame);
-    if (building) {
-      s.scale.set(structureScale(frame, f.texture.frame.width / f.w > 1 ? f.h : undefined));
-      s.texture = this.surfaces.contact(frame, f, MATERIAL_COLORS[materialAt(this.map, x, y)]);
+    // only a building has window lights and a ground fit; drop those of a building shown before
+    if (!building) this.dropBuildingDressing(id);
+    else {
+      // a copy of its atlas frame, texel for texel, sampled without mipmaps (surfaceAssets.ts)
+      s.texture = this.surfaces.picture(frame, f);
+      this.buildingLife.place(id, s, frame, building.scale);
+      const art = this.fitToGround(id, s, frame, f, building.scale, x, y);
+      this.setFooting(id, s, frame, building.scale, x, y, dx, dy, art.base ?? null);
       let light = this.windowLights.get(id);
       if (!light) {
         light = windowSprite();
         this.objects.addChild(light);
         this.windowLights.set(id, light);
       }
-      light.texture = this.surfaces.window(frame, f, f.texture.frame.width / f.w === 1);
+      light.texture = this.surfaces.window(frame, f, !illustrated(f), building.family);
       light.anchor.set(f.anchorX, f.anchorY);
       light.position.copyFrom(s.position);
       light.scale.copyFrom(s.scale);
       light.zIndex = s.zIndex + 0.01;
-      let patches = this.contactPatches.get(id);
-      if (!patches) {
-        patches = new Graphics({ cullable: true });
-        this.contactGround.addChild(patches);
-        this.contactPatches.set(id, patches);
-      }
-      patches.clear();
-      patches.position.copyFrom(s.position);
-      const contour = this.surfaces.groundContour(frame, f);
-      for (let j = 0; j < contour.length; j++) {
-        const q = contour[j],
-          px = q.x * s.scale.x,
-          py = q.y * s.scale.y;
-        const seed = hash2(x + this.map.originX + j, y + this.map.originY, 91);
-        // Thin broken soil/grass strip follows the actual foundation silhouette.
-        if (seed < 0.2) continue;
-        patches
-          .ellipse(px, py + 0.65, 1.6 + seed * 1.6, 0.65 + seed * 0.75)
-          .fill({ color: 0x8c7950, alpha: 0.17 + seed * 0.11 });
-        if (seed > 0.6) {
-          patches
-            .moveTo(px - 0.7, py + 1.7)
-            .lineTo(px - 0.85, py + 0.25)
-            .moveTo(px + 0.35, py + 1.7)
-            .lineTo(px + 0.7, py + 0.1)
-            .stroke({ color: 0x82964c, width: 0.6, alpha: 0.52 });
-        }
-        if (seed > 0.91)
-          patches.ellipse(px + 1.1, py + 1.6, 0.85, 0.45).fill({ color: 0xa6a28a, alpha: 0.5 });
-      }
     }
     // Stations reach up to two tiles from their anchor; nature there clears away.
     this.refreshScatter(x, y, 2);
+    // and a field beside one ends short of it, or runs up to it
+    this.fieldRuns = null;
+    this.wheat.near(x - 2, y - 2, x + 2, y + 2);
     return s;
+  }
+  /**
+   * Fit building `id`, picture `s` showing `frame` at `scale` on tile (x, y), to the ground: the
+   * soft shadow it casts, the shade over its foot and the weeds and pebbles over its base. They
+   * are layers of their own; the picture stays its atlas frame's texels. A picture with its
+   * ground shadow baked in (a generated works or station) casts none, so it is not doubled.
+   */
+  private fitToGround(
+    id: string,
+    s: Sprite,
+    frame: string,
+    f: FrameInfo,
+    scale: number,
+    x: number,
+    y: number,
+  ) {
+    const art = this.surfaces.groundFit(frame, f, scale);
+    let fit = this.groundFits.get(id);
+    if (!fit) {
+      fit = {
+        shadow: new Sprite({ cullable: true }),
+        foot: new Sprite({ cullable: true }),
+        weeds: new Sprite({ cullable: true }),
+        weedsTexture: null,
+        feet: [],
+        x: 0,
+        y: 0,
+        drawn: null,
+      };
+      this.contactGround.addChild(fit.shadow);
+      this.objects.addChild(fit.foot, fit.weeds);
+      this.groundFits.set(id, fit);
+    }
+    for (const [sprite, layer] of [
+      [fit.shadow, art.shadow],
+      [fit.foot, art.foot],
+    ] as const) {
+      sprite.visible = !!layer;
+      if (!layer) continue;
+      sprite.texture = layer.texture;
+      sprite.anchor.set(layer.anchorX, layer.anchorY);
+    }
+    fit.feet = art.feet;
+    fit.x = Math.round(x);
+    fit.y = Math.round(y);
+    this.growWeeds(fit);
+    setOwnTint(fit.weeds, this.propTint);
+    placeGroundFit(fit, s);
+    return art;
+  }
+  /**
+   * The yard and plinth of building `id`, picture `s` showing `frame` at `scale`, placed on tile
+   * (x, y) and moved (dx, dy) world px from it, as `setStructure` places it: its anchor is the
+   * footprint's centre on the ground. A frame without ground data (src/art/buildingGround.json)
+   * has neither. `wall` is the colour of its walls' base.
+   */
+  private setFooting(
+    id: string,
+    s: Sprite,
+    frame: string,
+    scale: number,
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+    wall: RGB | null,
+  ) {
+    const ground = groundDataOf(frame);
+    if (!ground) {
+      this.dropFooting(id);
+      return;
+    }
+    const off = worldToTile(dx, dy);
+    let footing = this.footings.get(id);
+    const was = footing?.yard ?? null;
+    const site = { frame, ground, scale, x: x + off.x, y: y + off.y, tx: x, ty: y, wall };
+    if (footing) Object.assign(footing, site);
+    else {
+      footing = { ...site, yard: null as unknown as Yard, lift: 0, plinth: null, drawn: '' };
+      this.footings.set(id, footing);
+    }
+    const yard = this.yardOf(footing);
+    footing.yard = yard;
+    if (!sameYard(was, yard)) this.yardsChanged(was, yard);
+    this.fitPlinth(footing, s);
+    const fit = this.groundFits.get(id);
+    if (fit) placeGroundFit(fit, s);
+  }
+  /** A building's yard as its footing, the doors and the roads round it stand now. */
+  private yardOf(f: Footing): Yard {
+    const { w, h } = this.map,
+      material = materialAt(this.map, f.tx, f.ty),
+      doors: PavingDoor[] = [];
+    for (const t of footprintTiles(f.ground, f.x, f.y))
+      if (t.x >= 0 && t.y >= 0 && t.x < w && t.y < h)
+        doors.push(...(this.doorsByTile.get(t.y * w + t.x) ?? []));
+    return buildingYard(
+      f.frame,
+      f.ground,
+      {
+        x: f.x,
+        y: f.y,
+        scale: f.scale,
+        sandy: material === Material.Sand || material === Material.Desert,
+      },
+      doors,
+      // a path runs on to a road next door, not on to the rails of a level crossing
+      (rx, ry) =>
+        rx >= 0 &&
+        ry >= 0 &&
+        rx < w &&
+        ry < h &&
+        this.roadAt(rx, ry) &&
+        !this.trackSprites.has(idx(this.map, rx, ry)),
+    );
+  }
+  /** Work out again the yards of the footings `which` picks; repaint those that changed. */
+  private refreshYards(which: (f: Footing) => boolean) {
+    for (const f of this.footings.values()) {
+      if (!which(f)) continue;
+      const yard = this.yardOf(f);
+      if (sameYard(f.yard, yard)) continue;
+      const was = f.yard;
+      f.yard = yard;
+      this.yardsChanged(was, yard);
+      // a door path on its W or S side keeps a field there from running up to it
+      this.fieldRuns = null;
+      this.wheat.near(f.x - 2, f.y - 2, f.x + 2, f.y + 2);
+    }
+  }
+  /** Hand the yards to the painter and repaint where yard `was` gave way to `now`. */
+  private yardsChanged(was: Yard | null, now: Yard | null) {
+    const { w, h } = this.map;
+    this.landscape.setYards([...this.footings.values()].map((f) => f.yard));
+    const tiles = new Set<number>();
+    for (const yard of [was, now]) if (yard) for (const k of yardTiles(yard, w, h)) tiles.add(k);
+    for (const k of tiles) this.landscape.repaint(k % w, Math.floor(k / w));
+  }
+  /**
+   * Stand building `f`'s picture `s` on the ground under its foot, from where its tile's ground
+   * puts it: lifted onto the highest ground under its foot, with a plinth from its walls' foot down
+   * to the ground wherever that drops away (plinth.ts), drawn just under the picture. Off the
+   * painted relief (the per-tile ground) and under machinery measured by its outline, none.
+   */
+  private fitPlinth(f: Footing, s: Sprite) {
+    const plinth =
+      this.landscape.failed || f.ground.fit !== 'walls'
+        ? null
+        : plinthOf(
+            f.ground.foot.map(([px, py]) => [px * f.scale, py * f.scale] as const),
+            f.x,
+            f.y,
+            -this.elevationOf(f.tx, f.ty),
+            (mx, my) => -this.elevationOf(mx, my),
+          );
+    f.lift = plinth?.lift ?? 0;
+    s.y -= f.lift;
+    if (!plinth?.runs.length) {
+      f.plinth?.destroy();
+      f.plinth = null;
+      f.drawn = '';
+      return;
+    }
+    if (!f.plinth) {
+      f.plinth = new Graphics({ cullable: true });
+      this.objects.addChild(f.plinth);
+    }
+    const colour = plinthColour(f.wall),
+      key = JSON.stringify([colour, plinth.runs]);
+    if (key !== f.drawn) {
+      f.drawn = key;
+      const g = f.plinth.clear();
+      for (const shape of plinthShapes(plinth, colour)) {
+        g.poly(shape.points, shape.width === undefined);
+        if (shape.width === undefined) g.fill({ color: shape.colour, alpha: shape.alpha });
+        else g.stroke({ color: shape.colour, alpha: shape.alpha, width: shape.width });
+      }
+    }
+    f.plinth.position.copyFrom(s.position);
+    // under the picture, over everything a depth step behind it
+    f.plinth.zIndex = s.zIndex - 0.004;
+  }
+  /** A building's yard and plinth go with it: the ground under its yard is painted again. */
+  private dropFooting(id: string) {
+    const f = this.footings.get(id);
+    if (!f) return;
+    this.footings.delete(id);
+    f.plinth?.destroy();
+    this.yardsChanged(f.yard, null);
+  }
+  /** Draw a building's weeds and pebbles for the ground its tile has now (none on paving). */
+  private growWeeds(fit: GroundFitSprites) {
+    const { x, y, feet } = fit,
+      ground = footGround(materialAt(this.map, x, y), this.city.has(idx(this.map, x, y))),
+      on = `${x},${y}|${ground}`;
+    if (fit.drawn?.feet === feet && fit.drawn.on === on) return;
+    fit.drawn = { feet, on };
+    const art = this.surfaces.weeds(
+      footScatter(feet, x + this.map.originX, y + this.map.originY, ground),
+      ground,
+    );
+    showWeeds(fit, art?.texture ?? null);
+    fit.weeds.visible = !!art;
+    if (art) fit.weeds.anchor.set(art.anchorX, art.anchorY);
   }
   setWindowNight(night: number) {
     for (const [id, light] of this.windowLights) {
@@ -1172,33 +2326,41 @@ export class WorldRenderer {
       light.rotation = owner.rotation;
     }
   }
-  private atmosphereTints = new WeakMap<Container, { base: number; applied: number }>();
-  /** Ground is tinted by the multiply layer. Objects tint before their emissive masks. */
+  /**
+   * Ground is tinted by the multiply layer. Objects tint before their emissive masks: each shows
+   * its own tint times `color`. Only a new colour walks the whole layer; otherwise just the
+   * objects added since the last call are tinted (atmosphere.ts).
+   */
   setAtmosphereTint(color: number) {
-    for (const object of this.objects.children) {
-      if (object.label === 'emissive') continue;
-      const previous = this.atmosphereTints.get(object);
-      const base = previous && object.tint === previous.applied ? previous.base : object.tint;
-      let applied = 0;
-      for (const shift of [0, 8, 16])
-        applied |= Math.round((((base >> shift) & 255) * ((color >> shift) & 255)) / 255) << shift;
-      object.tint = applied;
-      this.atmosphereTints.set(object, { base, applied });
+    this.atmosphere.apply(color);
+  }
+  /** A structure's window lights, ground fit, yard and plinth, which only a building has. */
+  private dropBuildingDressing(id: string) {
+    this.buildingLife.remove(id);
+    this.dropFooting(id);
+    const fit = this.groundFits.get(id);
+    if (fit) {
+      showWeeds(fit, null);
+      for (const part of [fit.shadow, fit.foot, fit.weeds]) part.destroy();
     }
+    this.groundFits.delete(id);
+    this.windowLights.get(id)?.destroy();
+    this.windowLights.delete(id);
   }
   removeStructure(id: string) {
     const anchor = this.structureAnchors.get(id);
     this.structureAnchors.delete(id);
-    this.contactPatches.get(id)?.destroy();
-    this.contactPatches.delete(id);
-    this.windowLights.get(id)?.destroy();
-    this.windowLights.delete(id);
+    this.dropBuildingDressing(id);
     const s = this.structures.get(id);
     if (s) {
       s.destroy();
       this.structures.delete(id);
     }
-    if (anchor) this.refreshScatter(anchor.x, anchor.y, 2);
+    if (anchor) {
+      this.refreshScatter(anchor.x, anchor.y, 2);
+      this.fieldRuns = null;
+      this.wheat.near(anchor.x - 2, anchor.y - 2, anchor.x + 2, anchor.y + 2);
+    }
   }
   getStructure(id: string) {
     return this.structures.get(id);
@@ -1211,17 +2373,25 @@ export class WorldRenderer {
     this.overlay.addChild(s);
     return s;
   }
-  setSpriteFrame(s: Sprite, frame: string) {
+  /**
+   * Show `frame` on `s` at its anchor and size: a building by its scale reference (a turned
+   * frame by its unturned frame's), a tree at tree scale, anything else at 1, so a reused sprite
+   * never keeps the size of the frame it showed before. Returns the building's scale reference,
+   * or null for a frame without one.
+   */
+  setSpriteFrame(s: Sprite, frame: string): ScaleReference | null {
     const f = this.atlas.get(frame);
     s.texture = f.texture;
     s.anchor.set(f.anchorX, f.anchorY);
+    const building = scaleReference(this.atlas, frame, illustrated(f) ? f.h : undefined);
     s.scale.set(
-      hasScaleReference(frame)
-        ? structureScale(frame, f.texture.frame.width / f.w > 1 ? f.h : undefined)
+      building
+        ? building.scale
         : frame.startsWith('props/') && isTree(frame.slice(6).replace(/_\d+$/, ''))
           ? TREE_SCALE
           : 1,
     );
+    return building;
   }
 
   /** World pixel position of the top surface of a tile centre (for placing sprites). */

@@ -1,0 +1,120 @@
+{
+  "guide": "windmill-r1.png",
+  "view": "r1",
+  "rotation": 1,
+  "front": "W",
+  "note": "Written by tools/building-guides.mjs: do not edit by hand.",
+  "canvas": [
+    1024,
+    1024
+  ],
+  "scale": 8,
+  "anchor": [
+    512,
+    832
+  ],
+  "units": "canvas px are the guide picture's; game px are canvas px over `scale`, from the anchor (the footprint's centre at ground level), x to the right and y down",
+  "hub": {
+    "canvas": [
+      384,
+      432
+    ],
+    "fromAnchorGame": [
+      -16,
+      -50
+    ],
+    "tile": [
+      -0.5,
+      0
+    ],
+    "heightAbovePlinth": 38,
+    "heightAboveGround": 42
+  },
+  "shaft": {
+    "tileAxis": "-x",
+    "face": "upper left",
+    "lengthTiles": 0.5,
+    "from": {
+      "canvas": [
+        512,
+        496
+      ],
+      "tile": [
+        0,
+        0
+      ]
+    },
+    "screenDirection": [
+      -0.8944,
+      -0.4472
+    ],
+    "screenSlope": 0.5,
+    "behindTower": true
+  },
+  "door": {
+    "visible": false,
+    "tileAxis": "-x",
+    "canvas": null,
+    "fromAnchorGame": null,
+    "widthTiles": 0.1312,
+    "heightPx": 10.8,
+    "heightMetres": 2.1,
+    "widthMetres": 1,
+    "note": "the front is away from the camera: there is no door in this view, on either visible wall"
+  },
+  "tower": {
+    "baseRadiusTiles": 0.475,
+    "topRadiusTiles": 0.33,
+    "heightPx": 32,
+    "capHeightPx": 15.4,
+    "capRadiusTiles": 0.375,
+    "footEllipse": {
+      "centre": [
+        512,
+        800
+      ],
+      "semiMajor": 171.9684,
+      "semiMinor": 85.9842,
+      "minorOverMajor": 0.5
+    }
+  },
+  "cross": {
+    "plane": "the plane of tile y and the vertical, to which the shaft (tile x) stands square",
+    "uTileAxis": "+y",
+    "seenFrom": "behind (the front is away from the camera)",
+    "determinantSign": "-",
+    "affine": [
+      [
+        -0.7071,
+        0
+      ],
+      [
+        0.3536,
+        0.866
+      ]
+    ],
+    "formula": "screen = s * [[-0.7071, 0], [0.3536, 0.866]] * (u, v), u to the right and v down in the cross's own px, s game px per cross px",
+    "ellipseMinorOverMajor": 0.6124,
+    "sails": {
+      "radiusGamePx": 40,
+      "gamePxPerCrossPx": 0.069343,
+      "lowestTipDropPx": 34.641,
+      "lowestTipAboveGroundPx": 7.359,
+      "lowestTipAboveGroundMetres": 1.4309,
+      "note": "the radius is in the cross plane, hub to tip of the longest painted point; the lowest tip of a turning cross hangs sqrt(3)/2 of it below the hub"
+    },
+    "sailsFace": {
+      "picture": "windmill-sails-face.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "pivot": [
+        626.5,
+        626.5
+      ],
+      "reachShare": 0.46,
+      "armsDegrees": 45
+    }
+  }
+}

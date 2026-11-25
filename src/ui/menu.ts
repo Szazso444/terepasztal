@@ -1,351 +1,295 @@
-import { el, btn } from './dom';
+import { el } from './dom';
+import { actionButton, lineIcon, note, page, well, type IconName } from './kit';
+import { ScreenFrame, type Screen, type ScreenManager } from './modal';
 import { STR } from '../strings';
 import type { LevelData } from '../world/level';
-import { SUPPLY_MODES, DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
+import type { SupplyMode } from '../sim/supply';
 import type { SlotMeta } from '../sim/save';
+import { textLines, type Confirm, type SlotActions } from './saveRows';
+import { continueText, type Replacement, type ReplaceEffect } from './saveSlots';
+import { LevelsScreen } from './levelsScreen';
+import { NewGameScreen } from './newGameScreen';
+import { titleEntries, type TitleEntry } from './titleModel';
 
-/** Shared by both menus: music and effects volume, so the player can set them from the menu. */
-export interface AudioActions {
-  volume(key: 'music' | 'sfx'): number;
-  setVolume(key: 'music' | 'sfx', v: number): void;
+export { slotRows, confirmDeleteSlot, slotLines } from './saveRows';
+export type { Confirm, SlotActions } from './saveRows';
+
+/**
+ * What Continue goes back to, described like a save: the stored save (`continueMeta()`), or with
+ * `live` the game being played under the title screen, which it was opened over.
+ */
+export interface ContinueTarget {
+  meta: SlotMeta;
+  live: boolean;
 }
 
-/** One labelled 0-100 slider wired straight to the live audio bus. */
-function volumeRow(actions: AudioActions, key: 'music' | 'sfx', label: string) {
-  const input = el('input', {
-    class: 'menu-volume',
-    type: 'range',
-    min: '0',
-    max: '100',
-    value: String(Math.round(actions.volume(key) * 100)),
-    'aria-label': label,
-  }) as HTMLInputElement;
-  const val = el('span', { class: 'num', text: `${Math.round(actions.volume(key) * 100)}%` });
-  input.addEventListener('input', () => {
-    actions.setVolume(key, Number(input.value) / 100);
-    val.textContent = `${input.value}%`;
-  });
-  return el(
-    'div',
-    { class: 'menu-row' },
-    el('span', { class: 'menu-volume-label dim', text: label }),
-    input,
-    val,
-  );
-}
-
-/** The audio block shown in both the title screen and the pause menu. */
-export function audioRows(actions: AudioActions) {
-  return el(
-    'div',
-    { class: 'menu-audio' },
-    el('div', { class: 'col-title', text: STR.settings.audio }),
-    volumeRow(actions, 'music', STR.settings.music),
-    volumeRow(actions, 'sfx', STR.settings.sfx),
-  );
-}
-
-/** Shared by both menus: the named saves with load / delete. */
-export interface SlotActions {
-  slots(): SlotMeta[];
-  loadSlot(name: string): void;
-  deleteSlot(name: string): void;
-}
-
-function slotList(actions: SlotActions, onDeleted: () => void) {
-  const list = el('div', { class: 'menu-levels' });
-  const slots = actions.slots();
-  if (!slots.length) list.append(el('div', { class: 'dim', text: STR.menu.noSaves }));
-  for (const sl of slots)
-    list.append(
-      el(
-        'div',
-        { class: 'item', style: 'cursor:default' },
-        el(
-          'div',
-          {},
-          el('div', { class: 'name', text: sl.name }),
-          el('div', {
-            class: 'sub',
-            text: `${STR.menu.day(sl.day)} · ${new Date(sl.savedAt).toLocaleString()}`,
-          }),
-        ),
-        el(
-          'div',
-          { class: 'row', style: 'margin:0;flex-direction:column' },
-          btn(STR.settings.loadSlot, () => actions.loadSlot(sl.name), 'small accent'),
-          btn(
-            STR.settings.deleteSlot,
-            () => {
-              if (confirm(STR.settings.confirmDelete(sl.name))) {
-                actions.deleteSlot(sl.name);
-                onDeleted();
-              }
-            },
-            'small',
-          ),
-        ),
-      ),
-    );
-  return list;
-}
-
-export interface MainMenuActions extends SlotActions, AudioActions {
+export interface MainMenuActions extends SlotActions {
   continue(): void;
-  newGame(seed: string, supply: SupplyMode): void;
+  /** `tuning` is the saved tuning picked under New game, null for the shipped rules */
+  newGame(seed: string, supply: SupplyMode, tuning: string | null): void;
+  /** the tunings saved in Game tuning, newest first */
+  tunings(): { name: string }[];
+  /** the levels kept in this browser, newest first */
+  levels(): LevelData[];
+  /** what a replacement of this kind loses, for the tips of the buttons that start it */
+  asks(kind: Replacement): ReplaceEffect | null;
   playLevel(id: string): void;
   editLevel(id: string): void;
   newLevel(size: number, generated: boolean, seed: string): void;
   deleteLevel(id: string): void;
   importLevel(json: string): boolean;
   exportLevel(id: string): string;
+  /** Saved games, on its Load tab */
+  savedGames(): void;
   tuning(): void;
   content(): void;
   settings(): void;
+  audio(): void;
+  /** Settings, on its Controls tab */
+  controls(): void;
+  credits(): void;
 }
 
-/** Title screen. Overlays the (paused) world. */
+/**
+ * The title screen: the root of the menus, an S frame with the wordmark for its header and no ×.
+ * Its buttons open New game, Saved games, Levels and Settings over it; Esc and a click beside it
+ * do nothing, as there is nothing under it to go back to. Over a game it says Paused.
+ */
 export class MainMenu {
   readonly root = el('div', { id: 'menu-root', class: 'menu-root' });
-  private left = el('div', { class: 'menu-col' });
-  private right = el('div', { class: 'menu-col levels' });
+  private frame = new ScreenFrame(() => undefined);
+  private newGame: NewGameScreen;
+  private levelsScreen: LevelsScreen;
+  /** what the title was last shown with: it is drawn again, for its counts, when a screen leaves */
+  private last: { save: ContinueTarget | null; custom: { content: boolean } } | null = null;
+  /** the counts on the buttons; read again only after something that changes them */
+  private counts = { named: 0, levels: 0 };
+  private stale = true;
   visible = false;
 
-  constructor(private readonly actions: MainMenuActions) {
-    this.root.append(
-      el(
-        'div',
-        { class: 'menu-frame panel' },
-        el(
-          'div',
-          { class: 'menu-title' },
-          el('div', { class: 'menu-title-main', text: STR.title }),
-          el('div', { class: 'menu-title-sub', text: STR.menu.tagline }),
-        ),
-        el('div', { class: 'menu-cols' }, this.left, this.right),
-        el('div', { class: 'menu-foot dim', text: STR.settings.controlsText }),
-      ),
+  constructor(
+    private readonly actions: MainMenuActions,
+    prompt: Confirm,
+    private readonly screens: Pick<ScreenManager, 'open'>,
+  ) {
+    this.newGame = new NewGameScreen({
+      newGame: (seed, supply, tuning) => actions.newGame(seed, supply, tuning),
+      tunings: () => actions.tunings(),
+      asks: () => actions.asks('overwrite'),
+    });
+    this.levelsScreen = new LevelsScreen(
+      {
+        levels: () => actions.levels(),
+        playLevel: (id) => actions.playLevel(id),
+        editLevel: (id) => actions.editLevel(id),
+        newLevel: (size, generated, seed) => actions.newLevel(size, generated, seed),
+        deleteLevel: (id) => {
+          actions.deleteLevel(id);
+          this.changed();
+        },
+        importLevel: (json) => {
+          const kept = actions.importLevel(json);
+          if (kept) this.changed();
+          return kept;
+        },
+        asks: () => actions.asks('overwrite'),
+      },
+      prompt,
     );
+    this.root.append(this.frame.root);
     this.root.style.display = 'none';
   }
 
-  show(hasSave: boolean, levels: LevelData[], custom: { rules: boolean; content: boolean }) {
+  /** `save` is what Continue goes back to, null when there is nothing to continue. */
+  show(save: ContinueTarget | null, custom: { content: boolean }) {
     this.visible = true;
     this.root.style.display = 'flex';
-    this.render(hasSave, levels, custom);
+    document.body.classList.add('title-up');
+    this.last = { save, custom };
+    this.stale = true;
+    this.render();
   }
   hide() {
     this.visible = false;
     this.root.style.display = 'none';
+    document.body.classList.remove('title-up');
+  }
+  /** A screen over the title takes the view and the scrim: the map dims once. */
+  setCovered(covered: boolean) {
+    this.root.style.visibility = covered ? 'hidden' : '';
+    // what the screen over it changed (a level imported, a save deleted) shows on its buttons
+    if (!covered && this.visible) this.render();
   }
 
-  private render(
-    hasSave: boolean,
-    levels: LevelData[],
-    custom: { rules: boolean; content: boolean },
-  ) {
-    const l = this.left;
-    l.innerHTML = '';
-    const seedInput = el('input', {
-      class: 'text',
-      type: 'text',
-      placeholder: STR.settings.seedPlaceholder,
-      style: 'width:140px',
-    }) as HTMLInputElement;
-    const cont = btn(STR.menu.continue, () => this.actions.continue(), 'menu-btn accent');
-    cont.disabled = !hasSave;
-    // production chain of the new game: simple (default) or the full supply set
-    const supply = el('select', { class: 'text', title: STR.menu.supply }) as HTMLSelectElement;
-    for (const m of SUPPLY_MODES)
-      supply.append(el('option', { value: m, text: STR.menu.supplyModes[m] ?? m }));
-    supply.value = DEFAULT_SUPPLY;
-    const supplyHint = el('div', { class: 'sub dim', style: 'max-width:300px' });
-    const hint = () => (supplyHint.textContent = STR.menu.supplyHint[supply.value] ?? '');
-    supply.addEventListener('change', hint);
-    hint();
-    l.append(
-      cont,
-      el(
-        'div',
-        { class: 'menu-row' },
-        btn(
-          STR.menu.newGame,
-          () => this.actions.newGame(seedInput.value.trim(), supply.value as SupplyMode),
-          'menu-btn',
-        ),
-        seedInput,
-      ),
-      el('div', { class: 'menu-row' }, el('span', { class: 'dim', text: STR.menu.supply }), supply),
-      supplyHint,
-      btn(
-        STR.menu.tuning + (custom.rules ? ` ${STR.menu.modified}` : ''),
-        () => this.actions.tuning(),
-        'menu-btn',
-      ),
-      btn(
-        STR.menu.content + (custom.content ? ` ${STR.menu.modified}` : ''),
-        () => this.actions.content(),
-        'menu-btn',
-      ),
-      btn(STR.topbar.settings, () => this.actions.settings(), 'menu-btn'),
-      audioRows(this.actions),
-      el('div', { class: 'col-title', style: 'margin-top:8px', text: STR.menu.savedGames }),
-      slotList(this.actions, () => this.render(hasSave, levels, custom)),
-    );
-    const r = this.right;
-    r.innerHTML = '';
-    r.append(el('div', { class: 'col-title', text: STR.menu.levels }));
-    if (!levels.length) r.append(el('div', { class: 'dim', text: STR.menu.noLevels }));
-    const list = el('div', { class: 'menu-levels' });
-    for (const lv of levels) {
-      list.append(
-        el(
-          'div',
-          { class: 'item', style: 'cursor:default' },
-          el(
-            'div',
-            {},
-            el('div', { class: 'name', text: lv.name }),
-            el('div', {
-              class: 'sub',
-              text: `${lv.w}x${lv.h} · ${lv.stations.length} stations · ${new Date(lv.updatedAt).toLocaleDateString()}`,
-            }),
-            lv.description
-              ? el('div', { class: 'sub dim', text: lv.description.slice(0, 80) })
-              : null,
-          ),
-          el(
-            'div',
-            { class: 'row', style: 'margin:0;flex-direction:column' },
-            btn(STR.menu.play, () => this.actions.playLevel(lv.id), 'small accent'),
-            btn(STR.menu.edit, () => this.actions.editLevel(lv.id), 'small'),
-            btn(
-              STR.menu.delete,
-              () => {
-                if (confirm(STR.menu.confirmDelete(lv.name))) this.actions.deleteLevel(lv.id);
-              },
-              'small',
-            ),
-          ),
-        ),
+  /** A save or a level was added or deleted: the counts are read again when the title is drawn. */
+  changed() {
+    this.stale = true;
+  }
+
+  /** The tunings saved in Game tuning, drawn again in New game, and nothing else of it. */
+  refreshTunings() {
+    this.newGame.refreshTunings();
+  }
+
+  private press(e: TitleEntry) {
+    const a = this.actions;
+    switch (e.id) {
+      case 'continue':
+        return a.continue();
+      case 'newGame':
+        return this.screens.open(this.newGame);
+      case 'saved':
+        return a.savedGames();
+      case 'levels':
+        return this.screens.open(this.levelsScreen);
+      case 'settings':
+        return a.settings();
+      case 'audio':
+        return a.audio();
+      case 'controls':
+        return a.controls();
+      case 'tuning':
+        return a.tuning();
+      case 'content':
+        return a.content();
+      case 'credits':
+        return a.credits();
+    }
+  }
+
+  private button(e: TitleEntry, save: ContinueTarget | null): HTMLButtonElement {
+    const b = actionButton(e.label, () => this.press(e), {
+      icon: e.icon,
+      cls: e.primary ? 'pri' : '',
+      extra: e.count !== undefined ? String(e.count) : undefined,
+      title: e.off ?? e.tip,
+      disabled: !!e.off,
+    });
+    if (e.mark) b.append(el('small', { class: 'ti-mod', text: e.mark }));
+    if (e.id === 'continue') {
+      // what Continue goes back to, in the body font under the title-font label
+      const lines = save
+        ? textLines(continueText(save, Date.now()), 'ti-line')
+        : [el('div', { class: 'ti-line', text: STR.menu.noSaveLine })];
+      b.replaceChildren(
+        lineIcon(e.icon),
+        el('span', { class: 'ti-main' }, el('b', { text: e.label }), ...lines),
       );
     }
-    r.append(list);
-    const size = el('select', { class: 'text' }) as HTMLSelectElement;
-    for (const s of [32, 64, 96, 128])
-      size.append(el('option', { value: String(s), text: `${s} x ${s}` }));
-    size.value = '64';
-    const lvlSeed = el('input', {
-      class: 'text',
-      type: 'text',
-      placeholder: STR.settings.seedPlaceholder,
-      style: 'width:100px',
-    }) as HTMLInputElement;
-    r.append(
-      el('div', { class: 'col-title', style: 'margin-top:8px', text: STR.menu.newLevel }),
-      el(
-        'div',
-        { class: 'row' },
-        size,
-        lvlSeed,
-        btn(
-          STR.menu.blank,
-          () => this.actions.newLevel(Number(size.value), false, lvlSeed.value.trim()),
-          'small',
-        ),
-        btn(
-          STR.menu.generated,
-          () => this.actions.newLevel(Number(size.value), true, lvlSeed.value.trim()),
-          'small',
-        ),
+    return b;
+  }
+
+  private render() {
+    const { save, custom } = this.last ?? { save: null, custom: { content: false } };
+    if (this.stale) {
+      this.stale = false;
+      this.counts = { named: this.actions.slots().length, levels: this.actions.levels().length };
+    }
+    const entries = titleEntries({
+      canContinue: !!save,
+      overGame: !!save?.live,
+      named: this.counts.named,
+      levels: this.counts.levels,
+      contentModified: custom.content,
+    });
+    const buttons = entries.map((e) => this.button(e, save));
+    const screen: Screen = {
+      id: 'title',
+      title: STR.title,
+      frameSize: 'S',
+      frameClass: 'k-title',
+      noClose: true,
+      formKeys: true,
+      root: page(
+        note(STR.menu.tagline, 'k-tag'),
+        well(null, el('div', { class: 'k-stack' }, ...buttons)),
       ),
-    );
-    const area = el('textarea', {
-      class: 'text',
-      style: 'width:100%;height:40px;font-family:var(--font-mono);font-size:10px',
-      placeholder: STR.menu.importHint,
-      spellcheck: 'false',
-    }) as HTMLTextAreaElement;
-    r.append(
-      area,
-      el(
-        'div',
-        { class: 'row' },
-        btn(
-          STR.menu.importLevel,
-          () => {
-            if (area.value.trim() && !this.actions.importLevel(area.value.trim()))
-              alert(STR.editor.badLevel);
-          },
-          'small',
-        ),
-      ),
-    );
+    };
+    this.frame.show(screen, { stacked: false, paused: !!save?.live });
+    // nothing has the focus when it opens: it starts on the first button that can be pressed, so
+    // Tab goes on from there and Enter presses it
+    buttons.find((b) => !b.disabled)?.focus();
   }
 }
 
-export interface PauseMenuActions extends SlotActions, AudioActions {
+export interface PauseMenuActions extends SlotActions {
   resume(): void;
   save(): void;
+  /** Saved games, on its Save tab */
   saveAs(): void;
+  /** Saved games, on its Load tab */
+  loadGame(): void;
   settings(): void;
+  audio(): void;
   tuning(): void;
   content(): void;
   backToEditor(): void;
   mainMenu(): void;
 }
 
-/** In-game menu (Esc / Menu button). */
+/** In-game menu (Esc / Menu button): an S frame of its own, under the screens opened from it. */
 export class PauseMenu {
   readonly root = el('div', { id: 'pause-root', class: 'menu-root' });
-  private box = el('div', { class: 'menu-frame panel small' });
+  private frame = new ScreenFrame(() => this.actions.resume());
   visible = false;
+  /** what it was last shown with: it is drawn again, for the count on Load game, when a screen leaves */
+  private shown: { testing: boolean; editor: boolean } | null = null;
   constructor(private readonly actions: PauseMenuActions) {
-    this.root.append(this.box);
+    this.root.append(this.frame.root);
     this.root.style.display = 'none';
     this.root.addEventListener('mousedown', (e) => {
       if (e.target === this.root) this.actions.resume();
     });
   }
   show(opts: { testing: boolean; editor: boolean }) {
+    this.shown = opts;
     this.visible = true;
     this.root.style.display = 'flex';
-    const b = this.box;
-    b.innerHTML = '';
-    b.append(
-      el('div', {
-        class: 'menu-title-main',
-        style: 'font-size:22px',
-        text: opts.editor ? STR.editor.title : STR.menu.paused,
-      }),
-    );
-    b.append(btn(STR.menu.resume, () => this.actions.resume(), 'menu-btn accent'));
-    if (!opts.editor) {
-      b.append(btn(STR.settings.save, () => this.actions.save(), 'menu-btn'));
-      b.append(btn(STR.menu.saveAs, () => this.actions.saveAs(), 'menu-btn'));
-      // "Load game" unfolds the named saves under the button
-      const list = slotList(this.actions, () => this.show(opts));
-      list.style.display = 'none';
-      list.classList.add('menu-slots');
-      b.append(
-        btn(
+    const item = (icon: IconName, label: string, run: () => void, cls = '', extra?: string) =>
+      actionButton(label, run, { icon, cls, extra });
+    const resume = item('play', STR.menu.resume, () => this.actions.resume(), 'pri', STR.kit.esc);
+    const stack = el('div', { class: 'k-stack' }, resume);
+    if (!opts.editor)
+      stack.append(
+        item('save', STR.settings.save, () => this.actions.save()),
+        item('saveas', STR.menu.saveAs, () => this.actions.saveAs()),
+        item(
+          'folder',
           STR.menu.loadGame,
-          () => (list.style.display = list.style.display === 'none' ? 'flex' : 'none'),
-          'menu-btn',
+          () => this.actions.loadGame(),
+          '',
+          String(this.actions.slots().length),
         ),
-        list,
       );
-    }
-    b.append(btn(STR.topbar.settings, () => this.actions.settings(), 'menu-btn'));
-    b.append(audioRows(this.actions));
-    b.append(btn(STR.menu.tuning, () => this.actions.tuning(), 'menu-btn'));
-    b.append(btn(STR.menu.content, () => this.actions.content(), 'menu-btn'));
+    stack.append(
+      item('gear', STR.topbar.settings, () => this.actions.settings()),
+      item('speaker', STR.settings.audio, () => this.actions.audio()),
+      item('slider', STR.menu.tuning, () => this.actions.tuning()),
+      item('list', STR.menu.content, () => this.actions.content()),
+    );
     if (opts.testing)
-      b.append(btn(STR.menu.backToEditor, () => this.actions.backToEditor(), 'menu-btn'));
-    b.append(btn(STR.menu.mainMenu, () => this.actions.mainMenu(), 'menu-btn'));
+      stack.append(item('undo', STR.menu.backToEditor, () => this.actions.backToEditor()));
+    stack.append(item('home', STR.menu.mainMenu, () => this.actions.mainMenu()));
+    const screen: Screen = {
+      id: 'pause',
+      title: opts.editor ? STR.editor.title : STR.menu.menuButton,
+      frameSize: 'S',
+      hotkey: STR.kit.esc,
+      hotkeyHint: STR.menu.menuKeyHint,
+      formKeys: true,
+      root: page(well(null, stack)),
+    };
+    this.frame.show(screen, { stacked: false, paused: !opts.editor });
+    resume.focus();
   }
   hide() {
     this.visible = false;
     this.root.style.display = 'none';
+  }
+  /** A screen over the menu takes the view and the scrim: the map dims once. */
+  setCovered(covered: boolean) {
+    this.root.style.visibility = covered ? 'hidden' : '';
+    // the count on Load game follows what Saved games saved or deleted
+    if (!covered && this.visible && this.shown) this.show(this.shown);
   }
 }

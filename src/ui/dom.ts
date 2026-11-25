@@ -27,9 +27,6 @@ export function btn(label: string, onClick: () => void, cls = ''): HTMLButtonEle
   });
   return b;
 }
-export function fmtMoney(v: number) {
-  return `$${Math.round(v).toLocaleString('en-US')}`;
-}
-export function fmtInt(v: number) {
-  return Math.round(v).toLocaleString('en-US');
-}
+// the number formatters live apart from the DOM helpers (this file plays sounds), so a pure
+// module can use them; every panel keeps importing them from here
+export { fmtMoney, fmtInt } from './numberFormat';

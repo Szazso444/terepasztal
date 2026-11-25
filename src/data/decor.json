@@ -20,10 +20,17 @@
     },
     "crew": 1,
     "onTrack": false,
-    "rotations": 1,
+    "rotations": 4,
     "radius": 2,
     "loadBoost": 0.25,
-    "water": true
+    "water": true,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "fuel_stop",
@@ -35,9 +42,16 @@
     },
     "crew": 1,
     "onTrack": false,
-    "rotations": 1,
+    "rotations": 4,
     "radius": 2,
-    "fuel": true
+    "fuel": true,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   },
   {
     "id": "power_line",
@@ -56,14 +70,21 @@
   {
     "id": "townhouse",
     "name": "House",
-    "flavor": "Homes for 20 residents. Upgrade to apartments, a high-rise and a skyscraper for 60, 140 and 300 residents. Population stops at available housing; food comes from Windmills.",
+    "flavor": "Homes for 20 residents. Each age opens one more level, for 60, 140, 300, 520 and 800 residents; while it is upgraded nobody moves in. Population stops at available housing; food comes from Windmills.",
     "cost": {
       "wood": 35,
       "stone": 15
     },
     "crew": 0,
     "onTrack": false,
-    "rotations": 2,
-    "residents": 6
+    "rotations": 4,
+    "residents": 6,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "S"
+      }
+    ]
   }
 ]

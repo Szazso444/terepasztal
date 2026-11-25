@@ -99,6 +99,31 @@ upright edges upright) that lay the building onto its footprint. A building whos
 straight walls (a round tower, a yard of machinery) is placed by its outline, without a camera
 correction. The check, the review sheets and the game's atlas all use this one measurement.
 
+**The camera is required, not corrected into use.** The correction stretches a picture, and seen
+in the game a stretched building looks wrong: of the first 84 pictures 13 needed more than 15 %.
+So the correction is for small differences only. From the two wall feet the tools read where the
+camera stood: how steeply it looked down (the game's looks down at 30 degrees) and how far the
+building was turned from 45 degrees. A picture whose camera is more than 2 degrees off in either
+is failed by the check (the user's choice, made on renders from the game; the generator's own
+scatter is about 4 degrees, so most pictures need more than one attempt). Where only one wall
+foot is straight, that foot must have a slope a camera within the limit can draw (0.44 to 0.57).
+
+A picture refused for its camera alone is not made again from scratch. The tool keeps it: the
+closest attempt so far is the picture's earlier self, and the next attempt is painted from that,
+laid onto its footprint and straightened, with what was wrong said as a description. An
+instruction ("look down more steeply") made the generator overshoot, from too low to too high
+and back. After three attempts the tool makes the closest of them all the picture, corrected as
+far as the tools correct, and marks it `kept` with how far off it is. A picture made before this
+rule goes back in the queue (`recheck`) and is painted again the same way, so it stays the same
+building and the pictures built on it stay as they are.
+
+What keeps this from running away: the tool counts the attempts it refuses, so three stays three
+across sessions; a gate family that has pictures put back is shown to the user again before the
+work goes on; and a family where more than a quarter of the pictures had to be kept more than 3
+degrees off stops the work like one that lost them. A picture shown to the generator as a reference is straightened all
+the way, however far off it was, because the generator copies the wall feet it is shown; only
+what goes into the game is limited in how far it is stretched.
+
 Background alpha 0. Light from the upper left: tops lightest, lower-left wall mid, lower-right
 wall darkest. No ground, shadow, rails, people, smoke, text or loose objects. The foot of the two
 visible walls stays plain and straight, with nothing in front of it: it is what is measured.
@@ -131,9 +156,16 @@ Everything lives in `assets/source/buildings-v2/`.
 - **`queue.json`**: the record of progress, one entry per picture in working order:
   `{ id, family, age, rot, file, status, attempts, note }`. `status` is `pending`, `generated`,
   `approved` or `rejected`. It holds no prompts, so it stays small enough to read and to diff.
+  Two marks are added where they apply: `kept` (made, but with its camera off: the closest of
+  three attempts, with the degrees it is off) and `repaint` (back in the queue to be painted again from its earlier self,
+  which is kept beside it as `<name>.before.png`; the mark holds how far off that was and what
+  was wrong with it, for the prompt).
 - **The queue tool** (`tools/building-queue.mjs`) is how Codex works the list: `next` prints the
   next picture with its file, guide, references and prompt; `set` records a result; `status`
-  shows progress and where the list and the disk disagree; `redo` puts pictures back;
+  shows progress and where the list and the disk disagree; `redo` puts pictures back, to be made
+  afresh (`redo <id>` says what it would undo and waits for `--yes`); `recheck` puts back the
+  made pictures whose camera is off, to be painted again as the same building; `set <id> pending`
+  takes one recorded picture back;
   `approve-pilot` and `accept` record the user's decisions. `next` answers with its exit code: 0 a
   picture, 2 a gate, 3 nothing left, 4 a stop. A picture is recorded as made only when its file is
   there and passes the check; a rejected picture's file is set aside (`*.rejected.png`), and
@@ -191,9 +223,11 @@ Codex works on its own branch, `art/buildings-v2`, and touches only `assets/sour
   - a picture that is still grey (the guide come back unchanged);
   - a view that is not the game's: the foot is one level line (seen from the front), or both
     ground lines slope outside 0.25 to 0.8;
+  - a camera more than 2 degrees from the game's, in height or in turn (see section 1);
+  - a depot's portals in the other wall than the guide has them in;
   - too few pixels: the foot narrower than the footprint's walls at 4 px per game px.
-    It notes, without failing: a picture placed by its outline, a camera corrected only part of the
-    way, a building taller than its canvas. It prints one line per picture and writes
+    It notes, without failing: a picture placed by its outline, a picture kept with its camera
+    off, a building taller than its canvas. It prints one line per picture and writes
     `report.json` with every picture's result and measurement. Exit code 1 if any picture fails.
 - **`tools/building-sheets.mjs`**: one review sheet per family (`review/<family>.png`: a row per
   age, a column per rotation, each picture laid onto its footprint diamond over grass, as the game

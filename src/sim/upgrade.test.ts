@@ -1,0 +1,1668 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { simWorld, line, station, type SimWorld } from '../testing/simWorld';
+import { depotWith, townWith } from '../testing/storeFixtures';
+import type { Store } from './stores';
+import { forAll, shrinkArray, shrinkInt } from '../testing/property';
+import type { Rng } from '../engine/rng';
+import { content } from '../data/content';
+import { STR } from '../strings';
+import { rules, DEFAULT_RULES, daySeconds, weekSeconds } from './rules';
+import { setSeasonOffset } from './weather';
+import { LEVELS, MAX_LEVEL, STATION_DEFS, Station, type StationJSON } from './stations';
+import {
+  BUILDING_DEFS,
+  buildingDef,
+  buildingFromJSON,
+  buildingLevel,
+  buildingToJSON,
+  tickBuildings,
+  worksMaxLevel,
+  type Building,
+  type BuildingJSON,
+} from './buildings';
+import { bridgeCapacity } from './bridges';
+import { HOUSE_ID, type House } from './houses';
+import { decorDef } from './build';
+import { SimStep, eaters, type StepContext } from './step';
+import { SIM_STEP } from './time';
+import { SAVE_VERSION, readSaveText } from './save';
+import {
+  UPGRADE_HOURS,
+  advanceWork,
+  hoursLeft,
+  startWork,
+  upgradeSeconds,
+  workProgress,
+  type Upgraded,
+  type Work,
+} from './upgrade';
+import { sfx } from '../engine/audio';
+
+vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
+
+beforeEach(() => {
+  Object.assign(rules, DEFAULT_RULES);
+  setSeasonOffset(0);
+});
+
+/** Game seconds in a game hour, under the day length now. */
+const hour = () => daySeconds() / 24;
+/** A value as a save stores it: through JSON and back. */
+const asStored = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
+
+interface World extends SimWorld {
+  /** every level rise reported by the builder and the houses, in order */
+  readonly ups: Upgraded[];
+  /** the depot the builder pays from and the works by it run from */
+  readonly depot: Store;
+  /** what the depot holds, and a town gets (`three`): plenty, or nothing in a poor world */
+  readonly rich: Record<string, number>;
+}
+
+/**
+ * A flat 64-tile world in `age`, rich in wood, stone and iron unless `poor`, with a straight line
+ * along row 30 and every level rise recorded. Everything here stands in the start chunk.
+ */
+function world(age: number, poor = false): World {
+  const w = simWorld({ terrain: 'grass', size: 64 });
+  w.economy.setAge(age);
+  // the builder pays from the depot, in reach of all that stands here; houses from their town's
+  // store (`three`)
+  const rich: Record<string, number> = poor ? {} : { wood: 1e6, stone: 1e6, iron: 1e6 };
+  const depot = depotWith(w, rich, { x: 14, y: 16 });
+  line(w, 2, 30, 30);
+  const ups: Upgraded[] = [];
+  w.builder.onUpgraded = (e) => ups.push(e);
+  w.houses.onUpgraded = (e) => ups.push(e);
+  return { ...w, ups, depot, rich };
+}
+
+/** Runs `act` with `builder.free` set (the editor's way: no price, no lock), then plays on. */
+function freely<T>(w: SimWorld, act: () => T): T {
+  w.builder.free = true;
+  try {
+    return act();
+  } finally {
+    w.builder.free = false;
+  }
+}
+
+/** A works placed the way the editor places one. */
+function works(w: SimWorld, id: string, x: number, y: number): Building {
+  const b = freely(w, () => w.builder.placeBuilding(x, y, id));
+  if (!b) throw new Error(`works: no ${id} at ${x},${y}`);
+  return b;
+}
+
+/**
+ * A finished house at (x, y) with its first residents, raised the way a level file raises one, in
+ * a town: with none there yet, a Townhouse by the line at (x + 2, 29), its store holding what the
+ * world is rich in (it pays for the house's upgrades).
+ */
+function house(w: World, x: number, y: number): House {
+  if (!w.towns.townAt(x, y)) townWith(w, w.rich, { x: x + 2, y: 29 });
+  if (!freely(w, () => w.builder.spawnDecor(x, y, 'townhouse', 0)))
+    throw new Error(`house: none at ${x},${y}`);
+  w.houses.finishAll();
+  return w.houses.at(x, y)!;
+}
+
+/** What the stores hold, to compare before and after. */
+const holdings = (w: SimWorld) => JSON.stringify(w.stores.toJSON());
+
+/** A farm, a windmill and a house (in its town), each one level 1. */
+function three(w: World) {
+  return {
+    farm: station(w, 'farm', 6, 29),
+    mill: works(w, 'windmill', 4, 10),
+    home: house(w, 20, 25),
+  };
+}
+
+/** The step the game runs, in play mode with the weather still. */
+function stepper(w: SimWorld) {
+  const step = new SimStep(w);
+  const ctx: StepContext = {
+    mode: 'play',
+    weather: false,
+  };
+  return (gdt: number) => {
+    w.clock.time += gdt;
+    step.run(gdt, ctx);
+  };
+}
+
+describe('how long an upgrade takes', () => {
+  it('takes 6, 9, 12, 18 and 24 game hours', () => {
+    expect(UPGRADE_HOURS).toEqual([6, 9, 12, 18, 24]);
+    const levels = [2, 3, 4, 5, 6];
+    expect(levels.map((l) => upgradeSeconds(l))).toEqual([6, 9, 12, 18, 24].map((h) => h * hour()));
+    // a game day is four minutes at normal speed: one minute to level 2 .. four to level 6
+    expect(levels.map((l) => upgradeSeconds(l) / 60)).toEqual([1, 1.5, 2, 3, 4]);
+    // hours of the game day whatever its length, times the tuning value
+    rules.daySeconds = 600;
+    rules.upgradeTimeMul = 1.5;
+    for (const [i, l] of levels.entries()) {
+      expect(upgradeSeconds(l), `to level ${l}`).toBeCloseTo(UPGRADE_HOURS[i] * 25 * 1.5);
+      const w = startWork(l)!;
+      expect(w).toEqual({ to: l, left: upgradeSeconds(l), total: upgradeSeconds(l) });
+      expect(workProgress(w)).toBe(0);
+      expect(hoursLeft(w)).toBeCloseTo(UPGRADE_HOURS[i] * 1.5);
+    }
+    // there is nothing to wait for below level 2
+    expect(upgradeSeconds(1)).toBe(0);
+  });
+
+  it('is instant when the rules say so', () => {
+    rules.upgradeTimeMul = 0;
+    for (const l of [2, 3, 4, 5, 6]) {
+      expect(upgradeSeconds(l)).toBe(0);
+      expect(startWork(l)).toBeNull();
+    }
+    const w = world(1);
+    const { farm, mill, home } = three(w);
+    expect(w.builder.upgradeStation(farm)).toBe(true);
+    expect(w.builder.upgradeBuilding(mill)).toBe(true);
+    expect(w.houses.upgrade(home)).toBe(true);
+    expect([farm.level, buildingLevel(mill), home.level]).toEqual([2, 2, 2]);
+    expect([farm.work, mill.work, home.work]).toEqual([null, undefined, undefined]);
+    expect([...w.builder.works(), ...w.houses.works()]).toEqual([]);
+    expect(w.ups.map((e) => [e.kind, e.level])).toEqual([
+      ['station', 2],
+      ['works', 2],
+      ['house', 2],
+    ]);
+  });
+
+  it('raises the level when the time is up, not before', () => {
+    const w = world(1);
+    const { farm, mill, home } = three(w);
+    const log: string[] = [];
+    const { onStationChanged, onBuildingChanged } = w.builder;
+    w.builder.onStationChanged = (s, removed) => {
+      log.push(`changed ${s.def.id} at ${s.level}`);
+      onStationChanged?.(s, removed);
+    };
+    w.builder.onBuildingChanged = (b, removed) => {
+      log.push(`changed ${b.id} at ${buildingLevel(b)}`);
+      onBuildingChanged?.(b, removed);
+    };
+    w.houses.onChanged = (h) => log.push(`changed house at ${h.level}`);
+    w.builder.onUpgraded = w.houses.onUpgraded = (e) => {
+      log.push(`upgraded ${e.kind} to ${e.level}`);
+      w.ups.push(e);
+    };
+
+    const t = upgradeSeconds(2);
+    expect(w.builder.upgradeStation(farm)).toBe(true);
+    expect(w.builder.upgradeBuilding(mill)).toBe(true);
+    expect(w.houses.upgrade(home)).toBe(true);
+    // each one starts closed and redrawn, at its old level
+    expect(log).toEqual(['changed farm at 1', 'changed windmill at 1', 'changed house at 1']);
+    for (const work of [farm.work, mill.work, home.work])
+      expect(work).toEqual({ to: 2, left: t, total: t });
+
+    log.length = 0;
+    w.builder.tickWorks(t / 2);
+    w.houses.tickWorks(t / 2);
+    expect([farm.level, buildingLevel(mill), home.level]).toEqual([1, 1, 1]);
+    expect(farm.closed).toBe(true);
+    expect([...w.builder.works(), ...w.houses.works()]).toEqual([
+      { x: 6, y: 29, w: 1, h: 1, progress: 0.5 },
+      { x: 4, y: 10, w: 1, h: 1, progress: 0.5 },
+      { x: 20, y: 25, w: 1, h: 1, progress: 0.5 },
+    ]);
+    expect(log).toEqual([]);
+
+    w.builder.tickWorks(t / 2);
+    w.houses.tickWorks(t / 2);
+    expect([farm.level, buildingLevel(mill), home.level]).toEqual([2, 2, 2]);
+    expect([farm.work, farm.closed, mill.work, home.work]).toEqual([
+      null,
+      false,
+      undefined,
+      undefined,
+    ]);
+    // redrawn at the new level first, then reported once each
+    expect(log).toEqual([
+      'changed farm at 2',
+      'upgraded station to 2',
+      'changed windmill at 2',
+      'upgraded works to 2',
+      'changed house at 2',
+      'upgraded house to 2',
+    ]);
+    expect(w.ups).toEqual([
+      { kind: 'station', x: 6, y: 29, w: 1, h: 1, name: farm.name, level: 2 },
+      { kind: 'works', x: 4, y: 10, w: 1, h: 1, name: buildingDef('windmill').name, level: 2 },
+      { kind: 'house', x: 20, y: 25, w: 1, h: 1, name: 'House', level: 2 },
+    ]);
+
+    w.builder.tickWorks(t * 10);
+    w.houses.tickWorks(t * 10);
+    expect(w.ups).toHaveLength(3);
+    expect([farm.level, buildingLevel(mill), home.level]).toEqual([2, 2, 2]);
+    expect([...w.builder.works(), ...w.houses.works()]).toEqual([]);
+  });
+
+  it('follows game time', () => {
+    const w = world(1);
+    const { farm, mill, home } = three(w);
+    const run = stepper(w);
+    w.builder.upgradeStation(farm);
+    w.builder.upgradeBuilding(mill);
+    w.houses.upgrade(home);
+    const t = upgradeSeconds(2);
+    // a paused clock steps nothing
+    run(0);
+    for (const work of [farm.work, mill.work, home.work]) expect(work!.left).toBe(t);
+    run(t / 3);
+    run(t / 3);
+    expect([farm.level, buildingLevel(mill), home.level]).toEqual([1, 1, 1]);
+    run(t / 3);
+    expect([farm.level, buildingLevel(mill), home.level]).toEqual([2, 2, 2]);
+    expect(w.ups).toHaveLength(3);
+  });
+
+  it('is done the moment the game time stepped reaches its time, whatever the step sizes', () => {
+    // The oracle is the sum of the steps: a work is done exactly when the game time stepped since
+    // it started reaches its total, and stays done. Steps of nothing (a paused clock), of one
+    // frame at any speed, and of long stretches are mixed freely.
+    forAll(
+      (rng) => {
+        const level = rng.int(2, 6);
+        const mul = rng.pick([0.05, 0.5, 1, 1.3, 4]);
+        const steps: number[] = [];
+        for (let n = rng.int(1, 80); n > 0; n--)
+          steps.push(
+            rng.pick([0, SIM_STEP, SIM_STEP * rng.int(2, 16), rng.range(0, 5), rng.range(0, 900)]),
+          );
+        return { level, mul, steps };
+      },
+      ({ level, mul, steps }) => {
+        rules.upgradeTimeMul = mul;
+        const w = startWork(level)!;
+        const total = w.total;
+        let stepped = 0;
+        let was = 0;
+        for (const [i, dt] of steps.entries()) {
+          const done = advanceWork(w, dt);
+          stepped += dt;
+          expect(done, `step ${i}: ${stepped} of ${total} s`).toBe(stepped >= total - 1e-6);
+          expect(workProgress(w)).toBeCloseTo(Math.min(1, stepped / total), 6);
+          expect(workProgress(w)).toBeGreaterThanOrEqual(was);
+          was = workProgress(w);
+        }
+      },
+    );
+  });
+});
+
+describe('a building being upgraded', () => {
+  it('closes a station while it is upgraded', () => {
+    const w = world(1);
+    const farm = station(w, 'farm', 6, 29);
+    const crew = w.builder.crewTotal();
+    // the crews the step feeds, at the stores that supply them
+    const fed = () => [...eaters(w.houses, w.builder).values()].reduce((a, n) => a + n, 0);
+    const eating = fed();
+    w.builder.upgradeStation(farm);
+    expect(farm.crew).toBe(0);
+    expect(w.builder.crewTotal()).toBe(crew - LEVELS.crew[0]);
+    // the total is what the sites add up to
+    expect(w.builder.crewTotal()).toBe(w.builder.crewSites().reduce((n, c) => n + c.crew, 0));
+    farm.tick(weekSeconds());
+    expect(farm.totalStored()).toBe(0);
+    // the step makes nothing there either, and counts no crew to feed
+    const run = stepper(w);
+    run(upgradeSeconds(2) / 2);
+    expect(farm.totalStored()).toBe(0);
+    expect(fed()).toBe(eating - LEVELS.crew[0]);
+
+    run(upgradeSeconds(2) / 2);
+    expect(farm.closed).toBe(false);
+    expect(farm.crew).toBe(LEVELS.crew[1]);
+    expect(fed()).toBe(eating - LEVELS.crew[0] + LEVELS.crew[1]);
+    farm.tick(weekSeconds());
+    expect(farm.stored('wheat')).toBeGreaterThan(0);
+  });
+
+  it('gives out what it holds and takes nothing in', () => {
+    const w = world(1);
+    station(w, 'farm', 6, 29);
+    const store = station(w, 'warehouse', 10, 29);
+    const town = station(w, 'town', 20, 29);
+    /** What contracts could bring to the town. */
+    const toTown = () =>
+      w.contracts
+        .pairs()
+        .filter((p) => p.to === town)
+        .map((p) => p.cargo);
+    expect(store.store('wood', 50)).toBe(50);
+    expect([store.accepts('wood'), town.accepts('wheat')]).toEqual([true, true]);
+    expect(toTown()).toEqual(['wheat']);
+    w.builder.upgradeStation(store);
+    w.builder.upgradeStation(town);
+    expect([store.closed, town.closed]).toEqual([true, true]);
+    // trains still stop and load what it holds
+    expect(store.hasFreePlatform()).toBe(true);
+    expect(store.availableCargo()).toEqual(['wood']);
+    expect(store.take('wood', 20)).toBe(20);
+    expect(store.stored('wood')).toBe(30);
+    // but nothing is delivered, and no contract is offered to bring it any
+    expect([store.accepts('wood'), town.accepts('wheat')]).toEqual([false, false]);
+    expect(store.roomFor('stone')).toBe(0);
+    expect(store.store('stone', 10)).toBe(0);
+    expect(store.stored('stone')).toBe(0);
+    expect(toTown()).toEqual([]);
+
+    w.builder.tickWorks(upgradeSeconds(2));
+    expect([store.accepts('wood'), town.accepts('wheat')]).toEqual([true, true]);
+    expect(toTown()).toEqual(['wheat']);
+    // the warehouse keeps its goods in its own store, which has room per good
+    expect(store.roomFor('stone')).toBe(store.capacity - store.stored('stone'));
+    expect(store.store('stone', 10)).toBe(10);
+  });
+
+  it('closes a works: no inputs, no output, no crew, no power, no wire', () => {
+    const w = world(3);
+    w.depot.add('wheat', 100);
+    const mill = works(w, 'windmill', 4, 10);
+    const plant = works(w, 'power_plant', 10, 10);
+    const sub = works(w, 'substation', 14, 10);
+    line(w, 6, 12, 16);
+    freely(w, () => w.builder.placeSupply(11, 12, 'catenary'));
+    expect(w.catenary.isLive(11, 12)).toBe(true);
+    const crew = w.builder.crewTotal();
+    const changed: string[] = [];
+    const { onBuildingChanged } = w.builder;
+    w.builder.onBuildingChanged = (b, removed) => {
+      changed.push(`${b.id} ${b.work ? 'closed' : 'open'}`);
+      onBuildingChanged?.(b, removed);
+    };
+    const millTick = () => tickBuildings([mill], (b) => w.stores.worksStore(b), weekSeconds());
+
+    w.builder.upgradeBuilding(mill);
+    w.builder.upgradeBuilding(sub);
+    // the start fires the change, so the power is rebuilt
+    expect(changed).toEqual(['windmill closed', 'substation closed']);
+    const before = holdings(w);
+    millTick();
+    expect(holdings(w)).toBe(before);
+    expect([mill.acc, mill.reason, mill.active]).toEqual([0, 'upgrading', false]);
+    expect(w.builder.crewTotal()).toBe(
+      crew - buildingDef('windmill').crew - buildingDef('substation').crew,
+    );
+    // the plant still runs, but the closed substation feeds no wire
+    expect([w.builder.plantCount(), w.power.plants]).toEqual([1, 1]);
+    expect(w.catenary.isLive(11, 12)).toBe(false);
+    expect(w.catenary.substations.filter((s) => s.powered)).toEqual([]);
+
+    w.builder.tickWorks(upgradeSeconds(2));
+    expect(changed.slice(2)).toEqual(['windmill open', 'substation open']);
+    millTick();
+    expect([mill.reason, mill.active]).toEqual(['', true]);
+    expect(w.depot.get('food')).toBeGreaterThan(0);
+    expect(w.builder.crewTotal()).toBe(crew);
+    expect(w.catenary.isLive(11, 12)).toBe(true);
+
+    // a power plant being upgraded gives no power and is not reported as cut off
+    w.builder.upgradeBuilding(plant);
+    expect([w.builder.plantCount(), w.power.plants]).toEqual([0, 0]);
+    expect(w.power.isPowered(10, 10)).toBe(false);
+    expect(w.catenary.isLive(11, 12)).toBe(false);
+    w.notices.refresh({ trains: [], builder: w.builder, power: w.power });
+    expect(w.notices.list.filter((n) => n.key.startsWith('b10,10'))).toEqual([]);
+    w.builder.tickWorks(upgradeSeconds(2));
+    expect([w.builder.plantCount(), w.power.plants]).toEqual([1, 1]);
+    expect(w.catenary.isLive(11, 12)).toBe(true);
+  });
+
+  it('strengthens a bridge only when its work is done', () => {
+    const w = world(0);
+    const bridge = works(w, 'bridge_wood', 26, 10);
+    const base = bridgeCapacity(bridge);
+    expect(w.builder.upgradeBuilding(bridge)).toBe(true);
+    expect(bridge.work).toBeDefined();
+    expect(bridgeCapacity(bridge)).toBe(base);
+    w.builder.tickWorks(upgradeSeconds(2));
+    expect(buildingLevel(bridge)).toBe(2);
+    expect(bridgeCapacity(bridge)).toBeGreaterThan(base!);
+  });
+
+  it("keeps a house's people and lets nobody in", () => {
+    const w = world(1);
+    townWith(w, { ...w.rich, food: 1000 }, { x: 20, y: 29 });
+    const home = house(w, 20, 25);
+    const town = w.towns.townAt(20, 25)!;
+    expect(town).not.toBeNull();
+    const people = home.residents;
+    expect(people).toBeLessThan(w.houses.capacity(home));
+    w.houses.upgrade(home);
+    for (let d = 1; d <= 5; d++) w.houses.tick(daySeconds(), d * daySeconds());
+    expect(home.residents).toBe(people);
+    expect(w.houses.residentsTotal()).toBe(people);
+    expect(w.houses.growthDaysLeft(home)).toBeNull();
+    expect(w.houses.townHousing(town).growthPerDay).toBe(0);
+    // newcomers find no open house
+    w.houses.industryPlaced(20, 25);
+    expect(home.residents).toBe(people);
+
+    w.houses.tickWorks(upgradeSeconds(2));
+    expect(home.level).toBe(2);
+    w.houses.industryPlaced(20, 25);
+    expect(home.residents).toBe(people + content.houses.bonusIndustry);
+    w.houses.tick(daySeconds(), 6 * daySeconds());
+    expect(home.residents).toBeGreaterThan(people + content.houses.bonusIndustry);
+  });
+});
+
+describe('what may be upgraded', () => {
+  it('upgrades the depot at once and for nothing', () => {
+    rules.upgradeTimeMul = 4;
+    const w = world(1);
+    const depot = station(w, 'depot', 24, 20);
+    const before = holdings(w);
+    expect(w.builder.canUpgrade(depot)).toEqual({ ok: true, cost: {} });
+    expect(w.builder.upgradeStation(depot)).toBe(true);
+    expect([depot.level, depot.work, depot.closed]).toEqual([2, null, false]);
+    expect(holdings(w)).toBe(before);
+    expect(w.ups).toEqual([
+      { kind: 'station', x: 24, y: 20, w: 2, h: 2, name: depot.name, level: 2 },
+    ]);
+  });
+
+  it('starts no second upgrade while one runs', () => {
+    const w = world(2);
+    const { farm, mill, home } = three(w);
+    w.builder.upgradeStation(farm);
+    w.builder.upgradeBuilding(mill);
+    w.houses.upgrade(home);
+    const works = asStored([farm.work, mill.work, home.work]);
+    const before = holdings(w);
+    const busy = { ok: false, cost: {}, reason: STR.build.upgradingNow };
+    expect(w.builder.canUpgrade(farm)).toEqual(busy);
+    expect(w.builder.canUpgradeBuilding(mill)).toEqual(busy);
+    expect(w.houses.canUpgrade(home)).toEqual(busy);
+    expect(w.builder.upgradeStation(farm)).toBe(false);
+    expect(w.builder.upgradeBuilding(mill)).toBe(false);
+    expect(w.houses.upgrade(home)).toBe(false);
+    // the editor does not jump the work either
+    freely(w, () => {
+      expect(w.builder.upgradeStation(farm)).toBe(false);
+      expect(w.builder.upgradeBuilding(mill)).toBe(false);
+      expect(w.houses.upgrade(home)).toBe(false);
+    });
+    expect([farm.work, mill.work, home.work]).toEqual(works);
+    expect(holdings(w)).toBe(before);
+
+    // once it is done the next level may be paid for
+    w.builder.tickWorks(upgradeSeconds(2));
+    w.houses.tickWorks(upgradeSeconds(2));
+    expect(w.builder.canUpgrade(farm).ok).toBe(true);
+    expect(w.builder.canUpgradeBuilding(mill).ok).toBe(true);
+    expect(w.houses.canUpgrade(home).ok).toBe(true);
+  });
+
+  it('changes nothing when the upgrade cannot be paid for', () => {
+    const w = world(1, true);
+    const { farm, mill, home } = three(w);
+    let changes = 0;
+    w.builder.onStationChanged = w.builder.onBuildingChanged = () => changes++;
+    w.houses.onChanged = () => changes++;
+    const before = holdings(w);
+    for (const c of [
+      w.builder.canUpgrade(farm),
+      w.builder.canUpgradeBuilding(mill),
+      w.houses.canUpgrade(home),
+    ]) {
+      expect(c.ok).toBe(false);
+      expect(c.reason).toMatch(/^(Need|No store within \d+ tiles holds) /);
+    }
+    expect(w.builder.upgradeStation(farm)).toBe(false);
+    expect(w.builder.upgradeBuilding(mill)).toBe(false);
+    expect(w.houses.upgrade(home)).toBe(false);
+    expect([farm.work, mill.work, home.work]).toEqual([null, undefined, undefined]);
+    expect([farm.level, buildingLevel(mill), home.level]).toEqual([1, 1, 1]);
+    expect(holdings(w)).toBe(before);
+    expect(changes).toBe(0);
+    expect([...w.builder.works(), ...w.houses.works(), ...w.ups]).toEqual([]);
+  });
+
+  it('forgets the work of a building that was removed', () => {
+    const w = world(1);
+    const { farm, mill, home } = three(w);
+    w.builder.upgradeStation(farm);
+    w.builder.upgradeBuilding(mill);
+    w.houses.upgrade(home);
+    const t = upgradeSeconds(2);
+    w.builder.tickWorks(t / 2);
+    w.houses.tickWorks(t / 2);
+    expect(w.builder.removeStation(farm)).toBe(true);
+    expect(w.builder.removeBuilding(4, 10)).toBe(true);
+    expect(w.builder.removeDecor(20, 25)).toBe(true);
+    expect([...w.builder.works(), ...w.houses.works()]).toEqual([]);
+
+    // what is built on the same tiles starts afresh, and the old works never finish
+    const next = three(w);
+    w.builder.tickWorks(t * 2);
+    w.houses.tickWorks(t * 2);
+    expect([farm.level, buildingLevel(mill), home.level]).toEqual([1, 1, 1]);
+    expect([next.farm.level, buildingLevel(next.mill), next.home.level]).toEqual([1, 1, 1]);
+    expect([next.farm.closed, next.mill.work, next.home.work]).toEqual([
+      false,
+      undefined,
+      undefined,
+    ]);
+    expect(w.ups).toEqual([]);
+    // and what is gone cannot be upgraded
+    expect(w.builder.upgradeStation(farm)).toBe(false);
+    expect(w.builder.upgradeBuilding(mill)).toBe(false);
+    expect(w.houses.upgrade(home)).toBe(false);
+  });
+
+  it('carries a work under way through a save', () => {
+    const w = world(1);
+    const { farm, mill, home } = three(w);
+    w.builder.upgradeStation(farm);
+    w.builder.upgradeBuilding(mill);
+    w.houses.upgrade(home);
+    const t = upgradeSeconds(2);
+    w.builder.tickWorks(t / 3);
+    w.houses.tickWorks(t / 3);
+    const work: Work = { to: 2, left: t - t / 3, total: t };
+
+    // the parts a save holds of them, written and read back as the game reads a save
+    const text = JSON.stringify({
+      version: SAVE_VERSION,
+      savedAt: 0,
+      seed: 1,
+      clock: { time: 0, speedIndex: 1 },
+      economy: { money: 0, tier: 1 },
+      track: [],
+      stations: w.builder.stations.map((s) => s.toJSON()),
+      trains: [],
+      contracts: {},
+      inventory: {},
+      camera: { x: 0, y: 0, zoomIndex: 0 },
+      lastDay: 1,
+      buildings: [...w.builder.buildings.values()].map(buildingToJSON),
+      houses: w.houses.toJSON(),
+    });
+    const read = readSaveText(text);
+    if (!('save' in read)) throw new Error(`the save was refused as ${read.error}`);
+    const { save } = read;
+    expect(save.stations.find((s) => s.defId === 'farm')!.work).toEqual(work);
+    expect(save.buildings![0][5]).toEqual(work);
+    expect(save.houses!.list[0].work).toEqual(work);
+
+    // loaded into a new world the way the game loads one
+    const v = world(1);
+    for (const sj of save.stations) v.builder.stations.push(Station.fromJSON(sj as StationJSON));
+    // the stations went in past the builder: the towns and stores follow them, as on a load
+    v.towns.refresh();
+    v.stores.refresh();
+    for (const bj of save.buildings!) {
+      const b = buildingFromJSON(bj as BuildingJSON);
+      v.builder.buildings.set(b.y * v.map.w + b.x, b);
+    }
+    house(v, 20, 25);
+    v.houses.load(save.houses);
+    const farm2 = v.builder.stations.find((s) => s.def.id === 'farm')!;
+    const mill2 = v.builder.buildingAt(4, 10)!;
+    const home2 = v.houses.at(20, 25)!;
+    expect([farm2.work, mill2.work, home2.work]).toEqual([work, work, work]);
+    expect([farm2.closed, farm2.level, buildingLevel(mill2), home2.level]).toEqual([true, 1, 1, 1]);
+    tickBuildings([mill2], (b) => v.stores.worksStore(b), SIM_STEP);
+    expect(mill2.reason).toBe('upgrading');
+
+    // and it finishes when the rest of its time has passed, not before
+    v.builder.tickWorks(t / 3);
+    v.houses.tickWorks(t / 3);
+    expect([farm2.level, buildingLevel(mill2), home2.level]).toEqual([1, 1, 1]);
+    v.builder.tickWorks(t / 3);
+    v.houses.tickWorks(t / 3);
+    expect([farm2.level, buildingLevel(mill2), home2.level]).toEqual([2, 2, 2]);
+    expect(v.ups.map((e) => e.kind)).toEqual(['station', 'works', 'house']);
+  });
+});
+
+// ------------------------------------------------------------------------------------ properties
+
+/** Game hours of an upgrade to levels 2 to 6, as the design sets them: the oracle's own table. */
+const HOURS = [6, 9, 12, 18, 24];
+
+/** What an upgrade raises, named as `Upgraded.kind` names it. */
+type Kind = Upgraded['kind'];
+/** In the order a step finishes them: the builder's stations, its works, then the houses. */
+const KINDS: readonly Kind[] = ['station', 'works', 'house'];
+/** Where `site` puts the farm, the windmill and the house, and their footprints. */
+const AT: Record<Kind, { x: number; y: number; w: number; h: number }> = {
+  station: { x: 6, y: 29, w: 1, h: 1 },
+  works: { x: 4, y: 10, w: 1, h: 1 },
+  house: { x: 20, y: 25, w: 1, h: 1 },
+};
+/** A value for each kind. */
+const perKind = <T>(f: (k: Kind) => T) =>
+  ({ station: f('station'), works: f('works'), house: f('house') }) as Record<Kind, T>;
+
+/** The farm, the windmill and the house of a world, found where they stand (a load makes anew). */
+const farmOf = (w: SimWorld) => w.builder.stations.find((s) => s.def.id === 'farm')!;
+const millOf = (w: SimWorld) => w.builder.buildingAt(AT.works.x, AT.works.y)!;
+const homeOf = (w: SimWorld) => w.houses.at(AT.house.x, AT.house.y)!;
+function levelOf(w: SimWorld, k: Kind): number {
+  if (k === 'station') return farmOf(w).level;
+  return k === 'works' ? buildingLevel(millOf(w)) : homeOf(w).level;
+}
+function closedOf(w: SimWorld, k: Kind): boolean {
+  if (k === 'station') return farmOf(w).closed;
+  return !!(k === 'works' ? millOf(w).work : homeOf(w).work);
+}
+/**
+ * Puts the next level's cost of `k` in the store that pays for it (the depot for the farm and the
+ * windmill, the town's for the house), past its cap, then presses Upgrade; true if it started.
+ */
+function press(w: World, k: Kind): boolean {
+  const check =
+    k === 'station'
+      ? w.builder.canUpgrade(farmOf(w))
+      : k === 'works'
+        ? w.builder.canUpgradeBuilding(millOf(w))
+        : w.houses.canUpgrade(homeOf(w));
+  const to = k === 'house' ? w.stores.byKey(w.houses.store(homeOf(w))!.key)! : w.depot;
+  for (const [id, n] of Object.entries(check.cost)) to.amounts.set(id, to.get(id) + n);
+  if (k === 'station') return w.builder.upgradeStation(farmOf(w));
+  return k === 'works' ? w.builder.upgradeBuilding(millOf(w)) : w.houses.upgrade(homeOf(w));
+}
+
+/**
+ * A Hyper age world (every level open) with a farm, a windmill and a house at `AT`, each raised
+ * in the editor to its level in `from`, and the rises that took recorded nowhere.
+ */
+function site(from: Record<Kind, number>): World {
+  const w = world(5);
+  station(w, 'farm', AT.station.x, AT.station.y);
+  works(w, 'windmill', AT.works.x, AT.works.y);
+  house(w, AT.house.x, AT.house.y);
+  freely(w, () => {
+    for (const k of KINDS)
+      while (levelOf(w, k) < from[k])
+        if (!press(w, k)) throw new Error(`site: ${k} stuck at ${levelOf(w, k)}`);
+  });
+  w.ups.length = 0;
+  return w;
+}
+
+/**
+ * The game saved and loaded again: the farm, the works and the house written as a save writes
+ * them, read back through `readSaveText` and loaded into a new world in `applySave`'s order
+ * (stations, the decor and the houses, then the works). The new world records its own rises.
+ */
+function reload(w: World): World {
+  const text = JSON.stringify({
+    version: SAVE_VERSION,
+    savedAt: 0,
+    seed: 1,
+    clock: { time: w.clock.time, speedIndex: 1 },
+    economy: { money: 0, tier: 5 },
+    track: [],
+    stations: w.builder.stations.map((s) => s.toJSON()),
+    trains: [],
+    contracts: {},
+    inventory: {},
+    camera: { x: 0, y: 0, zoomIndex: 0 },
+    lastDay: 1,
+    buildings: [...w.builder.buildings.values()].map(buildingToJSON),
+    houses: w.houses.toJSON(),
+  });
+  const read = readSaveText(text);
+  if (!('save' in read)) throw new Error(`reload: the save was refused as ${read.error}`);
+  const { save } = read;
+  const v = world(5);
+  v.clock.time = save.clock.time;
+  for (const sj of save.stations) {
+    const s = Station.fromJSON(sj as StationJSON);
+    v.builder.stations.push(s);
+    v.builder.onStationChanged?.(s, false);
+  }
+  // the stations went in past the builder: the stores are derived from them once, as on a load
+  v.stores.refresh();
+  house(v, AT.house.x, AT.house.y);
+  v.houses.load(save.houses);
+  for (const bj of save.buildings!) {
+    const b = buildingFromJSON(bj as BuildingJSON);
+    v.builder.buildings.set(b.y * v.map.w + b.x, b);
+    v.builder.onBuildingChanged?.(b, false);
+  }
+  return v;
+}
+
+describe('upgrade time, for any steps', () => {
+  it('ends on the first step of SIM_STEP that reaches it, at any level, day and multiplier', () => {
+    // The game steps SIM_STEP (1/20) game seconds at a time. A work of H hours under a day of D
+    // seconds and a multiplier of c hundredths takes H·D/24·c/100 s, that is H·D·c/120 steps,
+    // counted in whole numbers here. It must end on the first whole step at or past that: never
+    // a step early, and never a step late because thousands of float steps did not quite add up.
+    // Half the cases sit on the Day length and Upgrade time sliders (tens of seconds, tenths);
+    // the rest take any whole second and hundredth, as rules from a save may, which brings the
+    // time of a work as close as 1/120 of a step to a step's end.
+    forAll(
+      (rng) => {
+        const on = rng.chance(0.5);
+        const day = on ? 10 * rng.int(3, 120) : rng.int(30, 1200);
+        return { from: rng.int(1, 5), day, hundredths: on ? 10 * rng.int(1, 40) : rng.int(1, 400) };
+      },
+      ({ from, day, hundredths }) => {
+        rules.daySeconds = day;
+        rules.upgradeTimeMul = hundredths / 100;
+        const w = site(perKind(() => from));
+        for (const k of KINDS) expect(press(w, k), `press ${k}`).toBe(true);
+        const due = Math.ceil((HOURS[from - 1] * day * hundredths) / 120);
+        const endedAt: Partial<Record<Kind, number>> = {};
+        for (let n = 1; n <= due + 1 && w.ups.length < KINDS.length; n++) {
+          w.builder.tickWorks(SIM_STEP);
+          w.houses.tickWorks(SIM_STEP);
+          for (const e of w.ups) endedAt[e.kind] ??= n;
+        }
+        expect(endedAt, `the step each work ended on, of ${due}`).toEqual(perKind(() => due));
+        expect(w.ups.map((e) => e.level)).toEqual(KINDS.map(() => from + 1));
+      },
+      {
+        shrink: function* (c) {
+          for (const from of shrinkInt(c.from, 1)) yield { ...c, from };
+          for (const day of shrinkInt(c.day, 30)) yield { ...c, day };
+          for (const hundredths of shrinkInt(c.hundredths, 1)) yield { ...c, hundredths };
+        },
+      },
+    );
+  }, 30_000);
+
+  /** A game run: upgrades pressed between steps of any size, maybe a save and load on the way. */
+  interface Run {
+    /** each one's level before its upgrade */
+    from: Record<Kind, number>;
+    day: number;
+    mul: number;
+    /** the step before which each upgrade is pressed; past the last step, after them all */
+    at: Record<Kind, number>;
+    /**
+     * game seconds of each step, in whole eighths so every sum is exact (0 is a paused frame), or
+     * `rest`: exactly the time the first work to end has left by the oracle's count, or nothing
+     * when no work runs
+     */
+    steps: (number | 'rest')[];
+    /** the step before which the game is saved and loaded again, or never */
+    saveAt: number | null;
+  }
+  function genRun(rng: Rng): Run {
+    const steps = Array.from({ length: rng.int(1, 30) }, (): number | 'rest' => {
+      switch (rng.int(0, 5)) {
+        case 0:
+          return 0;
+        case 1:
+          return rng.int(1, 8) / 8;
+        case 2:
+          return rng.int(1, 120);
+        case 3:
+          return rng.int(1, 4800) / 8;
+        default:
+          return 'rest';
+      }
+    });
+    return {
+      from: perKind(() => rng.int(1, 5)),
+      // whole game seconds an hour, and multipliers in quarters: the work times are exact too
+      day: rng.pick([120, 240, 360, 480, 720]),
+      mul: rng.pick([0.25, 0.5, 0.75, 1, 1.5, 2, 4]),
+      at: perKind(() => rng.int(0, steps.length)),
+      steps,
+      saveAt: rng.chance(0.5) ? rng.int(0, steps.length) : null,
+    };
+  }
+  function* shrinkRun(r: Run): Iterable<Run> {
+    if (r.saveAt !== null) yield { ...r, saveAt: null };
+    const eighths = (s: number | 'rest') =>
+      s === 'rest' ? [0] : [...shrinkInt(s * 8, 0)].map((n) => n / 8);
+    for (const steps of shrinkArray(r.steps, eighths)) if (steps.length) yield { ...r, steps };
+    for (const k of KINDS) {
+      for (const v of shrinkInt(r.at[k], 0)) yield { ...r, at: { ...r.at, [k]: v } };
+      for (const v of shrinkInt(r.from[k], 1)) yield { ...r, from: { ...r.from, [k]: v } };
+    }
+    if (r.saveAt !== null) for (const saveAt of shrinkInt(r.saveAt, 0)) yield { ...r, saveAt };
+  }
+
+  it('raises the level on the step its game time is reached, through the step and a save', () => {
+    // The oracle sums the game time of the steps since each press, exactly (whole eighths of a
+    // second against work times that are whole quarters, and steps that land on a work's end):
+    // the building is closed and at its old level until the step at which the sum reaches the
+    // work's time, then open one level up, and onUpgraded reports it once, on that step. Until
+    // then `works()` lists it with that sum over its time as its progress, so a step of no time
+    // moves nothing. A save and load anywhere changes none of it.
+    forAll(
+      genRun,
+      (run) => {
+        rules.daySeconds = run.day;
+        rules.upgradeTimeMul = run.mul;
+        const last = run.steps.length;
+        const at = perKind((k) => Math.min(run.at[k], last));
+        const time = perKind((k) => HOURS[run.from[k] - 1] * (run.day / 24) * run.mul);
+        // the oracle: game seconds of every step, and the step on which each work ends
+        const due = perKind(() => Infinity);
+        const sum = perKind(() => 0);
+        const dts = run.steps.map((s, j) => {
+          const running = KINDS.filter((k) => at[k] <= j && due[k] === Infinity);
+          const left = running.map((k) => time[k] - sum[k]);
+          const dt = s !== 'rest' ? s : left.length ? Math.min(...left) : 0;
+          for (const k of running) if ((sum[k] += dt) >= time[k]) due[k] = j;
+          return dt;
+        });
+        const stepped = perKind(() => 0);
+        let w = site(run.from);
+        let step = stepper(w);
+        const rises: (Omit<Upgraded, 'name'> & { step: number })[] = [];
+        for (let j = 0; j <= last; j++) {
+          for (const k of KINDS) {
+            if (at[k] !== j) continue;
+            expect(press(w, k), `press ${k} before step ${j}`).toBe(true);
+            expect(closedOf(w, k), `${k} closed once pressed`).toBe(true);
+          }
+          if (run.saveAt === j) {
+            w = reload(w);
+            step = stepper(w);
+          }
+          if (j === last) break;
+          step(dts[j]);
+          for (const { kind, x, y, w: wide, h: deep, level } of w.ups.splice(0))
+            rises.push({ kind, x, y, w: wide, h: deep, level, step: j });
+          for (const k of KINDS) {
+            if (at[k] <= j) stepped[k] += dts[j];
+            const done = due[k] <= j;
+            expect([levelOf(w, k), closedOf(w, k)], `${k} after step ${j}`).toEqual([
+              run.from[k] + (done ? 1 : 0),
+              at[k] <= j && !done,
+            ]);
+          }
+          const sites = [...w.builder.works(), ...w.houses.works()];
+          const running = KINDS.filter((k) => at[k] <= j && due[k] > j);
+          expect(
+            sites.map(({ progress: _, ...where }) => where),
+            `the works under way after step ${j}`,
+          ).toEqual(running.map((k) => AT[k]));
+          running.forEach((k, i) =>
+            expect(sites[i].progress, `${k}'s progress after step ${j}`).toBeCloseTo(
+              stepped[k] / time[k],
+              12,
+            ),
+          );
+        }
+        const expected = KINDS.filter((k) => due[k] <= last)
+          .map((k) => ({ kind: k, ...AT[k], level: run.from[k] + 1, step: due[k] }))
+          .sort((a, b) => a.step - b.step || KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind));
+        expect(rises, 'the rises onUpgraded reported, with their steps').toEqual(expected);
+      },
+      { shrink: shrinkRun },
+    );
+  }, 60_000);
+});
+
+describe('a work in a save', () => {
+  /** A work a save could hold for a building at `level`, well formed or not, as JSON reads it. */
+  function genWork(rng: Rng, level: number): unknown {
+    const total = rng.pick([1, 60, rng.range(0.001, 5000)]);
+    const work: Record<string, unknown> = { to: level + 1, left: rng.range(0, total), total };
+    if (rng.chance(0.2)) work.left = rng.pick([0, total]);
+    switch (rng.int(0, 9)) {
+      case 0:
+        work.to = level + rng.pick([-1, 0, 2]);
+        break;
+      case 1:
+        work.left = rng.pick([-5, total + 3, Number.NaN, Infinity, '7', null]);
+        break;
+      case 2:
+        work.total = rng.pick([0, -60, Number.NaN, Infinity, '60', null]);
+        break;
+      case 3:
+        delete work[rng.pick(['to', 'left', 'total'])];
+        break;
+      case 4:
+        return rng.pick([null, 7, 'work', [], {}]);
+      default:
+      // well formed
+    }
+    return asStored(work);
+  }
+  /** Whether `v` is a work the game could have started on a building at `level` below `top`. */
+  const startable = (v: unknown, level: number, top: number): v is Work => {
+    if (!v || typeof v !== 'object') return false;
+    const { to, left, total } = v as Record<string, unknown>;
+    if (typeof to !== 'number' || typeof left !== 'number' || typeof total !== 'number')
+      return false;
+    return (
+      to === level + 1 && to <= top && total > 0 && total < Infinity && left >= 0 && left <= total
+    );
+  };
+  const STATION_IDS = ['farm', 'lumber', 'quarry', 'pump', 'town', 'warehouse', 'station'];
+  const WORKS_IDS = BUILDING_DEFS.map((d) => d.id);
+
+  it('keeps only a work the building could have started, and every such work as it was', () => {
+    // A loaded work brings the level one above the one the building loads at, no higher than its
+    // top level, with its time left within its time; so when it ends the level rises by one, as
+    // onUpgraded says. Anything else is dropped, and a work the game could have written is kept
+    // exactly. The house loads onto a house standing in a world, as a save's houses do.
+    const w = world(5);
+    house(w, AT.house.x, AT.house.y);
+    forAll(
+      (rng) => {
+        const kind = rng.pick(KINDS);
+        const id =
+          kind === 'station'
+            ? rng.pick(STATION_IDS)
+            : kind === 'works'
+              ? rng.pick(WORKS_IDS)
+              : 'townhouse';
+        const top =
+          kind === 'station'
+            ? MAX_LEVEL
+            : kind === 'works'
+              ? worksMaxLevel({ id } as Building)
+              : w.houses.maxLevel;
+        const level = rng.chance(0.3) ? top : rng.int(1, top);
+        return { kind, id, level, work: genWork(rng, level) };
+      },
+      ({ kind, id, level, work }) => {
+        let loaded: { level: number; top: number; work: Work | null };
+        if (kind === 'station') {
+          const sj = { id: 1, defId: id, name: 'S', x: 1, y: 1, level, storage: {}, work };
+          const s = Station.fromJSON(asStored(sj) as StationJSON);
+          loaded = { level: s.level, top: MAX_LEVEL, work: s.work };
+        } else if (kind === 'works') {
+          const b = buildingFromJSON(asStored([1, 1, id, 0, level, work]) as BuildingJSON);
+          loaded = { level: buildingLevel(b), top: worksMaxLevel(b), work: b.work ?? null };
+        } else {
+          const hj = { ...AT.house, level, residents: 0, progress: 1, work };
+          w.houses.load(asStored({ list: [hj], arrivals: [], visited: [] }) as never);
+          const h = homeOf(w);
+          loaded = { level: h.level, top: w.houses.maxLevel, work: h.work ?? null };
+        }
+        expect(loaded.level, 'the level it loads at').toBe(level);
+        if (loaded.work)
+          expect(
+            startable(loaded.work, loaded.level, loaded.top),
+            `kept ${JSON.stringify(loaded.work)} at level ${loaded.level} of ${loaded.top}`,
+          ).toBe(true);
+        if (startable(work, level, loaded.top)) expect(loaded.work, 'kept as it was').toEqual(work);
+      },
+    );
+  });
+
+  it('ends a loaded work one level up, at the level it names, whatever level the save gives', () => {
+    // A save may give any level: below 1, above the top, a fraction, or none for a works. Loaded
+    // and run to its end through the builder and the houses, a kept work ends with the level one
+    // above the level the building loaded at, which is the work's own `to` and at most the top,
+    // and onUpgraded reports that level once. A building whose work was dropped stays as it
+    // loaded and reports nothing. A works the game does not know loads, and the step runs on it.
+    const w = world(5);
+    house(w, AT.house.x, AT.house.y);
+    const tops = (kind: Kind, id: string) =>
+      kind === 'station'
+        ? MAX_LEVEL
+        : kind === 'works'
+          ? WORKS_IDS.includes(id)
+            ? worksMaxLevel({ id } as Building)
+            : MAX_LEVEL
+          : w.houses.maxLevel;
+    forAll(
+      (rng) => {
+        const kind = rng.pick(KINDS);
+        const id =
+          kind === 'station'
+            ? rng.pick(STATION_IDS)
+            : kind === 'works'
+              ? rng.pick([...WORKS_IDS, 'sawmill'])
+              : 'townhouse';
+        const top = tops(kind, id);
+        const odd: (number | null)[] = [0, -1, top, top + 1, top + 3, 2.5];
+        if (kind === 'works') odd.push(null);
+        const level = rng.chance(0.5) ? rng.int(1, top) : rng.pick(odd);
+        // the work names the level after the saved one, or after the one it may load at
+        const clamped = Math.max(1, Math.min(top, level ?? 1));
+        const base = rng.chance(0.5) ? (level ?? 1) : rng.pick([clamped, Math.round(clamped)]);
+        return { kind, id, level, work: genWork(rng, base) };
+      },
+      ({ kind, id, level, work }) => {
+        w.ups.length = 0;
+        let now: () => number;
+        let kept: Work | null;
+        let unload: () => void;
+        if (kind === 'station') {
+          const sj = { id: 1, defId: id, name: 'S', x: 1, y: 1, level, storage: {}, work };
+          const s = Station.fromJSON(asStored(sj) as StationJSON);
+          w.builder.stations.push(s);
+          unload = () => w.builder.stations.splice(w.builder.stations.indexOf(s), 1);
+          now = () => s.level;
+          kept = s.work;
+        } else if (kind === 'works') {
+          const b = buildingFromJSON(asStored([1, 1, id, 0, level, work]) as BuildingJSON);
+          const key = b.y * w.map.w + b.x;
+          w.builder.buildings.set(key, b);
+          unload = () => w.builder.buildings.delete(key);
+          now = () => (WORKS_IDS.includes(id) ? buildingLevel(b) : (b.level ?? 1));
+          kept = b.work ?? null;
+        } else {
+          const hj = { ...AT.house, level, residents: 0, progress: 1, work };
+          w.houses.load(asStored({ list: [hj], arrivals: [], visited: [] }) as never);
+          const h = homeOf(w);
+          unload = () => {};
+          now = () => h.level;
+          kept = h.work ?? null;
+        }
+        try {
+          const at = now();
+          const top = tops(kind, id);
+          const to = kept?.to;
+          w.builder.tickWorks(kept ? kept.total : 1);
+          w.houses.tickWorks(kept ? kept.total : 1);
+          const rises = w.ups.map((e) => ({ kind: e.kind, level: e.level }));
+          if (to !== undefined) {
+            expect(to, `the level the work brings, loaded at ${at}`).toBe(at + 1);
+            expect(to, `the level the work brings, of ${top}`).toBeLessThanOrEqual(top);
+            expect(rises, 'what onUpgraded reports').toEqual([{ kind, level: to }]);
+            expect(now(), 'the level once the work is done').toBe(to);
+          } else {
+            expect(rises, 'what onUpgraded reports').toEqual([]);
+            expect(now(), 'the level with no work').toBe(at);
+          }
+        } finally {
+          unload();
+        }
+      },
+      {
+        seeds: Array.from({ length: 400 }, (_, i) => i + 1),
+        shrink: function* (c) {
+          // toward level 1, then 0, then none, each simpler than the one before
+          const simpler: (number | null)[] = [1, 0, null];
+          const rank = simpler.includes(c.level) ? simpler.indexOf(c.level) : simpler.length;
+          for (const level of simpler.slice(0, rank))
+            if (level !== null || c.kind === 'works') yield { ...c, level };
+          if (c.work && typeof c.work === 'object' && !Array.isArray(c.work)) {
+            const v = c.work as Record<string, unknown>;
+            if (v.left !== 0) yield { ...c, work: { ...v, left: 0 } };
+            if (v.total !== 1) yield { ...c, work: { ...v, left: 0, total: 1 } };
+          }
+        },
+      },
+    );
+  });
+});
+
+describe('a station being upgraded, of every kind', () => {
+  it('makes nothing, takes nothing in, has no crew, and gives out what it holds as if open', () => {
+    // Every kind of station but the depot (whose upgrade is instant), at every level a work can
+    // start from, holding any goods: closed, it accepts no cargo, has no room, stores nothing and
+    // makes nothing however long it ticks, and feeds no crew. What it holds goes out as from the
+    // same station open: the same cargo on offer, the same free platform, the same amounts taken.
+    const kinds = STATION_DEFS.filter((d) => !d.depot).map((d) => d.id);
+    const cargos = [
+      ...new Set(STATION_DEFS.flatMap((d) => [...d.accepts, ...d.produces.map((p) => p.cargo)])),
+    ];
+    forAll(
+      (rng) => ({
+        id: rng.pick(kinds),
+        level: rng.int(1, MAX_LEVEL - 1),
+        held: cargos.filter(() => rng.chance(0.3)).map((c) => [c, rng.int(0, 60)] as const),
+        cargo: rng.pick(cargos),
+        amount: rng.int(1, 100),
+        dt: rng.pick([SIM_STEP, daySeconds(), weekSeconds()]),
+      }),
+      ({ id, level, held, cargo, amount, dt }) => {
+        const make = (closed: boolean) => {
+          const s = new Station(id, 1, 1);
+          s.level = level;
+          for (const [c, n] of held) if (n > 0) s.storage.set(c, n);
+          if (closed) s.work = { to: level + 1, left: 60, total: 60 };
+          return s;
+        };
+        const shut = make(true);
+        const open = make(false);
+        expect([shut.closed, open.closed]).toEqual([true, false]);
+        expect([shut.crew, shut.roomFor('stone')], 'crew and room').toEqual([0, 0]);
+        expect(open.crew, 'crew when open').toBe(LEVELS.crew[level - 1]);
+        expect(cargos.filter((c) => shut.accepts(c))).toEqual([]);
+        expect(cargos.filter((c) => open.accepts(c))).toEqual(
+          cargos.filter((c) => open.def.accepts.includes(c)),
+        );
+        const holds = () => JSON.stringify([...shut.storage]);
+        const before = holds();
+        expect(shut.store(cargo, amount), `store ${amount} ${cargo}`).toBe(0);
+        shut.tick(dt);
+        expect(holds(), `after a tick of ${dt} s`).toBe(before);
+        expect(shut.availableCargo()).toEqual(open.availableCargo());
+        expect(shut.hasFreePlatform()).toBe(open.hasFreePlatform());
+        expect(shut.take(cargo, amount), `take ${amount} ${cargo}`).toBe(open.take(cargo, amount));
+        expect(holds()).toBe(JSON.stringify([...open.storage]));
+      },
+      {
+        shrink: function* (c) {
+          for (const held of shrinkArray(c.held)) yield { ...c, held };
+          for (const level of shrinkInt(c.level, 1)) yield { ...c, level };
+          for (const amount of shrinkInt(c.amount, 1)) yield { ...c, amount };
+        },
+      },
+    );
+  });
+});
+
+// ------------------------------------------------------------ the upgrade click
+
+/** Every sound played since the last `mockClear`, by name. */
+const played = () => vi.mocked(sfx).mock.calls.map(([name]) => name);
+
+/** What the player does: click Upgrade on one of five things, in play or the editor, or wait. */
+type ClickOp =
+  | { kind: 'click'; target: number; free: boolean }
+  | { kind: 'remove'; target: number }
+  | { kind: 'wait'; hours: number };
+interface ClickCase {
+  age: number;
+  poor: boolean;
+  ops: ClickOp[];
+}
+const TARGETS = ['station', 'depot', 'works', 'bridge', 'house'] as const;
+
+/** A station, a depot, a works, a bridge and a house, each with its Upgrade and Demolish. */
+function clickables(w: World) {
+  const { farm, mill, home } = three(w);
+  const depot = station(w, 'depot', 24, 20);
+  const bridge = works(w, 'bridge_wood', 26, 10);
+  const upgrade = [
+    () => w.builder.upgradeStation(farm),
+    () => w.builder.upgradeStation(depot),
+    () => w.builder.upgradeBuilding(mill),
+    () => w.builder.upgradeBuilding(bridge),
+    () => w.houses.upgrade(home),
+  ];
+  const remove = [
+    () => w.builder.removeStation(farm),
+    () => w.builder.removeStation(depot),
+    () => w.builder.removeBuilding(mill.x, mill.y),
+    () => w.builder.removeBuilding(bridge.x, bridge.y),
+    () => w.builder.removeDecor(home.x, home.y),
+  ];
+  return { upgrade, remove };
+}
+
+describe('the upgrade click', () => {
+  it('sounds the same for a station, a depot, a works, a bridge and a house', () => {
+    const w = world(1);
+    const { upgrade } = clickables(w);
+    for (const [i, click] of upgrade.entries()) {
+      vi.mocked(sfx).mockClear();
+      expect(click(), TARGETS[i]).toBe(true);
+      expect(played(), TARGETS[i]).toEqual(['station.upgrade']);
+    }
+  });
+
+  // slow because each seeded run of up to 20 clicks and removals is played against the sound: 0.34
+  // s alone, so a limit of 30 s
+  it('plays once for every upgrade a click starts and never for one refused', () => {
+    forAll(
+      (rng: Rng): ClickCase => ({
+        age: rng.int(0, 2),
+        poor: rng.chance(0.3),
+        ops: Array.from({ length: rng.int(1, 20) }, (): ClickOp => {
+          const target = rng.int(0, TARGETS.length - 1);
+          const roll = rng.next();
+          if (roll < 0.6) return { kind: 'click', target, free: rng.chance(0.2) };
+          if (roll < 0.7) return { kind: 'remove', target };
+          return { kind: 'wait', hours: rng.int(1, 30) };
+        }),
+      }),
+      (c) => {
+        const w = world(c.age, c.poor);
+        const { upgrade, remove } = clickables(w);
+        for (const [i, op] of c.ops.entries()) {
+          if (op.kind === 'wait') {
+            w.builder.tickWorks(op.hours * hour());
+            w.houses.tickWorks(op.hours * hour());
+            continue;
+          }
+          if (op.kind === 'remove') {
+            remove[op.target]();
+            continue;
+          }
+          const at = `op ${i}: ${op.free ? 'editor ' : ''}upgrade of the ${TARGETS[op.target]}`;
+          vi.mocked(sfx).mockClear();
+          const done = op.free ? freely(w, upgrade[op.target]) : upgrade[op.target]();
+          expect(played(), at).toEqual(done ? ['station.upgrade'] : []);
+        }
+      },
+      {
+        shrink: function* (c) {
+          for (const ops of shrinkArray(c.ops)) if (ops.length) yield { ...c, ops };
+          if (c.poor) yield { ...c, poor: false };
+          for (const age of shrinkInt(c.age)) yield { ...c, age };
+        },
+      },
+    );
+  }, 30_000);
+});
+
+// ---------------------------------------------- a house's finished upgrade: its toast and notice
+
+/**
+ * What a house registry told the game, in the order it did: a redraw (`onChanged`), a toast
+ * (`onMessage`) and a report (`onUpgraded`, which `Game.onUpgraded` turns into the play-mode notice
+ * with `STR.upgrade.done(name, level)`). `level` is the house's own level when it was told.
+ */
+type Told =
+  | { call: 'changed'; level: number }
+  | { call: 'message'; text: string; kind: string; level: number }
+  | { call: 'upgraded'; report: Upgraded };
+type Toast = Extract<Told, { call: 'message' }>;
+type Report = Extract<Told, { call: 'upgraded' }>;
+
+/** Records what the registry tells about the house `h`, besides the world's own record of rises. */
+function listen(w: World, h: House): Told[] {
+  const told: Told[] = [];
+  w.houses.onChanged = () => told.push({ call: 'changed', level: h.level });
+  w.houses.onMessage = (text, kind) => told.push({ call: 'message', text, kind, level: h.level });
+  w.houses.onUpgraded = (report) => {
+    told.push({ call: 'upgraded', report });
+    w.ups.push(report);
+  };
+  return told;
+}
+
+/**
+ * Splits what the registry told into the works it started and the rises it made. Every redraw
+ * opens a group. Alone, it is a work starting (the house closes, drawn at its old level). With
+ * company it is a rise, and the company is exactly one toast and one report, in either order.
+ */
+function readTold(told: readonly Told[]) {
+  const groups: Told[][] = [];
+  for (const t of told) {
+    if (t.call === 'changed') groups.push([]);
+    else if (groups.length) groups[groups.length - 1].push(t);
+    else throw new Error(`the registry told ${t.call} before any redraw`);
+  }
+  let starts = 0;
+  const rises: { toast: Toast; report: Upgraded }[] = [];
+  for (const g of groups) {
+    if (!g.length) {
+      starts++;
+      continue;
+    }
+    expect(g.map((t) => t.call).sort(), 'a rise tells one toast and one report').toEqual([
+      'message',
+      'upgraded',
+    ]);
+    rises.push({
+      toast: g.find((t): t is Toast => t.call === 'message')!,
+      report: g.find((t): t is Report => t.call === 'upgraded')!.report,
+    });
+  }
+  return { starts, rises };
+}
+
+/**
+ * The invariant: each rise is one level up from `from`, its toast is the text the notice gets from
+ * its report (`Game.onUpgraded` builds `STR.upgrade.done(e.name, e.level)`), of kind 'good', told
+ * when the house had already risen, and the report names the house the decor data names.
+ */
+function expectAgree(h: House, rises: { toast: Toast; report: Upgraded }[], from: number) {
+  for (const [i, { toast, report }] of rises.entries()) {
+    const level = from + 1 + i;
+    const at = `rise ${i + 1}, to level ${level}`;
+    expect(report, `${at}: the report`).toEqual({
+      kind: 'house',
+      x: h.x,
+      y: h.y,
+      w: 1,
+      h: 1,
+      name: decorDef(HOUSE_ID).name,
+      level,
+    });
+    expect(toast.kind, `${at}: the kind of the toast`).toBe('good');
+    expect(toast.text, `${at}: the toast against the notice`).toBe(
+      STR.upgrade.done(report.name, report.level),
+    );
+    expect(toast.level, `${at}: the house's level when the toast came`).toBe(level);
+  }
+}
+
+describe("a house's finished upgrade", () => {
+  const PATHS: {
+    name: string;
+    timed: boolean;
+    setup: () => void;
+    start: (w: World, h: House) => boolean;
+  }[] = [
+    {
+      name: 'a work that runs its time',
+      timed: true,
+      setup: () => {},
+      start: (w, h) => w.houses.upgrade(h),
+    },
+    {
+      name: 'an upgrade that takes no time (tuning at 0)',
+      timed: false,
+      setup: () => {
+        rules.upgradeTimeMul = 0;
+      },
+      start: (w, h) => w.houses.upgrade(h),
+    },
+    {
+      name: 'a click in the editor',
+      timed: false,
+      setup: () => {},
+      start: (w, h) => freely(w, () => w.houses.upgrade(h)),
+    },
+  ];
+
+  for (const path of PATHS)
+    it(`toasts what its notice says, once per level, through ${path.name}`, () => {
+      path.setup();
+      const w = world(5);
+      const h = house(w, AT.house.x, AT.house.y);
+      const told = listen(w, h);
+      const top = w.houses.maxLevel;
+      expect(top, 'levels a house has').toBeGreaterThan(2);
+      const toasts = () => told.filter((t) => t.call === 'message').length;
+
+      for (let level = 1; level < top; level++) {
+        expect(path.start(w, h), `start the upgrade to level ${level + 1}`).toBe(true);
+        if (path.timed) {
+          // under way the house is closed at its old level, and nothing has been said about it
+          expect(h.work, `work to level ${level + 1}`).toBeDefined();
+          expect([h.level, toasts()]).toEqual([level, level - 1]);
+          w.houses.tickWorks(h.work!.total / 2);
+          expect([h.level, toasts()]).toEqual([level, level - 1]);
+          w.houses.tickWorks(h.work!.left);
+        }
+        expect([h.work, h.level, toasts()], `after the upgrade to level ${level + 1}`).toEqual([
+          undefined,
+          level + 1,
+          level,
+        ]);
+      }
+
+      // nothing more is said by time passing, nor by an upgrade there is no level for
+      const said = told.length;
+      w.houses.tickWorks(1e6);
+      expect(w.houses.upgrade(h)).toBe(false);
+      expect(freely(w, () => w.houses.upgrade(h))).toBe(false);
+      expect(told).toHaveLength(said);
+
+      const { starts, rises } = readTold(told);
+      expect(starts, 'works started').toBe(path.timed ? top - 1 : 0);
+      expect(rises, 'rises, one for each level above the first').toHaveLength(top - 1);
+      expectAgree(h, rises, 1);
+      expect(w.ups, 'the reports the world recorded').toEqual(rises.map((r) => r.report));
+    });
+
+  /** A house, in a world, that cannot be upgraded, and the reason the check gives for it. */
+  const REFUSALS: {
+    name: string;
+    free?: boolean;
+    reason?: string | RegExp;
+    make: () => { w: World; h: House };
+  }[] = [
+    {
+      name: 'cannot be paid for',
+      // no store in reach holds the cost (`Builder.affordable`)
+      reason: /^No store within /,
+      make: () => {
+        const w = world(5, true);
+        return { w, h: house(w, AT.house.x, AT.house.y) };
+      },
+    },
+    {
+      name: 'is not open to its next level in this age',
+      reason: /^Level 2 opens in the /,
+      make: () => {
+        const w = world(0);
+        return { w, h: house(w, AT.house.x, AT.house.y) };
+      },
+    },
+    {
+      name: 'is still under construction',
+      reason: STR.house.building,
+      make: () => {
+        const w = world(5);
+        freely(w, () => w.builder.spawnDecor(AT.house.x, AT.house.y, HOUSE_ID, 0));
+        return { w, h: homeOf(w) };
+      },
+    },
+    {
+      name: 'is still under construction, in the editor',
+      free: true,
+      reason: STR.house.building,
+      make: () => {
+        const w = world(5);
+        freely(w, () => w.builder.spawnDecor(AT.house.x, AT.house.y, HOUSE_ID, 0));
+        return { w, h: homeOf(w) };
+      },
+    },
+    {
+      name: 'is already at its top level',
+      reason: STR.house.maxed,
+      make: () => {
+        const w = world(5);
+        const h = house(w, AT.house.x, AT.house.y);
+        rules.upgradeTimeMul = 0;
+        while (h.level < w.houses.maxLevel) expect(w.houses.upgrade(h)).toBe(true);
+        rules.upgradeTimeMul = DEFAULT_RULES.upgradeTimeMul;
+        return { w, h };
+      },
+    },
+    {
+      name: 'is already being upgraded',
+      reason: STR.build.upgradingNow,
+      make: () => {
+        const w = world(5);
+        const h = house(w, AT.house.x, AT.house.y);
+        expect(w.houses.upgrade(h)).toBe(true);
+        return { w, h };
+      },
+    },
+    {
+      name: 'is already being upgraded, in the editor',
+      free: true,
+      reason: STR.build.upgradingNow,
+      make: () => {
+        const w = world(5);
+        const h = house(w, AT.house.x, AT.house.y);
+        expect(w.houses.upgrade(h)).toBe(true);
+        return { w, h };
+      },
+    },
+    {
+      name: 'has been demolished',
+      make: () => {
+        const w = world(5);
+        const h = house(w, AT.house.x, AT.house.y);
+        expect(w.builder.removeDecor(h.x, h.y)).toBe(true);
+        return { w, h };
+      },
+    },
+  ];
+
+  for (const refusal of REFUSALS)
+    it(`says nothing when the house ${refusal.name}`, () => {
+      const { w, h } = refusal.make();
+      const told = listen(w, h);
+      const level = h.level;
+      const work = asStored(h.work ?? null);
+      const stock = holdings(w);
+      const reported = w.ups.length;
+      const attempt = <T>(f: () => T) => (refusal.free ? freely(w, f) : f());
+      if (refusal.reason !== undefined) {
+        const check = attempt(() => w.houses.canUpgrade(h));
+        expect(check.ok, 'the check allows it').toBe(false);
+        if (typeof refusal.reason === 'string') expect(check.reason).toBe(refusal.reason);
+        else expect(check.reason).toMatch(refusal.reason);
+      }
+      expect(
+        attempt(() => w.houses.upgrade(h)),
+        'upgrade',
+      ).toBe(false);
+      // a work already under way is not done after half its time; with none, time does nothing
+      w.houses.tickWorks(h.work ? h.work.total / 2 : 1e6);
+      expect(told, 'what the registry told').toEqual([]);
+      expect(h.level, 'the level').toBe(level);
+      expect(!!h.work, 'a work under way').toBe(!!work);
+      expect(holdings(w), 'the stores').toBe(stock);
+      expect(w.ups, 'the reports the world recorded').toHaveLength(reported);
+    });
+
+  it('takes the house name from the decor data once, for the toast and the report alike', () => {
+    // The data's name is made afresh on every read; if the toast and the report each read it,
+    // a source that answers differently every time shows them apart.
+    const def = decorDef(HOUSE_ID);
+    const was = def.name;
+    try {
+      const w = world(5);
+      const h = house(w, AT.house.x, AT.house.y);
+      const told = listen(w, h);
+      let reads = 0;
+      Object.defineProperty(def, 'name', {
+        get: () => `House number ${++reads}`,
+        configurable: true,
+      });
+      for (let rise = 1; rise <= 3; rise++) {
+        rules.upgradeTimeMul = rise === 2 ? 0 : 1;
+        expect(w.houses.upgrade(h)).toBe(true);
+        w.houses.tickWorks(1e6);
+      }
+      const { rises } = readTold(told);
+      expect(rises).toHaveLength(3);
+      for (const [i, { toast, report }] of rises.entries()) {
+        expect(toast.text, `rise ${i + 1}`).toBe(STR.upgrade.done(report.name, report.level));
+        expect(report.name, `rise ${i + 1}: the name in the report`).toMatch(/^House number \d+$/);
+      }
+    } finally {
+      Object.defineProperty(def, 'name', {
+        value: was,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
+    }
+    expect(decorDef(HOUSE_ID).name).toBe(was);
+  });
+
+  it('has one wording for the rise: the old house wording is gone from the strings', () => {
+    expect(STR.house).not.toHaveProperty('upgraded');
+    for (const level of [2, 6])
+      expect(STR.upgrade.done(decorDef(HOUSE_ID).name, level)).not.toMatch(/upgraded to/i);
+  });
+});
+
+describe("a house's toast, for any run of clicks, waits and saves", () => {
+  type Op = { op: 'upgrade'; free: boolean } | { op: 'wait'; eighths: number } | { op: 'reload' };
+  interface HouseRun {
+    age: number;
+    poor: boolean;
+    day: number;
+    mul: number;
+    ops: Op[];
+  }
+
+  it('is told once on exactly the step the level rises, and is the text its notice gets', () => {
+    // The oracle is the level of the house and the game time stepped since its work started (whole
+    // eighths of a second, against work times that are whole eighths too, so every sum is exact).
+    // An accepted upgrade rises at once only when the editor or the tuning at 0 makes it instant,
+    // else it starts a work and says nothing; a work rises on the tick whose time reaches its
+    // total; a refused upgrade, a tick without a rise and a save and load say nothing. Each rise
+    // is one toast and one report that agree. Clicks, waits and saves come in any order.
+    forAll<HouseRun>(
+      (rng) => ({
+        age: rng.int(0, 5),
+        poor: rng.chance(0.2),
+        day: rng.pick([120, 240, 480]),
+        mul: rng.pick([0, 0.25, 0.5, 1, 2]),
+        ops: Array.from({ length: rng.int(1, 40) }, (): Op => {
+          const roll = rng.int(0, 5);
+          if (roll <= 2) return { op: 'upgrade', free: rng.chance(0.25) };
+          if (roll === 3) return { op: 'reload' };
+          const eighths = rng.pick([0, rng.int(1, 8), 8 * rng.int(1, 120), rng.int(1, 4800)]);
+          return { op: 'wait', eighths };
+        }),
+      }),
+      (run) => {
+        rules.daySeconds = run.day;
+        rules.upgradeTimeMul = run.mul;
+        let w = world(run.age, run.poor);
+        let h = house(w, AT.house.x, AT.house.y);
+        let told = listen(w, h);
+        let elapsed = 0;
+        for (const [i, op] of run.ops.entries()) {
+          const level = h.level;
+          const at = `op ${i} ${JSON.stringify(op)} at level ${level}${h.work ? ' with a work running' : ''}`;
+          if (op.op === 'reload') {
+            const work = asStored(h.work ?? null);
+            w = reload(w);
+            h = homeOf(w);
+            told = listen(w, h);
+            expect([h.level, asStored(h.work ?? null)], `${at}: loaded`).toEqual([level, work]);
+          } else if (op.op === 'upgrade') {
+            const attempt = () => [w.houses.canUpgrade(h).ok, w.houses.upgrade(h)] as const;
+            const [ok, done] = op.free ? freely(w, attempt) : attempt();
+            expect(done, `${at}: the click against the check`).toBe(ok);
+            const { starts, rises } = readTold(told.splice(0));
+            if (!done) {
+              expect([starts, rises.length, h.level], `${at}: refused`).toEqual([0, 0, level]);
+            } else if (h.work) {
+              expect(op.free || run.mul === 0, `${at}: a work where it was instant`).toBe(false);
+              expect([starts, rises.length, h.level], `${at}: a work started`).toEqual([
+                1,
+                0,
+                level,
+              ]);
+              elapsed = 0;
+            } else {
+              expect(op.free || run.mul === 0, `${at}: a rise at once`).toBe(true);
+              expect([starts, rises.length, h.level], `${at}: a rise at once`).toEqual([
+                0,
+                1,
+                level + 1,
+              ]);
+              expectAgree(h, rises, level);
+            }
+          } else {
+            const running = h.work;
+            const dt = op.eighths / 8;
+            w.houses.tickWorks(dt);
+            if (running) elapsed += dt;
+            const rose = !!running && elapsed >= running.total;
+            const { starts, rises } = readTold(told.splice(0));
+            expect([starts, rises.length, h.level], `${at}: after ${elapsed} s`).toEqual([
+              0,
+              rose ? 1 : 0,
+              level + (rose ? 1 : 0),
+            ]);
+            expect(h.work === undefined, `${at}: the work is over`).toBe(!running || rose);
+            expectAgree(h, rises, level);
+          }
+        }
+      },
+      {
+        shrink: function* (c) {
+          const simpler = (op: Op): Iterable<Op> =>
+            op.op === 'upgrade'
+              ? op.free
+                ? [{ op: 'upgrade', free: false }]
+                : []
+              : op.op === 'wait'
+                ? [...shrinkInt(op.eighths, 0)].map((eighths): Op => ({ op: 'wait', eighths }))
+                : [];
+          for (const ops of shrinkArray(c.ops, simpler)) if (ops.length) yield { ...c, ops };
+          if (c.poor) yield { ...c, poor: false };
+          for (const age of shrinkInt(c.age, 5)) yield { ...c, age };
+          if (c.mul !== 1) yield { ...c, mul: 1 };
+          if (c.day !== 240) yield { ...c, day: 240 };
+        },
+      },
+    );
+  }, 60_000);
+});

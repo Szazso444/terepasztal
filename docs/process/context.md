@@ -7,12 +7,12 @@ hands back.
 
 ## What an agent reads
 
-| Reader | Always | Only when the brief names it | Never |
-| --- | --- | --- | --- |
-| Core | `AGENTS.md`, `CORE.md`, `docs/process/*`, the issue tree | specs, plans, any file | — |
-| A domain role | `AGENTS.md`, its own `.claude/agents/<role>.md`, the task brief | files in its context pack, a spec section | `CORE.md`, other roles' agent files, other tasks, the chat that produced the brief |
-| QA | `AGENTS.md`, `.claude/agents/qa.md`, the brief, the diff | the role file of the role under review | the implementer's reasoning beyond its report |
-| Verification | `AGENTS.md`, `.claude/agents/verification.md`, `docs/process/verification.md`, the brief | the module under test and its seams | the implementer's reasoning beyond its report |
+| Reader        | Always                                                                                   | Only when the brief names it              | Never                                                                              |
+| ------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------- |
+| Core          | `AGENTS.md`, `CORE.md`, `docs/process/*`, the issue tree                                 | specs, plans, any file                    | —                                                                                  |
+| A domain role | `AGENTS.md`, its own `.claude/agents/<role>.md`, the task brief                          | files in its context pack, a spec section | `CORE.md`, other roles' agent files, other tasks, the chat that produced the brief |
+| QA            | `AGENTS.md`, `.claude/agents/qa.md`, the brief, the diff                                 | the role file of the role under review    | the implementer's reasoning beyond its report                                      |
+| Verification  | `AGENTS.md`, `.claude/agents/verification.md`, `docs/process/verification.md`, the brief | the module under test and its seams       | the implementer's reasoning beyond its report                                      |
 
 Long histories (`CHANGELOG.md`, `MILESTONES.md`, `docs/phase-decisions.md`, `docs/archived-work.md`)
 are in no default pack. A brief cites the section it needs.
@@ -50,11 +50,12 @@ Out of scope: <what to leave alone even if it looks wrong; report it instead>
 ```
 Issue: #<n>
 Branch / commit: <branch> @ <sha>
-Outcome: done | partial | blocked
+Outcome: done | partial | blocked   (done: every criterion met; blocked: stopped for a reason in your role file's Stop and ask or lifecycle step 4; partial: anything else left unfinished, with the reason)
 Changed: <path> — <one line each>
 Gate: typecheck <ok|fail> · lint <ok|fail> · test <passed/total> · build <ok|fail> · prettier <ok|fail> · scope <ok|fail>
 Tests added: <file — invariant it pins>
-Open questions: <for the author or Core; none if none>
+Questions for the author: <product or rule decisions only the author can make; these stop the task>
+Notes for Core: <choices made inside the brief that Core should confirm; these do not stop it>
 Found out of scope: <problems noticed in files the role does not own>
 ```
 

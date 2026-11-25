@@ -1,0 +1,12 @@
+{
+  "method": "Same construction helpers and render profile as accepted C50",
+  "helper_source": "../c50_primitives.py",
+  "helper_sha256": "611d34c112db743e5456a5ec9a84db8a25ee4f3157bb6640c0770fa72452fcc1",
+  "hood_front_width": 1.8,
+  "hood_rear_width": 1.8,
+  "cab_width": 2.26,
+  "deck_width": 2.5,
+  "axes_parallel": true,
+  "gauge_half_m": 0.7482077759774072,
+  "source_geometry": "Authored from workbook picture; no imported meshes"
+}

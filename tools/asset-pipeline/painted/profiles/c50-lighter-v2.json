@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "id": "c50-lighter-v2",
+  "blender_version": "5.2.1 LTS",
+  "blender_build": "9e2066aef7ef",
+  "tile_m": 6.235064799811727,
+  "tile_px": 64,
+  "resolution": 4,
+  "supersample": 2,
+  "facings": 96,
+  "phases": 8,
+  "engine": "BLENDER_EEVEE",
+  "view_transform": "AgX",
+  "look": "AgX - Medium High Contrast",
+  "world_color": [
+    0.07,
+    0.07,
+    0.07
+  ],
+  "roughness": 0.78,
+  "metallic_cap": 0.18,
+  "specular": 0.22,
+  "paint_noise_scale": 7,
+  "paint_noise_detail": 2,
+  "paint_noise_roughness": 0.6,
+  "paint_low": 0.86,
+  "ao_distance": 0.28,
+  "ao_strength": 0.25,
+  "light_target": [
+    0,
+    0,
+    1.2
+  ],
+  "light_color": [
+    1,
+    0.91,
+    0.77
+  ],
+  "lights": [
+    {
+      "position": [
+        -4,
+        5,
+        6
+      ],
+      "energy": 1050,
+      "size": 5
+    },
+    {
+      "position": [
+        4,
+        2,
+        5
+      ],
+      "energy": 228,
+      "size": 4
+    },
+    {
+      "position": [
+        0,
+        6,
+        -4
+      ],
+      "energy": 238,
+      "size": 5
+    }
+  ],
+  "exposure": 0.3,
+  "cast_shadows": false
+}

@@ -43,15 +43,6 @@
         "iron": 2
       },
       "rotations": 2
-    },
-    "transition": {
-      "name": "Transition",
-      "cost": {
-        "wood": 2,
-        "stone": 2,
-        "iron": 2
-      },
-      "rotations": 4
     }
   },
   "terrainCost": {
@@ -60,8 +51,13 @@
     "forest": 1.4,
     "hill": 1.8,
     "water": 1,
-    "rock": 0,
-    "mountain": 0
+    "rock": 1.35,
+    "mountain": 1.65
+  },
+  "road": {
+    "cost": {
+      "stone": 1
+    }
   },
   "refund": 0.5,
   "curveSpeed": 0.55,

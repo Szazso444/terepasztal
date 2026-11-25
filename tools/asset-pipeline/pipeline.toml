@@ -3,7 +3,7 @@
 assets_csv   = "assets.csv"
 out_root     = "assets_out"                       # everything the pipeline writes lands here
 workflow_api = "workflows/image_to_3d_api.json"   # ComfyUI: Workflow -> Export (API)
-blender      = "blender"                          # Windows: "C:/Program Files/Blender Foundation/Blender 5.0/blender.exe"
+blender      = "blender"                          # Windows: the full path to blender.exe
 blender_timeout_s = 3600
 
 [comfy]

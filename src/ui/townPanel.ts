@@ -2,11 +2,13 @@ import { el, btn } from './dom';
 import { STR } from '../strings';
 import { TOWN_COLORS, type Town, type TownRegistry } from '../sim/towns';
 import type { HouseRegistry } from '../sim/houses';
-import { cargoDef } from '../sim/cargo';
+import type { StoreRegistry } from '../sim/stores';
+import { formatRates } from './townRates';
 
 /**
  * Left-hand list of towns, shown with the survey overview: colour, name, population, housing and
- * growth, what the town makes and uses per week, and what it still needs to be founded.
+ * growth, how full its store is, what the town makes and uses per week, and what it still needs to
+ * be founded. Go looks at the town and shows its store on the top bar.
  */
 export class TownPanel {
   readonly root = el('div', { id: 'town-panel', class: 'panel' });
@@ -18,6 +20,7 @@ export class TownPanel {
   constructor(
     private readonly towns: TownRegistry,
     private readonly houses: HouseRegistry | null = null,
+    private readonly stores: StoreRegistry | null = null,
   ) {
     this.root.append(el('div', { class: 'panel-title', text: STR.town.title }), this.body);
     this.root.style.display = 'none';
@@ -25,13 +28,6 @@ export class TownPanel {
   show(v: boolean) {
     this.root.style.display = v ? '' : 'none';
     if (v) this.render(true);
-  }
-  private fmt(rec: Record<string, number>) {
-    const parts = Object.entries(rec)
-      .filter(([, v]) => v >= 0.5)
-      .sort((a, b) => b[1] - a[1])
-      .map(([k, v]) => `${Math.round(v)} ${cargoDef(k).name.toLowerCase()}`);
-    return parts.length ? parts.join(', ') : '-';
   }
   /** Housing, growth and when the town builds next. */
   private housingLines(t: Town): HTMLElement[] {
@@ -45,13 +41,24 @@ export class TownPanel {
       el('div', {
         class: 'sub',
         text:
-          hs.growthPerDay > 0
-            ? T.growth(Math.round(hs.growthPerDay * 70) / 10)
-            : 'Growth stops at available housing capacity; food is required',
+          hs.growthPerDay > 0 ? T.growth(Math.round(hs.growthPerDay * 70) / 10) : T.growthCapped,
       }),
     );
-    out.push(el('div', { class: 'sub', text: 'Build or upgrade Houses to increase capacity' }));
+    out.push(el('div', { class: 'sub', text: T.capacityHint }));
     return out;
+  }
+  /** The store line of a town that has a store. */
+  private storeLines(t: Town): HTMLElement[] {
+    const sl = this.storeLine(t);
+    return sl ? [el('div', { class: 'sub', text: STR.town.store(sl.fullest, sl.cap) })] : [];
+  }
+  /** How full the town's store is: its fullest good against the cap per good; none without one. */
+  private storeLine(t: Town): { fullest: number; cap: number } | null {
+    const store = this.stores?.byKey(`town:${t.id}`);
+    if (!store) return null;
+    let fullest = 0;
+    for (const [, n] of store.held()) fullest = Math.max(fullest, Math.floor(n));
+    return { fullest, cap: store.cap('wood') };
   }
   render(force = false) {
     if (this.root.style.display === 'none') return;
@@ -63,7 +70,9 @@ export class TownPanel {
         const hk = hs
           ? `${hs.houses}:${hs.building}:${hs.capacity}:${hs.residents}:${hs.growthPerDay.toFixed(2)}:${hs.mul.toFixed(1)}:${hs.cramped}`
           : '';
-        return `${t.id}:${t.name}:${t.color}:${this.towns.population(t, m)}:${m.houses}:${m.warehouses}:${m.stations.length}:${m.buildings.length}:${hk}`;
+        const sl = this.storeLine(t);
+        const sk = sl ? `${sl.fullest}:${sl.cap}` : '';
+        return `${t.id}:${t.name}:${t.color}:${this.towns.population(t, m)}:${m.houses}:${m.warehouses}:${m.stations.length}:${m.buildings.length}:${hk}:${sk}`;
       })
       .join('|');
     if (!force && key === this.lastKey) return;
@@ -95,13 +104,14 @@ export class TownPanel {
             : STR.town.needs(m.houses === 0, m.warehouses === 0),
         }),
         ...this.housingLines(t),
+        ...this.storeLines(t),
         el('div', {
           class: 'sub',
-          text: `${STR.town.makes}: ${this.fmt(this.towns.production(t, m))}`,
+          text: `${STR.town.makes}: ${formatRates(this.towns.production(t, m))}`,
         }),
         el('div', {
           class: 'sub',
-          text: `${STR.town.uses}: ${this.fmt(this.towns.consumption(t, m))}`,
+          text: `${STR.town.uses}: ${formatRates(this.towns.consumption(t, m))}`,
         }),
         el(
           'div',

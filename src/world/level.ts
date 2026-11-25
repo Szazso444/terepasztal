@@ -1,6 +1,6 @@
 import type { GameMap } from './tiles';
-import type { TrackClass, TrackKind } from './track';
-import type { SupplyMode } from '../sim/supply';
+import type { TrackTuple } from './track';
+import { DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import { decorateProps, placeOilFields, emptyMap } from './mapgen';
 
 /** A station in a level; `rot` is the turn of a multi-tile one (missing: the default way). */
@@ -12,6 +12,8 @@ export interface LevelStation {
   name: string;
   rot?: number;
 }
+/** A works in a level: where, what, and its turn 0 to 3 (missing, as in an older file: 0). */
+export type LevelBuilding = [x: number, y: number, id: string, rot?: number];
 /** A hand-made map: terrain plus pre-placed track, stations and decor, and the starting economy. */
 export interface LevelData {
   id: string;
@@ -28,19 +30,20 @@ export interface LevelData {
   variant: string;
   /** base64 biome ids (missing: plains everywhere) */
   biome?: string;
-  track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
-  /** 2: regular curves and switches are 2×2 (missing: an older level with one-tile ones) */
+  track: TrackTuple[];
+  /** 2: wide curves and switches are 2×2 (missing: an older level with one-tile ones) */
   trackFormat?: 2;
   stations: LevelStation[];
   decor: [number, number, string, number][];
-  /** processing buildings [x, y, id] */
-  buildings?: [number, number, string][];
+  /** processing buildings */
+  buildings?: LevelBuilding[];
   start: {
     money: number;
-    tickets: number;
+    /** a level file from before the tickets left may hold this: read past, never written */
+    tickets?: number;
     /** age the level starts in (0 steam, 1 diesel, 2 electric) */
     tier: number;
-    /** multiplier on the default starting stockpile (1 = normal) */
+    /** multiplier on the default starting goods (1 = normal) */
     stockMul?: number;
     /** production chain the level is played in (missing: simple) */
     supply?: SupplyMode;
@@ -71,22 +74,32 @@ export function newLevelId() {
   return `lvl_${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`;
 }
 
-/** Terrain and props of a level as a GameMap. */
-export function mapFromLevel(level: LevelData): GameMap {
+/**
+ * Terrain and props of a level as a GameMap. `supply` is the production chain the game will run;
+ * only the full chain gets oil fields.
+ */
+export function mapFromLevel(level: LevelData, supply: SupplyMode = DEFAULT_SUPPLY): GameMap {
   const map = emptyMap(level.seed, level.w, level.h);
   map.terrain.set(unpackBytes(level.terrain, level.w * level.h));
   map.variant.set(unpackBytes(level.variant, level.w * level.h));
   if (level.biome) map.biome.set(unpackBytes(level.biome, level.w * level.h));
   decorateProps(map, level.seed);
-  placeOilFields(map, level.seed);
+  placeOilFields(map, level.seed, supply);
   return map;
+}
+
+/** A level without the tickets an older file's start block holds. */
+function withoutTickets(level: LevelData): LevelData {
+  const start = { ...level.start };
+  delete start.tickets;
+  return { ...level, start };
 }
 
 export function listLevels(): LevelData[] {
   try {
     const raw = localStorage.getItem(LEVELS_KEY);
     const list = raw ? (JSON.parse(raw) as LevelData[]) : [];
-    return Array.isArray(list) ? list.filter(isLevel) : [];
+    return Array.isArray(list) ? list.filter(isLevel).map(withoutTickets) : [];
   } catch {
     return [];
   }
@@ -96,7 +109,7 @@ export function getLevel(id: string): LevelData | null {
 }
 export function saveLevel(level: LevelData): boolean {
   const list = listLevels().filter((l) => l.id !== level.id);
-  list.push(level);
+  list.push(withoutTickets(level));
   list.sort((a, b) => b.updatedAt - a.updatedAt);
   try {
     localStorage.setItem(LEVELS_KEY, JSON.stringify(list));
@@ -146,6 +159,6 @@ export function levelFromMap(map: GameMap, name: string, id = newLevelId()): Lev
     stations: [],
     decor: [],
     buildings: [],
-    start: { money: 25000, tickets: 3, tier: 0, stockMul: 1 },
+    start: { money: 25000, tier: 0, stockMul: 1 },
   };
 }

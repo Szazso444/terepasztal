@@ -1,0 +1,29 @@
+# Windmill C17d — second queue run
+
+Step 0 adopted r0 attempt 3 accepted by Core review 1. Commit 9f336757a4ffaf9b4c9b503b52406641d959c477 changes only prompts.json. r0 PNG remains byte-identical to its raw attempt and r0 hub.json was not edited. r0 was never repainted.
+
+Completed all three requested views, r3 then r1 then r2, using all 9 allowed calls (three per view). No new view passes every test. Closest r3#3, r1#2 and r2#3 are copied byte-for-byte to their view files and explicitly kept:false. No conditional stop fired: the best camera error per view is .4, .7 and .6 degrees, all below the >3 degree stop. No tenth call was made.
+
+| View | Attempt | Returned    | Foot ratio / degrees off | Foot centre         | W / r0 W  | Cone tip / W | Stub slope | Hub offset / distance (game px) | Door position / height | Timber / white / amber | Decision            |
+| ---- | ------- | ----------- | ------------------------ | ------------------- | --------- | ------------ | ---------- | ------------------------------- | ---------------------- | ---------------------- | ------------------- |
+| r3   | 1       | 1254 x 1254 | 0.512 / 0.8              | 627.0000, 943.2500  | 563 / 415 | 1.1283       | 0.4655     | 0.1117, 0.3537 / 0.3709         | 0.2718 / 0.2860        | 384 / 4316 / 0         | refused             |
+| r3   | 2       | 1254 x 1254 | 0.505 / 0.4              | 629.5000, 978.5000  | 462 / 415 | 1.1439       | 0.4259     | 0.0515, -1.6842 / 1.6850        | 0.2955 / 0.3052        | 129 / 3129 / 0         | refused             |
+| r3   | 3       | 1254 x 1254 | 0.509 / 0.6              | 627.0000, 968.2500  | 447 / 415 | 1.1437       | 0.4583     | -0.1312, -1.3769 / 1.3832       | 0.3389 / 0.2550        | 160 / 3487 / 0         | closest, kept:false |
+| r1   | 1       | 1254 x 1254 | 0.537 / 2.5              | 630.0000, 969.2500  | 563 / 415 | 1.0999       | 0.4839     | 2.3318, -0.5216 / 2.3894        | none                   | 349 / 3451 / 0         | refused             |
+| r1   | 2       | 1254 x 1254 | 0.531 / 2.1              | 627.5000, 954.5000  | 438 / 415 | 1.1176       | 0.4762     | 0.7376, -0.1799 / 0.7592        | none                   | 8 / 2941 / 0           | closest, kept:false |
+| r1   | 3       | 1254 x 1254 | 0.49 / 0.7               | 627.0000, 1014.2500 | 479 / 415 | 1.1592       | 0.5000     | 2.8068, -2.0384 / 3.4689        | none                   | 0 / 2784 / 0           | refused             |
+| r2   | 1       | 1254 x 1254 | 0.491 / 0.6              | 628.5000, 938.5000  | 582 / 415 | 1.1074       | 0.6154     | 0.4352, -0.1293 / 0.4540        | none                   | 113 / 5665 / 0         | refused             |
+| r2   | 2       | 1254 x 1254 | 0.491 / 0.6              | 627.5000, 1012.5000 | 498 / 415 | 1.1175       | 0.5694     | 0.8766, -0.8315 / 1.2082        | none                   | 67 / 3539 / 0          | refused             |
+| r2   | 3       | 1254 x 1254 | 0.473 / 1.8              | 629.0000, 978.7500  | 469 / 415 | 1.1253       | 0.5152     | 2.5159, -0.8169 / 2.6453        | none                   | 19 / 3843 / 0          | closest, kept:false |
+
+The scaled guide foot centre is (627,979.6875), with tolerance14.6953125 returned px on both axes for1254 square returns. r3#1 fails foot position, door and timber; r3#2 fails door and timber; closest r3#3 passes all geometry but timber160>25. r1#1 fails hub and timber, with camera2.5 degrees; r1#2 fixes hub/timber but foot centreyc954.5 fails position, so its2.1-degree camera cannot be a near keeper; r1#3 fixes camera but footyc1014.25 and hub3.4689 game px fail. Closest r1#2 minimizes the remaining misses. r2#1 fails foot position, stub slope and timber; r2#2 fixes stub but foot position and timber fail; closest r2#3 fixes those but hub2.6453 game px exceeds2.
+
+Every attempt carries a nonzero near-white count, which is waived only if it is the sole miss; none qualifies. Amber is zero in all9. checkFile is called as a library; its camera-only problems on r1#1 and#2 are preserved in the records. No global building report or queue tool was run.
+
+By eye all returns are plain round smooth limestone towers with slate cones and plain tips, upper-left light, no sails, stocks, lattice, plinth, ground or loose objects. r3 alone has the door and narrow window on the lower-right face; r1/r2 have plain visible walls and the complete hub above the cap's far shoulder, with shaft roots hidden behind the cap. Door/window absence and whole unobscured plates are recorded by eye; coordinate readings and exact prompts are in prompts.json and raw/r*-attempt-*-eye.json. r2#1 stub inspection crop is a separate diagnostic, never a returned/kept painting.
+
+The amended timber test excludes points at Euclidean distance<=3 from the opaque silhouette edge, within6 returned px of the read door box, and within60 returned px of the read hub centre. Rechecking accepted r0 with those explicit coordinate/mask choices gives18 vs Core's15; both pass25. Its old raw measurements and first-run report remain unchanged. The r3#1 count initially read385 before defining the edge from boundary pixels rather than background pixels; final count384 is recorded, while its already-sent Correction retains385 verbatim.
+
+All raw returned PNGs are unmodified; their SHA256 values are in prompts.json. All kept copies compare byte-identically. Built-in imagegen used the exact required guide/board/shipped-windmill/accepted-r0 reference order on every call; no failed attempt or other turned view was attached. The tool saved autonomously to C: and bytes were copied to G: while leaving originals alone as the queue README directs. Every authored file and temp/cache stayed on G:.
+
+Hub paths: hub-r3.json, hub-r1.json, hub-r2.json. All three describe closest refused pictures, not accepted art.

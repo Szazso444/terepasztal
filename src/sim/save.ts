@@ -1,4 +1,4 @@
-import type { TrackClass, TrackKind } from '../world/track';
+import { liftLegacyTrack, type TrackTuple } from '../world/track';
 import type { StationJSON } from './stations';
 import type { MapGenParams } from '../world/mapgen';
 import { DEFAULT_MAP_PARAMS } from '../world/mapgen';
@@ -8,20 +8,43 @@ import type { TownJSON } from './towns';
 import type { HousesJSON } from './houses';
 import type { SupplyMode } from './supply';
 import type { SignalLevel } from './signals';
+import type { PeopleJSON } from './people';
+import type { RoadJSON } from './roads';
+import type { StoreJSON } from './stores';
+import type { BuildingJSON } from './buildings';
+import type { ChunkStore, MapGenerator } from '../world/chunks';
+import { HU_MIGRATIONS } from '../data/names.hu';
+import { LANGUAGE, SETTINGS_KEY, languageOf, type Language } from '../strings';
+import { CHUNK_TILES } from './expand';
+import { generatorOf, groundOf, lacksGround, worldWithinBound } from './ground';
+import { wrapRotation } from './rotation';
+import { alertSettingsFrom, defaultAlertSettings, type AlertSettings } from './alerts';
+import { DEFAULT_VOLUMES, type Volumes } from '../engine/audioGroups';
 
 /** What the map was built from; a level save carries the whole level. */
 export type WorldSpec =
-  | { kind: 'generated'; seed: number; params: MapGenParams }
+  | {
+      kind: 'generated';
+      seed: number;
+      params: MapGenParams;
+      /**
+       * v19: the ground of every chunk generated so far, as it was generated, under its world
+       * chunk key (src/world/chunks.ts). A load reads these and generates only the chunks missing
+       * here; absent or empty, every chunk is generated and stored on load.
+       */
+      chunks?: ChunkStore;
+    }
   | { kind: 'level'; seed: number; level: LevelData };
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 24;
 /**
  * Regular curves and switches were one tile until v13. One-tile track is narrow gauge now: those
  * pieces become narrow, and the lines meeting them need re-laying with 2×2 pieces.
  */
 export function convertOneTileRegular(track: SaveGame['track']): SaveGame['track'] {
   return track.map(([x, y, kind, rot, cls, cls2]) =>
-    (kind === 'curve' || kind === 'switch') && (cls ?? 'regular') === 'regular'
+    (kind === 'curve' || kind === 'switch') &&
+    ((cls as string | undefined) ?? 'regular') === 'regular'
       ? [x, y, kind, rot, 'narrow', cls2]
       : [x, y, kind, rot, cls, cls2],
   );
@@ -29,63 +52,118 @@ export function convertOneTileRegular(track: SaveGame['track']): SaveGame['track
 /** oldest version `readSave` still accepts; missing fields get defaults */
 export const SAVE_MIN_VERSION = 1;
 export const SAVE_KEY = 'terepasztal.save';
-export const SETTINGS_KEY = 'terepasztal.settings';
+export { SETTINGS_KEY };
 
-export interface SaveGame {
-  version: number;
-  savedAt: number;
+/**
+ * Everything a save holds besides its version and time stamp: what `buildSave` writes. Every
+ * field is required, so a save cannot be written with one left out, and `KNOWN_SAVE_KEYS` is
+ * built from the same names. A file read back may lack the fields added after v1 (`SaveGame`).
+ */
+export interface SaveParts {
   seed: number;
   clock: { time: number; speedIndex: number };
-  /** v9: `tier` is the age index; `earned` the lifetime income (reputation dropped) */
+  /**
+   * v9: `tier` is the age index; `earned` the lifetime income (reputation dropped); v24: the
+   * tickets, and `granted`, the ages that had paid some, dropped
+   */
   economy: {
     money: number;
-    tickets: number;
     tier: number;
-    granted: number[];
     earned?: number;
     /** pre-v9 field, ignored */
     reputation?: number;
   };
   /** anchor tiles: x, y, kind, rotation, class (v9), second class of crossings (v9) */
-  track: [number, number, TrackKind, number, TrackClass?, TrackClass?][];
+  track: TrackTuple[];
+  /**
+   * v15: each with the upgrade under way (`work`), null for none; v16: `rot` one of the four
+   * rotations, 0 to 3
+   */
   stations: StationJSON[];
+  /**
+   * as `Train.toJSON` writes them; v14: what each was doing; v17: whether the escape it runs is an
+   * idle train making way (`aside`), the way it runs (`way`), what a waiting train waits for
+   * (`blockedBy`, `want`), its note (`note`) and when it may next look for a way aside and a jam
+   * it is in be searched again (`asideRetry`, `recoveryRetry`); v18: whether a freight train has
+   * put goods down at the stop it stands at (`dropped`), and its `mode` is `freight` where it was
+   * `production` or `collection`
+   */
   trains: unknown[];
   contracts: unknown;
   inventory: unknown;
-  gacha: unknown;
   camera: { x: number; y: number; zoomIndex: number };
   lastDay: number;
-  /** v2: signals and water towers [x, y, id, rot] */
-  decor?: [number, number, string, number][];
+  /** v2: signals, services and houses [x, y, id, rot] (rot below the decor's `rotations`) */
+  decor: [number, number, string, number][];
   /** v9: electrified track [x, y, kind] */
-  wires?: [number, number, string][];
+  wires: [number, number, string][];
   /** v2: weather generator state */
-  weather?: unknown;
-  /** v3: how the map was built */
-  world?: WorldSpec;
+  weather: unknown;
+  /** v3: how the map was built; v19: a generated world with the ground of its chunks */
+  world: WorldSpec;
   /** v3: the rules the game was played with */
-  rules?: Partial<Rules>;
-  /** v4: global resources */
-  stockpile?: unknown;
-  /** v4: processing buildings [x, y, id, acc] */
-  buildings?: [number, number, string, number, number?][];
+  rules: Partial<Rules>;
+  /**
+   * v21: the goods and famine of every store (`StoreRegistry.toJSON`); they replace the global
+   * stockpile (v4 to v20), which the step from v20 moves into the start depot
+   */
+  stores: StoreJSON[];
+  /**
+   * v4: processing buildings, as `buildingToJSON` writes them (v15: the upgrade under way; v16:
+   * the rotation)
+   */
+  buildings: BuildingJSON[];
   /** v5: owned chunks */
-  regions?: boolean[];
+  regions: boolean[];
   /** v6: season of day 1 (0 spring .. 3 winter) */
-  seasonOffset?: number;
+  seasonOffset: number;
   /** v7: towns (names, colours) keyed by their town station */
-  towns?: TownJSON[];
-  /** v8: player settings travel with an exported save */
-  settings?: Settings;
+  towns: TownJSON[];
   /** v8: standing trade deals */
-  trade?: unknown;
+  trade: unknown;
   /** v10: known crafting recipes, craft statistics and an unfinished recipe draw */
-  crafting?: unknown;
-  /** v9: townhouses (level, residents, construction) plus town traffic and first-train marks */
-  houses?: HousesJSON;
+  crafting: unknown;
+  /**
+   * v9: townhouses (level, residents, construction) plus town traffic and first-train marks;
+   * v15: each house's upgrade under way
+   */
+  houses: HousesJSON;
   /** v9: production-chain mode the game was started with */
-  supply?: SupplyMode;
-  /** set on load when the file was written by another format version (not persisted) */
+  supply: SupplyMode;
+  /**
+   * The walkers' random stream (no format version of its own): a file without it seeds them from
+   * the map. The persons themselves are not saved and start over on load.
+   */
+  people: PeopleJSON;
+  /** v20: road tiles [x, y], level crossings included (`Roads.toJSON`) */
+  roads: RoadJSON;
+}
+/** The fields every format version since v1 has; the others arrived later and may be missing. */
+type SaveCore =
+  | 'seed'
+  | 'clock'
+  | 'economy'
+  | 'track'
+  | 'stations'
+  | 'trains'
+  | 'contracts'
+  | 'inventory'
+  | 'camera'
+  | 'lastDay';
+
+/** A save as read from a file of any version: `SaveParts`, the later fields optional. */
+export interface SaveGame extends Pick<SaveParts, SaveCore>, Partial<Omit<SaveParts, SaveCore>> {
+  version: number;
+  savedAt: number;
+  /**
+   * v8 to v13: player settings travelled with a save. Retired, as they travel with the settings
+   * alone: never read, never written, and an old file's copy goes on its next save.
+   */
+  settings?: Settings;
+  /**
+   * set on load when the file was written by another format version and the player is told so: a
+   * file only quiet steps upgraded (`Migration.quiet`) has none (not persisted)
+   */
   loadedFrom?: number;
   /** what the migration steps filled in (not persisted) */
   migrationNotes?: string[];
@@ -93,70 +171,152 @@ export interface SaveGame {
   [extra: string]: unknown;
 }
 
-export interface Settings {
-  master: number;
-  sfx: number;
-  music: number;
+export interface Settings extends Volumes {
+  /** retired: a settings file that has it is migrated into `sfx` and `soundGroups` */
   ambient?: number;
   edgeScroll: boolean;
   autosave: boolean;
   dayNight: boolean;
   smoke: boolean;
+  /** chimney smoke, the quarry crane's load and the windmill's sails move; off, a still picture */
+  buildingLife: boolean;
+  /** the sea, lakes, rivers and falls move; off, still water with its faint glints */
+  movingWater: boolean;
   showFps: boolean;
   weather: boolean;
+  /** the language of the text, read as the page loads (`LANGUAGE`) */
+  language?: Language;
   /** v6: helper tips shown */
   advisor?: boolean;
   /** v8 (retired in v9): accept contract offers as they come; migrated into `contractPolicy` */
   autoContracts?: boolean;
   /** v9: what happens to a new offer of each rarity */
   contractPolicy?: Record<ContractRarity, ContractPolicy>;
+  /**
+   * Which default `contractPolicy` was written under: absent (1) when every offer was accepted
+   * by default, `CONTRACT_POLICY_VERSION` once offers wait for the player by default.
+   */
+  contractPolicyVersion?: number;
   /** v10: signalling level (auto keeps the claims only) */
   signalling?: SignalLevel;
+  /** what each kind of alert does; an older settings file gets the defaults (`settingsFrom`) */
+  alerts: AlertSettings;
 }
 /** Contract rarities, commonest first; `contracts.json` carries the numbers for each. */
 export const CONTRACT_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'] as const;
 export type ContractRarity = (typeof CONTRACT_RARITIES)[number];
 /** accept: taken as it appears; prompt: left on the board; deny: dropped (free before acceptance) */
 export type ContractPolicy = 'accept' | 'prompt' | 'deny';
+/** What a new offer of any rarity meets unless the player chose otherwise: it waits for them. */
+export const DEFAULT_CONTRACT_POLICY: ContractPolicy = 'prompt';
+/** `Settings.contractPolicyVersion` of settings written since offers wait by default. */
+export const CONTRACT_POLICY_VERSION = 2;
 export function uniformContractPolicy(p: ContractPolicy): Record<ContractRarity, ContractPolicy> {
   return { common: p, uncommon: p, rare: p, epic: p, legendary: p };
 }
-/** Policy for a rarity, with the retired boolean and missing entries filled in. */
+/** Policy for a rarity; a missing entry is the default. */
 export function contractPolicyFor(s: Settings, rarity: ContractRarity): ContractPolicy {
-  const fallback: ContractPolicy = s.autoContracts === false ? 'prompt' : 'accept';
-  return s.contractPolicy?.[rarity] ?? fallback;
+  return s.contractPolicy?.[rarity] ?? DEFAULT_CONTRACT_POLICY;
 }
 /**
- * Turn the retired `autoContracts` flag into a per-rarity policy (true → accept, false → prompt).
- * Runs on the stored object before defaults are merged in, so a missing policy is still visible.
+ * Turn the retired `autoContracts` flag into a per-rarity policy (true → accept, false → prompt),
+ * as settings that travelled with a version 8 save had it.
  */
-export function migrateSettings<T extends Partial<Settings>>(s: T): T {
+function retireAutoContracts(s: Partial<Settings>) {
   if (!s.contractPolicy && s.autoContracts !== undefined)
     s.contractPolicy = uniformContractPolicy(s.autoContracts === false ? 'prompt' : 'accept');
   delete s.autoContracts;
+}
+/** What `ambient` held when a settings file had none: the default it had. */
+const OLD_AMBIENT = 0.35;
+/**
+ * Turn the retired `ambient` volume into the volume groups, at the same loudness. Effects played
+ * at `sfx`, and ambience at `ambient` beside it; now everything is under Effects, each group its
+ * share of it. `sfx` stays Effects while it is the louder, as it is by default. An `ambient` above
+ * it takes that place, as no group goes over 100%: otherwise the wind would drop.
+ */
+function groupVolumes(s: Partial<Settings>) {
+  const ambient = s.ambient ?? OLD_AMBIENT;
+  const old = s.sfx !== undefined || s.ambient !== undefined;
+  delete s.ambient;
+  if (!old || isRecord(s.soundGroups)) return;
+  const sfx = s.sfx ?? DEFAULT_VOLUMES.sfx;
+  const effects = Math.max(sfx, ambient);
+  const { weather } = DEFAULT_VOLUMES.soundGroups;
+  // nothing to take a share of: the groups stand at their defaults for when Effects comes back up
+  const share = (level: number, silent: number) => (effects > 0 ? level / effects : silent);
+  s.sfx = effects;
+  s.soundGroups = {
+    weather: share(ambient, weather),
+    environment: share(ambient, weather),
+    ui: share(sfx, 1),
+    building: share(sfx, 1),
+    trains: share(sfx, 1),
+    events: share(sfx, 1),
+  };
+}
+/**
+ * Bring stored settings to the current shape. Runs on the stored object before defaults are
+ * merged in, so a missing policy is still visible. The retired `ambient` volume becomes the volume
+ * groups, and the retired `autoContracts` flag a per-rarity policy; then, once, settings written
+ * while every offer was accepted by default move to the new default: a policy that accepts every
+ * rarity (a missing entry read as accept then), or none at all, becomes `DEFAULT_CONTRACT_POLICY`
+ * for every rarity. Any other policy is the player's own choice and stays, its missing entries
+ * filled with the accept they meant.
+ */
+export function migrateSettings<T extends Partial<Settings>>(s: T): T {
+  groupVolumes(s);
+  retireAutoContracts(s);
+  const v = s.contractPolicyVersion;
+  if (typeof v === 'number' && v >= CONTRACT_POLICY_VERSION) return s;
+  const old: Partial<Record<ContractRarity, unknown>> = isRecord(s.contractPolicy)
+    ? s.contractPolicy
+    : {};
+  const policy = Object.fromEntries(
+    CONTRACT_RARITIES.map((r) => [r, old[r] ?? 'accept']),
+  ) as Record<ContractRarity, ContractPolicy>;
+  s.contractPolicy = CONTRACT_RARITIES.every((r) => policy[r] === 'accept')
+    ? uniformContractPolicy(DEFAULT_CONTRACT_POLICY)
+    : policy;
+  s.contractPolicyVersion = CONTRACT_POLICY_VERSION;
   return s;
 }
 export const DEFAULT_SETTINGS: Settings = {
-  master: 0.8,
-  sfx: 0.8,
-  music: 0.5,
-  ambient: 0.35,
+  ...DEFAULT_VOLUMES,
   edgeScroll: true,
   autosave: true,
   dayNight: true,
   smoke: true,
+  buildingLife: true,
+  movingWater: true,
   showFps: false,
   weather: true,
+  language: 'en',
   advisor: true,
-  contractPolicy: uniformContractPolicy('accept'),
+  contractPolicy: uniformContractPolicy(DEFAULT_CONTRACT_POLICY),
+  contractPolicyVersion: CONTRACT_POLICY_VERSION,
+  alerts: defaultAlertSettings(),
 };
 
 /** One step of the migration chain: brings a save from `from` to `from + 1`. */
 export interface Migration {
   from: number;
-  /** what the step fills in with defaults, shown to the player */
+  /** what the step fills in with defaults, shown to the player unless the step is `quiet` */
   note: string;
+  /**
+   * The player could not tell the step ran: nothing in the game changed for them. It adds no note,
+   * and a file only such steps stand between loads and lists as one of this build's.
+   */
+  quiet?: boolean;
   run(j: SaveGame): void;
+}
+/** The station kinds that were depots when the stores replaced the global stockpile (v21). */
+const V20_DEPOTS = new Set(['depot', 'narrow_depot']);
+/** The goods of an old stockpile or station: every amount that is a number. */
+function goodsOf(r: Record<string, unknown>): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(r).filter((e): e is [string, number] => typeof e[1] === 'number'),
+  );
 }
 /** Starter models version 13 added: John Bull took the Rocket's place, and narrow wagons arrived. */
 const V13_STARTERS: [id: string, kind: 'loco' | 'wagon', copies: number][] = [
@@ -190,6 +350,60 @@ function grantStarters(j: SaveGame, models: typeof V13_STARTERS) {
   inv.nextUid = uid;
 }
 
+/** The map size a world description builds, read the way map generation and levels read it. */
+function worldSize(world: unknown): { w: number; h: number } {
+  const spec = isRecord(world) ? world : {};
+  const size = spec.kind === 'level' ? spec.level : spec.params;
+  const dim = (v: unknown, fallback: number) =>
+    typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : fallback;
+  return {
+    w: dim(isRecord(size) ? size.w : undefined, DEFAULT_MAP_PARAMS.w),
+    h: dim(isRecord(size) ? size.h : undefined, DEFAULT_MAP_PARAMS.h),
+  };
+}
+/** The tier a file stored, uncapped (the step from v8 caps it later): 0 when absent. */
+function storedTier(economy: unknown): number {
+  const tier = isRecord(economy) ? economy.tier : undefined;
+  return typeof tier === 'number' && tier > 0 ? tier : 0;
+}
+/**
+ * Chunk ownership before chunks were bought, as the load code rebuilt it from the tier reached:
+ * one entry per chunk of the map the world builds (`emptyMap`'s grid), owned when it lies within
+ * `tier` rings of the chunk map generation starts in. A chunk's ring is its Chebyshev distance
+ * from the start chunk in whole chunks, `regionTierMap`'s rule, so tier 0 owns the start chunk
+ * alone.
+ */
+function chunksWithinTier(world: unknown, tier: number): boolean[] {
+  const { w, h } = worldSize(world);
+  const regionsX = Math.max(1, Math.ceil(w / CHUNK_TILES));
+  const regionsY = Math.max(1, Math.ceil(h / CHUNK_TILES));
+  const startX = Math.floor((regionsX - 1) / 2);
+  const startY = Math.floor((regionsY - 1) / 2);
+  return Array.from({ length: regionsX * regionsY }, (_, i) => {
+    const ring = Math.max(
+      Math.abs((i % regionsX) - startX),
+      Math.abs(Math.floor(i / regionsX) - startY),
+    );
+    return ring <= tier;
+  });
+}
+/**
+ * The names route modes had when a train's `mode` arrived, and the names they have now. A train
+ * older than its `mode` has only the `dynamic` flag.
+ */
+const OLD_ROUTE_MODES = new Map([
+  ['fixed', 'schedule'],
+  ['dynamic', 'production'],
+  ['collect', 'collection'],
+]);
+/** A train's route mode under its current name: an old name mapped, a missing one from the flag. */
+function routeMode(train: Record<string, unknown>): unknown {
+  const m = train.mode;
+  if (typeof m === 'string' && OLD_ROUTE_MODES.has(m)) return OLD_ROUTE_MODES.get(m);
+  if (!m) return train.dynamic ? 'production' : 'schedule';
+  return m;
+}
+
 /**
  * Registry of version-to-version upgrades, run in order. Each step only knows the shape it
  * upgrades from; adding a format version means adding one entry here.
@@ -215,17 +429,37 @@ export const MIGRATIONS: Migration[] = [
     note: 'works buildings list started empty',
     run: (j) => (j.buildings = j.buildings ?? []),
   },
-  { from: 4, note: 'owned chunks reduced to the start chunk', run: () => {} },
-  { from: 5, note: 'season of day 1 set to spring', run: () => {} },
+  {
+    from: 4,
+    note: 'owned chunks rebuilt from the tier reached: every chunk within that many rings of the start chunk',
+    run: (j) => (j.regions = j.regions ?? chunksWithinTier(j.world, storedTier(j.economy))),
+  },
+  {
+    from: 5,
+    note: 'season of day 1 set to spring',
+    run: (j) => (j.seasonOffset = j.seasonOffset ?? 0),
+  },
   {
     from: 6,
-    note: 'towns started empty, station orientation 0, routing modes mapped to the new names, a depot placed at the start',
-    run: () => {},
+    note: 'towns started empty, station orientation 0, routing modes mapped to the new names, a depot placed at the start (applied on load)',
+    run: (j) => {
+      j.towns = j.towns ?? [];
+      for (const s of j.stations) if (isRecord(s)) s.rot = s.rot ?? 0;
+      for (const t of j.trains) if (isRecord(t)) t.mode = routeMode(t);
+    },
   },
-  { from: 7, note: 'player settings not in the file; the current settings stay', run: () => {} },
+  {
+    from: 7,
+    // the route modes were renamed while saves were v7, so a v7 file may still hold the old names
+    note: 'trade desk opened empty: no standing deals, fuel at its base price; routing modes mapped to the new names',
+    run: (j) => {
+      j.trade = j.trade ?? { deals: {}, nextAt: 0, fuelMul: 1, driftDay: 0 };
+      for (const t of j.trains) if (isRecord(t)) t.mode = routeMode(t);
+    },
+  },
   {
     from: 8,
-    note: 'every track piece counted as wide track; catenary strung over rails the poles powered; townhouses became level 1 houses with six residents each; reputation dropped: the tier reached becomes the age (capped at the Electric Age), lifetime income starts at 0, production chain set to simple; contracts rated Common with no train assigned; the auto-accept switch became a per-rarity policy',
+    note: 'every track piece counted as wide track; catenary strung over rails the poles powered (applied on load); townhouses became level 1 houses with six residents each; reputation dropped: the tier reached becomes the age (capped at the Electric Age), lifetime income starts at 0, production chain set to simple; contracts rated Common with no train assigned; the auto-accept switch became a per-rarity policy',
     run: (j) => {
       const book = j.contracts as { contracts?: Record<string, unknown>[] } | undefined;
       for (const c of book?.contracts ?? []) {
@@ -233,7 +467,7 @@ export const MIGRATIONS: Migration[] = [
         c.trainId = c.trainId ?? null;
         delete c.reputation;
       }
-      if (j.settings) migrateSettings(j.settings);
+      if (j.settings) retireAutoContracts(j.settings);
       j.supply = j.supply ?? 'simple';
       if (j.economy) {
         j.economy.tier = Math.max(0, Math.min(2, j.economy.tier ?? 0));
@@ -251,8 +485,12 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     from: 9,
-    note: 'crafting recipes granted for every model already in the inventory; locomotive modes set by the default rule (the first unit leads, units of its control class run in multiple, the rest double-headed); battery carts start empty',
+    note: 'crafting recipes granted for every model already in the inventory; locomotive modes set by the default rule (the first unit leads, units of its control class run in multiple, the rest double-headed; applied on load); battery carts start empty',
     run: (j) => {
+      for (const t of j.trains) {
+        const tanks = isRecord(t) ? t.tanks : undefined;
+        if (isRecord(tanks)) tanks.battery = tanks.battery ?? 0;
+      }
       if (j.crafting) return;
       const inv = j.inventory as { items?: { defId?: unknown }[] } | undefined;
       const recipes = new Set<string>();
@@ -279,7 +517,6 @@ export const MIGRATIONS: Migration[] = [
       if (j.rules) {
         if ([2, 6].includes(j.rules.contractRefreshDays ?? 0)) j.rules.contractRefreshDays = 21;
         if (j.rules.contractOfferCount === 2) j.rules.contractOfferCount = 1;
-        j.rules.tradeCycleDays = 7;
       }
       const trade = j.trade as { nextAt?: number; driftDay?: number } | undefined;
       if (trade) {
@@ -318,48 +555,431 @@ export const MIGRATIONS: Migration[] = [
       grantStarters(j, V13_STARTERS);
     },
   },
+  {
+    from: 13,
+    note: 'trains stand without a route and look for one, as every load left them before, with no escape to back off along, free to be asked to back off again, no stop ruled out and no service to head for, and look for fuel or water at once; from now on a save keeps what each train was doing',
+    run: (j) => {
+      for (const t of j.trains) {
+        if (!isRecord(t)) continue;
+        t.state = t.state ?? 'noRoute';
+        t.stateTime = t.stateTime ?? 10;
+        t.speed = t.speed ?? 0;
+        t.station = t.station ?? null;
+        t.holding = t.holding ?? false;
+        t.retreat = t.retreat ?? null;
+        t.blockedTime = t.blockedTime ?? 0;
+        t.yieldCount = t.yieldCount ?? 0;
+        t.yieldUntil = t.yieldUntil ?? 0;
+        t.badTargets = t.badTargets ?? [];
+        t.serviceStop = t.serviceStop ?? null;
+        t.nextFuelCheck = t.nextFuelCheck ?? 0;
+      }
+    },
+  },
+  {
+    from: 14,
+    note: 'no station, works or house was being upgraded: upgrades take game time from now on and close the building while they run, and a save keeps the ones under way',
+    run: (j) => {
+      for (const s of j.stations) if (isRecord(s)) s.work = s.work ?? null;
+      for (const b of j.buildings ?? []) {
+        if (!Array.isArray(b) || b.length < 4) continue;
+        // the work is the sixth place of the tuple: a level left out before it is the 1 it meant
+        if (b.length < 5) b.push(1);
+        b[5] = b[5] ?? null;
+      }
+      const list: unknown = isRecord(j.houses) ? j.houses.list : undefined;
+      if (Array.isArray(list)) for (const h of list) if (isRecord(h)) h.work = h.work ?? null;
+    },
+  },
+  {
+    from: 15,
+    note: 'every works faces the way it was drawn (rotation 0); from now on stations, works and houses are placed in one of four rotations, and a save keeps each one',
+    run: (j) => {
+      for (const b of j.buildings ?? []) {
+        if (!Array.isArray(b) || b.length < 4) continue;
+        // the rotation is the seventh place of the tuple: a level or a work left out before it
+        // is the 1 and the none it meant
+        if (b.length < 5) b.push(1);
+        if (b.length < 6) b.push(null);
+        b[6] = b[6] ?? 0;
+      }
+    },
+  },
+  {
+    from: 16,
+    note: 'no train was saved making way, nor with its way, what it waits for, its note or when it may next try a way aside or out of a jam: a train saved pulling aside waits where it pulls in to go on, a train under way plans its path again, a waiting train looks again, an idle train in the way and a jam are tried again at once, and every note starts blank, as every load had it before; from now on a save keeps an idle train making way, and it stays idle where it parks, and every train runs on along its way, waits for what it waited for, tries again when it would have and shows its note',
+    run: (j) => {
+      for (const t of j.trains) {
+        if (!isRecord(t)) continue;
+        t.aside = t.aside ?? false;
+        t.way = t.way ?? null;
+        t.blockedBy = t.blockedBy ?? null;
+        t.want = t.want ?? null;
+        t.note = t.note ?? '';
+        t.asideRetry = t.asideRetry ?? 0;
+        t.recoveryRetry = t.recoveryRetry ?? 0;
+      }
+    },
+  },
+  {
+    from: 17,
+    note: 'Production and Collection became one Freight route mode: a train on either now runs as Freight, which heads for the fullest producer or warehouse and takes producer goods to a warehouse or depot and warehouse goods to a depot; no freight train had put goods down at the stop it stands at; from now on a save keeps that',
+    run: (j) => {
+      for (const t of j.trains) {
+        if (!isRecord(t)) continue;
+        if (t.mode === 'production' || t.mode === 'collection') t.mode = 'freight';
+        t.dropped = t.dropped ?? false;
+      }
+    },
+  },
+  {
+    from: 18,
+    note: 'a generated map whose ground was not stored yet has it generated as before, then stored chunk by chunk and the save written at once (applied on load); from now on a save keeps the ground of every chunk, so a change to map generation reaches only land generated after it',
+    run: (j) => {
+      // a level carries its own ground; a world no build wrote is left as it is
+      const world: unknown = j.world;
+      if (isRecord(world) && world.kind === 'generated') world.chunks = world.chunks ?? {};
+    },
+  },
+  {
+    from: 19,
+    note: 'no road had been built: the road list started empty',
+    run: (j) => (j.roads = j.roads ?? []),
+  },
+  {
+    from: 20,
+    note: 'the global stockpile moved into the start depot; each warehouse keeps its own goods',
+    run: (j) => {
+      const stores: StoreJSON[] = [];
+      /** Add `goods` to the store of `key`, made at the end of the list when it is not there yet. */
+      const put = (key: string, goods: Record<string, number>) => {
+        let s = stores.find((e) => e.key === key);
+        if (!s) stores.push((s = { key, amounts: {}, famine: false }));
+        for (const [id, n] of Object.entries(goods)) s.amounts[id] = (s.amounts[id] ?? 0) + n;
+      };
+      const stations = j.stations.filter((s) => isRecord(s) && typeof s.id === 'number');
+      const warehouses = stations.filter((s) => s.defId === 'warehouse');
+      const stock: unknown = j.stockpile;
+      if (isRecord(stock) && isRecord(stock.amounts)) {
+        const { power, ...goods } = goodsOf(stock.amounts);
+        // the start depot is the depot of the lowest id; with none, the first warehouse, else
+        // the first Townhouse's town; with no place at all the goods wait for the depot a load
+        // grants (`StoreRegistry.load`)
+        const depots = stations.filter((s) => V20_DEPOTS.has(s.defId)).map((s) => s.id);
+        const towns = Array.isArray(j.towns) ? j.towns.filter(isRecord) : [];
+        const town = stations
+          .filter((s) => s.defId === 'town')
+          .map((s) => towns.find((t) => t.stationId === s.id))
+          .find((t) => t !== undefined);
+        const key = depots.length
+          ? `st:${Math.min(...depots)}`
+          : warehouses.length
+            ? `st:${warehouses[0].id}`
+            : town
+              ? `town:${town.id}`
+              : 'unplaced';
+        // its famine stays behind: the eaters are at their own stores now, whose next meals say
+        // whether they starve (carried to a depot nobody eats at, it would only be told as ended)
+        put(key, goods);
+        put('grid', power === undefined ? {} : { power });
+      }
+      for (const w of warehouses) {
+        put(`st:${w.id}`, isRecord(w.storage) ? goodsOf(w.storage) : {});
+        w.storage = {};
+      }
+      j.stores = stores;
+      delete j.stockpile;
+    },
+  },
+  {
+    from: 21,
+    note: 'the six track lines replaced the track classes: wide and high-speed track became Branch Line, and transitions became Branch Line straights',
+    run: (j) => (j.track = liftLegacyTrack(j.track)),
+  },
+  {
+    from: 22,
+    note: 'trains took a colour code: every train of an older save has the first colour',
+    run: (j) => {
+      for (const t of j.trains) if (isRecord(t)) t.colour = t.colour ?? 0;
+    },
+  },
+  {
+    from: 23,
+    note: 'the gacha and its tickets left the game, crafting having replaced them: what the file held of them is dropped and refunded by nothing',
+    quiet: true,
+    run: (j) => {
+      delete j.gacha;
+      const economy: Record<string, unknown> = j.economy;
+      delete economy.tickets;
+      delete economy.granted;
+      if (isRecord(j.contracts)) {
+        delete j.contracts.completedToday;
+        if (Array.isArray(j.contracts.contracts))
+          for (const c of j.contracts.contracts as unknown[]) if (isRecord(c)) delete c.tickets;
+      }
+      if (isRecord(j.inventory) && Array.isArray(j.inventory.items))
+        for (const it of j.inventory.items as unknown[]) if (isRecord(it)) delete it.dupes;
+      if (isRecord(j.rules)) delete (j.rules as Record<string, unknown>).startTickets;
+      const world: unknown = j.world;
+      if (isRecord(world) && isRecord(world.level) && isRecord(world.level.start))
+        delete world.level.start.tickets;
+    },
+  },
 ];
-/** Fields the current build reads; everything else is carried through untouched. */
-export const KNOWN_SAVE_KEYS = new Set<string>([
-  'version',
-  'savedAt',
-  'seed',
-  'clock',
-  'economy',
-  'track',
-  'stations',
-  'trains',
-  'contracts',
-  'inventory',
-  'gacha',
-  'camera',
-  'lastDay',
-  'decor',
-  'weather',
-  'world',
-  'rules',
-  'stockpile',
-  'buildings',
-  'regions',
-  'seasonOffset',
-  'towns',
-  'settings',
-  'wires',
-  'trade',
-  'crafting',
-  'houses',
-  'supply',
-  'loadedFrom',
-  'migrationNotes',
+/**
+ * The oldest format that loads without a word: only quiet steps (`Migration.quiet`) stand between
+ * it and this build, so nothing is told about the file and no list marks it as another format.
+ */
+export const SAVE_QUIET_VERSION = MIGRATIONS.reduce(
+  (oldest, m) => (m.quiet ? oldest : Math.max(oldest, m.from + 1)),
+  SAVE_MIN_VERSION,
+);
+/** Every field of `SaveParts`, once: leaving one out, or naming one it lacks, fails to compile. */
+const SAVE_PART_KEYS: Record<keyof SaveParts, true> = {
+  seed: true,
+  clock: true,
+  economy: true,
+  track: true,
+  stations: true,
+  trains: true,
+  contracts: true,
+  inventory: true,
+  camera: true,
+  lastDay: true,
+  decor: true,
+  wires: true,
+  weather: true,
+  world: true,
+  rules: true,
+  stores: true,
+  buildings: true,
+  regions: true,
+  seasonOffset: true,
+  towns: true,
+  trade: true,
+  crafting: true,
+  houses: true,
+  supply: true,
+  people: true,
+  roads: true,
+};
+/** The names a type declares, without the `string` and `number` of an index signature. */
+type DeclaredKey<T> = keyof {
+  [K in keyof T as string extends K ? never : number extends K ? never : K]: T[K];
+};
+/** The rest of what `SaveGame` declares: the stamps, the retired settings and the load notes. */
+const SAVE_OWN_KEYS: Record<Exclude<DeclaredKey<SaveGame>, keyof SaveParts>, true> = {
+  version: true,
+  savedAt: true,
+  settings: true,
+  loadedFrom: true,
+  migrationNotes: true,
+};
+/**
+ * Fields the current build knows; everything else is carried through untouched. The retired
+ * `settings` is known too, so an old file's copy is dropped on the next save instead of carried.
+ */
+export const KNOWN_SAVE_KEYS: ReadonlySet<string> = new Set([
+  ...Object.keys(SAVE_PART_KEYS),
+  ...Object.keys(SAVE_OWN_KEYS),
 ]);
 
-/** Parse and migrate a save text. Never refuses on version: older saves are upgraded step by step, newer ones are loaded as they are with a warning. */
-export function parseSave(raw: string): SaveGame | null {
-  const j = JSON.parse(raw) as SaveGame;
-  if (!j || typeof j !== 'object' || typeof j.seed !== 'number') return null;
-  if (typeof j.version !== 'number') j.version = SAVE_MIN_VERSION;
-  return migrate(j);
+/**
+ * A save of the current format: the fields of the loaded file this build does not know
+ * (`extra`), then the parts, then the version and time stamp. A known name in `extra` is left
+ * out, so neither the retired settings nor the load notes are written back.
+ */
+export function buildSave(
+  parts: SaveParts,
+  extra: Record<string, unknown> = {},
+  now = Date.now(),
+): SaveGame {
+  const unknown = Object.fromEntries(
+    Object.entries(extra).filter(([k]) => !KNOWN_SAVE_KEYS.has(k)),
+  );
+  return { ...unknown, ...parts, version: SAVE_VERSION, savedAt: now };
 }
+
+/**
+ * Why a text was not taken as a save: it is not JSON, it is JSON but no save (no numeric seed),
+ * or it is a save without something every version since v1 holds, or one that would load holding
+ * a number no save can store (`settle`), or seeds that name no one world (`settleSeeds`); or it
+ * describes a generated map larger than the game builds (`worldWithinBound`); or, for an import,
+ * storage refused to keep it (full or blocked).
+ */
+export type SaveRefusal = 'json' | 'notSave' | 'damaged' | 'tooLarge' | 'storage';
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+/**
+ * Where `value` holds a number JSON cannot: the path of the first NaN, Infinity or -Infinity in
+ * the order `JSON.stringify` visits it (keys joined by dots, list positions in brackets:
+ * `economy.money`, `stations[2].level`, `track[3][1]`; '' for `value` itself), or null when it
+ * holds none. `JSON.stringify` writes such a number as `null`, which no load reads back as the
+ * number it was. Like `JSON.stringify` it reads what an object's `toJSON` gives, and nothing it
+ * leaves out; the value is not changed, and a cycle (which `JSON.stringify` refuses) is not
+ * followed.
+ */
+export function firstNonFinite(value: unknown): string | null {
+  const within = new Set<object>();
+  const visit = (v: unknown, key: string, path: string): string | null => {
+    if (typeof v === 'object' && v !== null) {
+      const toJSON: unknown = (v as { toJSON?: unknown }).toJSON;
+      if (typeof toJSON === 'function') v = (toJSON as (k: string) => unknown).call(v, key);
+    }
+    if (v instanceof Number) v = Number(v);
+    if (typeof v === 'number') return Number.isFinite(v) ? null : path;
+    if (typeof v !== 'object' || v === null || within.has(v)) return null;
+    within.add(v);
+    try {
+      if (Array.isArray(v)) {
+        for (let i = 0; i < v.length; i++) {
+          const found = visit(v[i] as unknown, String(i), `${path}[${i}]`);
+          if (found !== null) return found;
+        }
+      } else {
+        const record = v as Record<string, unknown>;
+        for (const k of Object.keys(record)) {
+          const found = visit(record[k], k, path ? `${path}.${k}` : k);
+          if (found !== null) return found;
+        }
+      }
+      return null;
+    } finally {
+      within.delete(v);
+    }
+  };
+  return visit(value, '', '');
+}
+/** The numbers inside the blocks every version since v1 has, checked before migrating. */
+const CORE_NUMBERS: Record<string, readonly string[]> = {
+  clock: ['time', 'speedIndex'],
+  economy: ['money', 'tier'],
+  camera: ['x', 'y', 'zoomIndex'],
+};
+/** The lists every version since v1 has. */
+const CORE_LISTS = ['track', 'stations', 'trains'];
+/** Does a parsed file hold what every version since v1 holds, with the types it was written as? */
+function holdsCore(j: Record<string, unknown>) {
+  for (const [block, fields] of Object.entries(CORE_NUMBERS)) {
+    const b = j[block];
+    if (!isRecord(b) || fields.some((f) => typeof b[f] !== 'number')) return false;
+  }
+  return CORE_LISTS.every((k) => Array.isArray(j[k])) && typeof j.lastDay === 'number';
+}
+/** The save object in a text: a diagnostics bundle gives the save it carries. */
+function openSave(
+  raw: string,
+): { file: Record<string, unknown> & { seed: number } } | { error: 'json' | 'notSave' } {
+  let j: unknown;
+  try {
+    j = JSON.parse(raw);
+  } catch {
+    return { error: 'json' };
+  }
+  if (isRecord(j) && j.diagnostics === 1 && isRecord(j.save)) j = j.save;
+  if (!isRecord(j) || typeof j.seed !== 'number') return { error: 'notSave' };
+  return { file: j as Record<string, unknown> & { seed: number } };
+}
+/**
+ * Every station record's turn as the one of the four it loads at (`wrapRotation`, as
+ * `Station.fromJSON` reads it): the ground the game clears under a saved station before it loads
+ * (`stationFootprint` with the save's own turn) is then the ground it stands on. A turn no build
+ * wrote (a fraction, a string, none) is turn 0; a whole one is kept, counted round past 3 and back
+ * from 0. Entries that are no record are left as they are. A file of any version is read through
+ * this, so a turn the game wrote comes back as it was.
+ */
+function repairStationTurns(j: SaveGame) {
+  if (!Array.isArray(j.stations)) return;
+  for (const s of j.stations as unknown[]) if (isRecord(s)) s.rot = wrapRotation(s.rot);
+}
+/**
+ * The seed a world description names, as the one number its map is built from: a seed that is a
+ * number or the text of one, when that number is an integer (`Number.isInteger`); null for any
+ * other (a fraction, NaN, an infinity, a text that is not a number, no seed at all). An integer
+ * is not held to the safe ones: a player may type digits past 2^53 - 1 as a seed, the game makes
+ * `Number` of them (`parseSeed`), plays that world and writes it, and every such number is the one
+ * double its save holds and its chunks store (`chunks.ts` keeps a seed it cannot zigzag as a
+ * float64), so the save must load again. Text reads as the game reads typed digits. Text that is
+ * blank, and a value that is no number or text (null, a flag, a list), name no seed: `Number()`
+ * would read them as 0 or 1, and 0 is a world too. Map generation does arithmetic on the seed
+ * (`seed + 5`), which on text gives other text and so another world.
+ */
+function worldSeedOf(seed: unknown): number | null {
+  const n =
+    typeof seed === 'number'
+      ? seed
+      : typeof seed === 'string' && seed.trim() !== ''
+        ? Number(seed)
+        : NaN;
+  return Number.isInteger(n) ? n : null;
+}
+/**
+ * Whether the seeds of a file name one world, checked before any step runs: the file's own seed
+ * is an integer (`worldSeedOf`), because a file with no world (nothing, or null) has its world
+ * made from that seed on load, and a world's seed is the file's. A world that is there is a
+ * description whose seed, read as a number, is the file's seed: a save whose two seeds disagree
+ * cannot say which world it is, and neither wins. The world's seed is set on the description as
+ * that number. Any other value in place of a world holds no seed. False refuses the file as
+ * damaged, and then nothing has been changed.
+ */
+function settleSeeds(file: Record<string, unknown>): boolean {
+  if (worldSeedOf(file.seed) !== file.seed) return false;
+  const world = file.world;
+  if (world === undefined || world === null) return true;
+  if (!isRecord(world)) return false;
+  const seed = worldSeedOf(world.seed);
+  if (seed !== file.seed) return false;
+  world.seed = seed;
+  return true;
+}
+
+/**
+ * A file that holds every v1 field, migrated to the current version with its station turns
+ * repaired; null when it does not, when its seeds name no one world (`settleSeeds`), and when what
+ * it gives would still hold a number no save can store (`firstNonFinite`: only an overflowing
+ * literal such as `1e999` gives one), so that what loads can be stored again.
+ */
+function settle(file: Record<string, unknown>): SaveGame | null {
+  // before any step runs: the step from v4 lays out a list with an entry for every chunk of the map
+  if (!worldWithinBound(file.world) || !holdsCore(file) || !settleSeeds(file)) return null;
+  const j = file as SaveGame;
+  // no version, or none the chain can count up from, is the oldest
+  if (!Number.isInteger(j.version) || j.version < SAVE_MIN_VERSION) j.version = SAVE_MIN_VERSION;
+  let save: SaveGame;
+  try {
+    save = migrate(j);
+  } catch {
+    // a step met something deeper in the file that no version wrote
+    return null;
+  }
+  repairStationTurns(save);
+  return firstNonFinite(save) === null ? save : null;
+}
+
+/**
+ * Read a save text: an exported save, a stored one or a diagnostics bundle. Never refuses on
+ * version: older saves are upgraded step by step, newer ones are loaded as they are with a
+ * warning. Station turns are repaired (`repairStationTurns`), and a world seed held as text is
+ * read as the number it names (`settleSeeds`). Text that is not a whole save, or whose save could
+ * not be stored again, or whose seed is not an integer or is not the seed of its world, or
+ * whose generated map is larger than the game builds (`worldWithinBound`; refused before anything
+ * is migrated or generated), is refused, with the reason.
+ */
+export function readSaveText(raw: string): { save: SaveGame } | { error: SaveRefusal } {
+  const opened = openSave(raw);
+  if ('error' in opened) return opened;
+  if (!worldWithinBound(opened.file.world)) return { error: 'tooLarge' };
+  const save = settle(opened.file);
+  return save ? { save } : { error: 'damaged' };
+}
+/** Parse and migrate a save text; null for anything `readSaveText` refuses. */
+export function parseSave(raw: string): SaveGame | null {
+  const read = readSaveText(raw);
+  return 'save' in read ? read.save : null;
+}
+/** The stored game Continue loads; null when there is none or it is refused (it stays stored). */
 export function readSave(): SaveGame | null {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
@@ -368,6 +988,34 @@ export function readSave(): SaveGame | null {
   } catch {
     return null;
   }
+}
+/**
+ * Why the stored game Continue loads is refused (`readSaveText`); null when there is none or it
+ * loads. A refused save stays stored.
+ */
+export function storedRefusal(): SaveRefusal | null {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const read = readSaveText(raw);
+    return 'error' in read ? read.error : null;
+  } catch {
+    return null;
+  }
+}
+/**
+ * Store a save text the player brought (an export or a diagnostics bundle) as the game Continue
+ * loads. A refused text stores nothing; a save storage will not keep (full or blocked) is refused
+ * as `storage`, and Continue still loads what it did. The player's settings are never touched: the
+ * copy that files from v8 to v13 carry is not applied.
+ */
+export function importSave(
+  raw: string,
+): { ok: true; save: SaveGame } | { ok: false; error: SaveRefusal } {
+  const read = readSaveText(raw);
+  if ('error' in read) return { ok: false, error: read.error };
+  if (!writeSave(read.save)) return { ok: false, error: 'storage' };
+  return { ok: true, save: read.save };
 }
 /** Run the migration chain from the save's version to the current one; records where it came from. */
 export function migrate(j: SaveGame): SaveGame {
@@ -381,17 +1029,27 @@ export function migrate(j: SaveGame): SaveGame {
       continue;
     }
     step.run(j);
-    notes.push(`v${step.from}→v${step.from + 1}: ${step.note}`);
+    if (!step.quiet) {
+      const note = LANGUAGE === 'hu' ? (HU_MIGRATIONS[step.from] ?? step.note) : step.note;
+      notes.push(`v${step.from}→v${step.from + 1}: ${note}`);
+    }
     j.version = step.from + 1;
   }
-  if (from !== SAVE_VERSION) {
+  // a file from a newer build says so; an older one only when a step has something to tell
+  if (from > SAVE_VERSION || notes.length) {
     j.loadedFrom = from;
     j.migrationNotes = notes;
   }
   return j;
 }
 
+/**
+ * Store a save as the game Continue loads; false when it was not stored. A save that holds a
+ * number JSON cannot (`firstNonFinite`) is not written, so the save stored before it stays: its
+ * text would hold `null` in that place, and a load refuses it, or reads it as no number at all.
+ */
 export function writeSave(s: SaveGame) {
+  if (firstNonFinite(s) !== null) return false;
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(s));
     return true;
@@ -406,14 +1064,29 @@ export function clearSave() {
     /* ignore */
   }
 }
+/** The browser asks for less motion; false where nothing can say. */
+function prefersReducedMotion() {
+  return globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+}
+/** The defaults overlaid by `stored`, sharing no object with `DEFAULT_SETTINGS`. */
+function settingsFrom(stored: Partial<Settings>): Settings {
+  const s = { ...DEFAULT_SETTINGS, ...stored };
+  if (s.contractPolicy) s.contractPolicy = { ...s.contractPolicy };
+  s.soundGroups = { ...DEFAULT_VOLUMES.soundGroups, ...stored.soundGroups };
+  s.soundOff = { ...stored.soundOff };
+  s.alerts = alertSettingsFrom(stored.alerts);
+  s.language = languageOf(stored.language);
+  // Building life starts off for a player who asked for less motion; a stored choice stands
+  if (typeof stored.buildingLife !== 'boolean') s.buildingLife = !prefersReducedMotion();
+  if (typeof stored.movingWater !== 'boolean') s.movingWater = !prefersReducedMotion();
+  return s;
+}
 export function readSettings(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    return raw
-      ? { ...DEFAULT_SETTINGS, ...migrateSettings(JSON.parse(raw) as Partial<Settings>) }
-      : { ...DEFAULT_SETTINGS };
+    return settingsFrom(raw ? migrateSettings(JSON.parse(raw) as Partial<Settings>) : {});
   } catch {
-    return { ...DEFAULT_SETTINGS };
+    return settingsFrom({});
   }
 }
 export function writeSettings(s: Settings) {
@@ -426,20 +1099,73 @@ export function writeSettings(s: Settings) {
 
 // ------------------------------------------------------------------ named slots
 export const SLOTS_KEY = 'terepasztal.slots';
+/**
+ * What a list of saves shows of one; 0 for a field the file lacks or holds as no finite number.
+ */
 export interface SlotMeta {
+  /** the slot's name; '' for the save Continue loads */
   name: string;
   savedAt: number;
+  /** the format version the file was written in */
   version: number;
   seed: number;
   day: number;
+  /** the age reached (`economy.tier`) */
+  age: number;
+  money: number;
 }
 function readSlots(): Record<string, string> {
   try {
     const raw = localStorage.getItem(SLOTS_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    const slots: unknown = raw ? JSON.parse(raw) : {};
+    return isRecord(slots) ? (slots as Record<string, string>) : {};
   } catch {
     return {};
   }
+}
+/** The name a slot is stored under: trimmed, at most 32 characters. */
+function slotName(name: string) {
+  return name.trim().slice(0, 32).trimEnd();
+}
+/** A number a list can show: the file's own when it is finite, else 0. */
+const numberOr0 = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+/**
+ * What a stored text shows in a list, or null when it holds no save. A whole save is described
+ * after migrating, so an old file's tier reads as the age it became; a damaged one as it stands,
+ * unless `whole` asks for whole saves only.
+ */
+function describeSave(name: string, raw: unknown, whole: boolean): SlotMeta | null {
+  if (typeof raw !== 'string') return null;
+  const opened = openSave(raw);
+  if ('error' in opened) return null;
+  const { file } = opened;
+  const version = numberOr0(file.version);
+  const savedAt = numberOr0(file.savedAt);
+  const save = settle(file);
+  if (!save && whole) return null;
+  const s: Record<string, unknown> = save ?? file;
+  const economy = isRecord(s.economy) ? s.economy : {};
+  return {
+    name,
+    savedAt,
+    version,
+    seed: numberOr0(file.seed),
+    day: numberOr0(s.lastDay),
+    age: numberOr0(economy.tier),
+    money: numberOr0(economy.money),
+  };
+}
+/** The save Continue loads, described like a slot (name ''); null when Continue has none to load. */
+export function continueMeta(): SlotMeta | null {
+  try {
+    return describeSave('', localStorage.getItem(SAVE_KEY), true);
+  } catch {
+    return null;
+  }
+}
+/** Is there a named save that `writeSlot(name, ...)` would replace? */
+export function hasSlot(name: string): boolean {
+  return Object.prototype.hasOwnProperty.call(readSlots(), slotName(name));
 }
 function writeSlots(slots: Record<string, string>) {
   try {
@@ -449,41 +1175,158 @@ function writeSlots(slots: Record<string, string>) {
     return false;
   }
 }
-/** Named saves, newest first. */
+/**
+ * Named saves, newest first. A damaged one is listed too, so it can be deleted (loading it is
+ * refused); text that holds no save at all is skipped.
+ */
 export function listSlots(): SlotMeta[] {
   const out: SlotMeta[] = [];
   for (const [name, raw] of Object.entries(readSlots())) {
-    try {
-      const j = JSON.parse(raw) as SaveGame;
-      out.push({
-        name,
-        savedAt: j.savedAt ?? 0,
-        version: j.version ?? 0,
-        seed: j.seed,
-        day: j.lastDay ?? 0,
-      });
-    } catch {
-      /* skip a broken slot */
-    }
+    const meta = describeSave(name, raw, false);
+    if (meta) out.push(meta);
   }
   return out.sort((a, b) => b.savedAt - a.savedAt);
 }
+/**
+ * Store a save under a name (`slotName`), in place of one of that name; false when it was not
+ * stored. A save that holds a number JSON cannot (`firstNonFinite`) is not written, and every
+ * named save stays as it was.
+ */
 export function writeSlot(name: string, s: SaveGame) {
+  if (firstNonFinite(s) !== null) return false;
   const slots = readSlots();
-  slots[name.trim().slice(0, 32)] = JSON.stringify(s);
+  slots[slotName(name)] = JSON.stringify(s);
   return writeSlots(slots);
 }
+/** A named save, migrated; null when there is none by that name or it is refused. */
 export function readSlot(name: string): SaveGame | null {
-  const raw = readSlots()[name];
-  if (!raw) return null;
-  try {
-    return parseSave(raw);
-  } catch {
-    return null;
-  }
+  const raw: unknown = readSlots()[name];
+  return typeof raw === 'string' ? parseSave(raw) : null;
+}
+/** Why a named save is refused (`readSaveText`); null when there is none by that name or it loads. */
+export function slotRefusal(name: string): SaveRefusal | null {
+  const raw: unknown = readSlots()[name];
+  if (typeof raw !== 'string') return null;
+  const read = readSaveText(raw);
+  return 'error' in read ? read.error : null;
 }
 export function deleteSlot(name: string) {
   const slots = readSlots();
   delete slots[name];
   return writeSlots(slots);
+}
+
+// ------------------------------------------------------------------ stored ground
+/**
+ * Set once the saves stored before saves kept their ground (v19) have been given it
+ * (`freezeStoredSaves`); it holds the format version the pass ran under.
+ */
+export const GROUND_KEY = 'terepasztal.ground';
+
+/**
+ * A stored save text with the ground of its map added (`groundOf`, with `generate` for the save),
+ * or null when there is none to add: the text holds no save the game loads, its world is a level
+ * or stores every chunk its map covers already, or the file holds a number JSON cannot write.
+ * Only the ground is added. The file keeps its version, time stamp and everything else as they
+ * were, so it lists, loads and upgrades as before; the step from v18 keeps the store it finds.
+ * A save whose map is larger than the game builds (`worldWithinBound`) gets none: it is left as it
+ * is, and a load refuses it.
+ */
+export function withGround(raw: string, generate: (save: SaveGame) => MapGenerator): string | null {
+  const grounded = grounding(raw, generate);
+  return grounded !== null && 'text' in grounded ? grounded.text : null;
+}
+
+/** `withGround`, telling a save left as it is for the size of its map from the other reasons. */
+function grounding(
+  raw: string,
+  generate: (save: SaveGame) => MapGenerator,
+): { text: string } | { tooLarge: true } | null {
+  const read = readSaveText(raw);
+  if (!('save' in read)) return read.error === 'tooLarge' ? { tooLarge: true } : null;
+  const { world } = read.save;
+  if (world?.kind !== 'generated' || !lacksGround(world)) return null;
+  groundOf(world, generate(read.save));
+  const parsed = JSON.parse(raw) as unknown;
+  // the save inside a diagnostics bundle, as `openSave` reads it
+  const file =
+    isRecord(parsed) && parsed.diagnostics === 1 && isRecord(parsed.save) ? parsed.save : parsed;
+  if (!isRecord(file)) return null;
+  // a file from before v3 has no world of its own: it gets the one the step from v2 builds for it
+  file.world = isRecord(file.world) ? { ...file.world, chunks: world.chunks } : world;
+  return firstNonFinite(parsed) === null ? { text: JSON.stringify(parsed) } : null;
+}
+
+/** What `freezeStoredSaves` did. */
+export interface FreezeReport {
+  /** false when the pass had run before, or storage could not be read */
+  ran: boolean;
+  /** stored saves given their ground, Continue's and the named ones */
+  frozen: number;
+  /** stored saves that lack it still: storage would not keep them with it (full or blocked) */
+  refused: number;
+  /**
+   * stored saves whose map is larger than the game builds (`worldWithinBound`): left byte for
+   * byte, and refused when loaded
+   */
+  tooLarge: number;
+}
+
+/**
+ * Give every stored save that lacks the ground of its map that ground (`withGround`), as the
+ * generator of this build makes it: the save Continue loads and every named save, each once.
+ * Runs once (`GROUND_KEY`): saves written since keep their ground, and a save that comes in later
+ * without it (an import) gets it when it is loaded. A save storage will not keep with its ground
+ * stays stored as it was, is counted in `refused`, and gets its ground when it is next loaded.
+ * A save whose map is larger than the game builds (`worldWithinBound`) stays stored as it was
+ * without a map made for it, is counted in `tooLarge`, and is refused when loaded. Named saves are
+ * written one at a time, so a full storage keeps every one it can.
+ */
+export function freezeStoredSaves(
+  generate: (save: SaveGame) => MapGenerator = (s) => generatorOf(s.supply),
+): FreezeReport {
+  const report: FreezeReport = { ran: false, frozen: 0, refused: 0, tooLarge: 0 };
+  let continued: string | null;
+  try {
+    if (localStorage.getItem(GROUND_KEY) !== null) return report;
+    continued = localStorage.getItem(SAVE_KEY);
+  } catch {
+    return report;
+  }
+  report.ran = true;
+  const tally = (stored: boolean) => (stored ? report.frozen++ : report.refused++);
+  // a save whose map cannot be made is left as it was: its load says what is wrong with it. One
+  // whose map is too large is counted, and nothing of it is generated
+  const grounded = (raw: unknown) => {
+    try {
+      const done = typeof raw === 'string' ? grounding(raw, generate) : null;
+      if (done !== null && 'tooLarge' in done) report.tooLarge++;
+      return done !== null && 'text' in done ? done.text : null;
+    } catch {
+      return null;
+    }
+  };
+  const text = grounded(continued);
+  if (text !== null)
+    try {
+      localStorage.setItem(SAVE_KEY, text);
+      tally(true);
+    } catch {
+      tally(false);
+    }
+  let slots = readSlots();
+  for (const [name, raw] of Object.entries(slots)) {
+    const next = grounded(raw);
+    if (next === null) continue;
+    const table = { ...slots, [name]: next };
+    const stored = writeSlots(table);
+    if (stored) slots = table;
+    tally(stored);
+  }
+  try {
+    localStorage.setItem(GROUND_KEY, String(SAVE_VERSION));
+  } catch {
+    /* the pass runs again next time, and finds the saves it gave their ground to have it */
+  }
+  return report;
 }

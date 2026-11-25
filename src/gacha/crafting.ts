@@ -1,5 +1,6 @@
 import {
   content,
+  dataName,
   type Cost,
   type CraftKind,
   type CraftRarity,
@@ -8,11 +9,10 @@ import {
   type VehicleSize,
 } from '../data/content';
 import type { Rng } from '../engine/rng';
-import { LOCOS, WAGONS, itemDef, itemKind, type Item } from './items';
+import { LOCOS, WAGONS, isRetired, itemDef, itemKind, obtainable, type Item } from './items';
 import type { Inventory } from './inventory';
 import type { Economy } from '../sim/economy';
-import type { Stockpile } from '../sim/stockpile';
-import { scaleCost } from '../sim/stockpile';
+import { scaleCost, type ResourceStore } from '../sim/stores';
 
 export type { CraftKind };
 export const CRAFT_CONFIG: CraftingConfig = content.crafting;
@@ -45,10 +45,10 @@ export function craftResources(): string[] {
   push(CRAFT_CONFIG.ownedRefund);
   return out;
 }
-/** Every model of a kind and age. */
+/** Every model of a kind and age a recipe can still be drawn for (retired models are left out). */
 export function craftPool(kind: CraftKind, tier: number): string[] {
   const defs = kind === 'loco' ? LOCOS : WAGONS;
-  return defs.map((d) => d.id).filter((id) => craftTier(id) === tier);
+  return obtainable(defs.map((d) => d.id)).filter((id) => craftTier(id) === tier);
 }
 
 export interface CraftStats {
@@ -69,8 +69,9 @@ export type CraftResult =
 
 /**
  * Recipes and building. Step one: pay money for a draw of a few recipe cards of one kind and age
- * and keep one. Step two: spend stockpile resources on an instance of a known recipe; rarer
- * models fail more often and give part of the materials back.
+ * and keep one. Step two: spend the resources of a store (the one the player has selected) on an
+ * instance of a known recipe; rarer models fail more often and give part of the materials back to
+ * that store.
  */
 export class Crafting {
   /** model ids the player can build */
@@ -82,7 +83,6 @@ export class Crafting {
     readonly rng: Rng,
     readonly inventory: Inventory,
     readonly economy: Economy,
-    readonly stock: Stockpile,
   ) {}
 
   knows(defId: string) {
@@ -98,7 +98,9 @@ export class Crafting {
       const ra = order.indexOf(craftRarity(a));
       const rb = order.indexOf(craftRarity(b));
       return (
-        ra - rb || craftTier(a) - craftTier(b) || itemDef(a).name.localeCompare(itemDef(b).name)
+        ra - rb ||
+        craftTier(a) - craftTier(b) ||
+        dataName(itemDef(a)).localeCompare(dataName(itemDef(b)))
       );
     });
   }
@@ -154,13 +156,16 @@ export class Crafting {
     }
     return out;
   }
-  /** Keep one card of the pending draw; the others are gone. An owned recipe refunds materials. */
-  choose(defId: string): ChooseResult | null {
-    if (!this.pending || !this.pending.cards.includes(defId)) return null;
+  /**
+   * Keep one card of the pending draw; the others are gone. An owned recipe refunds materials into
+   * `store`.
+   */
+  choose(defId: string, store: ResourceStore): ChooseResult | null {
+    if (!this.pending || !this.pending.cards.includes(defId) || isRetired(defId)) return null;
     this.pending = null;
     if (this.recipes.has(defId)) {
       const refund = { ...CRAFT_CONFIG.ownedRefund };
-      this.stock.refund(refund);
+      store.refund(refund);
       return { defId, owned: true, refund };
     }
     this.recipes.add(defId);
@@ -176,30 +181,39 @@ export class Crafting {
   failChance(defId: string): number {
     return CRAFT_CONFIG.failChance[craftRarity(defId)] ?? 0;
   }
-  canCraft(defId: string) {
-    return this.recipes.has(defId) && this.stock.canAfford(this.instanceCost(defId));
+  canCraft(defId: string, store: ResourceStore) {
+    return (
+      this.recipes.has(defId) && !isRetired(defId) && store.canAfford(this.instanceCost(defId))
+    );
   }
-  /** Spend the materials and roll against the failure chance. Null when the recipe is unknown or unaffordable. */
-  craft(defId: string, now: number): CraftResult | null {
-    if (!this.recipes.has(defId)) return null;
+  /**
+   * Spend the materials from `store` and roll against the failure chance; a failure gives its
+   * share back to the same store. Null when the recipe is unknown, retired or more than the store
+   * holds.
+   */
+  craft(defId: string, store: ResourceStore, now: number): CraftResult | null {
+    if (!this.recipes.has(defId) || isRetired(defId)) return null;
     const cost = this.instanceCost(defId);
-    if (!this.stock.spend(cost)) return null;
+    if (!store.spend(cost)) return null;
     this.stats.crafts++;
     if (this.rng.chance(this.failChance(defId))) {
       this.stats.failures++;
       const refund: Cost = {};
       for (const [k, v] of Object.entries(cost))
         refund[k] = Math.floor(v * CRAFT_CONFIG.failRefund);
-      this.stock.refund(refund);
+      store.refund(refund);
       return { ok: false, refund, cost };
     }
     return { ok: true, item: this.inventory.add(defId, now), cost };
   }
 
   // ------------------------------------------------------------------ persistence
-  /** Every model in the inventory becomes a known recipe (saves from before crafting existed). */
+  /**
+   * Every model in the inventory becomes a known recipe (saves from before crafting existed). A
+   * retired model the player still owns stays in the roster but gets no recipe.
+   */
   grantFromInventory() {
-    for (const id of this.inventory.ownedDefs()) this.recipes.add(id);
+    for (const id of this.inventory.ownedDefs()) if (!isRetired(id)) this.recipes.add(id);
   }
   toJSON() {
     return {
@@ -217,8 +231,12 @@ export class Crafting {
       this.grantFromInventory();
       return;
     }
+    // a recipe or drawn card for a model retired since the save was written is dropped here, so
+    // the workshop cannot build another one; the copies in the inventory are not touched
     const known = (id: unknown): id is string =>
-      typeof id === 'string' && (LOCOS.some((l) => l.id === id) || WAGONS.some((w) => w.id === id));
+      typeof id === 'string' &&
+      (LOCOS.some((l) => l.id === id) || WAGONS.some((w) => w.id === id)) &&
+      !isRetired(id);
     for (const id of j.recipes ?? []) if (known(id)) this.recipes.add(id);
     if (j.stats) this.stats = { ...this.stats, ...j.stats };
     if (j.pending && Array.isArray(j.pending.cards)) {

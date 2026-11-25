@@ -1,13 +1,12 @@
 {
   "levels": {
-    "capacity": [60, 120, 200, 320, 500],
-    "loadRate": [4, 6, 9, 13, 18],
-    "platforms": [1, 1, 2, 2, 3],
-    "production": [30, 50, 80, 120, 170],
-    "upgradeCostMul": [0, 0.8, 1.2, 1.8, 2.6],
-    "spriteByLevel": [1, 2, 3, 4, 5],
-    "maxLevelByTier": [3, 4, 5],
-    "crew": [2, 3, 5, 8, 12]
+    "capacity": [60, 120, 200, 320, 500, 750],
+    "loadRate": [4, 6, 9, 13, 18, 24],
+    "platforms": [1, 1, 2, 2, 3, 3],
+    "production": [30, 50, 80, 120, 170, 230],
+    "upgradeCostMul": [0, 0.8, 1.2, 1.8, 2.6, 3.6],
+    "spriteByLevel": [1, 2, 3, 4, 5, 5],
+    "crew": [2, 3, 5, 8, 12, 16]
   },
   "defs": [
     {
@@ -27,7 +26,19 @@
       ],
       "accepts": [],
       "art": "farm",
-      "terrain": "grass"
+      "terrain": "grass",
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     },
     {
       "id": "lumber",
@@ -46,7 +57,19 @@
       ],
       "accepts": [],
       "art": "lumber",
-      "terrain": "forest"
+      "terrain": "forest",
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     },
     {
       "id": "quarry",
@@ -65,12 +88,24 @@
       ],
       "accepts": [],
       "art": "quarry",
-      "terrain": "rock"
+      "terrain": "rock",
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     },
     {
       "id": "pump",
       "name": "Water Pump",
-      "flavor": "Pumps water for steam engines and the works. Fills water tanks completely.",
+      "flavor": "Pumps water for steam engines and the works. Fills water tanks completely. Stands on grass or forest with water right beside it.",
       "cost": {
         "wood": 25,
         "stone": 20
@@ -85,7 +120,21 @@
       "accepts": [],
       "art": "pump",
       "water": true,
-      "terrain": "water"
+      "terrain": "water",
+      "standOn": ["grass", "forest"],
+      "needsWater": true,
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     },
     {
       "id": "town",
@@ -113,12 +162,28 @@
         "wire",
         "food"
       ],
-      "art": "town"
+      "art": "town",
+      "span": {
+        "w": 2,
+        "h": 1
+      },
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [1, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     },
     {
       "id": "warehouse",
       "name": "Warehouse",
-      "flavor": "Local store: holds 1000 units per level of anything trains bring. Trains take goods out again; only a Depot feeds the stockpile.",
+      "flavor": "Pools its goods with the town's store; outside a town it is a store of its own.",
       "cost": {
         "wood": 60,
         "stone": 30
@@ -145,7 +210,23 @@
       "stockpile": true,
       "fuel": true,
       "water": true,
-      "contracts": false
+      "contracts": false,
+      "span": {
+        "w": 2,
+        "h": 1
+      },
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     },
     {
       "id": "depot",
@@ -176,7 +257,14 @@
       "depot": true,
       "fuel": true,
       "water": true,
-      "contracts": false
+      "contracts": false,
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [0, 1],
+          "side": "S"
+        }
+      ]
     },
     {
       "id": "narrow_depot",
@@ -208,7 +296,14 @@
       "depot": true,
       "fuel": true,
       "water": true,
-      "contracts": false
+      "contracts": false,
+      "doors": [
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "S"
+        }
+      ]
     },
     {
       "id": "station",
@@ -227,7 +322,19 @@
         }
       ],
       "accepts": ["passengers"],
-      "art": "station"
+      "art": "station",
+      "doors": [
+        {
+          "kind": "platform",
+          "tile": [0, 0],
+          "side": "S"
+        },
+        {
+          "kind": "street",
+          "tile": [0, 0],
+          "side": "N"
+        }
+      ]
     }
   ]
 }

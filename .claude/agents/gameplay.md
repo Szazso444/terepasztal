@@ -52,8 +52,12 @@ area:
   frame counts.
 - The save shape is assembled in `src/game.ts` (Engine) from each module's `toJSON`. A new field
   needs your migration step and an Engine wiring task.
-- Content fields read only by art (`paint`, `body`, `bogieStyle`, `size`, `plan`) are Art's to
-  name; `src/data/track.json` values are consumed by World's `track.ts`.
+- `paint` and `bogieStyle` only choose sprites and are Art's to name. `size`, `plan` and `body` are
+  simulation contracts too: through `vehicleSpec` (`src/sim/body.ts`) they set body length,
+  segments and bogies, so they change consist length, track-class access (`src/sim/compat.ts`)
+  and craft cost (`src/gacha/crafting.ts`), and Art's export checks them
+  (`tools/asset-pipeline/export_game.py`). `src/data/track.json` values are consumed by World's
+  `track.ts`.
 - `Builder.groundCheck` takes buildability from Rendering's terrain relief.
 
 ## Rules that bite here
@@ -79,10 +83,14 @@ area:
 - A malformed content override in localStorage throws at module load.
 - `rules`, supply mode, `seasonOffset` and train ids are module-level; tests reset them.
 - `recovery.test.ts` mocks `sfx` as an object, but it is a function.
+- Adding, removing or re-tiering a station or building in `src/data` (`stations`,
+  `stations_full`, `buildings`, `buildings_full`) fails Art's `tools/building-kit.test.mjs` (27
+  families, 560 pictures hard-coded) and `tools/building-queue.test.mjs`. Do not edit them: stop
+  and report, and Core plans the Art follow-up.
 
 ## Stop and ask
 
 - The change alters an existing save's meaning, balance numbers the author set, or player-visible
   rules not in the brief.
 - A seam above has to change.
-- The change needs `src/game.ts` beyond a one-line call: that is an Engine task.
+- The change needs any edit to `src/game.ts`: report it; the wiring is an Engine task.

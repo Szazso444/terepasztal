@@ -1,7 +1,33 @@
 import { describe, it, expect } from 'vitest';
 import { Rng, hash2, hashString } from './rng';
 
-const draw = (r: Rng, n: number) => Array.from({ length: n }, () => r.next());
+const draw = (r: { next(): number }, n: number) => Array.from({ length: n }, () => r.next());
+
+const U32 = 0xffffffffn;
+const WEYL = 0x6d2b79f5n;
+
+/**
+ * Reference mulberry32: the published C, line for line, in BigInt so it shares none of Rng's
+ * 32-bit tricks (Math.imul, ToInt32 on ^ and |). Its state is a Weyl counter, so `skip` jumps
+ * straight to the state after that many draws.
+ */
+class Mulberry32 {
+  private s: bigint;
+  constructor(seed: number, skip = 0) {
+    this.s = (BigInt(seed) + BigInt(skip) * WEYL) & U32;
+  }
+  get state(): number {
+    return Number(this.s);
+  }
+  next(): number {
+    let z = (this.s = (this.s + WEYL) & U32);
+    z = ((z ^ (z >> 15n)) * (z | 1n)) & U32;
+    z ^= (z + (z ^ (z >> 7n)) * (z | 61n)) & U32;
+    return Number(z ^ (z >> 14n)) / 4294967296;
+  }
+}
+
+const isU32 = (v: number) => Number.isInteger(v) && v >= 0 && v < 2 ** 32;
 
 describe('Rng', () => {
   it('gives the same stream for the same seed', () => {
@@ -63,6 +89,70 @@ describe('Rng', () => {
     const a = new Rng(5).shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     const b = new Rng(5).shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     expect(a).toEqual(b);
+  });
+
+  it('draws the reference mulberry32 stream and state', () => {
+    for (const seed of [1, 0x5eed, 20260912]) {
+      const r = new Rng(seed);
+      const ref = new Mulberry32(seed);
+      let firstDiff: object | null = null;
+      for (let i = 1; i <= 10_000 && !firstDiff; i++) {
+        const got = { value: r.next(), state: r.state };
+        const want = { value: ref.next(), state: ref.state };
+        if (got.value !== want.value || got.state !== want.state)
+          firstDiff = { seed, draw: i, got, want };
+      }
+      expect(firstDiff).toBeNull();
+    }
+  });
+
+  it('keeps state an integer in [0, 2^32) after any draw', () => {
+    const src = [1, 2, 3];
+    const draws: ((r: Rng) => unknown)[] = [
+      (r) => r.next(),
+      (r) => r.int(0, 9),
+      (r) => r.range(-1, 1),
+      (r) => r.chance(0.5),
+      (r) => r.pick(src),
+      (r) => r.shuffle([...src]),
+    ];
+    for (const seed of [0, 1, 0x5eed, 0xffffffff]) {
+      const r = new Rng(seed);
+      let bad: object | null = null;
+      for (let i = 1; i <= 10_000 && !bad; i++) {
+        draws[i % draws.length](r);
+        if (!isU32(r.state)) bad = { seed, draw: i, state: r.state };
+      }
+      expect(bad).toBeNull();
+    }
+  });
+
+  it('resumes a JSON-saved state identically millions of draws in', () => {
+    // An unwrapped counter would pass 2^53 at draw 4,917,759 of Rng(0x5eed), where adding to it
+    // stops being exact; these two saves sit either side of that point.
+    const seed = 0x5eed;
+    const early = 4_917_700;
+    const late = 4_917_800;
+    const live = new Rng(seed);
+    for (let i = 0; i < early; i++) live.next();
+    const savedEarly = JSON.parse(JSON.stringify(live.state)) as number;
+    const between = draw(live, late - early);
+    const savedLate = JSON.parse(JSON.stringify(live.state)) as number;
+    const afterLate = draw(live, 1000);
+    const afterEarly = [...between, ...afterLate].slice(0, 1000);
+
+    for (const [taken, saved, liveTail] of [
+      [early, savedEarly, afterEarly],
+      [late, savedLate, afterLate],
+    ] as const) {
+      // Soft, so a failure at one save does not hide the other.
+      const resumed = new Rng(0);
+      resumed.state = saved;
+      expect.soft(draw(resumed, 1000), `resumed after ${taken} draws`).toEqual(liveTail);
+      const ref = new Mulberry32(seed, taken);
+      expect.soft(saved, `state after ${taken} draws`).toBe(ref.state);
+      expect.soft(liveTail, `live after ${taken} draws`).toEqual(draw(ref, 1000));
+    }
   });
 });
 

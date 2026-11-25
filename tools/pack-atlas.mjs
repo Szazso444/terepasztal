@@ -22,18 +22,33 @@
  *
  * `"partial": true` in `<src>/atlas.json` is copied to the output. The game then keeps the
  * group's generator and lays these frames over it, instead of replacing the whole group.
+ *
+ * Every trimmed frame goes through the atlas cap pass (`tools/atlas-cap.mjs`): alpha under 16 is
+ * dropped and 250 and over made solid, and no texel stays at or above the cursor white or as
+ * strong as the selection amber. It runs after the trim, so frame sizes and anchors stay.
  */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { PNG } from 'pngjs';
+import { capFrame } from './atlas-cap.mjs';
 
 function parseArgs(argv) {
   const [group, ...rest] = argv;
   if (!group || group.startsWith('--')) {
-    console.error('usage: node tools/pack-atlas.mjs <group> [--src DIR] [--out DIR] [--prefix P] [--max N] [--pad N] [--no-trim]');
+    console.error(
+      'usage: node tools/pack-atlas.mjs <group> [--src DIR] [--out DIR] [--prefix P] [--max N] [--pad N] [--no-trim]',
+    );
     process.exit(2);
   }
-  const opts = { group, src: `art-src/${group}`, out: 'public/assets', prefix: `${group}/`, max: 1024, pad: 1, trim: true };
+  const opts = {
+    group,
+    src: `art-src/${group}`,
+    out: 'public/assets',
+    prefix: `${group}/`,
+    max: 1024,
+    pad: 1,
+    trim: true,
+  };
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
     if (a === '--no-trim') opts.trim = false;
@@ -67,6 +82,13 @@ function opaqueBounds(png) {
         if (y > y1) y1 = y;
       }
   return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+}
+
+/** The pixels of `box` as an image of their own. */
+function crop(png, box) {
+  const out = new PNG({ width: box.w, height: box.h });
+  blit(out, png, 0, 0, box);
+  return out;
 }
 
 function blit(dst, src, dx, dy, box) {
@@ -106,7 +128,9 @@ function main() {
 
   const metaPath = join(src, 'atlas.json');
   const meta = existsSync(metaPath) ? JSON.parse(readFileSync(metaPath, 'utf8')) : {};
-  const files = readdirSync(src).filter((f) => f.toLowerCase().endsWith('.png')).sort();
+  const files = readdirSync(src)
+    .filter((f) => f.toLowerCase().endsWith('.png'))
+    .sort();
   if (!files.length) throw new Error(`no PNG frames in ${opts.src}`);
 
   const items = [];
@@ -121,7 +145,10 @@ function main() {
     }
     // Anchor against the untrimmed render, then shifted by whatever the trim cut away.
     const a = meta.frames?.[name] ?? meta.anchor ?? { ax: png.width / 2, ay: png.height };
-    items.push({ name, png, box, ax: a.ax - box.x, ay: a.ay - box.y, x: 0, y: 0 });
+    // The cap pass on the trimmed frame, after the trim, so the frame's size and anchor stay.
+    const capped = capFrame(name, crop(png, box)).png;
+    const own = { x: 0, y: 0, w: box.w, h: box.h };
+    items.push({ name, png: capped, box: own, ax: a.ax - box.x, ay: a.ay - box.y, x: 0, y: 0 });
   }
   if (!items.length) throw new Error(`every frame in ${opts.src} is fully transparent`);
 
@@ -139,7 +166,11 @@ function main() {
   const jsonPath = join(resolve(opts.out), `${opts.group}.json`);
   writeFileSync(pngPath, PNG.sync.write(sheet));
   // Sorted keys so a re-pack of unchanged art produces an unchanged file.
-  const ordered = Object.fromEntries(Object.keys(frames).sort().map((k) => [k, frames[k]]));
+  const ordered = Object.fromEntries(
+    Object.keys(frames)
+      .sort()
+      .map((k) => [k, frames[k]]),
+  );
   const table = meta.partial === true ? { partial: true, frames: ordered } : { frames: ordered };
   writeFileSync(jsonPath, `${JSON.stringify(table, null, 2)}\n`);
 

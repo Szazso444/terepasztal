@@ -1,21 +1,21 @@
-import type { GameMap } from './tiles';
+import { startRegion, type GameMap } from './tiles';
 import { rules } from '../sim/rules';
 
-/** Manhattan ring of each chunk around the starting chunk (centre = 0). */
+/**
+ * Ring of each chunk around the start chunk (`startRegion`, ring 0): the Chebyshev distance in
+ * whole chunks, so exactly one chunk is ring 0 on every grid, even or odd.
+ */
 export function regionTierMap(map: GameMap): number[] {
   const out: number[] = [];
-  const cx = (map.regionsX - 1) / 2;
-  const cy = (map.regionsY - 1) / 2;
+  const { rx: cx, ry: cy } = startRegion(map);
   for (let ry = 0; ry < map.regionsY; ry++)
-    for (let rx = 0; rx < map.regionsX; rx++) {
-      const d = Math.max(Math.abs(rx - cx), Math.abs(ry - cy));
-      out.push(Math.round(d));
-    }
+    for (let rx = 0; rx < map.regionsX; rx++)
+      out.push(Math.max(Math.abs(rx - cx), Math.abs(ry - cy)));
   return out;
 }
 
 /**
- * Chunk ownership. The player starts with the centre chunk and buys neighbours; a chunk is
+ * Chunk ownership. The player starts with the start chunk and buys neighbours; a chunk is
  * *revealed* (drawn as Uncharted, purchasable) when it touches an owned one, and hidden
  * otherwise. `tiers` holds each chunk's ring distance from the start, which drives the price.
  */

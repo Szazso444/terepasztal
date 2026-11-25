@@ -1,16 +1,18 @@
 import { el, btn } from './dom';
 import { STR } from '../strings';
 import type { Builder, Decor } from '../sim/build';
+import type { Commands } from '../sim/commands';
 import { decorDef } from '../sim/build';
 import type { PowerGrid } from '../sim/power';
 import type { House, HouseRegistry } from '../sim/houses';
-import { fmtCost } from '../sim/stockpile';
+import { upgradeView } from './upgradeView';
+import { upgradeRow } from './upgradeRow';
 
 /** Side panel for a selected service or utility (water tower, coaling stage, signal, pole, townhouse). */
 export class DecorPanel {
   readonly root: HTMLElement;
   private body = el('div', { class: 'panel-body' });
-  private title = el('span');
+  private title = el('span', { class: 'panel-name' });
   decor: Decor | null = null;
   /** set by the game: townhouse state for house entries */
   houses: HouseRegistry | null = null;
@@ -20,16 +22,18 @@ export class DecorPanel {
   constructor(
     private readonly builder: Builder,
     private readonly power: PowerGrid,
+    private readonly commands: Commands,
+    private readonly toast: (m: string, k?: 'info' | 'warn' | 'good') => void,
     private readonly onClose: () => void,
   ) {
     this.root = el(
       'div',
-      { id: 'station-panel', class: 'panel' },
+      { id: 'decor-panel', class: 'panel' },
       el(
         'div',
         { class: 'panel-title' },
         this.title,
-        btn('x', () => this.close(), 'small'),
+        btn('×', () => this.close(), 'panel-x'),
       ),
       this.body,
     );
@@ -48,7 +52,7 @@ export class DecorPanel {
     this.onClose();
   }
 
-  /** Townhouse lines: level, people, construction or growth. */
+  /** Townhouse lines: level, people, construction, growth, or closed while it is upgraded. */
   static houseLines(h: House, houses: HouseRegistry): string[] {
     const out: string[] = [];
     const H = STR.house;
@@ -61,11 +65,16 @@ export class DecorPanel {
       return out;
     }
     out.push(`${H.level(h.level)}, ${H.residents.toLowerCase()} ${h.residents} / ${cap}`);
+    // nobody moves in while it is upgraded; the people it has stay
+    if (h.work) {
+      out.push(STR.upgrade.closed);
+      return out;
+    }
     const days = houses.growthDaysLeft(h);
     if (days !== null) out.push(`${H.growth}: ${H.growthIn(Math.max(1, Math.ceil(days)))}`);
     else if (h.residents >= cap) {
       out.push(`${H.growth}: ${H.full}`);
-      if (h.level < houses.maxLevel) out.push('Upgrade this House to make room for more residents');
+      if (h.level < houses.maxLevel) out.push(H.makeRoom);
     } else out.push(`${H.growth}: ${H.growthNoFood}`);
     return out;
   }
@@ -92,10 +101,7 @@ export class DecorPanel {
     }
     if (def.power) out.push(power.isPowered(d.x, d.y) ? STR.decorInfo.live : STR.decorInfo.dead);
     if (d.id === 'signal')
-      out.push(
-        'Guards the track ahead until the next same-direction signal. Select to highlight the block.',
-        `Governs trains travelling ${['north', 'east', 'south', 'west'][d.rot]}`,
-      );
+      out.push(STR.signals.blockHint, STR.signals.governs(STR.signals.directions[d.rot]));
     if (def.crew) out.push(`${STR.building.crew}: ${def.crew}`);
     const h = def.residents && houses ? houses.at(d.x, d.y) : undefined;
     if (h && houses) out.push(...DecorPanel.houseLines(h, houses));
@@ -118,16 +124,16 @@ export class DecorPanel {
     if (d.id === 'signal')
       b.append(
         btn(
-          'Rotate direction',
+          STR.signals.rotate,
           () => {
-            d.rot = (d.rot + 1) % 4;
-            this.builder.onDecorChanged?.(d, false);
-            this.onSignalBlock?.(d);
+            const done = this.commands.turnSignal(d);
+            if (done.ok) this.onSignalBlock?.(d);
+            else this.toast(done.message, 'warn');
             this.render();
           },
           'small',
         ),
-        btn('Semaphore guide', () => this.onSignalGuide?.(), 'small'),
+        btn(STR.signals.guideButton, () => this.onSignalGuide?.(), 'small'),
       );
     const houses = this.houses;
     const h = def.residents && houses ? houses.at(d.x, d.y) : undefined;
@@ -147,23 +153,21 @@ export class DecorPanel {
           }),
         ),
       );
-      if (h.level < houses.maxLevel) {
-        const c = houses.canUpgrade(h);
-        const label = STR.house.upgrade(h.level + 1, fmtCost(c.cost));
-        const up = btn(
-          label,
-          () => {
-            houses.upgrade(h);
-            this.render();
-          },
-          'small',
-        );
-        if (!c.ok) {
-          up.disabled = true;
-          up.title = c.reason ?? '';
-        }
-        b.append(el('div', { class: 'row' }, up));
-      }
+      const view = upgradeView({
+        check: houses.canUpgrade(h),
+        level: h.level,
+        work: h.work,
+        instant: this.builder.free,
+      });
+      const up = upgradeRow(
+        view,
+        () => {
+          houses.upgrade(h);
+          this.render();
+        },
+        'small',
+      );
+      b.append(view.kind === 'work' ? up : el('div', { class: 'row' }, up));
     }
     b.append(
       el(
@@ -172,7 +176,7 @@ export class DecorPanel {
         btn(
           STR.station.demolish,
           () => {
-            this.builder.removeDecor(d.x, d.y);
+            this.commands.act(() => this.builder.removeDecor(d.x, d.y));
             this.close();
           },
           'small',

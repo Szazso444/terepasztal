@@ -1,0 +1,20 @@
+#!/bin/sh
+# Agents never push to main or develop: their work reaches develop through a pull request
+# (docs/process/lifecycle.md). The author's own pushes pass. An agent session is recognised by
+# the variables its tool sets: CLAUDECODE / CLAUDE_CODE_* for Claude Code, CODEX_* for Codex.
+# Enabled per clone by `git config core.hooksPath .githooks`, which the session hooks set.
+
+agent=""
+if [ -n "${CLAUDECODE:-}" ] || env | grep -q '^CLAUDE_CODE_'; then agent="Claude Code"; fi
+if env | grep -q '^CODEX_'; then agent="Codex"; fi
+[ -z "$agent" ] && exit 0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main | refs/heads/develop)
+      echo "pre-push: $agent may not push to ${remote_ref#refs/heads/}; open a pull request into develop instead." >&2
+      exit 1
+      ;;
+  esac
+done
+exit 0

@@ -164,6 +164,15 @@ export class Synth {
         );
         this.noise(t, 0.25, v * 0.15, { bandpass: 2500, sweepTo: 600 });
         break;
+      case 'upgrade.done':
+        // a small bell struck twice, a fifth apart, each with the off-key overtone a bell rings
+        // with, over a brief shimmer
+        [784, 1175].forEach((f, i) => {
+          this.tone(f, 'sine', t + i * 0.08, 0.3, v * 0.4, { decay: 0.45 });
+          this.tone(f * 2.76, 'sine', t + i * 0.08, 0.08, v * 0.1, { decay: 0.2 });
+        });
+        this.noise(t, 0.2, v * 0.08, { bandpass: 6000, sweepTo: 3000, q: 3 });
+        break;
       case 'train.dispatch':
         this.tone(660, 'sine', t, 0.25, v * 0.5, { vibrato: 8, decay: 0.1 });
         this.tone(880, 'sine', t + 0.02, 0.23, v * 0.35, { vibrato: 8, decay: 0.1 });

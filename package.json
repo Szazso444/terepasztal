@@ -9,9 +9,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint src --ext .ts",
-    "format": "prettier --write \"src/**/*.{ts,json,css}\" index.html",
-    "typecheck": "tsc --noEmit",
+    "lint": "eslint src tools vite.config.ts vitest.config.ts eslint.config.js",
+    "format": "prettier --write \"src/**/*.{ts,json,css}\" index.html \"tools/**/*.{mjs,ts}\" \"*.md\" \"docs/**/*.md\" \".github/**/*.{yml,json,md}\" \".claude/**/*.{md,js,json}\"",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
     "pack-atlas": "node tools/pack-atlas.mjs",
     "art:illustrated": "node tools/illustrated-sprites.mjs",
     "art:terrain": "node tools/terrain-surfaces.mjs",
@@ -19,7 +19,8 @@
     "art:buildings:queue": "node tools/building-queue.mjs",
     "art:buildings:check": "node tools/building-check.mjs",
     "art:buildings:sheets": "node tools/building-sheets.mjs",
-    "art:buildings:fit": "node tools/building-fit.mjs"
+    "art:buildings:fit": "node tools/building-fit.mjs",
+    "format:check": "prettier --check \"src/**/*.{ts,json,css}\" index.html \"tools/**/*.{mjs,ts}\" \"*.md\" \"docs/**/*.md\" \".github/**/*.{yml,json,md}\" \".claude/**/*.{md,js,json}\""
   },
   "dependencies": {
     "pixi.js": "^8.20.1"
@@ -30,6 +31,7 @@
     "@types/pngjs": "^6.0.5",
     "eslint": "^9.30.0",
     "eslint-config-prettier": "^10.1.0",
+    "globals": "^14.0.0",
     "pngjs": "^7.0.0",
     "prettier": "^3.6.0",
     "typescript": "^5.9.0",

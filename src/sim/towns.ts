@@ -4,6 +4,7 @@ import type { Station } from './stations';
 import { buildingRecipe, buildingRate, type Building } from './buildings';
 import { rules } from './rules';
 import { hash2 } from '../engine/rng';
+import { dataName } from '../data/content';
 
 /** Chebyshev reach of a town around its civic Townhouse. */
 export const TOWN_RADIUS = 7;
@@ -112,7 +113,7 @@ export class TownRegistry {
     for (const t of this.towns) {
       const s = this.station(t);
       if (!s) continue;
-      const d = Math.max(Math.abs(s.x - x), Math.abs(s.y - y));
+      const d = s.distTo(x, y);
       if (d <= TOWN_RADIUS && d < bd) {
         bd = d;
         best = t;
@@ -129,8 +130,7 @@ export class TownRegistry {
     const out: TownMembers = { stations: [], buildings: [], decor: [], houses: 0, warehouses: 0 };
     if (!s0) return out;
     const inside = (x: number, y: number) =>
-      Math.max(Math.abs(s0.x - x), Math.abs(s0.y - y)) <= TOWN_RADIUS &&
-      this.townAt(x, y)?.id === t.id;
+      s0.distTo(x, y) <= TOWN_RADIUS && this.townAt(x, y)?.id === t.id;
     for (const s of this.builder.stations) {
       if (s === s0) {
         out.stations.push(s);
@@ -164,24 +164,33 @@ export class TownRegistry {
     }
     return n;
   }
-  /** Goods made per week by the town's stations and works, per cargo. */
+  /**
+   * Goods made per week by the town's stations and works, per cargo. A station or works closed for
+   * its upgrade makes nothing and adds nothing.
+   */
   production(t: Town, m = this.members(t)): Record<string, number> {
     const out: Record<string, number> = {};
     for (const s of m.stations) {
+      if (s.closed) continue;
       const list = s.producedCargo().filter((c) => c !== 'passengers');
       for (const c of list)
         out[c] = (out[c] ?? 0) + (s.productionPerWeek * s.productionMul) / list.length;
     }
     for (const b of m.buildings) {
+      if (b.work) continue;
       for (const [k, v] of Object.entries(buildingRecipe(b).out))
         out[k] = (out[k] ?? 0) + v * buildingRate(b);
     }
     return out;
   }
-  /** Goods used per week: works inputs plus residents' food. */
+  /**
+   * Goods used per week: works inputs plus residents' food. A works closed for its upgrade takes
+   * nothing in; the residents of a house being upgraded stay and still eat.
+   */
   consumption(t: Town, m = this.members(t)): Record<string, number> {
     const out: Record<string, number> = {};
     for (const b of m.buildings) {
+      if (b.work) continue;
       for (const [k, v] of Object.entries(buildingRecipe(b).in))
         out[k] = (out[k] ?? 0) + v * buildingRate(b);
     }
@@ -223,6 +232,11 @@ export class TownRegistry {
     this.refresh();
   }
 
+  /** A town back with its Townhouse (an undo): the town it was, in the place it had in the list. */
+  restore(t: Town, index: number) {
+    if (!this.towns.includes(t)) this.towns.splice(index, 0, t);
+  }
+
   /**
    * Re-derive the registry from the stations: towns follow their town station, a removed station
    * dissolves its town, and every station inside a founded town is named after it.
@@ -246,7 +260,9 @@ export class TownRegistry {
     for (const s of stations) {
       const t = this.townOfStation(s);
       const inTown = t && (s.def.id === 'town' || this.founded(t));
-      const base = inTown ? `${t.name} ${s.def.name}` : s.def.name;
+      const kind = dataName(s.def);
+      const base = inTown ? `${t.name} ${kind}` : kind;
+      s.townName = inTown ? t.name : null;
       const key = inTown ? `${t.id}:${s.def.id}` : `:${s.def.id}`;
       const n = (perTown.get(key) ?? 0) + 1;
       perTown.set(key, n);
@@ -256,12 +272,12 @@ export class TownRegistry {
     for (const s of stations) {
       const w = wanted.get(s.id)!;
       const mine = this.assigned.get(s.id);
-      const untouched = mine === undefined ? isDefaultName(s) : s.name === mine;
-      if (!untouched || s.name === w) {
-        if (mine === undefined && s.name === w) this.assigned.set(s.id, w);
+      const untouched = mine === undefined ? isDefaultName(s) : s.storedName === mine;
+      if (!untouched || s.storedName === w) {
+        if (mine === undefined && s.storedName === w) this.assigned.set(s.id, w);
         continue;
       }
-      s.name = w;
+      s.storedName = w;
       this.assigned.set(s.id, w);
       changed = true;
     }
@@ -283,6 +299,7 @@ export class TownRegistry {
 
 /** Whether a station still carries the name the builder gave it ("Farm Halt", "Farm Halt 2"). */
 function isDefaultName(s: Station) {
-  if (s.name === s.def.name) return true;
-  return s.name.startsWith(s.def.name + ' ') && /^\d+$/.test(s.name.slice(s.def.name.length + 1));
+  const kind = dataName(s.def);
+  if (s.storedName === kind) return true;
+  return s.storedName.startsWith(kind + ' ') && /^\d+$/.test(s.storedName.slice(kind.length + 1));
 }

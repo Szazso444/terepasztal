@@ -8,16 +8,38 @@ passenger cargo. Build a separate **Station**, connected to track, for passenger
 run coaches between Stations with Dynamic — Transport or a schedule. Passenger production
 depends on finished housing within seven tiles of the Station.
 
-Houses hold 20, 60, 140 and 300 residents at levels 1–4. Select a completed House and use
-**Enlarge** to pay for the next level. Its appearance progresses from house to apartments,
-high-rise and skyscraper. Residents fill available homes while food is available; the game
-does not construct free housing or grant free upgrades. A sliding 6×6 area with at least 200
-town residents gains city paving and roads. These are cosmetic and do not replace rails.
+Stations, works and houses gain one level per age, from the age they first appear in: nothing
+can be upgraded in the Steam Age, a Farm Halt reaches level 2 in the Diesel Age and level 6 in
+the Hyper Age, and a Refinery of the Diesel Age reaches level 5 at most. A building that already
+stands above its age's level, from an old save or a level file, keeps its level and is offered
+the next one when that age comes. A building with a last age stops there: the Charcoal Kiln ends
+at level 3, in the Electric Age, and shows Max level from then on, in the editor too. A kiln that
+already stands above level 3 keeps its level and is offered no further one. Bridges keep their own
+four levels in every age.
+
+An upgrade is paid when it starts and takes game time: 6, 9, 12, 18 and 24 game hours to levels
+2 to 6, from a quarter of a day to a whole one (the **Upgrade time** tuning value scales them; at
+0 every upgrade is instant). The building is closed until the work is done and keeps its old
+level meanwhile: a station or works makes nothing and has no crew to feed, a Power Plant gives
+no power and a Battery feeds no wire, and a House takes no newcomers but keeps its residents.
+Nobody lives at a closed station or works, and nobody sets out from one to gather: the people
+who lived there move to the open place nearest to where they stand. Trains still stop at a
+closed station and load what it holds, but deliver nothing there, and a train set to wait for a
+full load does not wait for output that will not come. A second upgrade waits until the first
+is done, and a building removed during its upgrade is gone with the work. The Depot's upgrade is
+instant and free.
+
+Houses hold 20, 60, 140, 300, 520 and 800 residents at levels 1–6. Select a completed House
+and use its **Upgrade** button to pay for the next level. Its appearance progresses from house
+to apartments, high-rise and skyscraper; levels 5 and 6 keep the skyscraper. Residents fill
+available homes while food is available; the game does not construct free housing or grant free
+upgrades. A sliding 6×6 area with at least 200 town residents gains city paving and roads.
+These are cosmetic and do not replace rails.
 
 Bring wheat from a Farm Halt to a Depot, then build a **Windmill** from Works. Its base recipe
-is one wheat to five food, at up to 60 batches per week. Levels 2–4 improve that ratio to 7,
-9 and 11 food; each upgrade also increases throughput by half the base rate. Residents and
-crews each use one food per week at default tuning. Food can also be bought on the Market.
+is one wheat to five food, at up to 60 batches per week. Levels 2–6 improve that ratio to 7,
+9, 11, 13 and 15 food; each upgrade also increases throughput by half the base rate. Residents
+and crews each use one food per week at default tuning. Food can also be bought on the Market.
 Refineries now need two stone per batch, alongside their previous inputs.
 
 Production, consumption and market deals use seven-day weeks. Production and upkeep flow
@@ -47,10 +69,10 @@ tanks. Normal service has the ordinary resource cost.
 
 ## Semaphores as block boundaries
 
-Choose **Utility → Semaphore** and place a post on track. Rotate with **R** before placement,
-or select it afterwards and use **Rotate direction**. The panel names the governed travel
-direction and highlights the protected stretch. The header's **Signals?** button opens the
-same practical guidance inside the game.
+Choose **Tools → Track → Semaphore** in the build bar and place a post on track. Rotate with
+**R** before placement, or select it afterwards and use **Rotate direction**. The panel names
+the governed travel direction and highlights the protected stretch. **Signals** in the top bar's
+Fleet menu opens the same practical guidance inside the game, with the signalling level.
 
 ```text
 travel →  A ═════ block A–B ═════ B ═════ block B–C ═════ C
@@ -71,14 +93,31 @@ Posts operate in **Automatic** mode as soon as they are placed. Track without po
 ordinary traffic reservations.
 
 For two-way single track, provide passing loops long enough for the entire consist. Put posts
-on both approaches, facing into the shared line. **Token working** in Settings gives one
-train ownership of a shared plain section until its rear clears. Semaphores alone cannot
+on both approaches, facing into the shared line. The **Token** level, chosen in Fleet › Signals,
+gives one train ownership of a shared plain section until its rear clears. Semaphores alone cannot
 provide the missing space needed for two oncoming trains to pass. At a switch the selected
 post's preview follows the straight continuation; a train checks the branch on its actual path.
 
 The debug traffic panel shows blocking groups and active escape owners. Recovery reserves
 one escape route per conflicting group, and can first move a queue that obstructs another
 train's retreat. If no reachable siding fits the full train, add a longer loop or another route.
+A train only backs into a siding it can leave towards its next stop, so a siding whose switch
+faces away from where the train is going does not count. When no train in the way has room to
+pull aside, the traffic counts a deadlock and each train held in it says it is jammed, with no
+siding it can pull into to let the other train by. A train that has to back off for the same
+train again before it reaches its stop is kept back: it still gives way, so the other runs on,
+but the traffic counts a deadlock and the train says it gives way to the same train each time,
+with nowhere free to pass it. A free siding or a passing loop on that line lets the two pass.
+
+A roaming train with nothing worth hauling waits where it stopped without keeping the station's
+platform. When another train needs the track it stands on, it moves aside, into a siding when
+one is free and it can come back out of it to the station, and waits there until there is work. Trains never reverse partway along a move, so
+a train uses a siding only when it can run straight into it: give each busy line a dead-end
+siding as long as the whole train, its switch facing the station the train idles at, so a train
+leaving it turns straight in. A siding it could reach only by running past the switch and
+backing in does not count. Without one, the train note says it is in the way with no siding or
+free platform it can pull into. A dead-end siding does not let two working trains pass each
+other on single track; that still needs a passing loop.
 
 ## Bridges
 
@@ -86,6 +125,9 @@ From **Track**, build Wooden Bridge or Stone Bridge platforms on water. Then lay
 track on them. Straight rails on consecutive platforms of the same material join visually
 into timber trusses or masonry arches with supports. Regular and high-speed rails can both
 use a platform; normal class transitions are still required where classes meet.
+
+A platform that carries no rail can carry a road instead, and townsfolk walk over a road bridge,
+keeping to the road along the deck. They never walk on a bare platform or on one with rails.
 
 | Platform      | Base material cost | Capacity | Half speed above |
 | ------------- | ------------------ | -------- | ---------------- |
@@ -97,9 +139,29 @@ is excluded from pathfinding. Above 80% capacity, crossing speed is halved until
 leaves the bridge. A train exactly at capacity may cross at half speed.
 
 Select a platform to inspect its limit and pay for reinforcement. Each level adds 25% of the
-base capacity, up to level 4, and adds visible reinforcement. Upgrade every platform in the
-crossing for heavier traffic: its weakest platform remains the limiting one. Remove track
-before demolishing its platform. The removal tool removes the rails first on an occupied deck.
+base capacity, up to level 4, and adds visible reinforcement once the work is done; trains keep
+crossing at the old limit while it runs. Upgrade every platform in the crossing for heavier
+traffic: its weakest platform remains the limiting one. Remove track before demolishing its
+platform. The removal tool removes the rails first on an occupied deck.
+
+## Mountain track
+
+Track can be laid on **Rock** and **Mountain**, but only as the continuation of a line: every
+piece there needs one of its ends joined to the end of a line already standing. Draw a line up
+from the foot of the mountain, or on from track already on it; drawn from the far end, it is
+refused with "Mountain track must continue an existing line". Track beside the tile that runs
+past it does not count. The editor keeps the same rule. The rule is for drawing: a piece stays
+where it stands when the track around it is removed, and a saved game comes back with the rock
+and mountain under its track, signals included.
+
+The slope rules are those of any hill. Straights, crossings and transitions climb at most a level
+per tile; curves and switches need a level tile, which on a mountain means its flat top. Bridge
+platforms, stations, works, decor and power poles do not stand on rock or mountain, but signals
+and electrification on mountain track work as on any track.
+
+Track costs 1.35× on rock and 1.65× on a mountain, times the biome's track cost: in the Mountain
+biome (×1.5), about 2.0× and 2.5×. A train whose head is in the Mountain biome runs at 0.9 of its
+speed, and climbing halves that, to 0.45.
 
 ## Crafting and old saves
 

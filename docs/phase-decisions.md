@@ -1,4 +1,9 @@
-# Current phase: decisions taken while building
+# v0.8.0 phase: decisions taken while building
+
+This file is a record of the v0.8.0 phase, written against the codebase of that time. The spec
+whose sections and R-numbers it cites, `current-phase-spec.md`, is not kept in the repository. The
+code and `AGENTS.md` say what is true now: file and function names below are as of v0.8.0, and some,
+such as `src/render/vehicleVisual.ts`, are gone. `CHANGELOG.md` has what shipped.
 
 Record of the choices the spec left open (`FABLE DECIDES`) and of the places where a decided
 item had to bend to fit the code. Section numbers refer to `current-phase-spec.md`, R-numbers to

@@ -6,11 +6,11 @@ reads the section for its own step, not the whole file.
 
 ## Branches
 
-| Branch | Purpose | Who writes | Who merges into it |
-| --- | --- | --- | --- |
-| `main` | released game | nobody directly | the author, from `develop` |
-| `develop` | integration; every task lands here first and is validated here | nobody directly | Core, through a pull request |
-| `<role>/<issue>-<slug>` | one task, one role, one pull request | the role's agent | — |
+| Branch                  | Purpose                                                        | Who writes       | Who merges into it           |
+| ----------------------- | -------------------------------------------------------------- | ---------------- | ---------------------------- |
+| `main`                  | released game                                                  | nobody directly  | the author, from `develop`   |
+| `develop`               | integration; every task lands here first and is validated here | nobody directly  | Core, through a pull request |
+| `<role>/<issue>-<slug>` | one task, one role, one pull request                           | the role's agent | —                            |
 
 - A task branch starts from the current `develop` and lives in its own git worktree under
   `.claude/worktrees/<role>-<issue>-<slug>` (ignored by git), so parallel tasks never share a
@@ -23,7 +23,9 @@ reads the section for its own step, not the whole file.
   each on its own branch and worktree. No branch is kept per role.
 - Hosted sessions that can push only one assigned branch (`claude/...`) still follow the model:
   the pull request carries the `agent:<role>` label and `Closes #<issue>`, which is what the
-  scope check and the merge gate read.
+  scope check and the merge gate read. When Core recreates a task branch through the GitHub API
+  (`create_branch`, `push_files`), the pushed commit has a new hash, so before opening the pull
+  request it checks that its tree equals the tree QA approved (`git rev-parse <sha>^{tree}`).
 - A merged task branch is deleted. Work that never merged is not deleted: it is tagged
   `archive/<branch>` and recorded in `docs/archived-work.md` (see `.github/ref-archive.json`).
 
@@ -31,7 +33,7 @@ reads the section for its own step, not the whole file.
 
 An issue carries exactly one `status:` label. Core moves it.
 
-`status:triage` → `status:ready` → `status:in-progress` → `status:in-review` → closed by the merge,
+`status:triage` → `status:ready` → `status:in-progress` → `status:in-review` → closed by Core after the merge,
 with `status:blocked` reachable from any of them. `needs:decision` is added whenever the next step
 waits on the author.
 
@@ -85,7 +87,7 @@ npm run typecheck && npm run lint && npm test && npx vite build \
 
 It returns the result report (`docs/process/context.md`). It stops and reports instead of
 guessing when the brief is ambiguous, when the change needs a file another role owns, or when a
-golden test (map generation hashes, art frame counts) fails.
+golden test (map generation hashes) fails.
 
 ### 5. Verify (Verification, then QA)
 
@@ -118,13 +120,16 @@ build, formatting and the scope check (`.github/workflows/scope.yml`). A pull re
 cross roles carries `scope:cross`, which only Core sets and which the description has to justify.
 
 **Gate files** are the ones that decide what passes or what agents may do: `AGENTS.md`, `CLAUDE.md`,
-`.claude/**`, `.github/**`, `tools/agents/**`, the dependency and tool configs and the map
-generation goldens (the `gate` list in `tools/agents/ownership.json`). A pull request that changes
-one needs the `gate:approved` label, added by the author in person after review. The scope check
-reads the label's history and does not count it when an app added it, so an agent acting with
-the author's account cannot approve itself; a new push removes the label. The check runs from
-`develop`'s own copy of the workflow and the scripts, so a pull request cannot change the check
-that judges it.
+`.claude/**`, `.codex/**`, `.mcp.json`, `.github/**`, `tools/agents/**`, the dependency and tool
+configs and the map generation goldens (the `gate` list in `tools/agents/ownership.json`). A pull
+request that changes one needs the `gate:approved` label, added by the author in person after
+review; a new push removes the label. The scope check reads the label's history and does not
+count it when a GitHub App added it, which is how hosted agent sessions act. A label added with
+the author's own credentials (the `gh` login, a personal token) cannot be told from the author's
+own, so a local agent using them must never touch the label: the check cannot stop it. The check runs from
+`main`'s copy of the workflow and the scripts (GitHub takes `pull_request_target` workflows from
+the default branch), so a pull request cannot change the check that judges it, and a change to
+the gate takes effect only once it is released into `main`.
 
 ### 8. Merge into `develop` (Core)
 
@@ -132,21 +137,62 @@ Core merges when all of these hold:
 
 - CI is green on the head commit, the scope check included (so gate files carry the author's
   `gate:approved`);
-- the QA verdict on the head commit is `approve`;
+- the QA verdict is `approve` on the head commit, or on a commit with the identical tree;
 - Verification's tests exist and pass, where the task required them;
-- no open question and no `needs:decision` label.
+- every note for Core has been read and accepted, sent back as a finding, or turned into a
+  question for the author;
+- no question for the author is open and no `needs:decision` label is set.
 
 Merge with a merge commit titled `Merge <branch>: <one-line outcome>` (the existing history's
-style), then delete the branch. A red `develop` is the top priority: Core reverts the merge that
+style), then delete the branch, close the issue and remove its `status:` label. GitHub acts on
+`Closes #n` only for pull requests into the default branch (`main`), so a merge into `develop`
+links the issue but does not close it. A red `develop` is the top priority: Core reverts the merge that
 broke it (a revert pull request, never a force push) or lands a fix within the same session.
 
-### 9. Release into `main` (the author)
+### 9. Release into `main` (Core prepares, the author merges)
 
-Core prepares a release pull request `develop` → `main`: version, `CHANGELOG.md` entry, the issues
-it closes and anything the author should play-test. The author reviews, plays and merges. Only the
-author merges into `main`.
+Core prepares a release pull request `develop` → `main`: the version, the `CHANGELOG.md` entry, the
+issues it closes, the tag it names and the result of every check below. Only the author merges
+into `main`. The author's actions are to merge and to decide; no part of a release is handed to
+the author to run.
+
+**Version.** The version is `vMAJOR.MINOR.PATCH` and higher than the newest row of the table in
+`CHANGELOG.md`, which is its last row (v0.8.0 today). While MAJOR is 0, MINOR is for a release that
+adds or changes anything the player sees or raises `SAVE_VERSION`, and PATCH is for a release of
+fixes only. Core proposes the number in the release pull request and the author's merge accepts it.
+`package.json` `version` is a placeholder that nothing reads and is not part of a release.
+
+**Changelog.** The release pull request renames `## Unreleased` in `CHANGELOG.md` to `## vX.Y.Z`
+(the style of `## v0.8.0`) and adds the version's row at the bottom of the table. A release pull
+request without both is not ready.
+
+**Checks.** Each task pull request carries a "For the author" section. Core collects that section's
+items from the release's merged pull requests into one list of checks, and an agent runs each one
+before the release pull request is ready: QA by command or test, Core in the running game
+(`npm run dev`) through the browser tools of its session. The release pull request lists every
+check with its result:
+
+- pass;
+- fail, as a finding that goes to the fix loop (step 6);
+- unverified, with the reason.
+
+Evidence is given by path, never pasted. Nothing is put to the author as a check to run. A check no
+agent can run is not handed over: Core asks only whether to release without it, as one question
+with a recommendation.
+
+**Tag.** The tag `vX.Y.Z` is on the release pull request's merge commit in `main` (its
+`merge_commit_sha`), not on whatever `main`'s tip is by then. Core creates it right after the
+author's merge, through the GitHub API or a tag push, never a push to `main`. The author's only
+action is the merge. The release pull request description names the tag. A tag is never moved or
+reused.
 
 ### 10. Audit (Core)
+
+After each release, Core first checks the tag: `git ls-remote --tags origin vX.Y.Z` returns a ref,
+and `git rev-parse vX.Y.Z^{commit}` (after `git fetch origin tag vX.Y.Z`) is the release pull
+request's merge commit. Core creates a missing tag itself as in step 9 and tells the author only if
+its credentials cannot. A tag that stands on another commit is not moved: Core puts it to the
+author as a decision, with the options and a recommendation.
 
 After each release, and whenever the author asks, Core refreshes `CORE.md`: state of the game, open
 risks, test gaps, the branch and issue inventory, and what the last cycle cost in fix rounds and

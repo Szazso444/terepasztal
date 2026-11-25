@@ -30,7 +30,23 @@ foundation features following the actual model silhouette.
   the native tiles cover only the chunks still waiting. Paints are deterministic,
   so the pool produces the same pixels as one worker. Changes invalidate nearby
   chunks; seasonal changes repaint revealed chunks. Stale worker results are
-  discarded. City paving is painted onto the same relief surface.
+  discarded.
+- City paving (`src/render/townPaving.ts`, #443) is painted by the same workers onto the same
+  relief surface, as a function of the map point and the paved tiles (`cityTiles`) alone, so
+  neighbouring chunks agree pixel for pixel. Small setts, about a tenth of a tile, lie in a fan of
+  arcs, lit from the upper left, in warm stone a value step below the house walls and never
+  brighter than the semantic colours; a slow tint runs across the paving as one colour cluster,
+  with a lighter and a darker sett now and then. The outline wobbles slightly and rounds its
+  convex corners (concave corners stay sharp). Over the last quarter tile inside it the paving
+  wears out: the ground shows in the joints and whole setts are missing. Outside it a fringe of
+  packed earth fades into the ground. Each street door on a paved tile gets a doorstep, a rounded
+  box of the same setts reaching a quarter tile out over the tile it faces. The paving is lit by
+  its level like the ground and covers a town tile's water; the season tints the ground under it,
+  not the setts. Tufts, stones and scatter stay off it and the packed earth round it.
+- The 3×3 `terrain/city_*` frames (`src/art/terrain.ts`) no longer show city paving. They remain
+  only as the fallback ground sprite of a paved tile (`groundFrame` in
+  `src/render/worldRenderer.ts`), shown when the landscape worker fails and under a chunk not yet
+  painted, so their art is not to be removed.
 - The painter's ray march skips heights above each cell's highest point
   (`terraceCaps`), and lands on exactly the height the full march finds.
   `scratchpad/perf/` times a 128 × 128 world (`run.mjs`, in the browser) and hashes

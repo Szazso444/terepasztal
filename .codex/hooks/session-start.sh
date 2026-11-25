@@ -1,14 +1,11 @@
 #!/bin/bash
-# Installs dependencies so a Claude Code on the web session can typecheck, lint,
-# test and build straight away. Local sessions install their own.
+# Codex session start: turn on the repository's git hooks (.githooks/pre-push keeps agents from
+# pushing to main or develop) and install dependencies when they are missing.
 set -euo pipefail
 
-if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
-  exit 0
+cd "$(dirname "$0")/../.."
+git config core.hooksPath .githooks
+
+if [ ! -d node_modules ]; then
+  npm install --no-audit --no-fund
 fi
-
-cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}"
-
-# npm install, not npm ci: the container image is cached after the hook, and a
-# warm node_modules makes the install a no-op on the next session.
-npm install --no-audit --no-fund

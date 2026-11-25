@@ -12,21 +12,23 @@ Three local MCP servers, wired into both Claude Code and Codex.
   console errors, network, performance traces and screenshots. The renderer is a canvas, so this
   is the only one of the three that can see what the game actually draws.
 
-Both servers run on your machine, next to Blender and Unity. Nothing in this repository runs them;
-`.mcp.json` at the repo root only tells Claude Code where to find them, and the Codex config lives
-in your home directory.
+All three servers run on your machine, next to Blender and Unity. Nothing in this repository runs
+them; `.mcp.json` at the repo root only tells Claude Code where to find Blender and Chrome DevTools,
+and the Codex config lives in your home directory. MCP for Unity is registered on each machine by
+Unity's own setup (section 2.2), not by a file in the repository: its address only answers where
+Unity is running.
 
 ---
 
 ## 0. Prerequisites
 
-| | |
-|---|---|
-| `uv` | Install with the official installer only, **not** `pip install uv`. Windows: `powershell -c "irm https://astral.sh/uv/install.ps1 \| iex"` |
-| Python | 3.10+ (uv can supply it) |
-| Blender | 3.0 or newer |
-| Unity | 2021.3 LTS through 6.x |
-| Git | on `PATH`, if you install the Unity package by git URL |
+|         |                                                                                                                                            |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `uv`    | Install with the official installer only, **not** `pip install uv`. Windows: `powershell -c "irm https://astral.sh/uv/install.ps1 \| iex"` |
+| Python  | 3.10+ (uv can supply it)                                                                                                                   |
+| Blender | 3.0 or newer                                                                                                                               |
+| Unity   | 2021.3 LTS through 6.x                                                                                                                     |
+| Git     | on `PATH`, if you install the Unity package by git URL                                                                                     |
 
 Restart (fully quit, not just close the window) any client after changing `PATH`.
 
@@ -80,11 +82,11 @@ In Blender's 3D viewport press `N` → **MCP for Blender** tab → **Start MCP S
 
 ### 1.4 Options
 
-| Variable | Default | Effect |
-|---|---|---|
-| `BLENDER_HOST` | `localhost` | Blender socket host |
-| `BLENDER_PORT` | `9876` | Blender socket port |
-| `BLENDER_MCP_SAFE_MODE` | off | `1` validates each script before it runs in Blender |
+| Variable                | Default     | Effect                                              |
+| ----------------------- | ----------- | --------------------------------------------------- |
+| `BLENDER_HOST`          | `localhost` | Blender socket host                                 |
+| `BLENDER_PORT`          | `9876`      | Blender socket port                                 |
+| `BLENDER_MCP_SAFE_MODE` | off         | `1` validates each script before it runs in Blender |
 
 The server can run arbitrary Python inside Blender by design — that is how it models. Set
 `BLENDER_MCP_SAFE_MODE=1` if you want file, subprocess and network access blocked; modelling,
@@ -106,6 +108,7 @@ Alternatives, if you would rather track upstream:
 ```text
 https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main
 ```
+
 (Package Manager → `+` → **Add package from git URL…**; pin a release with `#v10.0.0`), or
 `openupm add com.coplaydev.unity-mcp`.
 
@@ -128,7 +131,8 @@ Only needed if auto-configuration cannot run.
 claude mcp add --scope local --transport http UnityMCP http://127.0.0.1:8080/mcp
 ```
 
-This repo's `.mcp.json` already carries the same HTTP entry, so the project scope covers it too.
+No file in this repository carries this entry; `--scope local` keeps it in your own Claude Code
+config.
 
 **Codex**, HTTP — `~/.codex/config.toml`. The `features` flag is required: Codex needs its Rust MCP
 client for HTTP transport.
@@ -186,11 +190,13 @@ on screen — a sprite anchored wrong, a train drawn behind the terrain, a frame
 1. `uv --version` answers in a plain terminal.
 2. Blender: addon enabled, **Start MCP Server** clicked.
 3. Unity: **Window → MCP for Unity** status panel reads `Connected`.
-4. Claude Code: `/mcp` lists `blender`, `unityMCP` and `chrome-devtools` as connected.
-5. Codex: `codex mcp list` shows them enabled; restart Codex to pick up the tools.
-6. Smoke tests — Blender: *"list the objects in the current scene"*. Unity: *"create a cube at the
-   origin and add a Rigidbody"*. Chrome DevTools: `npm run dev`, then *"screenshot
-   http://localhost:5173 and show me the console"*.
+4. Claude Code: `/mcp` lists `blender` and `chrome-devtools` as connected, and `UnityMCP` once
+   section 2.2 or 2.3 has been done on this machine.
+5. Codex: `codex mcp list` shows `blender` and `chrome-devtools` enabled, and `unityMCP` once
+   section 2.2 or 2.3 has been done on this machine; restart Codex to pick up the tools.
+6. Smoke tests — Blender: _"list the objects in the current scene"_. Unity: _"create a cube at the
+   origin and add a Rigidbody"_. Chrome DevTools: `npm run dev`, then _"screenshot
+   http://localhost:5173 and show me the console"_.
 
 ---
 
@@ -221,7 +227,7 @@ Editor inherited. Install the package from disk instead.
 
 ## 6. Feeding Blender output into this game
 
-The renderer is 2D. Blender is useful here as a *sprite source*: build in 3D, render to flat
+The renderer is 2D. Blender is useful here as a _sprite source_: build in 3D, render to flat
 frames, pack them into an atlas the game already knows how to load.
 
 ### 6.1 Where the files go
@@ -263,6 +269,7 @@ The projection is 2:1 isometric, base tile 64×32 px (`src/engine/iso.ts`).
 
   e.g. 512 px render → `11.3137`. That makes one Blender unit project to exactly 64 px across and
   32 px down, matching `TILE_W`/`TILE_H`.
+
 - Height: one elevation step is `ELEV_PX = 10` screen px, which is **0.2552 Blender units** of `Z`
   at this camera.
 - Film: transparent background, no anti-aliased edges you do not want in a nearest-sampled atlas.
@@ -296,7 +303,10 @@ trimming cuts away, so you measure it once.
 3. Write the group's anchor once, in `art-src/<group>/atlas.json`:
 
    ```json
-   { "anchor": { "ax": 256, "ay": 336 }, "frames": { "rolling/loco_x_f6": { "ax": 250, "ay": 336 } } }
+   {
+     "anchor": { "ax": 256, "ay": 336 },
+     "frames": { "rolling/loco_x_f6": { "ax": 250, "ay": 336 } }
+   }
    ```
 
    `anchor` applies to every frame; `frames` overrides it by name for the odd one out. Add
@@ -311,8 +321,10 @@ trimming cuts away, so you measure it once.
    npm run pack-atlas -- wagons --prefix rolling/
    ```
 
-   It trims each frame to its drawn pixels, shifts the anchor to match, shelf-packs the sheet and
-   writes `public/assets/<group>.png` + `.json`. The `--prefix` flag exists because frame keys are
+   It trims each frame to its drawn pixels, shifts the anchor to match, runs the atlas cap pass
+   (`tools/atlas-cap.mjs`: alpha under 16 dropped and 250 and over made solid, nothing left at or
+   above the cursor white or as strong as the selection amber), shelf-packs the sheet and writes
+   `public/assets/<group>.png` + `.json`. The `--prefix` flag exists because frame keys are
    global: the `wagons` group supplies keys named `rolling/wagon_*`. `--no-trim`, `--max`, `--pad`,
    `--src` and `--out` are there too; `--help` is the usage line you get from a bad invocation.
 

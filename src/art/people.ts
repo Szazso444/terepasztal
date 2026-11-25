@@ -143,77 +143,6 @@ function roadStone(v: number): PixelBuf {
   return b;
 }
 
-// ---------------------------------------------------------------------------
-// Level crossings (overlay on a straight track tile)
-// ---------------------------------------------------------------------------
-
-const GAUGE = 0.16; // matches src/art/track.ts
-const STRIP = 0.2; // half-length of the strip along the track (~40% of the tile)
-
-/**
- * Strip across the rails. `rot` 0 = straight_0 (N-S, along tile y), 1 = straight_1 (E-W, along
- * tile x). `paint(across, along, x, y)` returns the surface colour; the rail heads are left
- * transparent with a dark groove beside each so the rails underneath show through.
- */
-function crossing(
-  rot: number,
-  paint: (c: number, a: number, x: number, y: number) => RGB,
-): PixelBuf {
-  const b = new PixelBuf(TILE_W, TILE_H);
-  for (let y = 0; y < TILE_H; y++)
-    for (let x = 0; x < TILE_W; x++) {
-      const { tx, ty } = toTile(x, y);
-      const along = rot === 0 ? ty : tx;
-      const across = rot === 0 ? tx : ty;
-      if (Math.abs(along) > STRIP || Math.abs(across) > 0.5) continue;
-      let groove = false;
-      let gap = false;
-      for (const g of [-GAUGE, GAUGE]) {
-        const d = across - g;
-        if (Math.abs(d) < 0.018) gap = true;
-        else if (d >= 0.018 && d < 0.048) groove = true;
-      }
-      if (gap) continue;
-      if (groove) {
-        b.set(x, y, PAL.sleeperDark);
-        continue;
-      }
-      let c = paint(across, along, x, y);
-      if (Math.abs(along) > STRIP - 0.025) c = shade(c, 0.8);
-      b.set(x, y, c);
-    }
-  return b;
-}
-
-/** Timber planks laid parallel to the rails. */
-function crossingDirt(rot: number): PixelBuf {
-  const plank = 0.075;
-  return crossing(rot, (c, _a, x, y) => {
-    const i = Math.floor((c + 0.5) / plank);
-    const f = (c + 0.5) / plank - i;
-    if (f < 0.14) return PAL.timber[2];
-    const base = PAL.timber[Math.floor(hash2(i, rot, 700) * 2)];
-    return shade(base, 0.9 + 0.2 * hash2(x, y, 701 + rot));
-  });
-}
-
-/** Flat grey stone slabs in staggered rows. */
-function crossingStone(rot: number): PixelBuf {
-  const sw = 0.125;
-  const sh = (STRIP * 2) / 3;
-  return crossing(rot, (c, a, x, y) => {
-    const j = Math.floor((a + STRIP) / sh);
-    const ox = j % 2 === 0 ? 0 : sw / 2;
-    const i = Math.floor((c + 0.5 + ox) / sw);
-    const fx = (c + 0.5 + ox) / sw - i;
-    const fy = (a + STRIP) / sh - j;
-    if (fx < 0.1 || fy < 0.12) return shade(PAL.stone[2], 0.7);
-    const base = PAL.stone[Math.min(2, Math.floor(hash2(i, j, 800 + rot) * 3))];
-    const lit = fx < 0.5 && fy < 0.5 ? 1.08 : 1;
-    return shade(base, lit * (0.95 + 0.1 * hash2(x, y, 801 + rot)));
-  });
-}
-
 export function generatePeopleAtlas(): AtlasImage {
   const ab = new AtlasBuilder();
   OUTFITS.forEach((o, k) => {
@@ -223,10 +152,6 @@ export function generatePeopleAtlas(): AtlasImage {
   for (let v = 0; v < 3; v++) {
     ab.add(`people/path_dirt_${v}`, pathDirt(v).toImageData(), HALF_W, HALF_H);
     ab.add(`people/road_stone_${v}`, roadStone(v).toImageData(), HALF_W, HALF_H);
-  }
-  for (let rot = 0; rot < 2; rot++) {
-    ab.add(`people/crossing_dirt_${rot}`, crossingDirt(rot).toImageData(), HALF_W, HALF_H);
-    ab.add(`people/crossing_stone_${rot}`, crossingStone(rot).toImageData(), HALF_W, HALF_H);
   }
   return ab.build(256);
 }

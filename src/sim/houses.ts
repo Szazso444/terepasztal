@@ -1,16 +1,29 @@
 import type { Builder, Decor, PlacementCheck } from './build';
-import { decorDef } from './build';
+import { decorDef, levelLocked } from './build';
 import type { Town, TownRegistry } from './towns';
-import type { Stockpile } from './stockpile';
-import { scaleCost } from './stockpile';
+import { scaleCost, type ResourceStore } from './stores';
 import type { Station } from './stations';
 import { content, type Cost } from '../data/content';
 import { rules, daySeconds } from './rules';
 import { STR } from '../strings';
 import { sfx } from '../engine/audio';
+import {
+  advanceWork,
+  startWork,
+  workFromJSON,
+  workProgress,
+  workToJSON,
+  type Upgraded,
+  type Work,
+  type WorkSite,
+} from './upgrade';
 
 /** Decor id of the townhouse (its tile, cost and toolbar slot stay with the decor system). */
 export const HOUSE_ID = 'townhouse';
+/** The highest level with a picture of its own (`townhouse_4`); the levels above draw that one. */
+export const HOUSE_TOP_PICTURE = 4;
+/** Houses belong to the first age: their levels open one per age from the Steam age. */
+const HOUSE_FIRST_AGE = 0;
 
 /** A townhouse: the decor piece on its tile plus the people in it and how far it is built. */
 export interface House {
@@ -25,6 +38,8 @@ export interface House {
   grow: number;
   /** in-game days spent at capacity (a full house grows a storey on its own) */
   full: number;
+  /** the upgrade under way, absent when none is: nobody moves in, the residents stay */
+  work?: Work;
 }
 export interface HouseJSON {
   x: number;
@@ -34,6 +49,8 @@ export interface HouseJSON {
   progress: number;
   grow?: number;
   full?: number;
+  /** v15: the upgrade under way, null for none */
+  work?: Work | null;
 }
 export interface HousesJSON {
   list: HouseJSON[];
@@ -62,9 +79,10 @@ export interface TownHousing {
 }
 
 /**
- * Houses grow residents while fed, up to their completed housing capacity. Construction and
- * upgrades are paid player actions. Townhouses remain the separate civic anchors. The decor
- * entry owns placement; this registry keeps construction and residential state.
+ * Houses grow residents while their town's store has food, up to their completed housing capacity.
+ * Construction and upgrades are paid player actions, an upgrade from the house's own town store.
+ * Townhouses remain the separate civic anchors. The decor entry owns placement; this registry keeps
+ * construction and residential state.
  */
 export class HouseRegistry {
   readonly houses = new Map<number, House>();
@@ -72,14 +90,15 @@ export class HouseRegistry {
   private visited = new Set<number>();
   /** game time after which a town that found no free tile may look again */
   private retryAt = new Map<number, number>();
-  /** sprite or panel refresh after a stage or level change */
+  /** sprite or panel refresh after a stage or level change, and when an upgrade starts */
   onChanged: ((h: House) => void) | null = null;
+  /** fired when an upgrade raises a house's level: at once, or when its work is done */
+  onUpgraded: ((e: Upgraded) => void) | null = null;
   onMessage: ((msg: string, kind: 'info' | 'warn' | 'good') => void) | null = null;
 
   constructor(
     private readonly builder: Builder,
     private readonly towns: TownRegistry,
-    private readonly stock: Stockpile,
   ) {}
 
   private key(x: number, y: number) {
@@ -102,11 +121,18 @@ export class HouseRegistry {
     if (!HouseRegistry.isHouse(d)) return;
     const k = this.key(d.x, d.y);
     if (removed) {
+      // a house pulled down during its upgrade is gone for good, and so is the work
+      const h = this.houses.get(k);
+      if (h) delete h.work;
       this.houses.delete(k);
       return;
     }
     if (!this.houses.has(k))
       this.houses.set(k, { x: d.x, y: d.y, level: 1, residents: 0, progress: 0, grow: 0, full: 0 });
+  }
+  /** A house back with its decor piece (an undo): `sync` then finds it standing, as it was. */
+  restore(h: House) {
+    this.houses.set(this.key(h.x, h.y), h);
   }
   /** Pre-built houses (a level's content) stand finished with their first residents. */
   finishAll() {
@@ -129,11 +155,12 @@ export class HouseRegistry {
     if (this.finished(h)) return 3;
     return Math.min(2, Math.floor(h.progress * 3)) as HouseStage;
   }
-  /** Atlas frame of a house at its current stage and level. */
+  /** Atlas frame of a house at its stage and level (above the highest picture, that one). */
   frame(h: House) {
     const s = this.stage(h);
     if (s < 3) return `structures/${HOUSE_ID}_s${s}`;
-    return h.level > 1 ? `structures/${HOUSE_ID}_${h.level}` : `structures/${HOUSE_ID}`;
+    const l = Math.min(h.level, HOUSE_TOP_PICTURE);
+    return l > 1 ? `structures/${HOUSE_ID}_${l}` : `structures/${HOUSE_ID}`;
   }
   /** Frame for any decor piece: houses by stage and level, everything else by id. */
   frameFor(d: Decor) {
@@ -148,13 +175,25 @@ export class HouseRegistry {
     for (const h of this.houses.values()) n += h.residents;
     return n;
   }
-  /** People only move in while there is food. */
-  foodOk() {
-    return this.stock.get('food') > 0 && !this.stock.famine;
+  /** The store of the town the house stands in, which feeds it. */
+  store(h: House): ResourceStore | null {
+    return this.builder.stores.townStore(h.x, h.y);
+  }
+  /**
+   * People only move in while their town's store has food and no famine. A house outside every town
+   * has no store to eat from: it eats nothing and starves never, but nobody moves in either.
+   */
+  foodOk(h: House) {
+    const s = this.store(h);
+    return !!s && s.get('food') > 0 && !s.famine;
+  }
+  /** A house being upgraded lets nobody in. */
+  open(h: House) {
+    return this.finished(h) && !h.work;
   }
   /** Days until the next resident arrives in a house (null when nobody is coming). */
   growthDaysLeft(h: House): number | null {
-    if (!this.finished(h) || h.residents >= this.capacity(h) || !this.foodOk()) return null;
+    if (!this.open(h) || h.residents >= this.capacity(h) || !this.foodOk(h)) return null;
     return Math.max(0, this.cfg.growthDays - h.grow);
   }
 
@@ -164,38 +203,62 @@ export class HouseRegistry {
     const c = this.cfg.upgradeCost[h.level - 1] ?? {};
     return this.builder.free ? {} : scaleCost(c, rules.buildCostMul);
   }
+  /**
+   * Whether the player may pay for the next level: built, opened by the age, affordable at the
+   * nearest store in reach that holds the whole cost (`Builder.affordable`, as for any building
+   * work), which the check names (`payer`).
+   */
   canUpgrade(h: House): PlacementCheck {
+    if (h.work) return { ok: false, cost: {}, reason: STR.build.upgradingNow };
     const cost = this.upgradeCost(h);
     if (!cost) return { ok: false, cost: {}, reason: STR.house.maxed };
     if (!this.finished(h)) return { ok: false, cost, reason: STR.house.building };
-    if (!this.builder.free && !this.stock.canAfford(cost)) {
-      const miss = this.stock.missing(cost);
-      return {
-        ok: false,
-        cost,
-        reason: STR.build.needResources(
-          Object.entries(miss)
-            .map(([k, v]) => `${v} ${k}`)
-            .join(', '),
-        ),
-      };
-    }
-    return { ok: true, cost };
+    if (this.builder.free) return { ok: true, cost };
+    const locked = levelLocked(HOUSE_FIRST_AGE, h.level + 1, this.builder.economy.tier);
+    if (locked) return { ok: false, cost, reason: locked };
+    return this.builder.affordable(cost, h.x, h.y);
   }
-  /** The player pays for a bigger house. */
+  /**
+   * The player pays for a bigger house from the store the check named, and the work starts: the
+   * level rises when its time is up (`tickWorks`), at once in the editor or when upgrades take no
+   * time.
+   */
   upgrade(h: House) {
+    if (this.at(h.x, h.y) !== h) return false;
     const c = this.canUpgrade(h);
     if (!c.ok) return false;
-    if (!this.builder.free && !this.stock.spend(c.cost)) return false;
-    this.levelUp(h);
+    if (!this.builder.pay(c, h.x, h.y)) return false;
+    sfx('station.upgrade');
+    const work = this.builder.free ? null : startWork(h.level + 1);
+    if (!work) {
+      this.levelUp(h);
+      return true;
+    }
+    h.work = work;
+    this.onChanged?.(h);
     return true;
   }
+  /** Advance every work under way by `gameDt` game seconds; a house whose work is done rises. */
+  tickWorks(gameDt: number) {
+    for (const h of [...this.houses.values()])
+      if (h.work && advanceWork(h.work, gameDt)) this.levelUp(h);
+  }
+  /** Every house being upgraded, with how far its work has come. */
+  works(): WorkSite[] {
+    const out: WorkSite[] = [];
+    for (const h of this.houses.values())
+      if (h.work) out.push({ x: h.x, y: h.y, w: 1, h: 1, progress: workProgress(h.work) });
+    return out;
+  }
   private levelUp(h: House) {
-    h.level++;
+    h.level = Math.min(this.maxLevel, h.level + 1);
     h.full = 0;
+    delete h.work;
+    // The toast and the notice (`Game.onUpgraded`) read the same words, so say the name once.
+    const name = decorDef(HOUSE_ID).name;
     this.onChanged?.(h);
-    sfx('station.upgrade');
-    this.onMessage?.(STR.house.upgraded(h.level), 'good');
+    this.onMessage?.(STR.upgrade.done(name, h.level), 'good');
+    this.onUpgraded?.({ kind: 'house', x: h.x, y: h.y, w: 1, h: 1, name, level: h.level });
   }
 
   // ------------------------------------------------------------------ towns
@@ -232,22 +295,22 @@ export class HouseRegistry {
       mul: this.spawnMul(t),
       cramped: false,
     };
-    const food = this.foodOk();
     for (const h of list) {
       out.capacity += this.capacity(h);
       out.residents += h.residents;
       if (this.finished(h)) {
         out.houses++;
-        if (food && h.residents < this.capacity(h)) out.growthPerDay += 1 / this.cfg.growthDays;
+        if (!h.work && h.residents < this.capacity(h) && this.foodOk(h))
+          out.growthPerDay += 1 / this.cfg.growthDays;
       } else out.building++;
     }
     out.spawnAt = Math.ceil(this.cfg.spawnAt * out.capacity);
     out.cramped = (this.retryAt.get(t.id) ?? 0) > 0;
     return out;
   }
-  /** Move `n` people into the town's finished houses that have room; returns how many fit. */
+  /** Move `n` people into the town's open houses that have room; returns how many fit. */
   private welcome(t: Town, n: number) {
-    const list = this.townHouses(t).filter((h) => this.finished(h));
+    const list = this.townHouses(t).filter((h) => this.open(h));
     let left = n;
     let guard = 0;
     while (left > 0 && guard++ < 1000) {
@@ -284,7 +347,6 @@ export class HouseRegistry {
   tick(gdt: number, now: number, spawn = true) {
     const cfg = this.cfg;
     const days = gdt / daySeconds();
-    const food = this.foodOk();
     for (const h of this.houses.values()) {
       if (!this.finished(h)) {
         const before = this.stage(h);
@@ -296,7 +358,10 @@ export class HouseRegistry {
         if (this.stage(h) !== before) this.onChanged?.(h);
         continue;
       }
+      // closed for its upgrade: the residents stay and nobody moves in
+      if (h.work) continue;
       const cap = this.capacity(h);
+      const food = this.foodOk(h);
       if (h.residents < cap) {
         h.full = 0;
         if (!food) continue;
@@ -330,6 +395,7 @@ export class HouseRegistry {
         progress: h.progress,
         grow: h.grow,
         full: h.full,
+        work: workToJSON(h.work),
       })),
       arrivals: this.arrivals.map((a) => [a.town, a.at]),
       visited: [...this.visited],
@@ -349,6 +415,10 @@ export class HouseRegistry {
       h.residents = Math.max(0, Math.min(this.capacity(h), Math.round(hj.residents) || 0));
       h.grow = hj.grow ?? 0;
       h.full = hj.full ?? 0;
+      // only a finished house is ever upgraded
+      const work = this.finished(h) ? workFromJSON(hj.work, h.level, this.maxLevel) : null;
+      if (work) h.work = work;
+      else delete h.work;
       this.onChanged?.(h);
     }
     this.arrivals = (j.arrivals ?? []).map(([town, at]) => ({ town, at }));
