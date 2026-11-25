@@ -4,7 +4,7 @@ Last updated: 2026-11-25 (cloud run 19:36Z).
 
 ## Lock
 
-none
+cloud run, started 2026-11-25 21:31Z
 
 ## Links
 
