@@ -1,0 +1,242 @@
+[
+  {
+    "file": "01-merchants-last-stop.png",
+    "resolution": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 809385,
+    "solid_bounds": [
+      184,
+      25,
+      1357,
+      973
+    ],
+    "solid_silhouette_unclipped": true,
+    "source_sha256": "3e0bd0fefe3796ffe9d3f94a2f84aa4aa6d2374c2efb464495289ac828ff2752"
+  },
+  {
+    "file": "02-overgrown-bathhouse.png",
+    "resolution": [
+      1254,
+      1254
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "transparent_pixels": 975063,
+    "solid_bounds": [
+      119,
+      172,
+      1139,
+      1038
+    ],
+    "solid_silhouette_unclipped": true,
+    "source_sha256": "16fed8dca73326c1ebddf26adbfc12a6d0134c61ed7424da55d0724a6b6a0bd8"
+  },
+  {
+    "file": "03-bellkeepers-refuge.png",
+    "resolution": [
+      1254,
+      1254
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "transparent_pixels": 1201817,
+    "solid_bounds": [
+      424,
+      5,
+      831,
+      1183
+    ],
+    "solid_silhouette_unclipped": true,
+    "source_sha256": "080e2e441beae261579891c3ba418bf3c58bb6ab81e0955d12a25578b132b2be"
+  },
+  {
+    "file": "04-flooded-archive.png",
+    "resolution": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 829914,
+    "solid_bounds": [
+      194,
+      49,
+      1349,
+      995
+    ],
+    "solid_silhouette_unclipped": true,
+    "source_sha256": "ee6ec3c2b6b68d9d7908c66693fd4531c77afc1f3dc6a1aef243bc035525d8f7"
+  },
+  {
+    "file": "05-rootbound-workshop.png",
+    "resolution": [
+      1254,
+      1254
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "transparent_pixels": 655080,
+    "solid_bounds": [
+      53,
+      33,
+      1230,
+      1212
+    ],
+    "solid_silhouette_unclipped": true,
+    "source_sha256": "fada5607f8a9c27597754212e5f4d87a312d7bcc0d407d3556cdda3e7a0bfb87"
+  },
+  {
+    "file": "06-cliffside-cable-station.png",
+    "resolution": [
+      1254,
+      1254
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "transparent_pixels": 854980,
+    "solid_bounds": [
+      132,
+      100,
+      1242,
+      1141
+    ],
+    "solid_silhouette_unclipped": true,
+    "source_sha256": "c177a516f4f019e4127fbaab8ef5aba85f7d365457a6ba527a767cc9515ff49b"
+  },
+  {
+    "file": "07-stormglass-observatory.png",
+    "resolution": [
+      1254,
+      1254
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "transparent_pixels": 946693,
+    "solid_bounds": [
+      300,
+      20,
+      992,
+      1204
+    ],
+    "solid_silhouette_unclipped": true,
+    "source_sha256": "a6c42b0e95f47211252e0293ebba96bad97ce3714e51f738407db8023979b0fb"
+  },
+  {
+    "file": "08-ashen-conservatory.png",
+    "resolution": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 985681,
+    "solid_bounds": [
+      245,
+      24,
+      1304,
+      971
+    ],
+    "solid_silhouette_unclipped": true,
+    "source_sha256": "764d1463d7675b9b495fde658204ff4d6440a71dcaac6887d96a16e9e8305bfc"
+  },
+  {
+    "file": "09-inverted-manor.png",
+    "resolution": [
+      1254,
+      1254
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "transparent_pixels": 949000,
+    "solid_bounds": [
+      180,
+      105,
+      1080,
+      1159
+    ],
+    "solid_silhouette_unclipped": true,
+    "source_sha256": "0d2be78f7941e75ab9fe826b50e509096d7502993a89df05359138d970f6fee9"
+  },
+  {
+    "file": "10-sleeping-foundry.png",
+    "resolution": [
+      1254,
+      1254
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "transparent_pixels": 769959,
+    "solid_bounds": [
+      66,
+      41,
+      1224,
+      1145
+    ],
+    "solid_silhouette_unclipped": true,
+    "source_sha256": "42ed57d96f44f93f08cfbb9c1da779b14fc3e829fd98f8a13694bf26aeb2b9cf"
+  },
+  {
+    "file": "11-moonwell-pavilion.png",
+    "resolution": [
+      1254,
+      1254
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "transparent_pixels": 957446,
+    "solid_bounds": [
+      177,
+      41,
+      1078,
+      1177
+    ],
+    "solid_silhouette_unclipped": true,
+    "source_sha256": "244f1db5bbe798b1a44b554364a2910c15484c0b7e43a9e8e7d5bb2fd7fabdd1"
+  },
+  {
+    "file": "12-house-between-seasons.png",
+    "resolution": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "transparent_pixels": 705783,
+    "solid_bounds": [
+      98,
+      27,
+      1446,
+      1001
+    ],
+    "solid_silhouette_unclipped": true,
+    "source_sha256": "5d8cca11d99ac79789a88bcdb254241958ecdee4f84e66131d2c646e41399db2"
+  }
+]

@@ -1,4 +1,3 @@
-import { locoFrame, wagonFrame } from '../art/frames';
 import type { AtlasRegistry } from '../engine/atlas';
 import type { Builder } from '../sim/build';
 import { cargoName } from '../sim/cargo';
@@ -9,12 +8,13 @@ import type { Train } from '../sim/trains';
 import { STR } from '../strings';
 import { buildIcon } from './buildIcons';
 import { btn, el } from './dom';
+import { vehicleArt } from './economyParts';
 import { sectionHeader } from './kit';
 import { vehicleLabels } from './labels';
 import { classBadge } from './lineBadge';
 import { renameField } from './renameField';
 import { TrainStops } from './scheduleEditor';
-import { frameForItem, spriteImg } from './spritePreview';
+import { spriteImg } from './spritePreview';
 import { ttDim, ttLabel } from './tooltip';
 import { emergencyRefuel } from './trainScreen';
 import {
@@ -354,30 +354,15 @@ export class TrainPanel {
   private drawConsist(t: Train) {
     const P = STR.trainPanel;
     const a = this.h.atlas;
-    const car = (frame: string, title: string, cargo: string | null) => {
+    const car = (defId: string, title: string, cargo: string | null) => {
       const c = el('span', { class: 'tp-car', title });
-      c.append(spriteImg(a, frame, 1, 'sprite-preview'));
+      c.append(vehicleArt(a, defId, 1));
       if (cargo) c.append(this.icon(cargo));
       return c;
     };
     const strip = el('div', { class: 'tp-strip' });
-    // a body whose wheels are a layer of their own shows them only in the composed picture
-    for (const l of t.locos)
-      strip.append(
-        car(
-          l.def.wheels?.body?.layer ? frameForItem(l.def.id, 3) : locoFrame(a, l.def, 3),
-          l.def.name,
-          null,
-        ),
-      );
-    for (const w of t.wagons)
-      strip.append(
-        car(
-          w.def.wheels?.body?.layer ? frameForItem(w.def.id, 0) : wagonFrame(a, w.def, 0),
-          w.def.name,
-          w.cargo,
-        ),
-      );
+    for (const l of t.locos) strip.append(car(l.def.id, l.def.name, null));
+    for (const w of t.wagons) strip.append(car(w.def.id, w.def.name, w.cargo));
     if (!t.wagons.length) strip.append(el('span', { class: 'tp-none', text: P.noWagons }));
     const ph = t.physics;
     const out: HTMLElement[] = [strip, this.section(P.engine)];

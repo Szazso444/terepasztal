@@ -32,7 +32,8 @@ describe('the data sheet of a vehicle', () => {
     expect(LOCOS.length).toBeGreaterThan(0);
     expect(WAGONS.length).toBeGreaterThan(0);
     const plans = new Set(vehicles.map((d) => vehicleSpec(d).plan));
-    expect([...plans].sort()).toEqual(['garratt', 'meyer', 'rigid', 'tender']);
+    // a rendered model's plan is read off its gear: none ships as a one-frame Meyer any more
+    expect([...plans].sort()).toEqual(['garratt', 'rigid', 'tender']);
   });
 
   it('shows no stored size, body plan, type, cargo class or cargo id, and no empty line', () => {

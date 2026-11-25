@@ -16,6 +16,7 @@ import {
 } from './body';
 import { referencePath } from './compat';
 import type { Gear } from './gear';
+import { content } from '../data/content';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 
@@ -242,11 +243,25 @@ describe('a body pinned on its trucks', () => {
     truckSprites: { body: [0, 1] },
   });
   const loose = vehicleSpec({ gear, lengthTiles: 3 });
-  const path = referencePath('main');
+  const path = referencePath('branch');
 
   it('is marked so only when the model brings its own trucks', () => {
     expect(pinned.segments.every((s: SegmentSpec) => s.pinned)).toBe(true);
     expect(loose.segments.some((s: SegmentSpec) => s.pinned)).toBe(false);
+  });
+
+  it('keeps each truck exactly under its socket through the curve', () => {
+    let worstPinned = 0;
+    let worstLoose = 0;
+    for (let front = 3.5; front <= path.length - 0.5; front += 0.1) {
+      for (const b of poseVehicle(path, front, pinned).segments[0].bogies)
+        worstPinned = Math.max(worstPinned, b.foreAft, b.lateral);
+      for (const b of poseVehicle(path, front, loose).segments[0].bogies)
+        worstLoose = Math.max(worstLoose, b.foreAft, b.lateral);
+    }
+    expect(worstPinned).toBeLessThan(0.005);
+    // the same body centred on the track instead slides its trucks visibly
+    expect(worstLoose).toBeGreaterThan(0.08);
   });
 
   it('stands where it stood before on straight track', () => {
@@ -284,7 +299,7 @@ describe('a boiler on two engine units', () => {
     spriteGear: true,
     truckSprites: { engine: [0, 1], tender: [0] },
   });
-  const path = referencePath('main');
+  const path = referencePath('branch');
   const engine = (front: number) =>
     poseVehicle(path, front, spec).segments.find((g) => g.part === 'engine')!;
 
@@ -293,6 +308,35 @@ describe('a boiler on two engine units', () => {
     for (let front = L + 0.2; front <= path.length - 0.3; front += 0.1)
       for (const b of engine(front).bogies) worst = Math.max(worst, b.foreAft, b.lateral);
     expect(worst).toBeLessThan(0.005);
+  });
+
+  it('stands a long unit as a chord: no axle of it far from the rail', () => {
+    let worst = 0;
+    for (let front = L + 0.2; front <= path.length - 0.3; front += 0.1)
+      for (const b of engine(front).bogies) {
+        const axles = units[b.truck!],
+          mid = axles.reduce((p, q) => p + q, 0) / axles.length;
+        for (const f of axles) {
+          // the axle's place: so far ahead of the unit's middle along the unit
+          const d = (f - mid) * L,
+            x = b.x + Math.cos(b.angle) * d,
+            y = b.y + Math.sin(b.angle) * d,
+            n = path.nearest({ x, y }, front - 2, 3.5).p;
+          worst = Math.max(worst, Math.hypot(n.x - x, n.y - y));
+        }
+      }
+    // a tangent at the front unit's middle would leave its pilot wheels 0.14 tiles wide
+    expect(worst).toBeLessThan(0.08);
+    expect(worst).toBeGreaterThan(0.02);
+  });
+
+  it('is in line with its units on straight track', () => {
+    const e = engine(3.9);
+    expect(e.angle).toBeCloseTo(0, 9);
+    for (const b of e.bogies) {
+      expect(Math.max(b.foreAft, b.lateral)).toBeLessThan(1e-9);
+      expect(b.angle).toBeCloseTo(0, 9);
+    }
   });
 });
 
@@ -317,7 +361,7 @@ describe('a hinged half', () => {
     spriteGear: true,
     truckSprites: { rear: [0], body: [0, 1] },
   });
-  const path = referencePath('main');
+  const path = referencePath('branch');
 
   it('keeps the hinged half on its truck socket in both travel directions', () => {
     for (const reversed of [false, true]) {
@@ -394,7 +438,7 @@ describe('two halves on one truck each', () => {
     spriteGear: true,
     truckSprites: { rear: [0], body: [0] },
   });
-  const path = referencePath('main');
+  const path = referencePath('branch');
   const ends = (s: { x: number; y: number; angle: number; L: number }, k: number) => ({
     x: s.x + (k * Math.cos(s.angle) * s.L) / 2,
     y: s.y + (k * Math.sin(s.angle) * s.L) / 2,
@@ -501,7 +545,7 @@ describe('a pinned steam engine', () => {
     spriteGear: true,
     truckSprites: { engine: [0, 1] },
   });
-  const path = referencePath('main');
+  const path = referencePath('branch');
 
   it('keeps every wheel group near the body: none runs far beside its place', () => {
     let truck = 0;
@@ -515,5 +559,135 @@ describe('a pinned steam engine', () => {
     expect(truck).toBeLessThan(0.12);
     // the drivers share the misfit: a tenth of a tile off the rail at most
     expect(wheels).toBeLessThan(0.1);
+  });
+});
+
+describe('the Mallard', () => {
+  it('lists its drivers without its trailing axle', () => {
+    const def = content.locomotives.find((d) => d.id === 'mallard')!;
+    const engine = vehicleSpec(def).segments.find((s) => s.part === 'engine')!;
+    expect(engine.rigid).toHaveLength(4);
+    expect(engine.drivers).toHaveLength(3);
+  });
+});
+
+describe('an engine coupled to its tender', () => {
+  // a Black Five as its model draws it: three drivers and a leading bogie, a tender on three axles,
+  // the cab hanging 0.6 tile behind the last driver
+  const gear: Gear = {
+    parts: [
+      { part: 'tender', from: 0, to: 0.33884, rigid: [0.10711, 0.20571, 0.31584] },
+      {
+        part: 'engine',
+        from: 0.36745,
+        to: 1,
+        rigid: [0.55335, 0.65212, 0.75153],
+        trucks: [[0.84364, 0.92926]],
+      },
+    ],
+  };
+  const L = 3.1115;
+  const spec = vehicleSpec({
+    gear,
+    lengthTiles: L,
+    spriteGear: true,
+    truckSprites: { engine: [0] },
+  });
+  const straightGap = (0.36745 - 0.33884) * L;
+  const path = referencePath('branch');
+  /** distance between the engine's rear end and the tender's front end (as the engine runs) */
+  const gap = (front: number, reversed: boolean) => {
+    const v = poseVehicle(path, front, spec, reversed);
+    const e = v.segments.find((s) => s.part === 'engine')!,
+      t = v.segments.find((s) => s.part === 'tender')!;
+    const k = reversed ? -1 : 1;
+    return {
+      v,
+      d: Math.hypot(
+        e.x - (k * Math.cos(e.angle) * e.L) / 2 - (t.x + (k * Math.cos(t.angle) * t.L) / 2),
+        e.y - (k * Math.sin(e.angle) * e.L) / 2 - (t.y + (k * Math.sin(t.angle) * t.L) / 2),
+      ),
+    };
+  };
+
+  it('keeps the tender at the engine through the curve, in both directions', () => {
+    for (const reversed of [false, true]) {
+      let lo = Infinity;
+      let hi = 0;
+      for (let front = L + 0.2; front <= path.length - 0.3; front += 0.05) {
+        const { d } = gap(front, reversed);
+        lo = Math.min(lo, d);
+        hi = Math.max(hi, d);
+      }
+      // posed apart on their own arcs the two drifted 0.40 tile apart here
+      expect(hi).toBeLessThan(straightGap + 0.01);
+      expect(lo).toBeGreaterThan(straightGap - 0.01);
+    }
+  });
+
+  it('shares the misfit: no wheel group far from the rail', () => {
+    let worst = 0;
+    for (let front = L + 0.2; front <= path.length - 0.3; front += 0.05)
+      for (const s of gap(front, false).v.segments) {
+        worst = Math.max(worst, s.wheelGap);
+        for (const b of s.bogies) worst = Math.max(worst, b.lateral, b.foreAft);
+      }
+    expect(worst).toBeLessThan(0.1);
+  });
+
+  it('changes nothing on straight track', () => {
+    const { v, d } = gap(L + 0.5, false);
+    expect(d).toBeCloseTo(straightGap, 9);
+    for (const s of v.segments) {
+      expect(s.angle).toBeCloseTo(0, 9);
+      expect(s.y).toBeCloseTo(0, 9);
+    }
+  });
+
+  it('turns smoothly: the coupled pose never jumps between neighbouring positions', () => {
+    let prev: number[] | null = null;
+    let worst = 0;
+    for (let front = L + 0.2; front <= path.length - 0.3; front += 0.01) {
+      const angles = gap(front, false).v.segments.map((s) => s.angle);
+      if (prev) angles.forEach((a, i) => (worst = Math.max(worst, Math.abs(a - prev![i]))));
+      prev = angles;
+    }
+    // a hundredth of a tile on a 1.5 tile radius turns the track 0.38 degrees
+    expect((worst * 180) / Math.PI).toBeLessThan(0.6);
+  });
+});
+
+describe('a short truck', () => {
+  const gear: Gear = {
+    parts: [
+      {
+        part: 'body',
+        from: 0,
+        to: 1,
+        trucks: [
+          [0.1, 0.2],
+          [0.8, 0.9],
+        ],
+      },
+    ],
+  };
+  const spec = vehicleSpec({
+    gear,
+    lengthTiles: 2.6,
+    spriteGear: true,
+    truckSprites: { body: [0, 1] },
+  });
+  const path = referencePath('branch');
+
+  it('starts turning as its leading axle meets the curve, not all at once', () => {
+    // turning per step and its change from one step to the next, for the leading truck
+    const step = 0.01;
+    const angles: number[] = [];
+    for (let front = 3.8; front <= 5.2; front += step)
+      angles.push(poseVehicle(path, front, spec).segments[0].bogies[0].angle);
+    const rate = angles.slice(1).map((a, i) => a - angles[i]);
+    const jolt = Math.max(...rate.slice(1).map((r, i) => Math.abs(r - rate[i])));
+    // following the tangent at its middle, it went from not turning to full turning in a step or two
+    expect(jolt).toBeLessThan(0.25 * Math.max(...rate.map(Math.abs)));
   });
 });

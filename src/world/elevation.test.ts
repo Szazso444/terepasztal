@@ -20,7 +20,7 @@ describe('tile elevation', () => {
       for (let x = 0; x < map.w; x++) {
         const k = y * map.w + x,
           t = map.terrain[k];
-        if (t === Terrain.Hill || t === Terrain.Mountain) raised++;
+        if (t === Terrain.Hill || t === Terrain.Mountain || t === Terrain.Ice) raised++;
         else if (t !== Terrain.Water) expect(levels[k]).toBe(0);
         expect(levels[k]).toBeLessThanOrEqual(MAX_LEVEL);
         if (x) expect(Math.abs(levels[k] - levels[k - 1])).toBeLessThanOrEqual(1);
