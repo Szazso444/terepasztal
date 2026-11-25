@@ -378,8 +378,9 @@ describe('bridges, reversing and refuelling', () => {
       const t = train(id),
         pl = referencePath('branch', 0.01);
       const points: number[][] = [];
-      for (let arc = 0; arc <= 6.4; arc += 0.01) {
-        const p = pl.at(arc);
+      // straight track behind the curve's lead-in, as far as the longest engine reaches
+      for (let arc = -2; arc <= 6.4; arc += 0.01) {
+        const p = arc < 0 ? { x: arc, y: 0 } : pl.at(arc);
         points.push([p.x, p.y, 0, 0, Dir.W, Dir.E]);
       }
       t.restoreTrail(points, false);

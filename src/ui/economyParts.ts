@@ -6,8 +6,8 @@
 import type { AtlasRegistry } from '../engine/atlas';
 import { el } from './dom';
 import { meter } from './kit';
-import { portraitImg } from './rosterPortraits';
-import { frameForItem, spriteImg } from './spritePreview';
+import { portraitImg, vehiclePicture } from './rosterPortraits';
+import { spriteImg } from './spritePreview';
 
 type Content = Node | string | null | undefined;
 
@@ -23,12 +23,15 @@ export function resIcon(atlas: AtlasRegistry, id: string): HTMLElement {
   return spriteImg(atlas, `icons/${id}`, 1, 'sprite-preview ec-res');
 }
 
-/** The picture of a model: its portrait where it has one, the atlas sprite otherwise. */
+/**
+ * The picture of a model, the one every list shows: its portrait where it has one, the atlas sprite
+ * otherwise. It fills the slot it stands in.
+ */
 export function vehicleArt(atlas: AtlasRegistry, defId: string, scale = 2): HTMLElement {
-  return (
-    portraitImg(defId, 'ec-portrait') ??
-    spriteImg(atlas, frameForItem(defId), scale, 'sprite-preview ec-sprite')
-  );
+  const p = vehiclePicture(defId);
+  return 'portrait' in p
+    ? portraitImg(p.portrait, 'ec-portrait')
+    : spriteImg(atlas, p.frame, scale, 'sprite-preview ec-sprite');
 }
 
 /** A kit meter whose value and fill are set again as the numbers change, without a rebuild. */
