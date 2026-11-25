@@ -1,10 +1,10 @@
 # Supervisor state
 
-Last updated: 2026-11-25 (cloud run 13:38Z).
+Last updated: 2026-11-25 (cloud run 19:36Z).
 
 ## Lock
 
-cloud run, started 2026-11-25 19:36Z
+none
 
 ## Links
 
@@ -25,6 +25,18 @@ cloud run, started 2026-11-25 19:36Z
 
 ## For the local run
 
+**Save version collision (2026-11-25 19:36Z run):** three open stacks each bump `SAVE_VERSION`
+24 -> 25 with a `from: 24` step: track wear #647, fuel #692, landmarks #711. Whichever merges
+first keeps v25; each later one must renumber to the next version (step `from` the previous one,
+test renamed) before it merges. Track wear #647/#693 and fuel #690-#692 also carry QA approve
+comments now; #691's criterion "hint names water, coal and diesel" was not found by QA: check by eye.
+
+QA verdicts posted this run (all approve, render check still yours): #702 (develop merged in,
+`d509b5d`), #690 #691 #692, #647 #693 (develop merged into both, `26d0016` / `ef26fdf`).
+#685 now targets `art/653-nature-packed` (#683, develop merged in, check and scope green); its own
+diff is 8 files, still with `src/world/mapgen.test.ts` (needs your `gate:approved`). After #683
+merges, retarget #685 to develop.
+
 Cloud run 2026-11-25 left these green on `check` and `scope` (or with `scope:cross` just added
 and the check re-running): each needs only the render check before merging.
 
@@ -35,8 +47,8 @@ and the check re-running): each needs only the render check before merging.
   https://claude.ai/artifact/TvgwxsHMvu3hH826NLsQ46. Merge bottom first.
 - Fuel stack #690 -> #692 and Maglev #606: see In progress.
 - Weather/nature: #650 (trees sway) is the base of #652, #658, #659, #673 and #684; #683 (nature
-  atlas) is the base of #685. `scope:cross` added to #650 #652 #658 #659 #673 #684 (only
-  wiring lines in `src/game.ts`). #685 still fails scope (192 files of other roles): look first.
+  atlas) is the base of #685 (retargeted onto it 2026-11-25). `scope:cross` added to #650 #652
+  #658 #659 #673 #684 (only wiring lines in `src/game.ts`).
 - #702 night flicker: clean, green.
 - People #694, #695: develop merged in, the old ageTooltip failure is gone (check re-running).
 - Track wear #647 (`scope:cross` added) and #693 on it (a timeout fix pushed for the six-train
@@ -111,4 +123,5 @@ Standing preferences as of 2026-11-24. The author's newer word in #707 overrides
 
 ## Ideas
 
-None yet. Format: idea, why it fits, size, status.
+None yet. Decided 2026-11-25 19:36Z: no new feature work while ~40 pull requests wait on a
+render check; cloud runs clear the queue (QA, develop merges, conflicts) instead. Format: idea, why it fits, size, status.
