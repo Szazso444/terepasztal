@@ -2,8 +2,9 @@
  * Which parts each tile of a textured bridge draws (bridgeMeshes.ts builds them). Pure: no Pixi,
  * so it runs under Node.
  *
- * Every deck covers its whole tile, so decks of neighbouring bridge tiles always meet at the tile
- * seam. Two bridge tiles that share an edge merge into one bridge when they are of one material,
+ * A deck covers its whole tile, so decks of neighbouring bridge tiles always meet at the tile seam.
+ * Under narrow gauge it pulls in on its free edges (`ACROSS`, `NARROW`) and still meets its
+ * neighbours at the seam and the bank at its ends. Two bridge tiles that share an edge merge into one bridge when they are of one material,
  * their decks meet at the same height all along the edge and, when both are spans (straight rail
  * or a road), they run the same way: parallel lines on adjacent bridge tiles make one wide
  * bridge. A merged edge has no parapet, and the supports under it are shared: one pier wall, post
@@ -45,6 +46,8 @@ export interface BridgeSite {
   open?: readonly boolean[];
   /** Raised by the player above the ground or water: a viaduct's tall supports stand under it. */
   raised?: boolean;
+  /** It carries narrow gauge only: its free edges pull in (`NARROW`). */
+  narrow?: boolean;
 }
 
 /** Per edge, in iso Dir order (N -y, E +x, S +y, W -x): it meets a bridge tile it merges with. */
@@ -144,7 +147,7 @@ export interface Rect {
   y1: number;
 }
 export interface BridgePlan {
-  /** The deck slab: always the whole tile. */
+  /** The deck slab: the whole tile, less what a narrow deck pulls in on its free edges. */
   deck: Rect;
   /** Low walls on the deck's free edges; `near` ones (the +x and +y sides) draw over trains. */
   parapets: (Rect & { near: boolean })[];
@@ -172,7 +175,12 @@ export const ACROSS = {
   support: { pier: 0.38, trestle: 0.38, arch: 0.44 },
 } as const;
 export const PARAPET = ACROSS.parapet;
-const SUPPORT = ACROSS.support;
+/** The same under narrow gauge: a bridge is as wide as its track. */
+export const NARROW = {
+  deck: 0.3,
+  parapet: 0.24,
+  support: { pier: 0.2, trestle: 0.2, arch: 0.24 },
+} as const;
 /** Along offset and half thickness of the stone piers under a span over land. */
 export const PIER_AT = 0.38;
 const PIER_HALF = 0.07;
@@ -212,29 +220,38 @@ function spanRect(axis: 0 | 1, l0: number, l1: number, w0: number, w1: number): 
  * raised stone span stands on arched walls over land too: a viaduct.
  */
 export function bridgePlan(site: BridgeSite, joins: Joins, water: boolean): BridgePlan {
-  const half = ACROSS.deck,
-    deck = { x0: -half, x1: half, y0: -half, y1: half },
-    stone = site.material === 'stone',
+  const stone = site.material === 'stone',
+    across = site.narrow ? NARROW : ACROSS,
+    // A deck reaches the seam along its span and where it merges or, as a pad, where rail leaves.
+    edge = (d: number, along: boolean) =>
+      along || joins[d] || (site.axis === null && site.open?.[d]) ? 0.5 : across.deck,
+    deck: Rect = {
+      x0: -edge(W, site.axis === 1),
+      x1: edge(E, site.axis === 1),
+      y0: -edge(N, site.axis === 0),
+      y1: edge(S, site.axis === 0),
+    },
     abutment = (d: number) => water && !joins[d] && !!site.open?.[d],
     abutments = { e: abutment(E), s: abutment(S) };
-  if (site.axis === null) return padPlan(site, joins, deck, stone, abutments);
+  if (site.axis === null) return padPlan(site, joins, deck, stone, abutments, across);
   const axis = site.axis,
     // The span's far and near sides: -y and +y along x, -x and +x along y.
     [far, near] = axis === 1 ? [N, S] : [W, E],
     plan: BridgePlan = { deck, parapets: [], piers: [], trestles: [], arches: [], abutments };
-  if (!joins[far])
-    plan.parapets.push({ ...spanRect(axis, -0.5, 0.5, -0.5, -PARAPET), near: false });
-  if (!joins[near]) plan.parapets.push({ ...spanRect(axis, -0.5, 0.5, PARAPET, 0.5), near: true });
+  const side = across.deck,
+    wall = across.parapet;
+  if (!joins[far]) plan.parapets.push({ ...spanRect(axis, -0.5, 0.5, -side, -wall), near: false });
+  if (!joins[near]) plan.parapets.push({ ...spanRect(axis, -0.5, 0.5, wall, side), near: true });
   // Support lines across the span: the outer ones of a lone bridge, and one under each merged
   // seam, owned by the tile on its far side so it is drawn once.
   const lines = (outer: number) => [...(joins[far] ? [] : [-outer]), joins[near] ? 0.5 : outer];
   if (!water && stone && !site.raised) {
-    const w0 = joins[far] ? -0.5 : -SUPPORT.pier,
-      w1 = joins[near] ? 0.5 : SUPPORT.pier;
+    const w0 = joins[far] ? -0.5 : -across.support.pier,
+      w1 = joins[near] ? 0.5 : across.support.pier;
     for (const l of [-PIER_AT, PIER_AT])
       plan.piers.push(spanRect(axis, l - PIER_HALF, l + PIER_HALF, w0, w1));
-  } else if (stone) plan.arches = lines(SUPPORT.arch);
-  else plan.trestles = lines(SUPPORT.trestle);
+  } else if (stone) plan.arches = lines(across.support.arch);
+  else plan.trestles = lines(across.support.trestle);
   return plan;
 }
 
@@ -249,24 +266,26 @@ function padPlan(
   deck: Rect,
   stone: boolean,
   abutments: BridgePlan['abutments'],
+  across: typeof ACROSS | typeof NARROW,
 ): BridgePlan {
   const open = site.open ?? [false, false, false, false],
     walls = [0, 1, 2, 3].map((d) => !joins[d] && !open[d]),
     parapets: BridgePlan['parapets'] = [];
   // Walls along x run the whole edge; walls along y stop where they meet one.
-  if (walls[N]) parapets.push({ x0: -0.5, x1: 0.5, y0: -0.5, y1: -PARAPET, near: false });
-  if (walls[S]) parapets.push({ x0: -0.5, x1: 0.5, y0: PARAPET, y1: 0.5, near: true });
-  const y0 = walls[N] ? -PARAPET : -0.5,
-    y1 = walls[S] ? PARAPET : 0.5;
-  if (walls[W]) parapets.push({ x0: -0.5, x1: -PARAPET, y0, y1, near: false });
-  if (walls[E]) parapets.push({ x0: PARAPET, x1: 0.5, y0, y1, near: true });
+  const inner = across.parapet;
+  if (walls[N]) parapets.push({ x0: deck.x0, x1: deck.x1, y0: deck.y0, y1: -inner, near: false });
+  if (walls[S]) parapets.push({ x0: deck.x0, x1: deck.x1, y0: inner, y1: deck.y1, near: true });
+  const y0 = walls[N] ? -inner : deck.y0,
+    y1 = walls[S] ? inner : deck.y1;
+  if (walls[W]) parapets.push({ x0: deck.x0, x1: -inner, y0, y1, near: false });
+  if (walls[E]) parapets.push({ x0: inner, x1: deck.x1, y0, y1, near: true });
   const piers: Rect[] = [],
     h = PAD_PIER[stone ? 'stone' : 'wood'];
   for (const sx of [-1, 1])
     for (const sy of [-1, 1]) {
       if ((sx < 0 && joins[W]) || (sy < 0 && joins[N])) continue;
-      const cx = sx > 0 && joins[E] ? 0.5 : sx * SUPPORT.pier,
-        cy = sy > 0 && joins[S] ? 0.5 : sy * SUPPORT.pier;
+      const cx = sx > 0 && joins[E] ? 0.5 : sx * across.support.pier,
+        cy = sy > 0 && joins[S] ? 0.5 : sy * across.support.pier;
       piers.push({ x0: cx - h, x1: cx + h, y0: cy - h, y1: cy + h });
     }
   return { deck, parapets, piers, trestles: [], arches: [], abutments };
