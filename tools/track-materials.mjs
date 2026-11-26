@@ -16,7 +16,7 @@ import path from 'node:path';
 import { PNG } from 'pngjs';
 import { isMain } from './is-main.mjs';
 
-const LINES = ['narrow', 'branch', 'main', 'trunk'];
+const LINES = ['narrow', 'branch', 'main', 'trunk', 'maglev'];
 /** Files each line may have; the strips repeat along the track. */
 const STRIPS = ['bed', 'edge'];
 const SINGLES = ['sleeper', 'tufts', 'post'];

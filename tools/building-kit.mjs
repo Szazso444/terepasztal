@@ -139,7 +139,12 @@ export function loadInventory(root = '.') {
     out.push({ ...f, lastAge: last, ages: last - f.firstAge + 1, order: out.length });
   };
   const footprint = (d) => (d.long ? 't1x2' : (d.size ?? 1) > 1 ? 't2x2' : 't1');
-  for (const d of data('stations.json').defs)
+  // a station that wears another's art (the Maglev Depot in the Narrow Depot's) is no family of
+  // its own: its pictures are the ones that family already has
+  const seen = new Set();
+  for (const d of data('stations.json').defs) {
+    if (seen.has(d.art)) continue;
+    seen.add(d.art);
     add({
       family: d.art,
       id: d.id,
@@ -150,6 +155,7 @@ export function loadInventory(root = '.') {
       lastTier: d.lastTier,
       upgradeable: true,
     });
+  }
   // the full-chain mines share the quarry's picture in the game today; each gets its own
   for (const d of data('stations_full.json'))
     add({

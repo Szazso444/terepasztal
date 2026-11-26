@@ -187,7 +187,13 @@ describe('what the pages say is what the game does', () => {
 
   it('lists every line with pieces to build, and none without', () => {
     const lines = blocksOf(page('track'), 'table')[0].rows.map((r) => plain(r[0]));
-    expect(lines).toEqual(['Narrow Gauge', 'Branch Line', 'Main Line', 'Trunk Line']);
+    expect(lines).toEqual([
+      'Narrow Gauge',
+      'Branch Line',
+      'Main Line',
+      'Trunk Line',
+      'Maglev Guideway',
+    ]);
     rules.narrowUnlocked = 0;
     expect(blocksOf(page('track'), 'table')[0].rows.map((r) => plain(r[0]))).not.toContain(
       'Narrow Gauge',

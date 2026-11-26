@@ -92,6 +92,9 @@ export const HU_NAMES = {
     },
     ice1: { era: '1991, Németország első nagysebességű szerelvénye. Többáramnemű motorkocsi.' },
     mk48: { era: 'Magyar keskeny nyomtávú dízel-hidraulikus mozdony.' },
+    transrapid: {
+      era: '2004, Sanghaj. Se kerék, se felsővezeték: a pályáján lebeg, és 431 km/h-val száguld.',
+    },
     mk45: { era: '1958, dízel-hidraulikus mozdony Magyarország gyermek- és erdei vasútjaira.' },
     nklj_aeg: {
       era: '1921, AEG rudazatos villamos mozdony a svéd 891 mm-es Nordmark-Klarälven vonalra. Kicsi, de húzza az ércet.',
@@ -119,6 +122,10 @@ export const HU_NAMES = {
     },
   },
   wagons: {
+    transrapid_car: {
+      name: 'Transrapid kocsi',
+      era: 'Hosszú, csendes szalonkocsi, amely sosem érinti a pályát.',
+    },
     water_cart: { name: 'Fa vizeskocsi', era: 'Hordó egy kereten. Csöpög, de gurul.' },
     wood_hopper: {
       name: 'Fa garatos kocsi',
@@ -243,6 +250,11 @@ export const HU_NAMES = {
       name: 'Keskeny pályaudvar',
       flavor:
         'Keskeny nyomtávú pályaudvar, egy átmenő vágánnyal. Keskeny vonatokat épít és tankol, amelyek 1×1-es íveken fordulnak: szűk helyekre, és a majdani bányákhoz.',
+    },
+    maglev_depot: {
+      name: 'Mágnesvasúti kocsiszín',
+      flavor:
+        'Zárt csarnok a pálya végén. Mágnesvasúti szerelvényeket épít és táplál, amelyek máson nem járnak.',
     },
     station: {
       name: 'Állomás',

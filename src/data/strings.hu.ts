@@ -955,7 +955,11 @@ export const HU: Strings = {
     scopeAll: (n: number) => `Mind (${n})`,
     noTrainsHere: 'Erről a pályaudvarról még nem gördült ki vonat.',
     noHome: 'Nincs pályaudvar',
-    gaugeName: { regular: 'Normál nyomtáv', narrow: 'Keskeny nyomtáv' } as Record<string, string>,
+    gaugeName: {
+      regular: 'Normál nyomtáv',
+      narrow: 'Keskeny nyomtáv',
+      maglev: 'Mágnesvasút',
+    } as Record<string, string>,
     trainCount: (n: number) => `${n} vonat`,
     gateOpen: 'Kapu szabad',
     gateShut: 'Nem indulhat',
@@ -2073,6 +2077,8 @@ export const HU: Strings = {
     mixedGaugeTrain: 'Keskeny és normál nyomtáv egy vonatban: hívd vissza, és állítsd össze újra',
     wrongDepot: (name: string) => `${name} csak a saját nyomtávú vonatait indítja.`,
     noNarrowDepot: 'Előbb építs keskeny pályaudvart: a keskeny nyomtávú vonatok onnan gördülnek ki',
+    noMaglevDepot:
+      'Előbb építs mágnesvasúti kocsiszínt: a mágnesvasúti szerelvények onnan gördülnek ki',
     depotBusy: (n: string) => `${n}: minden kapuban vonat áll`,
     depotNoGate: (n: string) => `${n}: nincs sín a kapuknál`,
     depotNoRoute: (d: string, s: string) =>

@@ -182,13 +182,13 @@ export function vehicleAccess(def: LocoDef | WagonDef, cls: TrackClass): string 
 export function gaugeOf(def: { gauge?: Gauge }): Gauge {
   return def.gauge ?? 'regular';
 }
-/** The network a gauge's stock runs on: narrow on Narrow Gauge, regular on the standard lines. */
+/** The network a gauge's stock runs on: narrow and maglev their own, regular the standard lines. */
 export function gaugeNetwork(gauge: Gauge): Network {
-  return gauge === 'narrow' ? 'narrow' : 'standard';
+  return gauge === 'regular' ? 'standard' : gauge;
 }
 /** The line a depot of this gauge lays across its gates. */
 export function gaugeLine(gauge: Gauge): TrackClass {
-  return gauge === 'narrow' ? 'narrow' : 'branch';
+  return gauge === 'regular' ? 'branch' : gauge;
 }
 /** The gauge every vehicle shares, 'mixed' when they differ, null for none. */
 export function consistGauge(defs: { gauge?: Gauge }[]): Gauge | 'mixed' | null {

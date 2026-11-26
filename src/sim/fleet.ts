@@ -421,7 +421,10 @@ export class Fleet {
     const own = gauge ?? asked?.def.gauge ?? 'regular';
     const depot =
       asked && (asked.def.gauge ?? 'regular') === own ? asked : this.builder.depotsOf(own)[0];
-    if (!depot) return own === 'narrow' ? STR.fleet.noNarrowDepot : STR.fleet.noDepot;
+    if (!depot) {
+      if (own === 'maglev') return STR.fleet.noMaglevDepot;
+      return own === 'narrow' ? STR.fleet.noNarrowDepot : STR.fleet.noDepot;
+    }
     return depot;
   }
   /** The gauge a train runs on: its leading engine's. */

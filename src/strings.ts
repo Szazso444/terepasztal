@@ -1122,7 +1122,10 @@ const EN = {
     scopeAll: (n: number) => `All (${n})`,
     noTrainsHere: 'No train has rolled out of this depot yet.',
     noHome: 'No depot',
-    gaugeName: { regular: 'Standard gauge', narrow: 'Narrow gauge' } as Record<string, string>,
+    gaugeName: { regular: 'Standard gauge', narrow: 'Narrow gauge', maglev: 'Maglev' } as Record<
+      string,
+      string
+    >,
     trainCount: (n: number) => `${n} train${n === 1 ? '' : 's'}`,
     gateOpen: 'Gate free',
     gateShut: 'Cannot roll out',
@@ -2309,6 +2312,7 @@ const EN = {
     mixedGaugeTrain: 'Narrow Gauge and standard stock in one train: recall it and build it again',
     wrongDepot: (name: string) => `${name} builds only trains of its own gauge.`,
     noNarrowDepot: 'Build a Narrow Depot first: Narrow Gauge trains roll out of one',
+    noMaglevDepot: 'Build a Maglev Depot first: maglev sets roll out of one',
     depotBusy: (n: string) => `Every gate at ${n} has a train on it`,
     depotNoGate: (n: string) => `${n} has no track at its gates`,
     depotNoRoute: (d: string, s: string) =>
