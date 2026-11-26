@@ -76,6 +76,7 @@ function world(map: GameMap, objects: Container, flattened = new Set<number>()) 
     flattened,
     landscape: { failed: true },
     propTint: 0xffffff,
+    treeSway: { add: () => undefined },
   });
   return w as unknown as {
     propSprite(x: number, y: number, p: PropInstance): Sprite;
