@@ -207,7 +207,7 @@ describe('building, one action one step', () => {
 
   it('decor, turned as it was placed', () => {
     const g = game();
-    const { after } = roundTrip(g, () => g.builder.placeDecor(12, ROW + 5, 'water_tower', 0));
+    const { after } = roundTrip(g, () => g.builder.spawnDecor(12, ROW + 5, 'water_tower', 0));
     expect(after.decor).toHaveLength(1);
     expect(g.history.undoLabel).toBe('Built Water Tower');
   });
@@ -427,7 +427,7 @@ describe('demolishing', () => {
 
   it('decor with its turn, and a house with the people in it', () => {
     const g = game();
-    g.builder.placeDecor(12, ROW + 5, 'water_tower', 0);
+    g.builder.spawnDecor(12, ROW + 5, 'water_tower', 0);
     roundTrip(g, () => g.builder.removeDecor(12, ROW + 5));
     const d = g.builder.placeDecor(14, ROW + 5, 'townhouse', 3)!;
     const h = g.houses.at(14, ROW + 5)!;
@@ -756,7 +756,7 @@ describe('refusal', () => {
 
   it('something built where the step would put a thing back', () => {
     const g = game();
-    g.builder.placeDecor(12, ROW + 5, 'water_tower', 0);
+    g.builder.spawnDecor(12, ROW + 5, 'water_tower', 0);
     g.commands.act(() => g.builder.removeDecor(12, ROW + 5));
     // past the history, as nothing the player does is
     g.builder.placeDecor(12, ROW + 5, 'townhouse', 0);
@@ -767,7 +767,7 @@ describe('refusal', () => {
     const g = game();
     g.commands.act(() => run(g, 10, 12));
     g.history.undo();
-    g.builder.placeDecor(11, ROW, 'water_tower', 0);
+    g.builder.spawnDecor(11, ROW, 'water_tower', 0);
     expectRefused(g, 'redo', STR.history.builtOver);
   });
 
@@ -775,7 +775,7 @@ describe('refusal', () => {
     const g = game();
     g.commands.act(() => g.builder.placeRoads([{ x: 10, y: ROW }], { x: 10, y: ROW }));
     g.builder.removeRoad(10, ROW);
-    g.builder.placeDecor(10, ROW, 'water_tower', 0);
+    g.builder.spawnDecor(10, ROW, 'water_tower', 0);
     expectRefused(g, 'undo', STR.history.builtOver);
   });
 
@@ -948,7 +948,7 @@ describe('the session', () => {
   it('nothing is recorded outside a transaction', () => {
     const g = game();
     run(g, 10, 12);
-    g.builder.placeDecor(12, ROW + 5, 'water_tower', 0);
+    g.builder.spawnDecor(12, ROW + 5, 'water_tower', 0);
     g.builder.removeDecor(12, ROW + 5);
     expect(g.history.canUndo).toBe(false);
     expect(g.builder.log).toBeNull();
@@ -1002,7 +1002,7 @@ describe('the session', () => {
     g.commands.act(() => (s = g.builder.placeStation(15, ROW - 1, 'farm')));
     g.commands.act(() => g.builder.upgradeStation(s!));
     g.commands.renameStation(s!, 'Rét');
-    g.commands.act(() => g.builder.placeDecor(15, ROW - 2, 'water_tower', 0));
+    g.commands.act(() => g.builder.spawnDecor(15, ROW - 2, 'water_tower', 0));
     g.commands.act(() => g.builder.removeStation(s!));
     const after = state(g);
     for (let i = 0; i < 5; i++) expect(g.history.undo()).toEqual({ ok: true });

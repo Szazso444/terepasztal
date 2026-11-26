@@ -2211,89 +2211,177 @@
         }
       ]
     },
-    "structures/fuel_stop": {
+    "structures/fuel_pump": {
       "source": "illustrated",
       "rot": 0,
       "footprint": [[0, 0]],
       "foot": [
-        [-17.23, -13.31],
-        [10.56, 2.81],
-        [-0.9, 8.54],
-        [-28.69, -7.58]
+        [-4.99, -11.23],
+        [21.41, 1.97],
+        [6.06, 9.95],
+        [-20.34, -3.25]
       ],
       "fit": "walls",
       "baked": 0,
       "front": {
         "side": "S",
         "edge": [
-          [-28.69, -7.58],
-          [-0.9, 8.54]
+          [-20.34, -3.25],
+          [6.06, 9.95]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/fuel_pump_r1": {
+      "source": "illustrated",
+      "rot": 1,
+      "footprint": [[0, 0]],
+      "foot": [
+        [7.38, -9.92],
+        [22.37, -2.42],
+        [-3.89, 10.71],
+        [-18.88, 3.21]
+      ],
+      "fit": "walls",
+      "baked": 0,
+      "front": {
+        "side": "W",
+        "edge": [
+          [7.38, -9.92],
+          [-18.88, 3.21]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/fuel_pump_r2": {
+      "source": "illustrated",
+      "rot": 2,
+      "footprint": [[0, 0]],
+      "foot": [
+        [-6.45, -9.7],
+        [20.34, 4.23],
+        [5.89, 11.46],
+        [-20.91, -2.48]
+      ],
+      "fit": "walls",
+      "baked": 0,
+      "front": {
+        "side": "N",
+        "edge": [
+          [-6.45, -9.7],
+          [20.34, 4.23]
+        ],
+        "visible": false
+      },
+      "doors": []
+    },
+    "structures/fuel_pump_r3": {
+      "source": "illustrated",
+      "rot": 3,
+      "footprint": [[0, 0]],
+      "foot": [
+        [3.86, -10.37],
+        [19.38, -2.61],
+        [-6.84, 10.5],
+        [-22.37, 2.74]
+      ],
+      "fit": "walls",
+      "baked": 0,
+      "front": {
+        "side": "E",
+        "edge": [
+          [19.38, -2.61],
+          [-6.84, 10.5]
+        ],
+        "visible": true
+      },
+      "doors": []
+    },
+    "structures/fuel_stop": {
+      "source": "illustrated",
+      "rot": 0,
+      "footprint": [[0, 0]],
+      "foot": [
+        [4.55, -13.96],
+        [26.69, -2.45],
+        [-4.93, 13.36],
+        [-27.06, 1.85]
+      ],
+      "fit": "walls",
+      "baked": 0,
+      "front": {
+        "side": "S",
+        "edge": [
+          [-27.06, 1.85],
+          [-4.93, 13.36]
         ],
         "visible": true
       },
       "doors": []
     },
     "structures/fuel_stop_r1": {
-      "source": "generated",
+      "source": "illustrated",
       "rot": 1,
       "footprint": [[0, 0]],
       "foot": [
-        [3.5, -6.75],
-        [14, -1.5],
-        [-1.5, 6.25],
-        [-12, 1]
+        [-4.48, -13.87],
+        [27.18, 2.28],
+        [5.35, 13.64],
+        [-26.32, -2.51]
       ],
-      "fit": "outline",
-      "baked": 3,
+      "fit": "walls",
+      "baked": 0,
       "front": {
         "side": "W",
         "edge": [
-          [3.5, -6.75],
-          [-12, 1]
+          [-4.48, -13.87],
+          [-26.32, -2.51]
         ],
         "visible": false
       },
       "doors": []
     },
     "structures/fuel_stop_r2": {
-      "source": "generated",
+      "source": "illustrated",
       "rot": 2,
       "footprint": [[0, 0]],
       "foot": [
-        [-3.5, -6.75],
-        [12, 1],
-        [1.5, 6.25],
-        [-14, -1.5]
+        [5, -13.19],
+        [26.93, -2.23],
+        [-4.65, 13.56],
+        [-26.57, 2.6]
       ],
-      "fit": "outline",
-      "baked": 3,
+      "fit": "walls",
+      "baked": 0,
       "front": {
         "side": "N",
         "edge": [
-          [-3.5, -6.75],
-          [12, 1]
+          [5, -13.19],
+          [26.93, -2.23]
         ],
         "visible": false
       },
       "doors": []
     },
     "structures/fuel_stop_r3": {
-      "source": "generated",
+      "source": "illustrated",
       "rot": 3,
       "footprint": [[0, 0]],
       "foot": [
-        [3.5, -6.75],
-        [14, -1.5],
-        [-1.5, 6.25],
-        [-12, 1]
+        [-5.34, -13.54],
+        [26.43, 2.34],
+        [5.2, 12.96],
+        [-26.57, -2.93]
       ],
-      "fit": "outline",
-      "baked": 3,
+      "fit": "walls",
+      "baked": 0,
       "front": {
         "side": "E",
         "edge": [
-          [14, -1.5],
-          [-1.5, 6.25]
+          [26.43, 2.34],
+          [5.2, 12.96]
         ],
         "visible": true
       },
@@ -9486,84 +9574,84 @@
       "rot": 0,
       "footprint": [[0, 0]],
       "foot": [
-        [-2.31, -3.68],
-        [9.3, 0.85],
-        [-1.34, 5.43],
-        [-12.95, 0.9]
+        [0.4, -12.86],
+        [27, 0.45],
+        [0.1, 13.89],
+        [-26.5, 0.59]
       ],
       "fit": "walls",
       "baked": 0,
       "front": {
         "side": "S",
         "edge": [
-          [-12.95, 0.9],
-          [-1.34, 5.43]
+          [-26.5, 0.59],
+          [0.1, 13.89]
         ],
         "visible": true
       },
       "doors": []
     },
     "structures/water_tower_r1": {
-      "source": "generated",
+      "source": "illustrated",
       "rot": 1,
       "footprint": [[0, 0]],
       "foot": [
-        [0, -6.33],
-        [12, -0.33],
-        [0, 5.67],
-        [-12, -0.33]
+        [-0.01, -13.99],
+        [27.54, 0.61],
+        [0.58, 14.08],
+        [-26.96, -0.52]
       ],
       "fit": "walls",
       "baked": 0,
       "front": {
         "side": "W",
         "edge": [
-          [0, -6.33],
-          [-12, -0.33]
+          [-0.01, -13.99],
+          [-26.96, -0.52]
         ],
         "visible": false
       },
       "doors": []
     },
     "structures/water_tower_r2": {
-      "source": "generated",
+      "source": "illustrated",
       "rot": 2,
       "footprint": [[0, 0]],
       "foot": [
-        [0, -6.33],
-        [12, -0.33],
-        [0, 5.67],
-        [-12, -0.33]
+        [-0.02, -12.46],
+        [26.75, 0.92],
+        [0.01, 14.29],
+        [-26.75, 0.91]
       ],
       "fit": "walls",
       "baked": 0,
       "front": {
         "side": "N",
         "edge": [
-          [0, -6.33],
-          [12, -0.33]
+          [-0.02, -12.46],
+          [26.75, 0.92]
         ],
         "visible": false
       },
       "doors": []
     },
     "structures/water_tower_r3": {
-      "source": "generated",
+      "source": "illustrated",
       "rot": 3,
       "footprint": [[0, 0]],
       "foot": [
-        [0, -6.33],
-        [12, -0.33],
-        [0, 5.67],
-        [-12, -0.33]
+        [-0.12, -12.71],
+        [26.71, 0.71],
+        [-0.2, 14.16],
+        [-27.04, 0.75]
       ],
       "fit": "walls",
       "baked": 0,
       "front": {
         "side": "E",
         "edge": [
-          [12, -0.33],
-          [0, 5.67]
+          [26.71, 0.71],
+          [-0.2, 14.16]
         ],
         "visible": true
       },

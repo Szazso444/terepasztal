@@ -2,7 +2,7 @@ import { CARGO } from '../sim/cargo';
 import { STATION_DEFS } from '../sim/stations';
 import { BUILDING_DEFS } from '../sim/buildings';
 import { DECOR_DEFS } from '../sim/build';
-import { inSupplyMode } from '../sim/supply';
+import { dieselFuelId, inSupplyMode } from '../sim/supply';
 
 /**
  * The resource bar's groups, left to right: funds, building materials, fuel and power, food,
@@ -30,7 +30,7 @@ const ALWAYS = new Set(['money', 'passengers', 'population']);
 const NOT_CARGO = new Set(['power']);
 
 /** What a service flag on a decor def hands to trains. */
-const SERVICE_CARGO = { water: 'water', fuel: 'coal' } as const;
+const SERVICE_CARGO = { water: 'water', fuel: 'coal', liquidFuel: 'liquid' } as const;
 
 /** Whether the resource exists in the running production-chain mode. */
 function exists(id: string): boolean {
@@ -64,15 +64,17 @@ export function usersOf(id: string): BuildRef[] {
   return out;
 }
 
-/** Service stops (decor with a radius) that hand `id` to trains: water towers, coaling stages. */
+/** Service stops (decor with a radius) that hand `id` to trains: water towers, coaling stages, Fuel Pumps. */
 export function takenAt(id: string): BuildRef[] {
   const out: BuildRef[] = [];
   for (const d of DECOR_DEFS) {
     if (!d.radius) continue;
     const gives = (Object.keys(SERVICE_CARGO) as (keyof typeof SERVICE_CARGO)[]).some(
-      (flag) => d[flag] && SERVICE_CARGO[flag] === id,
+      (flag) =>
+        d[flag] &&
+        (SERVICE_CARGO[flag] === id || (SERVICE_CARGO[flag] === 'liquid' && id === dieselFuelId())),
     );
-    if (gives) out.push({ kind: 'decor', id: d.id, name: d.name, tier: 0 });
+    if (gives) out.push({ kind: 'decor', id: d.id, name: d.name, tier: d.tier ?? 0 });
   }
   return out;
 }

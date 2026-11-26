@@ -385,8 +385,10 @@ export class Station {
   waterSupply = false;
   /** Residents within the passenger catchment, updated by the game. */
   passengerPopulation = 0;
-  /** a coaling stage stands within reach (engines refuel from a store) */
-  fuelSupply = false;
+  /** a coaling stage stands within reach (steam engines refuel from a store) */
+  coalSupply = false;
+  /** a Fuel Pump stands within reach (diesel engines refuel from a store) */
+  liquidSupply = false;
   /** the upgrade under way (`Builder.upgradeStation`); null when none is */
   work: Work | null = null;
   /**
@@ -404,8 +406,15 @@ export class Station {
   get firstAge() {
     return this.def.tier ?? 0;
   }
+  /** A depot or a warehouse (`def.fuel`) fills both kinds of tank. */
+  get refuelsCoal() {
+    return !!this.def.fuel || this.coalSupply;
+  }
+  get refuelsLiquid() {
+    return !!this.def.fuel || this.liquidSupply;
+  }
   get refuelsFuel() {
-    return !!this.def.fuel || this.fuelSupply;
+    return this.refuelsCoal || this.refuelsLiquid;
   }
   get refuelsWater() {
     return !!this.def.water || this.waterSupply || this.producedCargo().includes('water');

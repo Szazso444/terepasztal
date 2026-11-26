@@ -315,5 +315,173 @@
    2,
    2
   ]
+ },
+ "water_tower-r0": {
+  "file": "water_tower-r0.png",
+  "ax": 138.99,
+  "ay": 342.58,
+  "frames": [
+   "structures/water_tower"
+  ],
+  "scale": 1,
+  "fit": 1,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "water_tower-r1": {
+  "file": "water_tower-r1.png",
+  "ax": 163.85,
+  "ay": 342,
+  "frames": [
+   "structures/water_tower_r1"
+  ],
+  "scale": 1,
+  "fit": 1,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "water_tower-r2": {
+  "file": "water_tower-r2.png",
+  "ax": 115.01,
+  "ay": 342.42,
+  "frames": [
+   "structures/water_tower_r2"
+  ],
+  "scale": 1,
+  "fit": 1,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "water_tower-r3": {
+  "file": "water_tower-r3.png",
+  "ax": 117.15,
+  "ay": 342,
+  "frames": [
+   "structures/water_tower_r3"
+  ],
+  "scale": 1,
+  "fit": 1,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "fuel_stop-r0": {
+  "file": "fuel_stop-r0.png",
+  "ax": 117.26,
+  "ay": 277.59,
+  "frames": [
+   "structures/fuel_stop"
+  ],
+  "scale": 0.88,
+  "fit": 1,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "fuel_stop-r1": {
+  "file": "fuel_stop-r1.png",
+  "ax": 132.27,
+  "ay": 277.07,
+  "frames": [
+   "structures/fuel_stop_r1"
+  ],
+  "scale": 0.88,
+  "fit": 1,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "fuel_stop-r2": {
+  "file": "fuel_stop-r2.png",
+  "ax": 110.3,
+  "ay": 277.57,
+  "frames": [
+   "structures/fuel_stop_r2"
+  ],
+  "scale": 0.88,
+  "fit": 1,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "fuel_stop-r3": {
+  "file": "fuel_stop-r3.png",
+  "ax": 111.29,
+  "ay": 277.09,
+  "frames": [
+   "structures/fuel_stop_r3"
+  ],
+  "scale": 0.88,
+  "fit": 1,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "fuel_pump-r0": {
+  "file": "fuel_pump-r0.png",
+  "ax": 138.37,
+  "ay": 192.73,
+  "frames": [
+   "structures/fuel_pump"
+  ],
+  "scale": 1,
+  "fit": 1,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "fuel_pump-r1": {
+  "file": "fuel_pump-r1.png",
+  "ax": 79.53,
+  "ay": 221.69,
+  "frames": [
+   "structures/fuel_pump_r1"
+  ],
+  "scale": 1,
+  "fit": 1,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "fuel_pump-r2": {
+  "file": "fuel_pump-r2.png",
+  "ax": 84.63,
+  "ay": 201.27,
+  "frames": [
+   "structures/fuel_pump_r2"
+  ],
+  "scale": 1,
+  "fit": 1,
+  "span": [
+   1,
+   1
+  ]
+ },
+ "fuel_pump-r3": {
+  "file": "fuel_pump-r3.png",
+  "ax": 91.47,
+  "ay": 207.31,
+  "frames": [
+   "structures/fuel_pump_r3"
+  ],
+  "scale": 1,
+  "fit": 1,
+  "span": [
+   1,
+   1
+  ]
  }
 }

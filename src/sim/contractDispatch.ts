@@ -177,7 +177,7 @@ export class ContractDispatcher {
     if (t.rangeTiles < legA.len * 1.15 + 4) {
       let nearest = Infinity;
       for (const s of this.builder.stations)
-        if (s.refuelsFuel && s.refuelsWater && this.builder.platformTiles(s).length)
+        if (t.fuelsAt(s) && s.refuelsWater && this.builder.platformTiles(s).length)
           nearest = Math.min(nearest, manhattan(s, head));
       dist += nearest === Infinity ? legA.len : nearest * 2 * 1.3;
     }

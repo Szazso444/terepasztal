@@ -13,7 +13,7 @@
   {
     "id": "water_tower",
     "name": "Water Tower",
-    "flavor": "Supplies stockpiled water to nearby stations and rails. Steam trains seek it before running dry. Combine with a coaling stage for a complete service stop.",
+    "flavor": "Fills steam engines with water from the town store under its spout. Nearby stations draw on it too. Combine with a coaling stage for a complete service stop.",
     "cost": {
       "wood": 30,
       "stone": 10
@@ -24,18 +24,19 @@
     "radius": 2,
     "loadBoost": 0.25,
     "water": true,
+    "facesTrack": true,
     "doors": [
       {
         "kind": "street",
         "tile": [0, 0],
-        "side": "S"
+        "side": "N"
       }
     ]
   },
   {
     "id": "fuel_stop",
     "name": "Coaling Stage",
-    "flavor": "Supplies fuel from the stockpile to nearby stations and rails. Low-reserve trains seek a reachable coaling stage; place a water tower nearby for complete steam service.",
+    "flavor": "Fills steam engines with coal from the town store under its chute. Nearby stations draw on it too. Place a water tower nearby for complete steam service.",
     "cost": {
       "stone": 20,
       "wood": 10
@@ -45,11 +46,35 @@
     "rotations": 4,
     "radius": 2,
     "fuel": true,
+    "facesTrack": true,
     "doors": [
       {
         "kind": "street",
         "tile": [0, 0],
-        "side": "S"
+        "side": "N"
+      }
+    ]
+  },
+  {
+    "id": "fuel_pump",
+    "name": "Fuel Pump",
+    "flavor": "Fills diesel engines from the town store through the hose over the track. Nearby stations draw on it too.",
+    "cost": {
+      "iron": 20,
+      "stone": 15
+    },
+    "crew": 1,
+    "onTrack": false,
+    "rotations": 4,
+    "radius": 2,
+    "liquidFuel": true,
+    "facesTrack": true,
+    "tier": 1,
+    "doors": [
+      {
+        "kind": "street",
+        "tile": [0, 0],
+        "side": "N"
       }
     ]
   },

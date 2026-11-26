@@ -835,7 +835,8 @@ describe(`the ground data of the ${GROUP} frames`, () => {
   it("has the front wall where #406's doors are: a platform door on it, a street door on it or across", () => {
     // the front the pictures are made for (S, W, N, E for r0 to r3) and the doors the game has
     // come from two places; a station's platform door is on its front and its street door on the
-    // side away from it (D1 of #406), every other place has its street door on its front
+    // side away from it (D1 of #406), as has a fuel building, whose front stands on the track;
+    // every other place has its street door on its front
     let checked = 0;
     for (const [key, e] of Object.entries(data)) {
       const front = DIRS.indexOf(e.front.side);
@@ -847,6 +848,8 @@ describe(`the ground data of the ${GROUP} frames`, () => {
         if (kind === 'station') {
           const platform = doors.find((d) => d.kind === 'platform');
           expect(platform?.side, `${label}: platform door`).toBe(front);
+          expect(street.side, `${label}: street door`).toBe((front + 2) % 4);
+        } else if (def.facesTrack) {
           expect(street.side, `${label}: street door`).toBe((front + 2) % 4);
         } else {
           expect(street.side, `${label}: street door`).toBe(front);

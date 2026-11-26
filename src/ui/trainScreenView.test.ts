@@ -20,7 +20,6 @@ const none: TankInput = {
   steam: false,
   diesel: false,
   electric: false,
-  fuelKind: 'coal',
   oilKind: 'oil',
   coal: 0,
   coalCap: 0,
@@ -68,13 +67,6 @@ describe('the tanks of a train', () => {
     expect(rows[0].label).toBe(`${STR.train.fuel} (coal)`);
     expect(rows[0].icon).toBe('coal');
     expect(rows[1].label).toBe(STR.train.water);
-  });
-
-  it('names the fuel that the tank holds, which a preference does not change', () => {
-    expect(tankRows({ ...steam, fuelKind: 'wood' }, 'Oil')[0].label).toBe(
-      `${STR.train.fuel} (wood)`,
-    );
-    expect(tankRows({ ...steam, fuelKind: 'wood' }, 'Oil')[0].icon).toBe('wood');
   });
 
   it('lists the oil for a diesel engine under the oil is named', () => {
@@ -132,7 +124,6 @@ describe('the range and the use per tile', () => {
     expect(
       perTileText({
         coalRate: 0.16,
-        fuelKind: 'coal',
         waterRate: 0.2,
         oilRate: 0,
         oilKind: 'oil',
@@ -142,7 +133,6 @@ describe('the range and the use per tile', () => {
     expect(
       perTileText({
         coalRate: 0,
-        fuelKind: 'coal',
         waterRate: 0,
         oilRate: 0,
         oilKind: 'oil',
@@ -152,7 +142,6 @@ describe('the range and the use per tile', () => {
     expect(
       perTileText({
         coalRate: 0,
-        fuelKind: 'coal',
         waterRate: 0,
         oilRate: 0,
         oilKind: 'oil',

@@ -41,6 +41,18 @@ export function nextToolRotation(tool: Tool, rot: number): number {
 }
 
 /**
+ * The rotation a fuel building's ghost takes among `rots`, those that face track
+ * (`Builder.trackFacingRots`): `rot` while it is one of them, else the first; with `turn` (R
+ * pressed) the next of them. With none it stays, and the ghost shows the reason.
+ */
+export function facingRotation(rots: readonly number[], rot: number, turn: boolean): number {
+  if (!rots.length) return rot;
+  const i = rots.indexOf(rot);
+  if (i < 0) return rots[0];
+  return turn ? rots[(i + 1) % rots.length] : rot;
+}
+
+/**
  * The frame a station's ghost shows turned to `rot`. A depot or a long station has a picture per
  * axis (`_r0`, `_r1`), any other station its level 1 picture; a station without its own family
  * borrows the plain station's. `structureFrame` then turns it, where the atlas has the turn.

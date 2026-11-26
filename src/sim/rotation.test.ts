@@ -192,8 +192,12 @@ describe('houses and services', () => {
   it('keep the rotation they were placed in', () => {
     const w = simWorld({ terrain: 'grass', size: 32 });
     w.builder.free = true;
-    for (const [i, id] of ['townhouse', 'water_tower', 'fuel_stop'].entries())
+    // east of each, the track the fuel buildings face at rotation 3
+    const up = { kind: 'straight', cls: 'branch', cls2: 'branch' } as const;
+    for (const [i, id] of ['townhouse', 'water_tower', 'fuel_stop'].entries()) {
+      expect(w.builder.placeTrack(5 + 3 * i, 4, up, 0)).toBeTruthy();
       expect(w.builder.placeDecor(4 + 3 * i, 4, id, 3)?.rot, id).toBe(3);
+    }
   });
 });
 
