@@ -177,7 +177,7 @@ function checkRules(small: MapPlanes, big: MapPlanes, seen: Seen) {
           const n = ny * w + nx;
           if (!on(nx, ny) || seenAt.has(n)) continue;
           const t = terrain[n];
-          if (t === Terrain.Mountain) return d;
+          if (t === Terrain.Mountain || t === Terrain.Ice) return d;
           if (t !== Terrain.Rock) continue;
           seenAt.set(n, d);
           next.push([nx, ny]);
@@ -230,7 +230,7 @@ function checkRules(small: MapPlanes, big: MapPlanes, seen: Seen) {
       if (t === Terrain.Water) {
         if (river[i]) expected = Biome.River;
         else expected = isSea(x, y) ? c : Biome.Lake;
-      } else if (t === Terrain.Mountain) expected = Biome.Mountain;
+      } else if (t === Terrain.Mountain || t === Terrain.Ice) expected = Biome.Mountain;
       else if (t === Terrain.Rock) {
         const d = stepsToMountain(x, y, MOUNTAIN_REACH);
         expected = d <= MOUNTAIN_REACH ? Biome.Mountain : c;
@@ -382,7 +382,8 @@ const DIAGONALS = [
  */
 function stoneFields(m: GameMap) {
   const { w, h, terrain } = m;
-  const stone = (i: number) => terrain[i] === Terrain.Rock || terrain[i] === Terrain.Mountain;
+  const stone = (i: number) =>
+    terrain[i] === Terrain.Rock || terrain[i] === Terrain.Mountain || terrain[i] === Terrain.Ice;
   const field = new Int32Array(w * h).fill(-1);
   const holdsMountain: boolean[] = [];
   for (let s = 0; s < w * h; s++) {
@@ -392,7 +393,7 @@ function stoneFields(m: GameMap) {
     field[s] = id;
     for (const stack = [s]; stack.length;) {
       const i = stack.pop()!;
-      if (terrain[i] === Terrain.Mountain) mountain = true;
+      if (terrain[i] === Terrain.Mountain || terrain[i] === Terrain.Ice) mountain = true;
       const x = i % w;
       const y = (i - x) / w;
       for (const [dx, dy] of SIDES) {
@@ -418,7 +419,7 @@ function stepsFromMountains(m: GameMap): Int32Array {
   const steps = new Int32Array(w * h).fill(-1);
   const queue: number[] = [];
   for (let i = 0; i < w * h; i++)
-    if (terrain[i] === Terrain.Mountain) {
+    if (terrain[i] === Terrain.Mountain || terrain[i] === Terrain.Ice) {
       steps[i] = 0;
       queue.push(i);
     }
@@ -489,7 +490,12 @@ describe('the biome rules, read again as the issues word them', () => {
           const b = biome[i];
           const where = () =>
             `seed ${seed}, world tile (${x - RING}, ${y - RING}), terrain ${t}, biome ${b}`;
-          if (b === Biome.Mountain && t !== Terrain.Rock && t !== Terrain.Mountain)
+          if (
+            b === Biome.Mountain &&
+            t !== Terrain.Rock &&
+            t !== Terrain.Mountain &&
+            t !== Terrain.Ice
+          )
             throw new Error(`no Grass, Forest, Sand, Hill or Water tile is Mountain: ${where()}`);
           if (t === Terrain.Mountain && b !== Biome.Mountain)
             throw new Error(`a Mountain tile is not in the Mountain biome: ${where()}`);
