@@ -564,7 +564,7 @@ describe('the pages, in every language', () => {
   it('writes Hungarian in Hungarian, the data and the numbers with it', async () => {
     const { guide } = await loaded('hu');
     const text = guide.guidePages().map(guide.pageWords).join(' ');
-    expect(text).toContain('fűtőház');
+    expect(text).toContain('pályaudvar');
     expect(text).toContain('kőfejtő');
     expect(text).not.toContain('lumber yard');
     expect(text).toContain('40 000 $');
