@@ -1,6 +1,7 @@
 import { Container, Graphics, MeshSimple, type Texture, type TextureSource } from 'pixi.js';
 import { TILE_H, tileToWorld } from '../engine/iso';
 import {
+  ARCH_OPEN,
   deckAtOffset,
   spanPoint,
   STOREY,
@@ -29,6 +30,8 @@ export interface BridgeSurfaces {
 }
 export interface BridgeTile extends BridgeSite {
   water: boolean;
+  /** World px up of the water's surface where it stands above level 0; else `WATERLINE`. */
+  waterline?: number;
   /** Upgrade level: each level above the first adds a pilaster or post to every parapet. */
   level: number;
   /** Ground height under a map point, world px up; where water is painted, the waterline. */
@@ -100,9 +103,10 @@ type Z = (x: number, y: number) => number;
 /**
  * A support's square foot: the middle of its +y face (`x`, `y`), its half side, and the highest
  * the two faces the camera sees end (`cut`, world px up) as drawn, cut to the ground and to the
- * bank in front (waterFade).
+ * bank in front (waterFade). `depth` is its length along y where that is not its width; 0 has no
+ * +x face.
  */
-type Foot = { x: number; y: number; half: number; cut: number };
+type Foot = { x: number; y: number; half: number; cut: number; depth?: number };
 
 /** Map point (tx, ty) at height z (world px up) to world px. */
 function screen(tx: number, ty: number, z: number): P {
@@ -413,8 +417,17 @@ export function bridgeTileMeshes(tile: BridgeTile, plan: BridgePlan, surfaces: B
         feet.push({ x: t.x + (r.x0 + r.x1) / 2, y: t.y + r.y1, half: (r.x1 - r.x0) / 2, cut });
       },
     });
+  for (const r of plan.blocks)
+    supports.push({
+      depth: t.x + t.y + (r.x0 + r.x1 + r.y0 + r.y1) / 2,
+      draw: () => void prism(p, r, underside, floor, side, null),
+    });
+  const nearest = Math.max(...plan.arches);
   for (const w of plan.arches)
-    supports.push({ depth: t.x + t.y + w, draw: () => archWall(p, w, underside) });
+    supports.push({
+      depth: t.x + t.y + w,
+      draw: () => archWall(p, w, underside, w === nearest && w < 0.5 ? feet : null),
+    });
   for (const w of plan.trestles)
     supports.push({ depth: t.x + t.y + w, draw: () => trestle(p, w, underside, feet) });
   supports.sort((a, b) => a.depth - b.depth);
@@ -423,7 +436,7 @@ export function bridgeTileMeshes(tile: BridgeTile, plan: BridgePlan, surfaces: B
     s.draw();
     p.flush();
   }
-  if (t.water && feet.length) under.addChild(waterFade(feet));
+  if (t.water && feet.length) under.addChild(waterFade(feet, t.waterline ?? WATERLINE));
   // The deck slab, then the far parapets on it.
   p.part = 'deck';
   prism(p, plan.deck, deck, underside, side, top, !stone);
@@ -465,13 +478,14 @@ function onAbutments(t: BridgeTile, plan: BridgePlan): BridgeTile {
 
 /**
  * A wall in the vertical plane `w` across a span, from the ground (the waterline) up to the
- * deck's underside, with one round arch per tile. Only its lit face is drawn.
+ * deck's underside, with one round arch per tile. Only its lit face is drawn. The outer wall on
+ * the camera's side reports its legs' `feet`, which fade into the water.
  */
-function archWall(p: Painter, w: number, underside: Z) {
+function archWall(p: Painter, w: number, underside: Z, feet: Foot[] | null) {
   const t = p.t,
     axis = t.axis!,
     [su, sv] = SCALE.stoneWall,
-    open = 0.36,
+    open = ARCH_OPEN,
     // The arch springs from the ground under the wall; the ground in front may hide more of it.
     at = (k: number): Upright => {
       const l = k - 0.5,
@@ -488,8 +502,32 @@ function archWall(p: Painter, w: number, underside: Z) {
       return upright(p, x, y, (axis === 1 ? x : y) * EDGE, z1, arch);
     },
     uv = (s: number, z: number) => [s / su, -z / sv] as [number, number];
-  // Split every STEP, so the arch is round.
-  wall(p, 'stoneWall', axis === 1 ? 'left' : 'right', 1, STEP, at, uv);
+  // Split every STEP, so the arch is round. Each pier's leg is a wall of its own, so it knows
+  // where it was cut and its foot can fade into the water.
+  const light = axis === 1 ? 'left' : 'right',
+    leg = (0.5 - open) as number,
+    part = (from: number, to: number) =>
+      wall(p, 'stoneWall', light, to - from, STEP, (k) => at(from + (to - from) * k), uv);
+  for (const [from, to] of [
+    [0, leg],
+    [leg, 1 - leg],
+    [1 - leg, 1],
+  ] as const) {
+    const cut = part(from, to);
+    if (!feet || from === leg) continue;
+    const a = spanPoint(axis, from - 0.5, w),
+      b = spanPoint(axis, to - 0.5, w),
+      x0 = Math.min(a.x, b.x),
+      x1 = Math.max(a.x, b.x),
+      y1 = Math.max(a.y, b.y);
+    feet.push({
+      x: t.x + (x0 + x1) / 2,
+      y: t.y + y1,
+      half: (x1 - x0) / 2,
+      depth: axis === 1 ? 0 : y1 - Math.min(a.y, b.y),
+      cut,
+    });
+  }
 }
 
 /** A timber bent along a span at across `w`: a post at each end, an X brace and a cap beam. */
@@ -637,18 +675,19 @@ function parapet(p: Painter, r: Rect, deck: Z) {
  * so the fade lies wholly on those faces and never strays past where they were cut: a foot on
  * land, or one a bank in front cuts anywhere along its faces, has none.
  */
-function waterFade(feet: Foot[]) {
+function waterFade(feet: Foot[], surface: number) {
   const g = new Graphics();
   for (const f of feet) {
-    if (f.cut > WATERLINE + 0.5) continue;
+    const depth = f.depth ?? 2 * f.half;
+    if (f.cut > surface + 0.5) continue;
     for (let k = 0; k < 6; k++) {
-      const z = WATERLINE + 12 - k * 2,
+      const z = surface + 12 - k * 2,
         a = screen(f.x - f.half, f.y, z),
         b = screen(f.x + f.half, f.y, z),
-        c = screen(f.x + f.half, f.y - 2 * f.half, z),
+        c = screen(f.x + f.half, f.y - depth, z),
         a2 = screen(f.x - f.half, f.y, z - 2),
         b2 = screen(f.x + f.half, f.y, z - 2),
-        c2 = screen(f.x + f.half, f.y - 2 * f.half, z - 2);
+        c2 = screen(f.x + f.half, f.y - depth, z - 2);
       g.poly([a.x, a.y, b.x, b.y, c.x, c.y, c2.x, c2.y, b2.x, b2.y, a2.x, a2.y]).fill({
         color: 0x2d6f80,
         alpha: 0.15 + k * 0.15,

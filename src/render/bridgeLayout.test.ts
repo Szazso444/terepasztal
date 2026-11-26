@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Graphics, MeshSimple, Texture, type Container, type FillInstruction } from 'pixi.js';
 import {
   ACROSS,
+  ARCH_OPEN,
   bridgeJoins,
   bridgePlan,
   deckAt,
@@ -108,6 +109,19 @@ describe('a raised span', () => {
           expect(bridgePlan(site(material, true), free, water)).toEqual(
             bridgePlan(site(material, false), free, water),
           );
+  });
+
+  it('fills a stone span over water with pier masonry between its walls, at each tile end', () => {
+    const { blocks, arches } = bridgePlan(site('stone', false), free, true);
+    expect(arches).toEqual([-0.44, 0.44]);
+    expect(blocks).toHaveLength(2);
+    for (const r of blocks) {
+      expect([r.y0, r.y1]).toEqual(arches);
+      expect(Math.max(Math.abs(r.x0), Math.abs(r.x1))).toBeCloseTo(0.5);
+      expect(Math.min(Math.abs(r.x0), Math.abs(r.x1))).toBeCloseTo(ARCH_OPEN);
+    }
+    expect(bridgePlan(site('wood', false), free, true).blocks).toEqual([]);
+    expect(bridgePlan(site('stone', false), free, false).blocks).toEqual([]);
   });
 
   it('braces a tall trestle in storeys', () => {
