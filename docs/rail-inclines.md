@@ -43,6 +43,21 @@ V-shaped foot on the ground. Without the packed atlas the procedural spans are u
 
 A crossing on a climb holds both lines level at its centre, so the two rails meet.
 
+## Raised decks
+
+A bridge can be raised, one height a click, to level 4 (`Builder.raiseSpan`). The whole connected
+bridge rises, and each platform stores its deck height as an absolute level (`Building.deck`).
+A deck with no stored height stays automatic, as every bridge of an older save does. A new
+platform beside a raised one carries the bridge on at that height.
+
+A stored deck stands at its height, never below the ground or the water under it, and curves and
+switches on it stand there too. The rail ramps up to it by itself, one level per tile, over
+ground that lies lower: the ramp is rail on its own ground, so the painter lifts the ground under
+it into an embankment, and the land around it keeps its shape. A curve, switch, crossing, level
+crossing or station must stay level, so `rampReach` reports it and the raise is refused, as is
+laying such a piece where a ramp climbs. A road on a bridge has no ramps and keeps the bridge at
+its banks' height.
+
 ## Tile types along a line
 
 | Type                                    | Where                                                 | Rail                                               |
