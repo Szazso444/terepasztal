@@ -2450,6 +2450,11 @@ export class Game implements UiHost {
     this.glows.update(this.builder.stations, this.fleet.trains, night);
     this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
     this.peopleRenderer.update(this.people, dt * this.clock.speed);
+    this.world.treeSway.update(
+      this.clock.speed ? dt : 0,
+      this.weather.wind,
+      this.camera.viewRect(),
+    );
     this.world.wind = this.weather.wind;
     this.world.rain = this.weather.kind === 'rain' ? this.weather.visible : 0;
     this.world.buildingLife.update(
