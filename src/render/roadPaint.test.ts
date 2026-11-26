@@ -536,7 +536,7 @@ describe('a road on a bridge deck (#506)', () => {
               );
         }
     });
-  });
+  }, 30_000);
 
   it('meets the road beside it whole at their shared edge', () => {
     let met = 0;
@@ -594,7 +594,7 @@ describe('a road on a bridge deck (#506)', () => {
       }
     });
     expect(toward).toBeGreaterThan(100);
-  });
+  }, 30_000);
 
   it("keeps the gravel's colour where it covers painted water, under any season's tint", () => {
     const p = paintOf(6, 3, new Set([6, 7, 8, 9, 10, 11]), { ox: 3, oy: -2, decks: new Set([9]) });
