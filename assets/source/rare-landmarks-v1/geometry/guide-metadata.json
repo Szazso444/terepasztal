@@ -1,0 +1,422 @@
+[
+  {
+    "id": "01-merchants-last-stop",
+    "source_size": [
+      1024,
+      1024
+    ],
+    "origin_pixels": [
+      512,
+      702.0
+    ],
+    "physical_pixels_per_logical_pixel": 4.75,
+    "ground_corners": [
+      [
+        436.0,
+        512.0
+      ],
+      [
+        892.0,
+        740.0
+      ],
+      [
+        588.0,
+        892.0
+      ],
+      [
+        132.0,
+        664.0
+      ]
+    ],
+    "ground_axis_slopes": [
+      0.5,
+      -0.5
+    ],
+    "vertical_pixels_per_metre": 47.5
+  },
+  {
+    "id": "02-overgrown-bathhouse",
+    "source_size": [
+      1024,
+      1024
+    ],
+    "origin_pixels": [
+      512,
+      630.75
+    ],
+    "physical_pixels_per_logical_pixel": 3.392857142857143,
+    "ground_corners": [
+      [
+        457.7142857142857,
+        440.75
+      ],
+      [
+        892.0,
+        657.8928571428571
+      ],
+      [
+        566.2857142857143,
+        820.75
+      ],
+      [
+        132.0,
+        603.6071428571429
+      ]
+    ],
+    "ground_axis_slopes": [
+      0.5,
+      -0.5
+    ],
+    "vertical_pixels_per_metre": 33.92857142857143
+  },
+  {
+    "id": "03-bellkeepers-refuge",
+    "source_size": [
+      1024,
+      1024
+    ],
+    "origin_pixels": [
+      512,
+      821.3023255813953
+    ],
+    "physical_pixels_per_logical_pixel": 4.4186046511627906,
+    "ground_corners": [
+      [
+        512.0,
+        750.6046511627907
+      ],
+      [
+        653.3953488372093,
+        821.3023255813953
+      ],
+      [
+        512.0,
+        891.9999999999999
+      ],
+      [
+        370.6046511627907,
+        821.3023255813953
+      ]
+    ],
+    "ground_axis_slopes": [
+      0.5,
+      -0.5
+    ],
+    "vertical_pixels_per_metre": 44.18604651162791
+  },
+  {
+    "id": "04-flooded-archive",
+    "source_size": [
+      1024,
+      1024
+    ],
+    "origin_pixels": [
+      512,
+      660.4375
+    ],
+    "physical_pixels_per_logical_pixel": 2.96875,
+    "ground_corners": [
+      [
+        512.0,
+        470.4375
+      ],
+      [
+        892.0,
+        660.4375
+      ],
+      [
+        512.0,
+        850.4375
+      ],
+      [
+        132.0,
+        660.4375
+      ]
+    ],
+    "ground_axis_slopes": [
+      0.5,
+      -0.5
+    ],
+    "vertical_pixels_per_metre": 29.6875
+  },
+  {
+    "id": "05-rootbound-workshop",
+    "source_size": [
+      1024,
+      1024
+    ],
+    "origin_pixels": [
+      512,
+      723.1111111111111
+    ],
+    "physical_pixels_per_logical_pixel": 5.277777777777778,
+    "ground_corners": [
+      [
+        512.0,
+        554.2222222222222
+      ],
+      [
+        849.7777777777778,
+        723.1111111111111
+      ],
+      [
+        512.0,
+        892.0
+      ],
+      [
+        174.22222222222223,
+        723.1111111111111
+      ]
+    ],
+    "ground_axis_slopes": [
+      0.5,
+      -0.5
+    ],
+    "vertical_pixels_per_metre": 52.77777777777778
+  },
+  {
+    "id": "06-cliffside-cable-station",
+    "source_size": [
+      1024,
+      1024
+    ],
+    "origin_pixels": [
+      512,
+      678.25
+    ],
+    "physical_pixels_per_logical_pixel": 4.75,
+    "ground_corners": [
+      [
+        436.0,
+        488.25
+      ],
+      [
+        892.0,
+        716.25
+      ],
+      [
+        588.0,
+        868.25
+      ],
+      [
+        132.0,
+        640.25
+      ]
+    ],
+    "ground_axis_slopes": [
+      0.5,
+      -0.5
+    ],
+    "vertical_pixels_per_metre": 47.5
+  },
+  {
+    "id": "07-stormglass-observatory",
+    "source_size": [
+      1024,
+      1024
+    ],
+    "origin_pixels": [
+      512,
+      752.2298850574713
+    ],
+    "physical_pixels_per_logical_pixel": 4.367816091954023,
+    "ground_corners": [
+      [
+        512.0,
+        612.4597701149426
+      ],
+      [
+        791.5402298850574,
+        752.2298850574713
+      ],
+      [
+        512.0,
+        892.0
+      ],
+      [
+        232.4597701149425,
+        752.2298850574713
+      ]
+    ],
+    "ground_axis_slopes": [
+      0.5,
+      -0.5
+    ],
+    "vertical_pixels_per_metre": 43.67816091954023
+  },
+  {
+    "id": "08-ashen-conservatory",
+    "source_size": [
+      1024,
+      1024
+    ],
+    "origin_pixels": [
+      512,
+      630.75
+    ],
+    "physical_pixels_per_logical_pixel": 3.9583333333333335,
+    "ground_corners": [
+      [
+        385.3333333333333,
+        440.75
+      ],
+      [
+        892.0,
+        694.0833333333334
+      ],
+      [
+        638.6666666666666,
+        820.75
+      ],
+      [
+        132.0,
+        567.4166666666666
+      ]
+    ],
+    "ground_axis_slopes": [
+      0.5,
+      -0.5
+    ],
+    "vertical_pixels_per_metre": 39.583333333333336
+  },
+  {
+    "id": "09-inverted-manor",
+    "source_size": [
+      1024,
+      1024
+    ],
+    "origin_pixels": [
+      512,
+      690.125
+    ],
+    "physical_pixels_per_logical_pixel": 3.9583333333333335,
+    "ground_corners": [
+      [
+        512.0,
+        500.125
+      ],
+      [
+        892.0,
+        690.125
+      ],
+      [
+        512.0,
+        880.125
+      ],
+      [
+        132.0,
+        690.125
+      ]
+    ],
+    "ground_axis_slopes": [
+      0.5,
+      -0.5
+    ],
+    "vertical_pixels_per_metre": 39.583333333333336
+  },
+  {
+    "id": "10-sleeping-foundry",
+    "source_size": [
+      1024,
+      1024
+    ],
+    "origin_pixels": [
+      512,
+      696.7222222222222
+    ],
+    "physical_pixels_per_logical_pixel": 2.638888888888889,
+    "ground_corners": [
+      [
+        469.77777777777777,
+        506.7222222222222
+      ],
+      [
+        892.0,
+        717.8333333333333
+      ],
+      [
+        554.2222222222222,
+        886.7222222222222
+      ],
+      [
+        132.0,
+        675.6111111111111
+      ]
+    ],
+    "ground_axis_slopes": [
+      0.5,
+      -0.5
+    ],
+    "vertical_pixels_per_metre": 26.38888888888889
+  },
+  {
+    "id": "11-moonwell-pavilion",
+    "source_size": [
+      1024,
+      1024
+    ],
+    "origin_pixels": [
+      512,
+      710.5074626865671
+    ],
+    "physical_pixels_per_logical_pixel": 5.6716417910447765,
+    "ground_corners": [
+      [
+        512.0,
+        529.0149253731342
+      ],
+      [
+        874.9850746268658,
+        710.5074626865671
+      ],
+      [
+        512.0,
+        892.0
+      ],
+      [
+        149.0149253731343,
+        710.5074626865671
+      ]
+    ],
+    "ground_axis_slopes": [
+      0.5,
+      -0.5
+    ],
+    "vertical_pixels_per_metre": 56.71641791044777
+  },
+  {
+    "id": "12-house-between-seasons",
+    "source_size": [
+      1024,
+      1024
+    ],
+    "origin_pixels": [
+      512,
+      660.4375
+    ],
+    "physical_pixels_per_logical_pixel": 2.96875,
+    "ground_corners": [
+      [
+        512.0,
+        470.4375
+      ],
+      [
+        892.0,
+        660.4375
+      ],
+      [
+        512.0,
+        850.4375
+      ],
+      [
+        132.0,
+        660.4375
+      ]
+    ],
+    "ground_axis_slopes": [
+      0.5,
+      -0.5
+    ],
+    "vertical_pixels_per_metre": 29.6875
+  }
+]
