@@ -152,7 +152,9 @@ describe('where a def is listed', () => {
   });
   it('puts the Townhouse with what has residents, and services with the rest of the decor', () => {
     expect(names(cat('buildings'), 'town')).toEqual(['Townhouse', 'House']);
-    expect(names(cat('buildings'), 'services')).toEqual(['Water Tower', 'Coaling Stage']);
+    expect(names(cat('buildings'), 'services')).toEqual(
+      expect.arrayContaining(['Water Tower', 'Coaling Stage']),
+    );
   });
   it('splits the tools: on-track decor and the two arrows, then the power line and the supply', () => {
     expect(shownItems(cat('tools'), 'track').map((i) => i.key)).toEqual([

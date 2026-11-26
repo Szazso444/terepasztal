@@ -1447,6 +1447,90 @@
       ]
     },
     {
+      "id": "water_tower-r0",
+      "source": "assets\\source\\models\\water_tower-r0.png",
+      "frames": [
+        "structures/water_tower"
+      ]
+    },
+    {
+      "id": "water_tower-r1",
+      "source": "assets\\source\\models\\water_tower-r1.png",
+      "frames": [
+        "structures/water_tower_r1"
+      ]
+    },
+    {
+      "id": "water_tower-r2",
+      "source": "assets\\source\\models\\water_tower-r2.png",
+      "frames": [
+        "structures/water_tower_r2"
+      ]
+    },
+    {
+      "id": "water_tower-r3",
+      "source": "assets\\source\\models\\water_tower-r3.png",
+      "frames": [
+        "structures/water_tower_r3"
+      ]
+    },
+    {
+      "id": "fuel_stop-r0",
+      "source": "assets\\source\\models\\fuel_stop-r0.png",
+      "frames": [
+        "structures/fuel_stop"
+      ]
+    },
+    {
+      "id": "fuel_stop-r1",
+      "source": "assets\\source\\models\\fuel_stop-r1.png",
+      "frames": [
+        "structures/fuel_stop_r1"
+      ]
+    },
+    {
+      "id": "fuel_stop-r2",
+      "source": "assets\\source\\models\\fuel_stop-r2.png",
+      "frames": [
+        "structures/fuel_stop_r2"
+      ]
+    },
+    {
+      "id": "fuel_stop-r3",
+      "source": "assets\\source\\models\\fuel_stop-r3.png",
+      "frames": [
+        "structures/fuel_stop_r3"
+      ]
+    },
+    {
+      "id": "fuel_pump-r0",
+      "source": "assets\\source\\models\\fuel_pump-r0.png",
+      "frames": [
+        "structures/fuel_pump"
+      ]
+    },
+    {
+      "id": "fuel_pump-r1",
+      "source": "assets\\source\\models\\fuel_pump-r1.png",
+      "frames": [
+        "structures/fuel_pump_r1"
+      ]
+    },
+    {
+      "id": "fuel_pump-r2",
+      "source": "assets\\source\\models\\fuel_pump-r2.png",
+      "frames": [
+        "structures/fuel_pump_r2"
+      ]
+    },
+    {
+      "id": "fuel_pump-r3",
+      "source": "assets\\source\\models\\fuel_pump-r3.png",
+      "frames": [
+        "structures/fuel_pump_r3"
+      ]
+    },
+    {
       "id": "windmill",
       "source": "assets\\source\\windmill-2026-10-17\\windmill-a0-r0.png",
       "frames": [
@@ -1494,17 +1578,17 @@
       }
     },
     "structures": {
-      "frames": 114,
-      "uniqueImages": 35,
-      "width": 4018,
-      "height": 1086,
+      "frames": 124,
+      "uniqueImages": 45,
+      "width": 3982,
+      "height": 1358,
       "capped": {
-        "texels": 8753387,
-        "haze": 165096,
-        "solid": 8580636,
-        "white": 60752,
-        "amber": 49186,
-        "compressed": 0
+        "texels": 9271915,
+        "haze": 182009,
+        "solid": 9078375,
+        "white": 64403,
+        "amber": 71719,
+        "compressed": 5264
       }
     },
     "icons": {

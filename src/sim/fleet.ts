@@ -874,7 +874,7 @@ export class Fleet {
       return !reach || plat.some((p) => reach.has(p.y * this.map.w + p.x));
     });
     const stores = withPlat.filter((s) => s.isStore);
-    const fuelPoints = withPlat.filter((s) => s.refuelsFuel && s.refuelsWater);
+    const fuelPoints = withPlat.filter((s) => t.fuelsAt(s) && s.refuelsWater);
     const range = t.rangeTiles;
     const now = this.clockTime;
     const ok = (s: Station) => !t.isBadTarget(s.id, now);

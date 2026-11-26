@@ -39,7 +39,6 @@ export interface TrainFacts {
   hasSteam: boolean;
   hasDiesel: boolean;
   hasElectric: boolean;
-  fuelKind: string;
   coal: number;
   coalCap: number;
   coalRate: number;
@@ -147,7 +146,7 @@ export function tanksOf(t: TrainFacts): Tank[] {
     low: have < rate * LOW_TANK_TILES,
   });
   const out: Tank[] = [];
-  if (t.hasSteam && t.coalCap > 0) out.push(tank(t.fuelKind, t.coal, t.coalCap, t.coalRate));
+  if (t.hasSteam && t.coalCap > 0) out.push(tank('coal', t.coal, t.coalCap, t.coalRate));
   if (t.hasSteam && t.waterCap > 0) out.push(tank('water', t.water, t.waterCap, t.waterRate));
   if (t.hasDiesel && t.oilCap > 0) out.push(tank(t.oilKind, t.oil, t.oilCap, t.oilRate));
   if (t.batteryCap > 0) out.push(tank('power', t.battery, t.batteryCap, t.powerRate));

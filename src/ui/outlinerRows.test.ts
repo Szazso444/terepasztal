@@ -217,7 +217,6 @@ describe('the Trains tab', () => {
       route: [1, 2],
       routeIndex: 1,
       hasSteam: true,
-      fuelKind: 'coal',
       coal: 5,
       coalCap: 20,
       coalRate: 1,

@@ -411,9 +411,9 @@ describe('bridges, reversing and refuelling', () => {
     t.coal = t.coalCap * 0.3;
     t.water = t.waterCap * 0.3;
     w.builder.placeDecor(30, 29, 'water_tower', 0);
-    w.builder.placeDecor(30, 31, 'fuel_stop', 0);
+    w.builder.placeDecor(30, 31, 'fuel_stop', 2);
     w.builder.placeDecor(60, 29, 'water_tower', 0);
-    w.builder.placeDecor(60, 31, 'fuel_stop', 0);
+    w.builder.placeDecor(60, 31, 'fuel_stop', 2);
     for (const d of w.depots) {
       d.add('coal', 1000);
       d.add('water', 1000);

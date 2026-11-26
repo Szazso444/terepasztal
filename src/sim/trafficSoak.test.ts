@@ -85,6 +85,9 @@ function tickState(fleet: Fleet, full: boolean): string {
       // lists it: they move nothing, and the goldens are older
       const saved: Partial<ReturnType<Train['toJSON']>> = t.toJSON();
       delete saved.colour;
+      // the same for the fields a tank held when wood was a fuel: nothing here burned it
+      const { oilKind, ...tanks } = saved.tanks!;
+      Object.assign(saved, { tanks: { ...tanks, kind: 'coal', pref: 'coal', oilKind } });
       delete saved.depot;
       parts.push(roundedJSON(saved));
     }

@@ -172,8 +172,10 @@ describe('the doors of every place', () => {
       for (const { x, y } of CORNERS) {
         const base = doorsOf(def, x, y, 0);
         expect(base.length, def.id).toBe(defDoors(def).length);
-        // the front door: the one facing S at r0
-        const front = base.findIndex((d) => d.side === Dir.S);
+        // the front door: the one facing S at r0; a building whose front stands on the track
+        // (`facesTrack`) has it at the back
+        const side = 'facesTrack' in def && def.facesTrack ? Dir.N : Dir.S;
+        const front = base.findIndex((d) => d.side === side);
         expect(front, `${def.id} has a door on its front`).toBeGreaterThanOrEqual(0);
         for (const rot of ROTATIONS) {
           const label = `${def.id} r${rot} at ${x},${y}`;
@@ -195,7 +197,7 @@ describe('the doors of every place', () => {
             expect(d.side, label).toBe(rotateDir(base[i].side, rot));
             expect(back[i].side, `${label} against r${rot + 2}`).toBe(opposite(d.side));
           });
-          expect(doors[front].side, label).toBe(FRONT[rot]);
+          expect(doors[front].side, label).toBe(rotateDir(side, rot));
           // its street door is a street door, the first of them
           expect(streetDoor(def, x, y, rot), label).toEqual(doors.find((d) => d.kind === 'street'));
         }

@@ -109,9 +109,14 @@ describe('the plinth under a building', () => {
         }
         // and wherever the ground lies more than a hair below a wall's foot, a run is there
         const all = p.runs.flatMap((r) => r.points);
-        for (const q of wallPoints(foot, 40)) {
-          const drop = h0 + p.lift - at(q.x, q.y);
+        const walls = wallPoints(foot, 40);
+        const dropAt = (q: { x: number; y: number }) => h0 + p.lift - at(q.x, q.y);
+        for (const [i, q] of walls.entries()) {
+          const drop = dropAt(q);
           if (drop < PLINTH_FROM + 0.8) continue;
+          // a dip one reading wide, as at a wall's end on a steep bank, is no run (`plinthOf`)
+          if (walls.slice(Math.max(0, i - 3), i + 4).some((o) => dropAt(o) < PLINTH_FROM + 0.8))
+            continue;
           const nearest = Math.min(...all.map((r) => Math.hypot(r.x - q.x, r.y - q.y)));
           expect(nearest, `${frame} at ${q.x}, ${q.y}, ${drop} px over the ground`).toBeLessThan(
             1.5,

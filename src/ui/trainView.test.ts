@@ -108,7 +108,6 @@ describe('the tanks', () => {
   it('a steam engine has fuel and water, with the tiles each lasts', () => {
     const t = trainFacts({
       hasSteam: true,
-      fuelKind: 'wood',
       coal: 12,
       coalCap: 40,
       coalRate: 0.5,
@@ -117,7 +116,7 @@ describe('the tanks', () => {
       waterRate: 2,
     });
     expect(tanksOf(t)).toEqual([
-      { res: 'wood', have: 12, cap: 40, tiles: 24, low: false },
+      { res: 'coal', have: 12, cap: 40, tiles: 24, low: false },
       { res: 'water', have: 30, cap: 60, tiles: 15, low: false },
     ]);
   });
@@ -273,7 +272,6 @@ describe('the Overview tab', () => {
         freeSpeed: 2,
         maxSpeed: 2.5,
         hasSteam: true,
-        fuelKind: 'coal',
         coal: 10,
         coalCap: 40,
         coalRate: 0.5,

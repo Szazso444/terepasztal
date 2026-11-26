@@ -14,7 +14,6 @@ export function trainFacts(more: Partial<TrainFacts> = {}): TrainFacts {
     hasSteam: false,
     hasDiesel: false,
     hasElectric: false,
-    fuelKind: 'coal',
     coal: 0,
     coalCap: 0,
     coalRate: 0,
