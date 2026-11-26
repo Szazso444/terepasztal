@@ -20,7 +20,7 @@ import {
 import { DEFAULT_MAP_PARAMS, emptyMap, generateMap, type MapGenParams } from './mapgen';
 import { levelAt, tileLevels } from './elevation';
 import { bytesOf, oldChunkText, textOf, type OldVersion } from './oldChunkTexts';
-import { MAX_DROP, fallFeature } from './waterfalls';
+import { FALL_BITS, MAX_DROP, fallFeature } from './waterfalls';
 import { Dir } from '../engine/iso';
 import { generatorOf, groundOf, type GeneratedWorld } from '../sim/ground';
 import { Biome, Terrain, climateAtIndex, type GameMap, type PropInstance } from './tiles';
@@ -1428,7 +1428,12 @@ function heldBy(c: ChunkPlanes, version: number): ChunkPlanes {
     waterSurface: version >= 3 ? c.waterSurface : new Uint8Array(n),
     flow: version >= 3 ? c.flow : new Uint16Array(n),
     flowDir: version >= 3 ? c.flowDir : new Uint8Array(n),
-    feature: version >= 4 ? c.feature : new Uint8Array(n),
+    feature:
+      version >= 6
+        ? c.feature
+        : version >= 4
+          ? c.feature.map((f) => f & FALL_BITS)
+          : new Uint8Array(n),
   };
 }
 
@@ -1503,7 +1508,7 @@ describe('chunk texts of every version (#392)', () => {
     expect(decodeChunk(V5_SPELLED)).toEqual({ ...spelled, version: 5 });
     const m = emptyMap(7412, 3, 2, Terrain.Grass, -CHUNK_TILES + 1, 2 * CHUNK_TILES + 2);
     placeChunk(m, -1, 2, decodeChunk(V5_SPELLED)!);
-    expect(encodeChunk(m, -1, 2)).toBe(V5_SPELLED);
+    expect(encodeChunk(m, -1, 2, 5)).toBe(V5_SPELLED);
     // the generated tiles: rivers, oil and five kinds of tree among them, the same in both texts
     const v4 = decodeChunk(V4_GENERATED)!;
     expect(v4.flowDir.filter((d) => d).length).toBeGreaterThan(0);
@@ -1511,7 +1516,7 @@ describe('chunk texts of every version (#392)', () => {
     expect(plain(decodeChunk(V5_GENERATED)!)).toEqual(plain({ ...v4, version: 5 }));
     const g = emptyMap(7412, 12, 10);
     placeChunk(g, 0, 0, v4);
-    expect(encodeChunk(g, 0, 0)).toBe(V5_GENERATED);
+    expect(encodeChunk(g, 0, 0, 5)).toBe(V5_GENERATED);
     expect(V5_GENERATED.length).toBeLessThan(V4_GENERATED.length / 2);
   });
 
@@ -1577,9 +1582,9 @@ describe('chunk texts of every version (#392)', () => {
     // (0.5: 00 six times, E0 3F); then cx and cy zigzagged (-3: 05, 2: 04)
     const head = (seed: number) =>
       bytesOf(encodeChunk(emptyMap(seed, 1, 1, Terrain.Grass, -3 * CHUNK_TILES, 64), -3, 2));
-    expect(head(7412).slice(0, 9)).toEqual([5, 0, 0, 1, 1, 0xe8, 0x73, 5, 4]);
+    expect(head(7412).slice(0, 9)).toEqual([CHUNK_VERSION, 0, 0, 1, 1, 0xe8, 0x73, 5, 4]);
     const float = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f, 0, 0, 0, 0, 0, 0, 0xe0, 0x3f];
-    expect(head(0.5).slice(0, 23)).toEqual([5, 0, 0, 1, 1, ...float, 5, 4]);
+    expect(head(0.5).slice(0, 23)).toEqual([CHUNK_VERSION, 0, 0, 1, 1, ...float, 5, 4]);
     // emptyMap's variants are map generation's: guessed from the seed, a chunk of them costs a bit
     // a row; missed, two bits a tile, 256 bytes for the chunk
     for (const seed of [...ANY_SEEDS, -0, -Infinity, NaN, Number.MAX_VALUE, -Number.MIN_VALUE])
@@ -1911,7 +1916,7 @@ function fixtureMap(): GameMap {
  * made it (32fdc93, version 1 with wheat; 37a0048; a588d0d; 3d24617, develop's before #392). The
  * bytes of saves already made: never re-blessed.
  */
-const WRITTEN: Record<OldVersion, string> = {
+const WRITTEN: Record<Exclude<OldVersion, 5>, string> = {
   1:
     'AQUJBgQRATEQATIhADFQYEExUBEBcRABcWAxAHBggJJwYIDk5OT/kJMGAABA4AJBAADlgH8fBggB/xMBBAoUKvbsHwus' +
     'AlqmbAB/j4AAGCIhLBBOAAAQZ7M3',

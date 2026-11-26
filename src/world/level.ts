@@ -1,5 +1,5 @@
 import type { GameMap } from './tiles';
-import type { TrackTuple } from './track';
+import { TRACK_ITEMS, type TrackTuple } from './track';
 import { DEFAULT_SUPPLY, type SupplyMode } from '../sim/supply';
 import { decorateProps, placeOilFields, emptyMap } from './mapgen';
 
@@ -125,6 +125,28 @@ export function deleteLevel(id: string) {
     /* ignore */
   }
 }
+/**
+ * A level's track as this build can lay it. A bridge piece of an older file becomes a straight over
+ * a bridge, as an old save does; a piece with no picture here stays out, because drawing it would
+ * stop the level from opening.
+ */
+export function layableTrack(track: TrackTuple[], buildings: LevelBuilding[] = []) {
+  const laid: TrackTuple[] = [];
+  const out = [...buildings];
+  for (const [x, y, stored, rot, line, line2] of track) {
+    const kind = stored === 'bridge' ? 'straight' : stored;
+    const cls = line ?? 'branch';
+    const has = TRACK_ITEMS.some(
+      (i) => i.kind === kind && i.cls === cls && (kind !== 'crossing' || i.cls2 === (line2 ?? cls)),
+    );
+    if (!has) continue;
+    laid.push([x, y, kind, rot, line, line2]);
+    if (stored === 'bridge' && !out.some((b) => b[0] === x && b[1] === y))
+      out.push([x, y, 'bridge_wood', 0]);
+  }
+  return { track: laid, buildings: out };
+}
+
 export function isLevel(v: unknown): v is LevelData {
   const l = v as LevelData;
   return (

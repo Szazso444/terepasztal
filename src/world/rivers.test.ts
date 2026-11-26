@@ -145,7 +145,7 @@ function checkWater(small: MapPlanes, big: MapPlanes, seen: Seen) {
         throw new Error(`a step of two at ${at(i)}`);
       if (terrain[i] === Terrain.Water && levels[i] !== surface[i])
         throw new Error(`water at level ${levels[i]}, its own ${surface[i]}, at ${at(i)}`);
-      if (terrain[i] !== Terrain.Water && surface[i])
+      if (terrain[i] !== Terrain.Water && terrain[i] !== Terrain.Ice && surface[i])
         throw new Error(`a water level on land at ${at(i)}`);
       // River and Lake as #340 assigns them, read off the pass's own flow planes rather than the
       // river plane biomeRules is given: River where the pass laid a river (a side to run to),
