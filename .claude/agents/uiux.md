@@ -63,8 +63,8 @@ Everything else is read-only.
 - About fifty hardcoded strings remain in panels (`signalGuide.ts`, `vehiclePreview.ts`,
   `craftingScreen.ts`, `buildingPanel.ts`, `decorPanel.ts`, `townPanel.ts`, `trainSide.ts`,
   `namePrompt.ts`, ...). Fix the ones your task touches; report the rest.
-- `marketScreen.ts` recomputes prices without `DEAL_BONUS` and spends directly;
-  `gachaScreen.ts` deducts tickets itself. These are Gameplay's rules living in UI.
+- `marketScreen.ts` recomputes prices without `DEAL_BONUS` and spends directly. That is
+  Gameplay's rule living in UI.
 - Some overlays mount on `document.body`, outside `#ui-root`, so the world's hover stays active
   under them.
 - `fmtMoney` uses `en-US`, other formatters use the default locale.
