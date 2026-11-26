@@ -11,6 +11,7 @@ import { resetStationIds } from '../sim/stations';
 import { resetTrainIds } from '../sim/trains';
 import { CHUNK_TILES, expandSave, ownsBorderChunk } from '../sim/expand';
 import { unbuildable } from '../sim/build';
+import { groundLevelFromJSON } from '../sim/underground';
 import { Commands } from '../sim/commands';
 import type { HistoryStep } from '../sim/history';
 import { INTENT_KEY, type Intent } from '../intent';
@@ -1117,6 +1118,7 @@ function gameOn(w: SimWorld): Game {
     clock: w.clock,
     notices: w.notices,
     commands: new Commands(w),
+    build: { setTool() {} },
     camera: { x: 640, y: 320, zoomIndex: 2, zoom: 1, centerOn() {} },
     sim: { lastDay: 0 },
     settings: { weather: false },
@@ -1399,6 +1401,22 @@ describe('roads through Game.snapshot and Game.applySave', () => {
 });
 
 // ------------------------------------------------------------------ stores in a save and a load
+
+describe('what the Drill made through Game.snapshot', () => {
+  it('writes the store, the plane and the terrain the tools changed, as a load reads them', () => {
+    Object.assign(rules, DEFAULT_RULES);
+    const w = simWorld({ seed: 11, size: 64, terrain: 'grass' });
+    w.builder.underground.dig(20, 20, 0);
+    w.builder.underground.cut(21, 20);
+    w.map.groundLevel = groundLevelFromJSON([[20, 20, 4]], 64, 64);
+    w.builder.terrainEdits.set(20 * 64 + 20, Terrain.Rock);
+    const read = readSaveText(JSON.stringify(gameOn(w).snapshot()));
+    if (!('save' in read)) throw new Error(read.error);
+    expect(read.save.underground).toEqual(w.builder.underground.toJSON());
+    expect(read.save.groundLevel).toEqual([[20, 20, 4]]);
+    expect(read.save.groundTerrain).toEqual([[20, 20, Terrain.Rock]]);
+  });
+});
 
 // The goods of every store go through `Game.snapshot` and `Game.applySave`, as the roads do above;
 // a file from before the stores (v20) brings its global stockpile into the start depot, and a new

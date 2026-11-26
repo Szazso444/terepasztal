@@ -188,7 +188,8 @@ export class Traffic {
     this.sectionsBuilt++;
     const platform = new Set<number>();
     for (const s of this.builder.stations)
-      for (const g of s.gateTiles()) if (this.track.has(g.x, g.y)) platform.add(this.key(g.x, g.y));
+      for (const g of s.gateTiles())
+        if (this.builder.gateTrack(g)) platform.add(this.key(g.x, g.y));
     const isNode = (x: number, y: number) => {
       const p = this.track.get(x, y);
       if (!p) return true;

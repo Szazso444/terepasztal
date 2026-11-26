@@ -3,9 +3,12 @@ import { emptyMap, generateMap } from '../world/mapgen';
 import { Terrain, TERRAIN_NAMES, type GameMap } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import {
+  TRACK_CLASSES,
   TRACK_ITEMS,
   TrackGraph,
   footprintOf,
+  isUnitKind,
+  memberClear,
   pieceCost,
   portClass,
   rotationCount,
@@ -21,12 +24,13 @@ import { content, type Cost } from '../data/content';
 import trackData from '../data/track.json';
 import { forAll } from '../testing/property';
 import { BIOME_DEFS } from './biomes';
-import { Builder, DECOR_DEFS, type LinePiece } from './build';
-import { BUILDING_DEFS } from './buildings';
-import { Catenary } from './catenary';
+import { Builder, DECOR_DEFS, decorPlace, type LinePiece } from './build';
+import { BUILDING_DEFS, buildingFootprint } from './buildings';
+import { Catenary, SUPPLY_KINDS } from './catenary';
+import { streetDoors } from './doors';
 import { Economy } from './economy';
 import { Fleet } from './fleet';
-import { STATION_DEFS, Station, resetStationIds } from './stations';
+import { STATION_DEFS, Station, resetStationIds, stationFootprint, stationGates } from './stations';
 import { Train, resetTrainIds, type TickCtx } from './trains';
 import { setSupplyMode } from './supply';
 import { Inventory } from '../gacha/inventory';
@@ -35,6 +39,7 @@ import { STR } from '../strings';
 import { applyTileRepairs, repairBuiltTiles, type BuiltObjects } from '../engine/loadRepair';
 import { onRails } from './mountainTrack';
 import { storeWith } from '../testing/storeFixtures';
+import { drillLine } from './underground';
 
 /** An economy in the Electric Age: Main and Trunk Line are open. */
 const electricAge = () => Object.assign(new Economy(), { tier: 2 });
@@ -623,7 +628,8 @@ describe('mountain lines on generated maps', () => {
             );
         }
         // and the profile the game draws and runs on, over all the track laid
-        for (const bed of railProfile(map, track).values())
+        const beds = railProfile(map, track, undefined, builder.underground);
+        for (const bed of beds.values())
           for (const s of [...bed.spans, ...(bed.cross?.spans ?? [])])
             expect(Math.abs(s.b - s.a), JSON.stringify(s)).toBeLessThanOrEqual(
               s.to - s.from + 1e-9,
@@ -641,6 +647,1186 @@ describe('mountain lines on generated maps', () => {
   }, 60_000);
 });
 
+// ---------------------------------------------------------------- cliffs
+
+describe('rail on the steps of generated ground', () => {
+  /**
+   * A generated level plane on grass: level 0 west of column 20 and `high` from it on, as
+   * tileLevels settles it, the slope rule asked and nothing to pay. Rows 2 to 37 stand clear of
+   * the map's border.
+   */
+  function cliff(high: number) {
+    const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass),
+      raw = new Uint8Array(SIZE * SIZE);
+    for (let i = 0; i < raw.length; i++) raw[i] = i % SIZE >= 20 ? high : 0;
+    map.generatedLevel = tileLevels({ ...map, generatedLevel: raw });
+    const track = new TrackGraph(SIZE, SIZE),
+      regions = new RegionState(map);
+    const builder = new Builder(map, regions, track, electricAge(), storeWith({}).stores);
+    builder.free = true;
+    builder.groundCheck = (x, y, need) => groundAllowsOn(map, x, y, need);
+    expect(levelAt(map, 19, 20)).toBe(0);
+    expect(levelAt(map, 20, 20)).toBe(high);
+    return { map, track, builder };
+  }
+  const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
+  /** A north-south straight, as the cliff runs. */
+  const ns = (x: number, y: number): LinePiece => ({
+    kind: 'track',
+    x,
+    y,
+    item: STRAIGHT,
+    rot: 0,
+  });
+
+  it('a link across a step of 2 refuses, from either side', () => {
+    const { builder } = cliff(2);
+    expect(builder.placeTrack(19, 20, STRAIGHT, 1)).toBe(true);
+    expect(builder.checkTrack(20, 20, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+    expect(builder.placeTrack(20, 22, STRAIGHT, 1)).toBe(true);
+    expect(builder.checkTrack(19, 22, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+    expect(builder.placeTrack(19, 22, STRAIGHT, 1)).toBe(false);
+  });
+
+  it('a line stops on the first tile past the edge', () => {
+    const { builder } = cliff(4);
+    expect(builder.checkLine(run(16, 24, 20))).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+      at: 4,
+    });
+    expect(builder.placeLine(run(16, 24, 20))).toBe(false);
+    expect(builder.track.pieces.size).toBe(0);
+  });
+
+  it('a step of 1 is laid', () => {
+    const { builder } = cliff(1);
+    expect(builder.placeLine(run(16, 24, 20))).toBe(true);
+  });
+
+  it('a straight along a cliff is laid', () => {
+    const { builder } = cliff(4);
+    for (const x of [19, 20]) {
+      const line = Array.from({ length: 8 }, (_, i) => ns(x, 16 + i));
+      expect(builder.placeLine(line), `column ${x}`).toBe(true);
+    }
+  });
+
+  it('a line may end at the foot or the top of a cliff, facing it', () => {
+    const { builder } = cliff(4);
+    expect(builder.placeLine(run(16, 19, 20))).toBe(true);
+    expect(builder.placeLine(run(23, 20, 21))).toBe(true);
+  });
+
+  it('a link into a dug or cut tile ignores the step', () => {
+    const { builder } = cliff(4);
+    expect(builder.placeTrack(19, 20, STRAIGHT, 1)).toBe(true);
+    builder.underground.dig(20, 20, 0);
+    builder.underground.addPortal({ x: 20, y: 20, face: 'W', floor: 0 });
+    builder.insideMode = true;
+    expect(builder.checkTrack(20, 20, STRAIGHT, 1).ok).toBe(true);
+    builder.insideMode = false;
+    expect(builder.placeTrack(19, 22, STRAIGHT, 1)).toBe(true);
+    builder.underground.cut(20, 22);
+    expect(builder.checkTrack(20, 22, STRAIGHT, 1).ok).toBe(true);
+    // and from the other side, with the piece on the dug or cut tile down first
+    expect(builder.placeTrack(20, 24, STRAIGHT, 1)).toBe(true);
+    builder.underground.cut(20, 24);
+    expect(builder.checkTrack(19, 24, STRAIGHT, 1).ok).toBe(true);
+    // a line's probe reads the same store
+    builder.underground.cut(20, 26);
+    expect(builder.checkLine(run(18, 20, 26)).ok).toBe(true);
+    expect(builder.checkLine(run(18, 20, 28)).ok).toBe(false);
+  });
+
+  it('refuses new links only: track that crosses a step stays, and can be relaid', () => {
+    const { track, builder } = cliff(4);
+    track.place(19, 20, 'straight', 1);
+    track.place(20, 20, 'straight', 1);
+    const main: TrackItem = { kind: 'straight', cls: 'main' };
+    expect(builder.checkTrack(20, 20, main, 1).ok).toBe(true);
+    expect(builder.checkTrack(19, 20, main, 1).ok).toBe(true);
+  });
+
+  it('a replace that adds a link over the step refuses', () => {
+    const { track, builder } = cliff(4);
+    track.place(20, 20, 'straight', 1);
+    expect(builder.placeTrack(19, 20, STRAIGHT, 0)).toBe(true);
+    const crossing: TrackItem = { kind: 'crossing', cls: 'branch', cls2: 'branch' };
+    expect(builder.checkTrack(19, 20, crossing, 0)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+    // with nothing past the edge there is no link to refuse
+    expect(builder.placeTrack(19, 24, STRAIGHT, 0)).toBe(true);
+    expect(builder.checkTrack(19, 24, crossing, 0).ok).toBe(true);
+  });
+
+  it('asks nothing of a builder with no slope rule: that ground counts as level', () => {
+    const { builder } = cliff(4);
+    builder.groundCheck = null;
+    expect(builder.placeLine(run(16, 24, 20))).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------- viaducts
+
+describe('a viaduct across a cliff', () => {
+  const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
+  const ROW = 20;
+  const platform = BUILDING_DEFS.find((d) => d.bridge)!;
+
+  /** Level 4, with a valley at level 0 from 20 to 24, and platforms from `from` to `to`. */
+  function valley(from: number, to: number) {
+    const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass),
+      raw = Uint8Array.from({ length: SIZE * SIZE }, (_, i) =>
+        i % SIZE >= 20 && i % SIZE <= 24 ? 0 : 4,
+      );
+    map.generatedLevel = tileLevels({ ...map, generatedLevel: raw });
+    const track = new TrackGraph(SIZE, SIZE),
+      regions = new RegionState(map);
+    for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
+    const builder = new Builder(map, regions, track, electricAge(), storeWith({}).stores);
+    builder.free = true;
+    builder.groundCheck = (x, y, need) => groundAllowsOn(map, x, y, need);
+    expect(levelAt(map, 19, ROW)).toBe(4);
+    expect(levelAt(map, 20, ROW)).toBe(0);
+    for (let x = from; x <= to; x++)
+      expect(builder.placeBuilding(x, ROW, platform.id), `platform on ${x}`).not.toBeNull();
+    const rail = () => railProfile(map, track, (x, y) => !!builder.bridgeAt(x, y));
+    return { track, builder, rail };
+  }
+  const levelsOf = (beds: ReturnType<typeof railProfile>, xs: number[]) =>
+    xs.map((x) => beds.get(ROW * SIZE + x)!.spans[0].a);
+  const row = (from: number, to: number) =>
+    Array.from({ length: to - from + 1 }, (_, i) => from + i);
+
+  it('runs level from the cliff top with platforms on the valley floor', () => {
+    const { builder, rail } = valley(20, 24);
+    expect(builder.placeTrack(19, ROW, STRAIGHT, 1)).toBe(true);
+    const c = builder.checkTrack(20, ROW, STRAIGHT, 1);
+    expect(c.ok, c.reason).toBe(true);
+    for (const x of row(20, 25)) expect(builder.placeTrack(x, ROW, STRAIGHT, 1)).toBe(true);
+    expect(levelsOf(rail(), row(19, 25))).toEqual(row(19, 25).map(() => 4));
+    expect(row(19, 25).every((x) => rail().get(ROW * SIZE + x)!.flat)).toBe(true);
+  });
+
+  it('runs on with platforms past both feet of the cliff too', () => {
+    const { builder, rail } = valley(18, 26);
+    for (const x of row(17, 27)) {
+      const c = builder.checkTrack(x, ROW, STRAIGHT, 1);
+      expect(c.ok, `${x}: ${c.reason}`).toBe(true);
+      expect(builder.placeTrack(x, ROW, STRAIGHT, 1)).toBe(true);
+    }
+    expect(levelsOf(rail(), row(17, 27))).toEqual(row(17, 27).map(() => 4));
+  });
+
+  it('is laid from the valley towards the cliff as well', () => {
+    const { builder } = valley(20, 24);
+    expect(builder.placeTrack(20, ROW, STRAIGHT, 1)).toBe(true);
+    expect(builder.checkTrack(19, ROW, STRAIGHT, 1).ok).toBe(true);
+    expect(builder.placeTrack(24, ROW, STRAIGHT, 1)).toBe(true);
+    expect(builder.checkTrack(25, ROW, STRAIGHT, 1).ok).toBe(true);
+  });
+
+  it('refuses a platform on the cliff top with bare ground at the foot', () => {
+    const { builder } = valley(16, 19);
+    expect(builder.placeTrack(19, ROW, STRAIGHT, 1)).toBe(true);
+    expect(builder.checkTrack(20, ROW, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+    expect(builder.placeTrack(20, ROW + 2, STRAIGHT, 1)).toBe(true);
+    expect(builder.placeBuilding(19, ROW + 2, platform.id)).not.toBeNull();
+    expect(builder.checkTrack(19, ROW + 2, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+  });
+
+  it('leaves the wall of a dug tile to its portal', () => {
+    const { builder } = valley(20, 24);
+    // the valley's platform faces a dug tile on the cliff, with no portal on that face
+    builder.underground.dig(19, ROW, 0);
+    expect(builder.placeTrack(20, ROW, STRAIGHT, 1)).toBe(true);
+    builder.insideMode = true;
+    expect(builder.checkTrack(19, ROW, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+    builder.underground.addPortal({ x: 19, y: ROW, face: 'E', floor: 0 });
+    expect(builder.checkTrack(19, ROW, STRAIGHT, 1).ok).toBe(true);
+  });
+
+  it('counts a cut at its bed: a platform above it holds nothing up', () => {
+    const { builder } = valley(20, 20);
+    builder.underground.cut(19, ROW + 2);
+    expect(builder.placeTrack(19, ROW + 2, STRAIGHT, 1)).toBe(true);
+    expect(builder.placeBuilding(18, ROW + 2, platform.id)).not.toBeNull();
+    expect(builder.checkTrack(18, ROW + 2, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.tooSteep,
+    });
+  });
+});
+
+// ---------------------------------------------------------------- inside
+
+describe('track inside', () => {
+  const STRAIGHT: TrackItem = { kind: 'straight', cls: 'branch' };
+  const CURVE: TrackItem = { kind: 'curve', cls: 'branch' };
+  const ROW = 20;
+
+  /** Grass at `level`, as generated ground settles it: every chunk owned, nothing to pay. */
+  function ground(level: (x: number, y: number) => number) {
+    const map = emptyMap(4242, SIZE, SIZE, Terrain.Grass),
+      raw = Uint8Array.from({ length: SIZE * SIZE }, (_, i) =>
+        level(i % SIZE, Math.floor(i / SIZE)),
+      );
+    map.generatedLevel = tileLevels({ ...map, generatedLevel: raw });
+    const track = new TrackGraph(SIZE, SIZE),
+      regions = new RegionState(map);
+    for (let i = 0; i < regions.unlocked.length; i++) regions.own(i);
+    const builder = new Builder(map, regions, track, electricAge(), storeWith({}).stores);
+    builder.free = true;
+    builder.groundCheck = (x, y, need) => groundAllowsOn(map, x, y, need);
+    return { map, track, builder, under: builder.underground };
+  }
+  /** A block of level 5 from 10 to 29 on both axes, a cliff round it. */
+  const block = () => ground((x, y) => (x >= 10 && x < 30 && y >= 10 && y < 30 ? 5 : 0));
+  /** A square hill of 6 on (20, 20): a level a tile down each side, level 0 at 14 and 26. */
+  const hill = () =>
+    ground((x, y) => Math.max(0, 6 - Math.max(Math.abs(x - 20), Math.abs(y - 20))));
+  /** A wall of 5 from column 16 to 23, right across the map. */
+  const wall = () => ground((x) => (x >= 16 && x < 24 ? 5 : 0));
+  const digAll = (under: Builder['underground'], tiles: readonly { x: number; y: number }[]) =>
+    tiles.forEach((t) => expect(under.dig(t.x, t.y, 0)).toBe(true));
+  /** The block of tiles from 14 to 25 on both axes, dug. */
+  const room = () => {
+    const w = block();
+    for (let y = 14; y < 26; y++) for (let x = 14; x < 26; x++) w.under.dig(x, y, 0);
+    w.builder.insideMode = true;
+    return w;
+  };
+
+  it('a piece inside needs its whole footprint dug, member tiles without a rail included', () => {
+    let clear = 0,
+      pieces = 0;
+    for (const { item, rot } of PIECES) {
+      if (!isUnitKind(item.kind, item.cls)) continue;
+      pieces++;
+      const tiles = footprintOf(20, 20, item.kind, rot, item.cls),
+        where = what(item, rot);
+      const whole = block();
+      digAll(whole.under, tiles);
+      whole.builder.insideMode = true;
+      const c = whole.builder.checkTrack(20, 20, item, rot);
+      expect(c.ok, `${where}: ${c.reason}`).toBe(true);
+      expect(whole.builder.placeTrack(20, 20, item, rot), where).toBe(true);
+      // one tile short of the whole, whichever tile that is: nothing lays
+      tiles.forEach((gap, member) => {
+        const w = block();
+        digAll(
+          w.under,
+          tiles.filter((t) => t !== gap),
+        );
+        w.builder.insideMode = true;
+        expect(w.builder.checkTrack(20, 20, item, rot), `${where}, tile ${member}`).toMatchObject({
+          ok: false,
+          reason: STR.build.notDug,
+        });
+        expect(w.builder.placeTrack(20, 20, item, rot), `${where}, tile ${member}`).toBe(false);
+        expect(w.track.pieces.size).toBe(0);
+        if (!memberClear(item.kind, item.cls, rot, member)) return;
+        clear++;
+        // and a dug tile under a member with no rail keeps the piece off with the Drill off
+        const over = block();
+        expect(over.under.dig(gap.x, gap.y, 0)).toBe(true);
+        expect(
+          over.builder.checkTrack(20, 20, item, rot),
+          `${where}, tile ${member}`,
+        ).toMatchObject({ ok: false, reason: STR.build.overTunnel });
+      });
+    }
+    // not vacuous: wide curves and switches, and members with no rail among their tiles
+    expect(pieces).toBeGreaterThan(20);
+    expect(clear).toBeGreaterThan(5);
+  });
+
+  it('straight, curve, switch, crossing and signal lay inside; stations, depots and buildings refuse', () => {
+    const { builder, track, under } = room();
+    const items: [TrackItem, number, number][] = [
+      [STRAIGHT, 15, 15],
+      [CURVE, 18, 15],
+      [{ kind: 'switch', cls: 'branch' }, 18, 19],
+      [{ kind: 'crossing', cls: 'branch', cls2: 'branch' }, 15, 19],
+    ];
+    for (const [item, x, y] of items) {
+      const c = builder.checkTrack(x, y, item, 1);
+      expect(c.ok, `${item.kind}: ${c.reason}`).toBe(true);
+      expect(builder.placeTrack(x, y, item, 1), item.kind).toBe(true);
+      expect(track.has(x, y), item.kind).toBe(true);
+    }
+    expect(builder.placeDecor(15, 15, 'signal', 1)).not.toBeNull();
+    for (const d of STATION_DEFS)
+      expect(builder.checkStation(23, 23, d.id), d.id).toMatchObject({
+        ok: false,
+        reason: STR.build.overTunnel,
+      });
+    expect(STATION_DEFS.some((d) => d.depot)).toBe(true);
+    for (const d of BUILDING_DEFS)
+      expect(builder.checkBuilding(23, 23, d.id), d.id).toMatchObject({
+        ok: false,
+        reason: STR.build.overTunnel,
+      });
+    expect(under.isDug(23, 23)).toBe(true);
+  });
+
+  it('a first piece on a dug tile lays in a stone mountain as in a raised grass hill', () => {
+    let laid = 0;
+    for (const { item, rot } of PIECES) {
+      if (!drillLine(item)) continue;
+      const where = what(item, rot),
+        tiles = footprintOf(PLATEAU.x, PLATEAU.y, item.kind, rot, item.cls);
+      for (const w of [field(), block()]) {
+        for (const t of tiles) expect(w.builder.underground.dig(t.x, t.y, 0)).toBe(true);
+        w.builder.insideMode = true;
+        const c = w.builder.checkTrack(PLATEAU.x, PLATEAU.y, item, rot);
+        expect(c.ok, `${where}: ${c.reason}`).toBe(true);
+        expect(w.builder.placeTrack(PLATEAU.x, PLATEAU.y, item, rot), where).toBe(true);
+        laid++;
+      }
+    }
+    expect(laid).toBeGreaterThan(40);
+  });
+
+  it('on the surface of a mountain the first piece still has to continue a line', () => {
+    for (const at of [FOOT, BANK, PLATEAU]) {
+      const w = field();
+      // a tunnel next door changes nothing up here, with the Drill on or off
+      w.builder.underground.dig(at.x, at.y + 1, 0);
+      expect(w.builder.checkTrack(at.x, at.y, STRAIGHT, 1), `${at.x}`).toMatchObject({
+        ok: false,
+        reason: STR.build.mountainLine,
+      });
+    }
+    // and a wide piece with a tile out on the stone does not get in by its dug tiles
+    const w = field(),
+      tiles = footprintOf(PLATEAU.x, PLATEAU.y, 'curve', 1, 'branch');
+    for (const t of tiles.slice(1)) w.builder.underground.dig(t.x, t.y, 0);
+    w.builder.insideMode = true;
+    expect(w.builder.checkTrack(PLATEAU.x, PLATEAU.y, CURVE, 1).reason).toBe(STR.build.notDug);
+  });
+
+  it('a curve inside asks nothing of the ground over it', () => {
+    const on = (dug: boolean) => {
+      const w = hill(),
+        tiles = footprintOf(16, 18, 'curve', 1, 'branch');
+      expect(new Set(tiles.map((t) => levelAt(w.map, t.x, t.y))).size).toBeGreaterThan(1);
+      if (dug) digAll(w.under, tiles);
+      w.builder.insideMode = dug;
+      return w.builder.checkTrack(16, 18, CURVE, 1);
+    };
+    expect(on(false)).toMatchObject({ ok: false, reason: STR.build.notSmooth });
+    expect(on(true).ok).toBe(true);
+  });
+
+  it.each([[false], [true]])(
+    'a cut takes straights, and no curve, switch or crossing, the Drill on: %s',
+    (drill) => {
+      let wide = 0;
+      for (const { item, rot } of PIECES) {
+        if (drill && !drillLine(item)) continue;
+        const where = what(item, rot),
+          refused = { ok: false, reason: STR.build.cutStraight };
+        const tiles = footprintOf(20, ROW, item.kind, rot, item.cls);
+        const whole = ground(() => 0);
+        for (const t of tiles) whole.under.cut(t.x, t.y);
+        whole.builder.insideMode = drill;
+        const c = whole.builder.checkTrack(20, ROW, item, rot);
+        if (item.kind === 'straight') expect(c.ok, `${where}: ${c.reason}`).toBe(true);
+        else expect(c, where).toMatchObject(refused);
+        if (drill || !isUnitKind(item.kind, item.cls)) continue;
+        // one tile of a wide piece on a cut, rail on it or none, keeps the whole piece off
+        wide++;
+        tiles.forEach((t, member) => {
+          const w = ground(() => 0);
+          w.under.cut(t.x, t.y);
+          expect(w.builder.checkTrack(20, ROW, item, rot), `${where}, ${member}`).toMatchObject(
+            refused,
+          );
+        });
+      }
+      if (!drill) expect(wide).toBeGreaterThan(20);
+    },
+  );
+
+  it('a straight on a cut takes no crossing over it, and may change its line', () => {
+    const w = hill();
+    expect(w.builder.placeLine(run(12, 14, ROW))).toBe(true);
+    w.under.cut(15, ROW);
+    expect(w.builder.placeTrack(15, ROW, STRAIGHT, 1)).toBe(true);
+    const crossing: TrackItem = { kind: 'crossing', cls: 'branch', cls2: 'branch' };
+    expect(w.builder.checkTrack(15, ROW, crossing, 0).reason).toBe(STR.build.cutStraight);
+    expect(w.builder.checkTrack(15, ROW, { kind: 'straight', cls: 'main' }, 1).ok).toBe(true);
+  });
+
+  it('a wide piece stands at one rail level on every tile, or not at all', () => {
+    const at = (level: (x: number) => number) => {
+      const w = ground((x) => level(x));
+      // the slope rule's own answer aside: the levels of the tiles are what is asked here
+      w.builder.groundCheck = () => true;
+      return w;
+    };
+    const tiles = footprintOf(14, 19, 'curve', 0, 'branch');
+    expect(new Set(tiles.map((t) => t.x)).size).toBeGreaterThan(1);
+    const terrace = at((x) => (x >= tiles[0].x + 1 ? 1 : 0));
+    expect(new Set(tiles.map((t) => levelAt(terrace.map, t.x, t.y))).size).toBe(2);
+    expect(terrace.builder.checkTrack(14, 19, CURVE, 0)).toMatchObject({
+      ok: false,
+      reason: STR.build.notSmooth,
+    });
+    expect(at(() => 0).builder.checkTrack(14, 19, CURVE, 0).ok).toBe(true);
+    expect(at(() => 1).builder.checkTrack(14, 19, CURVE, 0).ok).toBe(true);
+    // on platforms under every tile it rides the deck, as it did
+    const platform = BUILDING_DEFS.find((d) => d.bridge)!;
+    for (const t of tiles)
+      terrace.builder.buildings.set(t.y * SIZE + t.x, {
+        id: platform.id,
+        x: t.x,
+        y: t.y,
+        acc: 0,
+        rot: 0,
+        active: false,
+        rate: 0,
+      });
+    expect(terrace.builder.checkTrack(14, 19, CURVE, 0).ok).toBe(true);
+  });
+
+  it('with the Drill off a dug tile refuses track, as a tile with a surface', () => {
+    const { builder, track, under } = room();
+    builder.insideMode = false;
+    for (const { item, rot } of PIECES)
+      expect(builder.checkTrack(20, 20, item, rot), what(item, rot)).toMatchObject({
+        ok: false,
+        reason: STR.build.overTunnel,
+      });
+    expect(builder.placeTrack(20, 20, STRAIGHT, 1)).toBe(false);
+    expect(builder.checkLine(run(12, 16, ROW))).toMatchObject({
+      ok: false,
+      at: 2,
+      reason: STR.build.overTunnel,
+    });
+    // what stands inside stays, and is not laid over from outside
+    track.place(20, 21, 'straight', 1);
+    expect(builder.checkTrack(20, 21, { kind: 'straight', cls: 'main' }, 1).ok).toBe(false);
+    expect(builder.checkDecor(20, 21, 'signal').reason).toBe(STR.build.overTunnel);
+    expect(under.isDug(20, 20)).toBe(true);
+  });
+
+  it('with the Drill on open ground takes no track and no signals', () => {
+    const w = block();
+    w.track.place(20, ROW, 'straight', 1);
+    w.builder.insideMode = true;
+    expect(w.builder.checkTrack(18, ROW, STRAIGHT, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.notDug,
+    });
+    expect(w.builder.checkDecor(20, ROW, 'signal').reason).toBe(STR.build.notDug);
+    // a line's probe drills as its builder does
+    expect(w.builder.checkLine(run(17, 18, ROW))).toMatchObject({
+      ok: false,
+      at: 0,
+      reason: STR.build.notDug,
+    });
+    w.builder.insideMode = false;
+    expect(w.builder.checkDecor(20, ROW, 'signal').ok).toBe(true);
+  });
+
+  it.each([[false], [true]])(
+    'a cut takes rail and signals, the Drill on: %s, and asks nothing of the ground',
+    (drill) => {
+      const w = hill();
+      // the rail of a line into the bank
+      expect(w.builder.placeLine(run(12, 14, ROW))).toBe(true);
+      for (const x of [15, 16]) w.under.cut(x, ROW);
+      w.builder.insideMode = drill;
+      expect(w.builder.placeLine(run(15, 16, ROW))).toBe(true);
+      expect(w.builder.placeDecor(16, ROW, 'signal', 1)).not.toBeNull();
+      expect(w.track.has(16, ROW)).toBe(true);
+    },
+  );
+
+  it.each([[false], [true]])(
+    'a first piece in a cut on stone lays, the Drill on: %s: it is the way in',
+    (drill) => {
+      const w = field();
+      w.builder.underground.cut(BANK.x, BANK.y);
+      w.builder.insideMode = drill;
+      const c = w.builder.checkTrack(BANK.x, BANK.y, STRAIGHT, 1);
+      expect(c.ok, c.reason).toBe(true);
+      // and the stone beside the cut is the surface
+      w.builder.insideMode = false;
+      expect(w.builder.checkTrack(BANK.x + 1, BANK.y + 1, STRAIGHT, 1).reason).toBe(
+        STR.build.mountainLine,
+      );
+    },
+  );
+
+  it('no wide piece stands across the mouth of a tunnel, dug on one tile and cut on the next', () => {
+    const w = hill(),
+      [first, ...rest] = footprintOf(17, 18, 'curve', 1, 'branch');
+    w.under.cut(first.x, first.y);
+    digAll(w.under, rest);
+    expect(w.builder.checkTrack(17, 18, CURVE, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.overTunnel,
+    });
+    w.builder.insideMode = true;
+    expect(w.builder.checkTrack(17, 18, CURVE, 1)).toMatchObject({
+      ok: false,
+      reason: STR.build.notDug,
+    });
+  });
+
+  it.each([
+    ['dug'],
+    ['dug, Drill on'],
+    ['cut'],
+    ['portal front'],
+    ['portal front, Drill on'],
+  ] as const)('a %s tile takes no road, building, station, depot or decor', (name) => {
+    const AT = { x: 20, y: ROW };
+    // a level plain, with level ground and grass where every check would take it
+    const w = ground(() => 0);
+    let reason: string = STR.build.portalFront;
+    if (name.startsWith('dug')) {
+      w.under.dig(AT.x, AT.y, 0);
+      reason = STR.build.overTunnel;
+    } else if (name === 'cut') {
+      w.under.cut(AT.x, AT.y);
+      reason = STR.build.inCutting;
+    } else {
+      w.under.dig(AT.x + 1, AT.y, 0);
+      w.under.addPortal({ x: AT.x + 1, y: AT.y, face: 'W', floor: 0 });
+    }
+    w.builder.insideMode = name.endsWith('Drill on');
+    const refused = { ok: false, reason };
+    expect(w.builder.checkRoad(AT.x, AT.y), 'road').toMatchObject(refused);
+    expect(w.builder.placeRoad(AT.x, AT.y), 'road').toBe(false);
+    expect(w.builder.placeRoads([AT], AT), 'a stroke of road').toEqual([]);
+    expect(w.builder.roads.has(AT.x, AT.y)).toBe(false);
+    for (const d of STATION_DEFS)
+      expect(w.builder.checkStation(AT.x, AT.y, d.id), d.id).toMatchObject(refused);
+    for (const d of BUILDING_DEFS)
+      expect(w.builder.checkBuilding(AT.x, AT.y, d.id), d.id).toMatchObject(refused);
+    // a bridge platform in a line, too
+    const platform = BUILDING_DEFS.find((d) => d.bridge)!;
+    expect(
+      w.builder.checkLine([{ kind: 'platform', x: AT.x, y: AT.y, defId: platform.id }]),
+    ).toMatchObject({ ...refused, at: 0 });
+    for (const d of DECOR_DEFS.filter((def) => !onRails(def.id))) {
+      expect(w.builder.checkDecor(AT.x, AT.y, d.id), d.id).toMatchObject(refused);
+      expect(w.builder.spawnDecor(AT.x, AT.y, d.id, 0), d.id).toBeNull();
+    }
+    expect(w.builder.stations.length + w.builder.decor.size + w.builder.buildings.size).toBe(0);
+  });
+
+  it('wire stands on a dug tile with the Drill on, and is refused with it off', () => {
+    const w = room();
+    w.builder.catenary = new Catenary(w.map);
+    expect(w.builder.placeTrack(20, 20, STRAIGHT, 1)).toBe(true);
+    for (const kind of SUPPLY_KINDS) {
+      const c = w.builder.checkSupply(20, 20, kind);
+      expect(c.ok, `${kind}: ${c.reason}`).toBe(true);
+    }
+    expect(w.builder.placeSupply(20, 20, 'catenary')).toBe(true);
+    expect(w.builder.catenary.supplyAt(20, 20)).toBe('catenary');
+    w.builder.insideMode = false;
+    for (const kind of SUPPLY_KINDS)
+      expect(w.builder.checkSupply(20, 20, kind), kind).toMatchObject({
+        ok: false,
+        reason: STR.build.overTunnel,
+      });
+    expect(w.builder.placeSupply(20, 20, 'third_rail')).toBe(false);
+    expect(w.builder.catenary.supplyAt(20, 20)).toBe('catenary');
+  });
+
+  it('the tile a portal looks at keeps its rail: no road crosses it, and it opens with the portal gone', () => {
+    const w = ground(() => 0);
+    w.under.dig(21, ROW, 0);
+    w.under.addPortal({ x: 21, y: ROW, face: 'W', floor: 0 });
+    expect(w.builder.placeTrack(20, ROW, STRAIGHT, 1)).toBe(true);
+    expect(w.builder.placeDecor(20, ROW, 'signal', 1)).not.toBeNull();
+    expect(w.builder.checkRoad(20, ROW)).toMatchObject({
+      ok: false,
+      reason: STR.build.portalFront,
+    });
+    expect(w.under.fill(21, ROW)).not.toBeNull();
+    expect(w.builder.checkRoad(20, ROW).ok).toBe(true);
+    expect(w.builder.checkDecor(20, ROW - 1, 'water_tower').ok).toBe(true);
+  });
+
+  it('a curve on platforms meets rail on a cut at its bed, not the bank over the bed', () => {
+    const w = ground((x) => (x < 16 ? 0 : x < 18 ? 2 : 5)),
+      narrow: TrackItem = { kind: 'curve', cls: 'narrow' };
+    const drag = Array.from({ length: 6 }, (_, i) => ({ x: 15 + i, y: ROW }));
+    expect(w.builder.dig(drag)).toBe(true);
+    expect(w.under.isCut(16, ROW)).toBe(true);
+    expect(w.under.fronted(15, ROW)).toBe(false);
+    expect(levelAt(w.map, 16, ROW)).toBe(2);
+    const platform = BUILDING_DEFS.find((d) => d.bridge)!;
+    expect(w.builder.placeBuilding(15, ROW, platform.id)).not.toBeNull();
+    // east to the cut and south to open ground at level 0: both rails stand at 0
+    const c = w.builder.checkTrack(15, ROW, narrow, 1);
+    expect(c.ok, c.reason).toBe(true);
+    expect(w.builder.placeTrack(15, ROW, narrow, 1)).toBe(true);
+    const bed = railProfile(w.map, w.track, (x, y) => !!w.builder.bridgeAt(x, y), w.under);
+    expect(bed.get(ROW * SIZE + 15)!.spans[0].a).toBe(0);
+  });
+
+  it('a bridge platform keeps off the tile a cliff portal looks at, and may stand beside it', () => {
+    const w = wall();
+    expect(w.builder.dig(Array.from({ length: 10 }, (_, i) => ({ x: 15 + i, y: ROW })))).toBe(true);
+    expect(w.under.fronted(15, ROW)).toBe(true);
+    const platform = BUILDING_DEFS.find((d) => d.bridge)!;
+    expect(w.builder.checkBuilding(15, ROW, platform.id)).toMatchObject({
+      ok: false,
+      reason: STR.build.portalFront,
+    });
+    expect(w.builder.checkBuilding(15, ROW + 1, platform.id).ok).toBe(true);
+  });
+
+  it('a footprint with one tile on a dug or cut tile refuses as a whole', () => {
+    const w = ground(() => 0);
+    const big = STATION_DEFS.map((d) => ({ d, tiles: stationFootprint(d.id, 20, ROW, 0) })).find(
+      ({ tiles }) => tiles.length > 1,
+    )!;
+    const last = big.tiles[big.tiles.length - 1];
+    w.under.cut(last.x, last.y);
+    expect(w.builder.checkStation(20, ROW, big.d.id).reason).toBe(STR.build.inCutting);
+    const works = BUILDING_DEFS.map((d) => ({ d, tiles: buildingFootprint(d.id, 20, 8, 0) })).find(
+      ({ tiles }) => tiles.length > 1,
+    )!;
+    const corner = works.tiles[works.tiles.length - 1];
+    w.under.dig(corner.x, corner.y, 0);
+    expect(w.builder.checkBuilding(20, 8, works.d.id).reason).toBe(STR.build.overTunnel);
+  });
+
+  it('a spur to a door keeps off a tile the Drill made', () => {
+    /** A townhouse with a road near its door, with its door's tile dug or left open. */
+    const spur = (dug: boolean) => {
+      const w = ground(() => 0);
+      const probe = ground(() => 0);
+      const d = probe.builder.placeDecor(20, ROW, 'townhouse', 0)!;
+      const [{ reach }] = streetDoors(decorPlace(d));
+      if (dug) w.under.dig(reach.x, reach.y, 0);
+      // a run of road a tile off the door's tile, out along the way it looks
+      const dx = reach.x - 20,
+        dy = reach.y - ROW;
+      for (let i = -3; i <= 3; i++)
+        w.builder.placeRoad(reach.x + dx + i * dy, reach.y + dy + i * dx);
+      w.builder.placeDecor(20, ROW, 'townhouse', 0);
+      return w.builder.roads.has(reach.x, reach.y);
+    };
+    expect(spur(false)).toBe(true);
+    expect(spur(true)).toBe(false);
+  });
+
+  it('Drill lines are narrow, branch, main and trunk, from the diesel age', () => {
+    const inside = (tier: number, free = false) => {
+      const w = room();
+      w.builder.free = free;
+      w.builder.economy.tier = tier;
+      return w;
+    };
+    for (const cls of TRACK_CLASSES) {
+      const c = inside(5, true).builder.checkTrack(20, ROW, { kind: 'straight', cls }, 1);
+      if (['narrow', 'branch', 'main', 'trunk'].includes(cls)) expect(c.ok, cls).toBe(true);
+      else expect(c, cls).toMatchObject({ ok: false, reason: STR.build.drillLine });
+    }
+    // a crossing of two lines goes by both
+    const mixed: TrackItem = { kind: 'crossing', cls: 'branch', cls2: 'maglev' };
+    expect(inside(5, true).builder.checkTrack(20, ROW, mixed, 0).reason).toBe(STR.build.drillLine);
+    // Steam has no Drill; the age opens it, and the editor has no ages
+    const refused = { ok: false, reason: STR.build.tierLocked(1) };
+    expect(inside(0).builder.checkTrack(20, ROW, STRAIGHT, 1)).toMatchObject(refused);
+    expect(inside(0, true).builder.checkTrack(20, ROW, STRAIGHT, 1).ok).toBe(true);
+    expect(inside(1).builder.checkTrack(20, ROW, STRAIGHT, 1).reason).not.toBe(
+      STR.build.tierLocked(1),
+    );
+    // on the surface the age and the line ask as they always did
+    const outside = inside(0);
+    outside.builder.insideMode = false;
+    expect(outside.builder.checkTrack(5, ROW, STRAIGHT, 1).reason).not.toBe(
+      STR.build.tierLocked(1),
+    );
+  });
+
+  describe('a line through a tunnel', () => {
+    /** A line of straights on row ROW, from column `a` to `b` in that order, with the Drill as set. */
+    function lay(w: ReturnType<typeof ground>, a: number, b: number, inside: boolean) {
+      w.builder.insideMode = inside;
+      const c = w.builder.checkLine(run(a, b, ROW));
+      expect(c.ok, `${a} to ${b}: ${c.reason} at ${c.at}`).toBe(true);
+      expect(w.builder.placeLine(run(a, b, ROW))).toBe(true);
+      w.builder.insideMode = false;
+    }
+    /**
+     * Lay each stretch in turn, with the Drill on where it runs inside: every tile of it holds rail
+     * after, and each tile is on the side of the ground its stretch says.
+     */
+    const through = (w: ReturnType<typeof ground>, stretches: [number, number, boolean][]) => {
+      for (const [a, b, inside] of stretches) {
+        lay(w, a, b, inside);
+        for (let x = Math.min(a, b); x <= Math.max(a, b); x++) {
+          expect(w.track.railOn(x, ROW), `column ${x}`).toBe(true);
+          expect(w.under.isDug(x, ROW), `column ${x}`).toBe(inside);
+        }
+      }
+    };
+    /** The same line from east to west: each stretch turned round, the last first. */
+    const back = (stretches: [number, number, boolean][]) =>
+      [...stretches].reverse().map(([a, b, inside]): [number, number, boolean] => [b, a, inside]);
+
+    const allFlat = (w: ReturnType<typeof ground>, a: number, b: number) => {
+      const beds = railProfile(w.map, w.track, undefined, w.under);
+      for (let x = a; x <= b; x++) {
+        const bed = beds.get(ROW * SIZE + x)!;
+        expect(bed, `column ${x}`).toBeDefined();
+        expect(bed.flat, `column ${x}`).toBe(true);
+        expect(bed.spans[0].a, `column ${x}`).toBe(0);
+      }
+    };
+
+    // the wall stands straight up from level 0: from open ground, straight into a portal
+    const STRAIGHT_IN: [number, number, boolean][] = [
+      [10, 15, false],
+      [16, 23, true],
+      [24, 30, false],
+    ];
+    // the hill leads in by its banks: a cut each side of the tunnel
+    const BY_CUTS: [number, number, boolean][] = [
+      [10, 16, false],
+      [17, 23, true],
+      [24, 30, false],
+    ];
+
+    it('runs from open ground, the cliff rule lifted by the dug side, laid either way', () => {
+      for (const [name, stretches] of [
+        ['east', STRAIGHT_IN],
+        ['west', back(STRAIGHT_IN)],
+      ] as const) {
+        const w = wall();
+        expect(w.builder.dig(Array.from({ length: 10 }, (_, i) => ({ x: 15 + i, y: ROW })))).toBe(
+          true,
+        );
+        expect(
+          w.under
+            .portals()
+            .map((p) => [p.x, p.face])
+            .sort(),
+          name,
+        ).toEqual([
+          [16, 'W'],
+          [23, 'E'],
+        ]);
+        // the same edge with no tunnel behind it is a step of 5
+        const bare = wall();
+        expect(bare.builder.placeLine(run(10, 15, ROW))).toBe(true);
+        expect(bare.builder.checkTrack(16, ROW, STRAIGHT, 1).reason).toBe(STR.build.tooSteep);
+        through(w, stretches);
+        allFlat(w, 10, 30);
+      }
+    });
+
+    it('runs from the cuts, laid either way', () => {
+      for (const [name, stretches] of [
+        ['east', BY_CUTS],
+        ['west', back(BY_CUTS)],
+      ] as const) {
+        const w = hill();
+        const drag = Array.from({ length: 13 }, (_, i) => ({ x: 14 + i, y: ROW }));
+        expect(w.builder.checkDig(drag), name).toMatchObject({ ok: true });
+        expect(w.builder.dig(drag), name).toBe(true);
+        const kinds = drag.map(({ x, y }) =>
+          w.under.isDug(x, y) ? 'dug' : w.under.isCut(x, y) ? 'cut' : 'open',
+        );
+        expect(kinds).toEqual([
+          'open',
+          ...Array<string>(2).fill('cut'),
+          ...Array<string>(7).fill('dug'),
+          ...Array<string>(2).fill('cut'),
+          'open',
+        ]);
+        through(w, stretches);
+        allFlat(w, 10, 30);
+      }
+    });
+
+    describe('with the Drill on, in one drag', () => {
+      const tunnelBy = (w: ReturnType<typeof ground>, from: number, to: number) => {
+        const drag = Array.from({ length: to - from + 1 }, (_, i) => ({ x: from + i, y: ROW }));
+        expect(w.builder.dig(drag)).toBe(true);
+      };
+      /** A tunnel through the hill, with a cut each side: x 15 to 25, level 0 past them. */
+      const byCuts = () => {
+        const w = hill();
+        tunnelBy(w, 14, 26);
+        w.builder.insideMode = true;
+        return w;
+      };
+      /** A tunnel through the wall, portals at x 16 and 23, looking at open ground. */
+      const byCliffs = () => {
+        const w = wall();
+        tunnelBy(w, 15, 24);
+        w.builder.insideMode = true;
+        return w;
+      };
+
+      it.each([
+        ['east', 15, 25],
+        ['west', 25, 15],
+      ])('lays from cut through portal, tunnel and portal to cut, %s', (_way, a, b) => {
+        const w = byCuts();
+        const c = w.builder.checkLine(run(a, b, ROW));
+        expect(c.ok, `${c.reason} at ${c.at}`).toBe(true);
+        expect(w.builder.placeLine(run(a, b, ROW))).toBe(true);
+        for (let x = 15; x <= 25; x++) expect(w.track.railOn(x, ROW), `column ${x}`).toBe(true);
+        allFlat(w, 15, 25);
+      });
+
+      it.each([
+        ['east', 15, 24],
+        ['west', 24, 15],
+      ])('lays out to the open tile a portal looks at, %s', (_way, a, b) => {
+        const w = byCliffs();
+        const c = w.builder.checkLine(run(a, b, ROW));
+        expect(c.ok, `${c.reason} at ${c.at}`).toBe(true);
+        expect(w.builder.placeLine(run(a, b, ROW))).toBe(true);
+        allFlat(w, 15, 24);
+        // and a signal goes where the piece went
+        expect(w.builder.placeDecor(15, ROW, 'signal', 1)).not.toBeNull();
+      });
+
+      it('stops at the end of the cut: the tile past it is open ground', () => {
+        const w = byCuts();
+        expect(w.under.fronted(16, ROW)).toBe(true);
+        expect(w.under.fronted(14, ROW)).toBe(false);
+        expect(w.builder.checkLine(run(14, 18, ROW))).toMatchObject({
+          ok: false,
+          at: 0,
+          reason: STR.build.notDug,
+        });
+        expect(w.builder.checkLine(run(18, 14, ROW))).toMatchObject({
+          ok: false,
+          at: 4,
+          reason: STR.build.notDug,
+        });
+        w.builder.insideMode = false;
+        expect(w.builder.checkTrack(14, ROW, STRAIGHT, 1).ok).toBe(true);
+      });
+
+      it('stops at the tile a portal looks at: the next is open ground', () => {
+        const w = byCliffs();
+        expect(w.builder.checkLine(run(17, 14, ROW))).toMatchObject({
+          ok: false,
+          at: 3,
+          reason: STR.build.notDug,
+        });
+      });
+
+      it('leaves the tile a portal looks at under every rule of the surface', () => {
+        // a curve there needs level ground, and it stands against the cliff
+        const curve = byCliffs(),
+          narrow: TrackItem = { kind: 'curve', cls: 'narrow' };
+        expect(footprintOf(15, ROW, 'curve', 0, 'narrow')).toHaveLength(1);
+        expect(curve.builder.checkTrack(15, ROW, narrow, 0)).toMatchObject({
+          ok: false,
+          reason: STR.build.notSmooth,
+        });
+        // what stands there keeps it
+        const taken = byCliffs();
+        taken.builder.decor.set(ROW * SIZE + 15, { id: 'water_tower', x: 15, y: ROW, rot: 0 });
+        expect(taken.builder.checkTrack(15, ROW, STRAIGHT, 1).reason).toBe(STR.build.occupied);
+        // stone there asks for a line to continue, as it is the surface
+        const rock = byCliffs();
+        rock.map.terrain[ROW * SIZE + 15] = Terrain.Rock;
+        expect(rock.builder.checkTrack(15, ROW, STRAIGHT, 1).reason).toBe(STR.build.mountainLine);
+        expect(rock.builder.placeTrack(16, ROW, STRAIGHT, 1)).toBe(true);
+        expect(rock.builder.checkTrack(15, ROW, STRAIGHT, 1).ok).toBe(true);
+        // and with the portal gone it is open ground like any other
+        const gone = byCliffs();
+        gone.builder.insideMode = false;
+        expect(gone.builder.fillDug(16, ROW)).toBe(true);
+        gone.builder.insideMode = true;
+        expect(gone.builder.checkTrack(15, ROW, STRAIGHT, 1).reason).toBe(STR.build.notDug);
+      });
+    });
+
+    it.each([
+      ['dug', 0, true],
+      ['dug', 1, false],
+      ['dug', 2, false],
+      ['dug', 4, false],
+      ['cut', 0, true],
+      ['cut', 1, true],
+      ['cut', 2, false],
+      ['cut', 4, false],
+    ] as const)('a %s tile and open ground at level %i join: %s', (kind, level, joins) => {
+      /** Plain ground with a tile at `level` at x 19, and the Drill's tile beside it at x 20. */
+      const world = () => {
+        const w = ground((x) => (x === 19 ? level : 0));
+        expect(levelAt(w.map, 19, ROW)).toBe(level);
+        if (kind === 'dug') {
+          w.under.dig(20, ROW, 0);
+          w.under.addPortal({ x: 20, y: ROW, face: 'W', floor: 0 });
+        } else w.under.cut(20, ROW);
+        return w;
+      };
+      const want = joins ? { ok: true } : { ok: false, reason: STR.build.tooSteep };
+      // the open tile's piece down first
+      const a = world();
+      expect(a.builder.placeTrack(19, ROW, STRAIGHT, 1)).toBe(true);
+      a.builder.insideMode = kind === 'dug';
+      expect(a.builder.checkTrack(20, ROW, STRAIGHT, 1)).toMatchObject(want);
+      // the Drill's piece down first
+      const b = world();
+      b.builder.insideMode = kind === 'dug';
+      expect(b.builder.placeTrack(20, ROW, STRAIGHT, 1)).toBe(true);
+      b.builder.insideMode = false;
+      expect(b.builder.checkTrack(19, ROW, STRAIGHT, 1)).toMatchObject(want);
+    });
+
+    it('rail on the mountain does not join a tunnel through the wall', () => {
+      const w = wall();
+      expect(levelAt(w.map, 18, ROW)).toBe(5);
+      w.under.dig(17, ROW, 0);
+      w.builder.insideMode = true;
+      expect(w.builder.placeTrack(17, ROW, STRAIGHT, 1)).toBe(true);
+      w.builder.insideMode = false;
+      expect(w.builder.checkTrack(18, ROW, STRAIGHT, 1)).toMatchObject({
+        ok: false,
+        reason: STR.build.tooSteep,
+      });
+      // the other way round: rail on the top first, and the tunnel comes to it
+      w.track.place(18, ROW + 1, 'straight', 1);
+      w.under.dig(17, ROW + 1, 0);
+      w.builder.insideMode = true;
+      expect(w.builder.checkTrack(17, ROW + 1, STRAIGHT, 1)).toMatchObject({
+        ok: false,
+        reason: STR.build.tooSteep,
+      });
+    });
+
+    describe('an edge between a dug tile and what is not dug', () => {
+      const STEP = { ok: false, reason: STR.build.tooSteep };
+      /** A straight across (x, y) with the Drill on, then the one beside it with it off. */
+      const refusesBeside = (
+        w: ReturnType<typeof ground>,
+        x: number,
+        y: number,
+        nx: number,
+        ny: number,
+      ) => {
+        const rot = nx === x ? 0 : 1;
+        w.builder.insideMode = true;
+        expect(w.builder.placeTrack(x, y, STRAIGHT, rot)).toBe(true);
+        w.builder.insideMode = false;
+        expect(w.builder.checkTrack(nx, ny, STRAIGHT, rot)).toMatchObject(STEP);
+      };
+
+      it.each([['open'], ['cut']] as const)(
+        'joins a tile that is %s only through a portal on exactly that face',
+        (kind) => {
+          const FACES = ['N', 'E', 'S', 'W'] as const;
+          for (const d of [Dir.N, Dir.E, Dir.S, Dir.W])
+            for (const face of FACES) {
+              const nx = 20 + DIR_DX[d],
+                ny = ROW + DIR_DY[d],
+                where = `out ${FACES[d]}, portal ${face}`;
+              const world = () => {
+                const w = ground(() => 0);
+                w.under.dig(20, ROW, 0);
+                if (kind === 'cut') w.under.cut(nx, ny);
+                w.under.addPortal({ x: 20, y: ROW, face, floor: 0 });
+                return w;
+              };
+              const want = FACES[d] === face ? { ok: true } : STEP;
+              // the outer piece down first
+              const a = world();
+              expect(a.builder.placeTrack(nx, ny, STRAIGHT, along(d)), where).toBe(true);
+              a.builder.insideMode = true;
+              expect(a.builder.checkTrack(20, ROW, STRAIGHT, along(d)), where).toMatchObject(want);
+              // the piece inside down first
+              const b = world();
+              b.builder.insideMode = true;
+              expect(b.builder.placeTrack(20, ROW, STRAIGHT, along(d)), where).toBe(true);
+              b.builder.insideMode = false;
+              expect(b.builder.checkTrack(nx, ny, STRAIGHT, along(d)), where).toMatchObject(want);
+            }
+        },
+      );
+
+      it('a drag along the foot of a cliff makes no portal, and no way in', () => {
+        const w = ground((x) => (x >= 16 ? 4 : 0));
+        const drag = Array.from({ length: 5 }, (_, i) => ({ x: 16, y: 10 + i }));
+        expect(w.builder.dig(drag)).toBe(true);
+        expect(drag.every((t) => w.under.isDug(t.x, t.y))).toBe(true);
+        expect(w.under.portals()).toEqual([]);
+        refusesBeside(w, 16, 12, 15, 12);
+      });
+
+      it('a tile dug on the corner of a cliff makes no portal, and no way in', () => {
+        const w = ground((x, y) => (x >= 16 && y >= 16 ? 4 : 0));
+        expect(w.builder.dig([{ x: 16, y: 16 }])).toBe(true);
+        expect(w.under.isDug(16, 16)).toBe(true);
+        expect(w.under.portals()).toEqual([]);
+        refusesBeside(w, 16, 16, 15, 16);
+      });
+
+      it('a portal on the west face lets no straight in from the cut on the north', () => {
+        const w = ground((x) => (x >= 16 ? 4 : 0));
+        w.under.cut(16, 20);
+        w.under.dig(16, 21, 0);
+        w.under.addPortal({ x: 16, y: 21, face: 'W', floor: 0 });
+        refusesBeside(w, 16, 21, 16, 20);
+      });
+    });
+
+    it('a dug tile joins a dug tile and a cut at their floor', () => {
+      const w = hill();
+      w.under.cut(16, ROW);
+      w.under.dig(17, ROW, 0);
+      w.under.dig(18, ROW, 0);
+      w.under.addPortal({ x: 17, y: ROW, face: 'W', floor: 0 });
+      expect(w.builder.placeTrack(16, ROW, STRAIGHT, 1)).toBe(true);
+      w.builder.insideMode = true;
+      expect(w.builder.placeTrack(17, ROW, STRAIGHT, 1)).toBe(true);
+      expect(w.builder.placeTrack(18, ROW, STRAIGHT, 1)).toBe(true);
+    });
+
+    it('lifts the cliff rule for the tunnel only: the row beside it keeps its cliff', () => {
+      const w = wall();
+      w.under.dig(16, ROW, 0);
+      w.under.addPortal({ x: 16, y: ROW, face: 'W', floor: 0 });
+      expect(w.builder.placeLine(run(10, 15, ROW))).toBe(true);
+      w.builder.insideMode = true;
+      expect(w.builder.placeTrack(16, ROW, STRAIGHT, 1)).toBe(true);
+      w.builder.insideMode = false;
+      // beside the tunnel, the cliff stands as it did
+      expect(w.builder.placeLine(run(10, 15, ROW + 1))).toBe(true);
+      expect(w.builder.checkTrack(16, ROW + 1, STRAIGHT, 1).reason).toBe(STR.build.tooSteep);
+    });
+  });
+
+  describe('a station beside a tunnel', () => {
+    type Kind = 'dug' | 'cut' | 'open';
+    /** A plain where the first gate of `defId` at (20, ROW) is of that kind and holds rail. */
+    function beside(defId: string, kind: Kind) {
+      const w = ground(() => 0),
+        [gate] = stationGates(defId, 20, ROW, 0);
+      if (kind === 'dug') w.under.dig(gate.x, gate.y, 0);
+      if (kind === 'cut') w.under.cut(gate.x, gate.y);
+      w.track.place(gate.x, gate.y, 'straight', 1);
+      return { ...w, gate };
+    }
+
+    it.each([
+      ['dug', false],
+      ['cut', true],
+      ['open', true],
+    ] as const)('takes a gate on a %s tile as its track: %s', (kind, serves) => {
+      const w = beside('quarry', kind),
+        { builder, gate } = w;
+      expect(builder.hasAdjacentTrack(20, ROW, 'quarry', 0)).toBe(serves);
+      expect(builder.checkStation(20, ROW, 'quarry', 0).reason === STR.build.needTrack).toBe(
+        !serves,
+      );
+      const st = new Station('quarry', 20, ROW);
+      builder.stations.push(st);
+      expect(builder.platformTiles(st)).toEqual(serves ? [gate] : []);
+      expect(builder.isOrphaned(st)).toBe(!serves);
+      expect(builder.stationForTrackTile(gate.x, gate.y)).toBe(serves ? st : undefined);
+    });
+
+    it('does not take rail inside as track beside a plain tile either', () => {
+      const w = ground(() => 0);
+      w.under.dig(21, ROW, 0);
+      w.track.place(21, ROW, 'straight', 1);
+      expect(w.builder.hasAdjacentTrack(20, ROW)).toBe(false);
+      w.under.fill(21, ROW);
+      expect(w.builder.hasAdjacentTrack(20, ROW)).toBe(true);
+    });
+
+    it.each([
+      ['dug', false],
+      ['cut', true],
+    ] as const)('a depot with its gate on a %s tile rolls out there: %s', (kind, serves) => {
+      const w = beside('depot', kind),
+        { builder, gate, track, map } = w;
+      const depot = new Station('depot', 20, ROW);
+      builder.stations.push(depot);
+      expect(builder.platformTiles(depot)).toEqual(serves ? [gate] : []);
+      const fleet = new Fleet(track, builder, map, new Inventory(), builder.economy);
+      expect(fleet.depotClasses(depot).size).toBe(serves ? 1 : 0);
+      const train = new Train([
+        { uid: 1, level: 0, def: content.locomotives.find((d) => d.id === 'f7')! },
+      ]);
+      const report = fleet.gateReport(train, depot).find((g) => g.x === gate.x && g.y === gate.y)!;
+      if (!serves) expect(report.reason).toBe(STR.compat.gateNoTrack(gate.x, gate.y));
+      else expect(report.cls).not.toBeNull();
+    });
+
+    it.each([
+      ['dug', false],
+      ['cut', true],
+      ['open', true],
+    ] as const)('a service stop reaches rail on a %s tile by its radius: %s', (kind, serves) => {
+      const stops = DECOR_DEFS.filter((d) => d.fuel || d.water);
+      expect(stops.length).toBeGreaterThan(1);
+      for (const def of stops) {
+        const w = ground(() => 0),
+          { builder, under, track } = w;
+        if (kind === 'dug') under.dig(20, ROW, 0);
+        if (kind === 'cut') under.cut(20, ROW);
+        track.place(20, ROW, 'straight', 1);
+        expect(def.radius, def.id).toBeGreaterThan(0);
+        expect(builder.placeDecor(20, ROW + 1, def.id, 0), def.id).not.toBeNull();
+        const at = builder.serviceAt(20, ROW),
+          listed = builder.serviceTiles().filter((t) => t.x === 20 && t.y === ROW);
+        expect(at, def.id).toEqual({
+          fuel: serves && !!def.fuel,
+          water: serves && !!def.water,
+        });
+        expect(listed, def.id).toEqual(serves ? [{ x: 20, y: ROW, ...at }] : []);
+      }
+    });
+
+    it('does not make a platform of a gate inside: the line through it is one section', () => {
+      const sections = (kind: Kind) => {
+        const w = beside('quarry', kind),
+          { gate, track, builder, map } = w;
+        for (let x = gate.x - 3; x <= gate.x + 3; x++)
+          if (x !== gate.x) track.place(x, gate.y, 'straight', 1);
+        builder.stations.push(new Station('quarry', 20, ROW));
+        const { traffic } = new Fleet(track, builder, map, new Inventory(), builder.economy);
+        traffic.rebuildSections();
+        const { sections: all } = traffic as unknown as { sections: Map<number, number> };
+        return new Set(all.values()).size;
+      };
+      expect(sections('open')).toBeGreaterThan(sections('dug'));
+      expect(sections('cut')).toBe(sections('open'));
+    });
+  });
+});
+
 // ---------------------------------------------------------------- speed
 
 describe('a train on mountain track', () => {
@@ -648,7 +1834,11 @@ describe('a train on mountain track', () => {
    * The speed a lone diesel would run at as it sets off west along row 30, its head on a tile of
    * the given biome, the ground under it painted Mountain by `paint` (given the head tile).
    */
-  function freeSpeed(biome: number, paint: (map: GameMap, hx: number, hy: number) => void) {
+  function freeSpeed(
+    biome: number,
+    paint: (map: GameMap, hx: number, hy: number) => void,
+    drilled?: 'dug' | 'cut',
+  ) {
     const map = emptyMap(4242, 96, 96, Terrain.Grass),
       track = new TrackGraph(96, 96),
       economy = electricAge();
@@ -672,7 +1862,9 @@ describe('a train on mountain track', () => {
     const head = t.headTile!;
     paint(map, head.x, head.y);
     map.biome[head.y * map.w + head.x] = biome;
-    fleet.railBeds = railProfile(map, track);
+    if (drilled === 'dug') builder.underground.dig(head.x, head.y, 0);
+    if (drilled === 'cut') builder.underground.cut(head.x, head.y);
+    fleet.railBeds = railProfile(map, track, undefined, builder.underground);
     t.tick(0.05, ctx);
     expect(t.headTile).toEqual(head);
     return t.freeSpeed;
@@ -700,6 +1892,9 @@ describe('a train on mountain track', () => {
     // in the Mountain biome
     expect(freeSpeed(MOUNTAIN_BIOME, climb)).toBeCloseTo(flat * 0.45, 9);
     expect(freeSpeed(MOUNTAIN_BIOME, plateau)).toBeCloseTo(flat * 0.9, 9);
+    // on a tile in a cut the surface still counts; dug, the biome stays outside
+    expect(freeSpeed(MOUNTAIN_BIOME, plateau, 'cut')).toBeCloseTo(flat * 0.9, 9);
+    expect(freeSpeed(MOUNTAIN_BIOME, plateau, 'dug')).toBeCloseTo(flat, 9);
     expect(freeSpeed(MOUNTAIN_BIOME, grass)).toBeCloseTo(flat * 0.9, 9);
   });
 });

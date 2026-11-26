@@ -6,12 +6,13 @@ import { FALL_BITS } from './waterfalls';
 /**
  * Chunk texts of versions 1 to 4, written from planes as the description in chunks.ts spells out
  * their bytes: an oracle for tests, kept apart from chunks.ts, which reads these versions and
- * writes none of them any more. Version 5 is range coded: encodeChunk writes it, for tests alone.
+ * writes none of them any more. Versions 5 and 6 are range coded: encodeChunk writes them, for
+ * tests alone.
  * Nothing in the game imports it.
  */
 
 /** The versions a text here is written in. */
-export type OldVersion = 1 | 2 | 3 | 4 | 5;
+export type OldVersion = 1 | 2 | 3 | 4 | 5 | 6;
 
 /** The bytes of a chunk text, and the text of bytes. */
 export const bytesOf = (text: string) => Array.from(atob(text), (ch) => ch.charCodeAt(0));
@@ -45,10 +46,10 @@ const offsetByte = (v: number) => Math.max(-128, Math.min(127, Math.round(v * 25
  * left out (version 1 the climate, 1 and 2 the water planes, 1 to 3 the features).
  */
 export function oldChunkText(c: Omit<ChunkPlanes, 'version'>, version: OldVersion): string {
-  if (version === 5) {
+  if (version >= 5) {
     const m = emptyMap(0, c.w, c.h, Terrain.Grass, c.x0, c.y0);
     placeChunk(m, 0, 0, { ...c, version });
-    return encodeChunk(m, 0, 0, 5);
+    return encodeChunk(m, 0, 0, version);
   }
   const n = c.w * c.h;
   const out = [version, c.x0, c.y0, c.w, c.h];

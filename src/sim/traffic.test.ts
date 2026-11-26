@@ -7,12 +7,13 @@ import { Dir, DIR_DX, DIR_DY } from '../engine/iso';
 import type { Rng } from '../engine/rng';
 import { forAll, shrinkArray, shrinkInt } from '../testing/property';
 
-/** Traffic only reads `stations` off the builder, to find platform tiles. */
+/** Traffic only reads `stations` and `gateTrack` off the builder, to find platform tiles. */
 function trafficOn(
   track: TrackGraph,
   stations: { gateTiles(): { x: number; y: number }[] }[] = [],
 ) {
-  const t = new Traffic(track, { stations } as unknown as Builder);
+  const gateTrack = (g: { x: number; y: number }) => track.get(g.x, g.y);
+  const t = new Traffic(track, { stations, gateTrack } as unknown as Builder);
   t.rebuildSections();
   return t;
 }

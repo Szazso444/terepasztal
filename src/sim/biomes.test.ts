@@ -129,19 +129,19 @@ describe('the biome table', () => {
     });
   });
 
-  it('starts snow a level lower in taiga and a level higher in desert', () => {
+  it('snow starts at 14 in plains, 16 in the desert, 12 in the coldest climate', () => {
     const lines = Object.fromEntries(BIOME_DEFS.map((d) => [d.id, d.snowLevel]));
     expect(lines).toEqual({
-      plains: 4,
-      forest: 4,
-      desert: 5,
-      taiga: 3,
-      swamp: 4,
-      ocean: 4,
-      lake: 4,
-      river: 4,
-      beach: 4,
-      mountain: 4,
+      plains: 14,
+      forest: 14,
+      desert: 16,
+      taiga: 12,
+      swamp: 14,
+      ocean: 14,
+      lake: 14,
+      river: 14,
+      beach: 14,
+      mountain: 14,
     });
   });
 

@@ -8,6 +8,7 @@ import { generateRollingAtlas, generateWagonAtlas } from './rolling';
 import { generateFxAtlas } from './fx';
 import { generateIconsAtlas } from './icons';
 import { generatePeopleAtlas } from './people';
+import { generateTunnelAtlas } from './tunnelArt';
 
 /**
  * Atlas groups. A real `/public/assets/<name>.png` + `.json` pair overrides the generator for that
@@ -28,6 +29,8 @@ export const ATLAS_GROUPS: { name: string; generate: AtlasGenerator }[] = [
   { name: 'fx', generate: generateFxAtlas },
   { name: 'icons', generate: generateIconsAtlas },
   { name: 'people', generate: generatePeopleAtlas },
+  // placeholder tunnel frames: the glass rooms, the portal throat and ring, brick and coping
+  { name: 'tunnel', generate: generateTunnelAtlas },
   // Illustrated bridge kit (tools/bridge-kit.mjs); without the file, bridges stay procedural.
   { name: 'bridges', generate: emptyAtlas },
 ];

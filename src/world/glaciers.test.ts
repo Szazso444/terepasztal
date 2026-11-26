@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { DIR_DX, DIR_DY, type Dir } from '../engine/iso';
 import { DEFAULT_RELIEF, TILE_SIDE_PX, buildRelief } from '../render/terrainRelief';
 import { buildMap, encodeMap } from './chunks';
-import { MAX_LEVEL, levelTarget, tileLevels } from './elevation';
-import { GlacierKind, ICE_LOW, ICE_TILES, MELT_TILES, traceGlaciers } from './glaciers';
+import { MAX_LEVEL, NO_LEVEL, levelTarget, maxStep, tileLevels } from './elevation';
+import { GlacierKind, ICE_LOW, ICE_TILES, MELT_TILES, SNOW_LINE, traceGlaciers } from './glaciers';
 import { emptyMap, generateMap, type MapGenParams } from './mapgen';
 import { WaterKind, type Drainage } from './rivers';
 import { Biome, Terrain, type GameMap } from './tiles';
@@ -75,8 +75,8 @@ describe('glaciers in generated worlds', () => {
       for (let y = 0; y < m.h; y++)
         for (let x = 0; x < m.w; x++) {
           const k = y * m.w + x;
-          if (x) expect(Math.abs(levels[k] - levels[k - 1])).toBeLessThanOrEqual(1);
-          if (y) expect(Math.abs(levels[k] - levels[k - m.w])).toBeLessThanOrEqual(1);
+          if (x) expect(Math.abs(levels[k] - levels[k - 1])).toBeLessThanOrEqual(maxStep(m));
+          if (y) expect(Math.abs(levels[k] - levels[k - m.w])).toBeLessThanOrEqual(maxStep(m));
         }
     }
     expect(ice).toBeGreaterThan(0);
@@ -170,6 +170,10 @@ describe('traceGlaciers on a hand-made drainage', () => {
     const down = new Int32Array(n).fill(-1);
     const acc = new Float32Array(n).fill(1);
     const surface = new Uint8Array(n);
+    // the mountain climbs a level a row from row 33 up to MAX_LEVEL, as a sculpted one may
+    const generated = new Uint8Array(n).fill(NO_LEVEL);
+    for (let y = 0; y < 34; y++)
+      for (let x = 0; x < W; x++) generated[y * W + x] = Math.min(MAX_LEVEL, 34 - y);
     // low ground: rows 34 and below are grass, with the source on it
     for (let y = 34; y < W; y++) for (let x = 0; x < W; x++) terrain[y * W + x] = Terrain.Grass;
     const source = 34 * W + 20;
@@ -190,12 +194,21 @@ describe('traceGlaciers on a hand-made drainage', () => {
       down,
       acc,
     } as Drainage;
+    const levels = tileLevels({
+      w: W,
+      h: W,
+      terrain,
+      waterSurface: surface,
+      generatedLevel: generated,
+    });
     return {
       w: W,
       h: W,
       core: { x0: 0, y0: 0, x1: W, y1: W },
       terrain,
+      levels,
       keepOut: new Uint8Array(n),
+      edge: 4,
       drainage: d,
       source,
     };
@@ -208,11 +221,11 @@ describe('traceGlaciers on a hand-made drainage', () => {
 
   it('turns the way up into river, its top tile into ice and the ice runs on for ICE_TILES', () => {
     const p = fixture();
-    const levels = tileLevels(p);
+    const { levels } = p;
     const plane = traceGlaciers(p);
-    // the first tile up at MAX_LEVEL: 4 tiles into the mountain
+    // the first tile up at the snow line
     let top = 33;
-    while (levels[top * W + 20] < MAX_LEVEL) top--;
+    while (levels[top * W + 20] < SNOW_LINE) top--;
     expect(33 - top).toBeLessThanOrEqual(MELT_TILES);
     expect(column(plane).length).toBe(33 - top + 1 + ICE_TILES);
     expect(plane[top * W + 20]).toBe(GlacierKind.Ice);

@@ -172,15 +172,19 @@ describe('the falls of a world', () => {
       const list = c.falls.get(i)!;
       expect(list.length).toBeGreaterThan(0);
       const side = m.flowDir![i] - 1;
-      const f = list.find((q) => Math.hypot(q.mx - (i % m.w), q.my - Math.floor(i / m.w)) === 0.5)!;
-      expect([f.dx, f.dy]).toEqual(
-        [
-          [0, -1],
-          [1, 0],
-          [0, 1],
-          [-1, 0],
-        ][side],
-      );
+      const toward = [
+        [0, -1],
+        [1, 0],
+        [0, 1],
+        [-1, 0],
+      ][side];
+      // (a glacier's melt steps down in falls on tiles side by side: the one that falls over this
+      // tile's own edge, not its neighbour's)
+      const f = list.find(
+        (q) =>
+          q.mx === (i % m.w) + toward[0] * 0.5 && q.my === Math.floor(i / m.w) + toward[1] * 0.5,
+      )!;
+      expect([f.dx, f.dy]).toEqual(toward);
       expect(f.zHi).toBeGreaterThan(f.zLo);
     }
     expect(falls).toBeGreaterThan(0);

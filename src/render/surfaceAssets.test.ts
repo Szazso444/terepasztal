@@ -14,6 +14,7 @@ import {
   type FootGround,
 } from './groundFit';
 import { SurfaceAssets, type AnchoredTexture } from './surfaceAssets';
+import { snowChannelLight, snowTint } from './terrainRelief';
 
 /** Node has no ImageData: a stand-in that keeps the pixels. */
 class FakeImageData {
@@ -752,5 +753,69 @@ describe('the weeds and pebbles drawn at a building', () => {
       surfaces = new SurfaceAssets();
     expect(surfaces.weeds([], 'grass')).toBeNull();
     expect(surfaces.weeds(footScatter(feet, 1, 2, 'grass'), 'none')).toBeNull();
+  });
+});
+
+describe('summit pictures', () => {
+  beforeEach(() => {
+    vi.stubGlobal('ImageData', FakeImageData);
+    vi.stubGlobal('document', { createElement: fakeCanvas });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** A 2 x 1 picture: a texel of the pictures' lit snow, then a texel of grey rock. */
+  const cap = (): FrameInfo => ({
+    image: new FakeImageData(
+      new Uint8ClampedArray([229, 219, 202, 255, 118, 116, 109, 255]),
+      2,
+      1,
+    ) as never,
+    texture: new Texture({
+      source: SOURCE,
+      frame: new Rectangle(0, 0, 2, 1),
+      orig: new Rectangle(0, 0, 2, 1),
+    }),
+    anchorX: 0.5,
+    anchorY: 1,
+    w: 2,
+    h: 1,
+  });
+  const texels = (light: number, tint: number) => [
+    ...canvasOf(new SurfaceAssets().summit('terrain/mountain_0', cap(), 1, light, tint)).put!.data,
+  ];
+  const AUTUMN = 0xffe2bc;
+
+  it('lights and tints its snow as the painted ground does, whatever the height light', () => {
+    const SNOW = [234, 239, 246];
+    // the ground's snow in full light: the painter's snow, snowLight at shade 1, a share of the tint
+    const ground = (c: number) =>
+      SNOW[c] * snowChannelLight(1, c) * snowTint(((AUTUMN >> (16 - c * 8)) & 255) / 255);
+    for (const light of [1, 1.12, 1.348])
+      for (let c = 0; c < 3; c++)
+        expect(
+          Math.abs(texels(light, AUTUMN)[c] - ground(c)),
+          `light ${light} channel ${c}`,
+        ).toBeLessThan(1.01);
+    // in white light that is no brighter than the lightest snow the ground paints
+    for (let c = 0; c < 3; c++)
+      expect(texels(1.348, 0xffffff)[c]).toBeLessThanOrEqual(SNOW[c] * 1.08 + 1);
+  });
+
+  it('lights and tints its rock as before, in full', () => {
+    const grey = texels(1, 0xffffff).slice(4, 7),
+      lit = texels(1.2, 0xffffff).slice(4, 7),
+      tinted = texels(1, AUTUMN).slice(4, 7);
+    for (let c = 0; c < 3; c++) {
+      expect(lit[c]).toBeCloseTo(Math.min(255, grey[c] * 1.2), -0.5);
+      expect(tinted[c]).toBeCloseTo((grey[c] * ((AUTUMN >> (16 - c * 8)) & 255)) / 255, -0.5);
+    }
+  });
+
+  it('keeps one picture for each tint', () => {
+    const surfaces = new SurfaceAssets(),
+      f = cap();
+    const a = surfaces.summit('terrain/mountain_0', f, 1, 1.1, AUTUMN);
+    expect(surfaces.summit('terrain/mountain_0', f, 1, 1.1, AUTUMN)).toBe(a);
+    expect(surfaces.summit('terrain/mountain_0', f, 1, 1.1, 0xffffff)).not.toBe(a);
   });
 });

@@ -271,10 +271,18 @@ describe('simWorld wiring', () => {
     expect(w.builder.placeBuilding(50, 50, 'power_plant')).not.toBeNull();
     expect(w.power.isPowered(51, 50)).toBe(true);
     // the fleet's rail beds follow the track
-    const beds = () => railProfile(w.map, w.track, (x, y) => !!w.builder.bridgeAt(x, y));
+    const beds = () =>
+      railProfile(w.map, w.track, (x, y) => !!w.builder.bridgeAt(x, y), w.builder.underground);
     expect(w.fleet.railBeds.size).toBeGreaterThan(0);
     expect(w.fleet.railBeds).toEqual(beds());
     line(w, 5, 30, 20);
+    expect(w.fleet.railBeds).toEqual(beds());
+    // and the beds the Drill made
+    w.builder.underground.dig(21, 30, 0);
+    w.builder.insideMode = true;
+    line(w, 21, 30, 21);
+    w.builder.insideMode = false;
+    expect(w.fleet.railBeds.get(30 * w.map.w + 21)?.bridge).toBe(true);
     expect(w.fleet.railBeds).toEqual(beds());
     // the trains fill up from the world's stores
     expect(w.fleet.builder.stores).toBe(w.stores);

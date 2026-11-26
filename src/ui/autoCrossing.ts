@@ -135,8 +135,9 @@ export interface RunWorld {
  * goes down instead of the straight, and is priced as one. A crossing that is refused, by the pair
  * or by the rules of its tile, stops the run there: the line it meets is never cut. A curve at a
  * turn that cannot go down stops it too (the leg after it would lead nowhere), and so does track in
- * its way, which a curve never replaces. A curve or switch where the run starts or ends is where it
- * joins: left as it is. Any other refused tile is skipped, as before; a piece that stands already
+ * its way, which a curve never replaces, and so does a tile too steep for rails: past a cliff edge
+ * the run would go on with a gap and be paid for. A curve or switch where the run starts or ends is
+ * where it joins: left as it is. Any other refused tile is skipped, as before; a piece that stands already
  * costs nothing. Each piece is judged with the run's pieces before it down (on the world's
  * `runProbe`, when it has one), so a line climbs a mountain from its foot as it is laid.
  */
@@ -196,7 +197,8 @@ export function planRun(world: RunWorld, line: readonly RunTile[], item: TrackIt
         step = { ...step, ok: false, cost: {}, reason: STR.build.trackInWay };
     }
     if (pick) step.crossing = true;
-    if (end === line.length && (pick || curve) && !step.ok) {
+    const stops = pick || curve || step.reason === STR.build.tooSteep;
+    if (end === line.length && stops && !step.ok) {
       end = steps.length;
       reason = step.reason;
     }

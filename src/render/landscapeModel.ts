@@ -3,9 +3,15 @@ import { Biome, Terrain, climateAtIndex, type GameMap } from '../world/tiles';
 
 export type LandscapeMap = Pick<
   GameMap,
-  'w' | 'h' | 'seed' | 'originX' | 'originY' | 'terrain' | 'biome' | 'climate'
+  'w' | 'h' | 'seed' | 'originX' | 'originY' | 'terrain' | 'biome' | 'climate' | 'generatedLevel'
 > &
-  Pick<Partial<GameMap>, 'waterSurface' | 'flowDir' | 'feature'>;
+  Pick<Partial<GameMap>, 'waterSurface' | 'flowDir' | 'feature'> & {
+    /**
+     * The level of each tile, where the painter has them (the relief's tiles): a Forest tile above
+     * level 0 is painted as grass. Without it every tile is painted as its terrain says.
+     */
+    levels?: Uint8Array;
+  };
 /**
  * The cells of the packed surface sheet, by material index (names in tools/terrain-surfaces.mjs),
  * and after them those of the second, wild sheet (tools/wild-surfaces.mjs), from `FIRST_WILD` on.
@@ -135,8 +141,11 @@ export function materialAt(map: LandscapeMap, x: number, y: number) {
   }
   if (t === Terrain.Ice) return Material.Moraine;
   if (t === Terrain.Rock || t === Terrain.Mountain) return Material.Rock;
-  if (t === Terrain.Forest)
-    return own === Material.Swamp || own === Material.Taiga ? own : Material.Forest;
+  if (t === Terrain.Forest) {
+    if (own === Material.Swamp || own === Material.Taiga) return own;
+    // The forest floor is painted for the flat: on raised ground the trees stand on grass.
+    return map.levels?.[k] ? Material.Grass : Material.Forest;
+  }
   return groundMaterial(map.biome[k]);
 }
 

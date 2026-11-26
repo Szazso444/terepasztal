@@ -148,7 +148,8 @@ describe('a chunk text', () => {
         flowDir: now.flowDir,
         feature: now.feature,
       };
-      expect({ ...old, version: now.version, climate: now.climate, ...water }).toEqual(now);
+      const held = { climate: now.climate, generatedLevel: now.generatedLevel };
+      expect({ ...old, version: now.version, ...held, ...water }).toEqual(now);
       expect([...old.climate]).toEqual([...old.biome]);
       // and no water level, flow, side or waterfall, which version 1 does not hold
       const planes = [old.waterSurface, old.flow, old.flowDir, old.feature];

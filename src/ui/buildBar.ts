@@ -8,6 +8,7 @@ import type { AgeStatus } from '../sim/ages';
 import { DECOR_DEFS } from '../sim/build';
 import { BUILDING_DEFS } from '../sim/buildings';
 import { SUPPLY_DEFS, SUPPLY_KINDS, type SupplyKind } from '../sim/catenary';
+import { DRILL_AGE, DRILL_LINES } from '../sim/underground';
 import { roadCost } from '../sim/roads';
 import { rules } from '../sim/rules';
 import { STATION_DEFS } from '../sim/stations';
@@ -24,6 +25,7 @@ import {
   type TrackItem,
 } from '../world/track';
 import { lockTip } from './ageTooltip';
+import { fmtMoney } from './numberFormat';
 import type { BuildIcon } from './buildIcons';
 import { toolRotations } from './toolRotation';
 import {
@@ -59,6 +61,10 @@ export type Tool =
   | { kind: 'reclass'; dir: ReclassDir }
   /** lay roads by dragging (#328) */
   | { kind: 'road' }
+  /** raise or lower the ground one level a tile, by a click or a drag along a line */
+  | { kind: 'ground'; delta: 1 | -1 }
+  /** dig inside the mountains with a drag; while it is on the mountains are glass */
+  | { kind: 'drill' }
   | { kind: 'remove' };
 
 /** One placeable thing: what the bar shows and what the info panel describes. */
@@ -90,6 +96,8 @@ export interface ToolItem {
   hidden?: () => boolean;
   /** the type it is listed under, in a category that has types */
   group?: string;
+  /** the other types it is listed under: the one tool of several lines */
+  alsoIn?: readonly string[];
   /** the label of that type */
   typeLabel?: string;
   /** its place in the type, kept when the type changes (`slotMate`) */
@@ -98,6 +106,8 @@ export interface ToolItem {
   label?: string;
   /** a key of its own, beside its number */
   hot?: string;
+  /** not offered in the level editor: a level keeps no raised or lowered ground (`inMode`) */
+  playOnly?: boolean;
 }
 
 export type CategoryId = 'track' | 'buildings' | 'tools' | 'works' | 'roads' | 'terrain';
@@ -111,7 +121,7 @@ export interface Category {
   /** not offered in the level editor: a level keeps none of what it lays (roads) */
   playOnly?: boolean;
   /** types the items are listed by; one is open at a time */
-  groups?: { id: string; label: string }[];
+  groups?: { id: string; label: string; playOnly?: boolean }[];
 }
 
 /** Where a def is listed. */
@@ -143,6 +153,10 @@ export function toolKey(t: Tool): string {
       return `reclass:${t.dir}`;
     case 'road':
       return 'road';
+    case 'ground':
+      return `ground:${t.delta > 0 ? 'up' : 'down'}`;
+    case 'drill':
+      return 'drill';
     case 'remove':
       return 'remove';
     default:
@@ -181,8 +195,17 @@ function ranked<T>(defs: T[], rank: (d: T) => number): T[] {
   return [...defs].sort((a, b) => rank(a) - rank(b));
 }
 
-/** Every item the bar can offer, by category. `hasFrame` asks the atlas for a station's sprite. */
-export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
+/** The Drill's place in a line's list, after every piece. */
+const DRILL_SLOT = 100;
+
+/**
+ * Every item the bar can offer, by category. `hasFrame` asks the atlas for a station's sprite, and
+ * `tier` gives the age reached, for what is not even shown before its age.
+ */
+export function buildCatalog(
+  hasFrame: (frame: string) => boolean,
+  tier: () => number = () => 0,
+): Category[] {
   const trackItem = (it: TrackItem): ToolItem => {
     const k = itemKey(it);
     const base = pieceName(it.kind);
@@ -300,6 +323,42 @@ export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
     group: 'track',
     hot: dir === 'up' ? 'U' : 'Shift+U',
   });
+  const groundItem = (delta: 1 | -1): ToolItem => ({
+    key: `ground:${delta > 0 ? 'up' : 'down'}`,
+    tool: { kind: 'ground', delta },
+    name: delta > 0 ? STR.toolbar.raise : STR.toolbar.lower,
+    cost: {},
+    // money, per tile that moves: the ghost over the map has the sum
+    costText: STR.toolbar.groundCost,
+    frame: '',
+    icon: delta > 0 ? 'up' : 'down',
+    desc: delta > 0 ? STR.toolbar.raiseHint : STR.toolbar.lowerHint,
+    tier: 0,
+    place: STR.toolbar.place.ground,
+    group: 'ground',
+    playOnly: true,
+  });
+  const drill: ToolItem = {
+    key: 'drill',
+    tool: { kind: 'drill' },
+    name: STR.toolbar.drill,
+    cost: {},
+    // a game's own tuning comes with its save, after the catalogue is made
+    get costText() {
+      return `${fmtMoney(rules.drillCost)} ${STR.toolbar.drillCost}`;
+    },
+    frame: '',
+    icon: 'drill',
+    desc: STR.toolbar.drillHint,
+    tier: 0,
+    place: STR.toolbar.place.drill,
+    // a line's age lock is the Drill's too (`Builder.lineLocked`)
+    hidden: () => !!rules.lineAgeLocks && tier() < DRILL_AGE,
+    group: DRILL_LINES[0],
+    alsoIn: DRILL_LINES.slice(1),
+    slot: DRILL_SLOT,
+    playOnly: true,
+  };
   const supplyItem = (k: SupplyKind): ToolItem => ({
     key: `supply:${k}`,
     tool: { kind: 'supply', supply: k },
@@ -353,7 +412,7 @@ export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
       id: 'track',
       label: STR.toolbar.track,
       icon: 'rail',
-      items: [...track, ...works('bridges').map(bridgeItem)],
+      items: [...track, drill, ...works('bridges').map(bridgeItem)],
       groups: TRACK_GROUPS.map((id) => ({
         id,
         label: id === 'bridges' ? STR.toolbar.bridges : STR.toolbar.trackClass[id],
@@ -385,10 +444,13 @@ export function buildCatalog(hasFrame: (frame: string) => boolean): Category[] {
         reclassItem('down'),
         ...decor('electrification').map(decorItem),
         ...SUPPLY_KINDS.map(supplyItem),
+        groundItem(1),
+        groundItem(-1),
       ],
       groups: [
         { id: 'track', label: STR.toolbar.trackTools },
         { id: 'electrification', label: STR.toolbar.electrification },
+        { id: 'ground', label: STR.toolbar.ground, playOnly: true },
       ],
     },
     {
@@ -440,9 +502,14 @@ export function enabledItems(c: Category, tier: number): ToolItem[] {
   return modeItems(c).filter((i) => !isLocked(i, tier));
 }
 
+/** Is the item listed under the type `group`? */
+function listedIn(i: ToolItem, group: string | null) {
+  return i.group === group || (group !== null && !!i.alsoIn?.includes(group));
+}
+
 /** The tiles of a type (of the whole category when it has none), a locked one among them. */
 export function shownItems(c: Category, group: string | null): ToolItem[] {
-  return modeItems(c).filter((i) => group === null || i.group === group);
+  return modeItems(c).filter((i) => group === null || listedIn(i, group));
 }
 
 /** The type open in a category: the one used last, if it still offers something, else the first. */
@@ -470,6 +537,19 @@ export function keyLabel(place: number): string {
 export function pickAt(shown: ToolItem[], place: number, tier: number): ToolItem | null {
   const it = shown[place];
   return it && !isLocked(it, tier) ? it : null;
+}
+
+/**
+ * The category as the editor or the game shows it: the editor drops what is only for play, items
+ * and types alike. The game's is the category itself.
+ */
+export function inMode(c: Category, editor: boolean): Category {
+  if (!editor || !(c.items.some((i) => i.playOnly) || c.groups?.some((g) => g.playOnly))) return c;
+  return {
+    ...c,
+    items: c.items.filter((i) => !i.playOnly),
+    groups: c.groups?.filter((g) => !g.playOnly),
+  };
 }
 
 /** The categories on the row: the editor has Terrain in the place of Roads. */
@@ -604,11 +684,15 @@ export function controlsHint(item: ToolItem): string {
       ? f.run
       : t.kind === 'reclass'
         ? f.reclass
-        : t.kind === 'supply' || t.kind === 'road'
-          ? f.drag
-          : t.kind === 'terrain'
-            ? f.paint
-            : f.click;
+        : t.kind === 'ground'
+          ? f.ground
+          : t.kind === 'drill'
+            ? f.dig
+            : t.kind === 'supply' || t.kind === 'road'
+              ? f.drag
+              : t.kind === 'terrain'
+                ? f.paint
+                : f.click;
   return [use, ...(toolRotations(t) > 1 ? [f.turn] : []), f.cancel].join(' · ');
 }
 
@@ -623,6 +707,8 @@ export class BuildBar {
   /** the open category */
   open: CategoryId | null = null;
   active: Tool = { kind: 'none' };
+  /** the Drill is on, with track in hand too (`BuildController.drilling`): its tile stays lit */
+  drilling = false;
   /** the build controller's line (`setStatus`) */
   status = '';
   editor = false;
@@ -636,8 +722,12 @@ export class BuildBar {
     private readonly onChange: () => void,
   ) {}
 
+  /** The category as this mode shows it (`inMode`). */
   category(id: CategoryId) {
-    return this.categories.find((c) => c.id === id)!;
+    return inMode(
+      this.categories.find((c) => c.id === id)!,
+      this.editor,
+    );
   }
   visible() {
     return visibleCategories(this.categories, this.editor);
@@ -746,6 +836,8 @@ export class BuildBar {
     return true;
   }
   select(t: Tool) {
+    // the Drill in hand goes off on its own tile
+    if (t.kind === 'drill' && this.active.kind === 'drill') t = { kind: 'none' };
     this.onSelect(t);
     this.setActive(t);
   }
@@ -769,7 +861,8 @@ export class BuildBar {
       const at = locate(this.categories, t);
       if (at && this.open !== at.category.id) this.openCategory(at.category.id, false);
       // a piece picked some other way (Tab, a click on the map) brings its type with it
-      if (at?.item.group && this.open) this.groupOf.set(this.open, at.item.group);
+      if (at?.item.group && this.open && !listedIn(at.item, this.openGroup()))
+        this.groupOf.set(this.open, at.item.group);
     }
     this.onChange();
   }

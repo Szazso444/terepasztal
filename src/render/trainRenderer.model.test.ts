@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Container, Graphics, Sprite, Texture, type Matrix } from 'pixi.js';
 import { TrainRenderer } from './trainRenderer';
+import { layerPortals, type TunnelPortals } from './tunnelPortals';
 import { SwingSprite } from './swingSprite';
 import { spriteFacing } from './spriteFacing';
 import { AtmosphereTint, multiplyTint } from './atmosphere';
@@ -285,6 +286,37 @@ describe('TrainRenderer with a rendered model', () => {
       expect(l.alpha).toBeCloseTo(0.9, 6);
       expect(l.blendMode).toBe('add');
     }
+  });
+
+  it('near a portal its window lights take the mask of the body they light', () => {
+    const mask = new Graphics(),
+      train = trainOf([STEAM], 1),
+      lit = modelAtlas(() => true),
+      layer = new Container();
+    layerPortals.set(layer, {
+      dress: (s: Container) => {
+        s.mask = mask;
+      },
+    } as unknown as TunnelPortals);
+    const renderer = new TrainRenderer(lit.atlas, layer);
+    renderer.update([train], 1);
+    const lights = layer.children.filter((c) => c.label === 'emissive');
+    expect(lights.length).toBeGreaterThan(0);
+    for (const l of lights) expect(l.mask).toBe(mask);
+  });
+
+  it('a coupling takes its depth from a portal last, as a body and a truck do', () => {
+    const { atlas } = modelAtlas(),
+      layer = new Container();
+    layerPortals.set(layer, {
+      dress: (s: Container) => {
+        s.zIndex = 7777;
+      },
+    } as unknown as TunnelPortals);
+    new TrainRenderer(atlas, layer).update([trainOf([DIESEL, { ...DIESEL, id: 'two' }], 1)], 1);
+    const links = layer.children.filter((c) => c instanceof Graphics);
+    expect(links).toHaveLength(1);
+    expect(links[0].zIndex).toBe(7777);
   });
 
   it('gives back everything it made when the train goes', () => {

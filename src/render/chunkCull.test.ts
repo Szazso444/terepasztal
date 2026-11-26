@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   Bounds,
   Container,
@@ -167,6 +167,77 @@ describe('ChunkCull', () => {
     expect(far.culled).toBe(true);
     root.addChild(far);
     expect(far.culled).toBe(false);
+  });
+
+  describe('with a stencil held elsewhere in the layer', () => {
+    /** A moved root, a layer, and a mask in a holder that is not the masked child's parent. */
+    function masked() {
+      const stage = new Container(),
+        root = stage.addChild(new Container()),
+        layer = root.addChild(new Container()),
+        holder = layer.addChild(new Container()),
+        mask = holder.addChild(new Graphics().rect(-20, -400, 420, 800).fill(0xffffff));
+      holder.includeInBuild = false;
+      holder.measurable = false;
+      holder.position.set(0, 0);
+      mask.position.set(4000, 2000);
+      return { root, layer, mask, cull: new ChunkCull(layer) };
+    }
+    it('measures a masked sprite by itself, and warns of nothing', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined),
+        { root, layer, mask, cull } = masked(),
+        car = new Sprite({ texture: TEXTURES[0], cullable: true, x: 4016, y: 2008 });
+      car.anchor.set(0.5);
+      layer.addChild(car);
+      root.position.set(10 - car.x, 360 - car.y);
+      cull.update(SCREEN.width, SCREEN.height);
+      car.mask = mask;
+      car.x += 0.5;
+      cull.update(SCREEN.width, SCREEN.height);
+      expect(car.culled).toBe(false);
+      // and all round the screen: the box is the car's, not one crossed with the mask's
+      for (const [x, y] of [
+        [SCREEN.width - 10, 360],
+        [640, 10],
+        [640, SCREEN.height - 10],
+      ]) {
+        root.position.set(x - car.x, y - car.y);
+        car.x += 0.5;
+        cull.update(SCREEN.width, SCREEN.height);
+        expect(car.culled).toBe(false);
+      }
+      root.position.set(-9000, 360 - car.y);
+      cull.update(SCREEN.width, SCREEN.height);
+      expect(car.culled).toBe(true);
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+    it('measures a masked child inside a container as well, as the bogies stand', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined),
+        { root, layer, mask, cull } = masked(),
+        under = layer.addChild(new Container({ cullable: true })),
+        bogie = under.addChild(new Sprite({ texture: TEXTURES[0], x: 4016, y: 2008 }));
+      bogie.mask = mask;
+      root.position.set(40 - bogie.x, 360 - bogie.y);
+      cull.update(SCREEN.width, SCREEN.height);
+      expect(under.culled).toBe(false);
+      root.position.set(-9000, 360 - bogie.y);
+      cull.update(SCREEN.width, SCREEN.height);
+      expect(under.culled).toBe(true);
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+    it('takes the cull area of a masked container, and leaves it unmeasured', () => {
+      const { layer, mask, cull } = masked(),
+        throat = layer.addChild(new Container({ cullable: true }));
+      throat.addChild(new Sprite({ texture: TEXTURES[0], x: 9000 }));
+      throat.cullArea = new Rectangle(100, 100, 50, 50);
+      throat.mask = mask;
+      cull.update(SCREEN.width, SCREEN.height);
+      expect(throat.culled).toBe(false);
+      cull.update(SCREEN.width, SCREEN.height);
+      expect(cull.measured).toBe(0);
+    });
   });
 
   it('culls as the root renders, from the screen the renderer draws', () => {

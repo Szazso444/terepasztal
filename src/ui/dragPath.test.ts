@@ -17,7 +17,7 @@ import { Economy } from '../sim/economy';
 import { rules, DEFAULT_RULES } from '../sim/rules';
 import { STR } from '../strings';
 import { layRun, planRun } from './autoCrossing';
-import { TURN_AFTER, lineTiles, setOffAxis, turnPath, type RunTile } from './dragPath';
+import { TURN_AFTER, elbowPath, lineTiles, setOffAxis, turnPath, type RunTile } from './dragPath';
 
 vi.mock('../engine/audio', () => ({ sfx: vi.fn() }));
 beforeEach(() => Object.assign(rules, DEFAULT_RULES));
@@ -48,6 +48,26 @@ function looseEnds(g: TrackGraph) {
   return out.sort();
 }
 const at = (x: number, y: number, d: Dir) => `${x},${y},${d}`;
+
+describe('a line for the Drill', () => {
+  it('goes along the first axis, then the other, one side at a time', () => {
+    expect(elbowPath({ x: 1, y: 1 }, { x: 3, y: 2 }, 'x')).toEqual([
+      { x: 1, y: 1 },
+      { x: 2, y: 1 },
+      { x: 3, y: 1 },
+      { x: 3, y: 2 },
+    ]);
+    expect(elbowPath({ x: 1, y: 1 }, { x: 0, y: 3 }, 'y')).toEqual([
+      { x: 1, y: 1 },
+      { x: 1, y: 2 },
+      { x: 1, y: 3 },
+      { x: 0, y: 3 },
+    ]);
+  });
+  it('is the one tile for a press let go where it started', () => {
+    expect(elbowPath({ x: 2, y: 2 }, { x: 2, y: 2 }, 'x')).toEqual([{ x: 2, y: 2 }]);
+  });
+});
 
 describe('a drag that turns', () => {
   it('runs from the start to the cursor through one curve, for every class and turn', () => {
@@ -131,6 +151,26 @@ function world(size = 30) {
   const builder = new Builder(map, regions, track, new Economy(), stores);
   return { track, builder, stock };
 }
+
+describe('a line for the Drill', () => {
+  it('goes along the first axis, then the other, one side at a time', () => {
+    expect(elbowPath({ x: 1, y: 1 }, { x: 3, y: 2 }, 'x')).toEqual([
+      { x: 1, y: 1 },
+      { x: 2, y: 1 },
+      { x: 3, y: 1 },
+      { x: 3, y: 2 },
+    ]);
+    expect(elbowPath({ x: 1, y: 1 }, { x: 0, y: 3 }, 'y')).toEqual([
+      { x: 1, y: 1 },
+      { x: 1, y: 2 },
+      { x: 1, y: 3 },
+      { x: 0, y: 3 },
+    ]);
+  });
+  it('is the one tile for a press let go where it started', () => {
+    expect(elbowPath({ x: 2, y: 2 }, { x: 2, y: 2 }, 'x')).toEqual([{ x: 2, y: 2 }]);
+  });
+});
 
 describe('a turning run laid', () => {
   it('prices the straights and the curve, and lays one joined line', () => {

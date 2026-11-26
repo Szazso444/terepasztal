@@ -5,7 +5,15 @@ import {
   stoneGroundAt,
   type LandscapeMap,
 } from './landscapeModel';
-import { reliefHeight, surfaceAlongRay, RELIEF_MAX, type TerrainRelief } from './terrainRelief';
+import {
+  heightFactor,
+  snowChannelLight,
+  snowTint,
+  reliefHeight,
+  surfaceAlongRay,
+  RELIEF_MAX,
+  type TerrainRelief,
+} from './terrainRelief';
 import {
   grassDetail,
   hasWildSheet,
@@ -81,8 +89,9 @@ self.onmessage = async (event: MessageEvent) => {
       return;
     }
     if (data.map) {
-      map = data.map;
       relief = data.relief;
+      // The painter reads each tile's level to paint a forest on raised ground as grass.
+      map = { ...data.map, levels: relief.tiles };
       channels = channelsOf(map, relief.style.step, relief.tiles ?? undefined);
       version = data.version;
       tint = data.tint;
@@ -315,6 +324,7 @@ self.onmessage = async (event: MessageEvent) => {
             wy,
             snowLineAt(map, snowLevels, tileIndex),
             steep ?? 0,
+            shade,
             solid || terrain === Terrain.Ice ? null : color,
             Math.max(waterWeight, ice, rubble),
             source,
@@ -607,11 +617,10 @@ const PLAIN_SNOW = [234, 239, 246];
 let snowed = 0;
 const SNOW_CAP = [220, 225, 228];
 /**
- * Ice and snow lie high, where the height light lifts them by a quarter: these keep their texture
- * under the cap, ice a cool green-blue and snow a cool blue, as the art demo has them apart.
+ * Ice lies high, where the height light lifts it by a quarter: its texture keeps under the cap, a
+ * cool green-blue, as the art demo has it. Snow takes its light from snowChannelLight instead.
  */
 const ICE_TONE = [0.76, 0.82, 0.78];
-const SNOW_TONE = [0.74, 0.79, 0.84];
 /** The moraine's rubble: grey, under the same light. */
 const RUBBLE_TONE = [0.72, 0.76, 0.74];
 /**
@@ -619,7 +628,9 @@ const RUBBLE_TONE = [0.72, 0.76, 0.74];
  * paint lighter (ground level unchanged), snow patches from the tile's snow line and full snow a
  * level above, and a cast shadow darkens ground that a higher tile hides from the upper-left light.
  * Snow goes on `color`, the ground's colour, which is null where the ground is not painted (under
- * solid paving). Returns the shading factor.
+ * solid paving), lit by snowChannelLight and tinted by snowTint, as the peak pictures' snow is
+ * (SurfaceAssets.summit): it is set so that `shade`, the slope's light so far, and the factor
+ * returned, which the caller multiplies in, leave it at that. Returns the shading factor.
  */
 function previewLooks(
   x: number,
@@ -629,6 +640,7 @@ function previewLooks(
   wy: number,
   snowLine: number,
   steep: number,
+  shade: number,
   color: number[] | null,
   water: number,
   source: Uint8ClampedArray,
@@ -636,7 +648,7 @@ function previewLooks(
   const style = relief.style,
     level = Math.max(0, z / style.step);
   let factor = 1;
-  if (style.heightLight) factor *= 1 + style.heightLight * level;
+  if (style.heightLight) factor *= heightFactor(level, style.heightLight);
   if (style.snow && color) {
     const above = level - snowLine,
       // Half cover (patches) on the snow line's level, full cover from the level above.
@@ -650,12 +662,17 @@ function previewLooks(
       const snow = amount * (1 - water);
       snowed = snow;
       if (snow > 0) {
-        if (hasWildSheet(source)) {
-          surfaceColor(source, Material.Snow, wx, wy, snowColor);
-          for (let c = 0; c < 3; c++) color[c] += (snowColor[c] * SNOW_TONE[c] - color[c]) * snow;
-        } else {
-          const texture = 0.88 + 0.12 * ((color[0] + color[1] + color[2]) / 3 / 140);
-          for (let c = 0; c < 3; c++) color[c] += (PLAIN_SNOW[c] * texture - color[c]) * snow;
+        // the snow picture's own texture where the wild sheet has it, else the ground's brightness
+        const wild = hasWildSheet(source);
+        if (wild) surfaceColor(source, Material.Snow, wx, wy, snowColor);
+        const texture = wild
+          ? 1
+          : Math.min(1, 0.88 + (0.12 * (color[0] + color[1] + color[2])) / 3 / 140);
+        for (let c = 0; c < 3; c++) {
+          const season = ((tint >> (16 - c * 8)) & 255) / 255,
+            lit = (texture * snowChannelLight(shade, c)) / (shade * factor),
+            kept = snowTint(season) / season;
+          color[c] += ((wild ? snowColor[c] : PLAIN_SNOW[c]) * lit * kept - color[c]) * snow;
         }
       }
     }

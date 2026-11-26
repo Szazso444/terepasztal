@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { Container, Sprite, Texture } from 'pixi.js';
+import { Container, Sprite, Texture, type Graphics, type Polygon } from 'pixi.js';
 import type { AtlasRegistry } from '../engine/atlas';
+import { tileToWorld } from '../engine/iso';
 import { Rng } from '../engine/rng';
 import type { Station } from '../sim/stations';
 import type { Train } from '../sim/trains';
-import { tileToWorld } from '../engine/iso';
-import { Glows, GroundLights, Smoke, surfaceVersions } from './fx';
+import { DayNight, Fog, Glows, GroundLights, insideAt, Smoke, surfaceVersions } from './fx';
 
 const ATLAS = {
   get: () => ({ texture: Texture.EMPTY, anchorX: 0.5, anchorY: 0.5 }),
@@ -264,6 +264,37 @@ describe('Glows', () => {
   });
 });
 
+describe('Inside a mountain', () => {
+  it('a lamp does not shine, and shines again out in the open', () => {
+    const layer = new Container();
+    let dug = true;
+    insideAt.set(layer, () => dug);
+    const glows = new Glows(ATLAS, layer, (x, y) => ({ x, y }));
+    glows.update([], [engine({})], 1);
+    expect(layer.children[0].visible).toBe(false);
+    dug = false;
+    glows.update([], [engine({})], 1);
+    expect(layer.children[0].visible).toBe(true);
+  });
+  it('an engine leaves no smoke', () => {
+    const layer = new Container();
+    insideAt.set(layer, () => true);
+    new Smoke(ATLAS, layer).update([engine({})], 0.001, true);
+    expect(layer.children).toHaveLength(0);
+  });
+  it('a train lights no ground over it', () => {
+    const layer = new Container();
+    insideAt.set(layer, () => true);
+    new GroundLights(
+      ATLAS,
+      layer,
+      (x, y) => ({ x, y }),
+      () => true,
+    ).update([], [engine({})], 1);
+    expect(layer.children.filter((c) => c.visible)).toHaveLength(0);
+  });
+});
+
 describe('Smoke', () => {
   const puff = (smoke: Smoke, t: Train) => smoke.update([t], 0.001, true);
 
@@ -284,5 +315,66 @@ describe('Smoke', () => {
     const w = tileToWorld(5.24, 5);
     expect(layer.children[0].x).toBeCloseTo(w.x, 0);
     expect(layer.children[0].y).toBeCloseTo(w.y - 30, 0);
+  });
+});
+
+/** What a fill of a Graphics holds. */
+type Painted = { path: { shapePath: { shapePrimitives: { shape: Polygon }[] } } };
+
+describe('how far the fog and the night reach', () => {
+  /** Whether a shape of `clip` covers tile (`x`, `y`). */
+  const covers = (clip: Graphics, x: number, y: number) => {
+    const p = tileToWorld(x, y);
+    return clip.context.instructions.some((step) =>
+      (step.data as unknown as Painted).path.shapePath.shapePrimitives.some(({ shape }) =>
+        shape.contains(p.x, p.y),
+      ),
+    );
+  };
+  const clipOf = (fog: Fog) => (fog as unknown as { clip: Graphics }).clip;
+
+  it('clips fog to the map and its ring, with no strip in view', () => {
+    const fog = new Fog(ATLAS);
+    fog.setWorld(32, 32, 8);
+    const clip = clipOf(fog);
+    expect(covers(clip, 16, 16)).toBe(true);
+    expect(covers(clip, -8, 16)).toBe(true);
+    expect(covers(clip, -9, 16)).toBe(false);
+    expect(covers(clip, 39, 16)).toBe(true);
+    expect(covers(clip, 40, 16)).toBe(false);
+  });
+
+  it('reaches over the strip in view and over no other, so it never lies on the bare page', () => {
+    const fog = new Fog(ATLAS);
+    // a strip block past the upper edge, beside regions that are hidden
+    fog.setWorld(64, 64, 8, [{ x0: 16, y0: -12, x1: 32, y1: 16 }]);
+    const clip = clipOf(fog);
+    expect(covers(clip, 24, -11)).toBe(true);
+    expect(covers(clip, 24, -12)).toBe(true);
+    expect(covers(clip, 24, -13)).toBe(false);
+    // at the same distance out, beside regions with no block: past the ring, so not there
+    expect(covers(clip, 8, -11)).toBe(false);
+    expect(covers(clip, 40, -11)).toBe(false);
+    // the ring itself stays
+    expect(covers(clip, 8, -8)).toBe(true);
+  });
+
+  it('forgets the reach it had when given less', () => {
+    const fog = new Fog(ATLAS);
+    fog.setWorld(64, 64, 8, [{ x0: 16, y0: -12, x1: 32, y1: 16 }]);
+    fog.setWorld(64, 64, 8);
+    expect(covers(clipOf(fog), 24, -11)).toBe(false);
+  });
+
+  it('lays the night over the tiles asked for, out to the last one', () => {
+    const night = new DayNight();
+    night.setWorld(32, 32, 12);
+    night.update(0, true);
+    const p = tileToWorld(-12, 16);
+    const q = tileToWorld(-13, 16);
+    const shape = (night.overlay.context.instructions[0].data as unknown as Painted).path.shapePath
+      .shapePrimitives[0].shape;
+    expect(shape.contains(p.x, p.y)).toBe(true);
+    expect(shape.contains(q.x, q.y)).toBe(false);
   });
 });

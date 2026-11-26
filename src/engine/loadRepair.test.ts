@@ -25,6 +25,7 @@ import { stationFootprint } from '../sim/stations';
 import { buildingDef, buildingToJSON } from '../sim/buildings';
 import { Builder, DECOR_DEFS, unbuildable } from '../sim/build';
 import { Roads } from '../sim/roads';
+import { Underground } from '../sim/underground';
 import { Economy } from '../sim/economy';
 import { STR } from '../strings';
 import { generatorOf, groundOf, type GeneratedWorld } from '../sim/ground';
@@ -183,6 +184,36 @@ describe('a bridge platform', () => {
           }
       }
     expect(aliased).toBeGreaterThan(15);
+  });
+});
+
+describe('the ground over a tunnel', () => {
+  const under = new Underground(9, 9);
+  under.dig(4, 4, 0);
+  const built = (over: Partial<BuiltObjects>): BuiltObjects => ({
+    track: [],
+    stations: [],
+    underground: under.toJSON(),
+    ...over,
+  });
+
+  it('repairBuiltTiles keeps the ground over dug tiles', () => {
+    for (const t of [Terrain.Rock, Terrain.Mountain]) {
+      const m = flat(t);
+      const decor: SaveGame['decor'] = [[4, 4, 'water_tower', 0]];
+      expect(repairBuiltTiles(m, built({ decor }))).toEqual([]);
+      expect(repairBuiltTiles(m, built({ track: [[4, 4, 'straight', 0, 'branch']] }))).toEqual([]);
+      // the same decor on open stone is the repair's
+      expect(repairBuiltTiles(m, built({ decor: [[3, 4, 'water_tower', 0]] }))).toHaveLength(1);
+    }
+  });
+
+  it('is no reason to keep water that came back over one', () => {
+    const repairs = repairBuiltTiles(
+      flat(Terrain.Water),
+      built({ track: [[4, 4, 'straight', 0, 'branch']] }),
+    );
+    expect(repairs).toEqual([{ x: 4, y: 4, terrain: Terrain.Grass }]);
   });
 });
 

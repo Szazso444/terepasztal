@@ -1,5 +1,4 @@
 import { DIR_DX, DIR_DY, type Dir } from '../engine/iso';
-import { MAX_LEVEL } from './elevation';
 import { Terrain, type GameMap } from './tiles';
 
 /**
@@ -19,21 +18,28 @@ import { Terrain, type GameMap } from './tiles';
  *   is no waterfall;
  * - bits 5 and 6: the headwater kind of the tile (#356): Headwater.None, Melt or Spring, on a river
  *   tile, a waterfall or not; held from CHUNK_VERSION 6;
- * - bit 7: unused, 0.
+ * - bit 7: MELT_BIT, set on the water of a glacier's melt (glaciers.ts), which runs down a
+ *   mountain's side at levels the other water never reaches; held from CHUNK_VERSION 7.
  *
- * Water stands at levels 0 to MAX_LEVEL, so no drop is more than MAX_DROP and none needs splitting
+ * Water stands at levels 0 to MAX_WATER_LEVEL, so no drop is more than MAX_DROP and none needs splitting
  * over several tiles. Generation marks the waterfalls of a map on the ground around it
  * (markWaterfalls in mapgen.ts), so a river tile at the map's edge knows the tile beyond it, and
  * stored chunks keep the plane from CHUNK_VERSION 4; a chunk stored before it has no waterfalls.
  *
  * Generated water steps down one level at a time (rivers.ts, the drainage's levels), so every
  * waterfall a world generates drops one level. Drops of 2 to MAX_DROP are held all the same; the
- * relief (tileLevels) keeps every tile within a level of its neighbours, water included, so such a
- * drop would stand in it as a single level.
+ * relief (tileLevels) keeps every tile within maxStep of its neighbours, water included, so such a
+ * drop stands in full on a map with generated levels, and as a single level on a map without them.
  */
 
+/**
+ * The highest level water stands at. Ground reaches MAX_LEVEL (elevation.ts), water stays at 0 to 4:
+ * rivers keep to the low ground, and a waterfall's drop is held in three bits.
+ */
+export const MAX_WATER_LEVEL = 4;
+
 /** The largest drop: from the highest water level to the lowest. */
-export const MAX_DROP = MAX_LEVEL;
+export const MAX_DROP = MAX_WATER_LEVEL;
 
 /** The drop's bits of a feature byte. */
 const DROP_BITS = 0b111;
@@ -45,8 +51,8 @@ export const FALL_BITS = 0b1_1111;
 const HEAD_SHIFT = 5;
 /** The bits a headwater holds. */
 export const HEAD_BITS = 0b110_0000;
-/** The unused top bit. */
-const RESERVED_BITS = 0b1000_0000;
+/** The glacier melt's bit: set on every water tile a glacier's melt laid. */
+export const MELT_BIT = 0b1000_0000;
 
 /** Where a river starts in high ground (#356). */
 export const enum Headwater {
@@ -77,10 +83,10 @@ export const fallEdge = (f: number): Dir => ((f >> EDGE_SHIFT) & 3) as Dir;
 
 /**
  * Whether `f` is a byte the feature plane holds: a drop of 0 to MAX_DROP, an edge only with a drop,
- * a headwater kind there is, and not the unused bit.
+ * and a headwater kind there is.
  */
 export function isFeature(f: number): boolean {
-  if (!Number.isInteger(f) || f < 0 || f > 255 || f & RESERVED_BITS) return false;
+  if (!Number.isInteger(f) || f < 0 || f > 255) return false;
   const drop = fallDrop(f);
   if (headwaterOf(f) > Headwater.Spring) return false;
   return drop <= MAX_DROP && (drop > 0 || !(f & FALL_BITS));

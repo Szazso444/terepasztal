@@ -1,3 +1,4 @@
+import { NO_LEVEL } from '../world/elevation';
 import { Terrain, inBounds, type GameMap } from '../world/tiles';
 import { decorateProps } from '../world/mapgen';
 import { hash2 } from '../engine/rng';
@@ -35,13 +36,29 @@ export class Editor {
     return out;
   }
 
-  /** Paint terrain under the brush; anything built on those tiles is removed first. */
+  /** A painted tile is as the terrain makes it: no stored level, nothing dug. */
+  private clearGround(x: number, y: number) {
+    const plane = this.map.groundLevel,
+      i = y * this.map.w + x,
+      held = !!plane && plane[i] !== NO_LEVEL;
+    if (plane) plane[i] = NO_LEVEL;
+    this.builder.terrainEdits.delete(i);
+    return this.builder.underground.fill(x, y) !== null || held;
+  }
+
+  /**
+   * Paint terrain under the brush; anything built on those tiles is removed first, and the stored
+   * level and the dug state go with them.
+   */
   paint(x: number, y: number, terrain: Terrain) {
     const tiles = this.footprint(x, y);
     let changed = false;
     for (const t of tiles) {
       const i = t.y * this.map.w + t.x;
-      if (this.map.terrain[i] === terrain) continue;
+      if (this.map.terrain[i] === terrain) {
+        if (this.clearGround(t.x, t.y)) changed = true;
+        continue;
+      }
       const st = this.builder.stationAt(t.x, t.y);
       if (st) this.builder.removeStation(st);
       if (this.builder.decorAt(t.x, t.y)) this.builder.removeDecor(t.x, t.y);
@@ -49,6 +66,7 @@ export class Editor {
       this.builder.removeRoad(t.x, t.y);
       if (this.builder.track.has(t.x, t.y)) this.builder.removeTrack(t.x, t.y);
       if (this.builder.buildingAt(t.x, t.y)) this.builder.removeBuilding(t.x, t.y);
+      this.clearGround(t.x, t.y);
       this.map.terrain[i] = terrain;
       this.map.variant[i] = Math.floor(hash2(t.x, t.y, this.map.seed + terrain) * 4);
       this.world.setFlattened(t.x, t.y, false);
@@ -77,6 +95,10 @@ export class Editor {
     for (const r of this.builder.roads.list()) this.builder.removeRoad(r.x, r.y);
     for (const t of [...this.builder.track.tiles()]) this.builder.removeTrack(t.x, t.y);
     for (const b of [...this.builder.buildings.values()]) this.builder.removeBuilding(b.x, b.y);
+    const { dug, cuts } = this.builder.underground.toJSON();
+    for (const [x, y] of [...dug, ...cuts]) this.builder.underground.fill(x, y);
+    this.map.groundLevel = undefined;
+    this.builder.terrainEdits.clear();
     for (let i = 0; i < this.map.terrain.length; i++) {
       this.map.terrain[i] = terrain;
       this.map.variant[i] = Math.floor(

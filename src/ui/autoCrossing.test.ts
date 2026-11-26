@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { tileLevels } from '../world/elevation';
 import { emptyMap } from '../world/mapgen';
+import { groundAllowsOn } from '../world/slope';
 import { Terrain } from '../world/tiles';
 import { RegionState } from '../world/regions';
 import {
@@ -154,6 +156,56 @@ describe('the crossing a run lays by itself', () => {
       item: { kind: 'crossing', cls: 'branch', cls2: 'main' },
       rot: 1,
     });
+  });
+});
+
+describe('a run at a cliff', () => {
+  /** Level 0 west of column 12, level 4 from it on, asked through the slope rule. */
+  function cliff() {
+    const w = world(),
+      { map } = w.builder,
+      raw = new Uint8Array(map.w * map.h);
+    for (let i = 0; i < raw.length; i++) raw[i] = i % map.w >= 12 ? 4 : 0;
+    map.generatedLevel = tileLevels({ ...map, generatedLevel: raw });
+    w.builder.groundCheck = (x, y, need) => groundAllowsOn(map, x, y, need);
+    return w;
+  }
+  const ewRun = (x0: number, x1: number, y: number) => {
+    const step = Math.sign(x1 - x0);
+    return Array.from({ length: Math.abs(x1 - x0) + 1 }, (_, i) => ({
+      x: x0 + i * step,
+      y,
+      rot: 1,
+    }));
+  };
+
+  for (const [from, to, laid] of [
+    [8, 16, [8, 9, 10, 11]],
+    [16, 8, [12, 13, 14, 15, 16]],
+  ] as [number, number, number[]][])
+    it(`stops at the first edge it may not cross, from ${from} to ${to}`, () => {
+      const { track, builder, stock } = cliff(),
+        before = new Map(stock.amounts);
+      const plan = planRun(builder, ewRun(from, to, 10), straight('branch'));
+      expect(plan.end).toBe(laid.length);
+      expect(plan.reason).toBe(STR.build.tooSteep);
+      expect(plan.straights).toBe(laid.length);
+      const one = pieceCost('straight', 'branch');
+      for (const [k, v] of Object.entries(one)) expect(plan.cost[k]).toBe(v * laid.length);
+      expect(layRun(builder, plan)).toBe(laid.length);
+      const columns = [...track.pieces.keys()].map((k) => k % 24).sort((a, b) => a - b);
+      expect(columns).toEqual(laid);
+      for (const [k, v] of Object.entries(one))
+        expect(stock.amounts.get(k)).toBe((before.get(k) ?? 0) - v * laid.length);
+    });
+
+  it('a run along the cliff is laid whole', () => {
+    const { builder } = cliff();
+    for (const x of [11, 12]) {
+      const plan = planRun(builder, nsRun(x, 6, 16), straight('branch'));
+      expect(plan.end).toBe(11);
+      expect(plan.steps.every((s) => s.ok)).toBe(true);
+    }
   });
 });
 

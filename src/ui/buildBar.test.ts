@@ -36,6 +36,7 @@ import {
   toastBottom,
   stationPlace,
   stepCategory,
+  toolKey,
   typeLockAge,
   typeTip,
   visibleCategories,
@@ -117,7 +118,11 @@ describe('the categories', () => {
       STR.toolbar.town,
       STR.toolbar.services,
     ]);
-    expect(types('tools')).toEqual([STR.toolbar.trackTools, STR.toolbar.electrification]);
+    expect(types('tools')).toEqual([
+      STR.toolbar.trackTools,
+      STR.toolbar.electrification,
+      STR.toolbar.ground,
+    ]);
     expect(types('works')).toEqual([
       STR.toolbar.rawMaterials,
       STR.toolbar.processing,
@@ -154,7 +159,7 @@ describe('where a def is listed', () => {
     expect(names(cat('buildings'), 'town')).toEqual(['Townhouse', 'House']);
     expect(names(cat('buildings'), 'services')).toEqual(['Water Tower', 'Coaling Stage']);
   });
-  it('splits the tools: on-track decor and the two arrows, then the power line and the supply', () => {
+  it('splits the tools: on-track decor and the two arrows, the power line and the supply, then the ground', () => {
     expect(shownItems(cat('tools'), 'track').map((i) => i.key)).toEqual([
       'decor:signal',
       'reclass:up',
@@ -164,6 +169,28 @@ describe('where a def is listed', () => {
       'decor:power_line',
       ...SUPPLY_KINDS.map((k) => `supply:${k}`),
     ]);
+    expect(shownItems(cat('tools'), 'ground').map((i) => i.key)).toEqual([
+      'ground:up',
+      'ground:down',
+    ]);
+  });
+  it('holds Raise and Lower in Tools, open from the first age, each with its own arrow', () => {
+    const [up, down] = shownItems(cat('tools'), 'ground');
+    expect(up.tool).toEqual({ kind: 'ground', delta: 1 });
+    expect(down.tool).toEqual({ kind: 'ground', delta: -1 });
+    expect([up.name, down.name]).toEqual([STR.toolbar.raise, STR.toolbar.lower]);
+    expect([up.icon, down.icon]).toEqual(['up', 'down']);
+    expect([up.desc, down.desc]).toEqual([STR.toolbar.raiseHint, STR.toolbar.lowerHint]);
+    for (const i of [up, down]) {
+      expect(i.tier, i.key).toBe(0);
+      expect(i.hidden, i.key).toBeUndefined();
+      // money, per tile that moves: no table price, and the ghost has the sum
+      expect(i.cost, i.key).toEqual({});
+      expect(i.costText, i.key).toBe(STR.toolbar.groundCost);
+      expect(i.typeLabel, i.key).toBe(STR.toolbar.ground);
+    }
+    expect(toolKey(up.tool)).toBe('ground:up');
+    expect(toolKey(down.tool)).toBe('ground:down');
   });
   it('keeps the bridges in Track and out of the works', () => {
     const works = cat('works').items.map((i) => i.key);
@@ -224,9 +251,9 @@ describe.each(SUPPLY_MODES)('every def of the %s chain', (mode) => {
   ];
   const listed = () => catalog().flatMap((c) => modeItems(c).map((i) => i.key));
 
-  it('is listed once and nothing is lost: only the two arrows join the old toolbar', () => {
+  it('is listed once and nothing is lost: only the arrows join the old toolbar', () => {
     setSupplyMode(mode);
-    const want = [...offered(), 'reclass:up', 'reclass:down'].sort();
+    const want = [...offered(), 'reclass:up', 'reclass:down', 'ground:up', 'ground:down'].sort();
     expect(listed().sort()).toEqual(want);
     expect(new Set(want).size).toBe(want.length);
   });
@@ -414,6 +441,26 @@ describe('the categories on show', () => {
     expect(bar.keyOf('roads')).toBe('');
     bar.openAt(4);
     expect(bar.open).toBe('terrain');
+  });
+  it('leaves Raise and Lower, and their type, out of the editor', () => {
+    const { bar } = barOn(catalog());
+    bar.setEditor(true);
+    const tools = bar.category('tools');
+    expect(tools.items.map((i) => i.key)).not.toContain('ground:up');
+    expect(tools.items.map((i) => i.key)).not.toContain('ground:down');
+    expect(tools.groups?.map((g) => g.id)).toEqual(['track', 'electrification']);
+    // the type row has no Ground type to step to, and nothing of it is listed
+    bar.openCategory('tools');
+    for (let i = 0; i < 3; i++) {
+      expect(bar.openGroup()).not.toBe('ground');
+      expect(bar.openList().map((it) => it.key)).not.toContain('ground:up');
+      bar.cycleGroup(1);
+    }
+    // the game has them again, and the other categories are the same objects
+    bar.setEditor(false);
+    expect(bar.category('tools').items.map((i) => i.key)).toContain('ground:up');
+    expect(bar.category('tools').groups?.map((g) => g.id)).toContain('ground');
+    expect(bar.category('works')).toBe(bar.categories.find((c) => c.id === 'works'));
   });
   it('steps round the visible categories both ways', () => {
     const ids: CategoryId[] = ['track', 'buildings', 'roads'];
@@ -755,6 +802,15 @@ describe('the controls line of the build card', () => {
     expect(key({ kind: 'supply', supply: 'catenary' })).toContain(STR.toolbar.foot.drag);
     expect(key({ kind: 'terrain', terrain: 0 })).not.toContain(STR.toolbar.foot.drag);
     expect(key({ kind: 'terrain', terrain: 0 })).toContain(STR.toolbar.foot.paint);
+  });
+  it('says Raise and Lower act by a click or along a line, and lay nothing', () => {
+    for (const delta of [1, -1] as const) {
+      const line = key({ kind: 'ground', delta });
+      expect(line, String(delta)).toContain(STR.toolbar.foot.ground);
+      expect(line, String(delta)).not.toMatch(/lay|place/i);
+      expect(line, String(delta)).toContain(STR.toolbar.foot.cancel);
+      expect(line, String(delta)).not.toContain(STR.toolbar.foot.turn);
+    }
   });
   it('does not say Upgrade and Downgrade lay anything: they move track that stands', () => {
     for (const dir of ['up', 'down'] as const) {

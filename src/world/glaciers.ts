@@ -1,5 +1,6 @@
-import { MAX_LEVEL, tileLevels } from './elevation';
+import { MAX_LEVEL, NO_LEVEL, tileLevels } from './elevation';
 import { FLOW_CAP, WaterKind, type Drainage, type Rect } from './rivers';
+import { SCULPT_REACH } from './mountains';
 import { Terrain } from './tiles';
 
 /**
@@ -9,11 +10,11 @@ import { Terrain } from './tiles';
  * The rule is the approved tile tooltip demo's, run on the rivers `drain` leaves, so every glacier
  * has a river below it. From each river source (a river tile no river or lake runs into) the main
  * stream is traced uphill over land: the upstream tile with the most rain, ties to the lower
- * index, for at most MELT_TILES tiles, stopping at the first tile at MAX_LEVEL, the snow line. A
+ * index, for at most MELT_TILES tiles, stopping at the first tile at SNOW_LINE, the snow line. A
  * trace that gets there turns its tiles into river and its last tile into ice, and the ice runs on
- * uphill the same way, over land at MAX_LEVEL, for at most ICE_TILES more tiles.
+ * uphill the same way, over land at SNOW_LINE, for at most ICE_TILES more tiles.
  *
- * A river's main stream need not lead to the highest ground, so a field at MAX_LEVEL can be left
+ * A river's main stream need not lead to the highest ground, so a field at SNOW_LINE can be left
  * with no trace (a third of them were, and no longer limit helped). Such a field gets a glacier
  * from the other end: from its tile with the most rain the land's drainage is followed down, as
  * far as MELT_TILES tiles, to the water it reaches, and the way is laid the same.
@@ -35,12 +36,23 @@ import { Terrain } from './tiles';
  * quadrupled (RIVER_FLOW): a river rises twice as far down the drainage as in the demo.
  */
 export const MELT_TILES = 20;
+/**
+ * The snow line of the glacier trace: the level the snow lies from on the mountains (the shipped
+ * relief's snow line, 14 of the 16 levels). A mountain that never reaches it has no glacier.
+ */
+export const SNOW_LINE = 14;
+
 /** The most ice above the trace's top tile. */
 export const ICE_TILES = 4;
 /** The lowest land the ice runs down over: one level below the snow line. */
-export const ICE_LOW = MAX_LEVEL - 1;
-/** How far a trace keeps from the core's edge: the ground beyond it may change after the plan. */
-const EDGE = 4;
+export const ICE_LOW = SNOW_LINE - 1;
+/**
+ * How far a trace keeps from the core's edge. The levels it reads are the plan's own sculpt of the
+ * mountains (mapgen.ts), which only matches the map's where every tile the sculpt reads is the
+ * plan's: its tiles within a tile's depth and the step relaxation's reach, the world beyond the
+ * region having streams of its own.
+ */
+const EDGE = SCULPT_REACH + 16;
 
 /** What the glacier pass makes of a tile. */
 export const enum GlacierKind {
@@ -59,9 +71,16 @@ export interface GlacierInput {
   core: Rect;
   /** the terrain with the mountains risen, water where the drainage has water */
   terrain: Uint8Array;
+  /**
+   * The level of every tile as the map will have it (the mountains as sculpted, water at its
+   * level), settled: neighbours within maxStep of a generated level plane (elevation.ts)
+   */
+  levels: Uint8Array;
   /** where no trace goes: the start chunk's ground changes after the plan */
   keepOut: Uint8Array;
   drainage: Drainage;
+  /** how far a trace keeps from the core's edge; EDGE where not given */
+  edge?: number;
 }
 
 /** One glacier: its tiles from the water it runs into up. */
@@ -85,13 +104,13 @@ const sides = (i: number, w: number) => [i - w, i + 1, i + w, i - 1];
  * has to stay land until the mountains have risen).
  */
 export function traceGlaciers(p: GlacierInput): Uint8Array {
-  const { w, h, core, terrain, keepOut, drainage: d } = p;
+  const { w, h, core, keepOut, drainage: d, edge = EDGE } = p;
   const { kind, down, acc, surface, flow, dir } = d;
-  const levels = tileLevels({ w, h, terrain, waterSurface: surface });
-  const ix0 = core.x0 + EDGE;
-  const iy0 = core.y0 + EDGE;
-  const ix1 = core.x1 - EDGE;
-  const iy1 = core.y1 - EDGE;
+  const { levels } = p;
+  const ix0 = core.x0 + edge;
+  const iy0 = core.y0 + edge;
+  const ix1 = core.x1 - edge;
+  const iy1 = core.y1 - edge;
   const land = (i: number) => {
     const x = i % w;
     const y = (i - x) / w;
@@ -122,21 +141,17 @@ export function traceGlaciers(p: GlacierInput): Uint8Array {
     }
     if (level < surface[s]) return false;
     const ice = [top];
-    const iceLevels: number[] = [MAX_LEVEL];
+    const iceLevels: number[] = [levels[top]];
     // the ice runs on down the mountain as far as its land stands high
-    while (
-      melt.length &&
-      heights[heights.length - 1] >= ICE_LOW &&
-      terrain[melt[melt.length - 1]] === Terrain.Mountain
-    ) {
+    while (melt.length && heights[heights.length - 1] >= ICE_LOW) {
       ice.unshift(melt.pop()!);
       iceLevels.unshift(heights.pop()!);
     }
     for (let k = 0; k < ICE_TILES; k++) {
-      const next = uphill(ice[ice.length - 1], (n) => levels[n] >= MAX_LEVEL && !ice.includes(n));
+      const next = uphill(ice[ice.length - 1], (n) => levels[n] >= SNOW_LINE && !ice.includes(n));
       if (next < 0) break;
       ice.push(next);
-      iceLevels.push(MAX_LEVEL);
+      iceLevels.push(levels[next]);
     }
     for (const t of way) taken[t] = 1;
     for (const t of ice) taken[t] = 1;
@@ -156,14 +171,14 @@ export function traceGlaciers(p: GlacierInput): Uint8Array {
         if (next < 0) break;
         way.push(next);
         at = next;
-        if (levels[next] >= MAX_LEVEL) break;
+        if (levels[next] >= SNOW_LINE) break;
       }
       const top = way[way.length - 1];
-      if (top !== undefined && levels[top] >= MAX_LEVEL) lay(s, way);
+      if (top !== undefined && levels[top] >= SNOW_LINE) lay(s, way);
     }
-  // the fields at MAX_LEVEL no trace reached, each from its tile with the most rain
+  // the fields at SNOW_LINE no trace reached, each from its tile with the most rain
   const seen = new Uint8Array(w * h);
-  const high = (i: number) => land(i) && levels[i] >= MAX_LEVEL;
+  const high = (i: number) => land(i) && levels[i] >= SNOW_LINE;
   for (let y = iy0; y < iy1; y++)
     for (let x = ix0, start = y * w + x; x < ix1; x++, start++) {
       if (seen[start] || !high(start)) continue;
@@ -212,18 +227,31 @@ export function traceGlaciers(p: GlacierInput): Uint8Array {
 
 /** The traces of `traces` whose ice keeps its levels with the kept traces' water on the map. */
 function checkLevels(p: GlacierInput, traces: Trace[]): Trace[] {
-  const { w, h, terrain, drainage: d } = p;
+  const { w, h, terrain, levels: ground, drainage: d } = p;
   let kept = traces;
   for (;;) {
     const t = terrain.slice();
     const s = d.surface.slice();
+    // the land at its sculpted level, the water at its own
+    const plane = ground.map((v, i) => (terrain[i] === Terrain.Water ? NO_LEVEL : v));
     for (const g of kept)
       g.melt.forEach((i, k) => {
         t[i] = Terrain.Water;
         s[i] = g.levels[k];
+        plane[i] = NO_LEVEL;
       });
-    const levels = tileLevels({ w, h, terrain: t, waterSurface: s });
-    const next = kept.filter((g) => g.ice.every((i, k) => levels[i] >= g.iceLevels[k]));
+    const levels = tileLevels({ w, h, terrain: t, waterSurface: s, generatedLevel: plane });
+    // a trace stays when the levels settle where its water and ice put them: its melt at its levels,
+    // its ice and the land beside either at the sculpted ones (nothing gives way to its water)
+    const next = kept.filter(
+      (g) =>
+        g.melt.every((i, k) => levels[i] === g.levels[k]) &&
+        [...g.melt, ...g.ice].every((i) =>
+          [i, i - w, i + 1, i + w, i - 1].every(
+            (n) => n < 0 || n >= w * h || t[n] === Terrain.Water || levels[n] === ground[n],
+          ),
+        ),
+    );
     if (next.length === kept.length) return kept;
     kept = next;
   }

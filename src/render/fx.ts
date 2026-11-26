@@ -106,7 +106,8 @@ export class Glows {
         s.destroy();
         this.stationGlows.delete(id);
       }
-    const seenT = new Set<number>();
+    const seenT = new Set<number>(),
+      inside = insideAt.get(this.layer);
     for (const t of trains) {
       const pose = t.poses[0];
       if (!pose) continue;
@@ -150,7 +151,7 @@ export class Glows {
         s.position.set(Math.round(w.x), Math.round(w.y - spot.up + this.railDz(spot.x, spot.y)));
         s.scale.set(spot.size);
         s.alpha = night * 0.9 * spot.front;
-        s.visible = night > 0.02 && spot.front > 0;
+        s.visible = night > 0.02 && spot.front > 0 && !inside?.(spot.x, spot.y);
       });
     }
     for (const [id, glows] of this.trainGlows)
@@ -166,6 +167,11 @@ export class Glows {
  * on the surface of its tile, and stays where it is until this changes.
  */
 export const surfaceVersions = new WeakMap<Container, () => number>();
+/**
+ * Is a point of a train under a mountain, where nothing of it shows, by the layer its smoke, its
+ * glow or its light would stand in (`TunnelPortals.inside`)? A layer without one has no tunnels.
+ */
+export const insideAt = new WeakMap<Container, (x: number, y: number) => boolean>();
 
 /** A lit tile: where it is and how bright its light is. */
 interface Lit {
@@ -298,10 +304,11 @@ export class GroundLights {
   }
   /** Each train lights the tile in front of it, over what the stations light there. */
   private trainLights(trains: Train[], night: number) {
-    const lit = new Map<number, Lit>();
+    const lit = new Map<number, Lit>(),
+      inside = insideAt.get(this.layer);
     for (const t of trains) {
       const at = headTile(t);
-      if (!at || !this.inBounds(at.x, at.y)) continue;
+      if (!at || !this.inBounds(at.x, at.y) || inside?.(at.x, at.y)) continue;
       const key = tileKey(at.x, at.y);
       const l = lit.get(key) ?? this.stationLit.get(key);
       const alpha = l ? Math.min(1, l.alpha + 0.4 * night) : 0.75 * night;
@@ -398,6 +405,14 @@ export class Rain {
   }
 }
 
+/** Whole tiles from (`x0`, `y0`) up to but not including (`x1`, `y1`). */
+export interface TileRect {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
 /** Drifting fog patches in world space around the camera plus a light screen haze. */
 export class Fog {
   readonly patches = new Container();
@@ -409,19 +424,21 @@ export class Fog {
     this.patches.addChild(this.clip);
     this.patches.mask = this.clip;
   }
-  /** Clip fog to the map plus its void ring so patches never float over the page background. */
-  setWorld(w: number, h: number, border: number) {
-    const b = border + 0.5;
-    const pts = [
-      tileToWorld(-b, -b),
-      tileToWorld(w - 1 + b, -b),
-      tileToWorld(w - 1 + b, h - 1 + b),
-      tileToWorld(-b, h - 1 + b),
-    ];
-    this.clip
-      .clear()
-      .poly(pts.flatMap((p) => [p.x, p.y]))
-      .fill(0xffffff);
+  /**
+   * Clip fog to the map plus its void ring, and to the tiles of `reach`, the edge strip in view, so
+   * patches never float over the page background.
+   */
+  setWorld(w: number, h: number, border: number, reach: readonly TileRect[] = []) {
+    const shape = (r: TileRect) =>
+      [
+        tileToWorld(r.x0 - 0.5, r.y0 - 0.5),
+        tileToWorld(r.x1 - 0.5, r.y0 - 0.5),
+        tileToWorld(r.x1 - 0.5, r.y1 - 0.5),
+        tileToWorld(r.x0 - 0.5, r.y1 - 0.5),
+      ].flatMap((p) => [p.x, p.y]);
+    this.clip.clear();
+    const map = { x0: -border, y0: -border, x1: w + border, y1: h + border };
+    for (const r of [map, ...reach]) this.clip.poly(shape(r)).fill(0xffffff);
   }
   update(
     dt: number,
@@ -481,6 +498,7 @@ export class Smoke {
     private readonly railDz: (x: number, y: number) => number = () => 0,
   ) {}
   update(trains: Train[], dt: number, enabled: boolean) {
+    const inside = insideAt.get(this.layer);
     if (enabled)
       for (const t of trains) {
         if (!t.hasSteam || t.state !== 'moving' || t.speed < 0.05) continue;
@@ -501,6 +519,7 @@ export class Smoke {
             cy = seg.y + Math.sin(nose) * outlet.along;
             up = outlet.up;
           }
+          if (inside?.(cx, cy)) continue;
           const w = tileToWorld(cx, cy);
           const f = this.atlas.get(`fx/smoke_${Math.floor(Math.random() * 3)}`);
           const s = new Sprite(f.texture);
