@@ -119,6 +119,32 @@ describe('AtmosphereTint', () => {
     expect(own.tint).toBe(0x808080);
   });
 
+  it('tints an object the moment it joins, as a frame may add to the layer after its own pass', () => {
+    const layer = new Container(),
+      atmosphere = new AtmosphereTint(layer),
+      night = 0x5c6bad;
+    atmosphere.apply(night);
+    // nothing runs between this and the frame being drawn: it must not stand there bright
+    const late = new Sprite();
+    late.tint = 0xccddaa;
+    layer.addChild(late);
+    expect(late.tint).toBe(multiplyTint(0xccddaa, night));
+    // one with no tint of its own, and an emissive one, which keeps its own
+    const plain = layer.addChild(new Sprite()),
+      lamp = layer.addChild(new Sprite({ label: 'emissive' }));
+    expect(plain.tint).toBe(night);
+    expect(lamp.tint).toBe(0xffffff);
+    // a tint set straight on a new object after it joined shows under the night at the next frame
+    plain.tint = 0x808080;
+    atmosphere.apply(night);
+    expect(plain.tint).toBe(multiplyTint(0x808080, night));
+    // and nothing is multiplied twice, by the colour kept or by one that ends
+    atmosphere.apply(night);
+    expect(late.tint).toBe(multiplyTint(0xccddaa, night));
+    atmosphere.apply(0xffffff);
+    expect([late.tint, plain.tint]).toEqual([0xccddaa, 0x808080]);
+  });
+
   it('leaves the window lights at their own tint', () => {
     const layer = new Container(),
       atmosphere = new AtmosphereTint(layer);
