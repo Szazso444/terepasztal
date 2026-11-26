@@ -582,6 +582,8 @@ describe('levels and names', () => {
     for (const x of [20, 21]) g.builder.placeBuilding(x, ROW, 'bridge_wood', 0);
     roundTrip(g, () => g.builder.raiseSpan(20, ROW));
     expect(g.builder.bridgeAt(21, ROW)?.deck).toBe(1);
+    roundTrip(g, () => g.builder.lowerSpan(21, ROW));
+    expect(g.builder.bridgeAt(20, ROW)?.deck).toBeUndefined();
   });
 
   it("a works' upgrade, and a bridge's, which changes what the rail may carry", () => {

@@ -151,6 +151,56 @@ describe('raising a span', () => {
   });
 });
 
+describe('lowering a span', () => {
+  it('brings the whole bridge down one height, and automatic again at its lowest', () => {
+    const { builder } = world();
+    for (const x of [8, 9]) platform(builder, x);
+    for (let i = 0; i < 3; i++) builder.raiseSpan(9, ROW);
+    expect(builder.lowerSpan(8, ROW)).toBe(true);
+    expect([deckOf(builder, 8), deckOf(builder, 9)]).toEqual([2, 2]);
+    builder.lowerSpan(8, ROW);
+    builder.lowerSpan(8, ROW);
+    expect([deckOf(builder, 8), deckOf(builder, 9)]).toEqual([undefined, undefined]);
+    expect(builder.checkLower(9, ROW)).toMatchObject({ ok: false, reason: STR.build.raise.lowest });
+    expect(builder.lowerSpan(9, ROW)).toBe(false);
+  });
+
+  it('stops at the water under it, which an automatic deck stands on', () => {
+    const { builder, map } = world(Terrain.Water);
+    map.waterSurface = new Uint8Array(SIDE * SIDE).fill(2);
+    platform(builder, 9);
+    builder.raiseSpan(9, ROW);
+    expect(deckOf(builder, 9)).toBe(3);
+    builder.lowerSpan(9, ROW);
+    expect(deckOf(builder, 9)).toBeUndefined();
+  });
+
+  it('costs nothing and gives nothing back', () => {
+    const { builder } = world();
+    builder.free = false;
+    platform(builder, 9).deck = 2;
+    expect(builder.checkLower(9, ROW)).toEqual({ ok: true, cost: {} });
+  });
+
+  it('is refused under a train, on the bridge or on its ramps', () => {
+    const { builder, track } = world();
+    for (let x = 4; x <= 14; x++) track.place(x, ROW, 'straight', 1, 'branch');
+    platform(builder, 9).deck = 3;
+    builder.busy = (x) => x === 7;
+    expect(builder.checkLower(9, ROW).reason).toBe(STR.build.raise.train);
+    builder.busy = (x) => x === 3;
+    expect(builder.checkLower(9, ROW).ok).toBe(true);
+  });
+
+  it('keeps a road off a raised deck until it comes down', () => {
+    const { builder } = world();
+    platform(builder, 9).deck = 1;
+    expect(builder.checkRoad(9, ROW).reason).toBe(STR.build.raise.roadOnRaised);
+    builder.lowerSpan(9, ROW);
+    expect(builder.checkRoad(9, ROW).ok).toBe(true);
+  });
+});
+
 describe('the stored deck in a save', () => {
   it('keeps a raised deck, and an automatic one stays automatic', () => {
     const { builder } = world();
