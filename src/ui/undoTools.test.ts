@@ -139,7 +139,7 @@ describe('one action of the tools, one step', () => {
 
   it('decor and a works, each click its own step', () => {
     const h = harness();
-    h.tool({ kind: 'decor', defId: 'water_tower' });
+    h.tool({ kind: 'decor', defId: 'townhouse' });
     h.click(tile(8, 30));
     h.tool({ kind: 'building', defId: 'windmill' });
     h.click(tile(13, 30));
@@ -222,7 +222,7 @@ describe('after an undo', () => {
     h.history.undo();
     h.b.dropGone();
     expect(h.b.selectedBuilding).toBeNull();
-    const tower = h.commands.act(() => h.builder.placeDecor(8, 30, 'water_tower', 0))!;
+    const tower = h.commands.act(() => h.builder.placeDecor(8, 30, 'townhouse', 0))!;
     h.b.selectDecor(tower);
     h.history.undo();
     h.b.dropGone();

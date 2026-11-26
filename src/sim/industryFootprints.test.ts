@@ -165,7 +165,7 @@ for (const c of CASES) {
           ['mountain', (w, t) => paint(w, t.x, t.y, Terrain.Mountain)],
           ['a road', (w, t) => w.builder.roads.add(t.x, t.y)],
           ['a works', (w, t) => void w.builder.placeBuilding(t.x, t.y, 'windmill', 0)],
-          ['decor', (w, t) => void w.builder.placeDecor(t.x, t.y, 'water_tower', 0)],
+          ['decor', (w, t) => void w.builder.spawnDecor(t.x, t.y, 'water_tower', 0)],
           [
             'track',
             (w, t) =>

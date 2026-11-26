@@ -68,8 +68,6 @@ const BASELINE = {
   } as Record<string, number>,
   /** declared scale of outdoor equipment with no door */
   declared: {
-    water_tower: 0.7,
-    fuel_stop: 0.65,
     kiln: 0.7,
     refinery: 1.1,
     power_plant: 1.1,
@@ -90,8 +88,6 @@ const BASELINE = {
  */
 const PICK: Record<string, number> = {
   colliery: 1.2,
-  water_tower: 1.3,
-  fuel_stop: 1.25,
 };
 /**
  * The families drawn from their 3D model at their real size (2026-10-27), pinned apart from
@@ -114,6 +110,9 @@ const MODELS = new Set([
   'diesel_refinery',
   'wire_mill',
   'windmill',
+  'water_tower',
+  'fuel_stop',
+  'fuel_pump',
 ]);
 /** The pick a frame has: its family's multiplier, else none. */
 const pickOf = (frame: string) => PICK[structureFamily(frame)] ?? 1;
@@ -173,7 +172,7 @@ describe('building scale', () => {
         expect(structureScale(frame), frame).toBe(before(frame));
         expect(structureScale(frame, 100), frame).toBe(before(frame, 100));
       }
-    expect(families.size).toBeGreaterThan(20);
+    expect(families.size).toBeGreaterThan(18);
   });
 
   it('keeps every measure a building family had', () => {
@@ -200,7 +199,7 @@ describe('building scale', () => {
             baselineScale(frame, height),
           );
         }
-    expect(families.size).toBeGreaterThan(20);
+    expect(families.size).toBeGreaterThan(18);
   });
 
   it('sizes every packed illustrated frame as it was', () => {
@@ -237,8 +236,6 @@ describe("the author's size pick", () => {
   /** One representative frame per listed family; the sizes are measured the way the game does. */
   const REPRESENTATIVE: Record<string, string> = {
     colliery: 'structures/colliery',
-    water_tower: 'structures/water_tower',
-    fuel_stop: 'structures/fuel_stop',
   };
 
   it("pins the author's multipliers, family by family", () => {
@@ -288,38 +285,13 @@ describe("the author's size pick", () => {
   });
 });
 
-describe('the Fuel Pump', () => {
-  const frames: FrameNames = {
-    has: (key) => ['structures/fuel_pump', 'structures/fuel_pump_lv2'].includes(key),
-  };
-
-  it('has a declared scale, in line with the equipment it stands beside', () => {
-    expect(EQUIPMENT_SCALE.fuel_pump).toBeGreaterThanOrEqual(EQUIPMENT_SCALE.fuel_stop);
-    expect(EQUIPMENT_SCALE.fuel_pump).toBeLessThanOrEqual(EQUIPMENT_SCALE.water_tower);
-  });
-
-  it('is drawn at that scale at every level and turn, before its art arrives', () => {
-    const own = { family: 'fuel_pump', scale: EQUIPMENT_SCALE.fuel_pump };
-    for (const frame of [
-      'structures/fuel_pump',
-      'structures/fuel_pump_lv2',
-      'structures/fuel_pump_lv2_r1',
-      'structures/fuel_pump_r3',
-    ]) {
-      expect(scaleReference(frames, frame), frame).toEqual(own);
-    }
-    expect(structureScale('structures/fuel_pump_lv2')).toBe(own.scale);
-    expect(hasScaleReference('structures/fuel_pump_lv3')).toBe(true);
-  });
-});
-
 it('requires an explicit calibration or declared estimate for every illustrated structure', () => {
   // but the depot's: its 3D model's pictures are packed at the size they are drawn, and an axis
   // frame or the plain `depot_1` has no reference (`keep a wide station's axis frames`); and the
   // windmill's sails, no building but a part of one, drawn at the mill's scale (buildingLife.ts)
   for (const key of Object.keys(atlas.frames))
     if (!/^structures\/(depot_(r[01]|1$)|windmill_sails$)/.test(key))
-      expect(hasScaleReference(key), key).toBe(true);
+      expect(hasScaleReference(key.replace(/_r[1-3]$/, '')), key).toBe(true);
 });
 
 /** Node has no ImageData or canvas: enough of both for the atlas packer to run. */

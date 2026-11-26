@@ -116,8 +116,8 @@ describe('trains and the stores', () => {
     line(w, 2, ROW, 60);
     const town = townWith(w, { coal: 1000, water: 1000 }, { x: 34, y: ROW - 1 });
     w.builder.free = true;
-    expect(w.builder.placeDecor(30, ROW + 1, 'fuel_stop', 0)).not.toBeNull();
-    expect(w.builder.placeDecor(32, ROW + 1, 'water_tower', 0)).not.toBeNull();
+    expect(w.builder.placeDecor(30, ROW + 1, 'fuel_stop', 2)).not.toBeNull();
+    expect(w.builder.placeDecor(32, ROW + 1, 'water_tower', 2)).not.toBeNull();
     w.builder.free = false;
     const quarry = station(w, 'quarry', 50, ROW - 1);
     const t = onLine(w, 'general', 10, [quarry]);
@@ -133,19 +133,19 @@ describe('trains and the stores', () => {
   });
 
   it('a coaling stage with no store within 8 tiles serves nothing', () => {
-    // the stage's service tiles run to column 32; a warehouse at column 32 + gap is that far
+    // the stage faces column 30; a warehouse at column 30 + gap is that far
     const plan = (gap: number) => {
       const w = grass();
       line(w, 2, ROW, 60);
-      const house = station(w, 'warehouse', 32 + gap, ROW - 1);
+      const house = station(w, 'warehouse', 30 + gap, ROW - 1);
       const store = w.stores.byKey(`st:${house.id}`)!;
       store.amounts.set('coal', 500);
       store.amounts.set('water', 500);
       w.builder.free = true;
-      expect(w.builder.placeDecor(30, ROW + 1, 'fuel_stop', 0)).not.toBeNull();
-      expect(w.builder.placeDecor(30, ROW - 2, 'water_tower', 0)).not.toBeNull();
+      expect(w.builder.placeDecor(30, ROW + 1, 'fuel_stop', 2)).not.toBeNull();
+      expect(w.builder.placeDecor(30, ROW - 1, 'water_tower', 0)).not.toBeNull();
       w.builder.free = false;
-      expect(w.stores.supplierFor(32, ROW), 'premise: it supplies the stage').toBe(
+      expect(w.stores.supplierFor(30, ROW), 'premise: it supplies the stage').toBe(
         w.stores.poolOf(store),
       );
       const quarry = station(w, 'quarry', 56, ROW - 1);

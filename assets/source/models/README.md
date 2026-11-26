@@ -26,8 +26,14 @@ overhangs them by 10% at most.
   has its four painted views outside the repository.
 - `scale` is the factor on the model's own tile units (`fit` included); `span` the footprint the
   author chose.
+- The water tower, the coaling stage and the Fuel Pump (2026-10-31) have their four views
+  (`<id>-r0` to `-r3`, the frames `structures/<id>` and `_r1` to `_r3`), because they turn to face
+  the track. Their anchor is the middle of what stands on the ground: the spout, chute or hose
+  reaches out over the track on purpose. Sizes: the model's own height (14.6 m, 8.8 m), the
+  coaling stage 0.88 so that its ground plan fits one tile.
 
 Made outside the repository by
-`renders/building-models/tools/game_frames.py <out> --painted --fit`
+`renders/building-models/tools/game_frames.py <out> --painted --fit` (the fuel buildings by
+`decor_frames.py <out>` beside it)
 from the painted views `views/<building>/game/<building>-r<k>.png` (placed on the game canvas by
 `tools/bm_views.py place`) and `logs/final_sizes.json`.

@@ -27,10 +27,6 @@ export const DOOR_FRACTION: Record<string, number> = {
 };
 /** Outdoor equipment has no standard door; these explicit estimates need physical references. */
 export const EQUIPMENT_SCALE: Record<string, number> = {
-  water_tower: 0.7,
-  fuel_stop: 0.65,
-  // the Fuel Pump: an estimate beside its neighbours until its art brings a measured reference
-  fuel_pump: 0.65,
   kiln: 0.7,
   refinery: 1.1,
   power_plant: 1.1,
@@ -56,10 +52,6 @@ export const EQUIPMENT_SCALE: Record<string, number> = {
  */
 export const AUTHOR_SCALE: Record<string, number> = {
   colliery: 1.2,
-  /** proposal: "taller, increase its size" came with no number */
-  water_tower: 1.3,
-  /** the Coaling Stage; proposal: "also bigger" came with no number */
-  fuel_stop: 1.25,
 };
 /**
  * Families drawn from their 3D model, painted, at its real size measured against the walker and
@@ -85,6 +77,9 @@ export const MODEL_FAMILIES: ReadonlySet<string> = new Set([
   'diesel_refinery',
   'wire_mill',
   'windmill',
+  'water_tower',
+  'fuel_stop',
+  'fuel_pump',
 ]);
 /** What can say whether a frame exists: the atlas registry, or a set of frame names in a test. */
 export interface FrameNames {
