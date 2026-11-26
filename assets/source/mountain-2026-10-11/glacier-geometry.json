@@ -1,0 +1,144 @@
+{
+  "projection": "2:1 orthographic isometric",
+  "canvas": [1024, 1024],
+  "tileGame": [64, 32],
+  "levelGame": 9.8,
+  "levelsPerFace": 4,
+  "levelFractionOfTileSide": 0.25,
+  "scale": 8,
+  "tileCanvas": [512, 256],
+  "levelCanvas": 78.4,
+  "stripCentre": [512, 512],
+  "transform": {
+    "origin": [512, 512],
+    "x": [256, 128],
+    "y": [-256, 128]
+  },
+  "axes": {
+    "x": "NW to SE",
+    "y": "NE to SW"
+  },
+  "edges": {
+    "NE": "upper-right",
+    "SE": "lower-right",
+    "SW": "lower-left",
+    "NW": "upper-left"
+  },
+  "channel": {
+    "widthTiles": 1,
+    "rareWidthTiles": 2,
+    "lengthTiles": [1, 5]
+  },
+  "crossSection": {
+    "iceAbsU": [0, 0.4],
+    "moraineAbsU": [0.4, 0.5],
+    "outsideAbsU": 0.5
+  },
+  "strips": {
+    "x": {
+      "axisRange": [-1.5, 1.5],
+      "corners": [
+        [256, 256],
+        [1024, 640],
+        [768, 768],
+        [0, 384]
+      ],
+      "centreLine": [
+        [128, 320],
+        [896, 704]
+      ],
+      "iceEdges": [
+        [
+          [230, 269],
+          [998, 653]
+        ],
+        [
+          [26, 371],
+          [794, 755]
+        ]
+      ]
+    },
+    "y": {
+      "axisRange": [-1.5, 1.5],
+      "corners": [
+        [768, 256],
+        [1024, 384],
+        [256, 768],
+        [0, 640]
+      ],
+      "centreLine": [
+        [896, 320],
+        [128, 704]
+      ],
+      "iceEdges": [
+        [
+          [794, 269],
+          [26, 653]
+        ],
+        [
+          [998, 371],
+          [230, 755]
+        ]
+      ]
+    }
+  },
+  "lobe": {
+    "centre": [512, 512],
+    "iceRadii": [145, 72],
+    "rimRadii": [181, 90.5],
+    "iceRadiusTiles": 0.4,
+    "rimRadiusTiles": 0.5
+  },
+  "face": {
+    "projection": "square-on, no projection",
+    "size": [1024, 1024],
+    "widthTileEdges": 1,
+    "heightLevels": 4,
+    "levelPixels": 256
+  },
+  "tongue": {
+    "centre": [512, 832],
+    "scale": 8,
+    "heightLevels": 1,
+    "heightCanvas": 78.4,
+    "SW": {
+      "edge": [
+        [256, 832],
+        [512, 960]
+      ],
+      "caveFoot": [384, 896],
+      "facing": "lower-left",
+      "light": "lit"
+    },
+    "SE": {
+      "edge": [
+        [768, 832],
+        [512, 960]
+      ],
+      "caveFoot": [640, 896],
+      "facing": "lower-right",
+      "light": "shade"
+    },
+    "NE": {
+      "facing": "away",
+      "top": "half lobe"
+    },
+    "NW": {
+      "facing": "away",
+      "top": "half lobe"
+    }
+  },
+  "portal": {
+    "openingFraction": [0.25, 0.125],
+    "openingPixels": [256, 128],
+    "patchFraction": [0.5, 0.25],
+    "patchPixels": [512, 256],
+    "centreAtBottom": [512, 1024],
+    "openingTileEdges": 0.25,
+    "openingLevels": 0.5
+  },
+  "review": {
+    "strip": [128, 128],
+    "face": [36, 39]
+  }
+}
