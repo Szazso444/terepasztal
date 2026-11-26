@@ -80,6 +80,7 @@ import { defaultStop as defaultStopFor } from './sim/trains';
 import { ContractBoard, contractTitle } from './sim/contracts';
 import { Rng } from './engine/rng';
 import { DayNight, Glows, Smoke, GroundLights, Rain, Fog, nightness } from './render/fx';
+import { Storm } from './render/storm';
 import {
   Weather,
   SEASON_FX,
@@ -268,6 +269,7 @@ export class Game implements UiHost {
   dayNight = new DayNight();
   glows!: Glows;
   smoke!: Smoke;
+  storm!: Storm;
   /** the halo over whatever finished an upgrade, and the shimmer along track relaid as high speed */
   halos!: Halos;
   /** a bar over each building being upgraded */
@@ -1113,6 +1115,7 @@ export class Game implements UiHost {
     this.cursor.anchor.set(cur.anchorX, cur.anchorY);
     this.world.overlay.addChild(this.cursor);
     this.rain = new Rain(this.atlas);
+    this.storm = new Storm();
     this.fog = new Fog(this.atlas);
     this.world.root.addChildAt(
       this.dayNight.overlay,
@@ -1120,8 +1123,16 @@ export class Game implements UiHost {
     );
     this.dayNight.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
     this.fog.setWorld(this.map.w, this.map.h, WorldRenderer.BORDER);
+    this.rain.setWorld(this.map.w, this.map.h);
     this.world.overlay.addChild(this.fog.patches);
-    this.app.stage.addChild(this.world.root, this.fog.haze, this.rain.root, this.overview.root);
+    this.app.stage.addChild(
+      this.world.root,
+      this.storm.shade,
+      this.fog.haze,
+      this.rain.root,
+      this.storm.flash,
+      this.overview.root,
+    );
     this.glows = new Glows(
       this.atlas,
       this.world.overlay,
@@ -2417,11 +2428,26 @@ export class Game implements UiHost {
     const rainI = this.settings.weather && this.weather.kind === 'rain' ? this.weather.visible : 0;
     const fogI = this.settings.weather && this.weather.kind === 'fog' ? this.weather.visible : 0;
     this.dayNight.update(this.clock.dayFraction, this.settings.dayNight, rainI);
-    this.rain.update(dt, this.viewTarget === 0 ? rainI : 0, this.camera.viewW, this.camera.viewH);
+    this.rain.update(
+      dt,
+      this.viewTarget === 0 ? rainI : 0,
+      this.camera.viewW,
+      this.camera.viewH,
+      this.weather.wind,
+      this.camera,
+    );
+    this.world.puddles.update(dt * this.clock.speed, rainI, this.camera.viewRect());
     this.fog.update(
       dt,
       this.viewTarget === 0 ? fogI : 0,
       this.camera.viewRect(),
+      this.camera.viewW,
+      this.camera.viewH,
+      this.weather.wind,
+    );
+    this.storm.update(
+      this.clock.speed ? dt : 0,
+      this.viewTarget === 0 && this.settings.weather && this.weather.wind.level === 'storm',
       this.camera.viewW,
       this.camera.viewH,
     );
@@ -2450,6 +2476,16 @@ export class Game implements UiHost {
     this.glows.update(this.builder.stations, this.fleet.trains, night);
     this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
     this.peopleRenderer.update(this.people, dt * this.clock.speed);
+    this.world.desertWind.update(
+      this.clock.speed ? dt : 0,
+      this.weather.wind,
+      this.camera.viewRect(),
+    );
+    this.world.treeSway.update(
+      this.clock.speed ? dt : 0,
+      this.weather.wind,
+      this.camera.viewRect(),
+    );
     this.world.wind = this.weather.wind;
     this.world.rain = this.weather.kind === 'rain' ? this.weather.visible : 0;
     this.world.buildingLife.update(
