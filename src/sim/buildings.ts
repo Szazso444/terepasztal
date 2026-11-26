@@ -99,6 +99,13 @@ export interface Building {
    * that) means 0.
    */
   rot?: number;
+  /**
+   * A bridge platform raised by the player (`Builder.raiseSpan`): its deck height in levels,
+   * absolute like the terrain's. Absent, the deck is automatic: it takes the level of the rail
+   * laid over it, or lies on the ground or the water. It has nothing to do with `level`, the
+   * capacity upgrade.
+   */
+  deck?: number;
   /** running in the last tick */
   active: boolean;
   /** batches completed in the last in-game week (rolling estimate) */
@@ -115,7 +122,8 @@ export interface Building {
 }
 /**
  * A building as a save holds it (v4); the level came later, and a save without one means 1. The
- * upgrade under way came in v15, null for none; the rotation in v16, and a save without one means 0.
+ * upgrade under way came in v15, null for none; the rotation in v16, and a save without one means 0;
+ * the deck height of a raised bridge platform in v25, null on anything else.
  */
 export type BuildingJSON = [
   x: number,
@@ -125,16 +133,17 @@ export type BuildingJSON = [
   level?: number,
   work?: Work | null,
   rot?: number,
+  deck?: number | null,
 ];
 export function buildingToJSON(b: Building): BuildingJSON {
-  return [b.x, b.y, b.id, b.acc, b.level ?? 1, workToJSON(b.work), b.rot ?? 0];
+  return [b.x, b.y, b.id, b.acc, b.level ?? 1, workToJSON(b.work), b.rot ?? 0, b.deck ?? null];
 }
 /**
  * A saved building, idle until its first tick says otherwise. Its work is kept only where the game
  * could have started it: on a building it knows, towards the next level and at most the top one.
  * Its rotation is one of the four (`wrapRotation`), 0 where the save has none.
  */
-export function buildingFromJSON([x, y, id, acc, level, work, rot]: BuildingJSON): Building {
+export function buildingFromJSON([x, y, id, acc, level, work, rot, deck]: BuildingJSON): Building {
   const lv = level ?? 1;
   const b: Building = {
     id,
@@ -150,6 +159,7 @@ export function buildingFromJSON([x, y, id, acc, level, work, rot]: BuildingJSON
     const w = workFromJSON(work, buildingLevel(b), worksMaxLevel(b));
     if (w) b.work = w;
   }
+  if (typeof deck === 'number' && Number.isInteger(deck)) b.deck = deck;
   return b;
 }
 /**

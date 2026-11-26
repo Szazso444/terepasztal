@@ -577,6 +577,13 @@ describe('levels and names', () => {
     expect(state(g)).toEqual(was);
   });
 
+  it('a raised bridge, all its platforms together', () => {
+    const g = game();
+    for (const x of [20, 21]) g.builder.placeBuilding(x, ROW, 'bridge_wood', 0);
+    roundTrip(g, () => g.builder.raiseSpan(20, ROW));
+    expect(g.builder.bridgeAt(21, ROW)?.deck).toBe(1);
+  });
+
   it("a works' upgrade, and a bridge's, which changes what the rail may carry", () => {
     const g = game();
     const b = g.builder.placeBuilding(12, ROW + 5, 'windmill', 0)!;

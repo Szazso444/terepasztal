@@ -1,9 +1,14 @@
 import type { Building } from './buildings';
 import { buildingDef, buildingLevel } from './buildings';
 import type { Builder } from './build';
-import { Dir, opposite } from '../engine/iso';
+import { Dir, DIR_DX, DIR_DY, DIRS, opposite } from '../engine/iso';
+import { levelAt } from '../world/elevation';
 
 export type BridgeMaterial = 'wood' | 'stone';
+/** The highest level a deck can be raised to; `Building.deck` is the height, not `level`. */
+export const MAX_DECK_HEIGHT = 4;
+/** Share of a platform's price that raising it one height costs, per platform. */
+export const RAISE_SHARE = 0.5;
 /**
  * Share of a bridge's capacity a consist may weigh and still cross at full speed. Anything
  * heavier (strictly above `capacity * BRIDGE_SLOW_SHARE`) slows to `BRIDGE_SLOW_FACTOR`, both
@@ -62,6 +67,42 @@ export function bridgeSpan(builder: Builder, b: Building) {
       after++;
   }
   return { material, axis, index: before, length: before + after + 1 };
+}
+
+/** The platforms joined edge to edge with `b`, itself first: the bridge a raise lifts whole. */
+export function connectedPlatforms(builder: Builder, b: Building): Building[] {
+  const seen = new Set([b]),
+    all = [b];
+  for (const p of all)
+    for (const d of DIRS) {
+      const n = builder.platformAt(p.x + DIR_DX[d], p.y + DIR_DY[d]);
+      if (n && !seen.has(n)) {
+        seen.add(n);
+        all.push(n);
+      }
+    }
+  return all;
+}
+
+/**
+ * The level `span` stands at, as a raise counts from it: the highest of its stored decks, the
+ * ground and water under it, and the rail it meets off the bridge (which an automatic deck carries).
+ */
+export function spanLevel(builder: Builder, span: readonly Building[]) {
+  const { map, track } = builder,
+    on = new Set(span);
+  let level = 0;
+  for (const p of span) {
+    level = Math.max(level, p.deck ?? 0, levelAt(map, p.x, p.y));
+    for (const d of new Set(track.get(p.x, p.y)?.links.flat())) {
+      const nx = p.x + DIR_DX[d],
+        ny = p.y + DIR_DY[d],
+        n = builder.platformAt(nx, ny);
+      if ((!n || !on.has(n)) && track.opensTo(nx, ny, opposite(d)))
+        level = Math.max(level, levelAt(map, nx, ny));
+    }
+  }
+  return level;
 }
 
 /** A bridge platform with no rail on it stands on (x, y). */
