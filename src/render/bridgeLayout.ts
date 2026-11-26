@@ -43,6 +43,8 @@ export interface BridgeSite {
    * it: a pad keeps those free of parapets, and over water a deck's end there rests on the bank.
    */
   open?: readonly boolean[];
+  /** Raised by the player above the ground or water: a viaduct's tall supports stand under it. */
+  raised?: boolean;
 }
 
 /** Per edge, in iso Dir order (N -y, E +x, S +y, W -x): it meets a bridge tile it merges with. */
@@ -160,15 +162,34 @@ export interface BridgePlan {
   abutments: { e: boolean; s: boolean };
 }
 
-/** Inner face of a parapet, from the tile centre; its outer face is the deck edge. */
-export const PARAPET = 0.44;
-/** Across offset of a lone bridge's outer supports. */
-const SUPPORT = { pier: 0.38, trestle: 0.38, arch: 0.44 } as const;
+/** Across offsets from the tile centre, all in one place: a deck's edge is the tile's. */
+export const ACROSS = {
+  /** Half the deck. */
+  deck: 0.5,
+  /** Inner face of a parapet; its outer face is the deck edge. */
+  parapet: 0.44,
+  /** A lone bridge's outer supports. */
+  support: { pier: 0.38, trestle: 0.38, arch: 0.44 },
+} as const;
+export const PARAPET = ACROSS.parapet;
+const SUPPORT = ACROSS.support;
 /** Along offset and half thickness of the stone piers under a span over land. */
 export const PIER_AT = 0.38;
 const PIER_HALF = 0.07;
 /** Half side of a pad's corner pier. */
 const PAD_PIER = { stone: 0.09, wood: 0.045 } as const;
+
+/** World px of a support under a deck at `deck` over ground or water at `surface`, both px up. */
+export function pierLength(deck: number, surface: number) {
+  return Math.max(0, deck - surface);
+}
+
+/** World px one storey of a raised timber trestle stands. */
+export const STOREY = 20;
+/** How many storeys of bracing a raised trestle `height` world px tall has. */
+export function trestleStoreys(height: number) {
+  return Math.max(1, Math.round(height / STOREY));
+}
 
 /** Tile offsets of the point `l` along and `w` across a span of the given axis. */
 export function spanPoint(axis: 0 | 1, l: number, w: number) {
@@ -187,10 +208,12 @@ function spanRect(axis: 0 | 1, l0: number, l1: number, w0: number, w1: number): 
 
 /**
  * The parts one bridge tile draws, from its merged edges. `water` picks the supports that stand
- * in water (arched walls under stone, a trestle under timber) over those cut to the ground.
+ * in water (arched walls under stone, a trestle under timber) over those cut to the ground; a
+ * raised stone span stands on arched walls over land too: a viaduct.
  */
 export function bridgePlan(site: BridgeSite, joins: Joins, water: boolean): BridgePlan {
-  const deck = { x0: -0.5, x1: 0.5, y0: -0.5, y1: 0.5 },
+  const half = ACROSS.deck,
+    deck = { x0: -half, x1: half, y0: -half, y1: half },
     stone = site.material === 'stone',
     abutment = (d: number) => water && !joins[d] && !!site.open?.[d],
     abutments = { e: abutment(E), s: abutment(S) };
@@ -205,7 +228,7 @@ export function bridgePlan(site: BridgeSite, joins: Joins, water: boolean): Brid
   // Support lines across the span: the outer ones of a lone bridge, and one under each merged
   // seam, owned by the tile on its far side so it is drawn once.
   const lines = (outer: number) => [...(joins[far] ? [] : [-outer]), joins[near] ? 0.5 : outer];
-  if (!water && stone) {
+  if (!water && stone && !site.raised) {
     const w0 = joins[far] ? -0.5 : -SUPPORT.pier,
       w1 = joins[near] ? 0.5 : SUPPORT.pier;
     for (const l of [-PIER_AT, PIER_AT])
