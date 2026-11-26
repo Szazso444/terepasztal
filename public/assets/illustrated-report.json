@@ -200,6 +200,198 @@
       ]
     },
     {
+      "id": "props.beech",
+      "source": [
+        "tree-beech-1.png",
+        "tree-beech-2.png",
+        "tree-beech-3.png"
+      ],
+      "sourceDirectory": "assets/source/nature-2026-11-01",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/beech_0",
+        "props/beech_1",
+        "props/beech_2"
+      ]
+    },
+    {
+      "id": "props.poplar",
+      "source": [
+        "tree-poplar-1.png",
+        "tree-poplar-2.png",
+        "tree-poplar-3.png"
+      ],
+      "sourceDirectory": "assets/source/nature-2026-11-01",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/poplar_0",
+        "props/poplar_1",
+        "props/poplar_2"
+      ]
+    },
+    {
+      "id": "props.apple",
+      "source": [
+        "tree-apple-1.png",
+        "tree-apple-2.png",
+        "tree-apple-3.png"
+      ],
+      "sourceDirectory": "assets/source/nature-2026-11-01",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/apple_0",
+        "props/apple_1",
+        "props/apple_2"
+      ]
+    },
+    {
+      "id": "props.maple",
+      "source": [
+        "tree-maple-1.png",
+        "tree-maple-2.png",
+        "tree-maple-3.png"
+      ],
+      "sourceDirectory": "assets/source/nature-2026-11-01",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/maple_0",
+        "props/maple_1",
+        "props/maple_2"
+      ]
+    },
+    {
+      "id": "props.larch",
+      "source": [
+        "tree-larch-1.png",
+        "tree-larch-2.png",
+        "tree-larch-3.png"
+      ],
+      "sourceDirectory": "assets/source/nature-2026-11-01",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/larch_0",
+        "props/larch_1",
+        "props/larch_2"
+      ]
+    },
+    {
+      "id": "props.acacia",
+      "source": [
+        "tree-acacia-1.png",
+        "tree-acacia-2.png",
+        "tree-acacia-3.png"
+      ],
+      "sourceDirectory": "assets/source/nature-2026-11-01",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/acacia_0",
+        "props/acacia_1",
+        "props/acacia_2"
+      ]
+    },
+    {
+      "id": "props.stump",
+      "source": [
+        "stump-1.png",
+        "stump-2.png"
+      ],
+      "sourceDirectory": "assets/source/nature-2026-11-01",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/stump_0",
+        "props/stump_1"
+      ]
+    },
+    {
+      "id": "props.log",
+      "source": [
+        "log-1.png",
+        "log-2.png"
+      ],
+      "sourceDirectory": "assets/source/nature-2026-11-01",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/log_0",
+        "props/log_1"
+      ]
+    },
+    {
+      "id": "props.fern",
+      "source": [
+        "fern-1.png",
+        "fern-2.png"
+      ],
+      "sourceDirectory": "assets/source/nature-2026-11-01",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/fern_0",
+        "props/fern_1"
+      ]
+    },
+    {
+      "id": "props.mushrooms",
+      "source": [
+        "mushrooms-1.png",
+        "mushrooms-2.png"
+      ],
+      "sourceDirectory": "assets/source/nature-2026-11-01",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/mushrooms_0",
+        "props/mushrooms_1"
+      ]
+    },
+    {
+      "id": "props.heather",
+      "source": [
+        "heather-1.png",
+        "heather-2.png"
+      ],
+      "sourceDirectory": "assets/source/nature-2026-11-01",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/heather_0",
+        "props/heather_1"
+      ]
+    },
+    {
+      "id": "props.dryshrub",
+      "source": [
+        "dryshrub-1.png",
+        "dryshrub-2.png"
+      ],
+      "sourceDirectory": "assets/source/nature-2026-11-01",
+      "measurements": "trees.json",
+      "widthScale": 1.2,
+      "projection": null,
+      "frames": [
+        "props/dryshrub_0",
+        "props/dryshrub_1"
+      ]
+    },
+    {
       "id": "terrain.grass",
       "source": "terrain-grass.png",
       "widthScale": 1,
@@ -1466,14 +1658,14 @@
   ],
   "groups": {
     "props": {
-      "frames": 49,
-      "uniqueImages": 40,
-      "width": 4033,
-      "height": 253,
+      "frames": 79,
+      "uniqueImages": 70,
+      "width": 4064,
+      "height": 308,
       "capped": {
-        "texels": 188794,
+        "texels": 285078,
         "haze": 0,
-        "solid": 188794,
+        "solid": 285078,
         "white": 224,
         "amber": 0,
         "compressed": 0

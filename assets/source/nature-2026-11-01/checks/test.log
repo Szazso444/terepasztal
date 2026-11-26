@@ -1,0 +1,727 @@
+
+> terepasztal@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.0 G:/DEV/wt/codex-nature
+
+ ❯ tools/asset-pipeline/handbuilt-method.test.mjs (4 tests | 3 failed) 145ms
+   ❯ hand-built method, Python tests without Blender (3)
+     × runs every Blender step on a Blender 5.2.x executable or the bpy 5.2.x module 9ms
+     × keeps recipes locked to their pictures, inside their projects and the same on every checkout 4ms
+     × keeps renders locked to their models, atlas pages bounded and installs to owned keys 4ms
+ ❯ tools/asset-pipeline/handbuilt/run.test.mjs (0 test)
+ ❯ tools/asset-pipeline/painted/run.test.mjs (2 tests | 2 failed) 23ms
+   ❯ painted/run.py: the render cache (2)
+     × reuses a bundle exactly while its receipt holds for every file it lists 16ms
+     × keys a render by the Blender release and build, whether an executable or the bpy module 6ms
+ ❯ tools/asset-pipeline/blender_runner.test.mjs (5 tests | 3 failed | 2 skipped) 28ms
+   ❯ blender_runner: which Blender a step may run on (3)
+     × reads any `blender --version` back to its release and build, and accepts exactly 5.2.x 17ms
+     × gives the author's Blender 5.2.1 executable and the cloud's bpy 5.2.1 the identity the render profiles lock 4ms
+   ❯ blender_runner: running a step (2)
+     × leaves this process as it found it after any sequence of in-process steps, failed or not 5ms
+ ❯ tools/asset-pipeline/handbuilt/verify_construction.test.mjs (3 tests | 3 failed) 64ms
+   ❯ verify_construction: does a replay match the model (2)
+     × matches exactly when all but coordinates are equal and every coordinate is within 1e-6 48ms
+     × a NaN or an infinity on either side is a mismatch with no difference reported 6ms
+   ❯ verify_construction: does a replayed calibration match (1)
+     × matches exactly when the structure is equal and every number is within 1e-6 9ms
+ ❯ tools/asset-pipeline/game_rules.test.mjs (9 tests | 9 skipped) 10ms
+ ❯ tools/agents/ownership.test.mjs (23 tests | 1 failed) 993ms
+   ❯ changedPaths (1)
+     × reads names git would quote, so a non-ASCII path is judged by its real name 522ms
+(node:69296) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58252) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29908) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42148) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49472) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:41076) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17540) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32248) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:55552) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1668) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66852) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tools/asset-pipeline/filehash.test.mjs (3 tests | 3 failed) 2201ms
+   ❯ filehash: one hash for an input on every checkout (3)
+     × hashes a text input with CRLF read as LF and any other file as its bytes 13ms
+     × gives an input with a text suffix one hash on an LF and a CRLF checkout, whatever it holds 4ms
+     × keeps every committed lock and manifest hash on a CRLF checkout of its inputs 2183ms
+not recorded: no such file assets/source/buildings-v2/depot/depot-a0-r0.png
+(node:20116) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+--attempts takes a whole number, for example --attempts 2
+[vitest-pool]: Timeout terminating forks worker for test files G:/DEV/wt/codex-nature/src/world/mapgenSupply.test.ts.
+(node:45476) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+not recorded: camera off by 6.4°: it looks down from 23.6° where the game looks down from 30° (the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50). It is kept as the picture's earlier self: run `node tools/building-queue.mjs next` again, and it is handed out to be painted from that, straightened.
+(node:6308) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29728) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+not recorded: camera off by 6.4°: it looks down from 23.6° where the game looks down from 30° (the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50). An earlier attempt was closer (6.4°) and stays what the picture is painted from: run `node tools/building-queue.mjs next` again.
+(node:39908) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:47072) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26424) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/render/roadPaint.test.ts (22 tests | 1 failed) 18036ms
+   ❯ a road on a bridge deck (#506) (7)
+     × has the road beside it cover the painted bank toward it, and nowhere else 5494ms
+(node:36964) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18888) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:3260) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:70404) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43356) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:6808) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:51476) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+no family is called lighthouse
+(node:9108) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:64192) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30660) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18968) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48360) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:57540) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38244) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37620) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32368) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49996) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+unknown command "frobnicate"; see the top of tools/building-queue.mjs
+not recorded: camera off by 6.4°: it looks down from 23.6° where the game looks down from 30° (the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50). It is kept as the picture's earlier self: run `node tools/building-queue.mjs next` again, and it is handed out to be painted from that, straightened.
+depot-a0-r0 has had 1 attempt: an attempt is kept at the last of 3. Make it again first: run `node tools/building-queue.mjs next`
+(node:48280) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17260) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45216) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:56624) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:52904) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+depot-a0-r0 is recorded as generated: there is nothing to keep in its place
+say which picture: node tools/building-queue.mjs keep <id>
+pack-atlas: no such source folder: C:\Users\Zso\AppData\Local\Temp\pack-atlas-E1OpeF\nope
+(node:69352) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:57520) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+pack-atlas: no PNG frames in C:\Users\Zso\AppData\Local\Temp\pack-atlas-E1OpeF\empty
+(node:37076) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21892) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+no picture in C:\Users\Zso\AppData\Local\Temp\building-queue-64Yj17\made\chat or in the folders in it: make the picture first, or say where your image tool writes its pictures with --from <folder or file>
+the newest picture there, C:\Users\Zso\AppData\Local\Temp\building-queue-64Yj17\made\chat\exec-1.png, was made 60 minutes ago: make the picture first, or name the file with --from <file>
+(node:23684) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49072) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:11020) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39320) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43340) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+C:\Users\Zso\AppData\Local\Temp\building-queue-64Yj17\made\chat\exec-2.png was made before the last picture that was taken or recorded: it was given up, or it is not this picture's. Make the picture first.
+(node:6404) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+depot-a0-r0 is recorded as generated: only a picture that waits to be made is taken. To make it again, take it back first: node tools/building-queue.mjs set depot-a0-r0 pending
+(node:53888) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+C:\Users\Zso\AppData\Local\Temp\building-queue-64Yj17\assets\source\buildings-v2\depot\depot-a0-r0.png is depot-a0-r0's picture: nothing new was made. Make the picture first.
+nothing new was made: the newest picture there, C:\Users\Zso\AppData\Local\Temp\building-queue-64Yj17\made\chat\exec-3.png, is depot-a0-r0's (assets/source/buildings-v2/depot/depot-a0-r0.png). Make the picture first.
+C:\Users\Zso\AppData\Local\Temp\building-queue-64Yj17\made\chat\exec-3.png is depot-a0-r0's picture (assets/source/buildings-v2/depot/depot-a0-r0.png): nothing new was made. Make the picture first.
+(node:49880) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34296) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14888) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30964) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:51140) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+nothing new was made: the newest picture there, C:\Users\Zso\AppData\Local\Temp\building-queue-64Yj17\made\chat\exec-5.png, was made before the last picture was taken or recorded. Make the picture first.
+(node:22204) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39060) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:60060) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58228) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:52996) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+not recorded: camera off by 6.4°: it looks down from 23.6° where the game looks down from 30° (the wall feet slope 0.40 and -0.40, the game's 0.50 and -0.50). It is kept as the picture's earlier self: run `node tools/building-queue.mjs next` again, and it is handed out to be painted from that, straightened.
+(node:32156) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+C:\Users\Zso\AppData\Local\Temp\building-queue-64Yj17\made\chat\exec-6.png was taken before (it is assets/source/buildings-v2/depot/depot-a0-r2.before.png). Make the picture first.
+(node:29732) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:53252) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:63344) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45152) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:57812) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30940) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:53108) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:68124) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45080) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23828) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26372) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43964) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43876) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2132) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:22228) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23296) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19380) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:60212) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+C:\Users\Zso\AppData\Local\Temp\building-queue-64Yj17\made\chat\exec-bad.png cannot be read as a picture (There are some read requests waitng on finished stream): nothing was taken. Make the picture again.
+(node:58796) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16312) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+there is no building in C:\Users\Zso\AppData\Local\Temp\building-queue-64Yj17\made\chat\exec-blank.png: nothing was taken. Make the picture again.
+(node:35012) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65580) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58812) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+not recorded: picture is 768x512; its short side must be at least 768 px. Make depot-a0-r3 again, or record it as rejected.
+(node:9864) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+nothing new was made, and the picture in assets/source/buildings-v2/depot/depot-a0-r3.png was refused by `set`: make the picture again
+(node:23264) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37868) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:47528) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:63668) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+not recorded: picture is 768x512; its short side must be at least 768 px. It is the picture that was refused before: make depot-a0-r3 again, or record it as rejected.
+(node:10296) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36232) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10764) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29332) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18552) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:68172) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:70224) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18792) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:55208) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65176) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:47996) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24076) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:63852) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+say which picture: node tools/building-queue.mjs take <id>
+--from needs a folder or a file
+(node:16424) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25464) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:56644) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39028) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:51332) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+take does not understand "C:\Users\Zso\AppData\Local\Temp\building-queue-64Yj17\made\chat\exec-2.png": it is node tools/building-queue.mjs take <id> [--from <folder or file>]
+(node:48360) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:67472) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:62584) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+take does not understand "--from=x": it is node tools/building-queue.mjs take <id> [--from <folder or file>]
+(node:63608) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14028) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+no picture is called "nothing-a0-r0"
+(node:31052) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16020) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:54832) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10408) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:22096) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+no folder of pictures at C:\Users\Zso\AppData\Local\Temp\building-queue-ShWG81\codex\generated_images: say where your image tool writes its pictures with --from <folder or file>
+(node:67196) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33264) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31216) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:55716) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+the tool has taken no picture from a chat's folder yet, and does not know your chat's folder yet:
+  C:\Users\Zso\AppData\Local\Temp\building-queue-ShWG81\codex\generated_images\chat-a\exec-1.png (made 0 s ago)
+The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: node tools/building-queue.mjs take depot-a0-r0 --from <the file your image tool reported>
+If it has not, your generation failed: make the picture first.
+(node:15236) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:64828) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30092) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8628) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:51952) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20656) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:11328) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66292) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:63464) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:50416) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34936) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24408) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23720) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:35616) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14360) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20544) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+pictures were made in more than one chat's folder since the last one was taken or recorded:
+  C:\Users\Zso\AppData\Local\Temp\building-queue-ShWG81\codex\generated_images\chat-b\exec-3.png (made 0 s ago)
+  C:\Users\Zso\AppData\Local\Temp\building-queue-ShWG81\codex\generated_images\chat-a\exec-2.png (made 0 s ago)
+The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: node tools/building-queue.mjs take depot-a0-r1 --from <the file your image tool reported>
+If it has not, your generation failed: make the picture first.
+pictures were made in more than one chat's folder since the last one was taken or recorded:
+  C:\Users\Zso\AppData\Local\Temp\building-queue-ShWG81\codex\generated_images\chat-b\exec-3.png (made 0 s ago)
+  C:\Users\Zso\AppData\Local\Temp\building-queue-ShWG81\codex\generated_images\chat-a\exec-2.png (made 1 s ago)
+The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: node tools/building-queue.mjs take depot-a0-r1 --from <the file your image tool reported>
+If it has not, your generation failed: make the picture first.
+(node:39064) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38396) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8384) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46672) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:50616) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:53584) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:53460) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:22168) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:51872) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:35052) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:41036) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30372) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:55636) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2504) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:64072) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26628) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27032) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37660) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27200) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39316) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27960) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29600) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+the one new picture lies in another chat's folder than the last picture that was taken:
+  C:\Users\Zso\AppData\Local\Temp\building-queue-ShWG81\codex\generated_images\chat-b\exec-4.png (made 0 s ago)
+The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: node tools/building-queue.mjs take depot-a0-r2 --from <the file your image tool reported>
+If it has not, your generation failed: make the picture first.
+(node:18600) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44316) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+the one new picture lies in another chat's folder than the last picture that was taken:
+  C:\Users\Zso\AppData\Local\Temp\building-queue-ShWG81\codex\generated_images\chat-c\exec-6.png (made 0 s ago)
+The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: node tools/building-queue.mjs take depot-a0-r2 --from <the file your image tool reported>
+If it has not, your generation failed: make the picture first.
+(node:63724) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:57520) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:69580) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44904) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:35608) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24092) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:41248) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16588) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:62228) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:67568) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17244) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:61952) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:3624) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1920) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65792) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:35256) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13840) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1904) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23432) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40240) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:47992) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+nothing new was made: the newest picture there, C:\Users\Zso\AppData\Local\Temp\building-queue-bl1Q7V\codex\generated_images\chat-a\exec-1.png, is depot-a0-r0's (assets/source/buildings-v2/depot/depot-a0-r0.png). Make the picture first.
+C:\Users\Zso\AppData\Local\Temp\building-queue-bl1Q7V\codex\generated_images\chat-a\exec-1.png is depot-a0-r0's picture (assets/source/buildings-v2/depot/depot-a0-r0.png): nothing new was made. Make the picture first.
+the tool has taken no picture from a chat's folder yet, and does not know your chat's folder yet:
+  C:\Users\Zso\AppData\Local\Temp\building-queue-bl1Q7V\codex\generated_images\chat-b\exec-2.png (made 0 s ago)
+The tool cannot tell whether it is yours. If your image tool has just reported that file, name it: node tools/building-queue.mjs take depot-a0-r1 --from <the file your image tool reported>
+If it has not, your generation failed: make the picture first.
+ENOSPC: no space left on device, write
+The disk is full. Stop and tell the user how much is free; do not delete anything to make room. When there is room again, run `node tools/building-queue.mjs status`, then the same command again; if it then says that the picture is recorded already, or that its file is not there, go on with `next`.
+ENOSPC: no space left on device, write
+The disk is full. Stop and tell the user how much is free; do not delete anything to make room. When there is room again, run `node tools/building-queue.mjs status`, then the same command again; if it then says that the picture is recorded already, or that its file is not there, go on with `next`.
+ENOSPC: no space left on device, write
+The disk is full. Stop and tell the user how much is free; do not delete anything to make room. When there is room again, run `node tools/building-queue.mjs status`, then the same command again; if it then says that the picture is recorded already, or that its file is not there, go on with `next`.
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tools/asset-pipeline/game_rules.test.mjs [ tools/asset-pipeline/game_rules.test.mjs ]
+Error: spawnSync python ENOENT
+ ❯ tools/asset-pipeline/game_rules.test.mjs:32:31
+     30|                   "sizes": g.SIZE_TILES, "plans": g.PLANS, "parts": pa…
+     31| `;
+     32|   py = JSON.parse(execFileSync(python, ['-c', script], { cwd: dir, enc…
+       |                               ^
+     33| });
+     34|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  tools/asset-pipeline/handbuilt/run.test.mjs [ tools/asset-pipeline/handbuilt/run.test.mjs ]
+Error: spawnSync python ENOENT
+ ❯ py tools/asset-pipeline/handbuilt/run.test.mjs:22:26
+     20|   const out = path.join(tmp, 'out.json');
+     21|   try {
+     22|     const run = spawnSync(python, ['-c', code, out], {
+       |                          ^
+     23|       cwd: dir,
+     24|       input: JSON.stringify(input),
+ ❯ tools/asset-pipeline/handbuilt/run.test.mjs:251:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/render/roadPaint.test.ts > a road on a bridge deck (#506) > has the road beside it cover the painted bank toward it, and nowhere else
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/render/roadPaint.test.ts:567:3
+    565|   });
+    566|
+    567|   it('has the road beside it cover the painted bank toward it, and now…
+       |   ^
+    568|     let toward = 0;
+    569|     forAll(decked, ({ w, h, tiles, crossing, ox, oy, decks }) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  tools/agents/ownership.test.mjs > changedPaths > reads names git would quote, so a non-ASCII path is judged by its real name
+Error: ENOENT: no such file or directory, open 'C:\Users\Zso\AppData\Local\Temp\scope-i6e3B3\a "b".md'
+ ❯ tools/agents/ownership.test.mjs:211:18
+    209|     mkdirSync(join(repo, 'src', 'world'), { recursive: true });
+    210|     writeFileSync(join(repo, 'src', 'world', 'vasút.ts'), '');
+    211|     writeFileSync(join(repo, 'a "b".md'), '');
+       |                  ^
+    212|     run('add', '-A');
+    213|     run('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  tools/asset-pipeline/blender_runner.test.mjs > blender_runner: which Blender a step may run on > reads any `blender --version` back to its release and build, and accepts exactly 5.2.x
+Error: spawnSync python ENOENT
+ ❯ py tools/asset-pipeline/blender_runner.test.mjs:23:26
+     21|   const out = join(tmp, 'out.json');
+     22|   try {
+     23|     const run = spawnSync(python, ['-c', code, out], {
+       |                          ^
+     24|       cwd: dir,
+     25|       input: JSON.stringify(input),
+ ❯ batch tools/asset-pipeline/blender_runner.test.mjs:41:19
+ ❯ tools/asset-pipeline/blender_runner.test.mjs:160:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  tools/asset-pipeline/blender_runner.test.mjs > blender_runner: which Blender a step may run on > gives the author's Blender 5.2.1 executable and the cloud's bpy 5.2.1 the identity the render profiles lock
+Error: spawnSync python ENOENT
+ ❯ py tools/asset-pipeline/blender_runner.test.mjs:23:26
+     21|   const out = join(tmp, 'out.json');
+     22|   try {
+     23|     const run = spawnSync(python, ['-c', code, out], {
+       |                          ^
+     24|       cwd: dir,
+     25|       input: JSON.stringify(input),
+ ❯ tools/asset-pipeline/blender_runner.test.mjs:242:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  tools/asset-pipeline/blender_runner.test.mjs > blender_runner: running a step > leaves this process as it found it after any sequence of in-process steps, failed or not
+Error: spawnSync python ENOENT
+ ❯ py tools/asset-pipeline/blender_runner.test.mjs:23:26
+     21|   const out = join(tmp, 'out.json');
+     22|   try {
+     23|     const run = spawnSync(python, ['-c', code, out], {
+       |                          ^
+     24|       cwd: dir,
+     25|       input: JSON.stringify(input),
+ ❯ batch tools/asset-pipeline/blender_runner.test.mjs:41:19
+ ❯ tools/asset-pipeline/blender_runner.test.mjs:309:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  tools/asset-pipeline/filehash.test.mjs > filehash: one hash for an input on every checkout > hashes a text input with CRLF read as LF and any other file as its bytes
+Error: spawnSync python ENOENT
+ ❯ py tools/asset-pipeline/filehash.test.mjs:24:26
+     22|   const out = join(tmp, 'out.json');
+     23|   try {
+     24|     const run = spawnSync(python, ['-c', code, out], {
+       |                          ^
+     25|       cwd: dir,
+     26|       input: JSON.stringify(input),
+ ❯ digests tools/asset-pipeline/filehash.test.mjs:62:28
+ ❯ tools/asset-pipeline/filehash.test.mjs:147:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  tools/asset-pipeline/filehash.test.mjs > filehash: one hash for an input on every checkout > gives an input with a text suffix one hash on an LF and a CRLF checkout, whatever it holds
+Error: spawnSync python ENOENT
+ ❯ py tools/asset-pipeline/filehash.test.mjs:24:26
+     22|   const out = join(tmp, 'out.json');
+     23|   try {
+     24|     const run = spawnSync(python, ['-c', code, out], {
+       |                          ^
+     25|       cwd: dir,
+     26|       input: JSON.stringify(input),
+ ❯ digests tools/asset-pipeline/filehash.test.mjs:62:28
+ ❯ tools/asset-pipeline/filehash.test.mjs:176:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  tools/asset-pipeline/filehash.test.mjs > filehash: one hash for an input on every checkout > keeps every committed lock and manifest hash on a CRLF checkout of its inputs
+Error: spawnSync python ENOENT
+ ❯ py tools/asset-pipeline/filehash.test.mjs:24:26
+     22|   const out = join(tmp, 'out.json');
+     23|   try {
+     24|     const run = spawnSync(python, ['-c', code, out], {
+       |                          ^
+     25|       cwd: dir,
+     26|       input: JSON.stringify(input),
+ ❯ digests tools/asset-pipeline/filehash.test.mjs:62:28
+ ❯ tools/asset-pipeline/filehash.test.mjs:228:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  tools/asset-pipeline/handbuilt-method.test.mjs > hand-built method, Python tests without Blender > runs every Blender step on a Blender 5.2.x executable or the bpy 5.2.x module
+Error: spawnSync python ENOENT
+ ❯ unittest tools/asset-pipeline/handbuilt-method.test.mjs:14:24
+     12|
+     13| function unittest(cwd, module) {
+     14|   const run = spawnSync(python, ['-m', 'unittest', module, '-v'], { cw…
+       |                        ^
+     15|   if (run.error) throw run.error;
+     16|   const skipped = new Set([...run.stderr.matchAll(/skipped '([^']+)'/g…
+ ❯ tools/asset-pipeline/handbuilt-method.test.mjs:23:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  tools/asset-pipeline/handbuilt-method.test.mjs > hand-built method, Python tests without Blender > keeps recipes locked to their pictures, inside their projects and the same on every checkout
+Error: spawnSync python ENOENT
+ ❯ unittest tools/asset-pipeline/handbuilt-method.test.mjs:14:24
+     12|
+     13| function unittest(cwd, module) {
+     14|   const run = spawnSync(python, ['-m', 'unittest', module, '-v'], { cw…
+       |                        ^
+     15|   if (run.error) throw run.error;
+     16|   const skipped = new Set([...run.stderr.matchAll(/skipped '([^']+)'/g…
+ ❯ tools/asset-pipeline/handbuilt-method.test.mjs:27:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+ FAIL  tools/asset-pipeline/handbuilt-method.test.mjs > hand-built method, Python tests without Blender > keeps renders locked to their models, atlas pages bounded and installs to owned keys
+Error: spawnSync python ENOENT
+ ❯ unittest tools/asset-pipeline/handbuilt-method.test.mjs:14:24
+     12|
+     13| function unittest(cwd, module) {
+     14|   const run = spawnSync(python, ['-m', 'unittest', module, '-v'], { cw…
+       |                        ^
+     15|   if (run.error) throw run.error;
+     16|   const skipped = new Set([...run.stderr.matchAll(/skipped '([^']+)'/g…
+ ❯ tools/asset-pipeline/handbuilt-method.test.mjs:31:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+
+ FAIL  tools/asset-pipeline/handbuilt/verify_construction.test.mjs > verify_construction: does a replay match the model > matches exactly when all but coordinates are equal and every coordinate is within 1e-6
+Error: spawnSync python ENOENT
+ ❯ py tools/asset-pipeline/handbuilt/verify_construction.test.mjs:31:26
+     29|   const out = join(tmp, 'out.json');
+     30|   try {
+     31|     const run = spawnSync(python, ['-c', code, out], {
+       |                          ^
+     32|       cwd: dir,
+     33|       input: encode(input),
+ ❯ batch tools/asset-pipeline/handbuilt/verify_construction.test.mjs:49:19
+ ❯ tools/asset-pipeline/handbuilt/verify_construction.test.mjs:263:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/18]⎯
+
+ FAIL  tools/asset-pipeline/handbuilt/verify_construction.test.mjs > verify_construction: does a replay match the model > a NaN or an infinity on either side is a mismatch with no difference reported
+Error: spawnSync python ENOENT
+ ❯ py tools/asset-pipeline/handbuilt/verify_construction.test.mjs:31:26
+     29|   const out = join(tmp, 'out.json');
+     30|   try {
+     31|     const run = spawnSync(python, ['-c', code, out], {
+       |                          ^
+     32|       cwd: dir,
+     33|       input: encode(input),
+ ❯ tools/asset-pipeline/handbuilt/verify_construction.test.mjs:284:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/18]⎯
+
+ FAIL  tools/asset-pipeline/handbuilt/verify_construction.test.mjs > verify_construction: does a replayed calibration match > matches exactly when the structure is equal and every number is within 1e-6
+Error: spawnSync python ENOENT
+ ❯ py tools/asset-pipeline/handbuilt/verify_construction.test.mjs:31:26
+     29|   const out = join(tmp, 'out.json');
+     30|   try {
+     31|     const run = spawnSync(python, ['-c', code, out], {
+       |                          ^
+     32|       cwd: dir,
+     33|       input: encode(input),
+ ❯ batch tools/asset-pipeline/handbuilt/verify_construction.test.mjs:49:19
+ ❯ tools/asset-pipeline/handbuilt/verify_construction.test.mjs:353:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/18]⎯
+
+ FAIL  tools/asset-pipeline/painted/run.test.mjs > painted/run.py: the render cache > reuses a bundle exactly while its receipt holds for every file it lists
+Error: spawnSync python ENOENT
+ ❯ py tools/asset-pipeline/painted/run.test.mjs:22:26
+     20|   const out = join(tmp, 'out.json');
+     21|   try {
+     22|     const run = spawnSync(python, ['-c', code, out], {
+       |                          ^
+     23|       cwd: dir,
+     24|       input: JSON.stringify(input),
+ ❯ batch tools/asset-pipeline/painted/run.test.mjs:40:19
+ ❯ tools/asset-pipeline/painted/run.test.mjs:129:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/18]⎯
+
+ FAIL  tools/asset-pipeline/painted/run.test.mjs > painted/run.py: the render cache > keys a render by the Blender release and build, whether an executable or the bpy module
+Error: spawnSync python ENOENT
+ ❯ py tools/asset-pipeline/painted/run.test.mjs:22:26
+     20|   const out = join(tmp, 'out.json');
+     21|   try {
+     22|     const run = spawnSync(python, ['-c', code, out], {
+       |                          ^
+     23|       cwd: dir,
+     24|       input: JSON.stringify(input),
+ ❯ batch tools/asset-pipeline/painted/run.test.mjs:40:19
+ ❯ tools/asset-pipeline/painted/run.test.mjs:180:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/18]⎯
+
+
+ Test Files  9 failed | 267 passed (276)
+      Tests  16 failed | 5619 passed | 11 skipped | 1 todo (5647)
+   Start at  21:40:58
+   Duration  287.23s (tests 81%, import 14%, transform 6%)

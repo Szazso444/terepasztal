@@ -109,7 +109,8 @@ export function readTreeScale(file = 'src/render/assetScale.ts') {
  * `k * density / treeScale` texels per source px, the anchor the record's, drawn 1.2 wider like
  * every prop and rounded by smoothPng(2), so the anchor-to-top height is the record's `height`
  * drawn px. A picture whose alpha box is not the measured one was changed since it was measured,
- * and is refused.
+ * and is refused. A piece the renderer draws without the tree scale (a stump, a fern) has its entry
+ * in coverage.json say `treeScale: 1`.
  */
 export function packMeasuredTree(input, record, name = 'picture', options = {}) {
   const { density = DENSITY, treeScale = readTreeScale() } = options;
@@ -478,7 +479,12 @@ export function build(output = 'public/assets') {
         const file = entry.generated?.[Number(f.key.match(/_(\d+)$/)[1])];
         if (!file || !records[file]) throw new Error(`No measured picture for ${f.key}`);
         const input = PNG.sync.read(readFileSync(join(entry.sourceDirectory, file)));
-        const { png, ax, ay } = packMeasuredTree(input, records[file], `${f.key} (${file})`);
+        const { png, ax, ay } = packMeasuredTree(
+          input,
+          records[file],
+          `${f.key} (${file})`,
+          entry.treeScale ? { treeScale: entry.treeScale } : {},
+        );
         if (!groups.has(f.group)) groups.set(f.group, []);
         groups.get(f.group).push({ key: f.key, png: capped(f, png), ax, ay });
         names.push(f.key);

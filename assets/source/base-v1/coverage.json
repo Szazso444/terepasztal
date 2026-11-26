@@ -221,6 +221,198 @@
           "tree-willow-2.png",
           "tree-willow-3.png"
         ]
+      },
+      {
+        "id": "props.beech",
+        "sourceDefinition": "src/art/props.ts:natureTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/nature-2026-11-01",
+        "measurements": "trees.json",
+        "generated": [
+          "tree-beech-1.png",
+          "tree-beech-2.png",
+          "tree-beech-3.png"
+        ]
+      },
+      {
+        "id": "props.poplar",
+        "sourceDefinition": "src/art/props.ts:natureTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/nature-2026-11-01",
+        "measurements": "trees.json",
+        "generated": [
+          "tree-poplar-1.png",
+          "tree-poplar-2.png",
+          "tree-poplar-3.png"
+        ]
+      },
+      {
+        "id": "props.apple",
+        "sourceDefinition": "src/art/props.ts:natureTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/nature-2026-11-01",
+        "measurements": "trees.json",
+        "generated": [
+          "tree-apple-1.png",
+          "tree-apple-2.png",
+          "tree-apple-3.png"
+        ]
+      },
+      {
+        "id": "props.maple",
+        "sourceDefinition": "src/art/props.ts:natureTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/nature-2026-11-01",
+        "measurements": "trees.json",
+        "generated": [
+          "tree-maple-1.png",
+          "tree-maple-2.png",
+          "tree-maple-3.png"
+        ]
+      },
+      {
+        "id": "props.larch",
+        "sourceDefinition": "src/art/props.ts:natureTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/nature-2026-11-01",
+        "measurements": "trees.json",
+        "generated": [
+          "tree-larch-1.png",
+          "tree-larch-2.png",
+          "tree-larch-3.png"
+        ]
+      },
+      {
+        "id": "props.acacia",
+        "sourceDefinition": "src/art/props.ts:natureTree",
+        "variants": "v0-v2",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/nature-2026-11-01",
+        "measurements": "trees.json",
+        "generated": [
+          "tree-acacia-1.png",
+          "tree-acacia-2.png",
+          "tree-acacia-3.png"
+        ]
+      },
+      {
+        "id": "props.stump",
+        "sourceDefinition": "src/art/props.ts:natureGround",
+        "variants": "v0-v1",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/nature-2026-11-01",
+        "measurements": "trees.json",
+        "treeScale": 1,
+        "generated": [
+          "stump-1.png",
+          "stump-2.png"
+        ]
+      },
+      {
+        "id": "props.log",
+        "sourceDefinition": "src/art/props.ts:natureGround",
+        "variants": "v0-v1",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/nature-2026-11-01",
+        "measurements": "trees.json",
+        "treeScale": 1,
+        "generated": [
+          "log-1.png",
+          "log-2.png"
+        ]
+      },
+      {
+        "id": "props.fern",
+        "sourceDefinition": "src/art/props.ts:natureGround",
+        "variants": "v0-v1",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/nature-2026-11-01",
+        "measurements": "trees.json",
+        "treeScale": 1,
+        "generated": [
+          "fern-1.png",
+          "fern-2.png"
+        ]
+      },
+      {
+        "id": "props.mushrooms",
+        "sourceDefinition": "src/art/props.ts:natureGround",
+        "variants": "v0-v1",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/nature-2026-11-01",
+        "measurements": "trees.json",
+        "treeScale": 1,
+        "generated": [
+          "mushrooms-1.png",
+          "mushrooms-2.png"
+        ]
+      },
+      {
+        "id": "props.heather",
+        "sourceDefinition": "src/art/props.ts:natureGround",
+        "variants": "v0-v1",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/nature-2026-11-01",
+        "measurements": "trees.json",
+        "treeScale": 1,
+        "generated": [
+          "heather-1.png",
+          "heather-2.png"
+        ]
+      },
+      {
+        "id": "props.dryshrub",
+        "sourceDefinition": "src/art/props.ts:natureGround",
+        "variants": "v0-v1",
+        "generatedBase": true,
+        "variantsPending": false,
+        "integration": false,
+        "status": "generatedBase",
+        "sourceDirectory": "assets/source/nature-2026-11-01",
+        "measurements": "trees.json",
+        "treeScale": 1,
+        "generated": [
+          "dryshrub-1.png",
+          "dryshrub-2.png"
+        ]
       }
     ],
     "terrain": [
@@ -1956,14 +2148,14 @@
   "integratedFiles": [],
   "summary": {
     "categories": 10,
-    "requiredEntries": 149,
+    "requiredEntries": 161,
     "generatedSourceFiles": 147,
     "integratedSourceFiles": 0,
     "statusCounts": {
-      "generatedBase": 149,
+      "generatedBase": 161,
       "pending": 0
     },
-    "notes": "Generated files cover a base family image only; required level, rotation, palette, and frame variants remain pending. Runtime atlas integration remains false for every entry. An entry with a sourceDirectory (props.mangrove, props.willow) takes one picture per variant from that folder, measured in its measurements file; generatedSourceFiles counts this folder's pictures only."
+    "notes": "Generated files cover a base family image only; required level, rotation, palette, and frame variants remain pending. Runtime atlas integration remains false for every entry. An entry with a sourceDirectory (props.mangrove, props.willow and the nature set) takes one picture per variant from that folder, measured in its measurements file; generatedSourceFiles counts this folder's pictures only. An entry with a treeScale of 1 is drawn without the renderer's tree scale."
   },
   "unmappedGeneratedFiles": []
 }

@@ -1,0 +1,270 @@
+{
+  "tree-beech-1-attempt-1": {
+    "failed": ["beech leaf shape", "beech smooth grey bark"],
+    "lookReview": "Readable low dome but lobed oak-like leaves and furrowed bark. Retry for smooth oval leaf masses and grey trunk."
+  },
+  "tree-beech-2-attempt-1": {
+    "failed": ["beech crown shape", "beech smooth grey bark"],
+    "lookReview": "Crown hangs in willow-like curtains; trunk is ridged. Retry for closed beech dome and smooth grey bark."
+  },
+  "tree-beech-3-attempt-1": {
+    "failed": ["beech crown shape", "beech smooth grey bark"],
+    "lookReview": "Stout old branching reads, but open oak-like tiered crown and furrowed trunk weaken beech identity."
+  },
+  "tree-poplar-1-attempt-1": {
+    "failed": [],
+    "lookReview": "Narrow continuous fresh-green column, trunk barely showing, compact foot and upper-left light. Broad masses remain legible; no ground or shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-poplar-2-attempt-1": {
+    "failed": [],
+    "lookReview": "Fuller mature column retains tall narrow poplar silhouette. Clean compact contact, fresh-green shading, no ground or shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-poplar-3-attempt-1": {
+    "failed": [],
+    "lookReview": "Tall aged column with stronger trunk and irregular leafy sides; much narrower than broadleaf trees. Clean isolated foot and subdued light.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-apple-1-attempt-1": {
+    "failed": ["cursor white", "blossom brightness"],
+    "lookReview": "Small round branching apple with pale blossom clusters, but petals are visibly too bright and cross cursor-white threshold."
+  },
+  "tree-apple-2-attempt-1": {
+    "failed": ["cursor white", "blossom brightness"],
+    "lookReview": "Round mature apple silhouette, broad green clusters and cream blossom; petals exceed brightness limit. Retry with darker blossom."
+  },
+  "tree-apple-3-attempt-1": {
+    "failed": ["cursor white", "blossom brightness"],
+    "lookReview": "Old apple reads through thick forked trunk and round irregular crown. Blossom is too bright, including 13 cursor-white pixels."
+  },
+  "tree-maple-1-attempt-1": {
+    "failed": [],
+    "lookReview": "Rounded open crown in muted rust and russet with visible branches, broad clusters, upper-left lit. No painted ground, shadow or water.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-maple-2-attempt-1": {
+    "failed": [],
+    "foot": [618, 1190],
+    "footReadByEye": true,
+    "footReason": "Automatic lowest run selected a projecting right root. Foot is the central trunk contact under its axis.",
+    "lookReview": "Fuller open autumn crown with strong branch gaps, dull russet colours, no semantic amber. Compact central trunk foot selected by eye.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-maple-3-attempt-1": {
+    "failed": [],
+    "foot": [622, 1202],
+    "footReadByEye": true,
+    "footReason": "Central front trunk contact rather than the slightly left automatic bottom run.",
+    "lookReview": "Stout aged branching, rounded irregular open canopy, muted russet-red broad masses. Clean isolated object, no ground or ground shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-beech-1-attempt-2": {
+    "failed": [],
+    "lookReview": "Closed broad low dome with smooth grey short trunk; oval leaf hints and dark clustered canopy distinguish beech from oak and willow.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-apple-1-attempt-2": {
+    "failed": [],
+    "lookReview": "Compact small round apple, short forked trunk, sparse dusty pale pink-beige blossoms. Corrected petals stay subdued; no ground or shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-larch-1-attempt-1": {
+    "failed": ["larch needle identity"],
+    "lookReview": "Open yellow-green cone and visible branches are readable, but foliage repeats broad oval leaves and hanging clusters rather than short larch needle tufts. Retry."
+  },
+  "tree-beech-2-attempt-2": {
+    "failed": [],
+    "lookReview": "Full low-reaching closed beech dome, smooth cool grey trunk, broad deep-green masses, no willow curtains or ground.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-apple-2-attempt-2": {
+    "failed": [],
+    "lookReview": "Mature rounded crown with broad green masses and muted blossom. Strong short fork, compact foot, no bright petals or painted ground.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-larch-2-attempt-1": {
+    "failed": ["larch needle identity"],
+    "lookReview": "Open yellow-green cone and visible branches are readable, but foliage repeats broad oval leaves and hanging clusters rather than short larch needle tufts. Retry."
+  },
+  "tree-beech-3-attempt-2": {
+    "failed": [],
+    "lookReview": "Large irregular closed dome on stout smooth grey short trunk, low foliage and subdued upper-left light.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-apple-3-attempt-2": {
+    "failed": [],
+    "lookReview": "Old apple has stout aged forked trunk, round irregular crown and restrained dusty pink blossom clusters. Clean isolated contact.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-larch-3-attempt-1": {
+    "failed": ["larch needle identity"],
+    "lookReview": "Open yellow-green cone and visible branches are readable, but foliage repeats broad oval leaves and hanging clusters rather than short larch needle tufts. Retry."
+  },
+  "tree-acacia-1-attempt-1": {
+    "failed": ["acacia thin trunk", "acacia flat umbrella"],
+    "lookReview": "Wide olive canopy and forked trunk, but trunk is too stout and canopy too lumpy/high rather than a flat umbrella. Retry."
+  },
+  "tree-larch-1-attempt-2": {
+    "failed": [],
+    "lookReview": "Airy slim yellow-green cone with thin exposed trunk and branch gaps. Short feathery needle masses replace broad oval leaves; compact single contact.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-larch-2-attempt-2": {
+    "failed": [],
+    "lookReview": "Open tiered slim cone, thin branches visible through yellow-green brushy needle masses; clear separation from dark dense spruce at game scale.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-larch-3-attempt-2": {
+    "failed": [],
+    "lookReview": "Older irregular open cone, stronger trunk with sparse feathery needle masses and exposed limbs, muted yellow-green, no ground/shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-acacia-2-attempt-1": {
+    "failed": ["acacia thin trunk", "acacia flat umbrella"],
+    "lookReview": "Wide dry-olive crown, but massive oak-like trunk and rounded layered canopy do not satisfy thin forked trunk and flat umbrella. Retry."
+  },
+  "tree-acacia-3-attempt-1": {
+    "failed": ["acacia thin trunk", "acacia flat umbrella"],
+    "lookReview": "Wide dry-olive crown, but massive oak-like trunk and rounded layered canopy do not satisfy thin forked trunk and flat umbrella. Retry."
+  },
+  "stump-1-attempt-1": {
+    "failed": [],
+    "lookReview": "Isometric pale oval cut face with broad rings, muted bark planes and small compact flared foot. Readable isolated stump, no ground, shadow or attached plants.",
+    "foot": [632, 864],
+    "footReadByEye": true,
+    "footReason": "Center of compact flared contact footprint, under cut face, rather than lowest right root tip.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-acacia-1-attempt-2": {
+    "failed": [],
+    "lookReview": "Thin forked trunk supports flatter dry-olive umbrella; broad readable patches and compact foot. No ground/shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "tree-acacia-2-attempt-2": {
+    "failed": ["transparent margin"],
+    "lookReview": "Thin fork and flat umbrella, but rightmost foliage enters outer 8-pixel safety band (18 pixels). Retry."
+  },
+  "tree-acacia-3-attempt-2": {
+    "failed": [],
+    "lookReview": "Old irregular flat dry-olive umbrella on thin branching trunk. Very broad silhouette, compact central foot, no ground/shadow. Narrow source margin remains intact; large drawn width recorded for integration.",
+    "zoomReviewed": [1, 2],
+    "reviewNote": "Placement review: old acacia is 89.88 game px wide with only 16 source px at its left margin. Whole object is retained and edge-band checks pass; give this broad crown clearance when placing."
+  },
+  "tree-acacia-2-attempt-3": {
+    "failed": [],
+    "lookReview": "Flat dry-olive umbrella with thin open forked trunk. Whole crown has clear margins after correction; centered compact contact and quiet broad masses.",
+    "zoomReviewed": [1, 2]
+  },
+  "stump-2-attempt-1": {
+    "failed": [],
+    "foot": [649, 901],
+    "footReadByEye": true,
+    "footReason": "Center of stump contact footprint under cut face rather than projecting front root.",
+    "lookReview": "Distinct asymmetric broken-backed stump with pale cut face and broad bark planes. No painted ground, plants, shadow or water.",
+    "zoomReviewed": [1, 2]
+  },
+  "log-1-attempt-1": {
+    "failed": [],
+    "foot": [640, 789],
+    "footReadByEye": true,
+    "footReason": "Middle of lower contact line along fallen trunk, rather than lowest right cut end.",
+    "lookReview": "Fallen moss-topped log follows down-right 2:1 axis. Pale cut end and short broken nub, broad material masses, fully isolated.",
+    "zoomReviewed": [1, 2]
+  },
+  "log-2-attempt-1": {
+    "failed": [],
+    "foot": [644, 844],
+    "footReadByEye": true,
+    "footReason": "Middle of lower supporting line of log; attached broken root end is part of same object.",
+    "lookReview": "Distinct fallen log with irregular broken/root end, moss on upper side and pale cut front. Down-right 2:1 orientation, no detached ground or shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "fern-2-attempt-1": {
+    "failed": [],
+    "foot": [640, 985],
+    "footReadByEye": true,
+    "footReason": "Converging stem base; lowest opaque run is a hanging frond tip to the right.",
+    "lookReview": "Asymmetric tight clump of deep-green arching fronds; broad simplified paired leaflets and clear central stem base. No grass, ground or shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "fern-1-attempt-1": {
+    "failed": [],
+    "foot": [620, 900],
+    "footReadByEye": true,
+    "footReason": "Central converging stem base; lowest alpha run is a hanging frond.",
+    "lookReview": "Balanced low deep-green arching fronds with broad simplified leaflets and one clear stem base; distinct from asymmetric variant 2. No grass, ground or shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "mushrooms-1-attempt-1": {
+    "failed": [],
+    "foot": [647, 911],
+    "footReadByEye": true,
+    "footReason": "Center of tight group contact under the four stems.",
+    "lookReview": "Four muted red toadstools with warm cream patches and short stems in a tight group. Broad cap planes stay legible at six pixels; no ground or shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "mushrooms-2-attempt-1": {
+    "failed": ["smooth painted contours", "cursor white"],
+    "lookReview": "Four readable red/cream mushrooms, but overt stair-stepped pixel contours and blocky patches conflict with painted direction; two pixels cross cursor-white threshold. Retry."
+  },
+  "mushrooms-2-attempt-2": {
+    "failed": ["cursor white"],
+    "foot": [650, 961],
+    "footReadByEye": true,
+    "footReason": "Center of four-stem contact group rather than lowest front stem.",
+    "lookReview": "Four muted red and cream toadstools in asymmetric tight group. Smooth rounded painted contours replace pixel stairs, broad cap planes and compact short stems, no ground/shadow. Numeric audit still found cursor-white highlight pixels; retry with dull tan cream."
+  },
+  "heather-1-attempt-1": {
+    "failed": ["heather low tuft silhouette", "smooth painted contours"],
+    "lookReview": "Purple clusters and grey-green palette, but tall broad-leaved flower plant rather than low wiry heather tuft; visible stepped contours. Retry."
+  },
+  "heather-2-attempt-1": {
+    "failed": ["heather low tuft silhouette", "smooth painted contours"],
+    "lookReview": "Tall broad-leaved violet-like plant and blocky pixel contours, not low wiry heather. Retry."
+  },
+  "heather-1-attempt-2": {
+    "failed": [],
+    "foot": [622, 912],
+    "footReadByEye": true,
+    "footReason": "Converging central stem contact in low tuft, above lowest outer leaf tips.",
+    "lookReview": "Low wide tuft of dull purple heads on small narrow grey-green leaves and short wiry stems. Smooth contours and broad bloom masses, no ground/shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "heather-2-attempt-2": {
+    "failed": [],
+    "foot": [635, 897],
+    "footReadByEye": true,
+    "footReason": "Central stem convergence at contact of low tuft.",
+    "lookReview": "Distinct asymmetric low tuft with upright purple heads, narrow grey-green foliage and small stems. Muted painted masses and clean contact; no grass/ground/shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "dryshrub-1-attempt-1": {
+    "failed": [],
+    "foot": [642, 1016],
+    "footReadByEye": true,
+    "footReason": "Compact central woody foot rather than side root tip.",
+    "lookReview": "Low open bush of twisted dry wood with few olive leaves. Broad warm-grey wood planes and readable branching, isolated without ground or shadow.",
+    "zoomReviewed": [1, 2]
+  },
+  "dryshrub-2-attempt-1": {
+    "failed": ["smooth painted contours", "dryshrub slender sticks"],
+    "lookReview": "Twisted open branching with few olive leaves, but pixel stairs and heavy miniature-tree trunk. Retry for smooth slender dry sticks."
+  },
+  "dryshrub-2-attempt-2": {
+    "failed": [],
+    "foot": [635, 976],
+    "footReadByEye": true,
+    "footReason": "Central low woody contact beneath spreading sticks.",
+    "lookReview": "Asymmetric low wide bush of slender twisted dry sticks with sparse olive leaves, smooth painted contours and broad wood planes; no soil, grass, ground shadow or water.",
+    "zoomReviewed": [1, 2]
+  },
+  "mushrooms-2-attempt-3": {
+    "failed": [],
+    "foot": [640, 973],
+    "footReadByEye": true,
+    "footReason": "Center of the four-stem contact group above the lowest foreground stem.",
+    "lookReview": "Four smooth rounded muted red caps with dull tan-cream spots and stems. Broad painted planes, compact tight group, no white glints or ground/shadow.",
+    "zoomReviewed": [1, 2]
+  }
+}
