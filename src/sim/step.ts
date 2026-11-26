@@ -261,6 +261,11 @@ export class SimStep {
       this.nextAgeCheck = clock.time + daySeconds() / AGE_CHECKS_PER_DAY;
       economy.advanceAge(ageSnapshot(this.d));
     }
-    this.lastDay = clock.day;
+    if (clock.day !== this.lastDay) {
+      this.lastDay = clock.day;
+      builder.wear.daily();
+      // a piece that failed of time closes now, not at the next train's hit
+      builder.wear.flush();
+    }
   }
 }

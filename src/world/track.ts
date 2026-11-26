@@ -129,18 +129,31 @@ export function legacyClass(cls: string | undefined): TrackClass {
 export type TrackKind = 'straight' | 'curve' | 'switch' | 'crossing' | 'bridge';
 export const TRACK_KINDS: TrackKind[] = ['straight', 'curve', 'switch', 'crossing', 'bridge'];
 
-/** A stored anchor piece: x, y, kind, rotation, line, second line of a crossing. */
-export type TrackTuple = [number, number, TrackKind, number, TrackClass?, TrackClass?];
+/**
+ * A stored anchor piece: x, y, kind, rotation, line, second line of a crossing, health share
+ * (written only below 1, with null for a second line the piece has none of).
+ */
+export type TrackTuple = [
+  number,
+  number,
+  TrackKind,
+  number,
+  TrackClass?,
+  (TrackClass | null)?,
+  number?,
+];
 /**
  * Stored track from before the six lines, in today's terms: every piece gets its line
  * (`legacyClass`), and a transition, which joined wide and high-speed track, becomes the Branch
  * Line straight on its axis. Track already in today's terms comes back as it was.
  */
 export function liftLegacyTrack(track: TrackTuple[]): TrackTuple[] {
-  return track.map(([x, y, kind, rot, cls, cls2]): TrackTuple => {
+  return track.map(([x, y, kind, rot, cls, cls2, health]): TrackTuple => {
     const line = legacyClass(cls);
     if ((kind as string) === 'transition') return [x, y, 'straight', rot % 2, line];
-    return cls2 == null ? [x, y, kind, rot, line] : [x, y, kind, rot, line, legacyClass(cls2)];
+    const second = cls2 == null ? null : legacyClass(cls2);
+    if (health !== undefined) return [x, y, kind, rot, line, second, health];
+    return second === null ? [x, y, kind, rot, line] : [x, y, kind, rot, line, second];
   });
 }
 export type Link = [Dir, Dir];
@@ -181,6 +194,12 @@ export function itemKey(it: TrackItem) {
     : `${it.kind}_${it.cls}`;
 }
 
+/** What a piece has lost: one object per piece, shared by every tile of a multi-tile piece. */
+export interface PieceWear {
+  /** share of its maximum HP left, 0 to 1 (`src/sim/wear.ts`) */
+  health: number;
+}
+
 export interface TrackPiece {
   /** Re-derived from the independent platform under this rail. */
   bridgeCapacity?: number;
@@ -194,6 +213,7 @@ export interface TrackPiece {
   unit?: { ax: number; ay: number; member: number };
   /** 2×2 switches: which diverging lane is laid (absent: turn); chosen by the track around it */
   form?: SwitchForm;
+  wear: PieceWear;
 }
 
 const BASE: Record<TrackKind, Link[][]> = {
@@ -241,9 +261,9 @@ export function makePiece(
   kind: TrackKind,
   rot: number,
   cls: TrackClass = 'branch',
-  cls2?: TrackClass,
+  cls2?: TrackClass | null,
 ): TrackPiece {
-  const p: TrackPiece = { kind, rot, cls, links: pieceLinks(kind, rot) };
+  const p: TrackPiece = { kind, rot, cls, links: pieceLinks(kind, rot), wear: { health: 1 } };
   if (kind === 'crossing') p.cls2 = cls2 ?? cls;
   return p;
 }
@@ -357,7 +377,7 @@ export class TrackGraph {
     kind: TrackKind,
     rot: number,
     cls: TrackClass = 'branch',
-    cls2?: TrackClass,
+    cls2?: TrackClass | null,
     form: SwitchForm = 'turn',
   ): { x: number; y: number }[] {
     if (!isUnitKind(kind, cls)) {
@@ -366,6 +386,7 @@ export class TrackGraph {
     }
     const def = unitDef(kind as 'curve' | 'switch', CLASS_N[cls], rot, form);
     const out: { x: number; y: number }[] = [];
+    const wear: PieceWear = { health: 1 };
     def.members.forEach((m, i) => {
       const mx = x + m.dx;
       const my = y + m.dy;
@@ -374,7 +395,7 @@ export class TrackGraph {
       for (const l of m.links)
         if (!links.some(([a, b]) => (a === l.in && b === l.out) || (a === l.out && b === l.in)))
           links.push([l.in, l.out]);
-      const piece: TrackPiece = { kind, rot, cls, links, unit: { ax: x, ay: y, member: i } };
+      const piece: TrackPiece = { kind, rot, cls, links, unit: { ax: x, ay: y, member: i }, wear };
       if (kind === 'switch' && form === 'parallel') piece.form = form;
       this.pieces.set(this.key(mx, my), piece);
       out.push({ x: mx, y: my });
@@ -461,6 +482,8 @@ export class TrackGraph {
       }));
       const tiles = this.place(x, y, 'switch', piece.rot, piece.cls, undefined, want);
       for (const c of caps) if (c.cap !== undefined) this.get(c.x, c.y)!.bridgeCapacity = c.cap;
+      // the same switch in another form: it keeps what it has lost
+      for (const t of tiles) this.get(t.x, t.y)!.wear = piece.wear;
       changed.push(...tiles);
     }
     return changed;
@@ -614,5 +637,23 @@ export class TrackGraph {
   /** Anchor tiles only: what a save stores. */
   *anchors(): IterableIterator<{ x: number; y: number; piece: TrackPiece }> {
     for (const t of this.tiles()) if (!t.piece.unit || t.piece.unit.member === 0) yield t;
+  }
+  /** The stored form of every piece (`TrackTuple`): health is written only when it is below 1. */
+  tuples(): TrackTuple[] {
+    const out: TrackTuple[] = [];
+    for (const { x, y, piece: p } of this.anchors()) {
+      const health = Math.round(p.wear.health * 1e4) / 1e4;
+      if (health < 1) out.push([x, y, p.kind, p.rot, p.cls, p.cls2 ?? null, health]);
+      else out.push([x, y, p.kind, p.rot, p.cls, p.cls2]);
+    }
+    return out;
+  }
+  /** Place a stored piece with the health it was saved with. Returns the tiles written. */
+  placeTuple([x, y, kind, rot, cls, cls2, health]: TrackTuple): { x: number; y: number }[] {
+    const tiles = this.place(x, y, kind, rot, cls ?? 'branch', cls2);
+    // one object serves every tile of the piece
+    if (typeof health === 'number' && Number.isFinite(health) && tiles.length)
+      this.get(tiles[0].x, tiles[0].y)!.wear.health = Math.min(1, Math.max(0, health));
+    return tiles;
   }
 }

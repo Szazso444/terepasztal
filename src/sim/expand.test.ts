@@ -58,6 +58,7 @@ function partsOf(world: SaveParts['world']): SaveParts {
     supply: 'simple',
     people: { rng: 7 },
     roads: [],
+    wear: { degraded: false, unusable: false },
   };
 }
 
@@ -604,4 +605,24 @@ describe('a player buying chunk after chunk', () => {
       expect(played.atTheBound, at).toBeGreaterThan(0);
     });
   }, 20_000);
+});
+
+describe('a grown map', () => {
+  it('keeps a piece health, the tuple only shifting', () => {
+    const save = buildSave({
+      ...partsOf(worldOf({ w: 64, h: 64 })),
+      track: [
+        [3, 4, 'curve', 1, 'main', null, 0.5],
+        [9, 9, 'crossing', 0, 'branch', 'trunk', 0.25],
+        [6, 6, 'straight', 1, 'branch', 'branch'],
+      ],
+    });
+    const grown = expandSave(save, 1);
+    const d = CHUNK_TILES;
+    expect(grown.track).toEqual([
+      [3 + d, 4 + d, 'curve', 1, 'main', null, 0.5],
+      [9 + d, 9 + d, 'crossing', 0, 'branch', 'trunk', 0.25],
+      [6 + d, 6 + d, 'straight', 1, 'branch', 'branch'],
+    ]);
+  });
 });

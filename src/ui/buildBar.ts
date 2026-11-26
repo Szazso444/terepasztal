@@ -59,6 +59,8 @@ export type Tool =
   | { kind: 'reclass'; dir: ReclassDir }
   /** lay roads by dragging (#328) */
   | { kind: 'road' }
+  /** mend worn track by hand, whole pieces by a click or a stroke (beside Demolish, on no list) */
+  | { kind: 'repair' }
   | { kind: 'remove' };
 
 /** One placeable thing: what the bar shows and what the info panel describes. */
@@ -145,6 +147,8 @@ export function toolKey(t: Tool): string {
       return 'road';
     case 'remove':
       return 'remove';
+    case 'repair':
+      return 'repair';
     default:
       return '';
   }
@@ -481,7 +485,7 @@ export function stepCategory(ids: CategoryId[], current: CategoryId, dir: 1 | -1
   return stepGroup(ids, current, dir, () => true) as CategoryId;
 }
 
-/** The category and the item a tool belongs to; null for one on no list (Demolish, none). */
+/** The category and the item a tool belongs to; null for one on no list (Demolish, Repair, none). */
 export function locate(
   categories: Category[],
   tool: Tool,
@@ -595,6 +599,11 @@ export function demolishTip(refund: number | null): TipDoc {
   ];
 }
 
+/** The Repair button. */
+export function repairTip(): TipDoc {
+  return [title(STR.toolbar.repair), dim(STR.toolbar.repairTip)];
+}
+
 /** The build card's foot: how this tool is used, in words that hold in the game. */
 export function controlsHint(item: ToolItem): string {
   const t = item.tool;
@@ -683,11 +692,11 @@ export class BuildBar {
     this.onChange();
     if (first) this.select(first.tool);
   }
-  /** Close the open category and put down its tool; Demolish belongs to none and stays. */
+  /** Close the open category and put down its tool; Demolish and Repair belong to none and stay. */
   closeCategory() {
     this.open = null;
     this.onChange();
-    if (this.active.kind !== 'none' && this.active.kind !== 'remove') this.select({ kind: 'none' });
+    if (!['none', 'remove', 'repair'].includes(this.active.kind)) this.select({ kind: 'none' });
   }
   toggleCategory(id: CategoryId) {
     if (this.open === id) this.closeCategory();
@@ -758,12 +767,17 @@ export class BuildBar {
   toggleDemolish() {
     this.select(this.active.kind === 'remove' ? { kind: 'none' } : { kind: 'remove' });
   }
+  /** The Repair tool: chosen, or put down again when it is the one in hand. Not in the level editor. */
+  toggleRepair() {
+    if (this.editor) return;
+    this.select(this.active.kind === 'repair' ? { kind: 'none' } : { kind: 'repair' });
+  }
 
-  /** Reflect the controller's tool: it brings its category and type; none and Demolish close. */
+  /** Reflect the controller's tool: it brings its category and type; none, Demolish and Repair close. */
   setActive(t: Tool) {
     if (toolKey(t) !== toolKey(this.active)) this.status = '';
     this.active = t;
-    if (t.kind === 'none' || t.kind === 'remove') {
+    if (t.kind === 'none' || t.kind === 'remove' || t.kind === 'repair') {
       if (this.open) this.closeCategory();
     } else {
       const at = locate(this.categories, t);

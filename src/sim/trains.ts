@@ -1,4 +1,4 @@
-import { type Vec2, Dir, DIR_DX, DIR_DY } from '../engine/iso';
+import { type Vec2, Dir, DIR_DX, DIR_DY, opposite } from '../engine/iso';
 import type { TrackGraph, TrackPiece } from '../world/track';
 import { curveFactor } from '../world/trackGeom';
 import { findPath, walkBack, type PathSegment } from '../world/pathfinding';
@@ -23,6 +23,7 @@ import type { Station } from './stations';
 import { cargoDef, cargoClass } from './cargo';
 import { content } from '../data/content';
 import { rules, daySeconds, weekSeconds } from './rules';
+import { stateOf } from './wear';
 import { findRefugePath, findShuntPath, stateKey, statesReaching } from './recovery';
 import { ENGLISH } from '../strings';
 import {
@@ -642,6 +643,10 @@ export class Train {
   private pathPts: { x: number; y: number; seg: PathSegment; factor: number }[] = [];
   private pathCum: number[] = [];
   private pathPos = 0;
+  /** the path ends where failed track stops it, not at a stop: held on it, the train has no way on */
+  private shortWay = false;
+  /** the piece whose wear the head last paid for (not saved): one hit per piece entered */
+  lastWornPiece: TrackPiece['wear'] | null = null;
   /** `pathPts` grouped by tile, built once per path (`pathTiles`) */
   private tilesOfPath: PathTiles | null = null;
   /** the last `pathAhead` list, kept while the head stays at the same path point */
@@ -1183,8 +1188,14 @@ export class Train {
     return this.consistInfo().cls;
   }
   /** Pathfinding predicate: may the consist enter this piece through `entry`? */
-  readonly canUse = (p: TrackPiece, entry: Dir) =>
-    this.access.classes.has(pieceClassFor(p, entry)) && this.mass <= (p.bridgeCapacity ?? Infinity);
+  readonly canUse = (p: TrackPiece, entry: Dir) => this.fits(p, entry) && p.wear.health > 0;
+  /** May the consist run on this piece through `entry`, whatever its health? */
+  private fits(p: TrackPiece, entry: Dir) {
+    return (
+      this.access.classes.has(pieceClassFor(p, entry)) &&
+      this.mass <= (p.bridgeCapacity ?? Infinity)
+    );
+  }
   /** Route cost multiplier: a smaller train pays extra on a bigger line (`lineToll`). */
   readonly tollOf = (p: TrackPiece, entry: Dir) =>
     lineToll(this.trainClass, pieceClassFor(p, entry));
@@ -1917,6 +1928,7 @@ export class Train {
    */
   private setPath(path: PathSegment[], map: GameMap, track: TrackGraph, headRoute?: number) {
     this.path = path;
+    this.shortWay = false;
     this.pathPts = [];
     this.pathCum = [];
     track.resolveRoutes(path);
@@ -2053,17 +2065,101 @@ export class Train {
     return f;
   }
 
-  /** Validate the remaining path after a track edit (or `path`, before following it). */
+  /**
+   * Validate the remaining path after a track edit (or `path`, before following it). A piece the
+   * head has run past may have failed: only the tail is on it, and the crawl sees to the tail.
+   */
   pathStillValid(track: TrackGraph, path = this.path): boolean {
     if (!path) return true;
-    for (const s of path) {
-      if (
-        !track.opensTo(s.x, s.y, s.in) ||
-        !track.opensTo(s.x, s.y, s.out) ||
-        !this.canUse(track.get(s.x, s.y)!, s.in)
-      )
-        return false;
+    const head = path === this.path && this.headSeg ? path.indexOf(this.headSeg) : -1;
+    return path.every(
+      (s, i) =>
+        track.opensTo(s.x, s.y, s.in) &&
+        track.opensTo(s.x, s.y, s.out) &&
+        (i < head || this.canUse(track.get(s.x, s.y)!, s.in)),
+    );
+  }
+
+  /**
+   * A train standing on a failed piece runs off it: on over every failed piece in a row, then over
+   * sound track until the whole train is clear, the way its path goes where it can, and stops
+   * there to look for a way on (`noRoute`). It never runs from sound track onto a failed piece or
+   * into a train, so a stretch of sound track too short for it, or the end of the line, leaves its
+   * tail behind. False when no vehicle stands on a failed piece, or the head would reach no new
+   * tile, or no sound one: a train with no room stands, and does not go to and fro.
+   */
+  leaveBroken(ctx: TickCtx): boolean {
+    const track = ctx.track;
+    const head = this.headSeg;
+    const failed = ctx.builder.wear.unusable;
+    if (!head || !track.has(head.x, head.y)) return false;
+    if (!this.headFailed(track) && !this.occupancyKeys(track.w).some((k) => failed.has(k)))
+      return false;
+    const stateKey = (s: { x: number; y: number; in: Dir }) => track.key(s.x, s.y) * 4 + s.in;
+    const planned = new Map(this.path?.map((s) => [stateKey(s), s.out]));
+    planned.set(stateKey(head), head.out);
+    const seen = new Set<number>();
+    const path: PathSegment[] = [];
+    let at = { x: head.x, y: head.y, in: head.in };
+    /** arc of the sound tiles walked, to the far edge of the last; null before the first */
+    let sound: number | null = null;
+    while (!seen.has(stateKey(at))) {
+      seen.add(stateKey(at));
+      const onSound = stateOf(track.get(at.x, at.y)!) !== 'unusable';
+      const ways = track.exits(at.x, at.y, at.in).filter((out) => {
+        const next = track.get(at.x + DIR_DX[out], at.y + DIR_DY[out]);
+        return (
+          !!next &&
+          track.connected(at.x, at.y, out) &&
+          this.fits(next, opposite(out)) &&
+          !(onSound && stateOf(next) === 'unusable') &&
+          !ctx.occupied(at.x + DIR_DX[out], at.y + DIR_DY[out], this.id)
+        );
+      });
+      const want = planned.get(stateKey(at)) ?? opposite(at.in);
+      const out = ways.includes(want) ? want : (ways[0] ?? want);
+      path.push({ ...at, out });
+      if (onSound) {
+        const len = track.segLength(at.x, at.y, at.in, out);
+        sound = (sound ?? 0) + len;
+        // the head stops halfway across the last tile
+        if (sound - len / 2 >= this.length + 0.5) break;
+      }
+      if (!ways.length) break;
+      at = { x: at.x + DIR_DX[out], y: at.y + DIR_DY[out], in: opposite(out) };
     }
+    if (sound === null || path.length < 2) return false;
+    this.serviceStop = null;
+    this.setPath(path, ctx.map, track, path[0].out === head.out ? head.route : undefined);
+    this.shortWay = true;
+    this.trackVersion = track.version;
+    this.setState('moving');
+    return true;
+  }
+  /** Does the head stand on a failed piece? */
+  private headFailed(track: TrackGraph) {
+    const head = this.headSeg;
+    const under = head && track.get(head.x, head.y);
+    return !!under && stateOf(under) === 'unusable';
+  }
+  /**
+   * With no way round a failed piece on its path, run on at the speed the train has as far as the
+   * last sound tile before it. False when no failed piece cuts the path.
+   */
+  private stopShort(ctx: TickCtx): boolean {
+    const path = this.path;
+    const head = this.headSeg;
+    if (!path || !head) return false;
+    const from = Math.max(0, path.indexOf(head));
+    const cut = path.findIndex((s, i) => {
+      const p = ctx.track.get(s.x, s.y);
+      return i > from && !!p && stateOf(p) === 'unusable';
+    });
+    if (cut < 0) return false;
+    const way = path.slice(from, cut);
+    if (!this.pathStillValid(ctx.track, way)) return false;
+    this.followAfterLoad(way, ctx.builder, way[0].route);
+    this.shortWay = true;
     return true;
   }
 
@@ -2100,9 +2196,12 @@ export class Train {
         this.speed = 0;
         return;
       }
-      if (!this.pathStillValid(ctx.track)) {
+      if (
+        !this.pathStillValid(ctx.track) &&
+        !(this.headFailed(ctx.track) && this.leaveBroken(ctx))
+      ) {
         if (this.dispatch(ctx.track, ctx.builder, ctx.map)) this.onPathReady(ctx);
-        else this.setState('noRoute');
+        else if (!this.stopShort(ctx)) this.setState('noRoute');
       }
     }
     if (['moving', 'idle', 'noRoute'].includes(this.state) && ctx.now >= this.nextFuelCheck) {
@@ -2184,6 +2283,7 @@ export class Train {
             this.stateTime = 0;
             break;
           }
+          if (this.headFailed(ctx.track) && this.leaveBroken(ctx)) break;
           // a contract closed while the train stood here (or before a reload): never retry its
           // stops, go back to the program
           if (!this.job && this.suspended) {
@@ -2194,7 +2294,7 @@ export class Train {
           if (!this.job && this.jobs.length) this.startJob();
           if (this.dispatch(ctx.track, ctx.builder, ctx.map)) {
             if (!this.planFuelDetour(ctx)) this.onPathReady(ctx);
-          } else this.stateTime = 0;
+          } else if (!this.leaveBroken(ctx)) this.stateTime = 0;
         }
         break;
     }
@@ -2379,6 +2479,11 @@ export class Train {
       }
     }
     if (this.blocked) {
+      if (this.shortWay && this.speed === 0) {
+        // nothing lies past this way but failed track: it waits for the repair, not for the train
+        this.setState('noRoute');
+        return;
+      }
       this.blockedTime += gdt;
       if (!this.holding && this.blockedTime > REROUTE_AFTER && !this.rerouted) {
         this.rerouted = true;
@@ -2443,12 +2548,18 @@ export class Train {
     for (const s of this.pathAhead(12)) {
       const piece = ctx.track.get(s.x, s.y);
       if (!piece) continue;
-      const limit = lineSpeedCap(pieceClassFor(piece, s.in));
+      let limit = lineSpeedCap(pieceClassFor(piece, s.in));
+      if (stateOf(piece) === 'degraded')
+        limit = Math.min(limit, this.maxSpeed * rules.trackDegradedSpeed);
       if (limit === Infinity) continue;
       const d = s.arc - this.pathPos;
       if (d > 2 + (this.speed * this.speed) / (2 * DECEL)) break;
       cap = Math.min(cap, approachCap(limit, d, DECEL));
     }
+    // on failed track it crawls until its last vehicle is off
+    const failed = ctx.builder.wear.unusable;
+    if (failed.size > 0 && this.occupancyKeys(ctx.track.w).some((k) => failed.has(k)))
+      cap = Math.min(cap, rules.trackCrawlSpeed);
     if (cautionArc !== null)
       cap = Math.min(
         cap,
@@ -2537,6 +2648,7 @@ export class Train {
       this.trip.distance += step;
     }
     this.layTrail(from, this.pathPos);
+    this.wearTrack(ctx);
     this.updatePoses();
     if (this.pathTotal - this.pathPos < ARRIVE) {
       if (!this.path) {
@@ -2624,6 +2736,15 @@ export class Train {
     const y = a.y + (b.y - a.y) * t;
     const leaving = Math.max(Math.abs(x - a.seg.x), Math.abs(y - a.seg.y)) <= 0.5 + EDGE_SLACK;
     return { x, y, seg: leaving ? a.seg : b.seg };
+  }
+
+  /** The head ran onto a piece it was not on: one hit, however many tiles the piece spans. */
+  private wearTrack(ctx: TickCtx) {
+    const head = this.headSeg;
+    const piece = head && ctx.track.get(head.x, head.y);
+    if (!head || !piece || piece.wear === this.lastWornPiece) return;
+    this.lastWornPiece = piece.wear;
+    ctx.builder.wear.hit(head.x, head.y, head.in, this.mass);
   }
 
   /**
@@ -2952,6 +3073,8 @@ export class Train {
       this.dropped = false;
       if (!this.planFuelDetour(ctx)) this.onPathReady(ctx);
       else if (this.path) this.setState('moving');
+    } else if (this.leaveBroken(ctx)) {
+      // no way on from the failed piece it stands on: it gets off that first
     } else if (this.dynamic) {
       // a roaming train remembers the station it could not reach and picks another one soon
       this.badTargets.set(this.route[this.routeIndex % this.route.length], ctx.now + 240);

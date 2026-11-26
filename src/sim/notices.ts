@@ -1,6 +1,7 @@
 import type { Train } from './trains';
 import type { Builder } from './build';
 import type { PowerGrid } from './power';
+import type { TrackWear } from './wear';
 import { contractTitle, type ContractBoard } from './contracts';
 import { buildingDef, missingInput } from './buildings';
 import { cargoName } from './cargo';
@@ -29,6 +30,9 @@ export interface Notice {
   expires?: number;
 }
 
+/** Unusable pieces up to this many each have a notice; more gather into one with a count. */
+const BROKEN_EACH = 3;
+
 /**
  * Everything that deserves a marker: derived notices are recomputed from the live state every
  * refresh, transient ones (a failed contract, a purchase) are pushed with a lifetime.
@@ -49,10 +53,29 @@ export class Notices {
     this.transient = this.transient.filter((t) => t.key !== key);
   }
 
+  /** A notice for each unusable piece, or one with a count when there are many. */
+  private brokenTrack(wear: TrackWear, out: Notice[]) {
+    const at = wear.failedPieces();
+    if (!at.length) return;
+    const notice = (key: string, text: string, t: { x: number; y: number }): Notice => ({
+      key,
+      kind: 'bad',
+      type: 'trackbroken',
+      text,
+      target: { kind: 'tile', x: t.x, y: t.y },
+    });
+    if (at.length > BROKEN_EACH)
+      out.push(notice('track:broken', STR.notice.trackBrokenMany(at.length), at[0]));
+    else
+      for (const t of at)
+        out.push(notice(`track${t.x},${t.y}:broken`, STR.notice.trackBroken(t.x, t.y), t));
+  }
+
   refresh(src: {
     trains: Train[];
     builder: Builder;
     power: PowerGrid;
+    wear: TrackWear;
     stuck?: { id: number; since: number }[];
     /** the contract board and the game time */
     contracts?: { board: Pick<ContractBoard, 'active' | 'offers' | 'remaining'>; now: number };
@@ -195,6 +218,7 @@ export class Notices {
         });
     }
     this.fullGoods = fullGoods;
+    this.brokenTrack(src.wear, out);
     if (src.contracts) {
       const { board, now } = src.contracts;
       const destOf = (destId: number): NoticeTarget => {

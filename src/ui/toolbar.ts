@@ -10,6 +10,7 @@ import {
   buildCatalog,
   categoryTip,
   demolishTip,
+  repairTip,
   isLocked,
   itemTip,
   keyLabel,
@@ -52,8 +53,8 @@ function lockMark(tier: number): HTMLElement {
 }
 
 /**
- * The bottom build bar, drawn from `BuildBar`. From the bottom up: the categories with Demolish at
- * the right end and, with a category open, the types above them (when it has any) under their Q and
+ * The bottom build bar, drawn from `BuildBar`. From the bottom up: the categories with Repair and
+ * Demolish at the right end and, with a category open, the types above them (when it has any) under their Q and
  * E arrows, then its items as tiles. The controller's status takes a line at the top while it has
  * something to say. Every button is a term of the tooltip layer, and hovering a tile feeds the info
  * panel.
@@ -75,6 +76,9 @@ export class Toolbar {
   private typeRow = el('div', { class: 'tb-types' });
   private itemRow = el('div', { class: 'tb-items' });
   private removeBtn: HTMLButtonElement;
+  private repairBtn: HTMLButtonElement;
+  /** the Repair button as a term: the level editor has no wear to mend */
+  private repairTerm: HTMLElement;
   /** what the types and tiles were last drawn for */
   private laid = '';
   onHover: ((item: ToolItem | null) => void) | null = null;
@@ -104,6 +108,12 @@ export class Toolbar {
       this.catTerms.set(c.id, term);
       catRow.append(term);
     }
+    this.repairBtn = btn('', () => this.bar.toggleRepair(), 'tb-cat tb-repair');
+    this.repairBtn.append(
+      buildIcon('repair', 18),
+      el('span', { class: 'tb-cat-name', text: STR.toolbar.repair }),
+    );
+    this.repairTerm = this.term(this.repairBtn, repairTip);
     this.removeBtn = btn('', () => this.bar.toggleDemolish(), 'tb-cat tb-dem');
     this.removeBtn.append(
       buildIcon('demolish', 18),
@@ -112,6 +122,7 @@ export class Toolbar {
     );
     catRow.append(
       el('span', { class: 'tb-spacer' }),
+      this.repairTerm,
       this.term(this.removeBtn, () => demolishTip(refundPercent(this.bar.editor))),
     );
     this.layCategories();
@@ -175,12 +186,14 @@ export class Toolbar {
       this.catTerms.get(c.id)!.style.display = key ? '' : 'none';
       this.catKeys.get(c.id)!.textContent = key;
     }
+    this.repairTerm.style.display = this.bar.editor ? 'none' : '';
   }
 
   private paint(force = false) {
     const bar = this.bar;
     for (const [id, b] of this.catButtons) b.classList.toggle('active', id === bar.open);
     this.removeBtn.classList.toggle('active', bar.active.kind === 'remove');
+    this.repairBtn.classList.toggle('active', bar.active.kind === 'repair');
     const laid = `${bar.open}|${bar.openGroup()}`;
     if (force || laid !== this.laid) {
       this.laid = laid;

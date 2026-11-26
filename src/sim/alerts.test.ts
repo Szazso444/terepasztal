@@ -56,11 +56,19 @@ describe('the alert rows', () => {
   it('leaves the two event rows out: the sim has no events yet', () => {
     expect(ALERT_TYPES).not.toContain('evchoice');
     expect(ALERT_TYPES).not.toContain('evnone');
-    expect(ALERT_TYPES).toHaveLength(14);
+    expect(ALERT_TYPES).toHaveLength(16);
   });
 
   it('starts every alert on the alert icon and the map pin, and a critical pause says why', () => {
-    for (const t of ['noroute', 'full', 'starved', 'contract', 'jam'] as const)
+    for (const t of [
+      'noroute',
+      'trackbroken',
+      'full',
+      'starved',
+      'contract',
+      'jam',
+      'trackworn',
+    ] as const)
       expect(on(t), t).toEqual(['icon', 'pin']);
     expect(on('ctfail')).toEqual(['icon', 'pin', 'toast']);
     expect(on('nofuel')).toEqual(['icon', 'pin', 'toast']);
@@ -304,7 +312,7 @@ describe('after a load: the first 60 game seconds', () => {
 
   it('every row is either found again or an event, by what it tells of', () => {
     const events = ALERT_TYPES.filter((t) => ALERT_DEFS[t].event);
-    expect(events).toEqual(['ctfail', 'note', 'done', 'offer', 'goal', 'arrived']);
+    expect(events).toEqual(['ctfail', 'trackworn', 'note', 'done', 'offer', 'goal', 'arrived']);
   });
 });
 

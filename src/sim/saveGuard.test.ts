@@ -185,14 +185,11 @@ function build(w: SimWorld) {
  * them from Game's (it cannot load under Node); the camera is where the player looks.
  */
 function partsOf(w: SimWorld, step: SimStep, camera: SaveParts['camera']): SaveParts {
-  const track: SaveParts['track'] = [];
-  for (const t of w.track.anchors())
-    track.push([t.x, t.y, t.piece.kind, t.piece.rot, t.piece.cls, t.piece.cls2]);
   return {
     seed: w.seed,
     clock: { time: w.clock.time, speedIndex: w.clock.speedIndex },
     economy: w.economy.toJSON(),
-    track,
+    track: w.track.tuples(),
     stations: w.builder.stations.map((st) => st.toJSON()),
     trains: w.fleet.trains.map((t) => t.toJSON()),
     contracts: w.contracts.toJSON(),
@@ -215,6 +212,7 @@ function partsOf(w: SimWorld, step: SimStep, camera: SaveParts['camera']): SaveP
     houses: w.houses.toJSON(),
     people: w.people.toJSON(),
     roads: w.builder.roads.toJSON(),
+    wear: w.builder.wear.toJSON(),
   };
 }
 

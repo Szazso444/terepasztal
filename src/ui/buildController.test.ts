@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Sprite } from 'pixi.js';
 import type { Rng } from '../engine/rng';
 import type { Station } from '../sim/stations';
+import { STR } from '../strings';
 import { forAll, shrinkArray } from '../testing/property';
 import { BuildController } from './buildController';
 
@@ -132,5 +133,84 @@ describe('the run being dragged', () => {
     expect(b.run).not.toBeNull();
     b.update(false);
     expect(b.run).toBeNull();
+  });
+});
+
+describe('the Repair tool', () => {
+  /** A Repair tool over a row of worn Branch straights, with the cost of a piece fixed. */
+  function mending() {
+    const at = { x: 1, y: 1 };
+    const buttons = new Set<number>();
+    const input = {
+      wasPressed: () => false,
+      buttons,
+      buttonPressed: new Set<number>(),
+      buttonReleased: new Set<number>(),
+      clicks: [],
+    };
+    const mended: string[] = [];
+    let pay = true;
+    const builder = {
+      map: { w: 16, h: 16 },
+      stationAt: () => undefined,
+      buildingAt: () => undefined,
+      track: {
+        get: (x: number, y: number) => (y === 1 ? { kind: 'straight' } : undefined),
+        unitTiles: (x: number, y: number) => [{ x, y }],
+      },
+      checkRepair: ([t]: { x: number; y: number }[]) =>
+        mended.includes(`${t.x},${t.y}`) || t.y !== 1
+          ? { ok: false, cost: {}, pieces: [], reason: STR.build.repairNothing }
+          : pay
+            ? { ok: true, cost: { wood: 3 }, pieces: [t] }
+            : { ok: false, cost: { wood: 3 }, pieces: [t], reason: 'No store holds 3 wood' },
+      repairTrack: ([t]: { x: number; y: number }[]) => {
+        mended.push(`${t.x},${t.y}`);
+        return true;
+      },
+    };
+    const world = {
+      makeOverlaySprite: () => new Sprite(),
+      surfacePoint: () => ({ x: 0, y: 0 }),
+      setSpriteFrame: () => {},
+    };
+    const b = new BuildController(input as never, builder as never, world as never, () => ({
+      ...at,
+    }));
+    let status = '';
+    b.onStatus = (t) => (status = t);
+    b.setTool({ kind: 'repair' });
+    return { b, at, buttons, mended, status: () => status, broke: () => (pay = false) };
+  }
+
+  it('prices the piece under the pointer, and mends nothing until the button goes down', () => {
+    const { b, mended, status } = mending();
+    b.update(true);
+    expect(status()).toBe(STR.build.repairCost('3 wood'));
+    expect(mended).toEqual([]);
+  });
+
+  it('mends the piece pressed and every piece the stroke enters, each once', () => {
+    const { b, at, buttons, mended } = mending();
+    buttons.add(0);
+    b.update(true);
+    at.x = 4;
+    b.update(true);
+    b.update(true);
+    expect(mended).toEqual(['1,1', '2,1', '3,1', '4,1']);
+  });
+
+  it('says why, in the status line, when no store can pay', () => {
+    const { b, status, broke } = mending();
+    broke();
+    b.update(true);
+    expect(status()).toBe(`${STR.build.repairCost('3 wood')} (No store holds 3 wood)`);
+  });
+
+  it('has nothing to say off the track but that there is nothing to mend', () => {
+    const { b, at, status } = mending();
+    at.y = 5;
+    b.update(true);
+    expect(status()).toBe(STR.build.repairIdle);
   });
 });

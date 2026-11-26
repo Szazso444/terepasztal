@@ -70,6 +70,38 @@ export interface Rules {
   repeatCostStep: number;
   /** multiplies the whole track cost matrix */
   trackCostScale: number;
+  /** multiplies all track wear; 0 turns wear off */
+  trackWearMul: number;
+  /** HP of a piece of each line (`maxHp`) */
+  trackHpNarrow: number;
+  trackHpBranch: number;
+  trackHpMain: number;
+  trackHpTrunk: number;
+  /** wear multiplier of each line (`lineWearMul`) */
+  trackWearNarrow: number;
+  trackWearBranch: number;
+  trackWearMain: number;
+  trackWearTrunk: number;
+  /** HP a train takes per tonne of its mass, before the line multiplier */
+  trackWearPerTonne: number;
+  /** share of its maximum HP a piece loses each game day, standing or not */
+  trackTimeWear: number;
+  /** health share below which a piece is degraded: trains slow down on it and it wears faster */
+  trackDegradedAt: number;
+  /** health share below which a healthy piece counts as close to degraded (maintenance trains) */
+  trackCloseAt: number;
+  /** share of its top speed a train keeps on a degraded piece */
+  trackDegradedSpeed: number;
+  /** wear multiplier of a degraded piece, on train and time wear alike */
+  trackDegradedWear: number;
+  /** tiles a second a train crawls on an unusable piece */
+  trackCrawlSpeed: number;
+  /** share of a piece's build cost a maintenance train charges for 100 % of its HP */
+  trackRepairPrice: number;
+  /** game seconds a maintenance train needs for 100 % of a piece's HP */
+  trackRepairSeconds: number;
+  /** what a hand repair costs, as a multiple of the train price */
+  trackHandRepairMul: number;
   /** price of fitting in-cab signalling equipment to one locomotive */
   inCabCost: number;
   /** multiplies the starting wood, stone and iron */
@@ -133,6 +165,25 @@ export const DEFAULT_RULES: Rules = {
   depotCap: 3000,
   repeatCostStep: 0.2,
   trackCostScale: 1,
+  trackWearMul: 1,
+  trackHpNarrow: 600,
+  trackHpBranch: 1000,
+  trackHpMain: 2000,
+  trackHpTrunk: 3500,
+  trackWearNarrow: 1,
+  trackWearBranch: 1,
+  trackWearMain: 1.3,
+  trackWearTrunk: 1.6,
+  trackWearPerTonne: 0.015,
+  trackTimeWear: 0.004,
+  trackDegradedAt: 0.3,
+  trackCloseAt: 0.45,
+  trackDegradedSpeed: 0.6,
+  trackDegradedWear: 2,
+  trackCrawlSpeed: 0.25,
+  trackRepairPrice: 0.4,
+  trackRepairSeconds: 25,
+  trackHandRepairMul: 2,
   inCabCost: 6000,
   startingResourceScale: 3,
   powerCap: 100,
@@ -476,6 +527,166 @@ export const RULE_META: RuleMeta[] = [
     step: 0.01,
     newGame: true,
     hint: 'lower = more forest',
+  },
+  {
+    key: 'trackWearMul',
+    label: 'Track wear x',
+    group: 'Track wear',
+    min: 0,
+    max: 5,
+    step: 0.1,
+    hint: 'multiplies all wear, from trains and from time; 0 turns wear off',
+  },
+  {
+    key: 'trackHpNarrow',
+    label: 'Narrow Gauge piece HP',
+    group: 'Track wear',
+    min: 100,
+    max: 20000,
+    step: 100,
+  },
+  {
+    key: 'trackHpBranch',
+    label: 'Branch Line piece HP',
+    group: 'Track wear',
+    min: 100,
+    max: 20000,
+    step: 100,
+  },
+  {
+    key: 'trackHpMain',
+    label: 'Main Line piece HP',
+    group: 'Track wear',
+    min: 100,
+    max: 20000,
+    step: 100,
+  },
+  {
+    key: 'trackHpTrunk',
+    label: 'Trunk Line piece HP',
+    group: 'Track wear',
+    min: 100,
+    max: 20000,
+    step: 100,
+  },
+  {
+    key: 'trackWearNarrow',
+    label: 'Narrow Gauge wear x',
+    group: 'Track wear',
+    min: 0.1,
+    max: 5,
+    step: 0.1,
+  },
+  {
+    key: 'trackWearBranch',
+    label: 'Branch Line wear x',
+    group: 'Track wear',
+    min: 0.1,
+    max: 5,
+    step: 0.1,
+  },
+  {
+    key: 'trackWearMain',
+    label: 'Main Line wear x',
+    group: 'Track wear',
+    min: 0.1,
+    max: 5,
+    step: 0.1,
+  },
+  {
+    key: 'trackWearTrunk',
+    label: 'Trunk Line wear x',
+    group: 'Track wear',
+    min: 0.1,
+    max: 5,
+    step: 0.1,
+  },
+  {
+    key: 'trackWearPerTonne',
+    label: 'Wear per tonne of train',
+    group: 'Track wear',
+    min: 0,
+    max: 0.2,
+    step: 0.005,
+    hint: 'HP a train takes per tonne of its mass, before the line multiplier',
+  },
+  {
+    key: 'trackTimeWear',
+    label: 'Wear per day (share of max HP)',
+    group: 'Track wear',
+    min: 0,
+    max: 0.05,
+    step: 0.001,
+    hint: 'every piece loses this share each game day, trains or none',
+  },
+  {
+    key: 'trackDegradedAt',
+    label: 'Degraded below (share of HP)',
+    group: 'Track wear',
+    min: 0.05,
+    max: 0.6,
+    step: 0.05,
+  },
+  {
+    key: 'trackCloseAt',
+    label: 'Close to degraded below (share of HP)',
+    group: 'Track wear',
+    min: 0.1,
+    max: 0.9,
+    step: 0.05,
+    hint: 'maintenance trains look after a piece from here on',
+  },
+  {
+    key: 'trackDegradedSpeed',
+    label: 'Degraded track speed x',
+    group: 'Track wear',
+    min: 0.1,
+    max: 1,
+    step: 0.05,
+  },
+  {
+    key: 'trackDegradedWear',
+    label: 'Degraded track wear x',
+    group: 'Track wear',
+    min: 1,
+    max: 5,
+    step: 0.25,
+  },
+  {
+    key: 'trackCrawlSpeed',
+    label: 'Crawl speed on unusable track',
+    group: 'Track wear',
+    min: 0.05,
+    max: 1,
+    step: 0.05,
+    hint: 'tiles a second',
+  },
+  {
+    key: 'trackRepairPrice',
+    label: 'Train repair price (share of build cost)',
+    group: 'Track wear',
+    min: 0,
+    max: 2,
+    step: 0.05,
+    hint: 'for 100 % of the piece HP',
+  },
+  {
+    key: 'trackRepairSeconds',
+    label: 'Train repair time (game seconds)',
+    group: 'Track wear',
+    min: 1,
+    max: 300,
+    step: 1,
+    hint: 'for 100 % of the piece HP',
+  },
+  {
+    key: 'trackHandRepairMul',
+    label: 'Hand repair price x',
+    group: 'Track wear',
+    min: 1,
+    max: 10,
+    step: 0.5,
+    hint: 'a multiple of the train repair price',
   },
 ];
 if (LANGUAGE === 'hu')
