@@ -117,6 +117,42 @@ export function plumePuff(age: number, s: number, gust: number, work = false): P
 export const cranePhase = (t: number, s: number, gust: number, windX = 1) =>
   windX * s * (0.05 + 0.07 * gust) + s * (0.02 + 0.03 * gust) * Math.sin(t * 2.42 + 0.7);
 
+/**
+ * How each plant sways: [amplitude, turns a second]. Conifers are stiff and quick, birches the
+ * loosest, the broadleaves between them, a palm loose and slow; a dead tree barely moves.
+ */
+export const TREE_SWAY: Readonly<Record<string, readonly [number, number]>> = {
+  oak: [0.8, 0.42],
+  tree: [0.9, 0.48],
+  birch: [1.15, 0.58],
+  pine: [0.7, 0.66],
+  spruce: [0.62, 0.72],
+  palm: [1, 0.36],
+  deadtree: [0.25, 0.9],
+  mangrove: [0.62, 0.6],
+  willow: [0.85, 0.42],
+  reeds: [2.2, 0.95],
+};
+
+/** One tree's own swing: its amplitude, its angular speed and its phase. */
+export interface TreeMotion {
+  amp: number;
+  om: number;
+  ph: number;
+}
+
+/**
+ * How far a tree's top leans downwind at time `t`, a share of its height: a steady lean that grows
+ * in a gust, and its own swing about that, of two partials so that it never quite repeats, wider
+ * in a gust. A breeze moves the top about a world px either way; a storm leans it about a tenth of
+ * its height in the strongest gusts. Nothing in a calm.
+ */
+export function treeLean(tree: TreeMotion, s: number, gust: number, t: number) {
+  if (s <= 0) return 0;
+  const osc = Math.sin(t * tree.om + tree.ph) + 0.3 * Math.sin(t * tree.om * 1.83 + tree.ph * 1.7);
+  return tree.amp * (s * (0.025 + 0.045 * gust) + (0.011 + 0.026 * s) * (0.4 + 0.6 * gust) * osc);
+}
+
 /** A lot in [0, 1) that stays the same for the same three numbers. */
 export function lot(a: number, b: number, c: number) {
   const h = Math.sin(a * 127.1 + b * 311.7 + c * 74.7) * 43758.5453;
