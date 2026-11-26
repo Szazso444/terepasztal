@@ -1,10 +1,10 @@
 # Supervisor state
 
-Last updated: 2026-11-25 (cloud run 21:31Z).
+Last updated: 2026-11-26 (cloud run 13:31Z).
 
 ## Lock
 
-cloud run, started 2026-11-26 13:31Z
+none
 
 ## Links
 
@@ -43,8 +43,12 @@ and the check re-running): each needs only the render check before merging.
 - Landmarks stack #708 -> #709 -> ... -> #718 (#627 and #628 merged; #708 now targets develop).
   Formatting fixed and carried up the stack. Saves go to v25 (#711): list under Bigger
   developments when it merges. #718 is a review scene of all twelve.
-- Bridge stack #661 -> #662 -> ... -> #681: all `check` green, `clean`. Review renders exist at
-  https://claude.ai/artifact/TvgwxsHMvu3hH826NLsQ46. Merge bottom first.
+- Bridge stack #661 -> #662 -> ... -> #681: develop merged up the whole stack 2026-11-26 (one
+  `src/game.ts` conflict at #664: kept develop's `groundAllowsOn` ground check plus the stack's
+  `builder.busy`; see the comment on #664). Top `9096680` passes typecheck, lint, format and
+  vitest (only the PIL environment tests fail in the cloud). Review renders at
+  https://claude.ai/artifact/TvgwxsHMvu3hH826NLsQ46 predate the merge; the merge changes the
+  build rule, not the look. Merge bottom first.
 - Fuel stack #690 -> #692 and Maglev #606: see In progress.
 - Weather/nature: #650 (trees sway) is the base of #652, #658, #659, #673 and #684; #683 (nature
   atlas) is the base of #685 (retargeted onto it 2026-11-25). `scope:cross` added to #650 #652
@@ -58,6 +62,11 @@ and the check re-running): each needs only the render check before merging.
 - #697 Tunnels step 1: check green; scope fails only for `gate:approved` (it re-blesses
   `src/world/mapgen.test.ts` for tall mountains). The charter lets you add it; tall mountains
   are the point of the change.
+
+- QA verdicts posted 2026-11-26 (all approve, render check yours): weather stack on #650 (covers
+  #652 #658 #659 #673 #684), #694, #695 (merge with or before #694), #683, #606. The triage
+  still says "QA: nincs verdikt a leírásban": verdicts are comments, not in the PR bodies. Decide
+  whether the triage tool should read comments, or the cloud run should edit the bodies.
 
 - First run: read the local memory index and every memory it names that bears on open work, check
   each "open" item below against GitHub, and rewrite "Unfinished themes" with what is really
