@@ -17,8 +17,8 @@ import { Terrain, type GameMap } from './tiles';
  * - bits 0 to 2: the drop, 1 to MAX_DROP on a waterfall, 0 on any other tile;
  * - bits 3 and 4: the edge a waterfall falls over, as a Dir (0 N, 1 E, 2 S, 3 W); 0 on a tile that
  *   is no waterfall;
- * - bits 5 and 6: kept for the headwater kind of #356 (0 none, 1 melt, 2 spring). Nothing sets
- *   them yet, and a stored chunk holds them at 0 (chunks.ts) until #356 gives them a meaning;
+ * - bits 5 and 6: the headwater kind of the tile (#356): Headwater.None, Melt or Spring, on a river
+ *   tile, a waterfall or not; held from CHUNK_VERSION 6;
  * - bit 7: unused, 0.
  *
  * Water stands at levels 0 to MAX_LEVEL, so no drop is more than MAX_DROP and none needs splitting
@@ -41,8 +41,28 @@ const DROP_BITS = 0b111;
 const EDGE_SHIFT = 3;
 /** The bits a waterfall holds: its drop and its edge. */
 export const FALL_BITS = 0b1_1111;
-/** The headwater kind's bits (#356) and the unused top bit. */
-const RESERVED_BITS = 0b1110_0000;
+/** Where the headwater kind's two bits start. */
+const HEAD_SHIFT = 5;
+/** The bits a headwater holds. */
+export const HEAD_BITS = 0b110_0000;
+/** The unused top bit. */
+const RESERVED_BITS = 0b1000_0000;
+
+/** Where a river starts in high ground (#356). */
+export const enum Headwater {
+  None = 0,
+  /** the highest river tile below a glacier */
+  Melt = 1,
+  /** a river source at level 2 or more with no glacier above it */
+  Spring = 2,
+}
+/** The lowest level a spring rises at: a source below it has no headwater. */
+export const SPRING_LEVEL = 2;
+/** The headwater kind of feature byte `f`. */
+export const headwaterOf = (f: number): Headwater => ((f & HEAD_BITS) >> HEAD_SHIFT) as Headwater;
+/** Feature byte `f` with headwater kind `kind`. */
+export const withHeadwater = (f: number, kind: Headwater): number =>
+  (f & ~HEAD_BITS) | (kind << HEAD_SHIFT);
 
 /** The feature byte of a waterfall of `drop` (1 to MAX_DROP) over `edge`. */
 export function fallFeature(drop: number, edge: Dir): number {
@@ -57,12 +77,13 @@ export const fallEdge = (f: number): Dir => ((f >> EDGE_SHIFT) & 3) as Dir;
 
 /**
  * Whether `f` is a byte the feature plane holds: a drop of 0 to MAX_DROP, an edge only with a drop,
- * and none of the bits kept for later.
+ * a headwater kind there is, and not the unused bit.
  */
 export function isFeature(f: number): boolean {
   if (!Number.isInteger(f) || f < 0 || f > 255 || f & RESERVED_BITS) return false;
   const drop = fallDrop(f);
-  return drop <= MAX_DROP && (drop > 0 || f === 0);
+  if (headwaterOf(f) > Headwater.Spring) return false;
+  return drop <= MAX_DROP && (drop > 0 || !(f & FALL_BITS));
 }
 
 /** A waterfall: how many levels its water drops, and the edge it falls over. */
@@ -81,6 +102,16 @@ export function waterfallAt(
   const f = map.feature[y * map.w + x];
   const drop = fallDrop(f);
   return drop ? { drop, edge: fallEdge(f) } : null;
+}
+
+/** The headwater on tile (`x`, `y`) of `map`; Headwater.None where there is none, and off the map. */
+export function headwaterAt(
+  map: Pick<GameMap, 'w' | 'h' | 'feature'>,
+  x: number,
+  y: number,
+): Headwater {
+  if (!map.feature || x < 0 || y < 0 || x >= map.w || y >= map.h) return Headwater.None;
+  return headwaterOf(map.feature[y * map.w + x]);
 }
 
 /** The planes a waterfall is read off: a map's, or the field's generation works on. */
@@ -122,4 +153,46 @@ export function markWaterfalls(
   for (let y = Math.max(0, s.y0); y < Math.min(h, s.y1); y++)
     for (let x = Math.max(0, s.x0), i = y * w + x; x < Math.min(w, s.x1); x++, i++)
       out[i] = (out[i] & ~FALL_BITS) | fallAt(p, i);
+}
+
+/**
+ * Whether river tile `i` is a source: no river runs into it, and it is no lake's outlet (no still
+ * water on any of its sides).
+ */
+export function isRiverSource(p: WaterPlanes, i: number): boolean {
+  const { w, h, terrain, flowDir } = p;
+  if (terrain[i] !== Terrain.Water || !flowDir?.[i]) return false;
+  const x = i % w;
+  const y = (i - x) / w;
+  for (let d = 0; d < 4; d++) {
+    const nx = x + DIR_DX[d as Dir];
+    const ny = y + DIR_DY[d as Dir];
+    if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+    const n = ny * w + nx;
+    if (terrain[n] !== Terrain.Water) continue;
+    // running into `i` it flows the opposite way to `d`, the way it lies from here
+    const side = flowDir[n];
+    if (!side || side - 1 === (d + 2) % 4) return false;
+  }
+  return true;
+}
+
+/**
+ * Marks the headwaters of the tiles of `s` in feature plane `out`, keeping each tile's other bits:
+ * Melt where `melt` has a 1 (the plan's glaciers), and Spring on any other river source at
+ * SPRING_LEVEL or more. Run it after the river pass has settled, so a stream it removed has none.
+ */
+export function markHeadwaters(
+  p: WaterPlanes,
+  out: Uint8Array,
+  s: { x0: number; y0: number; x1: number; y1: number },
+  melt: Uint8Array,
+) {
+  const { w, h, waterSurface } = p;
+  for (let y = Math.max(0, s.y0); y < Math.min(h, s.y1); y++)
+    for (let x = Math.max(0, s.x0), i = y * w + x; x < Math.min(w, s.x1); x++, i++) {
+      const spring = (waterSurface?.[i] ?? 0) >= SPRING_LEVEL && isRiverSource(p, i);
+      const kind = melt[i] ? Headwater.Melt : spring ? Headwater.Spring : Headwater.None;
+      out[i] = withHeadwater(out[i], kind);
+    }
 }
