@@ -23,7 +23,7 @@ import {
 } from './engine/saveMessages';
 import { worldToTileInt, tileToWorld, HALF_H as HALF_H_PX } from './engine/iso';
 import { ATLAS_GROUPS } from './art/index';
-import { mapFromLevel, type LevelData } from './world/level';
+import { layableTrack, mapFromLevel, type LevelData } from './world/level';
 import { rules, applyGameRules, daySeconds } from './sim/rules';
 import { setSupplyMode, supplyMode, type SupplyMode } from './sim/supply';
 import { ageDef, LAST_AGE, railAge, type AgeSnapshot } from './sim/ages';
@@ -43,6 +43,7 @@ import type { WorldSpec } from './sim/save';
 import { type GameMap, inBounds, TERRAIN_NAMES, Terrain, terrainAt } from './world/tiles';
 import { climbAxes, railProfile } from './world/railProfile';
 import { levelAt } from './world/elevation';
+import { groundAllowsOn } from './world/slope';
 import { RegionState } from './world/regions';
 import { WorldRenderer, type TexturedBridge } from './render/worldRenderer';
 import { OverviewRenderer, OV_UNIT, type OverviewSource } from './render/overviewRenderer';
@@ -567,8 +568,9 @@ export class Game implements UiHost {
 
   /** Place a level's pre-built content into a fresh world (no economy). */
   placeLevelContent(level: LevelData) {
-    const track = liftLegacyTrack(
-      level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track),
+    const { track, buildings } = layableTrack(
+      liftLegacyTrack(level.trackFormat === 2 ? level.track : convertOneTileRegular(level.track)),
+      level.buildings,
     );
     for (const [x, y, kind, rot, cls, cls2] of track) {
       if (!inBounds(this.map, x, y)) continue;
@@ -590,7 +592,7 @@ export class Game implements UiHost {
       this.onDecorChanged(d, false);
     }
     this.houses.finishAll();
-    for (const bj of level.buildings ?? []) {
+    for (const bj of buildings) {
       const b = buildingFromLevel(bj);
       if (!inBounds(this.map, b.x, b.y)) continue;
       this.builder.buildings.set(b.y * this.map.w + b.x, b);
@@ -979,7 +981,7 @@ export class Game implements UiHost {
     this.stores.onMessage = (m, k) => this.toasts.push(m, k);
     this.builder.onBuildingChanged = (b, removed) => this.onBuildingChanged(b, removed);
     this.builder.onTrackChanged = (x, y) => this.onTrackChanged(x, y);
-    this.builder.groundCheck = (x, y, need) => this.world.groundAllows(x, y, need);
+    this.builder.groundCheck = (x, y, need) => groundAllowsOn(this.map, x, y, need);
     this.builder.busy = (x, y) => this.fleet.occupied(x, y, -1);
     this.builder.onStationChanged = (s, removed) => this.onStationChanged(s, removed);
     this.builder.onDecorChanged = (d, removed) => this.onDecorChanged(d, removed);
@@ -1233,7 +1235,10 @@ export class Game implements UiHost {
     audio.applyMusic();
     if (!this.settings.weather && this.weather) this.weather.visible = 0;
     if (this.world) this.applySeason();
-    if (this.world) this.world.buildingLife.enabled = this.settings.buildingLife;
+    if (this.world) {
+      this.world.buildingLife.enabled = this.settings.buildingLife;
+      this.world.movingWater = this.settings.movingWater;
+    }
     if (this.ui) this.hud.setToggles(this.settings.weather, this.settings.dayNight);
     if (this.fleet) this.fleet.signals.level = this.settings.signalling ?? 'auto';
   }
@@ -2488,6 +2493,8 @@ export class Game implements UiHost {
     this.glows.update(this.builder.stations, this.fleet.trains, night);
     this.smoke.update(this.fleet.trains, dt * this.clock.speed, this.settings.smoke);
     this.peopleRenderer.update(this.people, dt * this.clock.speed);
+    this.world.wind = this.weather.wind;
+    this.world.rain = this.weather.kind === 'rain' ? this.weather.visible : 0;
     this.world.buildingLife.update(
       this.clock.speed ? dt : 0,
       this.weather.wind,

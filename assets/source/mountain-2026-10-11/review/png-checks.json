@@ -1,0 +1,121 @@
+[
+  {
+    "file": "glacier-strip-x.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "alpha": {
+      "zero": 1263075,
+      "partial": 308957,
+      "opaque": 484
+    },
+    "sha256": "ca3f6e95b744dcd89762e1928780be3c9e794b9b4341ef611e2614da21b42642",
+    "reviewSize": [
+      128,
+      128
+    ]
+  },
+  {
+    "file": "glacier-strip-y.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "alpha": {
+      "zero": 1272456,
+      "partial": 299652,
+      "opaque": 408
+    },
+    "sha256": "6dd8f6839f2439cad2a318af7fbe4d99e4694b1c24291a175003f5959929c3f8",
+    "reviewSize": [
+      128,
+      128
+    ]
+  },
+  {
+    "file": "glacier-lobe.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "alpha": {
+      "zero": 1470285,
+      "partial": 102122,
+      "opaque": 109
+    },
+    "sha256": "f17cd1b46c12085b409b2fc90739e0a59f954b688055387c2fbd57d1a57aaf1e",
+    "reviewSize": [
+      128,
+      128
+    ]
+  },
+  {
+    "file": "ice-cliff-lit.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "alpha": {
+      "zero": 0,
+      "partial": 0,
+      "opaque": 1572516
+    },
+    "sha256": "d1f78fc1a193068a8f949ae98949ca3bb25ec981c17af368242e9316878c3c9c",
+    "reviewSize": [
+      36,
+      39
+    ]
+  },
+  {
+    "file": "ice-cliff-shade.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "alpha": {
+      "zero": 0,
+      "partial": 0,
+      "opaque": 1572516
+    },
+    "sha256": "6bc04f86e04a8a98bb41fd25eb92b79e16c1e26f109a7140f7d39f6d1dd08325",
+    "reviewSize": [
+      36,
+      39
+    ]
+  },
+  {
+    "file": "ice-portal-lit.png",
+    "returned": [
+      1613,
+      975
+    ],
+    "alpha": {
+      "zero": 1309160,
+      "partial": 262894,
+      "opaque": 621
+    },
+    "sha256": "abb87736d5a72eac08fce715fdca7d793eeec898f5c5aceb76107d728f893958",
+    "reviewSize": [
+      36,
+      39
+    ]
+  },
+  {
+    "file": "ice-portal-shade.png",
+    "returned": [
+      1254,
+      1254
+    ],
+    "alpha": {
+      "zero": 1257620,
+      "partial": 314858,
+      "opaque": 38
+    },
+    "sha256": "2c63a54d7217e56c889ebdea225a6b7b921b44991e9eac2c8905402058e997c6",
+    "reviewSize": [
+      36,
+      39
+    ]
+  }
+]
