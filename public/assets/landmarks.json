@@ -1,0 +1,101 @@
+{
+  "resolution": 4,
+  "frames": {
+    "landmarks/ashen_conservatory": {
+      "x": 1156,
+      "y": 1179,
+      "w": 447,
+      "h": 399,
+      "ax": 223,
+      "ay": 273
+    },
+    "landmarks/bellkeepers_refuge": {
+      "x": 1601,
+      "y": 688,
+      "w": 159,
+      "h": 458,
+      "ax": 80,
+      "ay": 423
+    },
+    "landmarks/cliffside_cable_station": {
+      "x": 425,
+      "y": 688,
+      "w": 506,
+      "h": 475,
+      "ax": 217,
+      "ay": 381
+    },
+    "landmarks/flooded_archive": {
+      "x": 1353,
+      "y": 4,
+      "w": 638,
+      "h": 522,
+      "ax": 318,
+      "ay": 380
+    },
+    "landmarks/house_between_seasons": {
+      "x": 939,
+      "y": 688,
+      "w": 654,
+      "h": 473,
+      "ax": 327,
+      "ay": 327
+    },
+    "landmarks/inverted_manor": {
+      "x": 4,
+      "y": 688,
+      "w": 413,
+      "h": 483,
+      "ax": 210,
+      "ay": 453
+    },
+    "landmarks/merchants_last_stop": {
+      "x": 4,
+      "y": 1179,
+      "w": 550,
+      "h": 444,
+      "ax": 275,
+      "ay": 322
+    },
+    "landmarks/moonwell_pavilion": {
+      "x": 819,
+      "y": 1179,
+      "w": 329,
+      "h": 416,
+      "ax": 172,
+      "ay": 337
+    },
+    "landmarks/overgrown_bathhouse": {
+      "x": 721,
+      "y": 4,
+      "w": 624,
+      "h": 530,
+      "ax": 312,
+      "ay": 360
+    },
+    "landmarks/rootbound_workshop": {
+      "x": 1611,
+      "y": 1179,
+      "w": 377,
+      "h": 378,
+      "ax": 184,
+      "ay": 290
+    },
+    "landmarks/sleeping_foundry": {
+      "x": 4,
+      "y": 4,
+      "w": 709,
+      "h": 676,
+      "ax": 344,
+      "ay": 509
+    },
+    "landmarks/stormglass_observatory": {
+      "x": 562,
+      "y": 1179,
+      "w": 249,
+      "h": 426,
+      "ax": 123,
+      "ay": 364
+    }
+  }
+}

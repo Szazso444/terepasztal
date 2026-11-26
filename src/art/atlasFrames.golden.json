@@ -39,6 +39,20 @@
     "icons/wire": "14x15@6,7",
     "icons/wood": "14x11@6,5"
   },
+  "landmarks": {
+    "landmarks/ashen_conservatory": "94x81@47,57",
+    "landmarks/bellkeepers_refuge": "62x115@31,99",
+    "landmarks/cliffside_cable_station": "126x105@63,73",
+    "landmarks/flooded_archive": "126x111@63,79",
+    "landmarks/house_between_seasons": "190x124@95,76",
+    "landmarks/inverted_manor": "62x109@31,93",
+    "landmarks/merchants_last_stop": "126x101@63,69",
+    "landmarks/moonwell_pavilion": "62x85@31,69",
+    "landmarks/overgrown_bathhouse": "158x116@79,76",
+    "landmarks/rootbound_workshop": "62x79@31,63",
+    "landmarks/sleeping_foundry": "158x147@79,107",
+    "landmarks/stormglass_observatory": "62x103@31,87"
+  },
   "people": {
     "people/path_dirt_0": "61x32@30,16",
     "people/path_dirt_1": "62x30@31,15",

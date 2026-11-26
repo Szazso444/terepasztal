@@ -32,3 +32,7 @@ These are selected illustrated source candidates, not mathematically exact 3D re
 Probabilities are before suitable-terrain and spacing checks. The cable station footprint excludes the ravine crossing.
 
 [manifest.json](manifest.json) contains selected source provenance and the exact generation prompt for each asset. Earlier retry prompts remain verbatim, including incorrect camera wording; none certify the final projection. [alpha-report.json](alpha-report.json) verifies source resolution, alpha-zero pixels, unclipped solid silhouettes and content hashes. All files preserve their generated alpha channels.
+
+## Calibration
+
+[calibration.json](calibration.json) is the measured record behind the game's `landmarks` atlas group: door, scale, base corners, anchor, camera and `fit` or `regenerate` per picture. `node tools/landmark-sprites.mjs` writes it and `public/assets/landmarks.{png,json}`; the footprints it measures against are `src/art/landmarkFootprints.json` (design spec section 1), which replace the proposed ones in the table above.
