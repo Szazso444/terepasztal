@@ -30,7 +30,9 @@ import {
   fallDrop,
   fallEdge,
   fallFeature,
+  Headwater,
   isFeature,
+  withHeadwater,
   markWaterfalls,
   waterfallAt,
 } from './waterfalls';
@@ -112,7 +114,7 @@ describe('the feature byte', () => {
     for (let drop = 1; drop <= MAX_DROP; drop++)
       for (const edge of DIRS) {
         const f = fallFeature(drop, edge);
-        // bits 0 to 2 the drop, 3 and 4 the edge, none of the bits kept for #356
+        // bits 0 to 2 the drop, 3 and 4 the edge, none of the headwater's
         expect(f).toBe(drop | (edge << 3));
         expect(f & ~FALL_BITS).toBe(0);
         expect([fallDrop(f), fallEdge(f)]).toEqual([drop, edge]);
@@ -120,12 +122,15 @@ describe('the feature byte', () => {
     expect(fallDrop(0)).toBe(0);
   });
 
-  it('is 0 or a waterfall, and nothing else: no drop past MAX_DROP, no edge alone, no kept bit', () => {
+  it('is a waterfall or none, with a headwater or none: no drop past MAX_DROP, no edge alone', () => {
     const held: number[] = [];
     for (let f = 0; f < 256; f++) if (isFeature(f)) held.push(f);
-    const want: number[] = [0];
+    const falls: number[] = [0];
     for (let drop = 1; drop <= MAX_DROP; drop++)
-      for (const edge of DIRS) want.push(fallFeature(drop, edge));
+      for (const edge of DIRS) falls.push(fallFeature(drop, edge));
+    const want = [Headwater.None, Headwater.Melt, Headwater.Spring].flatMap((kind) =>
+      falls.map((f) => withHeadwater(f, kind)),
+    );
     expect(held).toEqual(want.sort((a, b) => a - b));
     for (const v of [-1, 256, 1.5, NaN]) expect(isFeature(v)).toBe(false);
     for (const drop of [0, MAX_DROP + 1, -1, 1.5]) expect(() => fallFeature(drop, Dir.N)).toThrow();
@@ -379,7 +384,7 @@ function checkFalls(small: MapPlanes, big: MapPlanes, seen: Seen) {
     for (let x = RING; x < RING + S.w; x++) {
       const i = y * w + x;
       const f = feature[i];
-      if (!isFeature(f) || f & ~FALL_BITS) throw new Error(`feature byte ${f} at ${at(i)}`);
+      if (!isFeature(f)) throw new Error(`feature byte ${f} at ${at(i)}`);
       const drop = fallDrop(f);
       // every level drop along a river is a waterfall, and a waterfall is nothing else
       const n = flowDir[i] ? downstream(m, i) : -1;
@@ -564,7 +569,7 @@ describe('waterfalls in stored chunks', () => {
   }, 30_000);
 
   it('refuse a feature byte the plane does not hold', () => {
-    for (const f of [MAX_DROP + 1, 7, 0b1000, 0b10_0000, 0b100_0001, 0x80 | 1]) {
+    for (const f of [MAX_DROP + 1, 7, 0b1000, 0b110_0000, 0x80 | 1, 0x80]) {
       const m = blank(32, 32);
       m.feature![40] = f;
       expect(() => encodeChunk(m, 0, 0), `byte ${f}`).toThrow(/waterfalls/);
@@ -637,14 +642,14 @@ describe('waterfalls in stored chunks', () => {
       for (let y = 0; y < 160; y++)
         for (let x = 0; x < 160; x++) {
           const i = y * 160 + x;
-          const f = fresh.map.feature![i];
+          const f = fresh.map.feature![i] & FALL_BITS;
           const where = `seed ${seed}, map tile (${x}, ${y})`;
           // the stored chunks have none, where the world grown at once has its waterfalls
           if (inStore(x, y)) {
-            expect(built.map.feature![i], where).toBe(0);
+            expect(built.map.feature![i] & FALL_BITS, where).toBe(0);
             if (f) missing++;
           } else {
-            expect(built.map.feature![i], where).toBe(f);
+            expect(built.map.feature![i] & FALL_BITS, where).toBe(f);
             if (f) added++;
           }
         }
@@ -766,7 +771,7 @@ describe('waterfalls of a world grown beside a chunk an older generator stored',
       const built = buildMap(seed, params, { [chunkKey(cx, cy)]: encodeChunk(stub, cx, cy) }).map;
       const isStored = (i: number) => chunk(i) === first;
       for (let i = 0; i < 160 * 160; i++) {
-        const f = built.feature![i];
+        const f = built.feature![i] & FALL_BITS;
         const where = `seed ${seed}, map tile (${i % 160}, ${Math.floor(i / 160)})`;
         if (isStored(i)) {
           expect(f, where).toBe(i === fall ? fallFeature(3, Dir.S) : 0);
@@ -781,7 +786,7 @@ describe('waterfalls of a world grown beside a chunk an older generator stored',
           const drop = Math.max(0, fallDrop(fresh.feature![i]) - lowered);
           expect(f, where).toBe(drop ? fallFeature(drop, built.flowDir![i] - 1) : 0);
         } else expect(f, where).toBe(0);
-        if (f !== fresh.feature![i]) changed++;
+        if (f !== (fresh.feature![i] & FALL_BITS)) changed++;
       }
     }
     // the seam moved a waterfall somewhere
@@ -1077,12 +1082,12 @@ describe('waterfalls of a world grown beside a stored chunk of any ground', () =
         const isStored = (i: number) => chunkOfTile(i) === k;
         const at = (i: number) => `chunk ${key}, map tile (${i % 160}, ${Math.floor(i / 160)})`;
         for (let i = 0; i < 160 * 160; i++) {
-          const f = feature[i];
           // a waterfall's bits read here: the drop in bits 0 to 2, the edge in 3 and 4
+          const f = feature[i] & FALL_BITS;
           const drop = f & 7;
           if (isStored(i)) {
             // a stored tile keeps the byte it was stored with, whatever the new side does
-            if (f !== ground.feature![i])
+            if (feature[i] !== ground.feature![i])
               throw new Error(`stored feature ${ground.feature![i]} read as ${f} at ${at(i)}`);
             const n = drop ? downstream(m, i) : -1;
             if (n >= 0 && !isStored(n)) met.outward++;
@@ -1090,7 +1095,7 @@ describe('waterfalls of a world grown beside a stored chunk of any ground', () =
           }
           if (fresh.flowDir![i] && !way[i]) met.ponds++;
           if (m.terrain[i] === Terrain.Water && level[i] < fresh.waterSurface![i]) met.lowered++;
-          if (f !== fresh.feature![i]) met.moved++;
+          if (f !== (fresh.feature![i] & FALL_BITS)) met.moved++;
           if (f >= 32 || (f && !drop)) throw new Error(`feature byte ${f} at ${at(i)}`);
           if (!way[i]) {
             if (f) throw new Error(`a waterfall ${f} on a tile that runs nowhere at ${at(i)}`);
