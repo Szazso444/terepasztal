@@ -8,18 +8,34 @@ import {
 import { reliefHeight, surfaceAlongRay, RELIEF_MAX, type TerrainRelief } from './terrainRelief';
 import {
   grassDetail,
+  hasWildSheet,
   paintedWater,
   rockExposure,
   shareSurfaceDetail,
+  shareWildSheet,
   surfaceNoise,
   surfaceColor,
   surfaceMaterial,
+  wildTexel,
 } from './terrainMaterials';
+import {
+  bankMaterial,
+  channelsOf,
+  fallAt,
+  frontAt,
+  iceAt,
+  isRiver,
+  moraineAt,
+  riverAt,
+  type Channels,
+  type Lay,
+  type RiverPoint,
+} from './waterPaint';
 import { FRINGE_EARTH, PAVING_FAR, PAVING_FRINGE, PAVING_SOLID, TownPaving } from './townPaving';
 import { BuildingYards } from './buildingYard';
 import { pavingFade, RoadPaint } from './roadPaint';
 import { hash2 } from '../engine/rng';
-import { Terrain } from '../world/tiles';
+import { Biome, Terrain } from '../world/tiles';
 
 let map: LandscapeMap,
   relief: TerrainRelief,
@@ -38,6 +54,14 @@ let roads = new RoadPaint(0, 0, 0, 0, []);
 let lanes = new RoadPaint(0, 0, 0, 0, []);
 // Where snow starts, by biome id: sent by the landscape, as this worker cannot read the content.
 let snowLevels: readonly number[] = [];
+/** Rivers, falls and glaciers of the map (waterPaint.ts). */
+let channels: Channels;
+/** The sheet the current job reads, for `wildTexel`. */
+let sheet: Uint8ClampedArray;
+const readSheet = (material: number, u: number, v: number, out: number[]) =>
+  wildTexel(sheet, material, u, v, out);
+const river: RiverPoint = { water: 0, still: 0, bank: 0 };
+const lay: Lay = { r: 0, g: 0, b: 0, a: 0, dark: 0 };
 self.onmessage = async (event: MessageEvent) => {
   const data = event.data;
   try {
@@ -52,12 +76,14 @@ self.onmessage = async (event: MessageEvent) => {
       samples = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
       reduced = halve(samples, canvas.width, canvas.height);
       shareSurfaceDetail(samples, reduced);
+      await loadWild(data.url);
       self.postMessage({ loaded: true });
       return;
     }
     if (data.map) {
       map = data.map;
       relief = data.relief;
+      channels = channelsOf(map, relief.style.step, relief.tiles ?? undefined);
       version = data.version;
       tint = data.tint;
       paving = new TownPaving(
@@ -95,6 +121,7 @@ self.onmessage = async (event: MessageEvent) => {
     const started = performance.now(),
       // Chunks drawn at one pixel per world pixel read a half-size copy, so they stay filtered.
       source = scale > 1 ? samples : reduced;
+    sheet = source;
     const left = (x - y - h) * 32 - 4,
       top = (x + y - 1) * 16 - RELIEF_MAX - 5;
     const width = ((w + h) * 32 + 8) * scale,
@@ -104,7 +131,8 @@ self.onmessage = async (event: MessageEvent) => {
     const pixels = new Uint8ClampedArray(width * height * 4),
       color = [0, 0, 0],
       part = [0, 0, 0],
-      blend = new Array<number>(8);
+      wet = [0, 0, 0],
+      blend = new Array<number>(12);
     let raised = false;
     for (let ty = Math.max(0, y - 2); ty < Math.min(map.h, y + h + 3) && !raised; ty++)
       for (let tx = Math.max(0, x - 2); tx < Math.min(map.w, x + w + 3); tx++)
@@ -133,8 +161,15 @@ self.onmessage = async (event: MessageEvent) => {
           pave = paving.near(tileIndex) ? paving.distance(tx, ty) : -PAVING_FAR,
           solid = pave >= PAVING_SOLID;
         // Pilot: the climate's own ground between the stones (desert sand, taiga moss...).
-        const stoneGround = relief.style.biomeTops ? stoneGroundAt(map, tileIndex) : 0;
+        const stoneGround = !relief.style.biomeTops
+          ? 0
+          : map.biome[tileIndex] === Biome.Mountain
+            ? Material.Alpine
+            : stoneGroundAt(map, tileIndex);
         color[0] = color[1] = color[2] = 0;
+        // ice and the moraine that keeps snow off, as much of each as this point holds
+        let ice = 0,
+          rubble = 0;
         // Water keeps its colours under the season's tint, and so does the paving (below). The
         // water's share is the waterline bridges cut their supports to (paintedWater): none on a
         // town's tile, which is paved over its water too.
@@ -172,7 +207,16 @@ self.onmessage = async (event: MessageEvent) => {
           let material = blend[m];
           // Under a town's paving its water is its own ground, which worn setts show.
           if (paved && material === Material.Water) material = pavedGround(tx, ty);
-          if (z > 2 && terrain === Terrain.Mountain && material === 7) material = 9;
+          if (z > 2 && terrain === Terrain.Mountain && material === 7) material = Material.HighRock;
+          const tile = blend[m + 8];
+          // A river is narrower than its tile: the ground beside it is its neighbours', damp.
+          let channel = 0;
+          if (material === Material.Water && isRiver(map, tile)) {
+            riverAt(channels, map, tile, tx, ty, river);
+            channel = river.water;
+            material = bankMaterial(map, tile, tx, ty);
+          } else if (map.terrain[tile] === Terrain.Ice)
+            channel = iceAt(channels, map, tile, tx, ty);
           surfaceColor(
             source,
             material,
@@ -182,6 +226,43 @@ self.onmessage = async (event: MessageEvent) => {
             EXPOSED[material] ? steep : undefined,
             stoneGround,
           );
+          if (map.terrain[tile] === Terrain.Ice) {
+            for (let c = 0; c < 3; c++) part[c] *= RUBBLE_TONE[c];
+            ice += channel * weight;
+            rubble += (1 - channel) * weight;
+            if (channel > 0) {
+              surfaceColor(source, Material.Ice, wx, wy, wet);
+              for (let c = 0; c < 3; c++) part[c] += (wet[c] * ICE_TONE[c] - part[c]) * channel;
+            }
+          } else if (material !== Material.Water && channels.iced[tile]) {
+            const bank = moraineAt(map, tile, tx, ty);
+            rubble += bank * weight;
+            if (bank > 0) {
+              surfaceColor(source, Material.Moraine, wx, wy, wet);
+              for (let c = 0; c < 3; c++) part[c] += (wet[c] * RUBBLE_TONE[c] - part[c]) * bank;
+            }
+          } else if (blend[m] === Material.Water && isRiver(map, tile) && !paved) {
+            if (river.bank > 0 && channel < 1) {
+              surfaceColor(source, Material.Bank, wx * 2, wy * 2, wet);
+              for (let c = 0; c < 3; c++) {
+                const damp = part[c] * 0.8 + (wet[c] - BANK_MEAN[c]) * 0.33;
+                part[c] += (damp - part[c]) * 0.8 * river.bank;
+              }
+            }
+            if (channel > 0) {
+              surfaceColor(source, Material.River, wx, wy, wet);
+              if (river.still > 0) {
+                const r = wet[0];
+                const g = wet[1];
+                const b = wet[2];
+                surfaceColor(source, Material.Water, wx, wy, wet);
+                wet[0] = r + (wet[0] - r) * river.still;
+                wet[1] = g + (wet[1] - g) * river.still;
+                wet[2] = b + (wet[2] - b) * river.still;
+              }
+              for (let c = 0; c < 3; c++) part[c] += (wet[c] - part[c]) * channel;
+            }
+          }
           for (let c = 0; c < 3; c++) color[c] += part[c] * weight;
         }
         // A building's yard and its door paths are worn into its ground (buildingYard.ts), under
@@ -215,6 +296,7 @@ self.onmessage = async (event: MessageEvent) => {
             1.3;
           shade = Math.max(0.83, Math.min(1.12, 1 + dx * 0.012 - dy * 0.015));
         }
+        snowed = 0;
         // The paving is lit by its level like the ground, the solid middle too, so the line from
         // which the ground under it is not painted shows no step; snow goes on painted ground only.
         if (raised && waterWeight < 1) {
@@ -233,7 +315,9 @@ self.onmessage = async (event: MessageEvent) => {
             wy,
             snowLineAt(map, snowLevels, tileIndex),
             steep ?? 0,
-            solid ? null : color,
+            solid || terrain === Terrain.Ice ? null : color,
+            Math.max(waterWeight, ice, rubble),
+            source,
           );
         }
         if (pave > -PAVING_FRINGE) {
@@ -255,9 +339,33 @@ self.onmessage = async (event: MessageEvent) => {
               color[c] = (color[c] + (FRINGE_EARTH[c] - color[c]) * earth) * shade;
           }
         } else
-          for (let c = 0; c < 3; c++)
-            color[c] *=
-              shade * (waterWeight + ((1 - waterWeight) * ((tint >> (16 - c * 8)) & 255)) / 255);
+          // Water, ice and snow keep their colours under the season's tint.
+          for (let c = 0; c < 3; c++) {
+            const keep = Math.max(waterWeight, ice, snowed);
+            color[c] *= shade * (keep + ((1 - keep) * ((tint >> (16 - c * 8)) & 255)) / 255);
+          }
+        // Snow and ice stay under the cursor's white, however high they lie.
+        if (ice > 0 || snowed > 0)
+          for (let c = 0; c < 3; c++) color[c] = Math.min(color[c], SNOW_CAP[c]);
+        // A fall's cascade and an ice front go over the lit ground: they are water and ice, the
+        // light is their own.
+        if (channels.any) {
+          const falls = channels.falls.get(tileIndex);
+          const fronts = channels.fronts.get(tileIndex);
+          if (falls || fronts) {
+            lay.a = lay.dark = 0;
+            if (falls)
+              for (const f of falls) fallAt(f, map, tx, ty, z, waterWeight, readSheet, lay);
+            if (fronts) for (const f of fronts) frontAt(f, tx, ty, z, readSheet, lay);
+            const ground = 1 - lay.dark;
+            for (let c = 0; c < 3; c++) color[c] *= ground;
+            if (lay.a > 0) {
+              color[0] += (lay.r - color[0]) * lay.a;
+              color[1] += (lay.g - color[1]) * lay.a;
+              color[2] += (lay.b - color[2]) * lay.a;
+            }
+          }
+        }
         const k = (py * width + px) * 4;
         pixels[k] = color[0];
         pixels[k + 1] = color[1];
@@ -293,6 +401,10 @@ self.onmessage = async (event: MessageEvent) => {
         const material = surfaceMaterial(map, tx, ty);
         if (![0, 1, 3, 4, 7].includes(material)) continue;
         if (material === 7 && rockExposure(tx + ox, ty + oy) > 0.45) continue;
+        // no grass grows through snow
+        const tile = Math.round(ty) * map.w + Math.round(tx);
+        const line = snowLineAt(map, snowLevels, tile) - 0.25;
+        if (reliefHeight(map, relief, tx, ty) / relief.style.step >= line) continue;
         const sx = (tx - ty) * 32 - left,
           sy = (tx + ty) * 16 - reliefHeight(map, relief, tx, ty) - top;
         const length = 1.6 + hash2(ix, iy, 17) * 1.5;
@@ -356,6 +468,26 @@ self.onmessage = async (event: MessageEvent) => {
     });
   }
 };
+/**
+ * The wild sheet beside the surface sheet at `url`, and its half-size copy. A painter without it
+ * goes on with the plain materials (WILD_FALLBACK).
+ */
+async function loadWild(url: string) {
+  try {
+    const response = await fetch(url.replace('terrain-surfaces', 'wild-surfaces'));
+    if (!response.ok) return;
+    const bitmap = await createImageBitmap(await response.blob());
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height),
+      ctx = canvas.getContext('2d')!;
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close();
+    const wild = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    shareWildSheet(samples, wild);
+    shareWildSheet(reduced, halve(wild, canvas.width, canvas.height));
+  } catch {
+    // the plain materials stand in
+  }
+}
 /** 2×2 box reduction of the packed surface sheet. */
 function halve(pixels: Uint8ClampedArray, width: number, height: number) {
   const w = width >> 1,
@@ -391,8 +523,10 @@ function pavedGround(x: number, y: number) {
   const own = materialAt(map, Math.round(x), Math.round(y));
   return own === Material.Water ? Material.Grass : own;
 }
-/** Materials whose rock exposure follows the slope (materials 0, 1, 3, 4, 7 and 9), by index. */
-const EXPOSED = [1, 1, 0, 1, 1, 0, 0, 1, 0, 1];
+/** Materials whose rock exposure follows the slope (materials 0, 1, 3, 4, 7, 9 and the high rock). */
+const EXPOSED = [1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0];
+/** The bank swatch's mean colour: its gravel shows as light and dark about this. */
+const BANK_MEAN = [118, 108, 92];
 const gradient = [0, 0];
 /** Surface slope in world pixels per tile at (x, y): the analytic derivative of its corners. */
 function faceGradient(x: number, y: number) {
@@ -466,7 +600,20 @@ const BANK_TONES = {
   dark: [0.88, 0.92, 0.95],
   lush: [0.9, 1.02, 0.86],
 };
-const SNOW = [234, 239, 246];
+const snowColor = [0, 0, 0];
+/** Snow where the snow picture is missing. */
+const PLAIN_SNOW = [234, 239, 246];
+/** How much snow the last point took, and the brightest snow and ice may be: #DCE1E4. */
+let snowed = 0;
+const SNOW_CAP = [220, 225, 228];
+/**
+ * Ice and snow lie high, where the height light lifts them by a quarter: these keep their texture
+ * under the cap, ice a cool green-blue and snow a cool blue, as the art demo has them apart.
+ */
+const ICE_TONE = [0.76, 0.82, 0.78];
+const SNOW_TONE = [0.74, 0.79, 0.84];
+/** The moraine's rubble: grey, under the same light. */
+const RUBBLE_TONE = [0.72, 0.76, 0.74];
 /**
  * Looks from the relief style (the shipped style has the height light and snow): higher levels
  * paint lighter (ground level unchanged), snow patches from the tile's snow line and full snow a
@@ -483,6 +630,8 @@ function previewLooks(
   snowLine: number,
   steep: number,
   color: number[] | null,
+  water: number,
+  source: Uint8ClampedArray,
 ) {
   const style = relief.style,
     level = Math.max(0, z / style.step);
@@ -497,9 +646,17 @@ function previewLooks(
           surfaceNoise(wx * 1.3, wy * 1.3, 641) * 0.8 + surfaceNoise(wx * 6, wy * 6, 643) * 0.2,
         // Patchy snow keeps off steep rock; full snow covers everything.
         amount = unit((cover - n) / 0.06) * (cover < 0.99 ? 1 - 0.6 * steep : 1);
-      if (amount > 0) {
-        const texture = 0.88 + 0.12 * ((color[0] + color[1] + color[2]) / 3 / 140);
-        for (let c = 0; c < 3; c++) color[c] += (SNOW[c] * texture - color[c]) * amount;
+      // none on water: a river stays open above the snow line
+      const snow = amount * (1 - water);
+      snowed = snow;
+      if (snow > 0) {
+        if (hasWildSheet(source)) {
+          surfaceColor(source, Material.Snow, wx, wy, snowColor);
+          for (let c = 0; c < 3; c++) color[c] += (snowColor[c] * SNOW_TONE[c] - color[c]) * snow;
+        } else {
+          const texture = 0.88 + 0.12 * ((color[0] + color[1] + color[2]) / 3 / 140);
+          for (let c = 0; c < 3; c++) color[c] += (PLAIN_SNOW[c] * texture - color[c]) * snow;
+        }
       }
     }
   }

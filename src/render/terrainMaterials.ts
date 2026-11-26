@@ -1,6 +1,59 @@
 import { hash2 } from '../engine/rng';
 import { Terrain } from '../world/tiles';
-import { Material, materialAt, type LandscapeMap } from './landscapeModel';
+import { FIRST_WILD, Material, WILD_CELLS, materialAt, type LandscapeMap } from './landscapeModel';
+import { channelsOf, isRiver, riverWater } from './waterPaint';
+
+/** Each sheet's wild sheet of the same scale (`shareWildSheet`); none until it has loaded. */
+const wildSheets = new WeakMap<Uint8ClampedArray, Uint8ClampedArray>();
+/** The wild sheet to read wherever the painter reads `sheet`. */
+export function shareWildSheet(sheet: Uint8ClampedArray, wild: Uint8ClampedArray) {
+  wildSheets.set(sheet, wild);
+}
+/** Whether the wild sheet reached the painter. */
+export const hasWildSheet = (sheet: Uint8ClampedArray) => wildSheets.has(sheet);
+/** What a material of the wild sheet stands in for while that sheet is missing. */
+const WILD_FALLBACK = [
+  Material.Water,
+  Material.Sand,
+  Material.Sand,
+  Material.Water,
+  Material.Water,
+  Material.Rock,
+  Material.Mountain,
+  Material.Rock,
+  Material.Rock,
+  Material.Rock,
+  Material.Rock,
+  Material.Rock,
+];
+/**
+ * A texel of a picture of the wild sheet (a fall's sheet, an ice cliff), where it repeats: `u` and
+ * `v` wrap at 1. Grey where the sheet is missing.
+ */
+export function wildTexel(
+  samples: Uint8ClampedArray,
+  material: number,
+  u: number,
+  v: number,
+  out: number[],
+) {
+  const sheet = wildSheets.get(samples);
+  if (!sheet) {
+    out[0] = out[1] = out[2] = 170;
+    return;
+  }
+  const size = Math.round(Math.sqrt(sheet.length / (4 * WILD_CELLS)));
+  out[0] = out[1] = out[2] = 0;
+  addTexel(
+    sheet,
+    size,
+    material - FIRST_WILD,
+    (u - Math.floor(u)) * size,
+    (v - Math.floor(v)) * size,
+    1,
+    out,
+  );
+}
 
 /** Slow world-space variation, so light/balanced/rich areas never form tile-sized squares. */
 export function grassDetail(x: number, y: number) {
@@ -62,9 +115,16 @@ export function surfaceBlend(map: LandscapeMap, x: number, y: number, out: numbe
   out[5] = fx * (1 - fy);
   out[6] = (1 - fx) * fy;
   out[7] = fx * fy;
+  // the tiles the four materials are of, off the map its edge tile as materialAt reads
+  const at = (tx: number, ty: number) =>
+    Math.max(0, Math.min(map.h - 1, ty)) * map.w + Math.max(0, Math.min(map.w - 1, tx));
+  out[8] = at(ix, iy);
+  out[9] = at(ix + 1, iy);
+  out[10] = at(ix, iy + 1);
+  out[11] = at(ix + 1, iy + 1);
 }
 
-const blendAt: number[] = new Array(8);
+const blendAt: number[] = new Array(12);
 /**
  * The landscape painter's water at map point (x, y): the share of the water material in the blend
  * it paints there (`surfaceBlend`, left in `blend`), from 0 (none) to 1 (water alone). The edge
@@ -84,7 +144,17 @@ export function paintedWater(
   surfaceBlend(map, x, y, blend);
   if (paved) return 0;
   let water = 0;
-  for (let m = 0; m < 4; m++) if (blend[m] === Material.Water) water += blend[m + 4];
+  if (!map.flowDir) {
+    for (let m = 0; m < 4; m++) if (blend[m] === Material.Water) water += blend[m + 4];
+    return water;
+  }
+  // a river is narrower than its tile
+  const channels = channelsOf(map, 1);
+  for (let m = 0; m < 4; m++) {
+    if (blend[m] !== Material.Water) continue;
+    const tile = blend[m + 8];
+    water += blend[m + 4] * (isRiver(map, tile) ? riverWater(channels, map, tile, x, y) : 1);
+  }
   return water;
 }
 
@@ -110,7 +180,12 @@ function waterReach(map: LandscapeMap, x: number, y: number) {
   let water = 0;
   // Read off the map, a tile is its edge tile (materialAt), so the clamped box holds them all.
   for (let ty = y0; ty <= y1; ty++)
-    for (let tx = x0; tx <= x1; tx++) if (map.terrain[ty * map.w + tx] === Terrain.Water) water++;
+    for (let tx = x0; tx <= x1; tx++) {
+      if (map.terrain[ty * map.w + tx] !== Terrain.Water) continue;
+      // a river's tile may be bank at the point, so all of it is known only by blending
+      if (isRiver(map, ty * map.w + tx)) return -1;
+      water++;
+    }
   return water === (x1 - x0 + 1) * (y1 - y0 + 1) ? 1 : water ? -1 : 0;
 }
 /** Map offset along both axes of the point half a world pixel lower on screen. */
@@ -192,7 +267,7 @@ export function shareSurfaceDetail(sheet: Uint8ClampedArray, copy: Uint8ClampedA
 }
 /** Source position (in cell texels) for texture coordinates a, b. */
 function sourcePoint(material: number, a: number, b: number, size: number, out: number[]) {
-  if (material === 7 || material === 9) {
+  if (material === 7 || material === 9 || material >= FIRST_WILD) {
     // Screen-aligned like the illustrated tiles, so the painted boulder faces keep their upper-left
     // light instead of being turned 45° and flattened into paving. About 6 source pixels per pixel.
     out[0] = (0.5 + (a - b) * 0.7) * size;
@@ -227,7 +302,7 @@ function patchOffset(
   const seed = (material + 1) * 29;
   if (material >= 5 && material !== 6) {
     // Water, rock and road take a plain seeded offset; rock's wider source mapping allows less.
-    const spread = material === 7 || material === 9 ? 0.2 : 0.3;
+    const spread = material === 7 || material === 9 || material >= FIRST_WILD ? 0.2 : 0.3;
     out[0] = (hash2(cx, cy, seed + 81) - 0.5) * spread;
     out[1] = (hash2(cx, cy, seed + 177) - 0.5) * spread;
     return;
@@ -298,6 +373,67 @@ const offset = [0, 0];
  * source at full contrast; only a narrow warped seam blends neighbouring patches. `samples` holds
  * the ten square surface cells at any power-of-two size, so a reduced copy serves coarse chunks.
  */
+/**
+ * Water's broad light and shade, cell by cell: a box blur of the cell about a sixteenth of its side
+ * wide, and the cell's mean, both of its painted texels alone (weighed by their alpha). A patch of water reads its picture less this blur, plus the mean, so
+ * each patch keeps the picture's fine ripples but not the brightness of the stretch it happens to
+ * read; the open sea then shows no tile-wide bands where the patches meet.
+ */
+const broadLight = new WeakMap<
+  Uint8ClampedArray,
+  Map<number, { blur: Uint8ClampedArray; mean: number[] }>
+>();
+function broadOf(sheet: Uint8ClampedArray, cell: number, size: number) {
+  let cells = broadLight.get(sheet);
+  if (!cells) broadLight.set(sheet, (cells = new Map()));
+  let known = cells.get(cell);
+  if (known) return known;
+  const r = Math.max(2, Math.round(size / 16));
+  const at = cell * size * size * 4;
+  // three colour channels weighed by alpha, and the alpha itself
+  const pass = (src: Float32Array, along: boolean) => {
+    const out = new Float32Array(size * size * 4);
+    for (let line = 0; line < size; line++)
+      for (let c = 0; c < 4; c++) {
+        let sum = 0;
+        const read = (k: number) => {
+          const p = Math.min(size - 1, Math.max(0, k));
+          return src[(along ? line * size + p : p * size + line) * 4 + c];
+        };
+        for (let k = -r; k <= r; k++) sum += read(k);
+        for (let k = 0; k < size; k++) {
+          out[(along ? line * size + k : k * size + line) * 4 + c] = sum / (2 * r + 1);
+          sum += read(k + r + 1) - read(k - r);
+        }
+      }
+    return out;
+  };
+  const plain = new Float32Array(size * size * 4);
+  const mean = [0, 0, 0];
+  let weight = 0;
+  for (let k = 0; k < size * size; k++) {
+    const a = sheet[at + k * 4 + 3] / 255;
+    for (let c = 0; c < 3; c++) {
+      plain[k * 4 + c] = sheet[at + k * 4 + c] * a;
+      mean[c] += sheet[at + k * 4 + c] * a;
+    }
+    plain[k * 4 + 3] = a;
+    weight += a;
+  }
+  for (let c = 0; c < 3; c++) mean[c] /= weight || 1;
+  const smooth2 = pass(pass(plain, true), false);
+  const blur = new Uint8ClampedArray(size * size * 4);
+  for (let k = 0; k < size * size; k++) {
+    const a = smooth2[k * 4 + 3];
+    for (let c = 0; c < 3; c++) blur[k * 4 + c] = a > 0 ? smooth2[k * 4 + c] / a : mean[c];
+    blur[k * 4 + 3] = 255;
+  }
+  known = { blur, mean };
+  cells.set(cell, known);
+  return known;
+}
+const broad = [0, 0, 0];
+
 function sampleSurface(
   samples: Uint8ClampedArray,
   material: number,
@@ -305,8 +441,14 @@ function sampleSurface(
   y: number,
   out: number[],
 ) {
-  const size = Math.round(Math.sqrt(samples.length / 40));
-  const rock = material === 7 || material === 9;
+  const wild = material >= FIRST_WILD;
+  if (wild && !wildSheets.has(samples)) {
+    sampleSurface(samples, WILD_FALLBACK[material - FIRST_WILD], x, y, out);
+    return;
+  }
+  const sheet = wild ? wildSheets.get(samples)! : samples;
+  const size = Math.round(Math.sqrt(sheet.length / (4 * (wild ? WILD_CELLS : 10))));
+  const rock = wild || material === 7 || material === 9;
   const grid = rock ? 0.9 : 0.72,
     rate = rock ? 0.23 : SURFACE_RATE;
   const sx = x * grid + (surfaceNoise(x * 1.3, y * 1.3, 41) - 0.5) * 0.3,
@@ -315,7 +457,11 @@ function sampleSurface(
     iy = Math.floor(sy),
     u = smooth((sx - ix - 0.5) / PATCH_SEAM + 0.5),
     v = smooth((sy - iy - 0.5) / PATCH_SEAM + 0.5);
+  const cell = wild ? material - FIRST_WILD : material;
+  const even = material === Material.Water || material === Material.River;
+  const light = even ? broadOf(sheet, cell, size) : null;
   out[0] = out[1] = out[2] = 0;
+  broad[0] = broad[1] = broad[2] = 0;
   for (let dy = 0; dy < 2; dy++)
     for (let dx = 0; dx < 2; dx++) {
       const w = (dx ? u : 1 - u) * (dy ? v : 1 - v);
@@ -324,8 +470,10 @@ function sampleSurface(
       const a = 0.5 + (x - (ix + dx) / grid) * rate + offset[0],
         b = 0.5 + (y - (iy + dy) / grid) * rate + offset[1];
       sourcePoint(material, a, b, size, point);
-      addTexel(samples, size, material, point[0], point[1], w, out);
+      addTexel(sheet, size, cell, point[0], point[1], w, out);
+      if (light) addTexel(light.blur, size, 0, point[0], point[1], w, broad);
     }
+  if (light) for (let c = 0; c < 3; c++) out[c] += light.mean[c] - broad[c];
 }
 
 /** Grass remains the dominant surface, with coherent exposed stone islands and narrow edges. */
@@ -347,7 +495,7 @@ export function surfaceColor(
   /** Ground between stones on rock and mountain tiles (grass unless the biome says otherwise). */
   rockGround = 0,
 ) {
-  const rocky = material === 7 || material === 9;
+  const rocky = material === 7 || material === 9 || material === Material.HighRock;
   if (exposure === undefined) {
     if (!rocky) {
       sampleSurface(samples, material, x, y, out);

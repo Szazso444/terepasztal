@@ -41,6 +41,8 @@ import { Landscape } from './landscape';
 import { standOnGround, LEVEL_GROUND, type Ground } from './slope';
 import { clearedByPaving, scatterFor } from './scatter';
 import { levelAt } from '../world/elevation';
+import { WaterMotion, type WaterWind } from './waterMotion';
+import { isRiver } from './waterPaint';
 import { bedFor, railLevel, type RailBed } from '../world/railProfile';
 import { DEFAULT_RELIEF } from './terrainRelief';
 import { underPaintedWater } from './terrainMaterials';
@@ -333,6 +335,13 @@ export class WorldRenderer {
   private waterDetails = new Graphics();
   private waterClock = 0;
   private rippleRefresh = 0;
+  /** Whether all water moves (the setting); off, the still water of before #365. */
+  movingWater = true;
+  /** The wind the water moves in (`Weather`); the game sets it each frame. */
+  wind: WaterWind | undefined;
+  /** How much rain shows, 0 to 1, for the rings on the water; the game sets it each frame. */
+  rain = 0;
+  private waterMotion: WaterMotion | undefined;
   private view: { x: number; y: number; w: number; h: number } | null = null;
   /** The wheat fields' pictures (#444), one per field tile's sprite. */
   private wheat: WheatFields;
@@ -374,6 +383,11 @@ export class WorldRenderer {
     this.landscape = new Landscape(map, this.flattened, this.railBeds);
     this.harvest = new HarvestHighlight(map, (x, y) => this.surfacePoint(x, y));
     this.buildingLife = new BuildingLife(this.atlas, this.objects, this.surfaces);
+    this.waterMotion = new WaterMotion(
+      this.map,
+      (x, y) => this.elevationOf(x, y),
+      (x, y) => this.isBuilt(x, y),
+    );
     this.wheat = new WheatFields(map.w, map.h);
     this.wheatHost = {
       site: (x, y) => this.fieldSite(x, y),
@@ -397,6 +411,7 @@ export class WorldRenderer {
       this.landscape.root,
       this.ground,
       this.waterDetails,
+      this.waterMotion!.root,
       this.contactGround,
       this.piers,
       this.platforms,
@@ -630,13 +645,22 @@ export class WorldRenderer {
       case Terrain.Hill:
         return this.flattened.has(i) ? `terrain/hillcut_${v}` : `terrain/hill_${v % 3}`;
       case Terrain.Water:
-        return `terrain/water_${v % 3}_f0`;
+        return isRiver(this.map, i) ? `terrain/river_${v % 3}_f0` : `terrain/water_${v % 3}_f0`;
       case Terrain.Rock:
         return `terrain/rock_${v}`;
       case Terrain.Mountain:
         return `terrain/mountain_${v % 3}`;
       case Terrain.Sand:
-        return b === Biome.Desert ? `terrain/desert_${v}` : `terrain/sand_${v}`;
+        return b === Biome.Desert
+          ? `terrain/desert_${v}`
+          : b === Biome.Beach
+            ? `terrain/beach_${v}`
+            : `terrain/sand_${v}`;
+      case Terrain.Ice:
+        return `terrain/glacier_${v}`;
+      default:
+        // a terrain with no frame of its own yet reads as the high ground it lies on
+        return `terrain/mountain_${v % 3}`;
     }
   }
 
@@ -810,8 +834,10 @@ export class WorldRenderer {
       ty = Math.round(y);
     if (tx < 0 || ty < 0 || tx >= this.map.w || ty >= this.map.h) return 0;
     const i = idx(this.map, tx, ty);
-    if (this.map.terrain[i] === Terrain.Mountain) return -2 * ELEV_PX;
-    return this.map.terrain[i] === Terrain.Hill && !this.flattened.has(i) ? -ELEV_PX : 0;
+    // high ground stands at the levels the rail profile reads, so track sits at its own height
+    const t = this.map.terrain[i];
+    if (t === Terrain.Mountain || t === Terrain.Rock) return -levelAt(this.map, tx, ty) * ELEV_PX;
+    return t === Terrain.Hill && !this.flattened.has(i) ? -ELEV_PX : 0;
   }
 
   private buildProps() {
@@ -1053,6 +1079,15 @@ export class WorldRenderer {
             .stroke({ color: 0xb7d1be, width: 0.6, alpha: 0.04 + 0.055 * (1 + Math.sin(phase)) });
         }
     }
+    this.waterMotion?.update(
+      dt,
+      this.waterClock,
+      this.movingWater ? this.view : null,
+      () => viewTileRows(this.view!, RIPPLE_MARGIN, this.map.w, this.map.h),
+      this.builtRegions.size,
+      this.wind,
+      this.rain,
+    );
     this.waterPhase += dt;
     if (this.waterPhase > 0.28) {
       this.waterPhase = 0;
@@ -1223,42 +1258,47 @@ export class WorldRenderer {
   private propTint = 0xffffff;
   private refreshSummits() {
     for (let y = 0; y < this.map.h; y++)
-      for (let x = 0; x < this.map.w; x++) {
-        if (!this.isBuilt(x, y)) continue;
-        const k = idx(this.map, x, y),
-          show =
-            this.landscape.active && this.landscape.isPainted(x, y) && this.landscape.summit(x, y);
-        let s = this.summitSprites.get(k);
-        if (!show) {
-          s?.destroy();
-          this.summitSprites.delete(k);
-          continue;
-        }
-        const key = `terrain/mountain_${this.map.variant[k] % 3}`,
-          f = this.atlas.get(key),
-          style = this.landscape.style,
-          // With a match set, lit like the ground it stands on (the painter's height light).
-          texture = this.surfaces.summit(
-            key,
-            f,
-            style.summitMatch ?? 0,
-            style.summitMatch === undefined
-              ? 1
-              : 1 + (style.heightLight ?? 0) * levelAt(this.map, x, y),
-          );
-        if (s) s.texture = texture;
-        else {
-          s = new Sprite({ texture, cullable: true });
-          s.anchor.set(f.anchorX, f.anchorY);
-          s.scale.set(1.05 + hash2(x + this.map.originX, y + this.map.originY, 27) * 0.3);
-          s.zIndex = depthKey(x, y, 2);
-          this.objects.addChild(s);
-          this.summitSprites.set(k, s);
-        }
-        const p = this.surfacePoint(x, y);
-        s.position.set(p.x, p.y);
-        setOwnTint(s, this.groundTint);
-      }
+      for (let x = 0; x < this.map.w; x++) this.refreshSummit(x, y);
+  }
+  /** The summit of tile (x, y): a peak gives way to track, and comes back when the track goes. */
+  private refreshSummit(x: number, y: number) {
+    if (!this.isBuilt(x, y)) return;
+    const k = idx(this.map, x, y),
+      show =
+        !this.trackFrames.has(k) &&
+        this.landscape.active &&
+        this.landscape.isPainted(x, y) &&
+        this.landscape.summit(x, y);
+    let s = this.summitSprites.get(k);
+    if (!show) {
+      s?.destroy();
+      this.summitSprites.delete(k);
+      return;
+    }
+    const key = `terrain/mountain_${this.map.variant[k] % 3}`,
+      f = this.atlas.get(key),
+      style = this.landscape.style,
+      // With a match set, lit like the ground it stands on (the painter's height light).
+      texture = this.surfaces.summit(
+        key,
+        f,
+        style.summitMatch ?? 0,
+        style.summitMatch === undefined
+          ? 1
+          : 1 + (style.heightLight ?? 0) * levelAt(this.map, x, y),
+      );
+    if (s) s.texture = texture;
+    else {
+      s = new Sprite({ texture, cullable: true });
+      s.anchor.set(f.anchorX, f.anchorY);
+      s.scale.set(1.05 + hash2(x + this.map.originX, y + this.map.originY, 27) * 0.3);
+      s.zIndex = depthKey(x, y, 2);
+      this.objects.addChild(s);
+      this.summitSprites.set(k, s);
+    }
+    const p = this.surfacePoint(x, y);
+    s.position.set(p.x, p.y);
+    setOwnTint(s, this.groundTint);
   }
   setSeasonTint(ground: number, props: number) {
     this.groundTint = ground;
@@ -1860,6 +1900,7 @@ export class WorldRenderer {
     let s = this.trackSprites.get(i);
     if (frame) this.trackFrames.set(i, frame);
     else this.trackFrames.delete(i);
+    this.refreshSummit(x, y);
     if (!frame) {
       if (s) {
         s.destroy();

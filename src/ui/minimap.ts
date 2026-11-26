@@ -20,6 +20,7 @@ const COLORS: Record<number, string> = {
   [Terrain.Rock]: '#7c7970',
   [Terrain.Sand]: '#b7a47b',
   [Terrain.Mountain]: '#93908a',
+  [Terrain.Ice]: '#bccbd0',
 };
 
 /** Diamond-shaped minimap drawn in the same iso projection as the world (2 px per tile width). */
