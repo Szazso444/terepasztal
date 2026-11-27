@@ -1,10 +1,10 @@
 # Supervisor state
 
-Last updated: 2026-11-26 (cloud run 21:31Z).
+Last updated: 2026-11-27 (cloud run 13:31Z).
 
 ## Lock
 
-cloud run, started 2026-11-27 13:31Z
+none
 
 ## Links
 
