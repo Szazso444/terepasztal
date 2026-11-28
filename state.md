@@ -1,10 +1,10 @@
 # Supervisor state
 
-Last updated: 2026-11-27 (cloud run 21:31Z).
+Last updated: 2026-11-28 (cloud run).
 
 ## Lock
 
-cloud run, started 2026-11-28 13:31Z
+none
 
 ## Links
 
@@ -77,7 +77,10 @@ and the check re-running): each needs only the render check before merging.
 
 ## Waits on the author
 
-Nothing yet.
+- 2026-11-28: the local run has never done a full run. Its only attempt (2026-11-25 19:40Z)
+  stopped on the cloud run's lock; journal and this branch show none since. All ~45 open pull
+  requests wait on its render checks and #697 on its `gate:approved`. Check that the local
+  scheduled task fires on the machine. Author notified by push.
 
 ## Direction questions
 
